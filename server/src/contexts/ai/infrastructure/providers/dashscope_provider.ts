@@ -21,11 +21,16 @@ import {
   DEFAULT_PROVIDER_RETRY_POLICY,
   effectiveTimeoutSeconds,
   httpStatusFailure,
+  isJsonObject,
+  isResponseLike,
   malformedJsonFailure,
+  normalizedTimeoutSeconds,
   type ProviderRetryPolicy,
   type ProviderTransport,
   ProviderTransportError,
+  readableResponse,
   redactCredentialAndTruncateResponseBody,
+  requiredApiKey,
   runWithRetryPolicy,
 } from "./provider_http.js";
 import { streamProviderTextDeltas } from "./streaming_generation.js";
@@ -45,40 +50,9 @@ export interface DashScopeTextProviderOptions {
   readonly transport?: ProviderTransport | undefined;
 }
 
-function isJsonObject(value: unknown): value is JsonObject {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
-function isResponseLike(value: unknown): value is Response {
-  if (!isJsonObject(value)) return false;
-  return (
-    typeof value.ok === "boolean" &&
-    typeof value.status === "number" &&
-    typeof value.text === "function" &&
-    typeof value.json === "function"
-  );
-}
-
-function readableResponse(response: Response): Response {
-  return typeof response.clone === "function" ? response.clone() : response;
-}
-
-function requiredApiKey(value: string): string {
-  const apiKey = value.trim();
-  if (apiKey === "") throw new TextGenerationProviderError("DashScope API key is required");
-  return apiKey;
-}
-
 function modelName(value: string | undefined): string {
   const model = value?.trim();
   return model === undefined || model === "" ? HARD_DEFAULT_MODELS.dashscope : model;
-}
-
-function normalizedTimeoutSeconds(value: number | undefined): number {
-  if (value === undefined || !Number.isFinite(value) || value <= 0) {
-    return DEFAULT_TIMEOUT_SECONDS;
-  }
-  return value;
 }
 
 function supportedStep(step: string): ProviderStep {
@@ -144,11 +118,11 @@ export class DashScopeTextProvider implements TextGenerationProvider {
   private readonly transport: ProviderTransport | undefined;
 
   constructor(options: DashScopeTextProviderOptions) {
-    this.apiKey = requiredApiKey(options.apiKey);
+    this.apiKey = requiredApiKey(options.apiKey, "DashScope");
     this.model = modelName(options.model);
     this.apiBase = options.apiBase;
     this.protocol = resolveDashscopeTransport(options.transportMode ?? DEFAULT_TRANSPORT_MODE);
-    this.timeoutSeconds = normalizedTimeoutSeconds(options.timeoutSeconds);
+    this.timeoutSeconds = normalizedTimeoutSeconds(options.timeoutSeconds, DEFAULT_TIMEOUT_SECONDS);
     this.retry = options.retry ?? DEFAULT_PROVIDER_RETRY_POLICY;
     this.transport = options.transport;
   }

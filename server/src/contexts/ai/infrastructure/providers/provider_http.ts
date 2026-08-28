@@ -10,6 +10,43 @@ const MAX_PROVIDER_ERROR_BODY_LENGTH = 1_000;
 /** Chapter generation calls must outlive the enclosing request timeout. */
 export const GENERATION_TIMEOUT_FLOOR_SECONDS = 180;
 
+export function isJsonObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+export function isResponseLike(value: unknown): value is Response {
+  if (!isJsonObject(value)) return false;
+  return (
+    typeof value.ok === "boolean" &&
+    typeof value.status === "number" &&
+    typeof value.text === "function" &&
+    typeof value.json === "function"
+  );
+}
+
+export function readableResponse(response: Response): Response {
+  return typeof response.clone === "function" ? response.clone() : response;
+}
+
+/** Trim the configured key; the provider label keeps each error message verbatim. */
+export function requiredApiKey(value: string, providerLabel: string): string {
+  const apiKey = value.trim();
+  if (apiKey === "") {
+    throw new TextGenerationProviderError(`${providerLabel} API key is required`);
+  }
+  return apiKey;
+}
+
+export function normalizedTimeoutSeconds(
+  value: number | undefined,
+  fallbackSeconds: number,
+): number {
+  if (value === undefined || !Number.isFinite(value) || value <= 0) {
+    return fallbackSeconds;
+  }
+  return value;
+}
+
 export interface ProviderTransportErrorFields {
   readonly status?: number | undefined;
   readonly timedOut?: boolean | undefined;
