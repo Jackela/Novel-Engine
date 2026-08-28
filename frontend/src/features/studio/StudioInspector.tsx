@@ -51,6 +51,10 @@ interface StudioInspectorProps {
   failedFormat?: ExportFormat | null;
   pending?: InspectorPendingState;
   errorForExport?: string | null;
+  /** #308: markdown received so far while the proposal stream is running. */
+  streamingText?: string | null;
+  /** #308: aborts the running proposal stream. */
+  onStopProposal?: () => void;
 }
 
 export function StudioInspector({
@@ -82,6 +86,8 @@ export function StudioInspector({
   failedFormat = null,
   pending = DEFAULT_INSPECTOR_PENDING,
   errorForExport = null,
+  streamingText = null,
+  onStopProposal,
 }: StudioInspectorProps) {
   const inspectorId = useId();
   const tabId = (tab: Exclude<InspectorTab, 'settings'>) => `${inspectorId}-${tab}-tab`;
@@ -139,6 +145,8 @@ export function StudioInspector({
             failedFormat={failedFormat}
             pending={pending}
             errorForExport={errorForExport}
+            streamingText={streamingText}
+            onStopProposal={onStopProposal}
           />
         </div>
       </details>

@@ -2,6 +2,7 @@ import { useCallback, useRef, useState } from 'react';
 import type { Dispatch, SetStateAction } from 'react';
 
 import { api } from '@/app/api';
+import { streamProposal } from '@/app/proposalStream';
 import type { InspectorTab } from '@/features/studio/studioConstants';
 import type { Project, StudioDocument, StudioJob } from '@/app/types/studio';
 
@@ -31,9 +32,14 @@ export function useStudioProposal(
     proposal: false,
     accept: false,
   });
+  // #308: the in-flight streamed markdown lands in the proposal preview only;
+  // the manuscript is touched by acceptProposal, never by the stream itself.
+  const [streaming, setStreaming] = useState<{ documentId: string; text: string } | null>(null);
+  const streamController = useRef<AbortController | null>(null);
   const pendingRef = useRef<Set<keyof PendingProposalActions> | null>(null);
   const activeDocumentId = activeDocument?.id ?? null;
   const proposal = proposalState?.documentId === activeDocumentId ? proposalState.job : null;
+  const streamingText = streaming?.documentId === activeDocumentId ? streaming.text : null;
 
   const begin = useCallback((key: keyof PendingProposalActions) => {
     const current =
@@ -65,24 +71,42 @@ export function useStudioProposal(
     async (operation: 'continue' | 'rewrite') => {
       if (!activeDocument || !project || !begin('proposal')) return;
       setError(null);
+      const controller = new AbortController();
+      streamController.current = controller;
+      setStreaming({ documentId: activeDocument.id, text: '' });
       try {
-        const nextProposal = await api.proposal(
+        const nextProposal = await streamProposal({
           projectId,
-          activeDocument.id,
+          documentId: activeDocument.id,
           operation,
           instruction,
-          String(project.settings.provider ?? 'mock'),
-        );
+          provider: String(project.settings.provider ?? 'mock'),
+          signal: controller.signal,
+          onDelta: (text) =>
+            setStreaming((current) =>
+              current === null
+                ? current
+                : { documentId: current.documentId, text: current.text + text },
+            ),
+        });
         setProposalState({ documentId: activeDocument.id, job: nextProposal });
         setInspector('copilot');
       } catch (reason) {
-        setError(reason instanceof Error ? reason.message : 'Unable to create proposal.');
+        if (!controller.signal.aborted) {
+          setError(reason instanceof Error ? reason.message : 'Unable to create proposal.');
+        }
       } finally {
+        streamController.current = null;
+        setStreaming(null);
         finish('proposal');
       }
     },
     [activeDocument, begin, finish, project, projectId, instruction, setError, setInspector],
   );
+
+  const stopProposal = useCallback(() => {
+    streamController.current?.abort();
+  }, []);
 
   const acceptProposal = useCallback(async () => {
     if (!proposal || !activeDocument || !begin('accept')) return;
@@ -118,6 +142,8 @@ export function useStudioProposal(
     instruction,
     setInstruction,
     runProposal,
+    stopProposal,
+    streamingText,
     acceptProposal,
     pending,
     isRunningProposal: pending.proposal,

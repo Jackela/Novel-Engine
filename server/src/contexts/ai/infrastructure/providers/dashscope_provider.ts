@@ -5,12 +5,14 @@ import {
   type TextGenerationProvider,
   TextGenerationProviderError,
   type TextGenerationResult,
+  type TextGenerationStreamOptions,
   type TextGenerationTask,
 } from "../../application/ports/text_generation.js";
 import { coercePayloadToSchema, payloadFromResponseText } from "./dashscope_payload.js";
 import {
   type DashscopeTransport,
   type DashscopeTransportMode,
+  extractDashscopeIncrementalText,
   extractDashscopeUsageTokens,
   resolveDashscopeTransport,
 } from "./dashscope_protocol.js";
@@ -26,6 +28,7 @@ import {
   redactCredentialAndTruncateResponseBody,
   runWithRetryPolicy,
 } from "./provider_http.js";
+import { streamProviderTextDeltas } from "./streaming_generation.js";
 
 const DEFAULT_TIMEOUT_SECONDS = 30;
 const DEFAULT_TRANSPORT_MODE: DashscopeTransportMode = "multimodal_generation";
@@ -111,6 +114,23 @@ function structuredPayload(
 }
 
 /**
+ * Stream variant of the protocol payload: native modes read incremental
+ * output so each chunk carries a text piece instead of the whole message;
+ * payloads without a parameters object pass through unchanged.
+ */
+function streamingPayload(payload: object): JsonObject {
+  const source = payload as JsonObject;
+  const parameters = source.parameters;
+  if (typeof parameters !== "object" || parameters === null || Array.isArray(parameters)) {
+    return source;
+  }
+  return {
+    ...source,
+    parameters: { ...(parameters as JsonObject), incremental_output: true },
+  };
+}
+
+/**
  * Per-request DashScope adapter. It owns no import-time client or mutable
  * state; the composition root constructs an instance for each provider use.
  */
@@ -142,6 +162,41 @@ export class DashScopeTextProvider implements TextGenerationProvider {
 
     return runWithRetryPolicy(this.retry, () =>
       this.generateOnce(task, timeoutSeconds, context, url),
+    );
+  }
+
+  /**
+   * #308 SSE passthrough: native modes request `incremental_output` chunks
+   * and compatible mode relays OpenAI-style deltas; every text piece is
+   * yielded as a raw chapter-markdown delta. Usage comes from the final
+   * chunk when the provider includes it; absent tokens stay null.
+   */
+  async *generateStructuredStreaming(
+    task: TextGenerationTask,
+    options?: TextGenerationStreamOptions,
+  ): AsyncGenerator<string, void, void> {
+    const step = supportedStep(task.step);
+    const apiBase = this.protocol.normalizeApiBase(this.apiBase);
+    yield* streamProviderTextDeltas(
+      {
+        url: `${apiBase}${this.protocol.endpointPath()}`,
+        headers: {
+          Authorization: `Bearer ${this.apiKey}`,
+          "Content-Type": "application/json",
+          Accept: "text/event-stream",
+          "X-DashScope-SSE": "enable",
+        },
+        body: JSON.stringify(streamingPayload(this.protocol.buildRequestPayload(this.model, task))),
+        signal: options?.signal,
+        context: `DashScope generation failed for step '${step}'`,
+        timeoutSeconds: this.timeoutSeconds,
+        credential: this.apiKey,
+        model: this.model,
+      },
+      (url, init) => this.dispatch(url, init ?? {}),
+      extractDashscopeIncrementalText,
+      extractDashscopeUsageTokens,
+      options,
     );
   }
 

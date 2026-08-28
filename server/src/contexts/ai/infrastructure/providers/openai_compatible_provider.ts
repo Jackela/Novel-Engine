@@ -5,6 +5,7 @@ import {
   type TextGenerationProvider,
   TextGenerationProviderError,
   type TextGenerationResult,
+  type TextGenerationStreamOptions,
   type TextGenerationTask,
 } from "../../application/ports/text_generation.js";
 import { coercePayloadToSchema, payloadFromResponseText } from "./dashscope_payload.js";
@@ -20,6 +21,7 @@ import {
   redactCredentialAndTruncateResponseBody,
   runWithRetryPolicy,
 } from "./provider_http.js";
+import { streamProviderTextDeltas } from "./streaming_generation.js";
 
 const DEFAULT_API_BASE = "https://api.openai.com/v1";
 const DEFAULT_TEMPERATURE = 0.7;
@@ -159,6 +161,18 @@ function usageTokens(data: JsonObject): readonly [number | null, number | null] 
   return [usageToken(usage.prompt_tokens), usageToken(usage.completion_tokens)];
 }
 
+/** The incremental content piece of one chat-completions stream chunk. */
+function streamDeltaContent(data: JsonObject): string | undefined {
+  const choices = data.choices;
+  if (!Array.isArray(choices) || choices.length === 0) return undefined;
+  const firstChoice = choices[0];
+  if (!isJsonObject(firstChoice)) return undefined;
+  const delta = firstChoice.delta;
+  if (!isJsonObject(delta)) return undefined;
+  const content = delta.content;
+  return typeof content === "string" && content !== "" ? content : undefined;
+}
+
 function structuredPayload(
   contentText: string,
   responseSchema: JsonObject,
@@ -201,6 +215,43 @@ export class OpenAICompatibleTextProvider implements TextGenerationProvider {
 
     return runWithRetryPolicy(this.retry, () =>
       this.generateOnce(task, timeoutSeconds, context, url),
+    );
+  }
+
+  /**
+   * #308 SSE passthrough: `stream=true` chat completions relayed as raw
+   * chapter-markdown deltas. Usage comes from the final chunk when the
+   * provider includes it (`stream_options.include_usage`); absent tokens
+   * stay null so the caller's word-count fallback applies.
+   */
+  async *generateStructuredStreaming(
+    task: TextGenerationTask,
+    options?: TextGenerationStreamOptions,
+  ): AsyncGenerator<string, void, void> {
+    const step = supportedStep(task.step);
+    yield* streamProviderTextDeltas(
+      {
+        url: `${this.apiBase}/chat/completions`,
+        headers: {
+          Authorization: `Bearer ${this.apiKey}`,
+          "Content-Type": "application/json",
+          Accept: "text/event-stream",
+        },
+        body: JSON.stringify({
+          ...chatCompletionPayload(this.model, task),
+          stream: true,
+          stream_options: { include_usage: true },
+        }),
+        signal: options?.signal,
+        context: `OpenAI-compatible generation failed for step '${step}'`,
+        timeoutSeconds: this.timeoutSeconds,
+        credential: this.apiKey,
+        model: this.model,
+      },
+      (url, init) => this.dispatch(url, init ?? {}),
+      streamDeltaContent,
+      usageTokens,
+      options,
     );
   }
 

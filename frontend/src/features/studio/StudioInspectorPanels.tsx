@@ -47,6 +47,10 @@ interface StudioInspectorPanelsProps {
   failedFormat: ExportFormat | null;
   pending: InspectorPendingState;
   errorForExport: string | null;
+  /** #308: markdown received so far while the proposal stream is running. */
+  streamingText?: string | null;
+  /** #308: aborts the running proposal stream. */
+  onStopProposal?: () => void;
 }
 
 export function StudioInspectorPanels({
@@ -78,6 +82,8 @@ export function StudioInspectorPanels({
   failedFormat,
   pending,
   errorForExport,
+  streamingText = null,
+  onStopProposal,
 }: StudioInspectorPanelsProps) {
   if (inspector === 'settings') {
     return (
@@ -108,6 +114,8 @@ export function StudioInspectorPanels({
           onAcceptProposal={onAcceptProposal}
           isRunningProposal={pending.proposal.running}
           isAcceptingProposal={pending.proposal.accepting}
+          streamingText={streamingText}
+          onStopProposal={onStopProposal}
         />
       </div>
       <div

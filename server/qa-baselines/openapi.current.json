@@ -1592,6 +1592,135 @@
         }
       }
     },
+    "/api/projects/{projectId}/documents/{documentId}/ai-proposals/stream": {
+      "post": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "documentId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "instruction": {
+                    "default": "",
+                    "maxLength": 10000,
+                    "type": "string"
+                  },
+                  "operation": {
+                    "enum": [
+                      "continue",
+                      "rewrite",
+                      "generate"
+                    ],
+                    "type": "string"
+                  },
+                  "provider": {
+                    "default": "mock",
+                    "enum": [
+                      "mock",
+                      "dashscope",
+                      "openai_compatible"
+                    ],
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "operation"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "text/event-stream": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Server-Sent Events stream of proposal frames (delta/done/error)."
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "error": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "code": {
+                          "enum": [
+                            "OPERATION_IN_FLIGHT"
+                          ],
+                          "type": "string"
+                        },
+                        "details": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "document_id": {
+                              "nullable": true,
+                              "type": "string"
+                            },
+                            "operation": {
+                              "type": "string"
+                            },
+                            "project_id": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "project_id",
+                            "document_id",
+                            "operation"
+                          ],
+                          "type": "object"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message",
+                        "details"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Default Response"
+          }
+        }
+      }
+    },
     "/api/projects/{projectId}/documents/{documentId}/aliases": {
       "get": {
         "parameters": [
