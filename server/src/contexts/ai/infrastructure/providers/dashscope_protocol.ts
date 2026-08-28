@@ -59,6 +59,7 @@ export interface DashscopeResponsesRequest {
   readonly model: string;
   readonly input: string;
   readonly temperature: number;
+  readonly response_format: { readonly type: "json_object" };
 }
 
 type RequestForMode<Mode extends DashscopeTransportMode> = Mode extends "responses"
@@ -204,6 +205,21 @@ export function extractDashscopeIncrementalText(data: JsonObject): string | unde
     }
   }
   const output = data.output;
+  if (Array.isArray(output)) {
+    // Responses-mode events mirror the non-streaming shape (#343): output is a
+    // list of items whose message content carries the incremental text.
+    for (const item of output) {
+      if (!isJsonObject(item)) continue;
+      for (const holder of [item.message, item]) {
+        if (!isJsonObject(holder)) continue;
+        const text = rawTextFromContent(holder.content);
+        if (text !== undefined) return text;
+      }
+      if (typeof item.delta === "string" && item.delta !== "") return item.delta;
+      if (typeof item.text === "string" && item.text !== "") return item.text;
+    }
+    return undefined;
+  }
   if (isJsonObject(output)) {
     const outputChoices = Array.isArray(output.choices) ? output.choices : [];
     const outputChoice = outputChoices.find(isJsonObject);
@@ -251,6 +267,7 @@ export class DashscopeTransport<Mode extends DashscopeTransportMode> {
         model,
         input: `System:\n${buildSystemContent(task)}\n\nUser:\n${buildUserContent(task)}`,
         temperature: DEFAULT_TEMPERATURE,
+        response_format: { type: "json_object" },
       } as RequestForMode<Mode>;
     }
     const systemContent = buildSystemContent(task);
