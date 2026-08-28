@@ -42,13 +42,12 @@ legacy `{"detail": ...}` shape MUST NOT appear. A document save conflict
 The session cookie MUST be named `novel_engine_session` and the CSRF cookie
 `novel_engine_csrf`. The session cookie MUST be HttpOnly, SameSite=Lax,
 scoped to the application path, and marked Secure in production and staging.
-Owner sessions MUST last 30 days and guest sessions 24 hours.
+Owner sessions MUST last 30 days.
 
 #### Scenario: Owner login sets the session cookie
 - **GIVEN** the owner authenticates successfully
 - **WHEN** the response is delivered
 - **THEN** `novel_engine_session` is set with the adjudicated attributes
-- **AND** the guest equivalent expires within 24 hours
 
 #### Scenario: Production cookies are Secure
 - **GIVEN** the environment is production or staging
@@ -58,8 +57,8 @@ Owner sessions MUST last 30 days and guest sessions 24 hours.
 ### Requirement: CSRF double-submit protection
 Every state-changing API request MUST present an `X-CSRF-Token` header that
 matches the `novel_engine_csrf` cookie under constant-time comparison,
-except the setup, login, and guest endpoints, which are exempt. Mismatched
-or missing tokens MUST be rejected with 403.
+except the setup and login endpoints, which are exempt. Mismatched or
+missing tokens MUST be rejected with 403.
 
 #### Scenario: Write without a valid token is rejected
 - **GIVEN** an authenticated session
@@ -68,21 +67,26 @@ or missing tokens MUST be rejected with 403.
 
 #### Scenario: Exempt endpoints accept first contact
 - **GIVEN** no session exists
-- **WHEN** setup, login, or guest creation is requested
+- **WHEN** setup or login is requested
 - **THEN** the request proceeds without CSRF validation
 
 ### Requirement: Session and provider surface
 The API MUST expose owner setup (`GET`/`POST /setup`), authentication
-(`POST /session/login`, `POST /session/guest`, `GET /session`,
-`DELETE /session`), and provider discovery (`GET /providers` returning, for
-each provider, whether it is configured, its model, and whether it is the
-default).
+(`POST /session/login`, `GET /session`, `DELETE /session`), and provider
+discovery (`GET /providers` returning, for each provider, whether it is
+configured, its model, and whether it is the default). A guest session
+surface MUST NOT exist.
 
 #### Scenario: Provider discovery
 - **GIVEN** no provider API key is configured
 - **WHEN** `GET /providers` is called by the owner
 - **THEN** each provider reports `configured: false`
 - **AND** the response includes the mock provider as configured
+
+#### Scenario: Guest surface is gone
+- **GIVEN** any session state
+- **WHEN** `POST /session/guest` is requested
+- **THEN** the response is 404 under the unified error envelope
 
 ### Requirement: Health and version surface
 The API MUST expose a database-aware health check, liveness and readiness
@@ -740,22 +744,17 @@ Import MUST never modify the source directory. A legacy workspace MUST
 contain `story.yaml`; chapters come from `manuscript/chapters/chapter-*.md`
 sorted by filename, and each becomes a chapter document titled `Chapter N`
 by position, with no additional seeded document. Import MUST be idempotent
-per principal scope: re-importing the same source hash within the same owner
-or guest scope returns the existing project without duplication. Web imports
-MUST be owner-only and confined to `data/imports`: path separators,
-traversal, absolute paths, and symbolic links MUST be rejected, and the
-resolved source MUST stay inside `data/imports`.
+per owner scope: re-importing the same source hash within the owner scope
+returns the existing project without duplication. Web imports MUST be
+owner-only and confined to `data/imports`: path separators, traversal,
+absolute paths, and symbolic links MUST be rejected, and the resolved source
+MUST stay inside `data/imports`.
 
 #### Scenario: Repeated import is idempotent
-- **GIVEN** a legacy workspace was already imported by the current principal scope
+- **GIVEN** a legacy workspace was already imported by the owner
 - **WHEN** the same source is imported again
 - **THEN** the existing project is returned
 - **AND** no duplicate project is created
-
-#### Scenario: Idempotency is scoped per principal
-- **GIVEN** the owner and a guest each import the same workspace
-- **WHEN** both imports complete
-- **THEN** two distinct projects exist, one per scope
 
 #### Scenario: Web sources are confined
 - **GIVEN** a web import request names a source with traversal, an absolute path, or a symbolic link under `data/imports`
@@ -830,7 +829,7 @@ and each successful validation MUST refresh the session's last-seen
 timestamp.
 
 #### Scenario: Expired session is rejected on next use
-- **GIVEN** a guest session whose 24-hour expiry has passed
+- **GIVEN** an owner session whose 30-day expiry has passed
 - **WHEN** a request presents its token
 - **THEN** the API responds 401 on authenticated surfaces
 - **AND** the session record is deleted so the token cannot authenticate again
@@ -884,17 +883,17 @@ allowed.
 - **THEN** the request proceeds
 
 ### Requirement: Authentication endpoint rate limiting
-The setup, login, and guest endpoints MUST be rate limited per client IP
-with a token bucket defaulting to five requests per minute. Excess requests
-MUST receive 429 with a `Retry-After` header in seconds under the unified
-error envelope, and MUST NOT trigger authentication side effects. Client
-identity MUST use the first `X-Forwarded-For` entry only when the immediate
-peer is a configured trusted proxy (IP, CIDR network, or host); otherwise
-the peer address itself. Preflight `OPTIONS` requests are exempt.
+The setup and login endpoints MUST be rate limited per client IP with a
+token bucket defaulting to five requests per minute. Excess requests MUST
+receive 429 with a `Retry-After` header in seconds under the unified error
+envelope, and MUST NOT trigger authentication side effects. Client identity
+MUST use the first `X-Forwarded-For` entry only when the immediate peer is a
+configured trusted proxy (IP, CIDR network, or host); otherwise the peer
+address itself. Preflight `OPTIONS` requests are exempt.
 
 #### Scenario: Burst exhausted
 - **GIVEN** the default five-per-minute limit
-- **WHEN** a sixth setup, login, or guest request arrives from the same client IP within the window
+- **WHEN** a sixth setup or login request arrives from the same client IP within the window
 - **THEN** the status is 429 with a `Retry-After` of at least one second
 - **AND** no session or owner state changes
 
@@ -971,30 +970,6 @@ authentication rate limit of five per minute.
 - **WHEN** the server starts from the workspace root
 - **THEN** the declared value applies without shell exports
 
-### Requirement: Principal-scoped data isolation
-Every project-scoped query MUST be bound to the requesting principal: owner
-data by `owner_id`, guest data by the guest `session_id`. A principal MUST
-NOT observe or mutate another principal's data, and cross-principal
-lookups MUST return not-found. Guests receive 24-hour sandboxes whose
-projects, jobs, reviews, and exports MUST be deleted by the startup and
-hourly cleanup once expired.
-
-#### Scenario: Cross-principal access is not found
-- **GIVEN** a project owned by the owner
-- **WHEN** a guest requests it by identifier
-- **THEN** the status is 404
-- **AND** no data is disclosed
-
-#### Scenario: Guest data is scoped by session
-- **GIVEN** two guest sessions each hold a project
-- **WHEN** one guest lists projects
-- **THEN** only its own project appears
-
-#### Scenario: Expired guest sandbox is cleaned up
-- **GIVEN** a guest session older than 24 hours
-- **WHEN** cleanup runs at startup or on the hourly schedule
-- **THEN** its projects, jobs, reviews, and exports are deleted
-
 ### Requirement: CLI operational surface
 The CLI MUST provide four commands. `serve` MUST back up the SQLite store
 before applying pending migrations, then start the API. `import` MUST take
@@ -1023,14 +998,14 @@ enabled.
 - **AND** the exit code is non-zero
 
 ### Requirement: Entry flow session probe
-The Studio entry MUST probe the session on mount and take one of three
-paths: a valid session replaces navigation into the project library; an
-unconfigured owner renders a unified setup and login form whose single
-submit creates the owner and establishes the session; a configured owner
-renders the login form. The guest entry MUST remain available in every
-state. The form prefills the username `author`, enforces the ten-character
-password minimum, and switches autocomplete between new-password and
-current-password according to setup status.
+The Studio entry MUST probe the session on mount and take one of two paths:
+a valid session replaces navigation into the project library; otherwise a
+form renders — a unified setup and login form when the owner is
+unconfigured (single submit creates the owner and establishes the session),
+the login form when the owner exists. The form prefills the username
+`author`, enforces the ten-character password minimum, and switches
+autocomplete between new-password and current-password according to setup
+status.
 
 #### Scenario: Valid session skips to the library
 - **GIVEN** a valid session exists
@@ -1042,11 +1017,6 @@ current-password according to setup status.
 - **WHEN** the author submits the unified form once with valid credentials
 - **THEN** the owner is created and the session established in one flow
 - **AND** navigation proceeds to the project library
-
-#### Scenario: Guest entry remains available
-- **GIVEN** an owner is configured
-- **WHEN** the entry page renders
-- **THEN** the guest entry is still offered
 
 ### Requirement: In-memory document drafts
 Document drafts — content, title, and save state — MUST live only in
@@ -1154,7 +1124,7 @@ The system MUST provide project library, manuscript, outline, character, world,
 review, history, export, and settings surfaces.
 
 #### Scenario: Authoring flow
-- **GIVEN** an owner or valid guest project
+- **GIVEN** an owner project
 - **WHEN** the author edits a Markdown document and pauses for 1.5 seconds
 - **THEN** the Studio saves a new revision
 - **AND** shows saved, saving, or conflict state
@@ -1249,4 +1219,177 @@ local draft and retry an overwrite using the latest revision as its baseline.
 - **WHEN** the author chooses Keep local and retry overwrite
 - **THEN** the local content is retained
 - **AND** the save is retried against the latest revision explicitly
+
+### Requirement: Owner data isolation
+Every project-scoped query MUST be bound to the single owner principal, and
+every project resource MUST resolve only within the owner's data.
+Identifiers that do not resolve MUST return not-found without disclosing
+existence.
+
+#### Scenario: Unknown identifiers are not found
+- **GIVEN** any project-scoped resource address
+- **WHEN** an identifier that does not exist in the owner's data is requested
+- **THEN** the status is 404 and no data is disclosed
+
+### Requirement: Volume hierarchy
+Chapters MUST be organized into volumes — the level between the project and
+its chapters. A project MUST always hold at least one volume, and a freshly
+created or imported project MUST start with a single default volume
+containing its chapters. Reading order MUST be volume order, then chapter
+order within each volume; reordering MUST operate on that order. Exports
+MUST follow the same order. Non-chapter documents MUST stay outside
+volumes.
+
+#### Scenario: New project starts with a default volume
+- **GIVEN** a newly created project
+- **WHEN** its structure is read
+- **THEN** it contains one volume holding its chapters in reading order
+
+#### Scenario: Export order follows volumes
+- **GIVEN** a project whose chapters span two volumes
+- **WHEN** an export is written
+- **THEN** chapters appear in volume order, then in-volume order
+
+### Requirement: Chapter beat association
+Each chapter MUST be associable with exactly one beat of the project's
+outline document, and the association MUST be readable and editable through
+the chapter. Generation for a chapter MUST include its linked beat's content
+in the prompt; an unlinked chapter MUST generate without a beat.
+
+#### Scenario: Generation includes the linked beat
+- **GIVEN** a chapter linked to an outline beat describing the storm scene
+- **WHEN** a proposal is drafted for that chapter
+- **THEN** the provider prompt contains the beat's content
+
+#### Scenario: Unlinked chapter generates without a beat
+- **GIVEN** a chapter with no beat association
+- **WHEN** a proposal is drafted for that chapter
+- **THEN** the prompt contains no beat section
+
+### Requirement: Resident context injection
+Every proposal generation MUST assemble the resident context ahead of the
+target manuscript: the outline (with the current beat position), a rolling
+summary of the prior chapters, and the tail of the most recent chapter. The
+assembly MUST draw only from the project's own documents, and the rolling
+summary MUST cover every prior chapter in reading order.
+
+#### Scenario: Continuation sees the prior story
+- **GIVEN** a project with an outline and three completed chapters
+- **WHEN** a proposal is drafted for the next chapter
+- **THEN** the provider prompt contains the outline, a summary covering chapters 1 through 3, and the tail of chapter 3
+- **AND** the target chapter's manuscript follows the resident context
+
+### Requirement: Keyword-triggered lore entries
+Character and world documents MUST serve as lore entries: the entry keys are
+the document title plus aliases declared in the document's metadata, and the
+entry content is the document's current markdown. When a key occurs in the
+resident context or the target manuscript, the entry MUST be injected into
+the prompt; lore entries without a key occurrence MUST be omitted.
+
+#### Scenario: Alias triggers injection
+- **GIVEN** a character document titled `Mara` declaring the alias `the archivist`
+- **WHEN** the target manuscript mentions `the archivist`
+- **THEN** the document's content is injected into the prompt
+
+#### Scenario: No key hit, no injection
+- **GIVEN** a world document whose keys never occur in the resident context or manuscript
+- **WHEN** a proposal is drafted
+- **THEN** that document's content is not injected
+
+### Requirement: LLM editorial review
+A review MUST snapshot the project's current revisions (reason `review`) and
+MUST run the editorial review provider step over that snapshot, producing
+findings that each carry a severity (`blocker` or `warning`), a review
+dimension from the server-owned closed dimension set, a message, and a
+suggestion. Findings MUST be ordered by severity, then dimension, then
+document position. The review stays snapshot-bound: later edits MUST NOT
+rewrite recorded findings. A provider failure during review MUST produce a
+failed job under the existing terminal semantics and MUST NOT fabricate
+findings.
+
+#### Scenario: Dimensioned findings are reported
+- **GIVEN** a snapshot whose chapters contain pacing and continuity problems
+- **WHEN** a review runs
+- **THEN** each finding reports a dimension from the closed set with a severity, message, and suggestion
+
+#### Scenario: Provider failure fails the job
+- **GIVEN** the editorial review provider step fails with a known provider error
+- **WHEN** the review request completes
+- **THEN** the job records status `failed` with the error
+- **AND** no findings are recorded for that review
+
+### Requirement: Project usage surface
+The API MUST expose `GET /api/projects/:projectId/usage` to the owner,
+aggregating the project's recorded usage events: total prompt tokens, total
+completion tokens, request count, and a per-model breakdown.
+
+#### Scenario: Aggregates reflect recorded events
+- **GIVEN** recorded usage events across two models
+- **WHEN** the usage surface is read
+- **THEN** the totals equal the recorded sums
+- **AND** the per-model breakdown separates the two models
+
+### Requirement: Whole-book generation loop
+The Studio MUST offer a whole-book generation mode driven by the frontend
+over the existing synchronous proposal and accept endpoints: it drafts a
+proposal for the next chapter needing one, accepts it automatically, and
+proceeds in reading order. The loop MUST be stoppable at any moment and
+resumable; already-accepted chapters MUST be preserved, and a stop MUST
+leave every completed chapter intact.
+
+#### Scenario: The loop advances chapter by chapter
+- **GIVEN** a project with an outline and one completed chapter
+- **WHEN** the whole-book loop runs
+- **THEN** each subsequent chapter receives a generated proposal that is accepted automatically in reading order
+
+#### Scenario: Stop preserves completed work
+- **GIVEN** the loop has accepted two chapters
+- **WHEN** the author stops the loop
+- **THEN** the two accepted chapters remain, and no further chapters are generated
+
+### Requirement: Streaming proposal generation
+
+The API MUST expose `POST /api/projects/:projectId/documents/:documentId/ai-proposals/stream`,
+authenticated like every other write surface (session cookie plus CSRF
+header), accepting the same request body as the synchronous proposal
+endpoint. On success it MUST answer `200` with `text/event-stream` frames of
+single-line JSON events: `{"type":"delta","text":…}` for each markdown
+piece, then either `{"type":"done","job":…}` carrying the same job payload
+shape as the synchronous endpoint, or `{"type":"error","error":{"code":…,"message":…}}`.
+Invalid input, unknown documents, in-flight conflicts, and providers without
+the streaming capability MUST be rejected with the normal error envelope
+before the stream starts. A completed stream MUST land the same way as the
+synchronous endpoint (a completed job plus exactly one usage event); a
+provider failure mid-stream MUST record a failed job and end the stream with
+an error frame without fabricating text; a client disconnect MUST abort the
+upstream provider request and persist nothing. The synchronous proposal
+endpoint MUST remain unchanged and the proposal contract MUST hold: nothing
+mutates the manuscript until an explicit accept.
+
+#### Scenario: Deltas stream, then done carries the job
+
+- **GIVEN** an owner session and a document with a current revision
+- **WHEN** the owner requests a streamed proposal from a provider with the
+  streaming capability
+- **THEN** the response is a `text/event-stream` of delta frames whose
+  concatenation equals the persisted proposal markdown
+- **AND** the stream ends with a done frame whose job payload is a completed
+  proposal job with exactly one usage event recorded
+
+#### Scenario: Abort persists nothing
+
+- **GIVEN** a proposal stream is running
+- **WHEN** the client disconnects (or aborts its request) mid-stream
+- **THEN** the upstream provider request is aborted
+- **AND** no job, no usage event, and no revision is persisted for the
+  interrupted stream
+
+#### Scenario: Provider failure mid-stream records a failed job
+
+- **GIVEN** a proposal stream has already delivered deltas
+- **WHEN** the provider fails before completing the stream, or the
+  accumulated markdown fails the prose validation after completion
+- **THEN** the stream ends with an error frame carrying the failure message
+- **AND** a failed proposal job with an empty proposal markdown is recorded
+- **AND** no usage event is recorded for the failed stream
 
