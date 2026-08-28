@@ -2,9 +2,12 @@ import type { TextGenerationStreamOptions } from "../../application/ports/text_g
 import {
   classifyTransportRejection,
   httpStatusFailure,
+  isJsonObject,
+  isResponseLike,
   malformedJsonFailure,
   type ProviderTransport,
   ProviderTransportError,
+  readableResponse,
   redactCredentialAndTruncateResponseBody,
   timeoutFailure,
 } from "./provider_http.js";
@@ -17,24 +20,6 @@ const EVENT_BOUNDARY = /\r?\n\r?\n/u;
 export const DEFAULT_STREAM_FIRST_BYTE_TIMEOUT_MS = 30_000;
 /** Ceiling on silence between consecutive stream frames. */
 export const DEFAULT_STREAM_IDLE_TIMEOUT_MS = 60_000;
-
-function isJsonObject(value: unknown): value is JsonObject {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
-function isResponseLike(value: unknown): value is Response {
-  if (!isJsonObject(value)) return false;
-  return (
-    typeof value.ok === "boolean" &&
-    typeof value.status === "number" &&
-    typeof value.text === "function" &&
-    typeof value.json === "function"
-  );
-}
-
-function readableResponse(response: Response): Response {
-  return typeof response.clone === "function" ? response.clone() : response;
-}
 
 /** Strip exactly the one leading space the SSE `data:` field rule allows. */
 function dataFieldValue(line: string): string {
