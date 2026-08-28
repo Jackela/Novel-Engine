@@ -2,7 +2,7 @@ import { createHmac, randomBytes } from "node:crypto";
 import { compare, hash } from "bcryptjs";
 
 import { InvalidOperationError } from "../domain/exceptions.js";
-import type { AuthStore, Principal, SessionKind } from "./ports/auth.js";
+import type { AuthStore, Principal } from "./ports/auth.js";
 
 /** Owner sessions last 30 days (the lazy-expiry contract validates against it). */
 const OWNER_TTL_MS = 30 * 24 * 60 * 60 * 1000;
