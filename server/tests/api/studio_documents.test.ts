@@ -151,7 +151,8 @@ describe("documents surface", () => {
     try {
       const jar = await ownerJar(app);
       const project = await seedProject(app, jar, "Renumber");
-      const seed = project.documents[0]!;
+      const seed = project.documents[0];
+      if (seed === undefined) throw new Error("expected seeded document");
       const second = await seedDocument(app, jar, project.id, {
         kind: "chapter",
         title: "Chapter 2",

@@ -39,9 +39,12 @@ describe("volume reading order", () => {
       const jar = await ownerJar(app);
       const project = await seedProject(app, jar, "Projected Reorder");
       const volumes = await listVolumes(app, jar, project.id);
-      const firstVolume = volumes[0]!;
+      const firstVolume = volumes[0];
+      if (firstVolume === undefined) throw new Error("expected default volume");
       const secondVolume = await seedVolume(app, jar, project.id, "Second");
-      const c1 = (await getProject(app, jar, project.id)).documents[0]!;
+      const projectView = await getProject(app, jar, project.id);
+      const c1 = projectView.documents[0];
+      if (c1 === undefined) throw new Error("expected seeded document");
       const c2 = await seedDocument(app, jar, project.id, { kind: "chapter", title: "Chapter 2" });
       const c3 = await seedDocument(app, jar, project.id, { kind: "chapter", title: "Chapter 3" });
       await moveChapterToVolume(app, jar, project.id, c3.id, secondVolume.id);
@@ -101,7 +104,8 @@ describe("volume reading order", () => {
       await moveChapterToVolume(app, jar, project.id, c.id, secondVolume.id);
       const seed = (await getProject(app, jar, project.id)).documents.find(
         (document) => document.kind === "chapter" && document.title === "Chapter 1",
-      )!;
+      );
+      if (seed === undefined) throw new Error("expected Chapter 1 document");
       const renamed = await call(
         app,
         jar,
@@ -161,8 +165,10 @@ describe("volume reading order", () => {
       expect([...marks].sort((left, right) => left - right)).toEqual(marks);
 
       // Moving a volume later moves its chapters in every reading surface.
+      const [defaultVolume] = await listVolumes(app, jar, project.id);
+      if (defaultVolume === undefined) throw new Error("expected default volume");
       const reversed = await call(app, jar, "PUT", `/api/projects/${project.id}/volumes/reorder`, {
-        volume_ids: [secondVolume.id, (await listVolumes(app, jar, project.id))[0]!.id],
+        volume_ids: [secondVolume.id, defaultVolume.id],
       });
       expect(reversed.statusCode, reversed.body).toBe(200);
       const flipped = await orderedChapters(app, jar, project.id);

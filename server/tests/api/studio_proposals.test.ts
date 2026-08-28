@@ -108,7 +108,7 @@ describe("proposal flow", () => {
       expect(job.result.accepted_revision_id).toBeNull();
       assertIsProse(job.result.proposal_markdown as string);
       expect(job.events.map((event) => event.status)).toEqual(["completed"]);
-      expect(job.events[0]!.details).toEqual({ proposal_only: true });
+      expect(job.events.map((event) => event.details)).toEqual([{ proposal_only: true }]);
       // No acceptance yet: the document still points at revision A, nothing new exists.
       const after = (await getProject(app, jar, project.id)).documents[0] as DocumentPayload;
       expect(after.current_revision_id).toBe(before.current_revision_id);
@@ -251,9 +251,9 @@ describe("proposal flow", () => {
       const revisions = await listRevisions(app, jar, project.id, document.id);
       expect(revisions).toHaveLength(2);
       const acceptedRevision = revisions.find((revision) => revision.id === acceptedRevisionId);
-      expect(acceptedRevision!.source).toBe("ai-accepted");
-      expect(acceptedRevision!.metadata.ai_job_id).toBe(job.id);
-      expect(acceptedRevision!.content_markdown).toBe(job.result.proposal_markdown);
+      expect(acceptedRevision?.source).toBe("ai-accepted");
+      expect(acceptedRevision?.metadata.ai_job_id).toBe(job.id);
+      expect(acceptedRevision?.content_markdown).toBe(job.result.proposal_markdown);
 
       const after = (await getProject(app, jar, project.id)).documents[0] as DocumentPayload;
       expect(after.current_revision_id).toBe(acceptedRevisionId);
