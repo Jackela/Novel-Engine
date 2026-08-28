@@ -1,70 +1,160 @@
 # Architecture overview
 
-Novel Engine is a FastAPI application with a React frontend; its persistence layer uses synchronous SQLAlchemy sessions. The Studio domain is organized into domain, application, infrastructure, and HTTP-interface layers; import-linter makes those boundaries executable rather than conventional (`.importlinter`).
+Novel Engine is a self-hosted, single-author writing studio. The backend is a
+TypeScript server on Node 24 LTS: Fastify v5 with the TypeBox type provider for
+HTTP, Drizzle ORM over better-sqlite3 for persistence, and SQLite as the
+content authority. The frontend is a React 19 + Vite application served by the
+same deployable. Code lives in a minimal pnpm workspace (`frontend/` +
+`server/`), and the server is organized into bounded contexts — `studio`
+(authoring), `ai` (text generation), and the `shared` kernel — whose import
+boundaries are executable policy, not convention (`server/.dependency-cruiser.cjs`).
+The stack decision is recorded in ADR-0001 through ADR-0003; the product
+vocabulary lives in the root `CONTEXT.md`.
 
-## Runtime composition and lifecycle
+## Composition root and runtime composition
 
-`create_application()` builds a `NovelStudioApplication`, resolves settings, creates (or accepts) a `StudioRuntime`, and attaches both the runtime and its `StudioStore` to that specific FastAPI application's state (`src/apps/api/main.py`, `src/apps/api/runtime.py`, `src/contexts/studio/interface/http/dependencies.py`). Request dependencies retrieve the store from `request.app`; there is no module-global runtime.
+`buildApp()` in `server/src/apps/api/app.ts` is the composition root of the TS
+server. It takes an injectable `AppOptions` object — logger, data directory,
+session secret, CORS origins, trusted proxies, auth rate limit, AI provider
+keys and factory, resolved `ServerConfig`, SPA dist directory, injectable clock,
+and health probe — and wires every service onto one Fastify instance. There are
+no module-global app instances and no import-time database handles: handlers
+reach services through the options passed at registration time.
 
-`StudioRuntime` owns:
+When a `dataDirectory` is configured, startup runs the persistence pipeline —
+backup, migrations, restart recovery — through `openStudioDatabase()` before
+the app serves traffic, and decorates the instance with a `StudioDatabase`
+handle closed in an `onClose` hook. When it is absent, the app boots as a
+database-free walking skeleton. Misconfigured production starts fail fast:
+`assertStartupGuards()` runs before any side effect, so a bad start creates no
+directories and opens no databases.
 
-- a `StudioStore`, composed with `SqlAlchemyStudioRepository`, the configured data directory, the injected `SECURITY_SECRET_KEY`, an AI-provider factory, and the registered export writers; and
-- a `StudioDatabase`, which owns the SQLAlchemy engine and session factory (`src/apps/api/runtime.py`, `src/contexts/studio/infrastructure/database.py`).
+The CLI (`server/src/apps/cli/main.ts`: `serve`, `import`, `backup`, `doctor`)
+builds short-lived app instances through the same `buildApp()` factory; no
+state is shared through module globals between commands.
 
-The FastAPI lifespan initializes the database without creating a backup or schema, recovers interrupted jobs through database initialization, removes expired guest sessions once at startup, then starts an hourly guest-cleanup loop. Shutdown cancels that task group and disposes the runtime database in `finally` (`src/apps/api/runtime.py`). Blocking database and cleanup work is dispatched from the lifespan through AnyIO worker threads; the persistence implementation itself uses synchronous SQLAlchemy sessions.
+## Bounded contexts and enforced dependency direction
 
-The CLI deliberately has a separate, short-lived `CliRuntime`. Each command creates it through `_configured_runtime()` and disposes its database on context exit. Commands that need an operational store run database backup/migrations before their work; `serve` releases this CLI runtime before Uvicorn calls the FastAPI application factory (`src/apps/cli/novel_engine.py`).
+`server/src` is split into `src/apps` (composition roots), `src/contexts/studio`,
+`src/contexts/ai`, and `src/shared`. Each context is layered into `domain`,
+`application`, `infrastructure`, and `interface`. The contracts, enforced by
+`server/.dependency-cruiser.cjs` and checked by `pnpm --dir server arch` in CI:
 
-First-owner setup is the unauthenticated bootstrap write before a session exists. The HTTP boundary compares every supplied `Origin` and `Referer` with the serving origin or an explicit configured non-wildcard CORS origin (or a supported localhost/127.0.0.1 port wildcard), while requests without browser origin metadata remain available to local bootstrap clients. On SQLite, owner creation starts `BEGIN IMMEDIATE`, rechecks the Owner count inside that transaction, and raises the existing domain `InvalidOperation` when another request won the race; the HTTP decorator exposes that loser as a controlled `422` (`src/contexts/studio/interface/http/session_router.py`, `src/contexts/studio/infrastructure/repository/auth.py`, `src/contexts/studio/interface/http/errors.py`, `src/apps/api/middleware/cors.py`). Login and guest cookies are `Secure` in production and staging; local HTTP development intentionally leaves that attribute off. Session token lookup hashes are HMAC-SHA256 values keyed by `SECURITY_SECRET_KEY`; the registry injects this secret into `AuthService`, and rotating it deliberately invalidates all existing sessions without changing cookie, API, or CSRF shapes (`src/contexts/studio/domain/utils.py`, `src/contexts/studio/application/services/auth_service.py`, `src/contexts/studio/application/services/facade_base.py`).
+- Domain layers never import application, infrastructure, or interface layers.
+- Application layers orchestrate domain behavior through ports; they never
+  import infrastructure or interface code.
+- Interface layers own HTTP concerns only — no direct infrastructure imports.
+- Bounded contexts never import `src.apps`; `src.shared` never imports bounded
+  contexts; and the `ai` context is a leaf provider module, importable only
+  through its application ports, never importing `studio`.
 
-## Enforced dependency direction
+Infrastructure is therefore supplied at composition points — `buildApp()` or a
+CLI command — rather than selected by application services. `pnpm --dir server
+arch` is executable policy: a violating import fails the build.
 
-The import contracts forbid domain modules from importing application or infrastructure code, application modules from importing infrastructure, contexts from importing apps, shared code from importing contexts, and interface modules from importing infrastructure (`.importlinter`). Infrastructure is therefore supplied at composition points—such as the API runtime or CLI runtime—rather than selected by application services.
+## Persistence: SQLite as content authority
 
-The application depends on the `StudioRepository` protocol and its DTO/core-port sections, not the SQLAlchemy repository. The port covers ownership and sessions, projects/documents/revisions, snapshots, reviews, exports, jobs, and usage events (`src/contexts/studio/application/ports/studio_repository.py`, `src/contexts/studio/application/ports/studio_repository_sections.py`). `SqlAlchemyStudioRepository` is the runtime-provided implementation (`src/apps/api/runtime.py`, `src/apps/cli/novel_engine.py`).
+SQLite (`novel-engine.sqlite3` in the configured data directory) is the
+authority for projects, documents, revisions, snapshots, reviews, exports,
+jobs, and auth state. `DrizzleStudioStore`
+(`server/src/contexts/studio/infrastructure/`) implements the studio ports over
+Drizzle + better-sqlite3; `DrizzleAuthStore` serves the shared auth store.
+Schema changes go through drizzle-kit migrations in `server/drizzle/`,
+generated only via `pnpm --dir server db:generate`; hand-editing
+`server/drizzle/meta/*` is forbidden, and the migration-channel gate enforces
+this.
 
-## Documents, revisions, and snapshots
+Full-text search is the deliberate exception to ORM metadata: the FTS5 virtual
+table DDL, triggers, and row cleanup are hand-written SQL inside the migration
+files, and `MATCH` input is reduced to strict tokens by
+`buildFtsMatchQuery()` (`server/src/contexts/studio/application/fts_match_query.ts`)
+before reaching a parameterized query. SQL and FTS expressions are never built
+by string concatenation.
 
-Documents retain a `current_revision_id`; revision rows carry a parent revision ID, monotonically unique revision number per document, Markdown content, metadata, source, and creation time (`src/contexts/studio/infrastructure/models.py`). Saving a document delegates to the repository with a caller-supplied base revision ID; an out-of-date base is surfaced as a `RevisionConflict` by `DocumentService` (`src/contexts/studio/application/services/document_service.py`).
+Revisions and snapshots are immutable references. A conflict-checked save
+creates a new revision; restore creates a new current revision from history
+rather than rewriting it. Snapshots pin the exact revision selected for each
+document, and both reviews and exports read from that frozen revision set —
+never from live documents.
 
-History is append-only in use: revision lookup/listing reads `DocumentRevision` rows, while a restore reads the selected historical revision and calls the normal save path with `source="restore"` and `restored_from` metadata. Restore therefore creates a new current revision rather than overwriting the historical revision (`src/contexts/studio/application/services/revision_service.py`, `src/contexts/studio/infrastructure/repository/document_revisions.py`).
+## AI providers: ports and adapters
 
-A project snapshot records the exact revision ID currently selected for each document that has one, together with its position. Snapshot reads join those stored IDs back to documents and revisions, so later edits do not alter snapshot content (`src/contexts/studio/infrastructure/repository/snapshot.py`, `src/contexts/studio/infrastructure/models.py`).
+The `ai` context is a ports-and-adapters leaf. Application code depends on the
+`TextGenerationProviderFactory` port
+(`server/src/contexts/ai/application/ports/text_generation.ts`); the
+infrastructure factory (`server/src/contexts/ai/infrastructure/providers/text_provider_factory.ts`)
+builds deterministic, DashScope, and OpenAI-compatible adapters. Provider
+failures are normalized only for known transport, HTTP, JSON, and provider
+error classes, and a keyed provider never falls back to the mock — a missing
+API key fails explicitly. `AppOptions.textProviderFactory` lets tests inject
+capturing providers.
 
-The `SnapshotDocument.revision_id` foreign key uses `ON DELETE RESTRICT`, preserving every revision referenced by an export or review snapshot. Before deleting a document, the repository checks for any snapshot reference and raises the domain `SnapshotConflict`; the HTTP error decorator maps that expected conflict to `409` while leaving the database restriction intact. A rejected delete leaves the document, snapshots, and revisions untouched (`src/contexts/studio/infrastructure/models.py`, `src/contexts/studio/infrastructure/repository/document.py`, `src/contexts/studio/domain/exceptions.py`, `src/contexts/studio/interface/http/errors.py`).
+## HTTP surface and the OpenAPI snapshot
 
-Reviews are snapshot-bound as well as exports: review creation writes a `ProjectSnapshot(reason="review")`, stores its revision IDs on `SnapshotDocument`, associates the snapshot with the review, and evaluates issues from that frozen set. Later document edits therefore do not rewrite historical review findings (`src/contexts/studio/infrastructure/repository/review.py`, `openspec/specs/novel-studio/spec.md`).
+Routes are thin: `server/src/contexts/studio/interface/http/` and
+`server/src/contexts/ai/interface/http/` define TypeBox schemas and delegate to
+services; shared routes (auth, health, version, SPA serving) live in
+`server/src/shared/interface/http/`. The unified error envelope is registered
+before route plugins, and the SPA wildcard registers last so the JSON API stays
+distinct.
 
-The route-level Studio keeps these concerns separate: `/history` exposes revision listing and restore only, while `/export` exposes format selection, export pending/failure state, and recent export links. The top bar no longer duplicates Review, Export, or Settings actions; `StudioInspector` selects the surface from the route and uses the same API client and store contracts as the other panels (`frontend/src/features/studio/StudioPage.tsx`, `StudioTopbar.tsx`, `StudioInspector.tsx`).
-
-## Export flow
-
-`ExportService` compares the current `{document_id: current_revision_id}` mapping with the newest export snapshot. It reuses that snapshot only when the mappings match; otherwise it creates a new `reason="export"` snapshot. It exports only snapshot documents whose kind is `chapter`, and rejects an export with no chapters—exports are not an all-document dump (`src/contexts/studio/application/services/export_service.py`).
-
-Markdown, DOCX, and EPUB output is written through a temporary file in the destination directory and atomically replaced into place. DOCX and EPUB writers receive prepared chapter titles and plain text; the service records the resulting file's relative path, size, checksum, format, and snapshot ID in the repository (`src/contexts/studio/application/services/export_service.py`, `src/contexts/studio/infrastructure/exporters/docx_exporter.py`, `src/contexts/studio/infrastructure/exporters/epub_exporter.py`).
-
-AI generation keeps the author instruction in explicit begin/end markers and sanitizes known control phrases before sending it to the provider. Manuscript text is serialized as `{"content_markdown": ...}` inside `[BEGIN UNTRUSTED MANUSCRIPT JSON]` / `[END UNTRUSTED MANUSCRIPT JSON]`; bracket characters are escaped in the serialized payload so author text cannot manufacture a second delimiter. The system prompt explicitly says that this block is data and never an instruction. Instruction sanitization and output Markdown sanitization remain separate defenses, and the public request/response payload is unchanged (`src/contexts/studio/application/service_common.py`, `src/contexts/studio/application/services/ai_service.py`).
-
-Validation handlers keep response details compatible while logging only the request path, HTTP method, field, error type, and human-readable message. They pass `format_validation_errors(...)` to the logger instead of raw Pydantic `errors()`, so password, token, API-key, and other input values are not written to telemetry (`src/apps/api/middleware/error_handler.py`).
+The API contract is code-first: Fastify swagger produces `/openapi.json`, and
+the frozen snapshot `server/qa-baselines/openapi.current.json` is compared by
+the OpenAPI gate. Route-adding changes must regenerate it deliberately via
+`pnpm --dir server openapi:snapshot`. Frontend types are generated from the
+same document (`frontend/generated/api-types.ts` via `pnpm --dir frontend
+gen:api-types`), and a CI step fails on drift. Browser requests always go
+through `frontend/src/app/api.ts`, whose CSRF, credentials, abort, and
+error-envelope semantics are product invariants.
 
 ## Quality gates
 
-The CI `validate` job installs locked Python and pnpm dependencies, checks AI regression differences for pull requests, validates SSOT/OpenSpec and repository hygiene, then runs backend formatting, linting, security, type, import-boundary, test/coverage, and OpenAPI checks. It also runs frontend lint/format/type/unit/build checks, requires a clean React Doctor report, and executes the Studio smoke workflow in Playwright. A dependent container job verifies a fresh install, persistence across restart, deep-link serving, authenticated session persistence, SQLite integrity, and the expected migration (`.github/workflows/ci.yml`).
+CI (`.github/workflows/ci.yml`) is the authoritative full gate:
 
-CodeQL separately analyzes both Python and JavaScript/TypeScript on pushes and pull requests to `main`/`develop`, plus a scheduled weekly run; it initializes the repository CodeQL configuration and performs autobuild before analysis (`.github/workflows/codeql.yml`).
+- The `validate` job (Node 22) installs locked pnpm dependencies, audits
+  production dependency security, runs `pnpm --dir server gates` and
+  `pnpm spec:validate`, then the full frontend suite (lint, format, type-check,
+  unit tests, build), the generated API-types drift check, React static
+  diagnostics, and Playwright Studio workflows against the built TS backend.
+- The `server` job (Node 24) runs the workspace gates, `pnpm --dir server arch`
+  (dependency-cruiser), type-check, lint, and the vitest suite (Fastify
+  `inject()` against hermetic temp data dirs). A dependent container job
+  verifies fresh install, persistence across restart, and deep-link serving.
 
-The pre-remediation audit and each focused remediation batch use the same
-replayable backend, frontend, OpenSpec, OpenAPI, security, and Studio smoke
-checks. Focused tests cover route surfaces and APG keyboard behavior, pending
-and duplicate-submission guards, conflict recovery, snapshot-protected delete,
-AI prompt boundaries, validation-log redaction, and HMAC key rotation. After
-source changes, rerun the release-equivalent commands in
+The Node split is deliberate and current: product code targets Node 24 LTS
+(server runtime, `server` job), while the `validate` job and the CodeQL
+workflow still pin Node 22 for tooling. Treat both pins as facts of CI, not
+drift to fix casually.
+
+`pnpm --dir server gates` composes the five release gates: SSOT
+(`readWorkspaceVersion` against `server/package.json`), repo hygiene, file
+size limits, migration channel, and the OpenAPI snapshot.
+`pnpm spec:validate` validates the OpenSpec product specification
+(`openspec/`). CodeQL analyzes `javascript-typescript` only — the repository
+is single-language — on pushes and pull requests to `main`/`develop` plus a
+scheduled weekly run (`.github/workflows/codeql.yml`).
+
+After source changes, rerun the release-equivalent commands in
 `openwiki/quickstart.md` and wait for hosted `validate`, container, and CodeQL
 jobs before merge.
 
 ## Change guidance
 
-- Change runtime ownership or request access through `server/src/apps/api/app.ts` and its injectable `AppOptions` together; preserve per-app database lifecycle and `onClose` disposal.
-- Add application behavior behind an application port and service before changing repository infrastructure; `pnpm --dir server arch` (dependency-cruiser) in CI verifies the layer rules.
-- Preserve revision IDs in snapshots and the restore-as-new-revision behavior when modifying history or export paths.
-- For export changes, keep snapshot comparison chapter-only selection and atomic output replacement intact; run the focused service tests plus the CI-equivalent backend/frontend checks as applicable.
+- Change runtime ownership or request access through `server/src/apps/api/app.ts`
+  and its injectable `AppOptions` together; preserve per-app database lifecycle
+  and `onClose` disposal.
+- Add application behavior behind an application port and service before
+  changing repository infrastructure; `pnpm --dir server arch`
+  (dependency-cruiser) in CI verifies the layer rules.
+- Preserve revision IDs in snapshots and the restore-as-new-revision behavior
+  when modifying history or export paths; exports must write from the exact
+  snapshot revision set.
+- For export changes, keep snapshot comparison, chapter-only selection, and
+  atomic output replacement intact; run the focused service tests plus the
+  CI-equivalent backend/frontend checks as applicable.
+- Route-adding changes regenerate the OpenAPI snapshot
+  (`pnpm --dir server openapi:snapshot`); frontend contract changes regenerate
+  the API types (`pnpm --dir frontend gen:api-types`).
+- Migrations are generated only via `pnpm --dir server db:generate`; FTS5 DDL
+  stays hand-written inside migration files, and FTS input keeps its strict
+  token reduction.
