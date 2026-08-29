@@ -137,38 +137,38 @@ export function completedProposalJob(
   revisionId: string,
   landing: ProposalLanding,
 ): JobRecord {
-  const job = store.addJob(scope, {
-    projectId: seed.projectId,
-    documentId: seed.documentId,
-    kind: "proposal",
-    operation: seed.operation,
-    provider: seed.provider,
-    status: "completed",
-    model: landing.model,
-    requestJson: seed.requestJson,
-    resultJson: dumpJson({
-      proposal_markdown: landing.proposal,
-      base_revision_id: revisionId,
-      accepted_revision_id: null,
-    }),
-    error: null,
-    eventDetailsJson: dumpJson({ proposal_only: true }),
-    now: seed.now,
-  });
-  store.addUsageEvent(scope, {
-    projectId: seed.projectId,
-    jobId: job.id,
-    provider: landing.provider,
-    model: landing.model,
-    promptTokens: resolvedTokenCount(landing.promptTokens, landing.instruction),
-    completionTokens: resolvedTokenCount(landing.completionTokens, landing.proposal),
-    requestEvidenceJson: dumpJson({
+  // #392: the job row and its usage event commit in one transaction so a
+  // failure between the two writes can never strand a completed job.
+  return store.recordCompletedProposalJob(scope, {
+    job: {
+      projectId: seed.projectId,
+      documentId: seed.documentId,
+      kind: "proposal",
       operation: seed.operation,
-      base_revision_id: revisionId,
-    }),
-    now: seed.now,
+      provider: seed.provider,
+      status: "completed",
+      model: landing.model,
+      requestJson: seed.requestJson,
+      resultJson: dumpJson({
+        proposal_markdown: landing.proposal,
+        base_revision_id: revisionId,
+        accepted_revision_id: null,
+      }),
+      error: null,
+      eventDetailsJson: dumpJson({ proposal_only: true }),
+      now: seed.now,
+    },
+    usage: {
+      provider: landing.provider,
+      model: landing.model,
+      promptTokens: resolvedTokenCount(landing.promptTokens, landing.instruction),
+      completionTokens: resolvedTokenCount(landing.completionTokens, landing.proposal),
+      requestEvidenceJson: dumpJson({
+        operation: seed.operation,
+        base_revision_id: revisionId,
+      }),
+    },
   });
-  return job;
 }
 
 export function failedProposalJob(
