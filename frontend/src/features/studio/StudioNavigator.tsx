@@ -1,8 +1,9 @@
-import { ArrowDown, ArrowUp, ChevronDown, FileText, Loader2, Plus, Search } from 'lucide-react';
+import { ArrowDown, ArrowUp, ChevronDown, Loader2, Plus, Search } from 'lucide-react';
 import type { ComponentProps, FormEvent } from 'react';
 
 import type { DocumentKind, Project, StudioDocument } from '@/app/types/studio';
 
+import { StudioDocumentRow } from './components/StudioDocumentRow';
 import { StudioWholeBookControl } from './components/StudioWholeBookControl';
 import { GROUPS, SECTIONS } from './studioConstants';
 
@@ -32,17 +33,11 @@ function DocumentRows({
     <>
       {rows.map((document, index) => (
         <div className="document-row-wrap" key={document.id}>
-          <button
-            aria-current={document.id === activeId ? 'page' : undefined}
-            className={
-              document.id === activeId ? 'document-row document-row--active' : 'document-row'
-            }
-            onClick={() => onSelectDocument(document.id)}
-            type="button"
-          >
-            <FileText aria-hidden="true" />
-            <span>{document.title}</span>
-          </button>
+          <StudioDocumentRow
+            document={document}
+            isActive={document.id === activeId}
+            onSelect={onSelectDocument}
+          />
           <span className="document-order" aria-label={`Reorder ${document.title}`}>
             <button
               aria-label={`Move ${document.title} up`}
