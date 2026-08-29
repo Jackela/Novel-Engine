@@ -228,3 +228,98 @@ describe("in-flight operation deduplication (#305)", () => {
     }
   });
 });
+
+/**
+ * #392: reviews run provider work before their terminal job row exists, so
+ * the review bridge shares the same in-flight guard. The factory parks the
+ * first review on a gate to make the in-flight window deterministic.
+ */
+function deferredReviewProviderFactory(): {
+  factory: TextGenerationProviderFactory;
+  waitForStart: () => Promise<void>;
+  resolveAll: () => void;
+} {
+  const gates: Array<() => void> = [];
+  let notifyStart: (() => void) | undefined;
+  const factory: TextGenerationProviderFactory = (provider) => {
+    const impl: TextGenerationProvider = {
+      generateStructured: async (task) => {
+        const startSignal = notifyStart;
+        notifyStart = undefined;
+        startSignal?.();
+        await new Promise<void>((resolve) => {
+          gates.push(resolve);
+        });
+        return {
+          step: task.step,
+          provider,
+          model: "deferred-review-model",
+          rawText: "",
+          content: { findings: [] },
+          promptTokens: null,
+          completionTokens: null,
+        };
+      },
+    };
+    return impl;
+  };
+  return {
+    factory,
+    waitForStart: () =>
+      new Promise<void>((resolve) => {
+        notifyStart = resolve;
+      }),
+    resolveAll: () => {
+      const pending = [...gates];
+      gates.length = 0;
+      for (const gate of pending) {
+        gate();
+      }
+    },
+  };
+}
+
+describe("in-flight review deduplication (#392)", () => {
+  it("rejects a concurrent review with 409 while one is running, then releases the guard", async () => {
+    const deferred = deferredReviewProviderFactory();
+    const { app } = await buildStudioApp(undefined, {
+      textProviderFactory: deferred.factory,
+    });
+    try {
+      const jar = await ownerJar(app);
+      const project = await seedProject(app, jar, "Review dedup");
+      const url = `/api/projects/${project.id}/reviews`;
+
+      const first = call(app, jar, "POST", url, {});
+      await deferred.waitForStart();
+      const second = await call(app, jar, "POST", url, {});
+
+      expect(second.statusCode).toBe(409);
+      expect(second.json()).toEqual({
+        error: {
+          code: "OPERATION_IN_FLIGHT",
+          message: "The review operation is already running for this project.",
+          details: {
+            project_id: project.id,
+            document_id: null,
+            operation: "review",
+          },
+        },
+      });
+
+      deferred.resolveAll();
+      const winner = await first;
+      expect(winner.statusCode).toBe(201);
+      expect(winner.json().kind).toBe("review");
+      expect(winner.json().status).toBe("completed");
+
+      // The guard is released once the winner settles: a fresh review runs.
+      const third = call(app, jar, "POST", url, {});
+      await deferred.waitForStart();
+      deferred.resolveAll();
+      expect((await third).statusCode).toBe(201);
+    } finally {
+      await app.close();
+    }
+  });
+});

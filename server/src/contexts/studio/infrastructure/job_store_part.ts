@@ -1,4 +1,3 @@
-import { randomUUID } from "node:crypto";
 import { asc, count, desc, eq, inArray, sum } from "drizzle-orm";
 
 import type { StudioSqliteDatabase } from "../../../shared/infrastructure/db/connection.js";
@@ -6,12 +5,19 @@ import { jobEvents, jobs, usageEvents } from "../../../shared/infrastructure/db/
 import type {
   AddJobInput,
   AddUsageEventInput,
+  CompleteJobWithUsageInput,
   JobRecord,
   MarkJobOutcomeInput,
   ProjectScope,
   ProjectUsageAggregate,
+  RecordCompletedProposalJobInput,
 } from "../application/ports/studio_store.js";
-import { NotFoundError } from "../domain/exceptions.js";
+import { InvalidJobTransitionError, NotFoundError } from "../domain/exceptions.js";
+import {
+  applyJobOutcome,
+  insertJobAndEvent,
+  writeUsageEvent as writeUsageEventRow,
+} from "./db/job_writes.js";
 import { type ProjectRow, scopedProject, type Tx } from "./db/studio_query_helpers.js";
 import { dailyUsageBuckets } from "./db/usage_daily_buckets.js";
 
@@ -74,54 +80,61 @@ export class JobStorePart {
   addJob(scope: ProjectScope, input: AddJobInput): JobRecord {
     return this.db.transaction((tx) => {
       scopedProject(tx, scope, input.projectId);
-      const job: typeof jobs.$inferInsert = {
-        id: randomUUID(),
-        project_id: input.projectId,
-        document_id: input.documentId,
-        kind: input.kind,
-        operation: input.operation,
-        status: input.status,
-        provider: input.provider,
-        model: input.model,
-        request_json: input.requestJson,
-        result_json: input.resultJson,
-        error: input.error,
-        created_at: input.now,
-        updated_at: input.now,
-      };
-      tx.insert(jobs)
-        .values({ ...job, retry_of_job_id: input.retryOfJobId ?? null })
-        .run();
-      tx.insert(jobEvents)
-        .values({
-          id: randomUUID(),
-          job_id: job.id,
-          status: input.status,
-          details_json: input.eventDetailsJson,
-          created_at: input.now,
-        })
-        .run();
-      return jobWithEvents(tx, job.id);
+      const jobId = insertJobAndEvent(tx, input);
+      return jobWithEvents(tx, jobId);
     });
   }
 
   addUsageEvent(scope: ProjectScope, input: AddUsageEventInput): void {
     this.db.transaction((tx) => {
       scopedProject(tx, scope, input.projectId);
-      tx.insert(usageEvents)
-        .values({
-          id: randomUUID(),
-          project_id: input.projectId,
-          job_id: input.jobId,
-          provider: input.provider,
-          model: input.model,
-          prompt_tokens: input.promptTokens,
-          completion_tokens: input.completionTokens,
-          request_evidence_json: input.requestEvidenceJson,
-          estimated_cost: null,
-          created_at: input.now,
-        })
-        .run();
+      this.writeUsageEvent(tx, input);
+    });
+  }
+
+  /**
+   * The atomic completed-proposal landing (#392): the job row and its usage
+   * event share one transaction, so a failure between the writes rolls back
+   * both and never strands a completed job without its usage event.
+   */
+  recordCompletedProposalJob(
+    scope: ProjectScope,
+    input: RecordCompletedProposalJobInput,
+  ): JobRecord {
+    return this.db.transaction((tx) => {
+      scopedProject(tx, scope, input.job.projectId);
+      const jobId = insertJobAndEvent(tx, input.job);
+      this.writeUsageEvent(tx, {
+        ...input.usage,
+        projectId: input.job.projectId,
+        jobId,
+        now: input.job.now,
+      });
+      return jobWithEvents(tx, jobId);
+    });
+  }
+
+  /**
+   * The atomic retry completion (#392): the terminal transition of the
+   * running job and its usage event share one transaction.
+   */
+  markJobOutcomeWithUsage(
+    scope: ProjectScope,
+    projectId: string,
+    jobId: string,
+    input: CompleteJobWithUsageInput,
+  ): JobRecord {
+    return this.db.transaction((tx) => {
+      scopedProject(tx, scope, projectId);
+      this.assertOpenTransition(tx, projectId, jobId, input.outcome.status);
+      applyJobOutcome(tx, jobId, input.outcome);
+      this.writeUsageEvent(tx, {
+        ...input.usage,
+        projectId,
+        jobId,
+        now: input.outcome.now,
+      });
+      return jobWithEvents(tx, jobId);
     });
   }
 
@@ -219,32 +232,40 @@ export class JobStorePart {
   ): JobRecord {
     return this.db.transaction((tx) => {
       scopedProject(tx, scope, projectId);
-      const job = tx.select().from(jobs).where(eq(jobs.id, jobId)).get();
-      if (job === undefined || job.project_id !== projectId) {
-        throw new NotFoundError("Job not found.");
-      }
-      tx.update(jobs)
-        .set({
-          status: input.status,
-          ...(input.resultJson === undefined ? {} : { result_json: input.resultJson }),
-          ...(input.model === undefined ? {} : { model: input.model }),
-          error: input.error,
-          updated_at: input.now,
-          finished_at: input.now,
-        })
-        .where(eq(jobs.id, jobId))
-        .run();
-      tx.insert(jobEvents)
-        .values({
-          id: randomUUID(),
-          job_id: jobId,
-          status: input.status,
-          details_json: input.eventDetailsJson,
-          created_at: input.now,
-        })
-        .run();
+      this.assertOpenTransition(tx, projectId, jobId, input.status);
+      applyJobOutcome(tx, jobId, input);
       return jobWithEvents(tx, jobId);
     });
+  }
+
+  /**
+   * #392: a terminal outcome may only land on a job that is still open
+   * (`running` or `pending`). Anything else is a pipeline protocol error,
+   * not a silent overwrite of an already-terminal job. Test seams write
+   * states directly through the database and bypass this assertion.
+   */
+  private assertOpenTransition(
+    tx: Tx,
+    projectId: string,
+    jobId: string,
+    attemptedStatus: string,
+  ): void {
+    const job = tx.select().from(jobs).where(eq(jobs.id, jobId)).get();
+    if (job === undefined || job.project_id !== projectId) {
+      throw new NotFoundError("Job not found.");
+    }
+    if (job.status !== "running" && job.status !== "pending") {
+      throw new InvalidJobTransitionError(jobId, job.status, attemptedStatus);
+    }
+  }
+
+  /**
+   * The usage-ledger write inside an open transaction. A protected seam so
+   * tests can inject a failure between the job and usage writes and prove
+   * the enclosing transaction rolls both back (#392).
+   */
+  protected writeUsageEvent(tx: Tx, input: AddUsageEventInput): void {
+    writeUsageEventRow(tx, input);
   }
 
   setJobResult(

@@ -55,6 +55,23 @@ export class DuplicateVolumeError extends Error {
   }
 }
 
+/** A terminal outcome was offered to a job that is no longer open (#392). */
+export class InvalidJobTransitionError extends Error {
+  readonly jobId: string;
+  readonly currentStatus: string;
+  readonly attemptedStatus: string;
+
+  constructor(jobId: string, currentStatus: string, attemptedStatus: string) {
+    super(
+      `Job ${jobId} is ${currentStatus}; a ${attemptedStatus} outcome requires a running or pending job.`,
+    );
+    this.name = "InvalidJobTransitionError";
+    this.jobId = jobId;
+    this.currentStatus = currentStatus;
+    this.attemptedStatus = attemptedStatus;
+  }
+}
+
 /** The same synchronous pipeline operation is already running for this target. */
 export class OperationInFlightError extends Error {
   readonly projectId: string;
