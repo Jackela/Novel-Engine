@@ -74,6 +74,31 @@ describe('ProposalStreamParser', () => {
     const frames = parser.append(': ping\nevent: x\ndata: {"type":"delta",\ndata: "text":"C"}\n\n');
     expect(frames).toEqual([{ type: 'delta', text: 'C' }]);
   });
+
+  it('ignores frames with an unknown type', () => {
+    const parser = new ProposalStreamParser();
+    const frames = parser.append(
+      'data: {"type":"tick","at":1}\n\ndata: {"type":"delta","text":"D"}\n\n',
+    );
+    expect(frames).toEqual([{ type: 'delta', text: 'D' }]);
+  });
+
+  it.each([
+    ['non-JSON payload', 'not-json', /not JSON/],
+    ['JSON array', '[1,2]', /proposal frame/],
+    ['delta missing text', '{"type":"delta"}', /delta\.text/],
+    ['delta with non-string text', '{"type":"delta","text":42}', /delta\.text/],
+    ['error frame missing code', '{"type":"error","error":{"message":"x"}}', /error\.code/],
+    [
+      'error frame missing message',
+      '{"type":"error","error":{"code":"PROVIDER_FAILED"}}',
+      /error\.message/,
+    ],
+    ['done frame missing job', '{"type":"done"}', /done\.job/],
+  ])('rejects malformed frame: %s', (_name, data, pattern) => {
+    const parser = new ProposalStreamParser();
+    expect(() => parser.append(`data: ${data}\n\n`)).toThrow(pattern);
+  });
 });
 
 describe('streamProposal', () => {
