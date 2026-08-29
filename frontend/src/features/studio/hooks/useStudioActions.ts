@@ -1,10 +1,13 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useState } from 'react';
 import type { Dispatch, FormEvent, SetStateAction } from 'react';
 
 import { api } from '@/app/api';
 import type { DocumentKind, Project, Review } from '@/app/types/studio';
 
 import { GROUPS, type InspectorTab } from '../studioConstants';
+
+import { toErrorMessage } from './toErrorMessage';
+import { usePendingAction } from './usePendingAction';
 
 interface UseStudioActionsOptions {
   project: Project | null;
@@ -18,23 +21,15 @@ interface UseStudioActionsOptions {
   loadJobs: () => Promise<void>;
 }
 
-type ActionKey = 'createDocument' | 'moveDocument' | 'runReview' | 'updateSettings' | 'retryJob';
+const ACTION_KEYS = [
+  'createDocument',
+  'moveDocument',
+  'runReview',
+  'updateSettings',
+  'retryJob',
+] as const;
 
-interface PendingActions {
-  readonly createDocument: boolean;
-  readonly moveDocument: boolean;
-  readonly runReview: boolean;
-  readonly updateSettings: boolean;
-  readonly retryJob: boolean;
-}
-
-const INITIAL_PENDING: PendingActions = {
-  createDocument: false,
-  moveDocument: false,
-  runReview: false,
-  updateSettings: false,
-  retryJob: false,
-};
+type ActionKey = (typeof ACTION_KEYS)[number];
 
 export function useStudioActions({
   project,
@@ -47,22 +42,8 @@ export function useStudioActions({
   settingsForm,
   loadJobs,
 }: UseStudioActionsOptions) {
-  const [pending, setPending] = useState<PendingActions>(INITIAL_PENDING);
+  const { pending, begin, finish } = usePendingAction<ActionKey>(ACTION_KEYS);
   const [retryingJobId, setRetryingJobId] = useState<string | null>(null);
-  const pendingRef = useRef<Set<ActionKey> | null>(null);
-
-  const begin = useCallback((key: ActionKey) => {
-    const current = pendingRef.current ?? (pendingRef.current = new Set<ActionKey>());
-    if (current.has(key)) return false;
-    current.add(key);
-    setPending((current) => ({ ...current, [key]: true }));
-    return true;
-  }, []);
-
-  const finish = useCallback((key: ActionKey) => {
-    pendingRef.current?.delete(key);
-    setPending((current) => ({ ...current, [key]: false }));
-  }, []);
 
   const createDocument = useCallback(
     async (kind: DocumentKind) => {
@@ -81,7 +62,7 @@ export function useStudioActions({
         );
         setActiveId(document.id);
       } catch (reason) {
-        setError(reason instanceof Error ? reason.message : 'Unable to create document.');
+        setError(toErrorMessage(reason, 'Unable to create document.'));
       } finally {
         finish('createDocument');
       }
@@ -117,7 +98,7 @@ export function useStudioActions({
           current ? { ...current, documents: response.documents } : current,
         );
       } catch (reason) {
-        setError(reason instanceof Error ? reason.message : 'Unable to reorder documents.');
+        setError(toErrorMessage(reason, 'Unable to reorder documents.'));
       } finally {
         finish('moveDocument');
       }
@@ -139,7 +120,7 @@ export function useStudioActions({
       setReviews(response.reviews);
       setInspector('review');
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : 'Unable to run review.');
+      setError(toErrorMessage(reason, 'Unable to run review.'));
     } finally {
       finish('runReview');
     }
@@ -159,7 +140,7 @@ export function useStudioActions({
         setProject(updated);
         setError(null);
       } catch (reason) {
-        setError(reason instanceof Error ? reason.message : 'Unable to update project.');
+        setError(toErrorMessage(reason, 'Unable to update project.'));
       } finally {
         finish('updateSettings');
       }
@@ -176,7 +157,7 @@ export function useStudioActions({
         await api.retryJob(projectId, jobId);
         await loadJobs();
       } catch (reason) {
-        setError(reason instanceof Error ? reason.message : 'Unable to retry job.');
+        setError(toErrorMessage(reason, 'Unable to retry job.'));
       } finally {
         setRetryingJobId(null);
         finish('retryJob');

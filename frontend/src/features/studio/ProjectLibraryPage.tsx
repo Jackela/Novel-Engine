@@ -5,6 +5,8 @@ import { useNavigate } from 'react-router-dom';
 import { api } from '@/app/api';
 import type { Project } from '@/app/types/studio';
 
+import { toErrorMessage } from './hooks/toErrorMessage';
+
 export function ProjectLibraryPage() {
   const navigate = useNavigate();
   const [projects, setProjects] = useState<Project[]>([]);
@@ -32,7 +34,7 @@ export function ProjectLibraryPage() {
       const project = await api.createProject(title, description);
       navigate(`/projects/${project.id}/manuscript`);
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : 'Unable to create project.');
+      setError(toErrorMessage(reason, 'Unable to create project.'));
     }
   };
 
@@ -40,7 +42,7 @@ export function ProjectLibraryPage() {
     try {
       await api.logout();
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : 'Unable to sign out.');
+      setError(toErrorMessage(reason, 'Unable to sign out.'));
       return;
     }
     navigate('/');

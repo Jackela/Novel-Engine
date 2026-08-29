@@ -5,16 +5,13 @@ import { HttpError } from '@/app/api';
 import type { Project, SaveState, StudioDocument } from '@/app/types/studio';
 
 import { useRevisionCache } from './useRevisionCache';
+import { toErrorMessage } from './toErrorMessage';
 import {
   loadLatestDocument,
   restoreDocumentRevision,
   saveDocumentDraft,
   useDocumentDraftAutosave,
 } from './useDocumentDraftAutosave';
-
-function errorMessage(reason: unknown, fallback: string): string {
-  return reason instanceof Error ? reason.message : fallback;
-}
 
 interface DraftState {
   readonly documentId: string | null;
@@ -76,7 +73,7 @@ export function useDocumentDraft(
 
   const reportRevisionError = useCallback(
     (reason: unknown) => {
-      setError(errorMessage(reason, 'Unable to load revisions.'));
+      setError(toErrorMessage(reason, 'Unable to load revisions.'));
     },
     [setError],
   );
@@ -212,7 +209,7 @@ export function useDocumentDraft(
       setError(null);
     } catch (reason) {
       setCurrentSaveState('error');
-      setError(errorMessage(reason, 'Unable to load the latest document.'));
+      setError(toErrorMessage(reason, 'Unable to load the latest document.'));
     } finally {
       setIsConflictActionPending(false);
       conflictActionPendingRef.current = false;
@@ -245,7 +242,7 @@ export function useDocumentDraft(
       setCurrentSaveState(
         reason instanceof HttpError && reason.status === 409 ? 'conflict' : 'error',
       );
-      setError(errorMessage(reason, 'Unable to overwrite the latest document.'));
+      setError(toErrorMessage(reason, 'Unable to overwrite the latest document.'));
     } finally {
       saveInFlight.current = false;
       setIsConflictActionPending(false);
@@ -280,7 +277,7 @@ export function useDocumentDraft(
         );
         await refreshDocumentRevisions(activeDocument.id);
       } catch (reason) {
-        setError(errorMessage(reason, 'Unable to restore revision.'));
+        setError(toErrorMessage(reason, 'Unable to restore revision.'));
       }
     },
     [activeDocument, projectId, refreshDocumentRevisions, setError, setProject],

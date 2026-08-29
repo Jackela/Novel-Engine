@@ -3,6 +3,8 @@ import { useEffect, type Dispatch, type MutableRefObject, type SetStateAction } 
 import { HttpError, api } from '@/app/api';
 import type { Project, SaveState, StudioDocument } from '@/app/types/studio';
 
+import { toErrorMessage } from './toErrorMessage';
+
 interface DraftRefValue {
   readonly draft: string;
   readonly titleDraft: string;
@@ -36,10 +38,6 @@ interface AutosaveOptions {
   readonly refreshLatestDocument: (documentId: string) => Promise<StudioDocument>;
   readonly setCurrentSaveState: (nextSaveState: SaveState) => void;
   readonly setError: Dispatch<SetStateAction<string | null>>;
-}
-
-function errorMessage(reason: unknown, fallback: string): string {
-  return reason instanceof Error ? reason.message : fallback;
 }
 
 export function useDocumentDraftAutosave({
@@ -98,7 +96,7 @@ export function useDocumentDraftAutosave({
       } catch (reason) {
         const isConflict = reason instanceof HttpError && reason.status === 409;
         setCurrentSaveState(isConflict ? 'conflict' : 'error');
-        setError(errorMessage(reason, 'Unable to save.'));
+        setError(toErrorMessage(reason, 'Unable to save.'));
         if (isConflict) {
           void refreshLatestDocument(currentDocument.id).catch(() => undefined);
         }

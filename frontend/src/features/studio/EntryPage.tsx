@@ -5,6 +5,8 @@ import { useNavigate } from 'react-router-dom';
 import { api } from '@/app/api';
 import type { SetupStatus } from '@/app/types/studio';
 
+import { toErrorMessage } from './hooks/toErrorMessage';
+
 const PASSWORD_AUTOCOMPLETE = {
   existing: 'current-password',
   fresh: 'new-password',
@@ -33,7 +35,7 @@ export function EntryPage() {
           })
           .catch((reason: unknown) => {
             if (mounted) {
-              setError(reason instanceof Error ? reason.message : 'Unable to reach Novel Engine.');
+              setError(toErrorMessage(reason, 'Unable to reach Novel Engine.'));
             }
           }),
       );
@@ -53,7 +55,7 @@ export function EntryPage() {
       await api.login(username, password);
       navigate('/projects');
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : 'Unable to continue.');
+      setError(toErrorMessage(reason, 'Unable to continue.'));
     } finally {
       setBusy(false);
     }

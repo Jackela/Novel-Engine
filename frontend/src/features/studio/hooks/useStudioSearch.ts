@@ -3,6 +3,8 @@ import type { Dispatch, FormEvent, SetStateAction } from 'react';
 
 import { api } from '@/app/api';
 
+import { toErrorMessage } from './toErrorMessage';
+
 interface SearchResult {
   readonly document_id: string;
   readonly title: string;
@@ -72,7 +74,7 @@ export function useStudioSearch(
         const response = await api.search(projectId, search);
         dispatch({ type: 'searchSucceeded', results: response.results });
       } catch (reason) {
-        setError(reason instanceof Error ? reason.message : 'Search failed.');
+        setError(toErrorMessage(reason, 'Search failed.'));
         dispatch({ type: 'searchFailed' });
       }
     },
