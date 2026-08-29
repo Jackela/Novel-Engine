@@ -16,6 +16,7 @@ import {
 import {
   classifyTransportRejection,
   DEFAULT_PROVIDER_RETRY_POLICY,
+  DEFAULT_PROVIDER_TIMEOUT_SECONDS,
   effectiveTimeoutSeconds,
   httpStatusFailure,
   isResponseLike,
@@ -37,7 +38,6 @@ import {
 } from "./provider_json.js";
 import { streamProviderTextDeltas } from "./streaming_generation.js";
 
-const DEFAULT_TIMEOUT_SECONDS = 30;
 const DEFAULT_TRANSPORT_MODE: DashscopeTransportMode = "multimodal_generation";
 
 export interface DashScopeTextProviderOptions {
@@ -90,7 +90,10 @@ export class DashScopeTextProvider implements TextGenerationProvider {
     this.model = modelName(options.model);
     this.apiBase = options.apiBase;
     this.protocol = resolveDashscopeTransport(options.transportMode ?? DEFAULT_TRANSPORT_MODE);
-    this.timeoutSeconds = normalizedTimeoutSeconds(options.timeoutSeconds, DEFAULT_TIMEOUT_SECONDS);
+    this.timeoutSeconds = normalizedTimeoutSeconds(
+      options.timeoutSeconds,
+      DEFAULT_PROVIDER_TIMEOUT_SECONDS,
+    );
     this.retry = options.retry ?? DEFAULT_PROVIDER_RETRY_POLICY;
     this.transport = options.transport;
   }

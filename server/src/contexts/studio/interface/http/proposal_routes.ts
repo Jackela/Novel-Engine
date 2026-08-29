@@ -5,20 +5,9 @@ import type { ProposalStreamFrame } from "../../application/proposal_streaming.j
 import { jobResponseSchema } from "./job_schemas.js";
 import type { JsonResponseSchema } from "./json_response_schema.js";
 import { requireServices, type StudioRoutesOptions } from "./project_routes.js";
-import { withStudioErrors } from "./studio_error_mapping.js";
+import { withAsyncStudioErrors, withStudioErrors } from "./studio_error_mapping.js";
 import { documentIdParams, jobIdParams, proposalCreateSchema } from "./studio_request_schemas.js";
 import { operationInFlightSchema } from "./studio_schemas.js";
-
-/** `withStudioErrors` is synchronous; generation executes asynchronously. */
-async function withGenerationErrors<T>(operation: () => Promise<T>): Promise<T> {
-  try {
-    return await operation();
-  } catch (error) {
-    return withStudioErrors<T>(() => {
-      throw error;
-    });
-  }
-}
 
 /**
  * The stream endpoint hijacks the reply and writes raw SSE frames, so its
@@ -57,7 +46,7 @@ async function writeProposalStream(
   frames: AsyncGenerator<ProposalStreamFrame, void, void>,
   disconnect: AbortController,
 ): Promise<void> {
-  let current = await withGenerationErrors(() => frames.next());
+  let current = await withAsyncStudioErrors(() => frames.next());
   reply.hijack();
   reply.raw.writeHead(200, SSE_HEADERS);
   const write = (frame: ProposalStreamFrame): void => {
@@ -97,7 +86,7 @@ export const proposalRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fa
           "provider cleanup failed",
         );
       };
-      return withGenerationErrors(() =>
+      return withAsyncStudioErrors(() =>
         requireServices(options).proposals.draftProposal(
           requirePrincipal(request),
           request.params.projectId,

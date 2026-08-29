@@ -104,6 +104,8 @@ const CORS_ALLOWED_HEADERS = [
 const CORS_ALLOWED_METHODS = ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"];
 
 const DEFAULT_AUTH_RATE_LIMIT_PER_MINUTE = 5;
+/** Rate-limit buckets expire with the minute window that fills them. */
+const AUTH_RATE_LIMIT_KEY_TTL_SECONDS = 60;
 
 const emptyHealthProbe: HealthProbe = async () => ({ components: [] });
 
@@ -229,7 +231,7 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
     limiter: new TokenBucketRateLimiter({
       ratePerSecond: perMinute / 60,
       capacity: perMinute,
-      keyTtlSeconds: 60,
+      keyTtlSeconds: AUTH_RATE_LIMIT_KEY_TTL_SECONDS,
     }),
     version: versionInfo.version,
     environment,

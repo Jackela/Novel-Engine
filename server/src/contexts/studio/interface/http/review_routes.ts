@@ -6,7 +6,7 @@ import type { EditorialAssessment } from "../../application/review_service.js";
 import { jobResponseSchema } from "./job_schemas.js";
 import { requireServices, type StudioRoutesOptions } from "./project_routes.js";
 import { reviewCreateSchema, reviewListResponseSchema } from "./review_schemas.js";
-import { withStudioErrors } from "./studio_error_mapping.js";
+import { withAsyncStudioErrors, withStudioErrors } from "./studio_error_mapping.js";
 import { projectIdParams } from "./studio_request_schemas.js";
 
 function reviewPayload(assessment: EditorialAssessment) {
@@ -28,17 +28,6 @@ function reviewPayload(assessment: EditorialAssessment) {
       evidence: { ...issue.evidence },
     })),
   };
-}
-
-/** `withStudioErrors` is synchronous; review generation runs asynchronously. */
-async function withOutcomeErrors<T>(operation: () => Promise<T>): Promise<T> {
-  try {
-    return await operation();
-  } catch (error) {
-    return withStudioErrors<T>(() => {
-      throw error;
-    });
-  }
 }
 
 /** Snapshot-bound editorial assessments, with server-owned provider provenance. */
@@ -91,7 +80,7 @@ export const reviewRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fast
       },
     },
     async (request, reply) => {
-      const payload = await withOutcomeErrors(() =>
+      const payload = await withAsyncStudioErrors(() =>
         requireServices(options).jobHistory.recordReviewJob(
           requirePrincipal(request),
           request.params.projectId,

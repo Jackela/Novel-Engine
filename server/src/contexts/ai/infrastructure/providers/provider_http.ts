@@ -10,8 +10,16 @@ const MAX_PROVIDER_ERROR_BODY_LENGTH = 1_000;
 /** Chapter generation calls must outlive the enclosing request timeout. */
 export const GENERATION_TIMEOUT_FLOOR_SECONDS = 180;
 
+/** Adapter fallback when neither composition nor options carry a timeout. */
+export const DEFAULT_PROVIDER_TIMEOUT_SECONDS = 30;
+
 export function isJsonObject(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+/** Structural usage token read; malformed or negative values stay null. */
+export function usageToken(value: unknown): number | null {
+  return typeof value === "number" && Number.isInteger(value) && value >= 0 ? value : null;
 }
 
 export function isResponseLike(value: unknown): value is Response {

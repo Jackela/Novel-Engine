@@ -9,7 +9,7 @@ import type {
 import { jobResponseSchema } from "./job_schemas.js";
 import type { JsonResponseSchema } from "./json_response_schema.js";
 import { requireServices, type StudioRoutesOptions } from "./project_routes.js";
-import { withStudioErrors } from "./studio_error_mapping.js";
+import { withAsyncStudioErrors, withStudioErrors } from "./studio_error_mapping.js";
 import { exportIdParams, projectIdParams } from "./studio_request_schemas.js";
 import { operationInFlightSchema } from "./studio_schemas.js";
 
@@ -82,17 +82,6 @@ function exportPayload(artifact: ExportArtifactRecord, projectId: string) {
   };
 }
 
-/** `withStudioErrors` is synchronous; artifact reads must map rejected promises too. */
-async function withDeliveryErrors<T>(operation: () => Promise<T>): Promise<T> {
-  try {
-    return await operation();
-  } catch (error) {
-    return withStudioErrors<T>(() => {
-      throw error;
-    });
-  }
-}
-
 /**
  * Project-scoped export surface: the synchronous POST bridge that reports a
  * terminal job, the read-only artifact catalog, and confined binary delivery.
@@ -113,7 +102,7 @@ export const exportRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fast
     },
     async (request, reply) => {
       const { format } = request.body;
-      const payload = await withDeliveryErrors(() =>
+      const payload = await withAsyncStudioErrors(() =>
         requireServices(options).jobHistory.recordExportJob(
           requirePrincipal(request),
           request.params.projectId,
@@ -159,7 +148,7 @@ export const exportRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fast
       },
     },
     async (request, reply) => {
-      const artifact = await withDeliveryErrors(() =>
+      const artifact = await withAsyncStudioErrors(() =>
         requireServices(options).artifacts.readArtifactForDelivery(
           requirePrincipal(request),
           request.params.projectId,

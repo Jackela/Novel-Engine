@@ -5,6 +5,10 @@ import { InvalidOperationError } from "../../domain/exceptions.js";
 /** Optional machine-readable payload carried inside the unified error envelope. */
 export type ErrorEnvelopeDetails = Record<string, unknown>;
 
+/** The single envelope channel for InvalidOperationError (status and code). */
+export const INVALID_OPERATION_STATUS_CODE = 422;
+export const INVALID_OPERATION_CODE = "INVALID_OPERATION";
+
 export interface AppErrorOptions {
   statusCode: number;
   code: string;
@@ -86,7 +90,7 @@ export function registerErrorEnvelope(app: FastifyInstance): void {
       return;
     }
     if (error instanceof InvalidOperationError) {
-      sendEnvelope(reply, 422, "INVALID_OPERATION", error.message);
+      sendEnvelope(reply, INVALID_OPERATION_STATUS_CODE, INVALID_OPERATION_CODE, error.message);
       return;
     }
     if (hasValidationErrors(error)) {

@@ -1,5 +1,9 @@
 import { InvalidOperationError } from "../../../../shared/domain/exceptions.js";
-import { AppError } from "../../../../shared/interface/http/error_envelope.js";
+import {
+  AppError,
+  INVALID_OPERATION_CODE,
+  INVALID_OPERATION_STATUS_CODE,
+} from "../../../../shared/interface/http/error_envelope.js";
 import {
   DuplicateDocumentError,
   DuplicateVolumeError,
@@ -48,7 +52,11 @@ function toAppError(error: unknown): unknown {
     });
   }
   if (error instanceof InvalidOperationError) {
-    return new AppError({ statusCode: 422, code: "INVALID_OPERATION", message: error.message });
+    return new AppError({
+      statusCode: INVALID_OPERATION_STATUS_CODE,
+      code: INVALID_OPERATION_CODE,
+      message: error.message,
+    });
   }
   return error;
 }
@@ -57,6 +65,19 @@ function toAppError(error: unknown): unknown {
 export function withStudioErrors<T>(operation: () => T): T {
   try {
     return operation();
+  } catch (error) {
+    throw toAppError(error);
+  }
+}
+
+/**
+ * `withStudioErrors` is synchronous; async studio operations (generation,
+ * review, retry, artifact delivery) must map rejections through the same
+ * single translation channel.
+ */
+export async function withAsyncStudioErrors<T>(operation: () => Promise<T>): Promise<T> {
+  try {
+    return await operation();
   } catch (error) {
     throw toAppError(error);
   }

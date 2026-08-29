@@ -1,5 +1,4 @@
 import type {
-  TextGenerationProvider,
   TextGenerationProviderFactory,
   TextProviderName,
 } from "../../../contexts/ai/application/ports/text_generation.js";
@@ -11,7 +10,11 @@ import {
   type StudioStore,
   scopeForPrincipal,
 } from "./ports/studio_store.js";
-import { chapterWordCounts, coerceEditorialFindings } from "./review_rules.js";
+import {
+  type ProviderCleanupFailureReporter as CleanupFailureReporter,
+  disposeProvider,
+} from "./provider_disposal.js";
+import { chapterWordCounts, coerceEditorialFindings, THIN_CHAPTER_WORDS } from "./review_rules.js";
 import { formatUntrustedManuscript } from "./sanitization.js";
 
 /** The adjudicated summary of a deterministic, non-mutating editorial pass. */
@@ -63,35 +66,6 @@ const REVIEW_SYSTEM_PROMPT = [
   'Return JSON with a single "findings" array; each entry carries document_id, severity ("blocker" or "warning"), dimension (one of: pacing, continuity, pov, foreshadowing, dialogue), message, and suggestion.',
   "Report only real, actionable problems; an empty findings array is a valid result.",
 ].join(" ");
-
-type CleanupFailureReporter = (failure: unknown) => void;
-
-function reportCleanupFailureBestEffort(
-  reportCleanupFailure: CleanupFailureReporter | undefined,
-  failure: unknown,
-): void {
-  if (reportCleanupFailure === undefined) {
-    return;
-  }
-  try {
-    reportCleanupFailure(failure);
-  } catch (reporterFailure) {
-    // This observer has no recovery path, so its own failure is intentionally
-    // suppressed and cannot replace the job/HTTP outcome already selected.
-    void reporterFailure;
-  }
-}
-
-async function disposeProvider(
-  provider: TextGenerationProvider,
-  reportCleanupFailure: CleanupFailureReporter | undefined,
-): Promise<void> {
-  try {
-    await provider.dispose?.();
-  } catch (failure) {
-    reportCleanupFailureBestEffort(reportCleanupFailure, failure);
-  }
-}
 
 /**
  * Evaluates immutable manuscript snapshots through the editorial_review
@@ -158,7 +132,7 @@ export class ReviewService {
               title: chapter.title,
               words: chapter.words,
               empty: chapter.empty,
-              thin_below: 250,
+              thin_below: THIN_CHAPTER_WORDS,
             }),
           ),
         },

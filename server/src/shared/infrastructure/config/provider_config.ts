@@ -7,6 +7,9 @@ export const DASHSCOPE_TRANSPORT_MODES = [
   "responses",
 ] as const;
 
+// Mirrors DEFAULT_PROVIDER_TIMEOUT_SECONDS in ai/infrastructure/providers/
+// provider_http.ts; shared never imports bounded contexts, so the value is
+// kept in step deliberately.
 const DEFAULT_LLM_TIMEOUT_SECONDS = 30;
 const MIN_LLM_TIMEOUT_SECONDS = 5;
 const MAX_LLM_TIMEOUT_SECONDS = 300;

@@ -10,6 +10,7 @@ import { coercePayloadToSchema } from "./dashscope_payload.js";
 import {
   classifyTransportRejection,
   DEFAULT_PROVIDER_RETRY_POLICY,
+  DEFAULT_PROVIDER_TIMEOUT_SECONDS,
   effectiveTimeoutSeconds,
   httpStatusFailure,
   isJsonObject,
@@ -22,8 +23,11 @@ import {
   redactCredentialAndTruncateResponseBody,
   requiredApiKey,
   runWithRetryPolicy,
+  usageToken,
 } from "./provider_http.js";
 import {
+  buildSystemContent,
+  buildUserContent,
   type JsonObject,
   providerDispatch,
   responseJsonObject,
@@ -34,7 +38,6 @@ import { streamProviderTextDeltas } from "./streaming_generation.js";
 
 const DEFAULT_API_BASE = "https://api.openai.com/v1";
 const DEFAULT_TEMPERATURE = 0.7;
-const DEFAULT_TIMEOUT_SECONDS = 30;
 
 export interface OpenAICompatibleTextProviderOptions {
   readonly apiKey: string;
@@ -75,14 +78,8 @@ function chatCompletionPayload(model: string, task: TextGenerationTask): JsonObj
     temperature: DEFAULT_TEMPERATURE,
     response_format: { type: "json_object" },
     messages: [
-      {
-        role: "system",
-        content: `${task.systemPrompt}\nReturn valid JSON only. Output schema: ${JSON.stringify(task.responseSchema)}`,
-      },
-      {
-        role: "user",
-        content: `${task.userPrompt}\nTask step: ${task.step}\nMetadata: ${JSON.stringify(task.metadata)}`,
-      },
+      { role: "system", content: buildSystemContent(task) },
+      { role: "user", content: buildUserContent(task) },
     ],
   };
 }
@@ -104,10 +101,6 @@ function responseContentText(data: JsonObject): string {
     throw new TextGenerationProviderError("OpenAI-compatible response missing message content");
   }
   return message.content.trim();
-}
-
-function usageToken(value: unknown): number | null {
-  return typeof value === "number" && Number.isInteger(value) && value >= 0 ? value : null;
 }
 
 function usageTokens(data: JsonObject): readonly [number | null, number | null] {
@@ -144,7 +137,10 @@ export class OpenAICompatibleTextProvider implements TextGenerationProvider {
     this.apiKey = requiredApiKey(options.apiKey, "OpenAI-compatible");
     this.model = modelName(options.model);
     this.apiBase = normalizedApiBase(options.apiBase);
-    this.timeoutSeconds = normalizedTimeoutSeconds(options.timeoutSeconds, DEFAULT_TIMEOUT_SECONDS);
+    this.timeoutSeconds = normalizedTimeoutSeconds(
+      options.timeoutSeconds,
+      DEFAULT_PROVIDER_TIMEOUT_SECONDS,
+    );
     this.retry = options.retry ?? DEFAULT_PROVIDER_RETRY_POLICY;
     this.transport = options.transport;
   }
