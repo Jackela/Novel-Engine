@@ -1,29 +1,35 @@
+import type { TypeBoxTypeProvider } from "@fastify/type-provider-typebox";
 import type { FastifyPluginAsync } from "fastify";
-import type { Principal } from "../../../../shared/application/ports/auth.js";
-import { principalGuard } from "../../../../shared/interface/http/auth_guard.js";
+import { principalGuard, requirePrincipal } from "../../../../shared/interface/http/auth_guard.js";
+import type { JsonResponseSchema } from "./json_response_schema.js";
 import { requireServices, type StudioRoutesOptions } from "./project_routes.js";
 import { withStudioErrors } from "./studio_error_mapping.js";
 import {
-  documentConflictSchema,
   documentCreateSchema,
-  documentResponseSchema,
+  documentIdParams,
   documentSaveSchema,
+  projectIdParams,
   reorderSchema,
   restoreSchema,
+  revisionIdParams,
+} from "./studio_request_schemas.js";
+import {
+  documentConflictSchema,
+  documentResponseSchema,
   revisionConflictSchema,
   revisionResponseSchema,
   snapshotConflictSchema,
 } from "./studio_schemas.js";
 import { documentPlaceSchema } from "./volume_schemas.js";
 
-const documentListResponseSchema = {
+const documentListResponseSchema: JsonResponseSchema = {
   type: "object",
   additionalProperties: true,
   properties: { documents: { type: "array", items: documentResponseSchema } },
   required: ["documents"],
 } as const;
 
-const revisionListResponseSchema = {
+const revisionListResponseSchema: JsonResponseSchema = {
   type: "object",
   additionalProperties: true,
   properties: { revisions: { type: "array", items: revisionResponseSchema } },
@@ -45,30 +51,33 @@ const CREATE_RESPONSES = {
  * contract, conflict-checked saves, whole-set reorder, deletion, history,
  * and restore.
  */
-export const documentRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (app, options) => {
+export const documentRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fastify, options) => {
+  const app = fastify.withTypeProvider<TypeBoxTypeProvider>();
   const guard = principalGuard(options.authService);
-  const principal = (request: { principal?: Principal }) => request.principal as Principal;
 
   app.post(
     "/api/projects/:projectId/documents",
-    { preHandler: [guard], schema: { body: documentCreateSchema, response: CREATE_RESPONSES } },
+    {
+      preHandler: [guard],
+      schema: {
+        params: projectIdParams,
+        body: documentCreateSchema,
+        response: CREATE_RESPONSES,
+      },
+    },
     async (request, reply) => {
-      const { projectId } = request.params as { projectId: string };
-      const body = request.body as {
-        kind: string;
-        title: string;
-        content_markdown?: string;
-        position?: number | null;
-        metadata?: Record<string, unknown>;
-      };
       const payload = withStudioErrors(() =>
-        requireServices(options).documents.newDocument(principal(request), projectId, {
-          kind: body.kind,
-          title: body.title,
-          contentMarkdown: body.content_markdown,
-          position: body.position,
-          metadata: body.metadata,
-        }),
+        requireServices(options).documents.newDocument(
+          requirePrincipal(request),
+          request.params.projectId,
+          {
+            kind: request.body.kind,
+            title: request.body.title,
+            contentMarkdown: request.body.content_markdown,
+            position: request.body.position,
+            metadata: request.body.metadata,
+          },
+        ),
       );
       reply.status(201);
       return payload;
@@ -79,87 +88,84 @@ export const documentRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (ap
     "/api/projects/:projectId/documents/reorder",
     {
       preHandler: [guard],
-      schema: { body: reorderSchema, response: { 200: documentListResponseSchema } },
+      schema: {
+        params: projectIdParams,
+        body: reorderSchema,
+        response: { 200: documentListResponseSchema },
+      },
     },
-    async (request) => {
-      const { projectId } = request.params as { projectId: string };
-      const body = request.body as { document_ids: string[] };
-      return withStudioErrors(() => ({
+    async (request) =>
+      withStudioErrors(() => ({
         documents: requireServices(options).documents.reorderProjectDocuments(
-          principal(request),
-          projectId,
-          body.document_ids,
+          requirePrincipal(request),
+          request.params.projectId,
+          request.body.document_ids,
         ),
-      }));
-    },
+      })),
   );
 
   app.put(
     "/api/projects/:projectId/documents/:documentId",
-    { preHandler: [guard], schema: { body: documentSaveSchema, response: SAVE_RESPONSES } },
-    async (request) => {
-      const { projectId, documentId } = request.params as {
-        projectId: string;
-        documentId: string;
-      };
-      const body = request.body as {
-        content_markdown: string;
-        base_revision_id: string | null;
-        title?: string;
-        metadata?: Record<string, unknown>;
-      };
-      return withStudioErrors(() =>
+    {
+      preHandler: [guard],
+      schema: {
+        params: documentIdParams,
+        body: documentSaveSchema,
+        response: SAVE_RESPONSES,
+      },
+    },
+    async (request) =>
+      withStudioErrors(() =>
         requireServices(options).documents.storeDocument(
-          principal(request),
-          projectId,
-          documentId,
+          requirePrincipal(request),
+          request.params.projectId,
+          request.params.documentId,
           {
-            contentMarkdown: body.content_markdown,
-            baseRevisionId: body.base_revision_id,
-            title: body.title,
-            metadata: body.metadata,
+            contentMarkdown: request.body.content_markdown,
+            baseRevisionId: request.body.base_revision_id,
+            title: request.body.title,
+            metadata: request.body.metadata,
           },
         ),
-      );
-    },
+      ),
   );
 
   app.put(
     "/api/projects/:projectId/documents/:documentId/volume",
     {
       preHandler: [guard],
-      schema: { body: documentPlaceSchema, response: { 200: documentResponseSchema } },
+      schema: {
+        params: documentIdParams,
+        body: documentPlaceSchema,
+        response: { 200: documentResponseSchema },
+      },
     },
-    async (request) => {
-      const { projectId, documentId } = request.params as {
-        projectId: string;
-        documentId: string;
-      };
-      const body = request.body as { volume_id: string };
-      return withStudioErrors(() =>
-        requireServices(options).volumes.placeChapter(principal(request), projectId, documentId, {
-          volumeId: body.volume_id,
-        }),
-      );
-    },
+    async (request) =>
+      withStudioErrors(() =>
+        requireServices(options).volumes.placeChapter(
+          requirePrincipal(request),
+          request.params.projectId,
+          request.params.documentId,
+          { volumeId: request.body.volume_id },
+        ),
+      ),
   );
 
   app.delete(
     "/api/projects/:projectId/documents/:documentId",
     {
       preHandler: [guard],
-      schema: { response: { 204: { type: "null" }, 409: snapshotConflictSchema } },
+      schema: {
+        params: documentIdParams,
+        response: { 204: { type: "null" }, 409: snapshotConflictSchema },
+      },
     },
     async (request, reply) => {
-      const { projectId, documentId } = request.params as {
-        projectId: string;
-        documentId: string;
-      };
       withStudioErrors(() =>
         requireServices(options).documents.removeDocument(
-          principal(request),
-          projectId,
-          documentId,
+          requirePrincipal(request),
+          request.params.projectId,
+          request.params.documentId,
         ),
       );
       reply.status(204);
@@ -169,20 +175,21 @@ export const documentRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (ap
 
   app.get(
     "/api/projects/:projectId/documents/:documentId/revisions",
-    { preHandler: [guard], schema: { response: { 200: revisionListResponseSchema } } },
-    async (request) => {
-      const { projectId, documentId } = request.params as {
-        projectId: string;
-        documentId: string;
-      };
-      return withStudioErrors(() => ({
-        revisions: requireServices(options).revisions.documentRevisions(
-          principal(request),
-          projectId,
-          documentId,
-        ),
-      }));
+    {
+      preHandler: [guard],
+      schema: {
+        params: documentIdParams,
+        response: { 200: revisionListResponseSchema },
+      },
     },
+    async (request) =>
+      withStudioErrors(() => ({
+        revisions: requireServices(options).revisions.documentRevisions(
+          requirePrincipal(request),
+          request.params.projectId,
+          request.params.documentId,
+        ),
+      })),
   );
 
   app.post(
@@ -190,26 +197,20 @@ export const documentRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (ap
     {
       preHandler: [guard],
       schema: {
+        params: revisionIdParams,
         body: restoreSchema,
         response: { 200: documentResponseSchema, 409: revisionConflictSchema },
       },
     },
-    async (request) => {
-      const { projectId, documentId, revisionId } = request.params as {
-        projectId: string;
-        documentId: string;
-        revisionId: string;
-      };
-      const body = request.body as { base_revision_id: string | null };
-      return withStudioErrors(() =>
+    async (request) =>
+      withStudioErrors(() =>
         requireServices(options).revisions.replayRevision(
-          principal(request),
-          projectId,
-          documentId,
-          revisionId,
-          body.base_revision_id,
+          requirePrincipal(request),
+          request.params.projectId,
+          request.params.documentId,
+          request.params.revisionId,
+          request.body.base_revision_id,
         ),
-      );
-    },
+      ),
   );
 };

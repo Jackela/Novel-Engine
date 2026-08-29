@@ -1,18 +1,20 @@
+import type { TypeBoxTypeProvider } from "@fastify/type-provider-typebox";
+import { Type } from "@fastify/type-provider-typebox";
 import type { FastifyPluginAsync } from "fastify";
-
-import type { Principal } from "../../../../shared/application/ports/auth.js";
-import { principalGuard } from "../../../../shared/interface/http/auth_guard.js";
+import { principalGuard, requirePrincipal } from "../../../../shared/interface/http/auth_guard.js";
 import type {
   ExportArtifactFormat,
   ExportArtifactRecord,
 } from "../../application/ports/export_store.js";
 import { jobResponseSchema } from "./job_schemas.js";
+import type { JsonResponseSchema } from "./json_response_schema.js";
 import { requireServices, type StudioRoutesOptions } from "./project_routes.js";
 import { withStudioErrors } from "./studio_error_mapping.js";
+import { exportIdParams, projectIdParams } from "./studio_request_schemas.js";
 import { operationInFlightSchema } from "./studio_schemas.js";
 
 const timestampSchema = { type: "string", format: "date-time" } as const;
-const exportResponseSchema = {
+const exportResponseSchema: JsonResponseSchema = {
   type: "object",
   additionalProperties: false,
   properties: {
@@ -36,23 +38,26 @@ const exportResponseSchema = {
     "download_url",
   ],
 } as const;
-const exportListResponseSchema = {
+const exportListResponseSchema: JsonResponseSchema = {
   type: "object",
   additionalProperties: false,
   properties: { exports: { type: "array", items: exportResponseSchema } },
   required: ["exports"],
 } as const;
-const binaryExportSchema = {
+const binaryExportSchema: JsonResponseSchema = {
   type: "string",
   format: "binary",
   headers: { "Content-Disposition": { type: "string" } },
 } as const;
-const exportCreateSchema = {
-  type: "object",
-  properties: { format: { type: "string", enum: ["markdown", "docx", "epub"] } },
-  required: ["format"],
-  additionalProperties: false,
-} as const;
+const exportCreateSchema = Type.Object(
+  {
+    format: Type.Unsafe<ExportArtifactFormat>({
+      type: "string",
+      enum: ["markdown", "docx", "epub"],
+    }),
+  },
+  { additionalProperties: false },
+);
 const deliveryByFormat: Record<ExportArtifactFormat, { contentType: string; extension: string }> = {
   markdown: { contentType: "text/markdown; charset=utf-8", extension: "md" },
   docx: {
@@ -92,24 +97,28 @@ async function withDeliveryErrors<T>(operation: () => Promise<T>): Promise<T> {
  * Project-scoped export surface: the synchronous POST bridge that reports a
  * terminal job, the read-only artifact catalog, and confined binary delivery.
  */
-export const exportRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (app, options) => {
+export const exportRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fastify, options) => {
+  const app = fastify.withTypeProvider<TypeBoxTypeProvider>();
   const guard = principalGuard(options.authService);
-  const principal = (request: { principal?: Principal }) => request.principal as Principal;
 
   app.post(
     "/api/projects/:projectId/exports",
     {
       preHandler: [guard],
       schema: {
+        params: projectIdParams,
         body: exportCreateSchema,
         response: { 201: jobResponseSchema, 409: operationInFlightSchema },
       },
     },
     async (request, reply) => {
-      const { projectId } = request.params as { projectId: string };
-      const { format } = request.body as { format: ExportArtifactFormat };
+      const { format } = request.body;
       const payload = await withDeliveryErrors(() =>
-        requireServices(options).jobHistory.recordExportJob(principal(request), projectId, format),
+        requireServices(options).jobHistory.recordExportJob(
+          requirePrincipal(request),
+          request.params.projectId,
+          format,
+        ),
       );
       reply.status(201);
       return payload;
@@ -121,18 +130,17 @@ export const exportRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (app,
     {
       preHandler: [guard],
       schema: {
+        params: projectIdParams,
         security: [{ cookieAuth: [] }],
         response: { 200: exportListResponseSchema },
       },
     },
-    async (request) => {
-      const { projectId } = request.params as { projectId: string };
-      return withStudioErrors(() => ({
+    async (request) =>
+      withStudioErrors(() => ({
         exports: requireServices(options)
-          .artifacts.catalogProjectArtifacts(principal(request), projectId)
-          .map((artifact) => exportPayload(artifact, projectId)),
-      }));
-    },
+          .artifacts.catalogProjectArtifacts(requirePrincipal(request), request.params.projectId)
+          .map((artifact) => exportPayload(artifact, request.params.projectId)),
+      })),
   );
 
   app.get(
@@ -140,6 +148,7 @@ export const exportRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (app,
     {
       preHandler: [guard],
       schema: {
+        params: exportIdParams,
         security: [{ cookieAuth: [] }],
         produces: [
           "text/markdown; charset=utf-8",
@@ -150,12 +159,11 @@ export const exportRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (app,
       },
     },
     async (request, reply) => {
-      const { projectId, exportId } = request.params as { projectId: string; exportId: string };
       const artifact = await withDeliveryErrors(() =>
         requireServices(options).artifacts.readArtifactForDelivery(
-          principal(request),
-          projectId,
-          exportId,
+          requirePrincipal(request),
+          request.params.projectId,
+          request.params.exportId,
         ),
       );
       const delivery = deliveryByFormat[artifact.format];
