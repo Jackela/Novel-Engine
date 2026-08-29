@@ -67,3 +67,25 @@ export interface AddUsageEventInput {
   requestEvidenceJson: string;
   now: Date;
 }
+
+/** The usage fields of a completed proposal, keyed to its job (#392). */
+export type CompletedProposalUsageInput = Omit<AddUsageEventInput, "projectId" | "jobId" | "now">;
+
+/**
+ * The atomic completed-proposal landing (#392): the job row and its usage
+ * event commit in one transaction, so a crash between the two writes can
+ * never leave a completed job without its usage event.
+ */
+export interface RecordCompletedProposalJobInput {
+  job: AddJobInput;
+  usage: CompletedProposalUsageInput;
+}
+
+/**
+ * The atomic retry completion (#392): the terminal outcome transition of an
+ * existing running job and its usage event commit in one transaction.
+ */
+export interface CompleteJobWithUsageInput {
+  outcome: MarkJobOutcomeInput;
+  usage: CompletedProposalUsageInput;
+}

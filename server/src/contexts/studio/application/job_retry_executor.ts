@@ -172,31 +172,32 @@ export class JobRetryExecutor {
       });
       const outcome = this.proposalOutcome(result);
       const now = this.now();
-      this.store.addUsageEvent(scope, {
-        projectId: retry.projectId,
-        jobId: retry.id,
-        provider: result.provider,
-        model: result.model,
-        promptTokens: resolvedTokenCount(result.promptTokens, instruction),
-        completionTokens: resolvedTokenCount(result.completionTokens, outcome.proposal),
-        requestEvidenceJson: dumpJson({
-          operation: retry.operation,
-          base_revision_id: revision.id,
-        }),
-        now,
-      });
+      // #392: the outcome transition and its usage event commit together, so
+      // a retried proposal never completes without its usage-ledger row.
       return jobPayload(
-        this.store.markJobOutcome(scope, retry.projectId, retry.id, {
-          status: "completed",
-          model: result.model,
-          resultJson: dumpJson({
-            proposal_markdown: outcome.proposal,
-            base_revision_id: revision.id,
-            accepted_revision_id: null,
-          }),
-          error: null,
-          eventDetailsJson: dumpJson({ proposal_only: true }),
-          now,
+        this.store.markJobOutcomeWithUsage(scope, retry.projectId, retry.id, {
+          outcome: {
+            status: "completed",
+            model: result.model,
+            resultJson: dumpJson({
+              proposal_markdown: outcome.proposal,
+              base_revision_id: revision.id,
+              accepted_revision_id: null,
+            }),
+            error: null,
+            eventDetailsJson: dumpJson({ proposal_only: true }),
+            now,
+          },
+          usage: {
+            provider: result.provider,
+            model: result.model,
+            promptTokens: resolvedTokenCount(result.promptTokens, instruction),
+            completionTokens: resolvedTokenCount(result.completionTokens, outcome.proposal),
+            requestEvidenceJson: dumpJson({
+              operation: retry.operation,
+              base_revision_id: revision.id,
+            }),
+          },
         }),
       );
     } finally {
