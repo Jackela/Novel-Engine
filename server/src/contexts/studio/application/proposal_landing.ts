@@ -1,8 +1,9 @@
-import type {
-  ProviderStep,
-  TextGenerationProvider,
-  TextGenerationTask,
-  TextProviderName,
+import {
+  type ProviderStep,
+  type TextGenerationProvider,
+  TextGenerationProviderError,
+  type TextGenerationTask,
+  type TextProviderName,
 } from "../../../contexts/ai/application/ports/text_generation.js";
 import { collectLoreEntries } from "./lorebook.js";
 import { dumpJson, wordCount } from "./payloads.js";
@@ -14,6 +15,7 @@ import type {
   StudioStore,
 } from "./ports/studio_store.js";
 import { buildProposalUserPrompt, collectResidentContextSource } from "./resident_context.js";
+import { isProposalMarkdownProse, sanitizeProposalMarkdown } from "./sanitization.js";
 
 /** Observer for provider cleanup failures; reporting never alters outcomes. */
 export type ProviderCleanupFailureReporter = (failure: unknown) => void;
@@ -102,6 +104,26 @@ export function buildProposalTask(
       title: document.title,
     },
   };
+}
+
+/**
+ * The completed/failed judgment shared by draft, stream, and retry: the
+ * provider response must carry a `chapter_markdown` string that sanitizes
+ * into story prose. Anything else raises the provider error that every
+ * entry point maps onto its failed-job landing.
+ */
+export function validatedProposalOrThrow(result: {
+  readonly content: { readonly chapter_markdown?: unknown };
+}): { proposal: string } {
+  const chapterMarkdown = result.content.chapter_markdown;
+  if (typeof chapterMarkdown !== "string") {
+    throw new TextGenerationProviderError(INVALID_PROPOSAL_PROSE);
+  }
+  const proposal = sanitizeProposalMarkdown(chapterMarkdown);
+  if (!isProposalMarkdownProse(proposal)) {
+    throw new TextGenerationProviderError(INVALID_PROPOSAL_PROSE);
+  }
+  return { proposal };
 }
 
 /** Reported provider tokens fall back to a shared word count when absent. */
