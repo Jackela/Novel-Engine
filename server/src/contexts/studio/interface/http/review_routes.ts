@@ -1,12 +1,13 @@
+import type { TypeBoxTypeProvider } from "@fastify/type-provider-typebox";
 import type { FastifyPluginAsync } from "fastify";
-import type { Principal } from "../../../../shared/application/ports/auth.js";
-import { principalGuard } from "../../../../shared/interface/http/auth_guard.js";
+import { principalGuard, requirePrincipal } from "../../../../shared/interface/http/auth_guard.js";
 import { AppError } from "../../../../shared/interface/http/error_envelope.js";
 import type { EditorialAssessment } from "../../application/review_service.js";
 import { jobResponseSchema } from "./job_schemas.js";
 import { requireServices, type StudioRoutesOptions } from "./project_routes.js";
 import { reviewCreateSchema, reviewListResponseSchema } from "./review_schemas.js";
 import { withStudioErrors } from "./studio_error_mapping.js";
+import { projectIdParams } from "./studio_request_schemas.js";
 
 function reviewPayload(assessment: EditorialAssessment) {
   return {
@@ -41,9 +42,9 @@ async function withOutcomeErrors<T>(operation: () => Promise<T>): Promise<T> {
 }
 
 /** Snapshot-bound editorial assessments, with server-owned provider provenance. */
-export const reviewRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (app, options) => {
+export const reviewRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fastify, options) => {
+  const app = fastify.withTypeProvider<TypeBoxTypeProvider>();
   const guard = principalGuard(options.authService);
-  const principal = (request: { principal?: Principal }) => request.principal as Principal;
 
   app.post(
     "/api/projects/:projectId/reviews",
@@ -76,7 +77,11 @@ export const reviewRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (app,
         }
       },
       preHandler: [guard],
-      schema: { body: reviewCreateSchema, response: { 201: jobResponseSchema } },
+      schema: {
+        params: projectIdParams,
+        body: reviewCreateSchema,
+        response: { 201: jobResponseSchema },
+      },
       config: {
         swaggerTransform: ({ schema, url }) => {
           const documentationSchema = { ...schema };
@@ -86,9 +91,11 @@ export const reviewRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (app,
       },
     },
     async (request, reply) => {
-      const { projectId } = request.params as { projectId: string };
       const payload = await withOutcomeErrors(() =>
-        requireServices(options).jobHistory.recordReviewJob(principal(request), projectId),
+        requireServices(options).jobHistory.recordReviewJob(
+          requirePrincipal(request),
+          request.params.projectId,
+        ),
       );
       reply.status(201);
       return payload;
@@ -97,14 +104,18 @@ export const reviewRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (app,
 
   app.get(
     "/api/projects/:projectId/reviews",
-    { preHandler: [guard], schema: { response: { 200: reviewListResponseSchema } } },
-    async (request) => {
-      const { projectId } = request.params as { projectId: string };
-      return withStudioErrors(() => ({
-        reviews: requireServices(options)
-          .reviewAssessments.listEditorialAssessments(principal(request), projectId)
-          .map(reviewPayload),
-      }));
+    {
+      preHandler: [guard],
+      schema: { params: projectIdParams, response: { 200: reviewListResponseSchema } },
     },
+    async (request) =>
+      withStudioErrors(() => ({
+        reviews: requireServices(options)
+          .reviewAssessments.listEditorialAssessments(
+            requirePrincipal(request),
+            request.params.projectId,
+          )
+          .map(reviewPayload),
+      })),
   );
 };

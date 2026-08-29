@@ -1,41 +1,42 @@
 /**
  * Volume request/response shapes for the fixed two-level hierarchy
  * (ADR-0005). Volume titles follow the project/document title contract.
+ * Request schemas are TypeBox; response schemas stay plain JSON Schema.
  */
+
+import { Type } from "@fastify/type-provider-typebox";
+import type { JsonResponseSchema } from "./json_response_schema.js";
 
 const timestamp = { type: "string" } as const;
 
-export const volumeCreateSchema = {
-  type: "object",
-  properties: {
-    title: { type: "string", minLength: 1, maxLength: 240 },
-  },
-  required: ["title"],
-  additionalProperties: false,
-} as const;
+const volumeTitle = Type.String({ minLength: 1, maxLength: 240 });
 
-export const volumeRetitleSchema = volumeCreateSchema;
-
-export const volumeReorderSchema = {
-  type: "object",
-  properties: {
-    volume_ids: { type: "array", items: { type: "string" }, minItems: 1 },
+export const volumeCreateSchema = Type.Object(
+  { title: volumeTitle },
+  {
+    additionalProperties: false,
   },
-  required: ["volume_ids"],
-  additionalProperties: false,
-} as const;
+);
+
+export const volumeRetitleSchema = Type.Object(
+  { title: volumeTitle },
+  {
+    additionalProperties: false,
+  },
+);
+
+export const volumeReorderSchema = Type.Object(
+  { volume_ids: Type.Array(Type.String(), { minItems: 1 }) },
+  { additionalProperties: false },
+);
 
 /** Moving a chapter between volumes names the target volume only. */
-export const documentPlaceSchema = {
-  type: "object",
-  properties: {
-    volume_id: { type: "string", minLength: 1 },
-  },
-  required: ["volume_id"],
-  additionalProperties: false,
-} as const;
+export const documentPlaceSchema = Type.Object(
+  { volume_id: Type.String({ minLength: 1 }) },
+  { additionalProperties: false },
+);
 
-export const volumeResponseSchema = {
+export const volumeResponseSchema: JsonResponseSchema = {
   type: "object",
   additionalProperties: true,
   properties: {
@@ -49,7 +50,7 @@ export const volumeResponseSchema = {
   required: ["id", "project_id", "title", "position", "created_at", "updated_at"],
 } as const;
 
-export const volumeListResponseSchema = {
+export const volumeListResponseSchema: JsonResponseSchema = {
   type: "object",
   additionalProperties: true,
   properties: { volumes: { type: "array", items: volumeResponseSchema } },

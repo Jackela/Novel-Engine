@@ -1,8 +1,9 @@
-import type {
-  ProviderStep,
-  TextGenerationProvider,
-  TextGenerationTask,
-  TextProviderName,
+import {
+  type ProviderStep,
+  type TextGenerationProvider,
+  TextGenerationProviderError,
+  type TextGenerationTask,
+  type TextProviderName,
 } from "../../../contexts/ai/application/ports/text_generation.js";
 import { collectLoreEntries } from "./lorebook.js";
 import { dumpJson, wordCount } from "./payloads.js";
@@ -14,6 +15,7 @@ import type {
   StudioStore,
 } from "./ports/studio_store.js";
 import { buildProposalUserPrompt, collectResidentContextSource } from "./resident_context.js";
+import { isProposalMarkdownProse, sanitizeProposalMarkdown } from "./sanitization.js";
 
 /** Observer for provider cleanup failures; reporting never alters outcomes. */
 export type ProviderCleanupFailureReporter = (failure: unknown) => void;
@@ -104,6 +106,26 @@ export function buildProposalTask(
   };
 }
 
+/**
+ * The completed/failed judgment shared by draft, stream, and retry: the
+ * provider response must carry a `chapter_markdown` string that sanitizes
+ * into story prose. Anything else raises the provider error that every
+ * entry point maps onto its failed-job landing.
+ */
+export function validatedProposalOrThrow(result: {
+  readonly content: { readonly chapter_markdown?: unknown };
+}): { proposal: string } {
+  const chapterMarkdown = result.content.chapter_markdown;
+  if (typeof chapterMarkdown !== "string") {
+    throw new TextGenerationProviderError(INVALID_PROPOSAL_PROSE);
+  }
+  const proposal = sanitizeProposalMarkdown(chapterMarkdown);
+  if (!isProposalMarkdownProse(proposal)) {
+    throw new TextGenerationProviderError(INVALID_PROPOSAL_PROSE);
+  }
+  return { proposal };
+}
+
 /** Reported provider tokens fall back to a shared word count when absent. */
 export function resolvedTokenCount(reported: number | null, text: string): number {
   return reported ?? wordCount(text);
@@ -137,38 +159,38 @@ export function completedProposalJob(
   revisionId: string,
   landing: ProposalLanding,
 ): JobRecord {
-  const job = store.addJob(scope, {
-    projectId: seed.projectId,
-    documentId: seed.documentId,
-    kind: "proposal",
-    operation: seed.operation,
-    provider: seed.provider,
-    status: "completed",
-    model: landing.model,
-    requestJson: seed.requestJson,
-    resultJson: dumpJson({
-      proposal_markdown: landing.proposal,
-      base_revision_id: revisionId,
-      accepted_revision_id: null,
-    }),
-    error: null,
-    eventDetailsJson: dumpJson({ proposal_only: true }),
-    now: seed.now,
-  });
-  store.addUsageEvent(scope, {
-    projectId: seed.projectId,
-    jobId: job.id,
-    provider: landing.provider,
-    model: landing.model,
-    promptTokens: resolvedTokenCount(landing.promptTokens, landing.instruction),
-    completionTokens: resolvedTokenCount(landing.completionTokens, landing.proposal),
-    requestEvidenceJson: dumpJson({
+  // #392: the job row and its usage event commit in one transaction so a
+  // failure between the two writes can never strand a completed job.
+  return store.recordCompletedProposalJob(scope, {
+    job: {
+      projectId: seed.projectId,
+      documentId: seed.documentId,
+      kind: "proposal",
       operation: seed.operation,
-      base_revision_id: revisionId,
-    }),
-    now: seed.now,
+      provider: seed.provider,
+      status: "completed",
+      model: landing.model,
+      requestJson: seed.requestJson,
+      resultJson: dumpJson({
+        proposal_markdown: landing.proposal,
+        base_revision_id: revisionId,
+        accepted_revision_id: null,
+      }),
+      error: null,
+      eventDetailsJson: dumpJson({ proposal_only: true }),
+      now: seed.now,
+    },
+    usage: {
+      provider: landing.provider,
+      model: landing.model,
+      promptTokens: resolvedTokenCount(landing.promptTokens, landing.instruction),
+      completionTokens: resolvedTokenCount(landing.completionTokens, landing.proposal),
+      requestEvidenceJson: dumpJson({
+        operation: seed.operation,
+        base_revision_id: revisionId,
+      }),
+    },
   });
-  return job;
 }
 
 export function failedProposalJob(

@@ -1,15 +1,12 @@
 import {
-  isTextProviderName,
   type TextGenerationProvider,
   TextGenerationProviderError,
   type TextGenerationProviderFactory,
-  type TextProviderName,
 } from "../../../contexts/ai/application/ports/text_generation.js";
 import type { Principal } from "../../../shared/application/ports/auth.js";
 import { InvalidOperationError } from "../../../shared/domain/exceptions.js";
 import { NotFoundError } from "../domain/exceptions.js";
 import type { SnapshotArtifactService } from "./export_artifact_service.js";
-import { collectLoreEntries } from "./lorebook.js";
 import {
   dumpJson,
   exportJobResultJson,
@@ -20,14 +17,17 @@ import {
 import type { JobRecord, ProjectScope, StudioStore } from "./ports/studio_store.js";
 import { scopeForPrincipal } from "./ports/studio_store.js";
 import {
-  INVALID_PROPOSAL_PROSE,
-  OPERATION_STEPS,
+  buildProposalTask,
+  disposeProvider,
   resolvedTokenCount,
-  SYSTEM_PROMPT,
-} from "./proposal_service.js";
-import { buildProposalUserPrompt, collectResidentContextSource } from "./resident_context.js";
+  validatedProposalOrThrow,
+} from "./proposal_landing.js";
+import {
+  admitTextProvider,
+  proposalStepForOperation,
+  resolveProposalRevision,
+} from "./proposal_pipeline.js";
 import type { ReviewService } from "./review_service.js";
-import { isProposalMarkdownProse, sanitizeProposalMarkdown } from "./sanitization.js";
 
 const RETRYABLE_STATUSES = new Set(["failed", "interrupted"]);
 
@@ -133,99 +133,73 @@ export class JobRetryExecutor {
     const instruction = typeof request.instruction === "string" ? request.instruction : "";
     const baseRevisionId =
       typeof request.base_revision_id === "string" ? request.base_revision_id : null;
-    const step = OPERATION_STEPS[retry.operation];
-    if (retry.documentId === null || baseRevisionId === null || step === undefined) {
+    if (retry.documentId === null || baseRevisionId === null) {
       throw new InvalidOperationError("Original AI job is missing its request context.");
     }
-    if (!isTextProviderName(retry.provider)) {
-      throw new InvalidOperationError(`Unsupported text generation provider: ${retry.provider}`);
+    // A stored operation without a provider step has lost its request context.
+    const step = proposalStepForOperation(retry.operation);
+    if (step === undefined) {
+      throw new InvalidOperationError("Original AI job is missing its request context.");
     }
-    const providerName: TextProviderName = retry.provider;
-    const document = this.store.findDocument(scope, retry.projectId, retry.documentId);
-    const revision = document.currentRevision;
-    if (revision === null) {
-      throw new InvalidOperationError("Document has no current revision.");
-    }
+    const providerName = admitTextProvider(retry.provider);
+    const { document, revision } = resolveProposalRevision(
+      this.store,
+      scope,
+      retry.projectId,
+      retry.documentId,
+    );
     let provider: TextGenerationProvider | undefined;
     try {
       provider = this.providerFactory(providerName);
-      const result = await provider.generateStructured({
-        step,
-        systemPrompt: SYSTEM_PROMPT,
-        // A retried generation is a proposal generation too (#314): it assembles
-        // the same resident context instead of the amnesiac historical shape.
-        userPrompt: buildProposalUserPrompt({
-          operation: retry.operation,
+      // A retried generation is a proposal generation too (#314): it assembles
+      // the same resident context instead of the amnesiac historical shape.
+      const result = await provider.generateStructured(
+        buildProposalTask(
+          step,
+          retry.operation,
           instruction,
-          source: collectResidentContextSource(this.store, scope, retry.projectId, document),
-          manuscriptMarkdown: revision.contentMarkdown,
-          loreEntries: collectLoreEntries(this.store, scope, retry.projectId),
-        }),
-        responseSchema: { chapter_markdown: { type: "string" } },
-        metadata: {
-          operation: retry.operation,
-          document_id: document.id,
-          base_revision_id: revision.id,
-          chapter_number: document.position,
-          title: document.title,
-        },
-      });
-      const outcome = this.proposalOutcome(result);
+          this.store,
+          scope,
+          retry.projectId,
+          document,
+          revision,
+        ),
+      );
+      const outcome = validatedProposalOrThrow(result);
       const now = this.now();
-      this.store.addUsageEvent(scope, {
-        projectId: retry.projectId,
-        jobId: retry.id,
-        provider: result.provider,
-        model: result.model,
-        promptTokens: resolvedTokenCount(result.promptTokens, instruction),
-        completionTokens: resolvedTokenCount(result.completionTokens, outcome.proposal),
-        requestEvidenceJson: dumpJson({
-          operation: retry.operation,
-          base_revision_id: revision.id,
-        }),
-        now,
-      });
+      // #392: the outcome transition and its usage event commit together, so
+      // a retried proposal never completes without its usage-ledger row.
       return jobPayload(
-        this.store.markJobOutcome(scope, retry.projectId, retry.id, {
-          status: "completed",
-          model: result.model,
-          resultJson: dumpJson({
-            proposal_markdown: outcome.proposal,
-            base_revision_id: revision.id,
-            accepted_revision_id: null,
-          }),
-          error: null,
-          eventDetailsJson: dumpJson({ proposal_only: true }),
-          now,
+        this.store.markJobOutcomeWithUsage(scope, retry.projectId, retry.id, {
+          outcome: {
+            status: "completed",
+            model: result.model,
+            resultJson: dumpJson({
+              proposal_markdown: outcome.proposal,
+              base_revision_id: revision.id,
+              accepted_revision_id: null,
+            }),
+            error: null,
+            eventDetailsJson: dumpJson({ proposal_only: true }),
+            now,
+          },
+          usage: {
+            provider: result.provider,
+            model: result.model,
+            promptTokens: resolvedTokenCount(result.promptTokens, instruction),
+            completionTokens: resolvedTokenCount(result.completionTokens, outcome.proposal),
+            requestEvidenceJson: dumpJson({
+              operation: retry.operation,
+              base_revision_id: revision.id,
+            }),
+          },
         }),
       );
     } finally {
       if (provider !== undefined) {
-        try {
-          await provider.dispose?.();
-        } catch (cleanupFailure) {
-          try {
-            reportCleanupFailure(cleanupFailure);
-          } catch {
-            // The observer cannot replace the outcome already selected above.
-          }
-        }
+        await disposeProvider(provider, reportCleanupFailure);
       }
     }
-  }
-
-  private proposalOutcome(result: { content: { chapter_markdown?: unknown } }): {
-    proposal: string;
-  } {
-    const chapterMarkdown = result.content.chapter_markdown;
-    if (typeof chapterMarkdown !== "string") {
-      throw new TextGenerationProviderError(INVALID_PROPOSAL_PROSE);
-    }
-    const proposal = sanitizeProposalMarkdown(chapterMarkdown);
-    if (!isProposalMarkdownProse(proposal)) {
-      throw new TextGenerationProviderError(INVALID_PROPOSAL_PROSE);
-    }
-    return { proposal };
   }
 
   private async reexecuteReviewJob(

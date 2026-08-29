@@ -1,11 +1,13 @@
+import type { TypeBoxTypeProvider } from "@fastify/type-provider-typebox";
 import type { FastifyPluginAsync, FastifyReply } from "fastify";
-import type { Principal } from "../../../../shared/application/ports/auth.js";
-import { principalGuard } from "../../../../shared/interface/http/auth_guard.js";
+import { principalGuard, requirePrincipal } from "../../../../shared/interface/http/auth_guard.js";
 import type { ProposalStreamFrame } from "../../application/proposal_streaming.js";
 import { jobResponseSchema } from "./job_schemas.js";
+import type { JsonResponseSchema } from "./json_response_schema.js";
 import { requireServices, type StudioRoutesOptions } from "./project_routes.js";
 import { withStudioErrors } from "./studio_error_mapping.js";
-import { operationInFlightSchema, proposalCreateSchema } from "./studio_schemas.js";
+import { documentIdParams, jobIdParams, proposalCreateSchema } from "./studio_request_schemas.js";
+import { operationInFlightSchema } from "./studio_schemas.js";
 
 /** `withStudioErrors` is synchronous; generation executes asynchronously. */
 async function withGenerationErrors<T>(operation: () => Promise<T>): Promise<T> {
@@ -24,7 +26,7 @@ async function withGenerationErrors<T>(operation: () => Promise<T>): Promise<T> 
  * the frame payloads are typed by `ProposalStreamFrame` and specified in the
  * OpenSpec change.
  */
-const proposalStreamResponseSchema = {
+const proposalStreamResponseSchema: JsonResponseSchema = {
   description: "Server-Sent Events stream of proposal frames (delta/done/error).",
   content: {
     "text/event-stream": { schema: { type: "string" } },
@@ -74,25 +76,21 @@ async function writeProposalStream(
  * `ai-accepted` revision, and — since #308 — the SSE streaming twin of the
  * synchronous generation with identical landing semantics.
  */
-export const proposalRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (app, options) => {
+export const proposalRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fastify, options) => {
+  const app = fastify.withTypeProvider<TypeBoxTypeProvider>();
   const guard = principalGuard(options.authService);
-  const principal = (request: { principal?: Principal }) => request.principal as Principal;
 
   app.post(
     "/api/projects/:projectId/documents/:documentId/ai-proposals",
     {
       preHandler: [guard],
       schema: {
+        params: documentIdParams,
         body: proposalCreateSchema,
         response: { 200: jobResponseSchema, 409: operationInFlightSchema },
       },
     },
     async (request) => {
-      const { projectId, documentId } = request.params as {
-        projectId: string;
-        documentId: string;
-      };
-      const body = request.body as { operation: string; instruction?: string; provider?: string };
       const reportCleanupFailure = (failure: unknown): void => {
         request.log.error(
           { err: failure, errorId: request.id, provider_cleanup_failed: true },
@@ -101,13 +99,13 @@ export const proposalRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (ap
       };
       return withGenerationErrors(() =>
         requireServices(options).proposals.draftProposal(
-          principal(request),
-          projectId,
-          documentId,
+          requirePrincipal(request),
+          request.params.projectId,
+          request.params.documentId,
           {
-            operation: body.operation,
-            instruction: body.instruction ?? "",
-            provider: body.provider ?? "mock",
+            operation: request.body.operation,
+            instruction: request.body.instruction ?? "",
+            provider: request.body.provider ?? "mock",
           },
           reportCleanupFailure,
         ),
@@ -120,16 +118,12 @@ export const proposalRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (ap
     {
       preHandler: [guard],
       schema: {
+        params: documentIdParams,
         body: proposalCreateSchema,
         response: { 200: proposalStreamResponseSchema, 409: operationInFlightSchema },
       },
     },
     async (request, reply) => {
-      const { projectId, documentId } = request.params as {
-        projectId: string;
-        documentId: string;
-      };
-      const body = request.body as { operation: string; instruction?: string; provider?: string };
       const reportCleanupFailure = (failure: unknown): void => {
         request.log.error(
           { err: failure, errorId: request.id, provider_cleanup_failed: true },
@@ -146,13 +140,13 @@ export const proposalRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (ap
       reply.raw.on("close", () => disconnect.abort());
       reply.raw.on("error", () => disconnect.abort());
       const frames = requireServices(options).proposals.draftProposalStream(
-        principal(request),
-        projectId,
-        documentId,
+        requirePrincipal(request),
+        request.params.projectId,
+        request.params.documentId,
         {
-          operation: body.operation,
-          instruction: body.instruction ?? "",
-          provider: body.provider ?? "mock",
+          operation: request.body.operation,
+          instruction: request.body.instruction ?? "",
+          provider: request.body.provider ?? "mock",
         },
         reportCleanupFailure,
         disconnect.signal,
@@ -163,11 +157,17 @@ export const proposalRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (ap
 
   app.post(
     "/api/projects/:projectId/ai-proposals/:jobId/accept",
-    { preHandler: [guard], schema: { response: { 200: jobResponseSchema } } },
+    {
+      preHandler: [guard],
+      schema: { params: jobIdParams, response: { 200: jobResponseSchema } },
+    },
     async (request) => {
-      const { projectId, jobId } = request.params as { projectId: string; jobId: string };
       return withStudioErrors(() =>
-        requireServices(options).proposals.adoptProposal(principal(request), projectId, jobId),
+        requireServices(options).proposals.adoptProposal(
+          requirePrincipal(request),
+          request.params.projectId,
+          request.params.jobId,
+        ),
       );
     },
   );

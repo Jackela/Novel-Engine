@@ -1,11 +1,14 @@
+import type { TypeBoxTypeProvider } from "@fastify/type-provider-typebox";
+import { Type } from "@fastify/type-provider-typebox";
 import type { FastifyPluginAsync } from "fastify";
-import type { Principal } from "../../../../shared/application/ports/auth.js";
-import { principalGuard } from "../../../../shared/interface/http/auth_guard.js";
+import { principalGuard, requirePrincipal } from "../../../../shared/interface/http/auth_guard.js";
+import type { JsonResponseSchema } from "./json_response_schema.js";
 import { requireServices, type StudioRoutesOptions } from "./project_routes.js";
 import { withStudioErrors } from "./studio_error_mapping.js";
+import { documentIdParams } from "./studio_request_schemas.js";
 
 /** The resolved association view: the live beat, or null when unlinked/vanished. */
-export const chapterBeatResponseSchema = {
+export const chapterBeatResponseSchema: JsonResponseSchema = {
   type: "object",
   additionalProperties: false,
   properties: {
@@ -23,37 +26,42 @@ export const chapterBeatResponseSchema = {
   required: ["beat"],
 } as const;
 
-const chapterBeatLinkSchema = {
-  type: "object",
-  properties: {
-    // A beat title links; explicit null clears the association.
-    beat: { type: "string", maxLength: 240, nullable: true },
+// A beat title links; explicit null clears the association. `nullable: true`
+// keeps Fastify's coercing AJV from turning the null into "".
+const chapterBeatLinkSchema = Type.Object(
+  {
+    beat: Type.Unsafe<string | null>({
+      type: "string",
+      maxLength: 240,
+      nullable: true,
+    }),
   },
-  required: ["beat"],
-  additionalProperties: false,
-} as const;
+  { additionalProperties: false },
+);
 
 /**
  * The chapter beat surface (#313): read the effective association and set or
  * clear it on a chapter. Reads never error for a vanished beat — they resolve
  * to unlinked.
  */
-export const beatRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (app, options) => {
+export const beatRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fastify, options) => {
+  const app = fastify.withTypeProvider<TypeBoxTypeProvider>();
   const guard = principalGuard(options.authService);
-  const principal = (request: { principal?: Principal }) => request.principal as Principal;
 
   app.get(
     "/api/projects/:projectId/documents/:documentId/beat",
-    { preHandler: [guard], schema: { response: { 200: chapterBeatResponseSchema } } },
-    async (request) => {
-      const { projectId, documentId } = request.params as {
-        projectId: string;
-        documentId: string;
-      };
-      return withStudioErrors(() =>
-        requireServices(options).beats.chapterBeat(principal(request), projectId, documentId),
-      );
+    {
+      preHandler: [guard],
+      schema: { params: documentIdParams, response: { 200: chapterBeatResponseSchema } },
     },
+    async (request) =>
+      withStudioErrors(() =>
+        requireServices(options).beats.chapterBeat(
+          requirePrincipal(request),
+          request.params.projectId,
+          request.params.documentId,
+        ),
+      ),
   );
 
   app.put(
@@ -61,21 +69,19 @@ export const beatRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (app, o
     {
       preHandler: [guard],
       schema: {
+        params: documentIdParams,
         body: chapterBeatLinkSchema,
         response: { 200: chapterBeatResponseSchema },
       },
     },
-    async (request) => {
-      const { projectId, documentId } = request.params as {
-        projectId: string;
-        documentId: string;
-      };
-      const body = request.body as { beat: string | null };
-      return withStudioErrors(() =>
-        requireServices(options).beats.linkChapterBeat(principal(request), projectId, documentId, {
-          beat: body.beat,
-        }),
-      );
-    },
+    async (request) =>
+      withStudioErrors(() =>
+        requireServices(options).beats.linkChapterBeat(
+          requirePrincipal(request),
+          request.params.projectId,
+          request.params.documentId,
+          { beat: request.body.beat },
+        ),
+      ),
   );
 };

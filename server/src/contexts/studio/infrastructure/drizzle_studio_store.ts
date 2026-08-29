@@ -6,6 +6,7 @@ import type {
   AddUsageEventInput,
   AdvanceDocumentInput,
   CaptureReviewSnapshotInput,
+  CompleteJobWithUsageInput,
   DocumentMatchRecord,
   DocumentWithCurrent,
   EditorialAssessmentRecord,
@@ -13,6 +14,7 @@ import type {
   MarkJobOutcomeInput,
   ProjectScope,
   ProjectUsageAggregate,
+  RecordCompletedProposalJobInput,
   RecordSnapshotReviewInput,
   ReviewSnapshotDocument,
   StudioStore,
@@ -168,6 +170,22 @@ export class DrizzleStudioStore extends ProjectStorePart implements StudioStore 
 
   addUsageEvent(scope: ProjectScope, input: AddUsageEventInput): void {
     this.workflowJobs.addUsageEvent(scope, input);
+  }
+
+  recordCompletedProposalJob(
+    scope: ProjectScope,
+    input: RecordCompletedProposalJobInput,
+  ): JobRecord {
+    return this.workflowJobs.recordCompletedProposalJob(scope, input);
+  }
+
+  markJobOutcomeWithUsage(
+    scope: ProjectScope,
+    projectId: string,
+    jobId: string,
+    input: CompleteJobWithUsageInput,
+  ): JobRecord {
+    return this.workflowJobs.markJobOutcomeWithUsage(scope, projectId, jobId, input);
   }
 
   aggregateProjectUsage(scope: ProjectScope, projectId: string, now: Date): ProjectUsageAggregate {
