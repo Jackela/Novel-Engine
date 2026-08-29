@@ -1,6 +1,6 @@
 # Resident context
 
-Every proposal generation assembles a **two-layer context** ahead of the target manuscript (ADR-0004). Layer 1 is the **resident context** — always injected, deterministic, never model-generated. Layer 2 is the keyword-triggered **lorebook** of character and world entries (see `CONTEXT.md` for both terms). This page covers layer 1; the lorebook trigger mechanism lives alongside it in `server/src/contexts/studio/application/lorebook.ts`.
+Every proposal generation assembles a **two-layer context** ahead of the target manuscript (ADR-0004). Layer 1 is the **resident context** — always injected, deterministic, never model-generated. Layer 2 is the keyword-triggered **lorebook** of character and world entries (see `CONTEXT.md` for both terms). This page covers layer 1; the lorebook trigger mechanism has its own page (`lorebook.md`) and lives in `server/src/contexts/studio/application/lorebook.ts`.
 
 **Primary sources:** `docs/adr/0004-two-layer-generation-context.md`, `server/src/contexts/studio/application/resident_context.ts`.
 
