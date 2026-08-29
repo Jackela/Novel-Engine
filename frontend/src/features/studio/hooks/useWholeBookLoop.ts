@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Dispatch, SetStateAction } from 'react';
 
 import { api } from '@/app/api';
@@ -61,6 +61,16 @@ export function useWholeBookLoop({
   const stop = useCallback(() => {
     stopRequestedRef.current = true;
   }, []);
+
+  // #390: unmounting the page must halt the loop — no further chapter draft
+  // or accept request may start after the studio page goes away. This reuses
+  // the exact stop semantics of the manual stop button.
+  useEffect(
+    () => () => {
+      stopRequestedRef.current = true;
+    },
+    [],
+  );
 
   const start = useCallback(
     (plan: WholeBookChapter[]): Promise<void> => {

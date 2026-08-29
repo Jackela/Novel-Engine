@@ -171,11 +171,12 @@ export const api = {
     postJson('/api/setup', { username, password }, parseOwnerSetup),
   login: (username: string, password: string) =>
     postJson('/api/session/login', { username, password }, parseSession),
-  session: () => request('/api/session', undefined, parseSession),
+  session: (init?: RequestInit) => request('/api/session', init, parseSession),
   logout: () => request('/api/session', { method: 'DELETE' }, parseVoid),
   providers: () => request('/api/providers', undefined, parseProviders),
   projects: (init?: RequestInit) => request('/api/projects', init, parseProjects),
-  project: (projectId: string) => request(`/api/projects/${projectId}`, undefined, parseProject),
+  project: (projectId: string, init?: RequestInit) =>
+    request(`/api/projects/${projectId}`, init, parseProject),
   createProject: (title: string, description: string) =>
     postJson('/api/projects', { title, description }, parseProject),
   createDocument: (
@@ -243,12 +244,8 @@ export const api = {
       { base_revision_id: baseRevisionId },
       parseStudioDocument,
     ),
-  search: (projectId: string, query: string) =>
-    request(
-      `/api/projects/${projectId}/search?q=${encodeURIComponent(query)}`,
-      undefined,
-      parseSearch,
-    ),
+  search: (projectId: string, query: string, init?: RequestInit) =>
+    request(`/api/projects/${projectId}/search?q=${encodeURIComponent(query)}`, init, parseSearch),
   proposal: (
     projectId: string,
     documentId: string,
@@ -267,12 +264,12 @@ export const api = {
       { method: 'POST' },
       parseJob,
     ),
-  reviews: (projectId: string) =>
-    request(`/api/projects/${projectId}/reviews`, undefined, parseReviews),
+  reviews: (projectId: string, init?: RequestInit) =>
+    request(`/api/projects/${projectId}/reviews`, init, parseReviews),
   createReview: (projectId: string) =>
     request(`/api/projects/${projectId}/reviews`, { method: 'POST' }, parseReviewJobResponse),
-  exports: (projectId: string) =>
-    request(`/api/projects/${projectId}/exports`, undefined, parseExports),
+  exports: (projectId: string, init?: RequestInit) =>
+    request(`/api/projects/${projectId}/exports`, init, parseExports),
   createExport: (projectId: string, format: ExportFormat) =>
     postJson(`/api/projects/${projectId}/exports`, { format }, parseExportJobResponse),
   updateProject: (
@@ -287,8 +284,10 @@ export const api = {
     request(`/api/projects/${projectId}`, { method: 'DELETE' }, parseVoid),
   deleteDocument: (projectId: string, documentId: string) =>
     request(`/api/projects/${projectId}/documents/${documentId}`, { method: 'DELETE' }, parseVoid),
-  jobs: (projectId: string) => request(`/api/projects/${projectId}/jobs`, undefined, parseJobs),
-  usage: (projectId: string) => request(`/api/projects/${projectId}/usage`, undefined, parseUsage),
+  jobs: (projectId: string, init?: RequestInit) =>
+    request(`/api/projects/${projectId}/jobs`, init, parseJobs),
+  usage: (projectId: string, init?: RequestInit) =>
+    request(`/api/projects/${projectId}/usage`, init, parseUsage),
   retryJob: (projectId: string, jobId: string) =>
     request(`/api/projects/${projectId}/jobs/${jobId}/retry`, { method: 'POST' }, parseJob),
   download: (path: string) => downloadBlob(path),

@@ -114,6 +114,7 @@ afterEach(() => {
 
 function renderLoopHook(initialProject: Project): {
   readonly result: () => HarnessSnapshot;
+  readonly unmount: () => void;
 } {
   let current: HarnessSnapshot | undefined;
 
@@ -143,6 +144,15 @@ function renderLoopHook(initialProject: Project): {
     result: () => {
       if (current === undefined) throw new Error('Expected hook result after render.');
       return current;
+    },
+    // Unmount now and keep afterEach from unmounting the same root twice.
+    unmount: () => {
+      const index = mountedRoots.findIndex((entry) => entry.root === root);
+      if (index >= 0) mountedRoots.splice(index, 1);
+      act(() => {
+        root.unmount();
+      });
+      container.remove();
     },
   };
 }
@@ -325,5 +335,35 @@ describe('useWholeBookLoop (#318)', () => {
   it('reports idle before any run starts', () => {
     const harness = renderLoopHook(baseProject);
     expect(harness.result().hook.phase).toEqual({ kind: 'idle' });
+  });
+
+  it('#390 halts the loop when the page unmounts: no further chapter is drafted or accepted', async () => {
+    const events: string[] = [];
+    const firstDraft = deferred<StudioJob>();
+    traceApiCalls(events);
+    vi.mocked(api.proposal).mockImplementationOnce(async (_projectId, documentId) => {
+      events.push(`proposal:${documentId}`);
+      return firstDraft.promise;
+    });
+
+    const harness = renderLoopHook(baseProject);
+    let finished: Promise<void> = Promise.resolve();
+
+    await act(async () => {
+      finished = harness.result().hook.start(wholeBookPlan(baseProject));
+      await vi.waitFor(() =>
+        expect(events.filter((event) => event.startsWith('proposal:'))).toHaveLength(1),
+      );
+      // Unmount while the first draft is still in flight.
+      harness.unmount();
+      firstDraft.resolve(proposalJobFor(firstChapter.id));
+      await finished;
+    });
+
+    // The unmounted run never accepts the in-flight draft and never starts
+    // the next chapter.
+    expect(events.some((event) => event.startsWith('accept:'))).toBe(false);
+    expect(events.filter((event) => event.startsWith('proposal:'))).toEqual(['proposal:one']);
+    expect(vi.mocked(api.acceptProposal)).not.toHaveBeenCalled();
   });
 });
