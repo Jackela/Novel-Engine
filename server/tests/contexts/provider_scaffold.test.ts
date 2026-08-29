@@ -9,6 +9,28 @@ const siblingPaddedScaffold = JSON.stringify(
   }),
 );
 
+describe("limit sentinels are treated as scaffolding", () => {
+  // Existing behavior pinned by the audit: when a scan budget
+  // (candidate length, candidate count, walk work, or depth) is exceeded,
+  // detection returns true ("treat as guilty") even without a provider key.
+  const longJsonCandidate = `{"note":"${"x".repeat(24e3 + 10)}"}`;
+  it("flags a JSON candidate exceeding the candidate-length budget", () => {
+    expect(hasProviderScaffolding(longJsonCandidate)).toBe(true);
+  });
+  it("flags a quoted projected target exceeding the candidate-length budget", () => {
+    expect(hasProviderScaffolding(`'${longJsonCandidate.slice(1, -1)}'`)).toBe(true);
+  });
+  it("flags a serialized tree exceeding the walk work budget", () => {
+    const wide = JSON.stringify({ items: Array.from({ length: 600 }, (_, i) => i) });
+    expect(hasProviderScaffolding(wide)).toBe(true);
+  });
+  it("flags a serialized tree exceeding the depth budget", () => {
+    let deep: unknown = "leaf";
+    for (let i = 0; i < 30; i += 1) deep = { nested: deep };
+    expect(hasProviderScaffolding(JSON.stringify(deep))).toBe(true);
+  });
+});
+
 describe("provider scaffold detection", () => {
   it.each([
     ["bare line key", "ReSuLt: raw provider scaffold"],
