@@ -4,9 +4,7 @@ import cors from "@fastify/cors";
 import swagger from "@fastify/swagger";
 import type { TypeBoxTypeProvider } from "@fastify/type-provider-typebox";
 import Fastify, { type FastifyInstance, type FastifyLoggerOptions } from "fastify";
-import { resolveReviewModel } from "../../contexts/ai/application/model_resolution.js";
 import type { TextGenerationProviderFactory } from "../../contexts/ai/application/ports/text_generation.js";
-import { textProviderFactory } from "../../contexts/ai/infrastructure/providers/text_provider_factory.js";
 import { providerCatalogRoutes } from "../../contexts/ai/interface/http/provider_routes.js";
 import { createStudioServices } from "../../contexts/studio/application/studio_services.js";
 import { DrizzleStudioStore } from "../../contexts/studio/infrastructure/drizzle_studio_store.js";
@@ -22,7 +20,7 @@ import {
   type ServerConfig,
 } from "../../shared/infrastructure/config/server_config.js";
 import { DrizzleAuthStore } from "../../shared/infrastructure/db/auth_store.js";
-import { openStudioDatabase, type StudioDatabase } from "../../shared/infrastructure/db/startup.js";
+import type { StudioDatabase } from "../../shared/infrastructure/db/startup.js";
 import { clientIdentity } from "../../shared/infrastructure/rate_limit/client_identity.js";
 import { TokenBucketRateLimiter } from "../../shared/infrastructure/rate_limit/token_bucket.js";
 import { readWorkspaceVersion } from "../../shared/infrastructure/workspace_manifest.js";
@@ -35,6 +33,9 @@ import {
   registerSpaServing,
 } from "../../shared/interface/http/spa_serving.js";
 import { type VersionInfo, versionRoutes } from "../../shared/interface/http/version_route.js";
+import { openPersistence } from "./persistence.js";
+import { buildProviderRuntime, type ProviderApiKeys } from "./provider_runtime.js";
+import { correlationIdFrom, REQUEST_ID_HEADER } from "./request_correlation.js";
 
 declare module "fastify" {
   interface FastifyInstance {
@@ -75,7 +76,7 @@ export interface AppOptions {
    */
   textProviderFactory?: TextGenerationProviderFactory | undefined;
   /** Credentials for the HTTP providers; absent keys leave them unconfigured. */
-  providerApiKeys?: { dashscope?: string; openaiCompatible?: string } | undefined;
+  providerApiKeys?: ProviderApiKeys | undefined;
   /**
    * Resolved operational configuration (loadServerConfig). When present the
    * production guards fail fast here and unset options fall back to it.
@@ -106,21 +107,6 @@ const DEFAULT_AUTH_RATE_LIMIT_PER_MINUTE = 5;
 
 const emptyHealthProbe: HealthProbe = async () => ({ components: [] });
 
-const REQUEST_ID_HEADER = "x-request-id";
-const SAFE_REQUEST_ID = /^[A-Za-z0-9._-]{1,128}$/;
-
-/**
- * Inbound correlation ids are honored only when short and plain: a hostile
- * header value must not flow into logs, responses, or error ids.
- */
-function correlationIdFrom(value: string | string[] | undefined): string | undefined {
-  if (typeof value !== "string") {
-    return undefined;
-  }
-  const trimmed = value.trim();
-  return SAFE_REQUEST_ID.test(trimmed) ? trimmed : undefined;
-}
-
 /**
  * Composition root of the TS server: correlation-id request logging, the
  * unified error envelope, health probes, /version metadata, the OpenAPI
@@ -145,81 +131,53 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
   });
 
   const dataDirectory = options.dataDirectory ?? options.config?.dataDirectory;
-  let studioDb: StudioDatabase | undefined;
-  if (dataDirectory !== undefined) {
-    try {
-      studioDb = await openStudioDatabase(dataDirectory);
-    } catch (error) {
-      await app.close();
-      throw error;
-    }
-    app.decorate("studioDb", studioDb);
+  // The content-authority database exists exactly when a data directory is
+  // configured, so the handles travel together and downstream guards need a
+  // single check (audit hard-10: the former `studioDb === undefined ||
+  // dataDirectory === undefined` clause was unreachable).
+  const persistence =
+    dataDirectory === undefined ? undefined : await openPersistence(app, dataDirectory);
+  if (persistence !== undefined) {
+    app.decorate("studioDb", persistence.db);
     app.addHook("onClose", async () => {
-      studioDb?.close();
+      persistence.db.close();
     });
   }
 
   const environment =
     options.environment ?? options.config?.environment ?? process.env.NODE_ENV ?? "development";
   const authService =
-    studioDb === undefined
+    persistence === undefined
       ? undefined
       : new AuthService({
-          store: new DrizzleAuthStore(studioDb.db),
+          store: new DrizzleAuthStore(persistence.db.db),
           sessionSecret:
             options.sessionSecret ??
             options.config?.sessionSecret ??
             randomBytes(32).toString("base64url"),
           now: options.clock,
         });
-  const llm = options.config?.llm;
-  const providerApiKeys = options.providerApiKeys ?? {
-    dashscope: llm?.dashscopeApiKey,
-    openaiCompatible: llm?.openaiCompatibleApiKey,
-  };
-  const providerModelSettings = {
-    genericModel: llm?.genericModel,
-    dashscopeModel: llm?.dashscopeModel,
-    dashscopeReviewModel: llm?.dashscopeReviewModel,
-    openaiCompatibleModel: llm?.openaiCompatibleModel,
-  };
-  const defaultProvider = llm?.defaultProvider ?? "mock";
-  const providerFactory: TextGenerationProviderFactory =
-    options.textProviderFactory ??
-    textProviderFactory(providerApiKeys, {
-      modelSettings: providerModelSettings,
-      ...(llm === undefined
-        ? {}
-        : {
-            adapterOptions: {
-              dashscope: {
-                apiBase: llm.dashscopeApiBase,
-                transportMode: llm.dashscopeTransportMode,
-                timeoutSeconds: llm.timeoutSeconds,
-                retry: { maxAttempts: llm.retryAttempts, delayMs: llm.retryDelayMs },
-              },
-              openaiCompatible: {
-                apiBase: llm.openaiCompatibleApiBase,
-                timeoutSeconds: llm.timeoutSeconds,
-                retry: { maxAttempts: llm.retryAttempts, delayMs: llm.retryDelayMs },
-              },
-            },
-          }),
-    });
+  const provider = buildProviderRuntime(options.config, options);
   const studioServices =
-    studioDb === undefined || dataDirectory === undefined
+    persistence === undefined
       ? undefined
-      : createStudioServices(new DrizzleStudioStore({ database: studioDb.db, dataDirectory }), {
-          now: options.clock,
-          providerFactory,
-          legacyWorkspaceReader: new FsLegacyWorkspaceReader(),
-          reviewProvenance: {
-            provider: defaultProvider,
-            model: resolveReviewModel(defaultProvider, providerModelSettings),
+      : createStudioServices(
+          new DrizzleStudioStore({
+            database: persistence.db.db,
+            dataDirectory: persistence.dataDirectory,
+          }),
+          {
+            now: options.clock,
+            providerFactory: provider.providerFactory,
+            legacyWorkspaceReader: new FsLegacyWorkspaceReader(),
+            reviewProvenance: {
+              provider: provider.defaultProvider,
+              model: provider.reviewModel,
+            },
+            artifactStore: new ExportStorePart(persistence.db.db),
+            artifactFiles: new FilesystemExportArtifactGateway(persistence.dataDirectory),
           },
-          artifactStore: new ExportStorePart(studioDb.db),
-          artifactFiles: new FilesystemExportArtifactGateway(dataDirectory),
-        });
+        );
 
   const versionInfo: VersionInfo = {
     version: readWorkspaceVersion(),
@@ -289,9 +247,9 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
   await app.register(versionRoutes, { info: versionInfo });
   await app.register(providerCatalogRoutes, {
     authService,
-    defaultProvider,
-    settings: providerModelSettings,
-    credentials: providerApiKeys,
+    defaultProvider: provider.defaultProvider,
+    settings: provider.providerModelSettings,
+    credentials: provider.providerApiKeys,
   });
   await app.register(studioRoutes, {
     authService,

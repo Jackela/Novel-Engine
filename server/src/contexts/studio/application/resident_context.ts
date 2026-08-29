@@ -3,17 +3,12 @@ import type { LoreEntrySource } from "./lorebook.js";
 import { triggeredLoreSections } from "./lorebook.js";
 import type { OutlineBeat } from "./outline_beats.js";
 import type { DocumentWithCurrent, ProjectScope, StudioStore } from "./ports/studio_store.js";
-import {
-  formatAuthorInstruction,
-  formatUntrustedManuscript,
-  PRIOR_STORY_BEGIN,
-  PRIOR_STORY_END,
-  PROJECT_OUTLINE_BEGIN,
-  PROJECT_OUTLINE_END,
-  RECENT_TEXT_BEGIN,
-  RECENT_TEXT_END,
-  sanitizeResidentProse,
-} from "./sanitization.js";
+import { renderResidentContextSections, residentMatchCorpus } from "./resident_context_render.js";
+import { formatAuthorInstruction, formatUntrustedManuscript } from "./sanitization.js";
+
+// The rendering half lives in resident_context_render.ts; re-exported here so
+// the module's public API (ADR-0004 layer 1 consumers) stays unchanged.
+export { renderResidentContextSections, residentMatchCorpus } from "./resident_context_render.js";
 
 /**
  * Resident context (#314, ADR-0004 layer 1): every proposal generation assembles,
@@ -218,74 +213,6 @@ export function collectResidentContextSource(
     })),
     targetDocumentId: document.id,
   };
-}
-
-/**
- * The searchable text of the assembled resident view (#315): outline, beat,
- * every prior title/digest, and the recent tail. Keys match over this RAW
- * view text — render-time sanitization alters markers, not word content, so
- * hits are identical and matching stays independent of rendering.
- */
-export function residentMatchCorpus(view: ResidentContextView): string {
-  const parts: string[] = [];
-  if (view.outline !== null) {
-    parts.push(view.outline.markdown);
-    if (view.outline.linkedBeat !== null) {
-      parts.push(view.outline.linkedBeat.title, view.outline.linkedBeat.content);
-    }
-  }
-  for (const prior of view.priorStory) {
-    parts.push(prior.title, prior.digest);
-  }
-  if (view.recentText !== null) {
-    parts.push(view.recentText);
-  }
-  return parts.join("\n");
-}
-
-/**
- * Render the resident sections in prompt order. Derived prose crosses through
- * sanitizeResidentProse so summary lines and tails can neither instruct nor
- * forge a bracketed marker; the outline itself stays writer-trusted (#313).
- */
-export function renderResidentContextSections(view: ResidentContextView): string[] {
-  const sections: string[] = [];
-  if (view.outline !== null) {
-    sections.push(
-      "",
-      "OUTLINE (the writer's recorded plan):",
-      PROJECT_OUTLINE_BEGIN,
-      view.outline.markdown,
-      PROJECT_OUTLINE_END,
-    );
-    if (view.outline.linkedBeat !== null) {
-      sections.push(
-        `Current beat: "${view.outline.linkedBeat.title}" — this chapter fulfills this outline section.`,
-      );
-    }
-  }
-  if (view.priorStory.length > 0) {
-    sections.push(
-      "",
-      "PRIOR STORY (rolling summary of every earlier chapter, in reading order):",
-      PRIOR_STORY_BEGIN,
-      ...view.priorStory.map(
-        (entry) =>
-          `${entry.ordinal}. ${sanitizeResidentProse(entry.title)} — ${sanitizeResidentProse(entry.digest)}`,
-      ),
-      PRIOR_STORY_END,
-    );
-  }
-  if (view.recentText !== null) {
-    sections.push(
-      "",
-      "RECENT TEXT (closing passage of the most recent earlier chapter):",
-      RECENT_TEXT_BEGIN,
-      sanitizeResidentProse(view.recentText),
-      RECENT_TEXT_END,
-    );
-  }
-  return sections;
 }
 
 /** The whole proposal user prompt: resident context, triggered lorebook, manuscript. */
