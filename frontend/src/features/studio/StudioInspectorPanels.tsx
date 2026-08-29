@@ -13,6 +13,7 @@ import { StudioCopilotPanel } from './components/StudioCopilotPanel';
 import { StudioExportPanel } from './components/StudioExportPanel';
 import { StudioHistoryPanel } from './components/StudioHistoryPanel';
 import { StudioJobsPanel } from './components/StudioJobsPanel';
+import { StudioUsagePanel } from './components/StudioUsagePanel';
 import { StudioReviewPanel } from './components/StudioReviewPanel';
 import { StudioSettingsPanel } from './components/StudioSettingsPanel';
 import { type InspectorTab } from './studioConstants';
@@ -20,6 +21,8 @@ import type { InspectorPendingState, SettingsFormState } from './studioInspector
 
 interface StudioInspectorPanelsProps {
   inspector: InspectorTab;
+  /** #377: project scope for the lazily loaded usage panel. */
+  projectId: string;
   tabId: (tab: Exclude<InspectorTab, 'settings'>) => string;
   panelId: (tab: Exclude<InspectorTab, 'settings'>) => string;
   exports: StudioExport[];
@@ -55,6 +58,7 @@ interface StudioInspectorPanelsProps {
 
 export function StudioInspectorPanels({
   inspector,
+  projectId,
   tabId,
   panelId,
   exports,
@@ -177,6 +181,14 @@ export function StudioInspectorPanels({
               : null)
           }
         />
+      </div>
+      <div
+        aria-labelledby={tabId('usage')}
+        hidden={inspector !== 'usage'}
+        id={panelId('usage')}
+        role="tabpanel"
+      >
+        <StudioUsagePanel active={inspector === 'usage'} projectId={projectId} />
       </div>
     </>
   );

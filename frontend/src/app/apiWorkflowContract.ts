@@ -1,5 +1,6 @@
 import type {
   ExportFormat,
+  ProjectUsage,
   Review,
   ReviewIssue,
   StudioExport,
@@ -8,6 +9,7 @@ import type {
   StudioJobKind,
   StudioJobOperation,
   StudioJobStatus,
+  UsageModelRow,
 } from '@/app/types/studio';
 
 import {
@@ -146,6 +148,29 @@ function parseExport(value: unknown, label = 'export'): StudioExport {
     checksum_sha256: stringField(item, 'checksum_sha256', label),
     created_at: stringField(item, 'created_at', label),
     download_url: stringField(item, 'download_url', label),
+  };
+}
+
+function parseUsageModelRow(value: unknown, label: string): UsageModelRow {
+  const item = objectValue(value, label);
+  return {
+    model: stringField(item, 'model', label),
+    requests: numberField(item, 'requests', label),
+    prompt_tokens: numberField(item, 'prompt_tokens', label),
+    completion_tokens: numberField(item, 'completion_tokens', label),
+  };
+}
+
+export function parseUsage(value: unknown): ProjectUsage {
+  const item = objectValue(value, 'usage response');
+  return {
+    project_id: stringField(item, 'project_id', 'usage response'),
+    request_count: numberField(item, 'request_count', 'usage response'),
+    prompt_tokens: numberField(item, 'prompt_tokens', 'usage response'),
+    completion_tokens: numberField(item, 'completion_tokens', 'usage response'),
+    per_model: arrayField(item, 'per_model', 'usage response', (entry, index) =>
+      parseUsageModelRow(entry, `per_model[${index}]`),
+    ),
   };
 }
 

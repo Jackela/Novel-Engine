@@ -989,6 +989,47 @@ svg {
   border-radius: 5px;
   text-align: center;
 }
+.usage-totals {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 7px;
+  margin-top: 14px;
+}
+.usage-total-card {
+  display: grid;
+  gap: 2px;
+  padding: 10px;
+  border: 1px solid #dfe2e3;
+  border-radius: 5px;
+  background: #fff;
+  text-align: center;
+}
+.usage-total-card strong {
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+.usage-total-card span {
+  color: #4f595a;
+  font-size: 10px;
+}
+.usage-table {
+  width: 100%;
+  margin-top: 14px;
+  border-collapse: collapse;
+  font-size: 11px;
+}
+.usage-table th,
+.usage-table td {
+  padding: 6px 7px;
+  border-bottom: 1px solid #dfe2e3;
+  text-align: left;
+  font-variant-numeric: tabular-nums;
+}
+.usage-table thead th {
+  color: #4f595a;
+  font-size: 10px;
+  text-transform: uppercase;
+}
 .revision-list {
   display: grid;
   gap: 7px;

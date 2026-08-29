@@ -80,6 +80,7 @@ describe('Studio split components', () => {
     const container = render(
       <StudioInspector
         error={null}
+        projectId="project-1"
         inspector="copilot"
         instruction=""
         jobs={[]}
@@ -115,16 +116,16 @@ describe('Studio split components', () => {
     expect(disclosure).not.toBeNull();
     expect(disclosure?.querySelector('summary')?.textContent).toContain('Inspector');
     expect(disclosure?.hasAttribute('open')).toBe(true);
-    expect(tabs).toHaveLength(5);
-    expect(panels).toHaveLength(5);
+    expect(tabs).toHaveLength(6);
+    expect(panels).toHaveLength(6);
     expect(activeTab?.textContent).toContain('Copilot');
-    expect(tabs.filter((tab) => tab.getAttribute('aria-selected') === 'false')).toHaveLength(4);
+    expect(tabs.filter((tab) => tab.getAttribute('aria-selected') === 'false')).toHaveLength(5);
     expect(activeTab?.getAttribute('aria-controls')).toBe(activePanel?.id);
     expect(activePanel?.getAttribute('aria-labelledby')).toBe(activeTab?.id);
     expect(
       tabs.every((tab) => panels.some((panel) => panel.id === tab.getAttribute('aria-controls'))),
     ).toBe(true);
-    expect(panels.filter((panel) => panel.hasAttribute('hidden'))).toHaveLength(4);
+    expect(panels.filter((panel) => panel.hasAttribute('hidden'))).toHaveLength(5);
 
     click(tabs.find((tab) => tab.textContent?.includes('Review')) ?? null);
     expect(setInspector).toHaveBeenCalledWith('review');
@@ -135,6 +136,7 @@ describe('Studio split components', () => {
     const container = render(
       <StudioInspector
         error={null}
+        projectId="project-1"
         inspector="copilot"
         instruction=""
         jobs={[]}
@@ -170,7 +172,7 @@ describe('Studio split components', () => {
     act(() => {
       tabs[0].dispatchEvent(new KeyboardEvent('keydown', { key: 'End', bubbles: true }));
     });
-    expect(setInspector).toHaveBeenCalledWith('jobs');
+    expect(setInspector).toHaveBeenCalledWith('usage');
 
     act(() => {
       tabs[2].dispatchEvent(new KeyboardEvent('keydown', { key: 'Home', bubbles: true }));
@@ -182,6 +184,7 @@ describe('Studio split components', () => {
     const container = render(
       <StudioInspector
         error={null}
+        projectId="project-1"
         inspector="settings"
         instruction=""
         jobs={[]}
