@@ -66,7 +66,8 @@ export const jobListResponseSchema = {
   required: ["jobs"],
 } as const;
 
-/** The project usage surface (#317): totals plus a per-model breakdown. */
+/** The project usage surface (#317): totals plus a per-model breakdown and
+ * the trailing-30-UTC-day buckets (#384, optional for consumers). */
 export const usageResponseSchema = {
   type: "object",
   additionalProperties: false,
@@ -75,6 +76,22 @@ export const usageResponseSchema = {
     request_count: { type: "integer", minimum: 0 },
     prompt_tokens: { type: "integer", minimum: 0 },
     completion_tokens: { type: "integer", minimum: 0 },
+    daily: {
+      type: "array",
+      description:
+        "The last 30 UTC days (today included), zero-filled: one bucket per day, oldest first (#384).",
+      items: {
+        type: "object",
+        additionalProperties: false,
+        properties: {
+          date: { type: "string", pattern: "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" },
+          request_count: { type: "integer", minimum: 0 },
+          prompt_tokens: { type: "integer", minimum: 0 },
+          completion_tokens: { type: "integer", minimum: 0 },
+        },
+        required: ["date", "request_count", "prompt_tokens", "completion_tokens"],
+      },
+    },
     per_model: {
       type: "array",
       items: {

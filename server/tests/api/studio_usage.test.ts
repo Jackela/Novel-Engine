@@ -34,12 +34,22 @@ describe("project usage surface (#317)", () => {
       // Totals are exactly the fold of the per-model breakdown.
       expect(body.prompt_tokens).toBe(body.per_model[0].prompt_tokens);
       expect(body.completion_tokens).toBe(body.per_model[0].completion_tokens);
+      // #384: 30 zero-filled daily buckets ending today; today holds the calls.
+      expect(body.daily).toHaveLength(30);
+      const today = new Date().toISOString().slice(0, 10);
+      expect(body.daily.at(-1)).toEqual({
+        date: today,
+        request_count: 2,
+        prompt_tokens: body.prompt_tokens,
+        completion_tokens: body.completion_tokens,
+      });
+      expect(body.daily.at(-2)?.request_count).toBe(0);
     } finally {
       await app.close();
     }
   });
 
-  it("returns zeroed totals for a project with an empty ledger", async () => {
+  it("zero-fills the trailing 30 UTC days for a project with an empty ledger", async () => {
     const { app } = await buildStudioApp();
     try {
       const jar = await ownerJar(app);
@@ -47,13 +57,74 @@ describe("project usage surface (#317)", () => {
 
       const response = await call(app, jar, "GET", `/api/projects/${project.id}/usage`);
       expect(response.statusCode).toBe(200);
-      expect(response.json()).toEqual({
+      const body = response.json();
+      expect(body).toEqual({
         project_id: project.id,
         request_count: 0,
         prompt_tokens: 0,
         completion_tokens: 0,
         per_model: [],
+        daily: expect.any(Array),
       });
+      expect(body.daily).toHaveLength(30);
+      const today = new Date().toISOString().slice(0, 10);
+      expect(body.daily.map((bucket: { date: string }) => bucket.date)).toEqual(
+        Array.from({ length: 30 }, (_, index) =>
+          new Date(Date.parse(`${today}T00:00:00Z`) - (29 - index) * 86_400_000)
+            .toISOString()
+            .slice(0, 10),
+        ),
+      );
+      for (const bucket of body.daily) {
+        expect(bucket).toEqual({
+          date: bucket.date,
+          request_count: 0,
+          prompt_tokens: 0,
+          completion_tokens: 0,
+        });
+      }
+    } finally {
+      await app.close();
+    }
+  });
+
+  it("buckets usage into the UTC day of an injected fixed clock (#384)", async () => {
+    const fixed = new Date("2026-03-15T23:30:00Z");
+    let current = fixed.getTime();
+    const clock = () => {
+      current += 1;
+      return new Date(current);
+    };
+    const capture = capturingFactory({});
+    const { app } = await buildStudioApp(clock, { textProviderFactory: capture.factory });
+    try {
+      const jar = await ownerJar(app);
+      const project = await seedProject(app, jar, "Fixed clock");
+      const document = project.documents[0];
+      if (document === undefined) throw new Error("expected seeded document");
+      const propose = () =>
+        call(
+          app,
+          jar,
+          "POST",
+          `/api/projects/${project.id}/documents/${document.id}/ai-proposals`,
+          { operation: "continue" },
+        );
+      await propose();
+      await propose();
+
+      const response = await call(app, jar, "GET", `/api/projects/${project.id}/usage`);
+      expect(response.statusCode).toBe(200);
+      const body = response.json();
+      expect(body.daily.at(-1)).toEqual({
+        date: "2026-03-15",
+        request_count: 2,
+        prompt_tokens: body.prompt_tokens,
+        completion_tokens: body.completion_tokens,
+      });
+      // Only the fixed-clock day and zero-filled predecessors, never a future day.
+      expect(body.daily.at(0).date).toBe("2026-02-14");
+      expect(body.daily.some((bucket: { date: string }) => bucket.date > "2026-03-15")).toBe(false);
     } finally {
       await app.close();
     }

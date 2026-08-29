@@ -131,6 +131,14 @@ export interface UsageModelRow {
   completion_tokens: number;
 }
 
+/** One UTC day of the trailing-30-day usage window (#384). */
+export interface UsageDailyBucket {
+  date: string;
+  request_count: number;
+  prompt_tokens: number;
+  completion_tokens: number;
+}
+
 /** Project-level cumulative AI usage (matching the generated api contract). */
 export interface ProjectUsage {
   project_id: string;
@@ -138,6 +146,7 @@ export interface ProjectUsage {
   prompt_tokens: number;
   completion_tokens: number;
   per_model: UsageModelRow[];
+  daily?: UsageDailyBucket[];
 }
 
 export interface StudioJobEvent {

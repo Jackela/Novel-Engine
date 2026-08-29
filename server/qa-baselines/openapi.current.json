@@ -3370,6 +3370,38 @@
                       "minimum": 0,
                       "type": "integer"
                     },
+                    "daily": {
+                      "description": "The last 30 UTC days (today included), zero-filled: one bucket per day, oldest first (#384).",
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "completion_tokens": {
+                            "minimum": 0,
+                            "type": "integer"
+                          },
+                          "date": {
+                            "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
+                            "type": "string"
+                          },
+                          "prompt_tokens": {
+                            "minimum": 0,
+                            "type": "integer"
+                          },
+                          "request_count": {
+                            "minimum": 0,
+                            "type": "integer"
+                          }
+                        },
+                        "required": [
+                          "date",
+                          "request_count",
+                          "prompt_tokens",
+                          "completion_tokens"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
                     "per_model": {
                       "items": {
                         "additionalProperties": false,

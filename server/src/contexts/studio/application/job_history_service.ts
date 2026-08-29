@@ -57,9 +57,9 @@ export class JobHistoryService {
       .map((job) => jobPayload(job));
   }
 
-  /** The usage-ledger aggregation for the project surface (#317). */
+  /** The usage-ledger aggregation for the project surface (#317, #384). */
   aggregateProjectUsage(principal: Principal, projectId: string): ProjectUsageAggregate {
-    return this.store.aggregateProjectUsage(scopeForPrincipal(principal), projectId);
+    return this.store.aggregateProjectUsage(scopeForPrincipal(principal), projectId, this.now());
   }
 
   /** The terminal-Job bridge over a fresh editorial assessment. */

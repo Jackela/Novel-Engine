@@ -1030,6 +1030,43 @@ svg {
   font-size: 10px;
   text-transform: uppercase;
 }
+.usage-daily {
+  margin-top: 14px;
+  display: grid;
+  gap: 2px;
+}
+.usage-daily h3 {
+  margin: 0 0 4px;
+  color: #4f595a;
+  font-size: 10px;
+  text-transform: uppercase;
+}
+.usage-daily-row {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 7px;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+.usage-daily-date {
+  color: #4f595a;
+}
+.usage-daily-bar-track {
+  display: block;
+  height: 8px;
+  border-radius: 4px;
+  background: #eef0f1;
+}
+.usage-daily-bar {
+  display: block;
+  height: 100%;
+  border-radius: 4px;
+  background: #4f595a;
+}
+.usage-daily-count {
+  text-align: right;
+}
 .revision-list {
   display: grid;
   gap: 7px;
