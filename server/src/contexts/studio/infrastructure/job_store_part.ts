@@ -13,6 +13,7 @@ import type {
 } from "../application/ports/studio_store.js";
 import { NotFoundError } from "../domain/exceptions.js";
 import { type ProjectRow, scopedProject, type Tx } from "./db/studio_query_helpers.js";
+import { dailyUsageBuckets } from "./db/usage_daily_buckets.js";
 
 type JobRow = typeof jobs.$inferSelect;
 type JobEventRow = typeof jobEvents.$inferSelect;
@@ -127,8 +128,9 @@ export class JobStorePart {
   /**
    * The usage-ledger aggregation (#317): totals over the project's usage
    * events plus a per-model breakdown, read inside a scoped transaction.
+   * `daily` (#384) adds the trailing-30-UTC-day buckets relative to `now`.
    */
-  aggregateProjectUsage(scope: ProjectScope, projectId: string): ProjectUsageAggregate {
+  aggregateProjectUsage(scope: ProjectScope, projectId: string, now: Date): ProjectUsageAggregate {
     return this.db.transaction((tx) => {
       scopedProject(tx, scope, projectId);
       const rows = tx
@@ -149,12 +151,14 @@ export class JobStorePart {
         promptTokens: Number(row.promptTokens ?? 0),
         completionTokens: Number(row.completionTokens ?? 0),
       }));
+      const daily = dailyUsageBuckets(tx, projectId, now);
       return {
         projectId,
         requestCount: perModel.reduce((total, entry) => total + entry.requests, 0),
         promptTokens: perModel.reduce((total, entry) => total + entry.promptTokens, 0),
         completionTokens: perModel.reduce((total, entry) => total + entry.completionTokens, 0),
         perModel,
+        daily,
       };
     });
   }

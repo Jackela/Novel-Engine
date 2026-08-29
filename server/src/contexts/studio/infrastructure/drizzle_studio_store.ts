@@ -170,8 +170,8 @@ export class DrizzleStudioStore extends ProjectStorePart implements StudioStore 
     this.workflowJobs.addUsageEvent(scope, input);
   }
 
-  aggregateProjectUsage(scope: ProjectScope, projectId: string): ProjectUsageAggregate {
-    return this.workflowJobs.aggregateProjectUsage(scope, projectId);
+  aggregateProjectUsage(scope: ProjectScope, projectId: string, now: Date): ProjectUsageAggregate {
+    return this.workflowJobs.aggregateProjectUsage(scope, projectId, now);
   }
 
   findJob(scope: ProjectScope, projectId: string, jobId: string): JobRecord {

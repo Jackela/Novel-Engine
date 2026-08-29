@@ -1709,6 +1709,13 @@ export interface paths {
                     content: {
                         "application/json": {
                             completion_tokens: number;
+                            /** @description The last 30 UTC days (today included), zero-filled: one bucket per day, oldest first (#384). */
+                            daily?: {
+                                completion_tokens: number;
+                                date: string;
+                                prompt_tokens: number;
+                                request_count: number;
+                            }[];
                             per_model: {
                                 completion_tokens: number;
                                 model: string;

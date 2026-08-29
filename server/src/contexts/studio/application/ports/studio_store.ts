@@ -7,6 +7,7 @@ import type {
   MarkJobOutcomeInput,
 } from "./job_records.js";
 import type { StudioLoreStore } from "./lore_store.js";
+import type { ProjectUsageAggregate } from "./project_usage.js";
 import type { StudioVolumeStore } from "./volume_store.js";
 
 /** Persistence-neutral row shapes handed to the application layer. */
@@ -136,21 +137,12 @@ export interface ProjectScope {
   ownerId: string;
 }
 
-/** The aggregated AI usage ledger of one project (#317). */
-export interface ProjectUsageBreakdownEntry {
-  model: string;
-  requests: number;
-  promptTokens: number;
-  completionTokens: number;
-}
-
-export interface ProjectUsageAggregate {
-  projectId: string;
-  requestCount: number;
-  promptTokens: number;
-  completionTokens: number;
-  perModel: ProjectUsageBreakdownEntry[];
-}
+/** The aggregated usage-ledger types (#317, #384), shared with the HTTP surface. */
+export type {
+  ProjectUsageAggregate,
+  ProjectUsageBreakdownEntry,
+  ProjectUsageDailyBucket,
+} from "./project_usage.js";
 
 /** Derive the store scope from the authenticated owner principal. */
 export function scopeForPrincipal(principal: Principal): ProjectScope {
@@ -285,7 +277,7 @@ export interface StudioStore extends StudioVolumeStore, StudioBeatStore, StudioL
 
   addJob(scope: ProjectScope, input: AddJobInput): JobRecord;
   addUsageEvent(scope: ProjectScope, input: AddUsageEventInput): void;
-  aggregateProjectUsage(scope: ProjectScope, projectId: string): ProjectUsageAggregate;
+  aggregateProjectUsage(scope: ProjectScope, projectId: string, now: Date): ProjectUsageAggregate;
   findJob(scope: ProjectScope, projectId: string, jobId: string): JobRecord;
   /**
    * The jobs audit trail, newest job first and each job's events newest

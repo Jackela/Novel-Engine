@@ -3,9 +3,21 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { api } from '@/app/api';
-import type { ProjectUsage } from '@/app/types/studio';
+import type { ProjectUsage, UsageDailyBucket } from '@/app/types/studio';
 
 import { StudioUsagePanel } from './StudioUsagePanel';
+
+function dailyBucketsWithToday(requests: number): UsageDailyBucket[] {
+  const today = new Date().toISOString().slice(0, 10);
+  return Array.from({ length: 30 }, (_, index) => ({
+    date: new Date(Date.parse(`${today}T00:00:00Z`) - (29 - index) * 86_400_000)
+      .toISOString()
+      .slice(0, 10),
+    request_count: index === 29 ? requests : 0,
+    prompt_tokens: index === 29 ? 300 : 0,
+    completion_tokens: index === 29 ? 100 : 0,
+  }));
+}
 
 vi.mock('@/app/api', () => ({
   api: { usage: vi.fn() },
@@ -38,6 +50,7 @@ const emptyUsage: ProjectUsage = {
   prompt_tokens: 0,
   completion_tokens: 0,
   per_model: [],
+  daily: dailyBucketsWithToday(0),
 };
 
 const multiModelUsage: ProjectUsage = {
@@ -59,6 +72,7 @@ const multiModelUsage: ProjectUsage = {
       completion_tokens: 500,
     },
   ],
+  daily: dailyBucketsWithToday(4),
 };
 
 function flush(): Promise<void> {
@@ -100,6 +114,39 @@ describe('StudioUsagePanel', () => {
     expect(rows[0].textContent).toContain('100,000');
     expect(rows[1].textContent).toContain('mock');
     expect(rows[1].textContent).toContain('500');
+  });
+
+  it('renders the 30-day daily bars above the per-model table (#384)', async () => {
+    vi.mocked(api.usage).mockResolvedValue(multiModelUsage);
+    const container = renderUsagePanel(true);
+    await flush();
+
+    const daily = container.querySelector('.usage-daily');
+    expect(daily).not.toBeNull();
+    if (daily === null) throw new Error('expected daily section');
+    expect(daily?.querySelector('h3')?.textContent).toBe('Last 30 days');
+    const dailyRows = Array.from(daily?.querySelectorAll('.usage-daily-row') ?? []);
+    expect(dailyRows).toHaveLength(30);
+    // Today's row (last) carries the only usage; bar width is set inline.
+    const todayRow = dailyRows[dailyRows.length - 1];
+    expect(todayRow.textContent).toContain('400');
+    const bar = todayRow.querySelector<HTMLElement>('.usage-daily-bar');
+    expect(bar?.style.width).toBe('100%');
+    const zeroBar = dailyRows[0]?.querySelector<HTMLElement>('.usage-daily-bar');
+    expect(zeroBar?.style.width).toBe('0%');
+    // The daily section sits above the per-model table.
+    const table = container.querySelector('.usage-table');
+    expect(table).not.toBeNull();
+    if (table === null) throw new Error('expected usage table');
+    expect(daily.compareDocumentPosition(table) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0);
+  });
+
+  it('omits the daily section when no day has usage (empty state)', async () => {
+    const container = renderUsagePanel(true);
+    await flush();
+
+    expect(container.querySelector('.usage-daily')).toBeNull();
+    expect(container.textContent).toContain('No usage recorded yet.');
   });
 
   it('does not fetch while the tab is inactive', async () => {

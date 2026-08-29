@@ -83,6 +83,12 @@ export const jobRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (app, op
             prompt_tokens: entry.promptTokens,
             completion_tokens: entry.completionTokens,
           })),
+          daily: usage.daily.map((bucket) => ({
+            date: bucket.date,
+            request_count: bucket.requestCount,
+            prompt_tokens: bucket.promptTokens,
+            completion_tokens: bucket.completionTokens,
+          })),
         };
       });
     },

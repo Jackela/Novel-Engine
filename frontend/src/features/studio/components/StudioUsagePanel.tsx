@@ -3,6 +3,7 @@ import { RefreshCw } from 'lucide-react';
 import type { ProjectUsage } from '@/app/types/studio';
 
 import { useProjectUsage } from '../hooks/useProjectUsage';
+import { UsageDailyBars } from './UsageDailyBars';
 import { UsageModelTable } from './UsageModelTable';
 
 const formatCount = (value: number) => value.toLocaleString('en-US');
@@ -61,6 +62,9 @@ export function StudioUsagePanel({ projectId, active }: StudioUsagePanelProps) {
             <UsageTotalCard label="Prompt tokens" value={totals.prompt_tokens} />
             <UsageTotalCard label="Completion tokens" value={totals.completion_tokens} />
           </div>
+          {totals.daily && totals.daily.some((bucket) => bucket.request_count > 0) ? (
+            <UsageDailyBars buckets={totals.daily} />
+          ) : null}
           {totals.per_model.length ? (
             <UsageModelTable rows={totals.per_model} />
           ) : (
