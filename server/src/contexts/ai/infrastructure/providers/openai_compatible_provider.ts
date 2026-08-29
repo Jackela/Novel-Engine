@@ -1,14 +1,12 @@
 import { HARD_DEFAULT_MODELS } from "../../application/model_resolution.js";
 import {
-  isProviderStep,
-  type ProviderStep,
   type TextGenerationProvider,
   TextGenerationProviderError,
   type TextGenerationResult,
   type TextGenerationStreamOptions,
   type TextGenerationTask,
 } from "../../application/ports/text_generation.js";
-import { coercePayloadToSchema, payloadFromResponseText } from "./dashscope_payload.js";
+import { coercePayloadToSchema } from "./dashscope_payload.js";
 import {
   classifyTransportRejection,
   DEFAULT_PROVIDER_RETRY_POLICY,
@@ -16,7 +14,6 @@ import {
   httpStatusFailure,
   isJsonObject,
   isResponseLike,
-  malformedJsonFailure,
   normalizedTimeoutSeconds,
   type ProviderRetryPolicy,
   type ProviderTransport,
@@ -26,13 +23,18 @@ import {
   requiredApiKey,
   runWithRetryPolicy,
 } from "./provider_http.js";
+import {
+  type JsonObject,
+  providerDispatch,
+  responseJsonObject,
+  structuredPayload,
+  supportedStep,
+} from "./provider_json.js";
 import { streamProviderTextDeltas } from "./streaming_generation.js";
 
 const DEFAULT_API_BASE = "https://api.openai.com/v1";
 const DEFAULT_TEMPERATURE = 0.7;
 const DEFAULT_TIMEOUT_SECONDS = 30;
-
-type JsonObject = Record<string, unknown>;
 
 export interface OpenAICompatibleTextProviderOptions {
   readonly apiKey: string;
@@ -67,13 +69,6 @@ function normalizedApiBase(value: string | undefined): string {
   }
 }
 
-function supportedStep(step: string): ProviderStep {
-  if (!isProviderStep(step)) {
-    throw new TextGenerationProviderError(`Unsupported generation step: ${step}`);
-  }
-  return step;
-}
-
 function chatCompletionPayload(model: string, task: TextGenerationTask): JsonObject {
   return {
     model,
@@ -90,18 +85,6 @@ function chatCompletionPayload(model: string, task: TextGenerationTask): JsonObj
       },
     ],
   };
-}
-
-async function responseJsonObject(response: Response, context: string): Promise<JsonObject> {
-  try {
-    const data: unknown = await readableResponse(response).json();
-    if (!isJsonObject(data)) throw malformedJsonFailure(context);
-    return data;
-  } catch (error) {
-    if (error instanceof ProviderTransportError) throw error;
-    if (error instanceof SyntaxError) throw malformedJsonFailure(context);
-    throw error;
-  }
 }
 
 function responseContentText(data: JsonObject): string {
@@ -143,19 +126,6 @@ function streamDeltaContent(data: JsonObject): string | undefined {
   if (!isJsonObject(delta)) return undefined;
   const content = delta.content;
   return typeof content === "string" && content !== "" ? content : undefined;
-}
-
-function structuredPayload(
-  contentText: string,
-  responseSchema: JsonObject,
-  context: string,
-): JsonObject {
-  try {
-    return payloadFromResponseText(contentText, responseSchema);
-  } catch (error) {
-    if (error instanceof TextGenerationProviderError) throw malformedJsonFailure(context);
-    throw error;
-  }
 }
 
 /**
@@ -285,10 +255,6 @@ export class OpenAICompatibleTextProvider implements TextGenerationProvider {
   }
 
   private dispatch(url: string, init: RequestInit): Promise<Response | undefined> {
-    if (this.transport !== undefined) return this.transport(url, init);
-    if (typeof globalThis.fetch !== "function") {
-      throw new ProviderTransportError("OpenAI-compatible transport is unavailable");
-    }
-    return globalThis.fetch(url, init);
+    return providerDispatch(url, init, this.transport, "OpenAI-compatible");
   }
 }
