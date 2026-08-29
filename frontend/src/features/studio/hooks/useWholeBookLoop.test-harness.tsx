@@ -1,4 +1,4 @@
-import { act, useState } from 'react';
+import { act, useRef, useState } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, vi } from 'vitest';
 
@@ -30,7 +30,7 @@ export function deferred<T>(): Deferred<T> {
   return { promise, resolve };
 }
 
-export function chapter(id: string, overrides: Partial<StudioDocument> = {}): StudioDocument {
+function chapter(id: string, overrides: Partial<StudioDocument> = {}): StudioDocument {
   return {
     id,
     project_id: 'project-1',
@@ -105,15 +105,19 @@ export function renderLoopHook(initialProject: Project): {
 
   function Wrapper(): null {
     const [project, setProject] = useState<Project | null>(initialProject);
-    const [accepted, setAccepted] = useState<StudioDocument[]>([]);
+    // Accepted documents are recorded in a ref: tests only observe them
+    // through snapshots, so the extra re-render would be pure overhead.
+    const accepted = useRef<StudioDocument[]>([]);
     const hook = useWholeBookLoop({
       projectId: initialProject.id,
       provider: 'mock',
       setProject,
       loadJobs: vi.fn(),
-      onAccepted: (document) => setAccepted((previous) => [...previous, document]),
+      onAccepted: (document) => {
+        accepted.current = [...accepted.current, document];
+      },
     });
-    current = { hook, project, accepted };
+    current = { hook, project, accepted: accepted.current };
     return null;
   }
 
