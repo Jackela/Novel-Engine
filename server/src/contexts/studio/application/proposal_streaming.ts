@@ -1,15 +1,13 @@
 import {
-  isTextProviderName,
   type TextGenerationProvider,
   TextGenerationProviderError,
   type TextGenerationProviderFactory,
   type TextGenerationStreamOutcome,
-  type TextProviderName,
 } from "../../../contexts/ai/application/ports/text_generation.js";
 import type { Principal } from "../../../shared/application/ports/auth.js";
 import { InvalidOperationError } from "../../../shared/domain/exceptions.js";
 import type { InFlightOperationGuard } from "./operation_in_flight.js";
-import { dumpJson, jobPayload } from "./payloads.js";
+import { jobPayload } from "./payloads.js";
 import type { StudioStore } from "./ports/studio_store.js";
 import { scopeForPrincipal } from "./ports/studio_store.js";
 import {
@@ -17,12 +15,10 @@ import {
   completedProposalJob,
   disposeProvider,
   failedProposalJob,
-  INVALID_PROPOSAL_PROSE,
-  OPERATION_STEPS,
-  type ProposalJobSeed,
   type ProviderCleanupFailureReporter,
+  validatedProposalOrThrow,
 } from "./proposal_landing.js";
-import { isProposalMarkdownProse, sanitizeProposalMarkdown } from "./sanitization.js";
+import { buildProposalSeed, validateProposalRequest } from "./proposal_pipeline.js";
 
 /** The terminal frame vocabulary of a streamed proposal (#308). */
 export type ProposalStreamFrame =
@@ -74,34 +70,20 @@ export async function* streamProposal(
 ): AsyncGenerator<ProposalStreamFrame, void, void> {
   const { input, projectId, documentId } = request;
   const scope = scopeForPrincipal(request.principal);
-  const step = OPERATION_STEPS[input.operation];
-  if (step === undefined) {
-    throw new InvalidOperationError(`Unsupported proposal operation: ${input.operation}`);
-  }
-  if (!isTextProviderName(input.provider)) {
-    throw new InvalidOperationError(`Unsupported text generation provider: ${input.provider}`);
-  }
-  const document = deps.store.findDocument(scope, projectId, documentId);
-  const revision = document.currentRevision;
-  if (revision === null) {
-    throw new InvalidOperationError("Document has no current revision.");
-  }
-  const providerName: TextProviderName = input.provider;
-  const seed: ProposalJobSeed = {
+  const { step, providerName, operation, instruction, document, revision } =
+    validateProposalRequest(deps.store, scope, projectId, documentId, input);
+  const seed = buildProposalSeed({
     projectId,
     documentId,
-    operation: input.operation,
+    operation,
     provider: providerName,
-    requestJson: dumpJson({
-      operation: input.operation,
-      instruction: input.instruction,
-      base_revision_id: revision.id,
-    }),
+    instruction,
+    baseRevisionId: revision.id,
     now: deps.now(),
-  };
+  });
   // #305 parity: identical concurrent submissions are deduplicated by the
   // in-flight guard — the loser receives a 409 instead of running work twice.
-  const inFlightTarget = { projectId, documentId, operation: input.operation };
+  const inFlightTarget = { projectId, documentId, operation };
   deps.inFlight.enter(inFlightTarget);
   let provider: TextGenerationProvider | undefined;
   try {
@@ -117,8 +99,8 @@ export async function* streamProposal(
     for await (const delta of stream(
       buildProposalTask(
         step,
-        input.operation,
-        input.instruction,
+        operation,
+        instruction,
         deps.store,
         scope,
         projectId,
@@ -136,10 +118,7 @@ export async function* streamProposal(
       yield { type: "delta", text: delta };
     }
     if (request.signal?.aborted === true) return;
-    const proposal = sanitizeProposalMarkdown(accumulated);
-    if (!isProposalMarkdownProse(proposal)) {
-      throw new TextGenerationProviderError(INVALID_PROPOSAL_PROSE);
-    }
+    const { proposal } = validatedProposalOrThrow({ content: { chapter_markdown: accumulated } });
     yield {
       type: "done",
       job: jobPayload(
@@ -149,7 +128,7 @@ export async function* streamProposal(
           model: reported?.model ?? "",
           promptTokens: reported?.promptTokens ?? null,
           completionTokens: reported?.completionTokens ?? null,
-          instruction: input.instruction,
+          instruction,
         }),
       ),
     };

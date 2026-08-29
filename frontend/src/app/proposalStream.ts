@@ -1,4 +1,5 @@
 import { apiUrl, getCsrfToken, HttpError, readHttpError } from '@/app/api';
+import { objectValue } from '@/app/apiContract';
 import { parseJob } from '@/app/apiWorkflowContract';
 import type { StudioJob } from '@/app/types/studio';
 
@@ -15,6 +16,35 @@ export type ProposalStreamFrame =
   | { type: 'done'; job: StudioJob }
   | { type: 'error'; error: { code: string; message: string } };
 
+/** Runtime-validates one frame against the server contract; unknown frame types are ignored. */
+function parseFramePayload(data: string): ProposalStreamFrame | null {
+  let value: unknown;
+  try {
+    value = JSON.parse(data);
+  } catch {
+    throw new Error(`Invalid proposal frame: not JSON (${data.slice(0, 64)})`);
+  }
+  const frame = objectValue(value, 'proposal frame');
+  const type = frame.type;
+  if (type === 'delta') {
+    if (typeof frame.text !== 'string') throw new Error('Invalid proposal frame: delta.text');
+    return { type: 'delta', text: frame.text };
+  }
+  if (type === 'done') {
+    if (typeof frame.job !== 'object' || frame.job === null || Array.isArray(frame.job)) {
+      throw new Error('Invalid proposal frame: done.job');
+    }
+    return frame as unknown as ProposalStreamFrame;
+  }
+  if (type === 'error') {
+    const error = objectValue(frame.error, 'proposal frame.error');
+    if (typeof error.code !== 'string') throw new Error('Invalid proposal frame: error.code');
+    if (typeof error.message !== 'string') throw new Error('Invalid proposal frame: error.message');
+    return { type: 'error', error: { code: error.code, message: error.message } };
+  }
+  return null;
+}
+
 function parseFrameEvent(rawEvent: string): ProposalStreamFrame | null {
   const data = rawEvent
     .split('\n')
@@ -22,7 +52,7 @@ function parseFrameEvent(rawEvent: string): ProposalStreamFrame | null {
     .map((line) => (line.startsWith('data: ') ? line.slice(6) : line.slice(5)))
     .join('\n');
   if (data === '') return null;
-  return JSON.parse(data) as ProposalStreamFrame;
+  return parseFramePayload(data);
 }
 
 /**

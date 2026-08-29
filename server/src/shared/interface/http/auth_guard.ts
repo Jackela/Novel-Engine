@@ -80,3 +80,19 @@ export function principalGuard(
     done();
   };
 }
+
+/**
+ * Runtime principal accessor for handlers behind `principalGuard`: the guard
+ * has already authenticated the request, so the principal is present; this
+ * remains an explicit domain guard rather than a type assertion.
+ */
+export function requirePrincipal(request: FastifyRequest): Principal {
+  if (request.principal === undefined) {
+    throw new AppError({
+      statusCode: 401,
+      code: "UNAUTHORIZED",
+      message: "Owner session required.",
+    });
+  }
+  return request.principal;
+}
