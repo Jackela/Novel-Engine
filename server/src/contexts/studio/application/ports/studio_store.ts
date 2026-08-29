@@ -1,13 +1,7 @@
 import type { Principal } from "../../../../shared/application/ports/auth.js";
 import type { StudioBeatStore } from "./beat_store.js";
-import type {
-  AddJobInput,
-  AddUsageEventInput,
-  JobRecord,
-  MarkJobOutcomeInput,
-} from "./job_records.js";
+import type { StudioJobLedgerStore } from "./job_ledger_store.js";
 import type { StudioLoreStore } from "./lore_store.js";
-import type { ProjectUsageAggregate } from "./project_usage.js";
 import type { StudioVolumeStore } from "./volume_store.js";
 
 /** Persistence-neutral row shapes handed to the application layer. */
@@ -69,9 +63,12 @@ export interface DocumentMatchRecord {
 export type {
   AddJobInput,
   AddUsageEventInput,
+  CompletedProposalUsageInput,
+  CompleteJobWithUsageInput,
   JobEventRecord,
   JobRecord,
   MarkJobOutcomeInput,
+  RecordCompletedProposalJobInput,
 } from "./job_records.js";
 
 /** A document/revision pair frozen into an immutable review snapshot. */
@@ -207,7 +204,11 @@ export interface AdvanceDocumentInput {
  * (ADR-0005) extends it from its own module, as do the beat association
  * (#313) and the lorebook aliases (#315).
  */
-export interface StudioStore extends StudioVolumeStore, StudioBeatStore, StudioLoreStore {
+export interface StudioStore
+  extends StudioVolumeStore,
+    StudioBeatStore,
+    StudioLoreStore,
+    StudioJobLedgerStore {
   addProject(
     scope: ProjectScope,
     input: AddProjectInput,
@@ -274,30 +275,6 @@ export interface StudioStore extends StudioVolumeStore, StudioBeatStore, StudioL
     projectId: string,
     matchQuery: string,
   ): DocumentMatchRecord[];
-
-  addJob(scope: ProjectScope, input: AddJobInput): JobRecord;
-  addUsageEvent(scope: ProjectScope, input: AddUsageEventInput): void;
-  aggregateProjectUsage(scope: ProjectScope, projectId: string, now: Date): ProjectUsageAggregate;
-  findJob(scope: ProjectScope, projectId: string, jobId: string): JobRecord;
-  /**
-   * The jobs audit trail, newest job first and each job's events newest
-   * first — the OpenSpec listing contract for the synchronous jobs model.
-   */
-  collectProjectJobs(scope: ProjectScope, projectId: string): JobRecord[];
-  /** Transition a persisted job and append its matching event atomically. */
-  markJobOutcome(
-    scope: ProjectScope,
-    projectId: string,
-    jobId: string,
-    input: MarkJobOutcomeInput,
-  ): JobRecord;
-  setJobResult(
-    scope: ProjectScope,
-    projectId: string,
-    jobId: string,
-    resultJson: string,
-    now: Date,
-  ): JobRecord;
 
   /**
    * Freeze current document content before evaluating it; review history can

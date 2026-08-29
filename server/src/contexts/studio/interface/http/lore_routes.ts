@@ -1,59 +1,56 @@
+import type { TypeBoxTypeProvider } from "@fastify/type-provider-typebox";
 import type { FastifyPluginAsync } from "fastify";
-import type { Principal } from "../../../../shared/application/ports/auth.js";
-import { principalGuard } from "../../../../shared/interface/http/auth_guard.js";
+import { principalGuard, requirePrincipal } from "../../../../shared/interface/http/auth_guard.js";
 import { loreAliasResponseSchema, loreAliasWriteSchema } from "./lore_schemas.js";
 import { requireServices, type StudioRoutesOptions } from "./project_routes.js";
 import { withStudioErrors } from "./studio_error_mapping.js";
+import { documentIdParams } from "./studio_request_schemas.js";
 
 /**
  * The lorebook alias surface (#315): read and replace the extra prompt keys
  * (beyond the title) of a character or world document. Writes to other kinds
  * answer 422; reads default to an empty list.
  */
-export const loreRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (app, options) => {
+export const loreRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fastify, options) => {
+  const app = fastify.withTypeProvider<TypeBoxTypeProvider>();
   const guard = principalGuard(options.authService);
-  const principal = (request: { principal?: Principal }) => request.principal as Principal;
 
   app.get(
     "/api/projects/:projectId/documents/:documentId/aliases",
-    { preHandler: [guard], schema: { response: { 200: loreAliasResponseSchema } } },
-    async (request) => {
-      const { projectId, documentId } = request.params as {
-        projectId: string;
-        documentId: string;
-      };
-      return withStudioErrors(() => ({
-        aliases: requireServices(options).lore.listDocumentLoreAliases(
-          principal(request),
-          projectId,
-          documentId,
-        ),
-      }));
+    {
+      preHandler: [guard],
+      schema: { params: documentIdParams, response: { 200: loreAliasResponseSchema } },
     },
+    async (request) =>
+      withStudioErrors(() => ({
+        aliases: requireServices(options).lore.listDocumentLoreAliases(
+          requirePrincipal(request),
+          request.params.projectId,
+          request.params.documentId,
+        ),
+      })),
   );
 
   app.put(
     "/api/projects/:projectId/documents/:documentId/aliases",
     {
       preHandler: [guard],
-      schema: { body: loreAliasWriteSchema, response: { 200: loreAliasResponseSchema } },
+      schema: {
+        params: documentIdParams,
+        body: loreAliasWriteSchema,
+        response: { 200: loreAliasResponseSchema },
+      },
     },
-    async (request) => {
-      const { projectId, documentId } = request.params as {
-        projectId: string;
-        documentId: string;
-      };
-      const body = request.body as { aliases: string[] };
-      return withStudioErrors(() =>
+    async (request) =>
+      withStudioErrors(() =>
         requireServices(options).lore.overwriteDocumentAliases(
-          principal(request),
-          projectId,
-          documentId,
+          requirePrincipal(request),
+          request.params.projectId,
+          request.params.documentId,
           {
-            aliases: body.aliases,
+            aliases: request.body.aliases,
           },
         ),
-      );
-    },
+      ),
   );
 };

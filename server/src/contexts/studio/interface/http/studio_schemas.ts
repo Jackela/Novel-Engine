@@ -1,6 +1,11 @@
-import { PROVIDER_NAMES } from "../../../ai/application/ports/text_generation.js";
 import { DOCUMENT_KINDS, REVISION_SOURCES } from "../../domain/kinds.js";
+import type { JsonResponseSchema } from "./json_response_schema.js";
 import { volumeResponseSchema } from "./volume_schemas.js";
+
+/**
+ * Response payload shapes (fast-json-stringify passes unknown fields through).
+ * Request schemas live in `studio_request_schemas.ts` as TypeBox schemas.
+ */
 
 const kindLiteral = {
   type: "string",
@@ -10,89 +15,9 @@ const sourceLiteral = { type: "string", enum: [...REVISION_SOURCES] } as const;
 const timestamp = { type: "string" } as const;
 const metadataObject = { type: "object", additionalProperties: true } as const;
 
-/** Request schemas deliberately expose no `source` field (closed server enum). */
+/** Response payload shapes live above; the schemas below document hit shapes and error envelopes. */
 
-export const projectCreateSchema = {
-  type: "object",
-  properties: {
-    title: { type: "string", minLength: 1, maxLength: 240 },
-    description: { type: "string", maxLength: 10_000, default: "" },
-  },
-  required: ["title"],
-  additionalProperties: false,
-} as const;
-
-export const documentCreateSchema = {
-  type: "object",
-  properties: {
-    kind: kindLiteral,
-    title: { type: "string", minLength: 1, maxLength: 240 },
-    content_markdown: { type: "string", default: "" },
-    position: { type: "integer", minimum: 0, nullable: true },
-    metadata: metadataObject,
-  },
-  required: ["kind", "title"],
-  additionalProperties: false,
-} as const;
-
-export const documentSaveSchema = {
-  type: "object",
-  properties: {
-    content_markdown: { type: "string" },
-    base_revision_id: { type: "string", nullable: true },
-    title: { type: "string", maxLength: 240 },
-    metadata: metadataObject,
-  },
-  required: ["content_markdown", "base_revision_id"],
-  additionalProperties: false,
-} as const;
-
-export const reorderSchema = {
-  type: "object",
-  properties: {
-    document_ids: { type: "array", items: { type: "string" }, minItems: 1 },
-  },
-  required: ["document_ids"],
-  additionalProperties: false,
-} as const;
-
-/**
- * The proposal request carries the frontend operation vocabulary and the
- * provider choice only — models are resolved server-side, never sent.
- */
-export const proposalCreateSchema = {
-  type: "object",
-  properties: {
-    operation: { type: "string", enum: ["continue", "rewrite", "generate"] },
-    instruction: { type: "string", maxLength: 10_000, default: "" },
-    provider: { type: "string", enum: [...PROVIDER_NAMES], default: "mock" },
-  },
-  required: ["operation"],
-  additionalProperties: false,
-} as const;
-
-export const restoreSchema = {
-  type: "object",
-  properties: {
-    base_revision_id: { type: "string", nullable: true },
-  },
-  required: ["base_revision_id"],
-  additionalProperties: false,
-} as const;
-
-/** The full-text query string: `q` is required (missing → 422). */
-export const projectMatchQuerySchema = {
-  type: "object",
-  properties: {
-    q: { type: "string" },
-  },
-  required: ["q"],
-  additionalProperties: false,
-} as const;
-
-/** Response payload shapes (fast-json-stringify passes unknown fields through). */
-
-export const documentResponseSchema = {
+export const documentResponseSchema: JsonResponseSchema = {
   type: "object",
   additionalProperties: true,
   properties: {
@@ -128,7 +53,7 @@ export const documentResponseSchema = {
   ],
 } as const;
 
-export const revisionResponseSchema = {
+export const revisionResponseSchema: JsonResponseSchema = {
   type: "object",
   additionalProperties: true,
   properties: {
@@ -168,7 +93,7 @@ const projectResponseProperties = {
 } as const;
 
 /** One ranked full-text hit: identifier, title, plain-text excerpt. */
-export const matchResultSchema = {
+export const matchResultSchema: JsonResponseSchema = {
   type: "object",
   additionalProperties: true,
   properties: {
@@ -179,7 +104,7 @@ export const matchResultSchema = {
   required: ["document_id", "title", "excerpt"],
 } as const;
 
-export const matchListResponseSchema = {
+export const matchListResponseSchema: JsonResponseSchema = {
   type: "object",
   additionalProperties: true,
   properties: { results: { type: "array", items: matchResultSchema } },
@@ -196,14 +121,14 @@ const PROJECT_REQUIRED = [
   "updated_at",
 ] as const;
 
-export const projectResponseSchema = {
+export const projectResponseSchema: JsonResponseSchema = {
   type: "object",
   additionalProperties: true,
   properties: projectResponseProperties,
   required: [...PROJECT_REQUIRED],
 } as const;
 
-export const projectDetailResponseSchema = {
+export const projectDetailResponseSchema: JsonResponseSchema = {
   type: "object",
   additionalProperties: true,
   properties: projectResponseProperties,
@@ -211,7 +136,7 @@ export const projectDetailResponseSchema = {
 } as const;
 
 /** The 409 conflict envelope: details.current_revision_id identifies the winner. */
-export const revisionConflictSchema = {
+export const revisionConflictSchema: JsonResponseSchema = {
   type: "object",
   additionalProperties: false,
   properties: {
@@ -234,7 +159,7 @@ export const revisionConflictSchema = {
   required: ["error"],
 } as const;
 
-export const documentConflictSchema = {
+export const documentConflictSchema: JsonResponseSchema = {
   type: "object",
   additionalProperties: false,
   properties: {
@@ -252,7 +177,7 @@ export const documentConflictSchema = {
 } as const;
 
 /** The 409 envelope when an identical pipeline operation is already running (#305). */
-export const operationInFlightSchema = {
+export const operationInFlightSchema: JsonResponseSchema = {
   type: "object",
   additionalProperties: false,
   properties: {
@@ -280,7 +205,7 @@ export const operationInFlightSchema = {
 } as const;
 
 /** The fixed 409 envelope when an immutable snapshot references the document. */
-export const snapshotConflictSchema = {
+export const snapshotConflictSchema: JsonResponseSchema = {
   type: "object",
   additionalProperties: false,
   properties: {

@@ -1,9 +1,10 @@
+import type { TypeBoxTypeProvider } from "@fastify/type-provider-typebox";
 import type { FastifyPluginAsync } from "fastify";
-import type { Principal } from "../../../../shared/application/ports/auth.js";
-import { principalGuard } from "../../../../shared/interface/http/auth_guard.js";
+import { principalGuard, requirePrincipal } from "../../../../shared/interface/http/auth_guard.js";
 import { jobListResponseSchema, jobResponseSchema, usageResponseSchema } from "./job_schemas.js";
 import { requireServices, type StudioRoutesOptions } from "./project_routes.js";
 import { withStudioErrors } from "./studio_error_mapping.js";
+import { jobIdParams, projectIdParams } from "./studio_request_schemas.js";
 import { operationInFlightSchema } from "./studio_schemas.js";
 
 /** `withStudioErrors` is synchronous; the retry executes asynchronously. */
@@ -22,29 +23,35 @@ async function withOutcomeErrors<T>(operation: () => Promise<T>): Promise<T> {
  * and the retry chain, which executes synchronously and always responds with
  * the retry job's terminal state.
  */
-export const jobRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (app, options) => {
+export const jobRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fastify, options) => {
+  const app = fastify.withTypeProvider<TypeBoxTypeProvider>();
   const guard = principalGuard(options.authService);
-  const principal = (request: { principal?: Principal }) => request.principal as Principal;
 
   app.get(
     "/api/projects/:projectId/jobs",
-    { preHandler: [guard], schema: { response: { 200: jobListResponseSchema } } },
-    async (request) => {
-      const { projectId } = request.params as { projectId: string };
-      return withStudioErrors(() => ({
-        jobs: requireServices(options).jobHistory.collectProjectJobs(principal(request), projectId),
-      }));
+    {
+      preHandler: [guard],
+      schema: { params: projectIdParams, response: { 200: jobListResponseSchema } },
     },
+    async (request) =>
+      withStudioErrors(() => ({
+        jobs: requireServices(options).jobHistory.collectProjectJobs(
+          requirePrincipal(request),
+          request.params.projectId,
+        ),
+      })),
   );
 
   app.post(
     "/api/projects/:projectId/jobs/:jobId/retry",
     {
       preHandler: [guard],
-      schema: { response: { 200: jobResponseSchema, 409: operationInFlightSchema } },
+      schema: {
+        params: jobIdParams,
+        response: { 200: jobResponseSchema, 409: operationInFlightSchema },
+      },
     },
     async (request) => {
-      const { projectId, jobId } = request.params as { projectId: string; jobId: string };
       const reportCleanupFailure = (failure: unknown): void => {
         request.log.error(
           { err: failure, errorId: request.id, provider_cleanup_failed: true },
@@ -53,9 +60,9 @@ export const jobRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (app, op
       };
       return withOutcomeErrors(() =>
         requireServices(options).jobHistory.reexecuteProjectJob(
-          principal(request),
-          projectId,
-          jobId,
+          requirePrincipal(request),
+          request.params.projectId,
+          request.params.jobId,
           reportCleanupFailure,
         ),
       );
@@ -64,13 +71,15 @@ export const jobRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (app, op
 
   app.get(
     "/api/projects/:projectId/usage",
-    { preHandler: [guard], schema: { response: { 200: usageResponseSchema } } },
+    {
+      preHandler: [guard],
+      schema: { params: projectIdParams, response: { 200: usageResponseSchema } },
+    },
     async (request) => {
-      const { projectId } = request.params as { projectId: string };
       return withStudioErrors(() => {
         const usage = requireServices(options).jobHistory.aggregateProjectUsage(
-          principal(request),
-          projectId,
+          requirePrincipal(request),
+          request.params.projectId,
         );
         return {
           project_id: usage.projectId,

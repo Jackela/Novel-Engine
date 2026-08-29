@@ -1,3 +1,5 @@
+import type { JsonResponseSchema } from "./json_response_schema.js";
+
 const timestamp = { type: "string" } as const;
 const metadataObject = { type: "object", additionalProperties: true } as const;
 
@@ -14,7 +16,7 @@ const jobEventSchema = {
 } as const;
 
 /** The synchronous job payload: request/result JSON plus the event trail. */
-export const jobResponseSchema = {
+export const jobResponseSchema: JsonResponseSchema = {
   type: "object",
   additionalProperties: true,
   properties: {
@@ -59,7 +61,7 @@ export const jobResponseSchema = {
 } as const;
 
 /** The jobs audit listing: newest job first, each event newest first. */
-export const jobListResponseSchema = {
+export const jobListResponseSchema: JsonResponseSchema = {
   type: "object",
   additionalProperties: true,
   properties: { jobs: { type: "array", items: jobResponseSchema } },
@@ -68,7 +70,7 @@ export const jobListResponseSchema = {
 
 /** The project usage surface (#317): totals plus a per-model breakdown and
  * the trailing-30-UTC-day buckets (#384, optional for consumers). */
-export const usageResponseSchema = {
+export const usageResponseSchema: JsonResponseSchema = {
   type: "object",
   additionalProperties: false,
   properties: {

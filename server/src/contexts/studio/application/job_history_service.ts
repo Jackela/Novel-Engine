@@ -5,7 +5,7 @@ import { JobRetryExecutor, type JobRetryExecutorOptions } from "./job_retry_exec
 import type { InFlightOperationGuard } from "./operation_in_flight.js";
 import { dumpJson, exportJobResultJson, jobPayload, reviewJobResultJson } from "./payloads.js";
 import type { ExportArtifactFormat, ExportArtifactRecord } from "./ports/export_store.js";
-import type { ProjectUsageAggregate, StudioStore } from "./ports/studio_store.js";
+import type { ProjectScope, ProjectUsageAggregate, StudioStore } from "./ports/studio_store.js";
 import { scopeForPrincipal } from "./ports/studio_store.js";
 import type { ReviewService } from "./review_service.js";
 
@@ -69,6 +69,28 @@ export class JobHistoryService {
     reportCleanupFailure?: (failure: unknown) => void,
   ): Promise<Record<string, unknown>> {
     const scope = scopeForPrincipal(principal);
+    // #392: like proposal/export/retry, a review runs real provider work
+    // before its terminal row exists, so identical concurrent reviews are
+    // serialized by the in-flight guard instead of racing the provider.
+    const inFlightTarget = {
+      projectId,
+      documentId: null,
+      operation: "review",
+    };
+    this.inFlight.enter(inFlightTarget);
+    try {
+      return await this.recordReviewJobInner(principal, scope, projectId, reportCleanupFailure);
+    } finally {
+      this.inFlight.exit(inFlightTarget);
+    }
+  }
+
+  private async recordReviewJobInner(
+    principal: Principal,
+    scope: ProjectScope,
+    projectId: string,
+    reportCleanupFailure?: (failure: unknown) => void,
+  ): Promise<Record<string, unknown>> {
     try {
       const assessment = await this.reviews.evaluateProject(
         principal,
