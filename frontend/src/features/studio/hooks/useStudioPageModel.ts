@@ -25,11 +25,24 @@ export function useStudioPageModel(
   projectId: string,
   section: string,
   navigate: NavigateFunction,
-): { project: StudioViewProps['project'] | null; viewProps: StudioViewProps | null } {
+): {
+  project: StudioViewProps['project'] | null;
+  viewProps: StudioViewProps | null;
+  loadError: string | null;
+} {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [restoringRevisionId, setRestoringRevisionId] = useState<string | null>(null);
-  const { project, setProject, reviews, setReviews, exports, setExports, error, setError } =
-    useStudioProject(projectId);
+  const {
+    project,
+    setProject,
+    reviews,
+    setReviews,
+    exports,
+    setExports,
+    error,
+    setError,
+    loadError,
+  } = useStudioProject(projectId);
   const activeDocument = useActiveDocument(project, section, activeId);
   const visibleActiveId = activeDocument?.id ?? activeId;
   const {
@@ -132,7 +145,7 @@ export function useStudioPageModel(
     loadJobs,
   });
 
-  if (!project) return { project, viewProps: null };
+  if (!project) return { project, viewProps: null, loadError };
 
   const latestReview = reviews[0] ?? null;
   const inspectorPending = {
@@ -152,6 +165,7 @@ export function useStudioPageModel(
 
   return {
     project,
+    loadError,
     viewProps: {
       project,
       onBack: () => navigate('/projects'),

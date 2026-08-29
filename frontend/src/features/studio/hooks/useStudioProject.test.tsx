@@ -3,7 +3,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { MemoryRouter, useLocation, useNavigationType } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { api } from '@/app/api';
+import { HttpError, api } from '@/app/api';
 import type { Project, Review, Session, StudioExport } from '@/app/types/studio';
 
 import { useStudioProject } from './useStudioProject';
@@ -166,7 +166,7 @@ describe('useStudioProject', () => {
     expect(harness.result().hook.exports).toEqual([fixture.studioExport]);
   });
 
-  it('replaces the route and publishes no partial aggregate when one request fails', async () => {
+  it('replaces the route with no partial aggregate when the project is missing (404)', async () => {
     // Given
     const fixture = makeAggregate('project-1', 'one');
     let rejectExports: ((reason?: unknown) => void) | undefined;
@@ -185,7 +185,7 @@ describe('useStudioProject', () => {
       if (rejectExports === undefined) {
         throw new Error('Expected the exports request reject function.');
       }
-      rejectExports(new Error('exports unavailable'));
+      rejectExports(new HttpError('Project not found.', 404));
       await exportRequest.catch(() => undefined);
       await Promise.resolve();
     });
@@ -232,7 +232,67 @@ describe('useStudioProject', () => {
     expect(harness.result().hook.project).toEqual(second.project);
     expect(harness.result().hook.reviews).toEqual([second.review]);
     expect(harness.result().hook.exports).toEqual([second.studioExport]);
-    expect(api.project).toHaveBeenNthCalledWith(1, 'project-1');
-    expect(api.project).toHaveBeenNthCalledWith(2, 'project-2');
+    expect(api.project).toHaveBeenNthCalledWith(1, 'project-1', {
+      signal: expect.any(AbortSignal),
+    });
+    expect(api.project).toHaveBeenNthCalledWith(2, 'project-2', {
+      signal: expect.any(AbortSignal),
+    });
+  });
+
+  it('renders a readable error state and keeps the route when the failure is not a 404', async () => {
+    // Given
+    vi.mocked(api.session).mockResolvedValue({
+      session_id: 'session-1',
+      kind: 'owner',
+      owner_id: 'owner-1',
+      expires_at: null,
+    });
+    vi.mocked(api.project).mockRejectedValue(new HttpError('Upstream failure.', 503));
+    vi.mocked(api.reviews).mockResolvedValue({ reviews: [] });
+    vi.mocked(api.exports).mockResolvedValue({ exports: [] });
+
+    // When
+    const harness = renderStudioProjectHook('project-1');
+    await flushEffects();
+
+    // Then: no silent redirect, the error is published for the page to render.
+    expect(harness.result().pathname).toBe('/projects/project-1/manuscript');
+    expect(harness.result().hook.loadError).toBe('Upstream failure.');
+    expect(harness.result().hook.project).toBeNull();
+  });
+
+  it('aborts the in-flight requests of the previous project when the id changes', async () => {
+    // Given
+    const first = makeAggregate('project-1', 'one');
+    const second = makeAggregate('project-2', 'two');
+    vi.mocked(api.reviews).mockResolvedValue({ reviews: [] });
+    vi.mocked(api.exports).mockResolvedValue({ exports: [] });
+    vi.mocked(api.session)
+      .mockResolvedValueOnce(first.session)
+      .mockResolvedValueOnce(second.session);
+    // The stale project request only settles when its signal is aborted.
+    vi.mocked(api.project)
+      .mockImplementationOnce((_projectId: string, init?: RequestInit) => {
+        return new Promise((_resolve, reject) => {
+          init?.signal?.addEventListener('abort', () => reject(new Error('Request cancelled.')));
+        });
+      })
+      .mockResolvedValueOnce(second.project);
+
+    // When
+    const harness = renderStudioProjectHook('project-1');
+    await flushEffects();
+    harness.rerender('project-2');
+    await flushEffects();
+
+    // Then: the stale call's signal was aborted, the fresh one was not, and
+    // the stale response never published project-1 over project-2.
+    const [firstProjectCall, secondProjectCall] = vi.mocked(api.project).mock.calls;
+    const firstSignal = firstProjectCall?.[1]?.signal ?? null;
+    const secondSignal = secondProjectCall?.[1]?.signal ?? null;
+    expect(firstSignal?.aborted).toBe(true);
+    expect(secondSignal?.aborted).toBe(false);
+    expect(harness.result().hook.project).toEqual(second.project);
   });
 });
