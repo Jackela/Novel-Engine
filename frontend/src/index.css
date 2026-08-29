@@ -633,6 +633,37 @@ svg {
   background: var(--teal-soft);
   color: #0f6862;
 }
+/* In-volume chapter ordinal badge (#376). */
+.document-row__ordinal {
+  flex: none;
+  min-width: 20px;
+  padding: 1px 4px;
+  border-radius: 4px;
+  background: #e2e8e8;
+  color: #5a6465;
+  font-size: 11px;
+  font-weight: 700;
+  text-align: center;
+}
+.document-row--active .document-row__ordinal {
+  background: #cfe4e2;
+  color: #0f6862;
+}
+/* Linked outline beat title (#376); rendered only when beat_ref is set. */
+.document-row__beat {
+  margin-left: auto;
+  flex: none;
+  max-width: 45%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #7c8485;
+  font-size: 11px;
+  font-weight: 400;
+}
+.document-row--active .document-row__beat {
+  color: #0f6862;
+}
 
 .studio-editor {
   grid-area: editor;

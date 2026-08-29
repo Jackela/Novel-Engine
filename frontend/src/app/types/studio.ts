@@ -53,6 +53,12 @@ export interface StudioDocument {
   position: number;
   /** Owning volume of a chapter; non-chapter documents stay null (#312). */
   volume_id?: string | null;
+  /**
+   * Soft link to the chapter's associated outline beat title (#376); null
+   * when unlinked or dangling. This is a title link, not an ordinal — the
+   * in-volume ordinal is `position`.
+   */
+  beat_ref?: string | null;
   current_revision_id: string;
   content_markdown: string;
   metadata: Record<string, unknown>;

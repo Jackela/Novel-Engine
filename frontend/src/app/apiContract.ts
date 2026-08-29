@@ -129,6 +129,11 @@ function parseDocument(value: unknown, label = 'document'): StudioDocument {
     ...(volumeId === undefined || volumeId === null
       ? { volume_id: null }
       : { volume_id: stringValue(volumeId, `${label}.volume_id`) }),
+    // beat_ref (#376) is a nullable outline beat title link; treat a missing
+    // field like null so hand-built fixtures stay friction-free.
+    ...(item.beat_ref === undefined || item.beat_ref === null
+      ? { beat_ref: null }
+      : { beat_ref: stringValue(item.beat_ref, `${label}.beat_ref`) }),
   };
 }
 
