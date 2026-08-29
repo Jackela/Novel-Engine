@@ -9,7 +9,7 @@ import { fileSuffix, readTextLines, repoRoot, reportFailures, scanRootFiles } fr
  * source of truth.
  */
 
-const EXPECTED_VERSION = "0.4.0";
+const EXPECTED_VERSION = "0.5.0";
 const TEXT_SUFFIXES = new Set([".md", ".ts", ".tsx", ".js", ".mjs", ".cjs", ".json"]);
 const SCAN_SKIP_DIRECTORIES = new Set(["node_modules", "dist", "tmp", "coverage"]);
 const IDENTITY_SCAN_PATHS = ["README.md", "frontend/src", "server"];

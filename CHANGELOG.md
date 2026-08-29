@@ -1,5 +1,56 @@
 # Changelog
 
+## 0.5.0
+
+Studio deepening epic (#309–#328, ADR-0004/0005) plus a tech-debt and
+LLM-friendliness polish pass. BREAKING: the guest principal was removed
+end-to-end (#311) — authenticate a real principal before calling the API.
+
+### Added
+
+- Volume hierarchy: organize chapters into ordered volumes, with
+  order-aware exports (#312).
+- Keyword-triggered lorebook entries extracted from character and world
+  documents (#315).
+- Resident context assembly feeding every proposal generation (ADR-0004,
+  #314).
+- LLM editorial review over a closed dimension set (#316).
+- Project usage surface aggregating the AI token ledger
+  (`/api/projects/:projectId/usage`, #317).
+- Whole-book generation loop: stoppable, resumable auto-accept across the
+  full manuscript (#318).
+- SSE streaming proposal generation (#308).
+- `llms.txt` for LLM-oriented repository orientation and a
+  `CONTRIBUTING.md` (#350, #360).
+
+### Changed
+
+- The two epic OpenSpec changes are archived into the canonical
+  `novel-engine` spec (#352); `AGENTS.md` and openwiki documentation were
+  recalibrated to the post-epic codebase (#353–#355).
+- The repository facade now points contributors at GitHub issues and the
+  TS-stack architecture overview (#354, #355).
+
+### Fixed
+
+- Streaming generation now enforces timeouts so stalled provider streams
+  cannot hang a request (#361).
+- DashScope Responses-mode stream extraction aligned with the actual
+  provider payload (#364).
+- Biome diagnostics swept to zero warnings (#362, #363, #359).
+
+### Removed
+
+- Python-era tool-configuration corpses left over from the cutover
+  (#358).
+
+### Security / Policy
+
+- Mimosa false-positive waivers are registered in version control
+  (#356).
+- The file-size gate policy is documented for agents and reviewers
+  (#357).
+
 ## 0.4.0
 
 TypeScript rewrite cutover (#277, ADR-0002): the Fastify + TypeBox server
