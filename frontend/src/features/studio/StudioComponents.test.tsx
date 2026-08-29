@@ -168,16 +168,20 @@ describe('Studio split components', () => {
       tabs[0].dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
     });
     expect(setInspector).toHaveBeenCalledWith('review');
+    // #411: focus moves through the tab ref array, not DOM queries.
+    expect(document.activeElement).toBe(tabs[1]);
 
     act(() => {
       tabs[0].dispatchEvent(new KeyboardEvent('keydown', { key: 'End', bubbles: true }));
     });
     expect(setInspector).toHaveBeenCalledWith('usage');
+    expect(document.activeElement).toBe(tabs[5]);
 
     act(() => {
       tabs[2].dispatchEvent(new KeyboardEvent('keydown', { key: 'Home', bubbles: true }));
     });
     expect(setInspector).toHaveBeenCalledWith('copilot');
+    expect(document.activeElement).toBe(tabs[0]);
   });
 
   it('does not expose an unselected tablist while the settings route is active', () => {
@@ -213,6 +217,8 @@ describe('Studio split components', () => {
 
     expect(container.querySelector('[role="tablist"]')).toBeNull();
     expect(tabs).toHaveLength(0);
+    // #411: no orphan tabpanels without a tablist in the settings state.
+    expect(container.querySelectorAll('[role="tabpanel"]')).toHaveLength(0);
     expect(container.querySelector('form.inspector-content')).not.toBeNull();
   });
 

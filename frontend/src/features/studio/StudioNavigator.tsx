@@ -38,7 +38,7 @@ function DocumentRows({
             isActive={document.id === activeId}
             onSelect={onSelectDocument}
           />
-          <span className="document-order" aria-label={`Reorder ${document.title}`}>
+          <span className="document-order">
             <button
               aria-label={`Move ${document.title} up`}
               aria-busy={isMovingDocument || undefined}

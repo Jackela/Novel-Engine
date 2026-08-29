@@ -1,4 +1,4 @@
-import type { Dispatch, KeyboardEvent, ReactNode, SetStateAction } from 'react';
+import { useRef, type Dispatch, KeyboardEvent, type ReactNode, type SetStateAction } from 'react';
 import { BarChart3, Bot, Briefcase, Download, History, ShieldCheck } from 'lucide-react';
 
 import { INSPECTOR_TABS, type InspectorTab } from './studioConstants';
@@ -16,6 +16,9 @@ export function StudioInspectorTabs({
   panelId,
   setInspector,
 }: StudioInspectorTabsProps) {
+  // #411: focus via refs instead of DOM queries.
+  const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
+
   const onTabKeyDown = (
     event: KeyboardEvent<HTMLButtonElement>,
     currentTab: Exclude<InspectorTab, 'settings'>,
@@ -33,9 +36,7 @@ export function StudioInspectorTabs({
     if (nextIndex === currentIndex) return;
     const nextTab = INSPECTOR_TABS[nextIndex];
     setInspector(nextTab);
-    event.currentTarget.parentElement
-      ?.querySelector<HTMLButtonElement>(`[data-inspector-index="${nextIndex}"]`)
-      ?.focus();
+    tabRefs.current[nextIndex]?.focus();
   };
 
   const tabButton = (tab: Exclude<InspectorTab, 'settings'>, label: string, icon: ReactNode) => (
@@ -43,10 +44,12 @@ export function StudioInspectorTabs({
       aria-controls={panelId(tab)}
       aria-selected={inspector === tab}
       className={inspector === tab ? 'active' : ''}
-      data-inspector-index={INSPECTOR_TABS.indexOf(tab)}
       id={tabId(tab)}
       onClick={() => setInspector(tab)}
       onKeyDown={(event) => onTabKeyDown(event, tab)}
+      ref={(node) => {
+        tabRefs.current[INSPECTOR_TABS.indexOf(tab)] = node;
+      }}
       role="tab"
       tabIndex={inspector === tab ? 0 : -1}
       type="button"
