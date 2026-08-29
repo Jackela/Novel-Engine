@@ -1,25 +1,25 @@
+import type { TypeBoxTypeProvider } from "@fastify/type-provider-typebox";
+import { Type } from "@fastify/type-provider-typebox";
 import type { FastifyPluginAsync } from "fastify";
 import type { Principal } from "../../../../shared/application/ports/auth.js";
-import { principalGuard } from "../../../../shared/interface/http/auth_guard.js";
+import { principalGuard, requirePrincipal } from "../../../../shared/interface/http/auth_guard.js";
 import { AppError } from "../../../../shared/interface/http/error_envelope.js";
+import type { JsonResponseSchema } from "./json_response_schema.js";
 import { requireServices, type StudioRoutesOptions } from "./project_routes.js";
 import { withStudioErrors } from "./studio_error_mapping.js";
 
-const legacyPreviewRequestSchema = {
-  type: "object",
-  properties: {
-    source: {
-      type: "string",
+const legacyPreviewRequestSchema = Type.Object(
+  {
+    source: Type.String({
       minLength: 1,
       maxLength: 240,
       description: "Workspace directory name under data/imports.",
-    },
+    }),
   },
-  required: ["source"],
-  additionalProperties: false,
-} as const;
+  { additionalProperties: false },
+);
 
-const legacyPreviewResponseSchema = {
+const legacyPreviewResponseSchema: JsonResponseSchema = {
   type: "object",
   properties: {
     source: { type: "string" },
@@ -56,7 +56,8 @@ function requireLocalOwner(principal: Principal): void {
  * the CLI. The untrusted source name is confined to one real directory under
  * the application-owned data/imports root before any content is read.
  */
-export const importRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (app, options) => {
+export const importRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fastify, options) => {
+  const app = fastify.withTypeProvider<TypeBoxTypeProvider>();
   const guard = principalGuard(options.authService);
 
   app.post(
@@ -65,7 +66,7 @@ export const importRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (app,
       preHandler: [
         guard,
         async (request) => {
-          requireLocalOwner(request.principal as Principal);
+          requireLocalOwner(requirePrincipal(request));
         },
       ],
       schema: {
@@ -74,7 +75,7 @@ export const importRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (app,
       },
     },
     async (request) => {
-      const { source } = request.body as { source: string };
+      const { source } = request.body;
       const dataDirectory = options.dataDirectory;
       if (dataDirectory === undefined) {
         throw new AppError({
