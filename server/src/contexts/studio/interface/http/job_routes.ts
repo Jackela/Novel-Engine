@@ -3,20 +3,9 @@ import type { FastifyPluginAsync } from "fastify";
 import { principalGuard, requirePrincipal } from "../../../../shared/interface/http/auth_guard.js";
 import { jobListResponseSchema, jobResponseSchema, usageResponseSchema } from "./job_schemas.js";
 import { requireServices, type StudioRoutesOptions } from "./project_routes.js";
-import { withStudioErrors } from "./studio_error_mapping.js";
+import { withAsyncStudioErrors, withStudioErrors } from "./studio_error_mapping.js";
 import { jobIdParams, projectIdParams } from "./studio_request_schemas.js";
 import { operationInFlightSchema } from "./studio_schemas.js";
-
-/** `withStudioErrors` is synchronous; the retry executes asynchronously. */
-async function withOutcomeErrors<T>(operation: () => Promise<T>): Promise<T> {
-  try {
-    return await operation();
-  } catch (error) {
-    return withStudioErrors<T>(() => {
-      throw error;
-    });
-  }
-}
 
 /**
  * The synchronous jobs audit surface: the persisted listing (newest first)
@@ -58,7 +47,7 @@ export const jobRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fastify
           "provider cleanup failed",
         );
       };
-      return withOutcomeErrors(() =>
+      return withAsyncStudioErrors(() =>
         requireServices(options).jobHistory.reexecuteProjectJob(
           requirePrincipal(request),
           request.params.projectId,

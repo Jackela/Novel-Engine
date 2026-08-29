@@ -1,6 +1,5 @@
 import {
   type ProviderStep,
-  type TextGenerationProvider,
   TextGenerationProviderError,
   type TextGenerationTask,
   type TextProviderName,
@@ -17,34 +16,10 @@ import type {
 import { buildProposalUserPrompt, collectResidentContextSource } from "./resident_context.js";
 import { isProposalMarkdownProse, sanitizeProposalMarkdown } from "./sanitization.js";
 
-/** Observer for provider cleanup failures; reporting never alters outcomes. */
-export type ProviderCleanupFailureReporter = (failure: unknown) => void;
-
-function reportCleanupFailureBestEffort(
-  reportCleanupFailure: ProviderCleanupFailureReporter,
-  failure: unknown,
-): void {
-  try {
-    reportCleanupFailure(failure);
-  } catch (reporterFailure) {
-    // This observer has no recovery path, so its own failure is intentionally
-    // suppressed and cannot replace the job/HTTP outcome already selected by
-    // the proposal pipeline.
-    void reporterFailure;
-  }
-}
-
-/** Request-scoped provider cleanup; never replaces the selected job outcome. */
-export async function disposeProvider(
-  provider: TextGenerationProvider,
-  reportCleanupFailure: ProviderCleanupFailureReporter,
-): Promise<void> {
-  try {
-    await provider.dispose?.();
-  } catch (failure) {
-    reportCleanupFailureBestEffort(reportCleanupFailure, failure);
-  }
-}
+export {
+  disposeProvider,
+  type ProviderCleanupFailureReporter,
+} from "./provider_disposal.js";
 
 /**
  * The job/usage landing shared by every proposal pipeline (synchronous

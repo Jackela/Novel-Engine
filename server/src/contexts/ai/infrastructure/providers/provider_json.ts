@@ -2,6 +2,7 @@ import {
   isProviderStep,
   type ProviderStep,
   TextGenerationProviderError,
+  type TextGenerationTask,
 } from "../../application/ports/text_generation.js";
 import { payloadFromResponseText } from "./dashscope_payload.js";
 import {
@@ -11,6 +12,16 @@ import {
   ProviderTransportError,
   readableResponse,
 } from "./provider_http.js";
+
+/** Shared system prompt channel: the JSON-only schema contract, verbatim. */
+export function buildSystemContent(task: TextGenerationTask): string {
+  return `${task.systemPrompt}\nReturn valid JSON only. Output schema: ${JSON.stringify(task.responseSchema)}`;
+}
+
+/** Shared user prompt channel: step and metadata suffixes, verbatim. */
+export function buildUserContent(task: TextGenerationTask): string {
+  return `${task.userPrompt}\nTask step: ${task.step}\nMetadata: ${JSON.stringify(task.metadata)}`;
+}
 
 /** JSON-object payload shape shared by provider request/response helpers. */
 export type JsonObject = Record<string, unknown>;

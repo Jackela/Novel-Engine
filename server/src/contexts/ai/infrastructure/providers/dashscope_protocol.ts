@@ -2,6 +2,8 @@ import {
   TextGenerationProviderError,
   type TextGenerationTask,
 } from "../../application/ports/text_generation.js";
+import { isJsonObject, usageToken } from "./provider_http.js";
+import { buildSystemContent, buildUserContent } from "./provider_json.js";
 
 const DASHSCOPE_API_PATH_SEGMENTS = {
   root: "api",
@@ -66,10 +68,6 @@ type RequestForMode<Mode extends DashscopeTransportMode> = Mode extends "respons
   ? DashscopeResponsesRequest
   : DashscopeGenerationRequest;
 
-function isJsonObject(value: unknown): value is JsonObject {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
 function normalizedBase(apiBase: string | undefined, fallback: string): string {
   const candidate = apiBase?.trim();
   return (candidate === "" || candidate === undefined ? fallback : candidate).replace(/\/+$/u, "");
@@ -98,14 +96,6 @@ function normalizeResponsesBase(apiBase: string | undefined): string {
   return parsed.pathname === COMPATIBLE_MODE_PATH
     ? base
     : `${parsed.origin}${COMPATIBLE_MODE_PATH}`;
-}
-
-function buildSystemContent(task: TextGenerationTask): string {
-  return `${task.systemPrompt}\nReturn valid JSON only. Output schema: ${JSON.stringify(task.responseSchema)}`;
-}
-
-function buildUserContent(task: TextGenerationTask): string {
-  return `${task.userPrompt}\nTask step: ${task.step}\nMetadata: ${JSON.stringify(task.metadata)}`;
 }
 
 function textFromContent(content: unknown): string | undefined {
@@ -162,10 +152,6 @@ export function extractDashscopeResponsesText(data: JsonObject): string {
     if (text !== undefined) return text;
   }
   throw new TextGenerationProviderError("DashScope responses output missing message text");
-}
-
-function usageToken(value: unknown): number | null {
-  return typeof value === "number" && Number.isInteger(value) && value >= 0 ? value : null;
 }
 
 /**
