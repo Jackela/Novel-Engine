@@ -1,0 +1,122 @@
+:root {
+  --ink: #18181b;
+  --ink-soft: #27272a;
+  --surface: #fff;
+  --canvas: #f7f8f8;
+  --surface-muted: #fafbfb;
+  --surface-panel: #fcfcfc;
+  --surface-hover: #f4f5f5;
+  --line-strong: #bfc5c6;
+  --line: #dfe2e3;
+  --muted: #4b5556;
+  --muted-soft: #626a6b;
+  --muted-faint: #697172;
+  --teal-soft: #dff3f1;
+  --teal-strong: #0f766e;
+  --teal-hover: #115e59;
+  --focus-ring: #ccfbf1;
+  --danger: #b91c1c;
+  --danger-soft: #fff1f2;
+  --on-accent: #fff;
+  font-family: 'IBM Plex Sans', system-ui, sans-serif;
+  color: var(--ink);
+  background: var(--canvas);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  letter-spacing: 0;
+}
+
+* {
+  box-sizing: border-box;
+}
+html,
+body,
+#root {
+  min-height: 100%;
+  margin: 0;
+}
+button,
+input,
+textarea,
+select {
+  font: inherit;
+  letter-spacing: 0;
+}
+button {
+  cursor: pointer;
+}
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+svg {
+  width: 17px;
+  height: 17px;
+  stroke-width: 1.8;
+  flex: 0 0 auto;
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 17px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.brand svg {
+  color: var(--teal-strong);
+  width: 22px;
+  height: 22px;
+}
+
+.command,
+.icon-command {
+  border: 1px solid #d9dcdf;
+  background: var(--surface);
+  color: var(--ink-soft);
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 13px;
+  font-size: 13px;
+  font-weight: 600;
+  transition:
+    background 0.15s,
+    border-color 0.15s,
+    color 0.15s;
+}
+.command:hover,
+.icon-command:hover {
+  background: var(--surface-hover);
+  border-color: var(--line-strong);
+}
+.command--primary {
+  background: var(--teal-strong);
+  border-color: var(--teal-strong);
+  color: var(--on-accent);
+}
+.command--primary:hover {
+  background: var(--teal-hover);
+  border-color: var(--teal-hover);
+}
+.icon-command {
+  width: 44px;
+  padding: 0;
+}
+.form-error,
+.inspector-error {
+  color: var(--danger);
+  font-size: 13px;
+}
+.spin {
+  animation: spin 1s linear infinite;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
