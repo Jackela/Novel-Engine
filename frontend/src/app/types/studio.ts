@@ -117,6 +117,23 @@ export interface Review {
   issues: ReviewIssue[];
 }
 
+/** Per-model aggregate row of `GET /api/projects/:projectId/usage` (#377). */
+export interface UsageModelRow {
+  model: string;
+  requests: number;
+  prompt_tokens: number;
+  completion_tokens: number;
+}
+
+/** Project-level cumulative AI usage (matching the generated api contract). */
+export interface ProjectUsage {
+  project_id: string;
+  request_count: number;
+  prompt_tokens: number;
+  completion_tokens: number;
+  per_model: UsageModelRow[];
+}
+
 export interface StudioJobEvent {
   id: string;
   status: StudioJobStatus;

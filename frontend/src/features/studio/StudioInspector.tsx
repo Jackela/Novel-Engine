@@ -24,6 +24,8 @@ const DEFAULT_INSPECTOR_PENDING: InspectorPendingState = {
 
 interface StudioInspectorProps {
   error: string | null;
+  /** #377: project scope for the lazily loaded usage panel. */
+  projectId: string;
   exports: StudioExport[];
   inspector: InspectorTab;
   instruction: string;
@@ -59,6 +61,7 @@ interface StudioInspectorProps {
 
 export function StudioInspector({
   error,
+  projectId,
   exports,
   inspector,
   instruction,
@@ -118,6 +121,7 @@ export function StudioInspector({
 
           <StudioInspectorPanels
             inspector={inspector}
+            projectId={projectId}
             tabId={tabId}
             panelId={panelId}
             exports={exports}

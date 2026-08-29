@@ -20,7 +20,14 @@ export const GROUPS: Array<{
  * alias for history so that the two workflows remain discoverable and
  * keyboard addressable.
  */
-export type InspectorTab = 'copilot' | 'review' | 'history' | 'export' | 'jobs' | 'settings';
+export type InspectorTab =
+  | 'copilot'
+  | 'review'
+  | 'history'
+  | 'export'
+  | 'jobs'
+  | 'usage'
+  | 'settings';
 
 export const INSPECTOR_TABS: Exclude<InspectorTab, 'settings'>[] = [
   'copilot',
@@ -28,6 +35,7 @@ export const INSPECTOR_TABS: Exclude<InspectorTab, 'settings'>[] = [
   'history',
   'export',
   'jobs',
+  'usage',
 ];
 
 export const SECTIONS = [

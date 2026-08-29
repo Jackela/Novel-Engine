@@ -22,6 +22,7 @@ import {
   parseJobs,
   parseReviewJobResponse,
   parseReviews,
+  parseUsage,
 } from '@/app/apiWorkflowContract';
 import type { DocumentKind, ExportFormat } from '@/app/types/studio';
 
@@ -287,6 +288,7 @@ export const api = {
   deleteDocument: (projectId: string, documentId: string) =>
     request(`/api/projects/${projectId}/documents/${documentId}`, { method: 'DELETE' }, parseVoid),
   jobs: (projectId: string) => request(`/api/projects/${projectId}/jobs`, undefined, parseJobs),
+  usage: (projectId: string) => request(`/api/projects/${projectId}/usage`, undefined, parseUsage),
   retryJob: (projectId: string, jobId: string) =>
     request(`/api/projects/${projectId}/jobs/${jobId}/retry`, { method: 'POST' }, parseJob),
   download: (path: string) => downloadBlob(path),

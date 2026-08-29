@@ -1,5 +1,5 @@
 import type { Dispatch, KeyboardEvent, ReactNode, SetStateAction } from 'react';
-import { Bot, Briefcase, Download, History, ShieldCheck } from 'lucide-react';
+import { BarChart3, Bot, Briefcase, Download, History, ShieldCheck } from 'lucide-react';
 
 import { INSPECTOR_TABS, type InspectorTab } from './studioConstants';
 
@@ -67,6 +67,7 @@ export function StudioInspectorTabs({
       {tabButton('history', 'History', <History aria-hidden="true" />)}
       {tabButton('export', 'Export', <Download aria-hidden="true" />)}
       {tabButton('jobs', 'Jobs', <Briefcase aria-hidden="true" />)}
+      {tabButton('usage', 'Usage', <BarChart3 aria-hidden="true" />)}
     </div>
   );
 }

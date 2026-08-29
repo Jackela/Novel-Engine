@@ -197,6 +197,7 @@ export function useStudioPageModel(
         inspector,
         instruction,
         jobs,
+        projectId,
         latestReview,
         loadedRevisionId: loadedRevision.current,
         proposal,
