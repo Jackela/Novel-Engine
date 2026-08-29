@@ -1,14 +1,3 @@
-import type { FormEvent, Dispatch, SetStateAction } from 'react';
-
-import type {
-  ExportFormat,
-  ProviderInfo,
-  Review,
-  Revision,
-  StudioExport,
-  StudioJob,
-} from '@/app/types/studio';
-
 import { StudioCopilotPanel } from './components/StudioCopilotPanel';
 import { StudioExportPanel } from './components/StudioExportPanel';
 import { StudioHistoryPanel } from './components/StudioHistoryPanel';
@@ -17,85 +6,30 @@ import { StudioUsagePanel } from './components/StudioUsagePanel';
 import { StudioReviewPanel } from './components/StudioReviewPanel';
 import { StudioSettingsPanel } from './components/StudioSettingsPanel';
 import { type InspectorTab } from './studioConstants';
-import type { InspectorPendingState, SettingsFormState } from './studioInspectorTypes';
+import type { InspectorPendingState, StudioInspectorModel } from './studioInspectorTypes';
 
 interface StudioInspectorPanelsProps {
   inspector: InspectorTab;
-  /** #377: project scope for the lazily loaded usage panel. */
-  projectId: string;
   tabId: (tab: Exclude<InspectorTab, 'settings'>) => string;
   panelId: (tab: Exclude<InspectorTab, 'settings'>) => string;
-  exports: StudioExport[];
-  instruction: string;
-  jobs: StudioJob[];
-  latestReview: Review | null;
-  loadedRevisionId: string | null;
-  proposal: StudioJob | null;
-  providers: ProviderInfo[];
-  revisions: Revision[];
-  settingsForm: SettingsFormState;
-  onAcceptProposal: () => void;
-  onExport?: (format: ExportFormat) => void;
-  onRetryExport?: (format: ExportFormat) => void;
-  onLoadJobs: () => void;
-  onRestoreRevision: (revisionId: string) => void;
-  onRetryJob: (jobId: string) => void;
-  onRunProposal: (operation: 'continue' | 'rewrite') => void;
-  onRunReview: () => void;
-  onUpdateSettings: (event: FormEvent) => void;
-  setInstruction: Dispatch<SetStateAction<string>>;
-  setProposal: Dispatch<SetStateAction<StudioJob | null>>;
-  setSettingsForm: Dispatch<SetStateAction<SettingsFormState>>;
-  exportingFormat: ExportFormat | null;
-  failedFormat: ExportFormat | null;
   pending: InspectorPendingState;
-  errorForExport: string | null;
-  /** #308: markdown received so far while the proposal stream is running. */
-  streamingText?: string | null;
-  /** #308: aborts the running proposal stream. */
-  onStopProposal?: () => void;
+  model: StudioInspectorModel;
 }
 
 export function StudioInspectorPanels({
   inspector,
-  projectId,
   tabId,
   panelId,
-  exports,
-  instruction,
-  jobs,
-  latestReview,
-  loadedRevisionId,
-  proposal,
-  providers,
-  revisions,
-  settingsForm,
-  onAcceptProposal,
-  onExport,
-  onRetryExport,
-  onLoadJobs,
-  onRestoreRevision,
-  onRetryJob,
-  onRunProposal,
-  onRunReview,
-  onUpdateSettings,
-  setInstruction,
-  setProposal,
-  setSettingsForm,
-  exportingFormat,
-  failedFormat,
   pending,
-  errorForExport,
-  streamingText = null,
-  onStopProposal,
+  model,
 }: StudioInspectorPanelsProps) {
   if (inspector === 'settings') {
     return (
       <StudioSettingsPanel
-        settingsForm={settingsForm}
-        setSettingsForm={setSettingsForm}
-        onUpdateSettings={onUpdateSettings}
-        providers={providers}
+        settingsForm={model.settings.settingsForm}
+        setSettingsForm={model.settings.setSettingsForm}
+        onUpdateSettings={model.settings.onUpdateSettings}
+        providers={model.settings.providers}
         isSaving={pending.settings}
       />
     );
@@ -110,16 +44,16 @@ export function StudioInspectorPanels({
         role="tabpanel"
       >
         <StudioCopilotPanel
-          instruction={instruction}
-          setInstruction={setInstruction}
-          proposal={proposal}
-          setProposal={setProposal}
-          onRunProposal={onRunProposal}
-          onAcceptProposal={onAcceptProposal}
+          instruction={model.copilot.instruction}
+          setInstruction={model.copilot.setInstruction}
+          proposal={model.copilot.proposal}
+          setProposal={model.copilot.setProposal}
+          onRunProposal={model.copilot.onRunProposal}
+          onAcceptProposal={model.copilot.onAcceptProposal}
           isRunningProposal={pending.proposal.running}
           isAcceptingProposal={pending.proposal.accepting}
-          streamingText={streamingText}
-          onStopProposal={onStopProposal}
+          streamingText={model.copilot.streamingText}
+          onStopProposal={model.copilot.onStopProposal}
         />
       </div>
       <div
@@ -129,12 +63,12 @@ export function StudioInspectorPanels({
         role="tabpanel"
       >
         <StudioExportPanel
-          exports={exports}
-          exportingFormat={exportingFormat}
-          onExport={onExport}
-          error={errorForExport}
-          failedFormat={failedFormat}
-          onRetry={onRetryExport}
+          exports={model.export.exports}
+          exportingFormat={model.export.exportingFormat}
+          onExport={model.export.onExport}
+          error={model.export.errorForExport}
+          failedFormat={model.export.failedFormat}
+          onRetry={model.export.onRetryExport}
         />
       </div>
       <div
@@ -144,8 +78,8 @@ export function StudioInspectorPanels({
         role="tabpanel"
       >
         <StudioReviewPanel
-          latestReview={latestReview}
-          onRunReview={onRunReview}
+          latestReview={model.review.latestReview}
+          onRunReview={model.review.onRunReview}
           isRunning={pending.review}
         />
       </div>
@@ -156,9 +90,9 @@ export function StudioInspectorPanels({
         role="tabpanel"
       >
         <StudioHistoryPanel
-          revisions={revisions}
-          loadedRevisionId={loadedRevisionId}
-          onRestoreRevision={onRestoreRevision}
+          revisions={model.history.revisions}
+          loadedRevisionId={model.history.loadedRevisionId}
+          onRestoreRevision={model.history.onRestoreRevision}
           restoringRevisionId={pending.history?.restoringRevisionId}
         />
       </div>
@@ -169,15 +103,16 @@ export function StudioInspectorPanels({
         role="tabpanel"
       >
         <StudioJobsPanel
-          jobs={jobs}
-          onLoadJobs={onLoadJobs}
-          onRetryJob={onRetryJob}
+          jobs={model.jobs.jobs}
+          onLoadJobs={model.jobs.onLoadJobs}
+          onRetryJob={model.jobs.onRetryJob}
           isLoading={pending.jobs.loading}
           retryingJobId={
             pending.jobs.retryingJobId ??
             (pending.jobs.retrying
-              ? (jobs.find((job) => job.status === 'failed' || job.status === 'interrupted')?.id ??
-                '__retrying__')
+              ? (model.jobs.jobs.find(
+                  (job) => job.status === 'failed' || job.status === 'interrupted',
+                )?.id ?? '__retrying__')
               : null)
           }
         />
@@ -188,7 +123,7 @@ export function StudioInspectorPanels({
         id={panelId('usage')}
         role="tabpanel"
       >
-        <StudioUsagePanel active={inspector === 'usage'} projectId={projectId} />
+        <StudioUsagePanel active={inspector === 'usage'} projectId={model.usage.projectId} />
       </div>
     </>
   );
