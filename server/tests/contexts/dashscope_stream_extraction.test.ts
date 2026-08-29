@@ -53,6 +53,39 @@ describe("dashscope incremental stream extraction", () => {
     ).toBe(" ");
   });
 
+  it("does not leak reasoning item content or text into stream deltas", () => {
+    expect(
+      extractDashscopeIncrementalText({
+        output: [
+          {
+            type: "reasoning",
+            content: [{ type: "reasoning_text", text: "chain of thought" }],
+            text: "chain of thought",
+          },
+        ],
+      }),
+    ).toBeUndefined();
+    expect(
+      extractDashscopeIncrementalText({
+        output: [
+          { type: "tool_call", content: [{ type: "output_text", text: "tool payload" }] },
+          { type: "message", content: [{ type: "output_text", text: "real answer" }] },
+        ],
+      }),
+    ).toBe("real answer");
+  });
+
+  it("accepts non-message items only via a top-level string delta", () => {
+    expect(
+      extractDashscopeIncrementalText({
+        output: [{ type: "reasoning", delta: "visible delta" }],
+      }),
+    ).toBe("visible delta");
+    expect(
+      extractDashscopeIncrementalText({ output: [{ type: "reasoning", text: "hidden" }] }),
+    ).toBeUndefined();
+  });
+
   it("returns undefined for responses-mode events without text", () => {
     expect(extractDashscopeIncrementalText({ output: [] })).toBeUndefined();
     expect(extractDashscopeIncrementalText({ output: [{ type: "reasoning" }] })).toBeUndefined();
