@@ -6,6 +6,42 @@ import type { Project, StudioDocument } from '@/app/types/studio';
 
 import { StudioInspector } from './StudioInspector';
 import { StudioTopbar } from './StudioTopbar';
+import type { StudioInspectorModel } from './studioInspectorTypes';
+
+/** #412: grouped per-tab model matching the new Inspector boundary. */
+function buildInspectorModel(): StudioInspectorModel {
+  return {
+    copilot: {
+      instruction: '',
+      proposal: null,
+      streamingText: null,
+      onRunProposal: vi.fn(),
+      onAcceptProposal: vi.fn(),
+      setInstruction: vi.fn(),
+      setProposal: vi.fn(),
+    },
+    export: {
+      exports: [],
+      exportingFormat: null,
+      failedFormat: null,
+      errorForExport: null,
+    },
+    review: { latestReview: null, onRunReview: vi.fn() },
+    history: {
+      revisions: [],
+      loadedRevisionId: null,
+      onRestoreRevision: vi.fn(),
+    },
+    jobs: { jobs: [], onLoadJobs: vi.fn(), onRetryJob: vi.fn() },
+    usage: { projectId: 'project-1' },
+    settings: {
+      settingsForm: { title: '', description: '', provider: '' },
+      providers: [],
+      onUpdateSettings: vi.fn(),
+      setSettingsForm: vi.fn(),
+    },
+  };
+}
 
 const mountedRoots: Array<{ container: HTMLDivElement; root: Root }> = [];
 
@@ -80,28 +116,9 @@ describe('Studio split components', () => {
     const container = render(
       <StudioInspector
         error={null}
-        projectId="project-1"
         inspector="copilot"
-        instruction=""
-        jobs={[]}
-        latestReview={null}
-        loadedRevisionId={null}
-        proposal={null}
-        providers={[]}
-        exports={[]}
-        revisions={[]}
-        settingsForm={{ title: '', description: '', provider: '' }}
-        onAcceptProposal={vi.fn()}
-        onLoadJobs={vi.fn()}
-        onRestoreRevision={vi.fn()}
-        onRetryJob={vi.fn()}
-        onRunProposal={vi.fn()}
-        onRunReview={vi.fn()}
-        onUpdateSettings={vi.fn()}
         setInspector={setInspector}
-        setInstruction={vi.fn()}
-        setProposal={vi.fn()}
-        setSettingsForm={vi.fn()}
+        model={buildInspectorModel()}
       />,
     );
 
@@ -136,28 +153,9 @@ describe('Studio split components', () => {
     const container = render(
       <StudioInspector
         error={null}
-        projectId="project-1"
         inspector="copilot"
-        instruction=""
-        jobs={[]}
-        latestReview={null}
-        loadedRevisionId={null}
-        proposal={null}
-        providers={[]}
-        exports={[]}
-        revisions={[]}
-        settingsForm={{ title: '', description: '', provider: '' }}
-        onAcceptProposal={vi.fn()}
-        onLoadJobs={vi.fn()}
-        onRestoreRevision={vi.fn()}
-        onRetryJob={vi.fn()}
-        onRunProposal={vi.fn()}
-        onRunReview={vi.fn()}
-        onUpdateSettings={vi.fn()}
         setInspector={setInspector}
-        setInstruction={vi.fn()}
-        setProposal={vi.fn()}
-        setSettingsForm={vi.fn()}
+        model={buildInspectorModel()}
       />,
     );
 
@@ -188,28 +186,9 @@ describe('Studio split components', () => {
     const container = render(
       <StudioInspector
         error={null}
-        projectId="project-1"
         inspector="settings"
-        instruction=""
-        jobs={[]}
-        latestReview={null}
-        loadedRevisionId={null}
-        proposal={null}
-        providers={[]}
-        exports={[]}
-        revisions={[]}
-        settingsForm={{ title: '', description: '', provider: '' }}
-        onAcceptProposal={vi.fn()}
-        onLoadJobs={vi.fn()}
-        onRestoreRevision={vi.fn()}
-        onRetryJob={vi.fn()}
-        onRunProposal={vi.fn()}
-        onRunReview={vi.fn()}
-        onUpdateSettings={vi.fn()}
         setInspector={vi.fn()}
-        setInstruction={vi.fn()}
-        setProposal={vi.fn()}
-        setSettingsForm={vi.fn()}
+        model={buildInspectorModel()}
       />,
     );
 
