@@ -210,6 +210,16 @@ export function extractDashscopeIncrementalText(data: JsonObject): string | unde
     // list of items whose message content carries the incremental text.
     for (const item of output) {
       if (!isJsonObject(item)) continue;
+      // #371: only message items expose content/text; typed non-message items
+      // (reasoning, tool_call) are accepted solely via a top-level string
+      // delta, mirroring OpenAI Responses event semantics. Untyped items keep
+      // the pre-existing permissive extraction so older fixture shapes stay green.
+      if (typeof item.type === "string" && item.type !== "message") {
+        if (typeof item.delta === "string" && item.delta !== "") return item.delta;
+        continue;
+      }
+      // Assumption: when a message item carries both `content` and `delta`,
+      // `content` is authoritative and is returned first (#364 review minor #3).
       for (const holder of [item.message, item]) {
         if (!isJsonObject(holder)) continue;
         const text = rawTextFromContent(holder.content);
