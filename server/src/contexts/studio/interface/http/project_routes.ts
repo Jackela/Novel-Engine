@@ -1,15 +1,18 @@
+import type { TypeBoxTypeProvider } from "@fastify/type-provider-typebox";
 import type { FastifyPluginAsync } from "fastify";
 import type { AuthService } from "../../../../shared/application/auth_service.js";
-import type { Principal } from "../../../../shared/application/ports/auth.js";
-import { principalGuard } from "../../../../shared/interface/http/auth_guard.js";
+import { principalGuard, requirePrincipal } from "../../../../shared/interface/http/auth_guard.js";
 import { AppError } from "../../../../shared/interface/http/error_envelope.js";
 import type { StudioServices } from "../../application/studio_services.js";
 import { withStudioErrors } from "./studio_error_mapping.js";
 import {
-  matchListResponseSchema,
   projectCreateSchema,
-  projectDetailResponseSchema,
+  projectIdParams,
   projectMatchQuerySchema,
+} from "./studio_request_schemas.js";
+import {
+  matchListResponseSchema,
+  projectDetailResponseSchema,
   projectResponseSchema,
 } from "./studio_schemas.js";
 
@@ -40,7 +43,8 @@ const projectListResponseSchema = {
 } as const;
 
 /** Project surface: create with seeding, list (updated_at DESC), detail, delete. */
-export const projectRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (app, options) => {
+export const projectRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fastify, options) => {
+  const app = fastify.withTypeProvider<TypeBoxTypeProvider>();
   const guard = principalGuard(options.authService);
 
   app.get(
@@ -48,7 +52,7 @@ export const projectRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (app
     { preHandler: [guard], schema: { response: { 200: projectListResponseSchema } } },
     async (request) =>
       withStudioErrors(() => ({
-        projects: requireServices(options).projects.listProjects(request.principal as Principal),
+        projects: requireServices(options).projects.listProjects(requirePrincipal(request)),
       })),
   );
 
@@ -59,11 +63,10 @@ export const projectRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (app
       schema: { body: projectCreateSchema, response: { 201: projectDetailResponseSchema } },
     },
     async (request, reply) => {
-      const body = request.body as { title: string; description?: string };
       const payload = withStudioErrors(() =>
-        requireServices(options).projects.newProject(request.principal as Principal, {
-          title: body.title,
-          description: body.description,
+        requireServices(options).projects.newProject(requirePrincipal(request), {
+          title: request.body.title,
+          description: request.body.description,
         }),
       );
       reply.status(201);
@@ -73,43 +76,52 @@ export const projectRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (app
 
   app.get(
     "/api/projects/:projectId",
-    { preHandler: [guard], schema: { response: { 200: projectDetailResponseSchema } } },
-    async (request) => {
-      const { projectId } = request.params as { projectId: string };
-      return withStudioErrors(
-        () =>
-          requireServices(options).projects.projectDetail(request.principal as Principal, projectId)
-            .payload,
-      );
+    {
+      preHandler: [guard],
+      schema: { params: projectIdParams, response: { 200: projectDetailResponseSchema } },
     },
+    async (request) =>
+      withStudioErrors(
+        () =>
+          requireServices(options).projects.projectDetail(
+            requirePrincipal(request),
+            request.params.projectId,
+          ).payload,
+      ),
   );
 
   app.get(
     "/api/projects/:projectId/search",
     {
       preHandler: [guard],
-      schema: { querystring: projectMatchQuerySchema, response: { 200: matchListResponseSchema } },
+      schema: {
+        params: projectIdParams,
+        querystring: projectMatchQuerySchema,
+        response: { 200: matchListResponseSchema },
+      },
     },
-    async (request) => {
-      const { projectId } = request.params as { projectId: string };
-      const { q } = request.query as { q: string };
-      return withStudioErrors(() => ({
+    async (request) =>
+      withStudioErrors(() => ({
         results: requireServices(options).documents.queryProjectDocuments(
-          request.principal as Principal,
-          projectId,
-          q,
+          requirePrincipal(request),
+          request.params.projectId,
+          request.query.q,
         ),
-      }));
-    },
+      })),
   );
 
   app.delete(
     "/api/projects/:projectId",
-    { preHandler: [guard], schema: { response: { 204: { type: "null" } } } },
+    {
+      preHandler: [guard],
+      schema: { params: projectIdParams, response: { 204: { type: "null" } } },
+    },
     async (request, reply) => {
-      const { projectId } = request.params as { projectId: string };
       withStudioErrors(() =>
-        requireServices(options).projects.removeProject(request.principal as Principal, projectId),
+        requireServices(options).projects.removeProject(
+          requirePrincipal(request),
+          request.params.projectId,
+        ),
       );
       reply.status(204);
       return null;

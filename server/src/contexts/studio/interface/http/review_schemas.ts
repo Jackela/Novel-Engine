@@ -1,3 +1,6 @@
+import { Type } from "@fastify/type-provider-typebox";
+import type { JsonResponseSchema } from "./json_response_schema.js";
+
 const timestamp = { type: "string", format: "date-time" } as const;
 const evidenceSchema = { type: "object", additionalProperties: true } as const;
 
@@ -5,13 +8,9 @@ const evidenceSchema = { type: "object", additionalProperties: true } as const;
  * A review has no client-controlled input. Provider and model provenance are
  * selected inside the server's service graph rather than accepted over HTTP.
  */
-export const reviewCreateSchema = {
-  type: "object",
-  properties: {},
-  additionalProperties: false,
-} as const;
+export const reviewCreateSchema = Type.Object({}, { additionalProperties: false });
 
-const reviewIssueResponseSchema = {
+const reviewIssueResponseSchema: JsonResponseSchema = {
   type: "object",
   additionalProperties: false,
   properties: {
@@ -27,7 +26,7 @@ const reviewIssueResponseSchema = {
 } as const;
 
 /** Stable snake_case response consumed by the frontend workflow parser. */
-export const reviewResponseSchema = {
+export const reviewResponseSchema: JsonResponseSchema = {
   type: "object",
   additionalProperties: false,
   properties: {
@@ -52,7 +51,7 @@ export const reviewResponseSchema = {
   ],
 } as const;
 
-export const reviewListResponseSchema = {
+export const reviewListResponseSchema: JsonResponseSchema = {
   type: "object",
   additionalProperties: false,
   properties: { reviews: { type: "array", items: reviewResponseSchema } },
