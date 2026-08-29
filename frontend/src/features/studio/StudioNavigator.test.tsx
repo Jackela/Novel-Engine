@@ -1,22 +1,16 @@
-import { act, type FormEvent, type ReactElement } from 'react';
-import { createRoot, type Root } from 'react-dom/client';
+import { act, type FormEvent } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import type { Project, StudioDocument } from '@/app/types/studio';
+import type { Project } from '@/app/types/studio';
+import { chapter, projectWith, volume } from '@/test/factories';
+import { createMountHarness } from '@/test/harness';
 
 import { StudioNavigator } from './StudioNavigator';
 
-const mountedRoots: Array<{ container: HTMLDivElement; root: Root }> = [];
+const harness = createMountHarness();
 
-function render(element: ReactElement): HTMLDivElement {
-  const container = document.createElement('div');
-  document.body.appendChild(container);
-  const root = createRoot(container);
-  act(() => {
-    root.render(element);
-  });
-  mountedRoots.push({ container, root });
-  return container;
+function render(element: Parameters<typeof harness.mount>[0]): HTMLDivElement {
+  return harness.mount(element).container;
 }
 
 function click(element: Element | null): void {
@@ -29,31 +23,19 @@ function click(element: Element | null): void {
 }
 
 afterEach(() => {
-  for (const { container, root } of mountedRoots) {
-    act(() => {
-      root.unmount();
-    });
-    container.remove();
-  }
-  mountedRoots.length = 0;
+  harness.cleanup();
 });
 
-const baseDocument: StudioDocument = {
-  id: 'doc-1',
-  project_id: 'project-1',
-  kind: 'chapter',
+const baseDocument = chapter('doc-1', {
   title: 'Opening',
   position: 1,
   current_revision_id: 'revision-abcdefghi',
   content_markdown: '# Opening',
-  metadata: {},
   revision_source: 'author',
   word_count: 42,
-  created_at: '2026-06-16T00:00:00Z',
-  updated_at: '2026-06-16T00:00:00Z',
-};
+});
 
-const secondDocument: StudioDocument = {
+const secondDocument = {
   ...baseDocument,
   id: 'doc-2',
   title: 'Second',
@@ -62,16 +44,7 @@ const secondDocument: StudioDocument = {
   word_count: 12,
 };
 
-const baseProject: Project = {
-  id: 'project-1',
-  title: 'Clockwork Harbor',
-  description: '',
-  settings: {},
-  import_hash: null,
-  created_at: '2026-06-16T00:00:00Z',
-  updated_at: '2026-06-16T00:00:00Z',
-  documents: [baseDocument, secondDocument],
-};
+const baseProject = projectWith([baseDocument, secondDocument]);
 
 describe('StudioNavigator', () => {
   it('keeps navigation callbacks scoped to section, search, and document actions', () => {
@@ -123,16 +96,9 @@ describe('StudioNavigator', () => {
   });
 
   it('groups manuscript chapters under volume headers in reading order', () => {
-    const firstVolume = {
-      id: 'volume-1',
-      project_id: 'project-1',
-      title: 'Default Volume',
-      position: 1,
-      created_at: '2026-06-16T00:00:00Z',
-      updated_at: '2026-06-16T00:00:00Z',
-    };
-    const bookTwo = { ...firstVolume, id: 'volume-2', title: 'Book Two', position: 2 };
-    const chapterTwo: StudioDocument = {
+    const firstVolume = volume('volume-1', 1, { title: 'Default Volume' });
+    const bookTwo = volume('volume-2', 2, { title: 'Book Two' });
+    const chapterTwo = {
       ...baseDocument,
       id: 'doc-2',
       title: 'Second',
@@ -174,14 +140,14 @@ describe('StudioNavigator', () => {
   });
 
   it('shows the in-volume ordinal and only renders a linked beat title (#376)', () => {
-    const linkedChapter: StudioDocument = {
+    const linkedChapter = {
       ...baseDocument,
       id: 'doc-2',
       title: 'Second',
       position: 2,
       beat_ref: 'The Harbor Bell',
     };
-    const unlinkedChapter: StudioDocument = {
+    const unlinkedChapter = {
       ...baseDocument,
       id: 'doc-3',
       title: 'Third',

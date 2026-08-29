@@ -1,24 +1,18 @@
 import { act } from 'react';
-import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import type { Project } from '@/app/types/studio';
+import { project } from '@/test/factories';
+import { createMountHarness } from '@/test/harness';
 
 import { useStudioInspectorState } from './useStudioInspectorState';
 
 type HookArgs = Parameters<typeof useStudioInspectorState>[0];
 type HookResult = ReturnType<typeof useStudioInspectorState>;
 
-const mountedRoots: Array<{ container: HTMLDivElement; root: Root }> = [];
+const harness = createMountHarness();
 
 afterEach(() => {
-  for (const { container, root } of mountedRoots) {
-    act(() => {
-      root.unmount();
-    });
-    container.remove();
-  }
-  mountedRoots.length = 0;
+  harness.cleanup();
 });
 
 function renderInspectorHook(initialArgs: HookArgs): {
@@ -33,14 +27,8 @@ function renderInspectorHook(initialArgs: HookArgs): {
     return null;
   }
 
-  const container = document.createElement('div');
-  document.body.appendChild(container);
-  const root = createRoot(container);
-  mountedRoots.push({ container, root });
-
-  act(() => {
-    root.render(<Wrapper />);
-  });
+  const mounted = harness.mount(<Wrapper />);
+  const root = mounted.root;
 
   return {
     result: () => {
@@ -58,16 +46,10 @@ function renderInspectorHook(initialArgs: HookArgs): {
   };
 }
 
-const baseProject: Project = {
-  id: 'project-1',
-  title: 'Clockwork Harbor',
+const baseProject = project({
   description: 'A harbor of brass clocks.',
   settings: { provider: 'dashscope' },
-  import_hash: null,
-  created_at: '2026-06-16T00:00:00Z',
-  updated_at: '2026-06-16T00:00:00Z',
-  documents: [],
-};
+});
 
 describe('useStudioInspectorState', () => {
   it('selects the matching inspector tab when route sections change', () => {

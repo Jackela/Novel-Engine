@@ -1,9 +1,9 @@
 import { act, useState } from 'react';
-import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { api } from '@/app/api';
-import type { StudioJob } from '@/app/types/studio';
+import { job } from '@/test/factories';
+import { createMountHarness } from '@/test/harness';
 
 import { useStudioJobs } from './useStudioJobs';
 import { useStudioSearch } from './useStudioSearch';
@@ -26,33 +26,12 @@ interface HarnessSnapshot {
   readonly error: string | null;
 }
 
-const job: StudioJob = {
-  id: 'job-1',
-  project_id: 'project-1',
-  document_id: 'document-1',
-  kind: 'proposal',
-  operation: 'continue',
-  status: 'completed',
-  provider: 'mock',
-  model: 'studio-copilot-v1',
-  request: {},
-  result: {},
-  error: null,
-  retry_of_job_id: null,
-  events: [],
-  created_at: '2026-06-20T00:00:00Z',
-  updated_at: '2026-06-20T00:00:00Z',
-};
-const mountedRoots: Array<{ container: HTMLDivElement; root: Root }> = [];
+const jobFixture = job();
+
+const harness = createMountHarness();
 
 afterEach(() => {
-  for (const { container, root } of mountedRoots) {
-    act(() => {
-      root.unmount();
-    });
-    container.remove();
-  }
-  mountedRoots.length = 0;
+  harness.cleanup();
   vi.resetAllMocks();
 });
 
@@ -70,13 +49,7 @@ function renderQueryHooks(): {
     return <form onSubmit={search.runSearch} />;
   }
 
-  const container = document.createElement('div');
-  document.body.appendChild(container);
-  const root = createRoot(container);
-  mountedRoots.push({ container, root });
-  act(() => {
-    root.render(<Wrapper />);
-  });
+  const { container } = harness.mount(<Wrapper />);
   const form = container.querySelector('form');
   if (form === null) {
     throw new Error('Expected search form after render.');
@@ -162,7 +135,7 @@ describe('Studio query hooks', () => {
 
   it('loads jobs into observable hook state', async () => {
     // Given
-    vi.mocked(api.jobs).mockResolvedValue({ jobs: [job] });
+    vi.mocked(api.jobs).mockResolvedValue({ jobs: [jobFixture] });
     const harness = renderQueryHooks();
 
     // When
@@ -171,7 +144,7 @@ describe('Studio query hooks', () => {
     });
 
     // Then
-    expect(harness.result().jobs.jobs).toEqual([job]);
+    expect(harness.result().jobs.jobs).toEqual([jobFixture]);
     expect(harness.result().error).toBeNull();
   });
 

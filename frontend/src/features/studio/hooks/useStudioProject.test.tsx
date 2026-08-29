@@ -1,10 +1,11 @@
 import { act } from 'react';
-import { createRoot, type Root } from 'react-dom/client';
 import { MemoryRouter, useLocation, useNavigationType } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { HttpError, api } from '@/app/api';
 import type { Project, Review, StudioExport } from '@/app/types/studio';
+import { project, review, studioExport } from '@/test/factories';
+import { createMountHarness, flushEffects } from '@/test/harness';
 
 import { useStudioProject } from './useStudioProject';
 
@@ -36,51 +37,35 @@ interface HarnessSnapshot {
   readonly navigationType: ReturnType<typeof useNavigationType>;
 }
 
-const mountedRoots: Array<{ container: HTMLDivElement; root: Root }> = [];
+const harness = createMountHarness();
 
 afterEach(() => {
-  for (const { container, root } of mountedRoots) {
-    act(() => {
-      root.unmount();
-    });
-    container.remove();
-  }
-  mountedRoots.length = 0;
+  harness.cleanup();
   vi.resetAllMocks();
 });
 
 function makeAggregate(projectId: string, label: string): AggregateFixture {
   return {
-    project: {
+    project: project({
       id: projectId,
       title: `Project ${label}`,
       description: `Description ${label}`,
       settings: { provider: 'mock' },
-      import_hash: null,
-      created_at: '2026-06-18T00:00:00Z',
-      updated_at: '2026-06-18T00:00:00Z',
-      documents: [],
-    },
-    review: {
+    }),
+    review: review({
       id: `review-${label}`,
       project_id: projectId,
       snapshot_id: `review-snapshot-${label}`,
-      provider: 'mock',
       model: 'mock-model',
       summary: `Review ${label}`,
-      created_at: '2026-06-18T00:01:00Z',
-      issues: [],
-    },
-    studioExport: {
+    }),
+    studioExport: studioExport({
       id: `export-${label}`,
       project_id: projectId,
       snapshot_id: `export-snapshot-${label}`,
-      format: 'markdown',
-      size_bytes: 128,
       checksum_sha256: `checksum-${label}`,
-      created_at: '2026-06-18T00:02:00Z',
       download_url: `/downloads/export-${label}`,
-    },
+    }),
   };
 }
 
@@ -102,10 +87,11 @@ function renderStudioProjectHook(
     return null;
   }
 
-  const container = document.createElement('div');
-  document.body.appendChild(container);
-  const root = createRoot(container);
-  mountedRoots.push({ container, root });
+  const { root } = harness.mount(
+    <MemoryRouter initialEntries={[initialPath]}>
+      <Harness />
+    </MemoryRouter>,
+  );
 
   const render = () => {
     root.render(
@@ -114,8 +100,6 @@ function renderStudioProjectHook(
       </MemoryRouter>,
     );
   };
-
-  act(render);
 
   return {
     result: () => {
@@ -129,13 +113,6 @@ function renderStudioProjectHook(
       act(render);
     },
   };
-}
-
-async function flushEffects(): Promise<void> {
-  await act(async () => {
-    await Promise.resolve();
-    await Promise.resolve();
-  });
 }
 
 describe('useStudioProject', () => {

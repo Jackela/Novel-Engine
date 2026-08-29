@@ -1,10 +1,11 @@
 import { act, useState } from 'react';
-import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { api } from '@/app/api';
-import type { Project, Review, StudioDocument, StudioJob } from '@/app/types/studio';
+import type { Project, Review, StudioJob } from '@/app/types/studio';
 import type { InspectorTab } from '@/features/studio/studioConstants';
+import { chapter, job, projectWith, review } from '@/test/factories';
+import { createMountHarness } from '@/test/harness';
 
 import { useStudioActions } from './useStudioActions';
 
@@ -33,99 +34,52 @@ interface HarnessSnapshot {
   readonly inspector: InspectorTab;
 }
 
-const chapter: StudioDocument = {
-  id: 'chapter-1',
-  project_id: 'project-1',
-  kind: 'chapter',
+const chapterOne = chapter('chapter-1', {
   title: 'Chapter One',
-  position: 0,
   current_revision_id: 'revision-1',
   content_markdown: '# Chapter 1\n\n',
-  metadata: {},
   revision_source: 'manual',
   word_count: 2,
-  created_at: '2026-06-20T00:00:00Z',
-  updated_at: '2026-06-20T00:00:00Z',
-};
-const note: StudioDocument = {
-  ...chapter,
+});
+const note = {
+  ...chapterOne,
   id: 'note-1',
-  kind: 'note',
+  kind: 'note' as const,
   title: 'Note One',
   position: 1,
   content_markdown: '',
 };
-const projectFixture: Project = {
-  id: 'project-1',
-  title: 'Clockwork Harbor',
+const projectFixture = projectWith([chapterOne, note], {
   description: 'Old description',
   settings: { provider: 'mock', temperature: 0.5 },
-  import_hash: null,
-  created_at: '2026-06-20T00:00:00Z',
-  updated_at: '2026-06-20T00:00:00Z',
-  documents: [chapter, note],
-};
-const review: Review = {
-  id: 'review-1',
-  project_id: projectFixture.id,
-  snapshot_id: 'snapshot-1',
-  provider: 'mock',
-  model: 'studio-copilot-v1',
-  summary: 'Looks good.',
-  created_at: '2026-06-20T00:01:00Z',
-  issues: [],
-};
-const reviewJob: StudioJob = {
+});
+const reviewFixture = review({ project_id: projectFixture.id });
+const reviewJob = job({
   id: 'job-review-1',
   project_id: projectFixture.id,
   document_id: null,
-  kind: 'review',
-  operation: 'review',
-  status: 'completed',
-  provider: 'mock',
-  model: 'studio-copilot-v1',
-  request: {},
+  kind: 'review' as const,
+  operation: 'review' as const,
   result: { review_id: 'review-1' },
-  error: null,
-  retry_of_job_id: null,
   events: [
     {
       id: 'event-1',
-      status: 'completed',
+      status: 'completed' as const,
       details: { review_id: 'review-1' },
-      created_at: '2026-06-20T00:01:00Z',
+      created_at: '2026-08-27T00:01:00Z',
     },
   ],
-  created_at: '2026-06-20T00:01:00Z',
-  updated_at: '2026-06-20T00:01:00Z',
-};
-const retriedJob: StudioJob = {
-  id: 'job-1',
+});
+const retriedJob = job({
   project_id: projectFixture.id,
-  document_id: chapter.id,
-  kind: 'proposal',
-  operation: 'continue',
-  status: 'pending',
-  provider: 'mock',
-  model: 'studio-copilot-v1',
-  request: {},
-  result: {},
-  error: null,
+  document_id: chapterOne.id,
+  status: 'pending' as const,
   retry_of_job_id: 'failed-job-1',
-  events: [],
-  created_at: '2026-06-20T00:02:00Z',
-  updated_at: '2026-06-20T00:02:00Z',
-};
-const mountedRoots: Array<{ container: HTMLDivElement; root: Root }> = [];
+});
+const harness = createMountHarness();
 
 afterEach(() => {
-  for (const { container, root } of mountedRoots) {
-    act(() => {
-      root.unmount();
-    });
-    container.remove();
-  }
-  mountedRoots.length = 0;
+  harness.cleanup();
   vi.resetAllMocks();
 });
 
@@ -165,13 +119,7 @@ function renderActions(
     return <form onSubmit={actions.updateProjectSettings} />;
   }
 
-  const container = document.createElement('div');
-  document.body.appendChild(container);
-  const root = createRoot(container);
-  mountedRoots.push({ container, root });
-  act(() => {
-    root.render(<Wrapper />);
-  });
+  const { container } = harness.mount(<Wrapper />);
   const form = container.querySelector('form');
   if (form === null) {
     throw new Error('Expected settings form after render.');
@@ -194,7 +142,7 @@ function renderActions(
 describe('useStudioActions', () => {
   it('creates a numbered chapter, appends it, and activates it', async () => {
     // Given
-    const created = { ...chapter, id: 'chapter-2', title: 'Chapter 2', position: 2 };
+    const created = { ...chapterOne, id: 'chapter-2', title: 'Chapter 2', position: 2 };
     vi.mocked(api.createDocument).mockResolvedValue(created);
     const harness = renderActions();
 
@@ -209,7 +157,7 @@ describe('useStudioActions', () => {
       title: 'Chapter 2',
       content_markdown: '# Chapter 2\n\n',
     });
-    expect(harness.result().project?.documents).toEqual([chapter, note, created]);
+    expect(harness.result().project?.documents).toEqual([chapterOne, note, created]);
     expect(harness.result().activeId).toBe(created.id);
   });
 
@@ -217,7 +165,7 @@ describe('useStudioActions', () => {
     // Given
     const reordered = [
       { ...note, position: 0 },
-      { ...chapter, position: 1 },
+      { ...chapterOne, position: 1 },
     ];
     vi.mocked(api.reorderDocuments).mockResolvedValue({ documents: reordered });
     const harness = renderActions();
@@ -228,14 +176,14 @@ describe('useStudioActions', () => {
     });
 
     // Then
-    expect(api.reorderDocuments).toHaveBeenCalledWith(projectFixture.id, [note.id, chapter.id]);
+    expect(api.reorderDocuments).toHaveBeenCalledWith(projectFixture.id, [note.id, chapterOne.id]);
     expect(harness.result().project?.documents).toEqual(reordered);
   });
 
   it('runs a review job and refreshes the assessment list', async () => {
     // Given
     vi.mocked(api.createReview).mockResolvedValue(reviewJob);
-    vi.mocked(api.reviews).mockResolvedValue({ reviews: [review] });
+    vi.mocked(api.reviews).mockResolvedValue({ reviews: [reviewFixture] });
     const harness = renderActions();
 
     // When
@@ -245,7 +193,7 @@ describe('useStudioActions', () => {
 
     // Then
     expect(api.reviews).toHaveBeenCalledWith(projectFixture.id);
-    expect(harness.result().reviews).toEqual([review]);
+    expect(harness.result().reviews).toEqual([reviewFixture]);
     expect(harness.result().inspector).toBe('review');
   });
 

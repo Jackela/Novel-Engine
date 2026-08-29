@@ -1,8 +1,10 @@
 import { act } from 'react';
-import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import type { Project, StudioDocument } from '@/app/types/studio';
+
+import { chapter, projectWith } from '@/test/factories';
+import { createMountHarness } from '@/test/harness';
 
 import { useActiveDocument } from './useActiveDocument';
 
@@ -12,55 +14,34 @@ interface HookArgs {
   readonly activeId: string | null;
 }
 
-const chapter: StudioDocument = {
-  id: 'chapter-1',
-  project_id: 'project-1',
-  kind: 'chapter',
+const harness = createMountHarness();
+
+afterEach(() => {
+  harness.cleanup();
+});
+
+const chapterOne = chapter('chapter-1', {
   title: 'Chapter One',
-  position: 0,
   current_revision_id: 'revision-1',
   content_markdown: 'Chapter content',
-  metadata: {},
   revision_source: 'manual',
   word_count: 2,
-  created_at: '2026-06-20T00:00:00Z',
-  updated_at: '2026-06-20T00:00:00Z',
-};
-const outline: StudioDocument = {
-  ...chapter,
+});
+const outline = {
+  ...chapterOne,
   id: 'outline-1',
-  kind: 'outline',
+  kind: 'outline' as const,
   title: 'Story Outline',
   position: 1,
 };
-const character: StudioDocument = {
-  ...chapter,
+const character = {
+  ...chapterOne,
   id: 'character-1',
-  kind: 'character',
+  kind: 'character' as const,
   title: 'Ada',
   position: 2,
 };
-const project: Project = {
-  id: 'project-1',
-  title: 'Clockwork Harbor',
-  description: '',
-  settings: {},
-  import_hash: null,
-  created_at: '2026-06-20T00:00:00Z',
-  updated_at: '2026-06-20T00:00:00Z',
-  documents: [chapter, outline, character],
-};
-const mountedRoots: Array<{ container: HTMLDivElement; root: Root }> = [];
-
-afterEach(() => {
-  for (const { container, root } of mountedRoots) {
-    act(() => {
-      root.unmount();
-    });
-    container.remove();
-  }
-  mountedRoots.length = 0;
-});
+const project = projectWith([chapterOne, outline, character]);
 
 function renderActiveDocument(initialArgs: HookArgs): {
   readonly result: () => StudioDocument | null;
@@ -74,13 +55,9 @@ function renderActiveDocument(initialArgs: HookArgs): {
     return null;
   }
 
-  const container = document.createElement('div');
-  document.body.appendChild(container);
-  const root = createRoot(container);
-  mountedRoots.push({ container, root });
+  const mounted = harness.mount(<Wrapper />);
 
-  const render = () => root.render(<Wrapper />);
-  act(render);
+  const render = () => mounted.root.render(<Wrapper />);
 
   return {
     result: () => current,
@@ -97,11 +74,11 @@ describe('useActiveDocument', () => {
     const hook = renderActiveDocument({
       project,
       section: 'manuscript',
-      activeId: chapter.id,
+      activeId: chapterOne.id,
     });
 
     // Then
-    expect(hook.result()).toEqual(chapter);
+    expect(hook.result()).toEqual(chapterOne);
   });
 
   it('returns the first document matching a scoped section', () => {
@@ -109,11 +86,11 @@ describe('useActiveDocument', () => {
     const hook = renderActiveDocument({
       project,
       section: 'manuscript',
-      activeId: chapter.id,
+      activeId: chapterOne.id,
     });
 
     // When
-    hook.rerender({ project, section: 'characters', activeId: chapter.id });
+    hook.rerender({ project, section: 'characters', activeId: chapterOne.id });
 
     // Then
     expect(hook.result()).toEqual(character);
@@ -122,9 +99,9 @@ describe('useActiveDocument', () => {
   it('returns null when a scoped section has no matching document', () => {
     // Given / When
     const hook = renderActiveDocument({
-      project: { ...project, documents: [chapter] },
+      project: { ...project, documents: [chapterOne] },
       section: 'world',
-      activeId: chapter.id,
+      activeId: chapterOne.id,
     });
 
     // Then
