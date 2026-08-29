@@ -1,9 +1,10 @@
 import { act, useState } from 'react';
-import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { api } from '@/app/api';
-import type { Project, Revision, StudioDocument } from '@/app/types/studio';
+import type { Project, Revision } from '@/app/types/studio';
+import { chapter, projectWith, revision } from '@/test/factories';
+import { createMountHarness } from '@/test/harness';
 
 import { useDocumentDraft } from './useDocumentDraft';
 import { useRevisionCache } from './useRevisionCache';
@@ -23,66 +24,29 @@ vi.mock('@/app/api', async (importOriginal) => {
 type HookResult = ReturnType<typeof useRevisionCache>;
 type DraftHookResult = ReturnType<typeof useDocumentDraft>;
 
-const mountedRoots: Array<{ container: HTMLDivElement; root: Root }> = [];
+const harness = createMountHarness();
 
 afterEach(() => {
-  for (const { container, root } of mountedRoots) {
-    act(() => root.unmount());
-    container.remove();
-  }
-  mountedRoots.length = 0;
+  harness.cleanup();
   vi.resetAllMocks();
 });
 
-const revision: Revision = {
-  id: 'revision-1',
-  document_id: 'document-1',
-  parent_revision_id: null,
-  revision_number: 1,
-  content_markdown: 'Draft',
-  metadata: {},
-  source: 'manual',
-  word_count: 1,
-  created_at: '2026-07-20T00:00:00Z',
-};
+const revisionOne = revision('revision-1');
+const staleRevision = revision('revision-stale', { content_markdown: 'Stale draft' });
 
-const staleRevision: Revision = {
-  ...revision,
-  id: 'revision-stale',
-  content_markdown: 'Stale draft',
-};
-
-const activeDocument: StudioDocument = {
-  id: 'document-1',
-  project_id: 'project-1',
-  kind: 'chapter',
+const activeDocument = chapter('document-1', {
   title: 'Chapter One',
-  position: 0,
   current_revision_id: 'revision-current',
   content_markdown: 'Draft',
-  metadata: {},
-  revision_source: 'manual',
-  word_count: 1,
-  created_at: '2026-07-20T00:00:00Z',
-  updated_at: '2026-07-20T00:00:00Z',
-};
+});
 
-const project: Project = {
-  id: 'project-1',
-  title: 'Novel',
-  description: '',
-  settings: {},
-  import_hash: null,
-  created_at: '2026-07-20T00:00:00Z',
-  updated_at: '2026-07-20T00:00:00Z',
-  documents: [activeDocument],
-};
+const project = projectWith([activeDocument], { title: 'Novel' });
 
-const restoredDocument: StudioDocument = {
+const restoredDocument = {
   ...activeDocument,
   current_revision_id: 'revision-restored',
   content_markdown: 'Restored draft',
-  updated_at: '2026-07-20T00:01:00Z',
+  updated_at: '2026-08-27T00:01:00Z',
 };
 
 function renderCache(): {
@@ -97,11 +61,7 @@ function renderCache(): {
     return null;
   }
 
-  const container = document.createElement('div');
-  const root = createRoot(container);
-  act(() => root.render(<Wrapper />));
-  document.body.appendChild(container);
-  mountedRoots.push({ container, root });
+  const { container } = harness.mount(<Wrapper />);
 
   return {
     result: () => {
@@ -109,10 +69,7 @@ function renderCache(): {
       return current;
     },
     dispose: () => {
-      act(() => root.unmount());
-      container.remove();
-      const index = mountedRoots.findIndex((mounted) => mounted.root === root);
-      if (index >= 0) mountedRoots.splice(index, 1);
+      harness.unmount(container);
     },
   };
 }
@@ -129,11 +86,7 @@ function renderDraft(): { readonly result: () => { readonly hook: DraftHookResul
     return null;
   }
 
-  const container = document.createElement('div');
-  const root = createRoot(container);
-  act(() => root.render(<Wrapper />));
-  document.body.appendChild(container);
-  mountedRoots.push({ container, root });
+  harness.mount(<Wrapper />);
 
   return {
     result: () => {
@@ -167,13 +120,13 @@ describe('useRevisionCache', () => {
     expect(settled).toBe(false);
 
     await act(async () => {
-      resolveResponse?.({ revisions: [revision] });
+      resolveResponse?.({ revisions: [revisionOne] });
       await refresh;
       await Promise.resolve();
     });
 
     expect(settled).toBe(true);
-    expect(cache.result().hook.revisions).toEqual([revision]);
+    expect(cache.result().hook.revisions).toEqual([revisionOne]);
   });
 
   it('does not let an unmounted cache instance overwrite a newer response', async () => {
@@ -196,7 +149,7 @@ describe('useRevisionCache', () => {
     const currentCache = renderCache();
 
     await act(async () => {
-      resolveCurrent?.({ revisions: [revision] });
+      resolveCurrent?.({ revisions: [revisionOne] });
       await Promise.resolve();
     });
     await act(async () => {
@@ -204,7 +157,7 @@ describe('useRevisionCache', () => {
       await Promise.resolve();
     });
 
-    expect(currentCache.result().hook.revisions).toEqual([revision]);
+    expect(currentCache.result().hook.revisions).toEqual([revisionOne]);
   });
 
   it('keeps restore pending until the revision refresh completes', async () => {
@@ -237,7 +190,7 @@ describe('useRevisionCache', () => {
     expect(settled).toBe(false);
 
     await act(async () => {
-      resolveRefresh?.({ revisions: [revision] });
+      resolveRefresh?.({ revisions: [revisionOne] });
       await restore;
       await Promise.resolve();
     });

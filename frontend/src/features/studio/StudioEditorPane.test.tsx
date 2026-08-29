@@ -1,9 +1,9 @@
 import { fireEvent } from '@testing-library/dom';
-import { act, type ReactElement } from 'react';
-import { createRoot, type Root } from 'react-dom/client';
+import { act } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import type { StudioDocument } from '@/app/types/studio';
+import { chapter } from '@/test/factories';
+import { createMountHarness } from '@/test/harness';
 
 import { StudioEditorPane } from './StudioEditorPane';
 
@@ -17,43 +17,24 @@ vi.mock('./MarkdownEditor', () => ({
   ),
 }));
 
-const mountedRoots: Array<{ container: HTMLDivElement; root: Root }> = [];
+const harness = createMountHarness();
 
-function render(element: ReactElement): HTMLDivElement {
-  const container = document.createElement('div');
-  document.body.appendChild(container);
-  const root = createRoot(container);
-  act(() => {
-    root.render(element);
-  });
-  mountedRoots.push({ container, root });
-  return container;
+function render(element: Parameters<typeof harness.mount>[0]): HTMLDivElement {
+  return harness.mount(element).container;
 }
 
 afterEach(() => {
-  for (const { container, root } of mountedRoots) {
-    act(() => {
-      root.unmount();
-    });
-    container.remove();
-  }
-  mountedRoots.length = 0;
+  harness.cleanup();
 });
 
-const baseDocument: StudioDocument = {
-  id: 'doc-1',
-  project_id: 'project-1',
-  kind: 'chapter',
+const baseDocument = chapter('doc-1', {
   title: 'Opening',
   position: 1,
   current_revision_id: 'revision-abcdefghi',
   content_markdown: '# Opening',
-  metadata: {},
   revision_source: 'author',
   word_count: 42,
-  created_at: '2026-06-16T00:00:00Z',
-  updated_at: '2026-06-16T00:00:00Z',
-};
+});
 
 describe('Studio editor pane', () => {
   it('renders editor state and forwards title/body edits', async () => {

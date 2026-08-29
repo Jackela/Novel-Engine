@@ -1,9 +1,10 @@
 import { act, useState } from 'react';
-import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { api } from '@/app/api';
 import type { Project, StudioExport, StudioJob } from '@/app/types/studio';
+import { job, project, studioExport } from '@/test/factories';
+import { createMountHarness } from '@/test/harness';
 
 import { useExportDownload } from './useExportDownload';
 
@@ -27,64 +28,36 @@ interface HarnessSnapshot {
   readonly exportProject: ReturnType<typeof useExportDownload>['exportProject'];
 }
 
-const mountedRoots: Array<{ container: HTMLDivElement; root: Root }> = [];
-const project: Project = {
-  id: 'project-1',
-  title: 'Clockwork Harbor',
+const harness = createMountHarness();
+const projectFixture = project({
   description: 'A harbor of brass clocks.',
-  settings: {},
-  import_hash: null,
-  created_at: '2026-06-19T00:00:00Z',
-  updated_at: '2026-06-19T00:00:00Z',
-  documents: [],
-};
-const studioExport: StudioExport = {
-  id: 'export-1',
-  project_id: project.id,
-  snapshot_id: 'snapshot-1',
-  format: 'markdown',
-  size_bytes: 128,
-  checksum_sha256: 'checksum-1',
-  created_at: '2026-06-19T00:01:00Z',
-  download_url: '/downloads/export-1',
-};
-const exportJob: StudioJob = {
-  id: 'job-1',
-  project_id: project.id,
+});
+const exportFixture = studioExport({ project_id: projectFixture.id });
+const exportJob = job({
+  project_id: projectFixture.id,
   document_id: null,
   kind: 'export',
   operation: 'export',
-  status: 'completed',
   provider: 'studio',
   model: '',
   request: { format: 'markdown' },
   result: { export_id: 'export-1' },
-  error: null,
-  retry_of_job_id: null,
   events: [
     {
       id: 'event-1',
       status: 'completed',
       details: { export_id: 'export-1' },
-      created_at: '2026-06-19T00:01:00Z',
+      created_at: '2026-08-27T00:01:00Z',
     },
   ],
-  created_at: '2026-06-19T00:01:00Z',
-  updated_at: '2026-06-19T00:01:00Z',
-};
+});
 
 beforeEach(() => {
   vi.useFakeTimers();
 });
 
 afterEach(() => {
-  for (const { container, root } of mountedRoots) {
-    act(() => {
-      root.unmount();
-    });
-    container.remove();
-  }
-  mountedRoots.length = 0;
+  harness.cleanup();
   vi.clearAllTimers();
   vi.useRealTimers();
   vi.unstubAllGlobals();
@@ -92,7 +65,7 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-function renderExportHook(selectedProject: Project | null = project): {
+function renderExportHook(selectedProject: Project | null = projectFixture): {
   readonly result: () => HarnessSnapshot;
 } {
   let current: HarnessSnapshot | undefined;
@@ -100,19 +73,17 @@ function renderExportHook(selectedProject: Project | null = project): {
   function Wrapper(): null {
     const [exports, setExports] = useState<StudioExport[]>([]);
     const [error, setError] = useState<string | null>(null);
-    const { exportProject } = useExportDownload(selectedProject, project.id, setExports, setError);
+    const { exportProject } = useExportDownload(
+      selectedProject,
+      projectFixture.id,
+      setExports,
+      setError,
+    );
     current = { exports, error, exportProject };
     return null;
   }
 
-  const container = document.createElement('div');
-  document.body.appendChild(container);
-  const root = createRoot(container);
-  mountedRoots.push({ container, root });
-
-  act(() => {
-    root.render(<Wrapper />);
-  });
+  harness.mount(<Wrapper />);
 
   return {
     result: () => {
@@ -140,7 +111,7 @@ describe('useExportDownload', () => {
       clickedDownload = this.download;
     });
     vi.mocked(api.createExport).mockResolvedValue(exportJob);
-    vi.mocked(api.exports).mockResolvedValue({ exports: [studioExport] });
+    vi.mocked(api.exports).mockResolvedValue({ exports: [exportFixture] });
     vi.mocked(api.download).mockResolvedValue(blob);
     const harness = renderExportHook();
 
@@ -153,7 +124,7 @@ describe('useExportDownload', () => {
     });
 
     // Then
-    expect(harness.result().exports).toEqual([studioExport]);
+    expect(harness.result().exports).toEqual([exportFixture]);
     expect(clickedHref).toBe('blob:export-1');
     expect(clickedDownload).toBe('Clockwork Harbor.md');
     expect(createObjectURL).toHaveBeenCalledWith(blob);

@@ -1,30 +1,22 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { job } from '@/test/factories';
+
 import { HttpError } from './api';
 import { ProposalStreamParser, streamProposal } from './proposalStream';
-import type { StudioJob } from './types/studio';
 
 afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-const streamedJob: StudioJob = {
+const streamedJob = job({
   id: 'job-9',
-  project_id: 'project-1',
-  document_id: 'document-1',
-  kind: 'proposal',
-  operation: 'continue',
-  status: 'completed',
-  provider: 'mock',
   model: 'deterministic-story-v1',
   request: { operation: 'continue' },
   result: { proposal_markdown: 'Night fell over the harbor.' },
-  error: null,
-  retry_of_job_id: null,
-  events: [],
   created_at: '2026-08-28T00:00:00Z',
   updated_at: '2026-08-28T00:00:00Z',
-};
+});
 
 function sseResponse(frames: string[], status = 200): Response {
   const encoder = new TextEncoder();

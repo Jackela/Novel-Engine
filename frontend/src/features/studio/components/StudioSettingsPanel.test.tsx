@@ -1,34 +1,20 @@
 import { fireEvent, getByRole, queryByRole } from '@testing-library/dom';
-import { createRoot } from 'react-dom/client';
 import { act } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import type { ProviderInfo } from '@/app/types/studio';
+import { createMountHarness } from '@/test/harness';
 
 import { StudioSettingsPanel } from './StudioSettingsPanel';
 
-const mountedContainers: Array<{ container: HTMLDivElement; root: ReturnType<typeof createRoot> }> =
-  [];
+const harness = createMountHarness();
 
 afterEach(() => {
-  for (const { container, root } of mountedContainers) {
-    act(() => {
-      root.unmount();
-    });
-    container.remove();
-  }
-  mountedContainers.length = 0;
+  harness.cleanup();
 });
 
 function render(element: React.ReactElement): HTMLDivElement {
-  const container = document.createElement('div');
-  document.body.appendChild(container);
-  const root = createRoot(container);
-  mountedContainers.push({ container, root });
-  act(() => {
-    root.render(element);
-  });
-  return container;
+  return harness.mount(element).container;
 }
 
 describe('StudioSettingsPanel', () => {

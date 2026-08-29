@@ -1,8 +1,8 @@
 import { act, type ReactElement } from 'react';
-import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import type { Project, StudioDocument } from '@/app/types/studio';
+import { chapter, projectWith } from '@/test/factories';
+import { createMountHarness } from '@/test/harness';
 
 import { StudioInspector } from './StudioInspector';
 import { StudioTopbar } from './StudioTopbar';
@@ -43,17 +43,10 @@ function buildInspectorModel(): StudioInspectorModel {
   };
 }
 
-const mountedRoots: Array<{ container: HTMLDivElement; root: Root }> = [];
+const harness = createMountHarness();
 
 function render(element: ReactElement): HTMLDivElement {
-  const container = document.createElement('div');
-  document.body.appendChild(container);
-  const root = createRoot(container);
-  act(() => {
-    root.render(element);
-  });
-  mountedRoots.push({ container, root });
-  return container;
+  return harness.mount(element).container;
 }
 
 function click(element: Element | null): void {
@@ -66,31 +59,19 @@ function click(element: Element | null): void {
 }
 
 afterEach(() => {
-  for (const { container, root } of mountedRoots) {
-    act(() => {
-      root.unmount();
-    });
-    container.remove();
-  }
-  mountedRoots.length = 0;
+  harness.cleanup();
 });
 
-const baseDocument: StudioDocument = {
-  id: 'doc-1',
-  project_id: 'project-1',
-  kind: 'chapter',
+const baseDocument = chapter('doc-1', {
   title: 'Opening',
   position: 1,
   current_revision_id: 'revision-abcdefghi',
   content_markdown: '# Opening',
-  metadata: {},
   revision_source: 'author',
   word_count: 42,
-  created_at: '2026-06-16T00:00:00Z',
-  updated_at: '2026-06-16T00:00:00Z',
-};
+});
 
-const secondDocument: StudioDocument = {
+const secondDocument = {
   ...baseDocument,
   id: 'doc-2',
   title: 'Second',
@@ -99,16 +80,7 @@ const secondDocument: StudioDocument = {
   word_count: 12,
 };
 
-const baseProject: Project = {
-  id: 'project-1',
-  title: 'Clockwork Harbor',
-  description: '',
-  settings: {},
-  import_hash: null,
-  created_at: '2026-06-16T00:00:00Z',
-  updated_at: '2026-06-16T00:00:00Z',
-  documents: [baseDocument, secondDocument],
-};
+const baseProject = projectWith([baseDocument, secondDocument]);
 
 describe('Studio split components', () => {
   it('exposes the inspector tabs and active panel as an associated ARIA tab set', () => {

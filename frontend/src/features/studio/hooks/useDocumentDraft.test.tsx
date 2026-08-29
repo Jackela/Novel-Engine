@@ -1,9 +1,10 @@
 import { act, useState } from 'react';
-import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { HttpError, api } from '@/app/api';
-import type { Project, Revision, StudioDocument } from '@/app/types/studio';
+import type { Project } from '@/app/types/studio';
+import { chapter, projectWith, revision } from '@/test/factories';
+import { createMountHarness, flushMicrotasks } from '@/test/harness';
 
 import { useDocumentDraft } from './useDocumentDraft';
 
@@ -30,84 +31,58 @@ interface HarnessResult {
   readonly error: string | null;
 }
 
-const mountedRoots: Array<{ container: HTMLDivElement; root: Root }> = [];
+const harness = createMountHarness();
 
-const activeDocument: StudioDocument = {
-  id: 'document-1',
-  project_id: 'project-1',
-  kind: 'chapter',
+const activeDocument = chapter('document-1', {
   title: 'Chapter One',
-  position: 0,
   current_revision_id: 'revision-1',
   content_markdown: 'Original draft',
-  metadata: {},
   revision_source: 'manual',
   word_count: 2,
-  created_at: '2026-06-18T00:00:00Z',
-  updated_at: '2026-06-18T00:00:00Z',
-};
+});
 
-const initialProject: Project = {
-  id: 'project-1',
-  title: 'Clockwork Harbor',
+const initialProject = projectWith([activeDocument], {
   description: 'A harbor of brass clocks.',
-  settings: {},
-  import_hash: null,
-  created_at: '2026-06-18T00:00:00Z',
-  updated_at: '2026-06-18T00:00:00Z',
-  documents: [activeDocument],
-};
+});
 
-const initialRevision: Revision = {
-  id: 'revision-1',
+const initialRevision = revision('revision-1', {
   document_id: activeDocument.id,
-  parent_revision_id: null,
-  revision_number: 1,
   content_markdown: activeDocument.content_markdown,
-  metadata: {},
-  source: 'manual',
   word_count: 2,
-  created_at: '2026-06-18T00:00:00Z',
-};
+});
 
-const savedDocument: StudioDocument = {
+const savedDocument = {
   ...activeDocument,
   current_revision_id: 'revision-2',
   content_markdown: 'Edited draft',
-  word_count: 2,
-  updated_at: '2026-06-18T00:01:00Z',
+  updated_at: '2026-08-27T00:01:00Z',
 };
 
-const savedRevision: Revision = {
-  id: 'revision-2',
+const savedRevision = revision('revision-2', {
   document_id: activeDocument.id,
   parent_revision_id: initialRevision.id,
   revision_number: 2,
   content_markdown: savedDocument.content_markdown,
-  metadata: {},
-  source: 'manual',
-  word_count: 2,
-  created_at: '2026-06-18T00:01:00Z',
-};
+});
 
-const latestDocument: StudioDocument = {
+const latestDocument = {
   ...activeDocument,
   current_revision_id: 'revision-3',
   content_markdown: 'Server latest draft',
-  updated_at: '2026-06-18T00:02:00Z',
+  updated_at: '2026-08-27T00:02:00Z',
 };
 
-const latestProject: Project = {
+const latestProject = {
   ...initialProject,
   documents: [latestDocument],
   updated_at: latestDocument.updated_at,
 };
 
-const overwrittenDocument: StudioDocument = {
+const overwrittenDocument = {
   ...latestDocument,
   current_revision_id: 'revision-4',
   content_markdown: 'Conflicting draft',
-  updated_at: '2026-06-18T00:03:00Z',
+  updated_at: '2026-08-27T00:03:00Z',
 };
 
 beforeEach(() => {
@@ -115,13 +90,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
-  for (const { container, root } of mountedRoots) {
-    act(() => {
-      root.unmount();
-    });
-    container.remove();
-  }
-  mountedRoots.length = 0;
+  harness.cleanup();
   vi.clearAllTimers();
   vi.useRealTimers();
   vi.resetAllMocks();
@@ -138,14 +107,7 @@ function renderDocumentDraftHook(): { readonly result: () => HarnessResult } {
     return null;
   }
 
-  const container = document.createElement('div');
-  document.body.appendChild(container);
-  const root = createRoot(container);
-  mountedRoots.push({ container, root });
-
-  act(() => {
-    root.render(<Wrapper />);
-  });
+  harness.mount(<Wrapper />);
 
   return {
     result: () => {
@@ -155,12 +117,6 @@ function renderDocumentDraftHook(): { readonly result: () => HarnessResult } {
       return current;
     },
   };
-}
-
-async function flushMicrotasks(): Promise<void> {
-  await act(async () => {
-    await Promise.resolve();
-  });
 }
 
 async function advanceAutosave(): Promise<void> {

@@ -1,5 +1,4 @@
 import { act, useState } from 'react';
-import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { api } from '@/app/api';
@@ -7,6 +6,8 @@ import { streamProposal } from '@/app/proposalStream';
 import type { ProposalStreamRequest } from '@/app/proposalStream';
 import type { Project, StudioDocument, StudioJob } from '@/app/types/studio';
 import type { InspectorTab } from '@/features/studio/studioConstants';
+import { chapter, job, projectWith } from '@/test/factories';
+import { createMountHarness } from '@/test/harness';
 
 import { useStudioProposal } from './useStudioProposal';
 
@@ -42,67 +43,35 @@ interface HarnessSnapshot {
   readonly accepted: StudioDocument | null;
 }
 
-const mountedRoots: Array<{ container: HTMLDivElement; root: Root }> = [];
+const harness = createMountHarness();
 
-const firstDocument: StudioDocument = {
-  id: 'document-1',
-  project_id: 'project-1',
-  kind: 'chapter',
+const firstDocument = chapter('document-1', {
   title: 'Chapter One',
-  position: 0,
   current_revision_id: 'revision-1',
   content_markdown: 'Original scene',
-  metadata: {},
   revision_source: 'manual',
   word_count: 2,
-  created_at: '2026-06-18T00:00:00Z',
-  updated_at: '2026-06-18T00:00:00Z',
-};
+});
 
-const secondDocument: StudioDocument = {
+const secondDocument = {
   ...firstDocument,
   id: 'document-2',
   title: 'Chapter Two',
   current_revision_id: 'revision-2',
 };
 
-const baseProject: Project = {
-  id: 'project-1',
-  title: 'Clockwork Harbor',
+const baseProject = projectWith([firstDocument, secondDocument], {
   description: 'A harbor of brass clocks.',
-  settings: {},
-  import_hash: null,
-  created_at: '2026-06-18T00:00:00Z',
-  updated_at: '2026-06-18T00:00:00Z',
-  documents: [firstDocument, secondDocument],
-};
+});
 
-const proposalJob: StudioJob = {
-  id: 'job-1',
+const proposalJob = job({
   project_id: baseProject.id,
   document_id: firstDocument.id,
-  kind: 'proposal',
-  operation: 'continue',
-  status: 'completed',
-  provider: 'mock',
-  model: 'studio-copilot-v1',
-  request: {},
   result: { proposal_markdown: 'A generated continuation.' },
-  error: null,
-  retry_of_job_id: null,
-  events: [],
-  created_at: '2026-06-18T00:01:00Z',
-  updated_at: '2026-06-18T00:01:00Z',
-};
+});
 
 afterEach(() => {
-  for (const { container, root } of mountedRoots) {
-    act(() => {
-      root.unmount();
-    });
-    container.remove();
-  }
-  mountedRoots.length = 0;
+  harness.cleanup();
   vi.resetAllMocks();
 });
 
@@ -134,13 +103,10 @@ function renderProposalHook(): {
     return null;
   }
 
-  const container = document.createElement('div');
-  document.body.appendChild(container);
-  const root = createRoot(container);
-  mountedRoots.push({ container, root });
+  const mounted = harness.mount(<Wrapper />);
+  const root = mounted.root;
 
   const render = () => root.render(<Wrapper />);
-  act(render);
 
   return {
     result: () => {

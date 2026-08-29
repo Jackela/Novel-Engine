@@ -1,41 +1,26 @@
 import { getByRole, queryByRole } from '@testing-library/dom';
-import { act } from 'react';
-import { createRoot } from 'react-dom/client';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import type { WholeBookPhase } from '../hooks/useWholeBookLoop';
+import { createMountHarness } from '@/test/harness';
 
 import { StudioWholeBookControl } from './StudioWholeBookControl';
 
-const mountedContainers: Array<{ container: HTMLDivElement; root: ReturnType<typeof createRoot> }> =
-  [];
+const harness = createMountHarness();
 
 afterEach(() => {
-  for (const { container, root } of mountedContainers) {
-    act(() => {
-      root.unmount();
-    });
-    container.remove();
-  }
-  mountedContainers.length = 0;
+  harness.cleanup();
 });
 
 function render(phase: WholeBookPhase, remaining = 3): HTMLDivElement {
-  const container = document.createElement('div');
-  document.body.appendChild(container);
-  const root = createRoot(container);
-  mountedContainers.push({ container, root });
-  act(() => {
-    root.render(
-      <StudioWholeBookControl
-        phase={phase}
-        remaining={remaining}
-        onStart={vi.fn()}
-        onStop={vi.fn()}
-      />,
-    );
-  });
-  return container;
+  return harness.mount(
+    <StudioWholeBookControl
+      phase={phase}
+      remaining={remaining}
+      onStart={vi.fn()}
+      onStop={vi.fn()}
+    />,
+  ).container;
 }
 
 describe('StudioWholeBookControl (#318)', () => {

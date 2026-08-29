@@ -1,73 +1,41 @@
-import { act } from 'react';
-import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import type { Revision } from '@/app/types/studio';
+import { revision } from '@/test/factories';
+import { createMountHarness } from '@/test/harness';
 
 import { StudioHistoryPanel } from './StudioHistoryPanel';
 
-const mountedRoots: Array<{ container: HTMLDivElement; root: Root }> = [];
+const harness = createMountHarness();
 
 afterEach(() => {
-  for (const { container, root } of mountedRoots) {
-    act(() => root.unmount());
-    container.remove();
-  }
-  mountedRoots.length = 0;
+  harness.cleanup();
 });
 
-const revisions: Revision[] = [
-  {
-    id: 'revision-old',
-    document_id: 'document-1',
-    parent_revision_id: null,
-    revision_number: 1,
-    content_markdown: 'Old draft',
-    metadata: {},
-    source: 'manual',
-    word_count: 2,
-    created_at: '2026-06-16T00:00:00Z',
-  },
-  {
-    id: 'revision-other',
-    document_id: 'document-1',
+const revisions = [
+  revision('revision-old', { content_markdown: 'Old draft', word_count: 2 }),
+  revision('revision-other', {
     parent_revision_id: 'revision-old',
     revision_number: 2,
     content_markdown: 'Other draft',
-    metadata: {},
-    source: 'manual',
     word_count: 2,
-    created_at: '2026-06-16T00:01:00Z',
-  },
-  {
-    id: 'revision-current',
-    document_id: 'document-1',
+  }),
+  revision('revision-current', {
     parent_revision_id: 'revision-other',
     revision_number: 3,
     content_markdown: 'Current draft',
-    metadata: {},
-    source: 'manual',
     word_count: 2,
-    created_at: '2026-06-16T00:02:00Z',
-  },
+  }),
 ];
 
 function renderHistory(restoringRevisionId: string | null): HTMLDivElement {
-  const container = document.createElement('div');
-  const root = createRoot(container);
-  act(() => {
-    root.render(
-      <StudioHistoryPanel
-        revisions={revisions}
-        loadedRevisionId="revision-current"
-        onRestoreRevision={vi.fn()}
-        restoringRevisionId={restoringRevisionId}
-      />,
-    );
-  });
-  document.body.appendChild(container);
-  mountedRoots.push({ container, root });
-  return container;
+  return harness.mount(
+    <StudioHistoryPanel
+      revisions={revisions}
+      loadedRevisionId="revision-current"
+      onRestoreRevision={vi.fn()}
+      restoringRevisionId={restoringRevisionId}
+    />,
+  ).container;
 }
 
 describe('StudioHistoryPanel', () => {

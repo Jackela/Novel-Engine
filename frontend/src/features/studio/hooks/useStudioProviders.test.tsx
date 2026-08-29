@@ -1,9 +1,9 @@
-import { createRoot } from 'react-dom/client';
 import { act } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { api } from '@/app/api';
 import type { ProviderInfo } from '@/app/types/studio';
+import { createMountHarness } from '@/test/harness';
 
 import { useStudioProviders } from './useStudioProviders';
 
@@ -13,17 +13,10 @@ vi.mock('@/app/api', () => ({
   },
 }));
 
-const mountedContainers: Array<{ container: HTMLDivElement; root: ReturnType<typeof createRoot> }> =
-  [];
+const harness = createMountHarness();
 
 afterEach(() => {
-  for (const { container, root } of mountedContainers) {
-    act(() => {
-      root.unmount();
-    });
-    container.remove();
-  }
-  mountedContainers.length = 0;
+  harness.cleanup();
 });
 
 function renderHook<T>(useHook: () => T): { result: { current: T } } {
@@ -34,14 +27,7 @@ function renderHook<T>(useHook: () => T): { result: { current: T } } {
     return null;
   }
 
-  const container = document.createElement('div');
-  document.body.appendChild(container);
-  const root = createRoot(container);
-  mountedContainers.push({ container, root });
-
-  act(() => {
-    root.render(<Wrapper />);
-  });
+  harness.mount(<Wrapper />);
 
   return { result };
 }

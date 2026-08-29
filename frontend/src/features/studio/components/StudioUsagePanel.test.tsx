@@ -1,9 +1,9 @@
 import { act } from 'react';
-import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { api } from '@/app/api';
 import type { ProjectUsage, UsageDailyBucket } from '@/app/types/studio';
+import { createMountHarness } from '@/test/harness';
 
 import { StudioUsagePanel } from './StudioUsagePanel';
 
@@ -23,25 +23,15 @@ vi.mock('@/app/api', () => ({
   api: { usage: vi.fn() },
 }));
 
-const mountedRoots: Array<{ container: HTMLDivElement; root: Root }> = [];
+const harness = createMountHarness();
 
 afterEach(() => {
-  for (const { container, root } of mountedRoots) {
-    act(() => root.unmount());
-    container.remove();
-  }
-  mountedRoots.length = 0;
+  harness.cleanup();
   vi.clearAllMocks();
 });
 
 function renderUsagePanel(active: boolean): HTMLDivElement {
-  const container = document.createElement('div');
-  const root = createRoot(container);
-  mountedRoots.push({ container, root });
-  act(() => {
-    root.render(<StudioUsagePanel active={active} projectId="project-1" />);
-  });
-  return container;
+  return harness.mount(<StudioUsagePanel active={active} projectId="project-1" />).container;
 }
 
 const emptyUsage: ProjectUsage = {
