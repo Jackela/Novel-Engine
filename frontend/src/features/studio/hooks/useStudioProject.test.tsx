@@ -4,7 +4,7 @@ import { MemoryRouter, useLocation, useNavigationType } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { HttpError, api } from '@/app/api';
-import type { Project, Review, Session, StudioExport } from '@/app/types/studio';
+import type { Project, Review, StudioExport } from '@/app/types/studio';
 
 import { useStudioProject } from './useStudioProject';
 
@@ -15,7 +15,6 @@ vi.mock('@/app/api', async (importOriginal) => {
     ...actual,
     api: {
       ...actual.api,
-      session: vi.fn<typeof actual.api.session>(),
       project: vi.fn<typeof actual.api.project>(),
       reviews: vi.fn<typeof actual.api.reviews>(),
       exports: vi.fn<typeof actual.api.exports>(),
@@ -26,7 +25,6 @@ vi.mock('@/app/api', async (importOriginal) => {
 type HookResult = ReturnType<typeof useStudioProject>;
 
 interface AggregateFixture {
-  readonly session: Session;
   readonly project: Project;
   readonly review: Review;
   readonly studioExport: StudioExport;
@@ -53,12 +51,6 @@ afterEach(() => {
 
 function makeAggregate(projectId: string, label: string): AggregateFixture {
   return {
-    session: {
-      session_id: `session-${label}`,
-      kind: 'owner',
-      owner_id: `owner-${label}`,
-      expires_at: null,
-    },
     project: {
       id: projectId,
       title: `Project ${label}`,
@@ -150,7 +142,6 @@ describe('useStudioProject', () => {
   it('publishes the complete project aggregate when every request succeeds', async () => {
     // Given
     const fixture = makeAggregate('project-1', 'one');
-    vi.mocked(api.session).mockResolvedValue(fixture.session);
     vi.mocked(api.project).mockResolvedValue(fixture.project);
     vi.mocked(api.reviews).mockResolvedValue({ reviews: [fixture.review] });
     vi.mocked(api.exports).mockResolvedValue({ exports: [fixture.studioExport] });
@@ -160,7 +151,6 @@ describe('useStudioProject', () => {
     await flushEffects();
 
     // Then
-    expect(harness.result().hook.session).toEqual(fixture.session);
     expect(harness.result().hook.project).toEqual(fixture.project);
     expect(harness.result().hook.reviews).toEqual([fixture.review]);
     expect(harness.result().hook.exports).toEqual([fixture.studioExport]);
@@ -173,7 +163,6 @@ describe('useStudioProject', () => {
     const exportRequest = new Promise<{ exports: StudioExport[] }>((_resolve, reject) => {
       rejectExports = reject;
     });
-    vi.mocked(api.session).mockResolvedValue(fixture.session);
     vi.mocked(api.project).mockResolvedValue(fixture.project);
     vi.mocked(api.reviews).mockResolvedValue({ reviews: [fixture.review] });
     vi.mocked(api.exports).mockReturnValue(exportRequest);
@@ -193,7 +182,6 @@ describe('useStudioProject', () => {
     // Then
     expect(harness.result().pathname).toBe('/');
     expect(harness.result().navigationType).toBe('REPLACE');
-    expect(harness.result().hook.session).toBeNull();
     expect(harness.result().hook.project).toBeNull();
     expect(harness.result().hook.reviews).toEqual([]);
     expect(harness.result().hook.exports).toEqual([]);
@@ -203,9 +191,6 @@ describe('useStudioProject', () => {
     // Given
     const first = makeAggregate('project-1', 'one');
     const second = makeAggregate('project-2', 'two');
-    vi.mocked(api.session)
-      .mockResolvedValueOnce(first.session)
-      .mockResolvedValueOnce(second.session);
     vi.mocked(api.project)
       .mockResolvedValueOnce(first.project)
       .mockResolvedValueOnce(second.project);
@@ -224,11 +209,9 @@ describe('useStudioProject', () => {
     await flushEffects();
 
     // Then
-    expect(firstPublished.session).toEqual(first.session);
     expect(firstPublished.project).toEqual(first.project);
     expect(firstPublished.reviews).toEqual([first.review]);
     expect(firstPublished.exports).toEqual([first.studioExport]);
-    expect(harness.result().hook.session).toEqual(second.session);
     expect(harness.result().hook.project).toEqual(second.project);
     expect(harness.result().hook.reviews).toEqual([second.review]);
     expect(harness.result().hook.exports).toEqual([second.studioExport]);
@@ -242,12 +225,6 @@ describe('useStudioProject', () => {
 
   it('renders a readable error state and keeps the route when the failure is not a 404', async () => {
     // Given
-    vi.mocked(api.session).mockResolvedValue({
-      session_id: 'session-1',
-      kind: 'owner',
-      owner_id: 'owner-1',
-      expires_at: null,
-    });
     vi.mocked(api.project).mockRejectedValue(new HttpError('Upstream failure.', 503));
     vi.mocked(api.reviews).mockResolvedValue({ reviews: [] });
     vi.mocked(api.exports).mockResolvedValue({ exports: [] });
@@ -264,13 +241,9 @@ describe('useStudioProject', () => {
 
   it('aborts the in-flight requests of the previous project when the id changes', async () => {
     // Given
-    const first = makeAggregate('project-1', 'one');
     const second = makeAggregate('project-2', 'two');
     vi.mocked(api.reviews).mockResolvedValue({ reviews: [] });
     vi.mocked(api.exports).mockResolvedValue({ exports: [] });
-    vi.mocked(api.session)
-      .mockResolvedValueOnce(first.session)
-      .mockResolvedValueOnce(second.session);
     // The stale project request only settles when its signal is aborted.
     vi.mocked(api.project)
       .mockImplementationOnce((_projectId: string, init?: RequestInit) => {

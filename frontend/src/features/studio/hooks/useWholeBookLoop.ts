@@ -4,6 +4,8 @@ import type { Dispatch, SetStateAction } from 'react';
 import { api } from '@/app/api';
 import type { Project, StudioDocument } from '@/app/types/studio';
 
+import { acceptProposalAndRefresh } from './acceptProposalAndRefresh';
+import { toErrorMessage } from './toErrorMessage';
 import type { WholeBookChapter } from './wholeBookPlan';
 
 /**
@@ -30,10 +32,6 @@ interface UseWholeBookLoopArgs {
   readonly loadJobs: () => void;
   /** Receives every freshly accepted document (active-editor cache reset). */
   readonly onAccepted?: (document: StudioDocument) => void;
-}
-
-function errorMessage(reason: unknown, fallback: string): string {
-  return reason instanceof Error ? reason.message : fallback;
 }
 
 /**
@@ -94,15 +92,15 @@ export function useWholeBookLoop({
             // react-doctor-disable-next-line async-await-in-loop
             const job = await api.proposal(projectId, chapter.id, 'generate', '', provider);
             if (stopRequestedRef.current) break;
-            await api.acceptProposal(projectId, job.id);
+            await acceptProposalAndRefresh({
+              projectId,
+              proposalId: job.id,
+              documentId: chapter.id,
+              setProject,
+              onAccepted,
+              loadJobs,
+            });
             generated += 1;
-            const refreshed = await api.project(projectId);
-            setProject(refreshed);
-            const acceptedDocument = refreshed.documents?.find(
-              (document) => document.id === chapter.id,
-            );
-            if (acceptedDocument) onAccepted?.(acceptedDocument);
-            loadJobs();
           }
           if (stopRequestedRef.current) {
             setPhase({ kind: 'done', generated, stoppedEarly: true });
@@ -118,7 +116,7 @@ export function useWholeBookLoop({
               kind: 'failed',
               generated,
               failedChapterTitle: failingTitle,
-              message: errorMessage(reason, 'Unable to generate the chapter.'),
+              message: toErrorMessage(reason, 'Unable to generate the chapter.'),
             });
           }
         } finally {

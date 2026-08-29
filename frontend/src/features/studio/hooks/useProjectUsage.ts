@@ -3,6 +3,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { api } from '@/app/api';
 import type { ProjectUsage } from '@/app/types/studio';
 
+import { toErrorMessage } from './toErrorMessage';
+
 /**
  * Loads the project-level cumulative usage (#377) lazily: the request fires
  * the first time the Usage inspector tab becomes active, and can be repeated
@@ -24,7 +26,7 @@ export function useProjectUsage(projectId: string, active: boolean) {
       setUsage(response);
       setError(null);
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : 'Unable to load usage.');
+      setError(toErrorMessage(reason, 'Unable to load usage.'));
     } finally {
       loadingRef.current = false;
       loadedRef.current = true;

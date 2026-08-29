@@ -4,6 +4,8 @@ import type { Dispatch, SetStateAction } from 'react';
 import { api } from '@/app/api';
 import type { StudioJob } from '@/app/types/studio';
 
+import { toErrorMessage } from './toErrorMessage';
+
 export function useStudioJobs(
   projectId: string,
   setError: Dispatch<SetStateAction<string | null>>,
@@ -20,7 +22,7 @@ export function useStudioJobs(
       const response = await api.jobs(projectId);
       setJobs(response.jobs);
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : 'Unable to load jobs.');
+      setError(toErrorMessage(reason, 'Unable to load jobs.'));
     } finally {
       loadingRef.current = false;
       setIsLoading(false);

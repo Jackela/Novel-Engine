@@ -45,7 +45,6 @@ export function StudioWholeBookControl({
       ) : (
         <>
           <button
-            aria-busy={false}
             className="command"
             disabled={remaining === 0}
             onClick={onStart}

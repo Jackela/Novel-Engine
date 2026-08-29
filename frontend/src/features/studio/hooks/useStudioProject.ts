@@ -2,7 +2,9 @@ import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { HttpError, api } from '@/app/api';
-import type { Project, Review, Session, StudioExport } from '@/app/types/studio';
+import type { Project, Review, StudioExport } from '@/app/types/studio';
+
+import { toErrorMessage } from './toErrorMessage';
 
 const DEFAULT_LOAD_ERROR = 'Unable to load the project. Please retry.';
 
@@ -16,7 +18,6 @@ const DEFAULT_LOAD_ERROR = 'Unable to load the project. Please retry.';
  */
 export function useStudioProject(projectId: string) {
   const navigate = useNavigate();
-  const [session, setSession] = useState<Session | null>(null);
   const [project, setProject] = useState<Project | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [exports, setExports] = useState<StudioExport[]>([]);
@@ -26,14 +27,12 @@ export function useStudioProject(projectId: string) {
   const loadProject = useCallback(
     async (signal: AbortSignal) => {
       try {
-        const [nextSession, nextProject, reviewResponse, exportResponse] = await Promise.all([
-          api.session({ signal }),
+        const [nextProject, reviewResponse, exportResponse] = await Promise.all([
           api.project(projectId, { signal }),
           api.reviews(projectId, { signal }),
           api.exports(projectId, { signal }),
         ]);
         setLoadError(null);
-        setSession(nextSession);
         setProject(nextProject);
         setReviews(reviewResponse.reviews);
         setExports(exportResponse.exports);
@@ -44,7 +43,7 @@ export function useStudioProject(projectId: string) {
           navigate('/', { replace: true });
           return;
         }
-        setLoadError(reason instanceof Error ? reason.message : DEFAULT_LOAD_ERROR);
+        setLoadError(toErrorMessage(reason, DEFAULT_LOAD_ERROR));
       }
     },
     [navigate, projectId],
@@ -59,7 +58,6 @@ export function useStudioProject(projectId: string) {
   return {
     project,
     setProject,
-    session,
     reviews,
     setReviews,
     exports,

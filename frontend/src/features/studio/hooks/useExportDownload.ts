@@ -4,6 +4,8 @@ import type { Dispatch, SetStateAction } from 'react';
 import { api } from '@/app/api';
 import type { ExportFormat, Project, StudioExport } from '@/app/types/studio';
 
+import { toErrorMessage } from './toErrorMessage';
+
 export function useExportDownload(
   project: Project | null,
   projectId: string,
@@ -46,7 +48,7 @@ export function useExportDownload(
         setTimeout(() => URL.revokeObjectURL(blobUrl), 100);
       } catch (reason) {
         setFailedFormat(format);
-        setError(reason instanceof Error ? reason.message : 'Unable to export project.');
+        setError(toErrorMessage(reason, 'Unable to export project.'));
       } finally {
         exportingRef.current = false;
         setExportingFormat(null);
