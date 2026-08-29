@@ -1,0 +1,169 @@
+.studio-statusbar {
+  grid-area: status;
+  border-top: 1px solid #dfe2e3;
+  background: var(--surface-muted);
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 0 14px;
+  color: #636b6c;
+  font-size: 11px;
+}
+.studio-statusbar span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+}
+.studio-statusbar svg {
+  width: 13px;
+  height: 13px;
+  color: var(--teal-strong);
+}
+
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+summary:focus-visible {
+  outline: 3px solid var(--teal-strong);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-delay: 0s !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .spin {
+    animation: none !important;
+  }
+}
+
+@media (max-width: 1100px) {
+  .studio {
+    grid-template-columns: 250px minmax(390px, 1fr) 310px;
+  }
+  .session-expiry {
+    display: none;
+  }
+}
+
+@media (max-width: 949px) {
+  .studio {
+    height: auto;
+    min-height: 100vh;
+    overflow: visible;
+    grid-template:
+      'top' auto
+      'editor' minmax(70vh, auto)
+      'nav' auto
+      'inspector' auto
+      'status' 34px
+      / 1fr;
+  }
+  .studio-topbar {
+    min-height: 58px;
+    flex-wrap: wrap;
+    padding: 10px;
+  }
+  .studio-project-title {
+    display: none;
+  }
+  .studio-nav {
+    border-right: 0;
+    border-bottom: 1px solid #dfe2e3;
+    overflow: visible;
+  }
+  .studio-editor {
+    min-height: 70vh;
+  }
+  .studio-inspector {
+    border-left: 0;
+    border-top: 1px solid #dfe2e3;
+    overflow: visible;
+  }
+  .studio-inspector__disclosure {
+    min-height: 0;
+  }
+  .studio-inspector__summary {
+    display: flex;
+  }
+  .editor-header {
+    padding-inline: 18px;
+  }
+  .studio-statusbar {
+    position: sticky;
+    bottom: 0;
+    z-index: 4;
+    overflow: hidden;
+  }
+}
+
+@media (max-width: 820px) {
+  .studio {
+    height: auto;
+    min-height: 100vh;
+    overflow: visible;
+    grid-template:
+      'top' auto
+      'editor' minmax(70vh, auto)
+      'nav' auto
+      'inspector' auto
+      'status' 34px
+      / 1fr;
+  }
+  .studio-topbar {
+    min-height: 58px;
+    flex-wrap: wrap;
+    padding: 10px;
+  }
+  .studio-topbar .brand {
+    font-size: 15px;
+  }
+  .studio-project-title {
+    display: none;
+  }
+  .studio-nav {
+    max-height: none;
+    border-right: 0;
+    border-bottom: 1px solid #dfe2e3;
+  }
+  .studio-editor {
+    min-height: 70vh;
+  }
+  .studio-editor .editor-header {
+    min-height: 64px;
+  }
+  .studio-editor .markdown-editor {
+    min-height: 520px;
+  }
+  .studio-inspector {
+    border-left: 0;
+    border-top: 1px solid #dfe2e3;
+    min-height: 0;
+  }
+  .editor-header {
+    padding: 0 16px;
+  }
+  .editor-title {
+    font-size: 19px;
+  }
+  .studio-statusbar {
+    position: sticky;
+    bottom: 0;
+    z-index: 4;
+    overflow: hidden;
+  }
+  .studio-statusbar span:nth-of-type(2),
+  .studio-statusbar span:nth-last-of-type(2) {
+    display: none;
+  }
+  .library__grid {
+    grid-template-columns: 1fr;
+  }
+}
