@@ -1,0 +1,143 @@
+.studio-editor {
+  grid-area: editor;
+  min-width: 0;
+  /* Flex column, not a fixed three-row grid: the conflict banner is an
+     optional extra child between header and toolbar, and a fixed row count
+     made the toolbar overlay the recovery actions (#274). */
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--surface);
+}
+.editor-header {
+  display: grid;
+  align-items: center;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  min-height: 70px;
+  padding: 0 24px;
+  border-bottom: 1px solid #e1e4e5;
+}
+.editor-header > div {
+  display: grid;
+  align-items: center;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  min-width: 0;
+}
+.editor-title {
+  border: 0;
+  outline: none;
+  font-family: ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif;
+  font-size: 23px;
+  font-weight: 700;
+  min-width: 0;
+  width: 100%;
+}
+.editor-header > span {
+  color: #626a6b;
+  font-size: 12px;
+  white-space: nowrap;
+}
+.save-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: #637071;
+  text-transform: capitalize;
+  white-space: nowrap;
+}
+.save-state svg {
+  width: 13px;
+  height: 13px;
+}
+.save-state--saved {
+  color: var(--teal-strong);
+}
+.save-state--conflict,
+.save-state--error {
+  color: var(--danger);
+}
+.editor-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-height: 42px;
+  padding: 0 18px;
+  border-bottom: 1px solid #e4e7e8;
+  color: #626a6b;
+}
+.editor-toolbar span {
+  font-size: 11px;
+  text-transform: uppercase;
+}
+.export-menu {
+  position: relative;
+}
+.export-menu > summary {
+  cursor: pointer;
+  list-style: none;
+}
+.export-menu > summary::-webkit-details-marker {
+  display: none;
+}
+.export-menu__items {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 6px);
+  right: 0;
+  min-width: 132px;
+  padding: 4px;
+  border: 1px solid #dfe2e3;
+  border-radius: 6px;
+  background: var(--surface);
+}
+.export-menu__items button {
+  min-height: 44px;
+  width: 100%;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  padding: 8px 10px;
+  text-align: left;
+}
+.export-menu__items button:hover,
+.export-menu__items button:focus-visible {
+  background: var(--surface-hover);
+}
+.markdown-editor {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+.markdown-editor .cm-content {
+  max-width: 75ch;
+  margin-inline: auto;
+  padding-inline: clamp(0px, 1vw, 12px);
+}
+.markdown-editor .cm-line {
+  max-width: 75ch;
+  margin-inline: auto;
+}
+.markdown-editor .cm-editor.cm-focused {
+  outline: 3px solid var(--teal-strong);
+  outline-offset: -3px;
+}
+.editor-loading {
+  display: grid;
+  min-height: 240px;
+  place-items: center;
+  color: #6f7778;
+}
+.empty-editor,
+.studio-loading {
+  display: grid;
+  place-items: center;
+  color: #6f7778;
+}
+.studio-loading {
+  height: 100vh;
+  gap: 8px;
+  align-content: center;
+}
