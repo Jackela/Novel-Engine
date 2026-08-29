@@ -105,6 +105,15 @@ describe("streamProviderTextDeltas internal timeouts (#342)", () => {
     await settled;
   });
 
+  it("names the first-byte budget and its real duration in the timeout message", async () => {
+    vi.useFakeTimers();
+    const request = streamRequest({ firstByteTimeoutMs: 5_000, timeoutSeconds: 30 });
+    const pending = consume(sseTransport(hangingStream()), request);
+    const settled = expect(pending).rejects.toThrow(/first-byte timeout after 5s/);
+    await vi.advanceTimersByTimeAsync(5_000);
+    await settled;
+  });
+
   it("aborts with an idle timeout when frames stall mid-stream", async () => {
     vi.useFakeTimers();
     const request = streamRequest({ firstByteTimeoutMs: 5_000, idleTimeoutMs: 10_000 });
@@ -133,6 +142,16 @@ describe("streamProviderTextDeltas internal timeouts (#342)", () => {
     expect(deltas.join("")).toBe("first bit");
     expect(outcome).toBe(false);
     await vi.advanceTimersByTimeAsync(1);
+    await settled;
+  });
+
+  it("names the idle budget and its real duration in the timeout message", async () => {
+    vi.useFakeTimers();
+    const request = streamRequest({ firstByteTimeoutMs: 5_000, idleTimeoutMs: 10_000 });
+    const transport = sseTransport(stallingStream([JSON.stringify({ content: "bit" })]));
+    const pending = consume(transport, request);
+    const settled = expect(pending).rejects.toThrow(/idle timeout after 10s of silence/);
+    await vi.advanceTimersByTimeAsync(10_000);
     await settled;
   });
 

@@ -9,7 +9,6 @@ import {
   ProviderTransportError,
   readableResponse,
   redactCredentialAndTruncateResponseBody,
-  timeoutFailure,
 } from "./provider_http.js";
 
 type JsonObject = Record<string, unknown>;
@@ -105,6 +104,26 @@ function dispatchSignal(request: StreamingTextRequest, guard: AbortController): 
     : AbortSignal.any([request.signal, guard.signal]);
 }
 
+/** Which silence budget fired, so operators can tell the two apart. */
+type SilencePhase = "first-byte" | "idle";
+
+/**
+ * Normalize an elapsed silence budget into a retryable transport timeout that
+ * names the budget and its real duration (not the overall request timeout).
+ */
+function silenceTimeoutFailure(
+  context: string,
+  budgetMs: number,
+  phase: SilencePhase,
+): ProviderTransportError {
+  const seconds = Math.round(budgetMs / 1000);
+  const detail =
+    phase === "first-byte"
+      ? `first-byte timeout after ${seconds}s`
+      : `idle timeout after ${seconds}s of silence`;
+  return new ProviderTransportError(`${context}: ${detail}.`, { timedOut: true });
+}
+
 /**
  * Await one stream frame, but never longer than the given silence budget:
  * when it elapses the guard aborts the dispatch, the loser of the race is
@@ -113,6 +132,7 @@ function dispatchSignal(request: StreamingTextRequest, guard: AbortController): 
 async function nextFrameWithin(
   pending: Promise<IteratorResult<string>>,
   budgetMs: number,
+  phase: SilencePhase,
   request: StreamingTextRequest,
   guard: AbortController,
 ): Promise<IteratorResult<string>> {
@@ -120,7 +140,7 @@ async function nextFrameWithin(
   const elapsed = new Promise<never>((_, reject) => {
     timer = setTimeout(() => {
       guard.abort();
-      reject(timeoutFailure(request.context, request.timeoutSeconds));
+      reject(silenceTimeoutFailure(request.context, budgetMs, phase));
     }, budgetMs);
   });
   try {
@@ -182,7 +202,8 @@ export async function* streamProviderTextDeltas(
   try {
     while (true) {
       const budget = receivedFrame ? idleTimeoutMs(request) : firstByteTimeoutMs(request);
-      const step = await nextFrameWithin(iterator.next(), budget, request, guard);
+      const phase: SilencePhase = receivedFrame ? "idle" : "first-byte";
+      const step = await nextFrameWithin(iterator.next(), budget, phase, request, guard);
       if (step.done === true) break;
       receivedFrame = true;
       const payload = step.value;
