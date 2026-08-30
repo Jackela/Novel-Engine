@@ -1,5 +1,65 @@
 # Changelog
 
+## 0.6.0
+
+Surfacing and hardening pass: usage, structure, and lore are now visible
+in the Studio UI and docs, backed by a frontend-correctness,
+concurrency, and API-contract quality batch, a toolchain refresh, and an
+internal convergence pass (provider/hook/pipeline dedup, preventive file
+splits, shared test factories). No breaking changes.
+
+### Added
+
+- Studio navigator shows each chapter's in-volume ordinal and a soft
+  link to its outline beat's title (#376).
+- Project Usage tab in the Studio inspector: cumulative totals and a
+  per-model request/token breakdown from the usage endpoint (#377).
+- Usage daily buckets: a trailing 30-day UTC per-day view with
+  dependency-free bars above the per-model table (#384).
+- openwiki documentation: four new feature pages (volumes & beats,
+  resident context, usage, streaming & whole-book), a new lorebook page,
+  and a deepened workspace page (#379, #385); quickstart gained
+  cross-OS commands.
+- llms.txt link-drift gate: every link in `llms.txt` is verified to
+  exist at git HEAD as part of the QA gates (#378).
+- Error-code catalog: all stable error codes documented with meaning and
+  suggested agent actions (`docs/agents/error-codes.md`, #424).
+
+### Changed
+
+- The frontend lints and formats with Biome, mirroring the server
+  toolchain; ESLint and Prettier were retired (#432).
+- Route handlers declare params and bodies through TypeBox schemas;
+  hand-written type assertions at the route layer are gone (#394).
+- Core resource payloads (project, document, revision, job, volume,
+  search hit) have a single TypeBox source of truth: response schemas
+  now reject undeclared fields (`additionalProperties: false`) and the
+  document payload declares `beat_ref` as always-present (#426, #433).
+- CI, CodeQL, and dependency audits standardize on Node.js 24 (#422).
+- Dependency maintenance: patch/minor sweep with dedupe (#422) plus a
+  minor-tier batch (Vite 8.2, Playwright 1.62, openspec 1.11,
+  react-doctor 0.9 — which surfaced two real fixes: router error
+  boundaries and a caught dynamic import — jsdom 30, jest-dom 7) (#435).
+- Error messages are actionable: CSRF/forbidden/not-found failures name
+  the exact cookie, header, or identifiers involved (#424), and stream
+  timeouts distinguish first-byte from idle budgets (#370).
+
+### Fixed
+
+- Frontend request lifecycle: non-404 project load failures render a
+  readable error instead of silently redirecting home, stale in-flight
+  requests are aborted on project switch and unmount, and the whole-book
+  loop stops when the page unmounts (#390).
+- SSE proposal frames are runtime-validated on the client; malformed
+  frames fail with a readable error instead of a bare parse error
+  (#391).
+- Concurrent review requests now hit the 409 in-flight guard, job
+  completion and its usage event post in a single transaction, and
+  illegal job status transitions are rejected (#392).
+- DashScope Responses-mode stream extraction no longer leaks content
+  from non-message (reasoning/tool) items (#371).
+- Accessibility fixes in the Studio navigator and inspector tabs (#411).
+
 ## 0.5.0
 
 Studio deepening epic (#309–#328, ADR-0004/0005) plus a tech-debt and
