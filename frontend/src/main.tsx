@@ -37,7 +37,7 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
           <p>
             The application encountered an unexpected error. Please refresh the page to try again.
           </p>
-          {this.state.error ? <p className="form-error">{this.state.error.message}</p> : null}
+          {this.state.error ? <p className="ui-form-error">{this.state.error.message}</p> : null}
         </div>
       </div>
     );

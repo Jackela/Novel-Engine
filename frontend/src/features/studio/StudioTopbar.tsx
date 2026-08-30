@@ -10,13 +10,18 @@ interface StudioTopbarProps {
 export function StudioTopbar({ project, onBack }: StudioTopbarProps) {
   return (
     <header className="studio-topbar">
-      <button aria-label="Back to projects" className="icon-command" onClick={onBack} type="button">
+      <button
+        aria-label="Back to projects"
+        className="ui-command--icon"
+        onClick={onBack}
+        type="button"
+      >
         <ChevronLeft />
       </button>
-      <div className="brand">
+      <div className="ui-brand">
         <BookOpen /> Novel Engine
       </div>
-      <div className="studio-project-title">{project.title}</div>
+      <div className="studio-topbar__project-title">{project.title}</div>
       <div className="studio-topbar__spacer" />
     </header>
   );

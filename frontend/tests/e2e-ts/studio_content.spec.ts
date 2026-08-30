@@ -86,12 +86,12 @@ test.describe
       // only when the done frame lands the completed proposal.
       await expect(studio.getByRole("button", { name: "Accept" })).toBeVisible();
 
-      const preview = (await studio.locator(".proposal pre").textContent()) ?? "";
+      const preview = (await studio.locator(".studio-inspector__proposal pre").textContent()) ?? "";
       await assertNarrativeProse(preview);
 
       await studio.getByRole("button", { name: "Accept" }).click();
       await expect(studio.getByText("Proposed Markdown")).toHaveCount(0);
-      await expect(studio.locator(".studio-editor .save-state")).toHaveText(/saved/i);
+      await expect(studio.locator(".studio-editor .editor__save-state")).toHaveText(/saved/i);
       await expect(studio.locator(".cm-content")).toContainText("The Debt in the Rain");
 
       // The accepted revision must be exactly the prose the author saw.
@@ -127,7 +127,7 @@ test.describe
       const markdownBytes = await exportThroughUi(studio, "Markdown", `${title}.md`);
       const docxBytes = await exportThroughUi(studio, "Word document", `${title}.docx`);
       const epubBytes = await exportThroughUi(studio, "EPUB", `${title}.epub`);
-      await expect(studio.locator(".export-row")).toHaveCount(3);
+      await expect(studio.locator(".studio-inspector__export-row")).toHaveCount(3);
 
       // Byte fidelity (#294): the file is exactly the saved chapters under the
       // project title — reconstructed from the store, not from typed constants.

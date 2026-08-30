@@ -34,8 +34,8 @@ export function StudioExportPanel({
   onRetry,
 }: StudioExportPanelProps) {
   return (
-    <div className="inspector-content export-panel">
-      <header className="inspector-heading">
+    <div className="studio-inspector__panel export-panel">
+      <header className="studio-inspector__heading">
         <div>
           <h2>Export project</h2>
           <p>Generate a file from the current immutable snapshot.</p>
@@ -67,12 +67,12 @@ export function StudioExportPanel({
       </div>
 
       {error ? (
-        <div aria-live="assertive" className="inspector-error" role="alert">
+        <div aria-live="assertive" className="studio-inspector__error" role="alert">
           <p>{error}</p>
           {failedFormat && onRetry ? (
             <button
               aria-label={`Retry ${failedFormat} export`}
-              className="command"
+              className="ui-command"
               disabled={Boolean(exportingFormat)}
               onClick={() => onRetry(failedFormat)}
               type="button"
@@ -88,7 +88,7 @@ export function StudioExportPanel({
         {exports.length ? (
           <div className="export-list">
             {exports.map((item) => (
-              <a className="export-row" href={item.download_url} key={item.id}>
+              <a className="studio-inspector__export-row" href={item.download_url} key={item.id}>
                 <span>
                   <strong>{item.format.toUpperCase()}</strong>
                   <small>
@@ -101,7 +101,7 @@ export function StudioExportPanel({
             ))}
           </div>
         ) : (
-          <p className="empty-panel">No exports yet.</p>
+          <p className="studio-inspector__empty">No exports yet.</p>
         )}
       </section>
     </div>

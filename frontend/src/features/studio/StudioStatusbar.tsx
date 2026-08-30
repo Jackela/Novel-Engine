@@ -19,7 +19,7 @@ export function StudioStatusbar({
         {saveState === "error" ? (
           <AlertCircle />
         ) : saveState === "saving" ? (
-          <Loader2 className="spin" />
+          <Loader2 className="ui-spin" />
         ) : (
           <Check />
         )}{" "}

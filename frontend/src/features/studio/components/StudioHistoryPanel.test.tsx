@@ -42,10 +42,12 @@ describe("StudioHistoryPanel", () => {
   it("locks every restore action while one revision is restoring", () => {
     const container = renderHistory("revision-old");
     const restoreButtons = Array.from(
-      container.querySelectorAll<HTMLButtonElement>(".icon-command"),
+      container.querySelectorAll<HTMLButtonElement>(".ui-command--icon"),
     );
 
-    expect(container.querySelector(".inspector-content")?.getAttribute("aria-busy")).toBe("true");
+    expect(container.querySelector(".studio-inspector__panel")?.getAttribute("aria-busy")).toBe(
+      "true",
+    );
     expect(restoreButtons).toHaveLength(2);
     expect(restoreButtons.every((button) => button.disabled)).toBe(true);
     expect(restoreButtons[0]?.getAttribute("aria-busy")).toBe("true");
@@ -56,10 +58,12 @@ describe("StudioHistoryPanel", () => {
   it("keeps restore actions available when no revision is restoring", () => {
     const container = renderHistory(null);
     const restoreButtons = Array.from(
-      container.querySelectorAll<HTMLButtonElement>(".icon-command"),
+      container.querySelectorAll<HTMLButtonElement>(".ui-command--icon"),
     );
 
     expect(restoreButtons.every((button) => !button.disabled)).toBe(true);
-    expect(container.querySelector(".inspector-content")?.getAttribute("aria-busy")).toBe("false");
+    expect(container.querySelector(".studio-inspector__panel")?.getAttribute("aria-busy")).toBe(
+      "false",
+    );
   });
 });

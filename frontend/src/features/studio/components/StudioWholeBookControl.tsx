@@ -38,14 +38,14 @@ export function StudioWholeBookControl({
           <p className="whole-book__status" role="status">
             Generating chapter {phase.current} of {phase.total}…
           </p>
-          <button className="command whole-book__stop" onClick={onStop} type="button">
+          <button className="ui-command whole-book__stop" onClick={onStop} type="button">
             Stop generating
           </button>
         </>
       ) : (
         <>
           <button
-            className="command"
+            className="ui-command"
             disabled={remaining === 0}
             onClick={onStart}
             title={
@@ -65,7 +65,7 @@ export function StudioWholeBookControl({
             </p>
           ) : null}
           {phase.kind === "failed" ? (
-            <p className="form-error whole-book__failure" role="alert">
+            <p className="ui-form-error whole-book__failure" role="alert">
               Failed on “{phase.failedChapterTitle}” after {chaptersLabel(phase.generated)}{" "}
               accepted: {phase.message}
             </p>
