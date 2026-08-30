@@ -48,6 +48,10 @@ export interface DashScopeTextProviderOptions {
   readonly timeoutSeconds?: number | undefined;
   readonly retry?: ProviderRetryPolicy | undefined;
   readonly transport?: ProviderTransport | undefined;
+  /** Server-configured silence ceiling before the stream's first byte. */
+  readonly firstByteTimeoutMs?: number | undefined;
+  /** Server-configured silence ceiling between consecutive stream frames. */
+  readonly idleTimeoutMs?: number | undefined;
 }
 
 function modelName(value: string | undefined): string {
@@ -84,6 +88,8 @@ export class DashScopeTextProvider implements TextGenerationProvider {
   private readonly timeoutSeconds: number;
   private readonly retry: ProviderRetryPolicy;
   private readonly transport: ProviderTransport | undefined;
+  private readonly firstByteTimeoutMs: number | undefined;
+  private readonly idleTimeoutMs: number | undefined;
 
   constructor(options: DashScopeTextProviderOptions) {
     this.apiKey = requiredApiKey(options.apiKey, "DashScope");
@@ -96,6 +102,8 @@ export class DashScopeTextProvider implements TextGenerationProvider {
     );
     this.retry = options.retry ?? DEFAULT_PROVIDER_RETRY_POLICY;
     this.transport = options.transport;
+    this.firstByteTimeoutMs = options.firstByteTimeoutMs;
+    this.idleTimeoutMs = options.idleTimeoutMs;
   }
 
   async generateStructured(task: TextGenerationTask): Promise<TextGenerationResult> {
@@ -137,6 +145,8 @@ export class DashScopeTextProvider implements TextGenerationProvider {
         timeoutSeconds: this.timeoutSeconds,
         credential: this.apiKey,
         model: this.model,
+        firstByteTimeoutMs: this.firstByteTimeoutMs,
+        idleTimeoutMs: this.idleTimeoutMs,
       },
       (url, init) => this.dispatch(url, init ?? {}),
       extractDashscopeIncrementalText,

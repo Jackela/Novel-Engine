@@ -18,6 +18,14 @@ const MAX_LLM_RETRY_ATTEMPTS = 3;
 const DEFAULT_LLM_RETRY_DELAY_SECONDS = 1;
 const MIN_LLM_RETRY_DELAY_SECONDS = 0.1;
 const MAX_LLM_RETRY_DELAY_SECONDS = 10;
+// Mirror DEFAULT_STREAM_FIRST_BYTE_TIMEOUT_MS and DEFAULT_STREAM_IDLE_TIMEOUT_MS
+// in ai/infrastructure/providers/streaming_generation.ts; shared never imports
+// bounded contexts, so the values are kept in step deliberately. The ceiling
+// matches the outbound provider timeout budget (MAX_LLM_TIMEOUT_SECONDS).
+const DEFAULT_LLM_STREAM_FIRST_BYTE_TIMEOUT_MS = 30_000;
+const DEFAULT_LLM_STREAM_IDLE_TIMEOUT_MS = 60_000;
+const MIN_LLM_STREAM_TIMEOUT_MS = 1;
+const MAX_LLM_STREAM_TIMEOUT_MS = MAX_LLM_TIMEOUT_SECONDS * 1_000;
 
 export type LlmProvider = (typeof LLM_PROVIDERS)[number];
 export type DashscopeTransportMode = (typeof DASHSCOPE_TRANSPORT_MODES)[number];
@@ -37,6 +45,10 @@ export interface LlmServerConfig {
   readonly timeoutSeconds: number;
   readonly retryAttempts: number;
   readonly retryDelayMs: number;
+  /** Server-wide silence ceiling (ms) before an SSE stream sends its first byte. */
+  readonly streamFirstByteTimeoutMs: number;
+  /** Server-wide silence ceiling (ms) between consecutive SSE stream frames. */
+  readonly streamIdleTimeoutMs: number;
 }
 
 /**
@@ -83,6 +95,20 @@ export function loadLlmServerConfig(env: ReadonlyMap<string, string>): LlmServer
         MIN_LLM_RETRY_DELAY_SECONDS,
         MAX_LLM_RETRY_DELAY_SECONDS,
       ) * 1_000,
+    streamFirstByteTimeoutMs: integerFrom(
+      env,
+      "LLM_STREAM_FIRST_BYTE_TIMEOUT_MS",
+      DEFAULT_LLM_STREAM_FIRST_BYTE_TIMEOUT_MS,
+      MIN_LLM_STREAM_TIMEOUT_MS,
+      MAX_LLM_STREAM_TIMEOUT_MS,
+    ),
+    streamIdleTimeoutMs: integerFrom(
+      env,
+      "LLM_STREAM_IDLE_TIMEOUT_MS",
+      DEFAULT_LLM_STREAM_IDLE_TIMEOUT_MS,
+      MIN_LLM_STREAM_TIMEOUT_MS,
+      MAX_LLM_STREAM_TIMEOUT_MS,
+    ),
   };
 }
 
