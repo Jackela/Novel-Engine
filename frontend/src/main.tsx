@@ -1,10 +1,10 @@
-import React from 'react';
-import ReactDOM from 'react-dom/client';
-import { RouterProvider } from 'react-router-dom';
-import '@fontsource-variable/ibm-plex-sans';
+import React from "react";
+import ReactDOM from "react-dom/client";
+import { RouterProvider } from "react-router-dom";
+import "@fontsource-variable/ibm-plex-sans";
 
-import { router } from '@/app/router';
-import '@/index.css';
+import { router } from "@/app/router";
+import "@/index.css";
 
 type ErrorBoundaryProps = {
   children: React.ReactNode;
@@ -44,7 +44,7 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
   }
 }
 
-ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
+ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
     <ErrorBoundary>
       <RouterProvider router={router} />

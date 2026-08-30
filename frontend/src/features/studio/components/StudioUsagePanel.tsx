@@ -1,15 +1,16 @@
-import { RefreshCw } from 'lucide-react';
+import { RefreshCw } from "lucide-react";
 
-import type { ProjectUsage } from '@/app/types/studio';
+import type { ProjectUsage } from "@/app/types/studio";
 
-import { useProjectUsage } from '../hooks/useProjectUsage';
-import { UsageDailyBars } from './UsageDailyBars';
-import { UsageModelTable } from './UsageModelTable';
+import { useProjectUsage } from "../hooks/useProjectUsage";
+import { UsageDailyBars } from "./UsageDailyBars";
+import { UsageModelTable } from "./UsageModelTable";
 
-const formatCount = (value: number) => value.toLocaleString('en-US');
+const formatCount = (value: number) => value.toLocaleString("en-US");
 
 function UsageTotalCard({ label, value }: { label: string; value: number }) {
   return (
+    // biome-ignore lint/a11y/useSemanticElements: this stat card is not a form control group; <fieldset> would misrepresent semantics and drag in default fieldset styling.
     <div aria-label={`${label}: ${formatCount(value)}`} className="usage-total-card" role="group">
       <strong>{formatCount(value)}</strong>
       <span>{label}</span>
@@ -40,7 +41,7 @@ export function StudioUsagePanel({ projectId, active }: StudioUsagePanelProps) {
         </div>
         <button
           aria-busy={isLoading}
-          aria-label={isLoading ? 'Refreshing usage' : 'Refresh usage'}
+          aria-label={isLoading ? "Refreshing usage" : "Refresh usage"}
           className="icon-command"
           disabled={isLoading}
           onClick={() => void reload()}
@@ -62,7 +63,7 @@ export function StudioUsagePanel({ projectId, active }: StudioUsagePanelProps) {
             <UsageTotalCard label="Prompt tokens" value={totals.prompt_tokens} />
             <UsageTotalCard label="Completion tokens" value={totals.completion_tokens} />
           </div>
-          {totals.daily && totals.daily.some((bucket) => bucket.request_count > 0) ? (
+          {totals.daily?.some((bucket) => bucket.request_count > 0) ? (
             <UsageDailyBars buckets={totals.daily} />
           ) : null}
           {totals.per_model.length ? (
@@ -72,7 +73,7 @@ export function StudioUsagePanel({ projectId, active }: StudioUsagePanelProps) {
           )}
         </>
       ) : (
-        <p className="empty-panel">{isLoading ? 'Loading usage…' : 'No usage recorded yet.'}</p>
+        <p className="empty-panel">{isLoading ? "Loading usage…" : "No usage recorded yet."}</p>
       )}
     </div>
   );

@@ -1,16 +1,14 @@
-import type { ComponentProps } from 'react';
-import type { NavigateFunction } from 'react-router-dom';
+import type { ComponentProps } from "react";
+import type { NavigateFunction } from "react-router-dom";
 
-import type { DocumentKind } from '@/app/types/studio';
+import type { DocumentKind } from "@/app/types/studio";
 
-import { StudioNavigator } from '../StudioNavigator';
+import type { StudioNavigator } from "../StudioNavigator";
 
 type NavigatorProps = ComponentProps<typeof StudioNavigator>;
 
-export interface StudioNavigatorModel extends Omit<
-  NavigatorProps,
-  'onNavigateSection' | 'onCreateDocument' | 'onMoveDocument'
-> {
+export interface StudioNavigatorModel
+  extends Omit<NavigatorProps, "onNavigateSection" | "onCreateDocument" | "onMoveDocument"> {
   createDocument: (kind: DocumentKind) => void | Promise<void>;
   moveDocument: (documentId: string, direction: -1 | 1) => void | Promise<void>;
 }

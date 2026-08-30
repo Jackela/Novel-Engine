@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
 
-import { api } from '@/app/api';
-import type { ProviderInfo } from '@/app/types/studio';
+import { api } from "@/app/api";
+import type { ProviderInfo } from "@/app/types/studio";
 
-import { DEFAULT_PROVIDER_OPTIONS } from '../studioConstants';
+import { DEFAULT_PROVIDER_OPTIONS } from "../studioConstants";
 
 export function useStudioProviders(): ProviderInfo[] {
   const [providers, setProviders] = useState<ProviderInfo[]>(DEFAULT_PROVIDER_OPTIONS);

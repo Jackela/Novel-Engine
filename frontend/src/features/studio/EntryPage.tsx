@@ -1,22 +1,22 @@
-import { useEffect, useState, type FormEvent } from 'react';
-import { BookOpen, LogIn } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { BookOpen, LogIn } from "lucide-react";
+import { type FormEvent, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
-import { api } from '@/app/api';
-import type { SetupStatus } from '@/app/types/studio';
+import { api } from "@/app/api";
+import type { SetupStatus } from "@/app/types/studio";
 
-import { toErrorMessage } from './hooks/toErrorMessage';
+import { toErrorMessage } from "./hooks/toErrorMessage";
 
 const PASSWORD_AUTOCOMPLETE = {
-  existing: 'current-password',
-  fresh: 'new-password',
+  existing: "current-password",
+  fresh: "new-password",
 } as const;
 
 export function EntryPage() {
   const navigate = useNavigate();
   const [setup, setSetup] = useState<SetupStatus | null>(null);
-  const [username, setUsername] = useState('author');
-  const [password, setPassword] = useState('');
+  const [username, setUsername] = useState("author");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -25,7 +25,7 @@ export function EntryPage() {
     void api
       .session()
       .then(() => {
-        if (mounted) navigate('/projects', { replace: true });
+        if (mounted) navigate("/projects", { replace: true });
       })
       .catch(() =>
         api
@@ -35,7 +35,7 @@ export function EntryPage() {
           })
           .catch((reason: unknown) => {
             if (mounted) {
-              setError(toErrorMessage(reason, 'Unable to reach Novel Engine.'));
+              setError(toErrorMessage(reason, "Unable to reach Novel Engine."));
             }
           }),
       );
@@ -53,9 +53,9 @@ export function EntryPage() {
         await api.setupOwner(username, password);
       }
       await api.login(username, password);
-      navigate('/projects');
+      navigate("/projects");
     } catch (reason) {
-      setError(toErrorMessage(reason, 'Unable to continue.'));
+      setError(toErrorMessage(reason, "Unable to continue."));
     } finally {
       setBusy(false);
     }
@@ -68,7 +68,7 @@ export function EntryPage() {
           <BookOpen aria-hidden="true" />
           <span>Novel Engine</span>
         </div>
-        <h1>{setup?.owner_configured ? 'Open your writing studio' : 'Create the local owner'}</h1>
+        <h1>{setup?.owner_configured ? "Open your writing studio" : "Create the local owner"}</h1>
         <p>
           Your projects, Markdown revisions, reviews, and exports stay in this self-hosted instance.
         </p>
@@ -100,7 +100,7 @@ export function EntryPage() {
           {error ? <p className="form-error">{error}</p> : null}
           <button className="command command--primary" disabled={busy || !setup} type="submit">
             <LogIn aria-hidden="true" />
-            {busy ? 'Opening...' : setup?.owner_configured ? 'Sign in' : 'Create owner'}
+            {busy ? "Opening..." : setup?.owner_configured ? "Sign in" : "Create owner"}
           </button>
         </form>
         <footer>Novel Engine {__APP_VERSION__}</footer>

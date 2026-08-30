@@ -1,16 +1,16 @@
-import { act } from 'react';
-import { MemoryRouter, useLocation, useNavigationType } from 'react-router-dom';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { act } from "react";
+import { MemoryRouter, useLocation, useNavigationType } from "react-router-dom";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { HttpError, api } from '@/app/api';
-import type { Project, Review, StudioExport } from '@/app/types/studio';
-import { project, review, studioExport } from '@/test/factories';
-import { createMountHarness, flushEffects } from '@/test/harness';
+import { api, HttpError } from "@/app/api";
+import type { Project, Review, StudioExport } from "@/app/types/studio";
+import { project, review, studioExport } from "@/test/factories";
+import { createMountHarness, flushEffects } from "@/test/harness";
 
-import { useStudioProject } from './useStudioProject';
+import { useStudioProject } from "./useStudioProject";
 
-vi.mock('@/app/api', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@/app/api')>();
+vi.mock("@/app/api", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/app/api")>();
 
   return {
     ...actual,
@@ -50,13 +50,13 @@ function makeAggregate(projectId: string, label: string): AggregateFixture {
       id: projectId,
       title: `Project ${label}`,
       description: `Description ${label}`,
-      settings: { provider: 'mock' },
+      settings: { provider: "mock" },
     }),
     review: review({
       id: `review-${label}`,
       project_id: projectId,
       snapshot_id: `review-snapshot-${label}`,
-      model: 'mock-model',
+      model: "mock-model",
       summary: `Review ${label}`,
     }),
     studioExport: studioExport({
@@ -104,7 +104,7 @@ function renderStudioProjectHook(
   return {
     result: () => {
       if (current === undefined) {
-        throw new Error('Expected hook result after render.');
+        throw new Error("Expected hook result after render.");
       }
       return current;
     },
@@ -115,16 +115,18 @@ function renderStudioProjectHook(
   };
 }
 
-describe('useStudioProject', () => {
-  it('publishes the complete project aggregate when every request succeeds', async () => {
+describe("useStudioProject", () => {
+  it("publishes the complete project aggregate when every request succeeds", async () => {
     // Given
-    const fixture = makeAggregate('project-1', 'one');
+    const fixture = makeAggregate("project-1", "one");
     vi.mocked(api.project).mockResolvedValue(fixture.project);
     vi.mocked(api.reviews).mockResolvedValue({ reviews: [fixture.review] });
-    vi.mocked(api.exports).mockResolvedValue({ exports: [fixture.studioExport] });
+    vi.mocked(api.exports).mockResolvedValue({
+      exports: [fixture.studioExport],
+    });
 
     // When
-    const harness = renderStudioProjectHook('project-1');
+    const harness = renderStudioProjectHook("project-1");
     await flushEffects();
 
     // Then
@@ -133,9 +135,9 @@ describe('useStudioProject', () => {
     expect(harness.result().hook.exports).toEqual([fixture.studioExport]);
   });
 
-  it('replaces the route with no partial aggregate when the project is missing (404)', async () => {
+  it("replaces the route with no partial aggregate when the project is missing (404)", async () => {
     // Given
-    const fixture = makeAggregate('project-1', 'one');
+    const fixture = makeAggregate("project-1", "one");
     let rejectExports: ((reason?: unknown) => void) | undefined;
     const exportRequest = new Promise<{ exports: StudioExport[] }>((_resolve, reject) => {
       rejectExports = reject;
@@ -145,29 +147,29 @@ describe('useStudioProject', () => {
     vi.mocked(api.exports).mockReturnValue(exportRequest);
 
     // When
-    const harness = renderStudioProjectHook('project-1');
+    const harness = renderStudioProjectHook("project-1");
     await flushEffects();
     await act(async () => {
       if (rejectExports === undefined) {
-        throw new Error('Expected the exports request reject function.');
+        throw new Error("Expected the exports request reject function.");
       }
-      rejectExports(new HttpError('Project not found.', 404));
+      rejectExports(new HttpError("Project not found.", 404));
       await exportRequest.catch(() => undefined);
       await Promise.resolve();
     });
 
     // Then
-    expect(harness.result().pathname).toBe('/');
-    expect(harness.result().navigationType).toBe('REPLACE');
+    expect(harness.result().pathname).toBe("/");
+    expect(harness.result().navigationType).toBe("REPLACE");
     expect(harness.result().hook.project).toBeNull();
     expect(harness.result().hook.reviews).toEqual([]);
     expect(harness.result().hook.exports).toEqual([]);
   });
 
-  it('publishes the new aggregate when the project id changes', async () => {
+  it("publishes the new aggregate when the project id changes", async () => {
     // Given
-    const first = makeAggregate('project-1', 'one');
-    const second = makeAggregate('project-2', 'two');
+    const first = makeAggregate("project-1", "one");
+    const second = makeAggregate("project-2", "two");
     vi.mocked(api.project)
       .mockResolvedValueOnce(first.project)
       .mockResolvedValueOnce(second.project);
@@ -179,10 +181,10 @@ describe('useStudioProject', () => {
       .mockResolvedValueOnce({ exports: [second.studioExport] });
 
     // When
-    const harness = renderStudioProjectHook('project-1');
+    const harness = renderStudioProjectHook("project-1");
     await flushEffects();
     const firstPublished = harness.result().hook;
-    harness.rerender('project-2');
+    harness.rerender("project-2");
     await flushEffects();
 
     // Then
@@ -192,48 +194,48 @@ describe('useStudioProject', () => {
     expect(harness.result().hook.project).toEqual(second.project);
     expect(harness.result().hook.reviews).toEqual([second.review]);
     expect(harness.result().hook.exports).toEqual([second.studioExport]);
-    expect(api.project).toHaveBeenNthCalledWith(1, 'project-1', {
+    expect(api.project).toHaveBeenNthCalledWith(1, "project-1", {
       signal: expect.any(AbortSignal),
     });
-    expect(api.project).toHaveBeenNthCalledWith(2, 'project-2', {
+    expect(api.project).toHaveBeenNthCalledWith(2, "project-2", {
       signal: expect.any(AbortSignal),
     });
   });
 
-  it('renders a readable error state and keeps the route when the failure is not a 404', async () => {
+  it("renders a readable error state and keeps the route when the failure is not a 404", async () => {
     // Given
-    vi.mocked(api.project).mockRejectedValue(new HttpError('Upstream failure.', 503));
+    vi.mocked(api.project).mockRejectedValue(new HttpError("Upstream failure.", 503));
     vi.mocked(api.reviews).mockResolvedValue({ reviews: [] });
     vi.mocked(api.exports).mockResolvedValue({ exports: [] });
 
     // When
-    const harness = renderStudioProjectHook('project-1');
+    const harness = renderStudioProjectHook("project-1");
     await flushEffects();
 
     // Then: no silent redirect, the error is published for the page to render.
-    expect(harness.result().pathname).toBe('/projects/project-1/manuscript');
-    expect(harness.result().hook.loadError).toBe('Upstream failure.');
+    expect(harness.result().pathname).toBe("/projects/project-1/manuscript");
+    expect(harness.result().hook.loadError).toBe("Upstream failure.");
     expect(harness.result().hook.project).toBeNull();
   });
 
-  it('aborts the in-flight requests of the previous project when the id changes', async () => {
+  it("aborts the in-flight requests of the previous project when the id changes", async () => {
     // Given
-    const second = makeAggregate('project-2', 'two');
+    const second = makeAggregate("project-2", "two");
     vi.mocked(api.reviews).mockResolvedValue({ reviews: [] });
     vi.mocked(api.exports).mockResolvedValue({ exports: [] });
     // The stale project request only settles when its signal is aborted.
     vi.mocked(api.project)
       .mockImplementationOnce((_projectId: string, init?: RequestInit) => {
         return new Promise((_resolve, reject) => {
-          init?.signal?.addEventListener('abort', () => reject(new Error('Request cancelled.')));
+          init?.signal?.addEventListener("abort", () => reject(new Error("Request cancelled.")));
         });
       })
       .mockResolvedValueOnce(second.project);
 
     // When
-    const harness = renderStudioProjectHook('project-1');
+    const harness = renderStudioProjectHook("project-1");
     await flushEffects();
-    harness.rerender('project-2');
+    harness.rerender("project-2");
     await flushEffects();
 
     // Then: the stale call's signal was aborted, the fresh one was not, and

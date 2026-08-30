@@ -1,6 +1,6 @@
-import { BookOpen, ChevronLeft } from 'lucide-react';
+import { BookOpen, ChevronLeft } from "lucide-react";
 
-import type { Project } from '@/app/types/studio';
+import type { Project } from "@/app/types/studio";
 
 interface StudioTopbarProps {
   project: Project;

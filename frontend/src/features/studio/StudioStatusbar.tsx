@@ -1,6 +1,6 @@
-import { AlertCircle, Check, Loader2 } from 'lucide-react';
+import { AlertCircle, Check, Loader2 } from "lucide-react";
 
-import type { SaveState, StudioDocument } from '@/app/types/studio';
+import type { SaveState, StudioDocument } from "@/app/types/studio";
 
 interface StudioStatusbarProps {
   activeDocument: StudioDocument | null;
@@ -16,22 +16,22 @@ export function StudioStatusbar({
   return (
     <footer className="studio-statusbar">
       <span>
-        {saveState === 'error' ? (
+        {saveState === "error" ? (
           <AlertCircle />
-        ) : saveState === 'saving' ? (
+        ) : saveState === "saving" ? (
           <Loader2 className="spin" />
         ) : (
           <Check />
-        )}{' '}
-        {saveState === 'saving'
-          ? 'Saving'
-          : saveState === 'conflict'
-            ? 'Conflict'
-            : saveState === 'error'
-              ? 'Error'
-              : 'Saved'}
+        )}{" "}
+        {saveState === "saving"
+          ? "Saving"
+          : saveState === "conflict"
+            ? "Conflict"
+            : saveState === "error"
+              ? "Error"
+              : "Saved"}
       </span>
-      <span>Revision {loadedRevisionId?.slice(0, 8) ?? 'none'}</span>
+      <span>Revision {loadedRevisionId?.slice(0, 8) ?? "none"}</span>
       <span className="studio-statusbar__spacer" />
       <span>{activeDocument?.word_count ?? 0} words</span>
       <span>Novel Engine {__APP_VERSION__}</span>

@@ -1,11 +1,11 @@
-import { act, type FormEvent } from 'react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { act, type FormEvent } from "react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
-import type { Project } from '@/app/types/studio';
-import { chapter, projectWith, volume } from '@/test/factories';
-import { createMountHarness } from '@/test/harness';
+import type { Project } from "@/app/types/studio";
+import { chapter, projectWith, volume } from "@/test/factories";
+import { createMountHarness } from "@/test/harness";
 
-import { StudioNavigator } from './StudioNavigator';
+import { StudioNavigator } from "./StudioNavigator";
 
 const harness = createMountHarness();
 
@@ -15,7 +15,7 @@ function render(element: Parameters<typeof harness.mount>[0]): HTMLDivElement {
 
 function click(element: Element | null): void {
   if (!(element instanceof HTMLElement)) {
-    throw new Error('Expected a clickable element.');
+    throw new Error("Expected a clickable element.");
   }
   act(() => {
     element.click();
@@ -26,28 +26,28 @@ afterEach(() => {
   harness.cleanup();
 });
 
-const baseDocument = chapter('doc-1', {
-  title: 'Opening',
+const baseDocument = chapter("doc-1", {
+  title: "Opening",
   position: 1,
-  current_revision_id: 'revision-abcdefghi',
-  content_markdown: '# Opening',
-  revision_source: 'author',
+  current_revision_id: "revision-abcdefghi",
+  content_markdown: "# Opening",
+  revision_source: "author",
   word_count: 42,
 });
 
 const secondDocument = {
   ...baseDocument,
-  id: 'doc-2',
-  title: 'Second',
+  id: "doc-2",
+  title: "Second",
   position: 2,
-  current_revision_id: 'revision-second',
+  current_revision_id: "revision-second",
   word_count: 12,
 };
 
 const baseProject = projectWith([baseDocument, secondDocument]);
 
-describe('StudioNavigator', () => {
-  it('keeps navigation callbacks scoped to section, search, and document actions', () => {
+describe("StudioNavigator", () => {
+  it("keeps navigation callbacks scoped to section, search, and document actions", () => {
     const callbacks = {
       searchChange: vi.fn(),
       searchSubmit: vi.fn((event: FormEvent) => event.preventDefault()),
@@ -64,7 +64,7 @@ describe('StudioNavigator', () => {
         activeId="doc-1"
         search="harbor"
         isSearching={false}
-        searchResults={[{ document_id: 'doc-1', title: 'Opening', excerpt: 'Harbor' }]}
+        searchResults={[{ document_id: "doc-1", title: "Opening", excerpt: "Harbor" }]}
         onSearchChange={callbacks.searchChange}
         onSearchSubmit={callbacks.searchSubmit}
         onNavigateSection={callbacks.navigateSection}
@@ -74,36 +74,36 @@ describe('StudioNavigator', () => {
       />,
     );
 
-    expect(container.querySelector('summary.studio-nav__summary')).not.toBeNull();
-    expect(container.querySelector('summary')?.textContent).toContain('Project navigation');
-    expect(container.querySelector('summary')?.hasAttribute('aria-label')).toBe(false);
+    expect(container.querySelector("summary.studio-nav__summary")).not.toBeNull();
+    expect(container.querySelector("summary")?.textContent).toContain("Project navigation");
+    expect(container.querySelector("summary")?.hasAttribute("aria-label")).toBe(false);
     expect(container.querySelector('button[aria-label="Add Manuscript"]')).not.toBeNull();
     expect(container.querySelector('button[aria-label="Move Second down"]')).not.toBeNull();
 
-    click(Array.from(container.querySelectorAll('.section-nav button'))[1]);
-    click(container.querySelector('.search-results button'));
-    click(container.querySelector('.document-group header button'));
-    click(container.querySelector('.document-order button:last-child'));
+    click(Array.from(container.querySelectorAll(".section-nav button"))[1]);
+    click(container.querySelector(".search-results button"));
+    click(container.querySelector(".document-group header button"));
+    click(container.querySelector(".document-order button:last-child"));
     act(() => {
-      container.querySelector('form')?.dispatchEvent(new Event('submit', { bubbles: true }));
+      container.querySelector("form")?.dispatchEvent(new Event("submit", { bubbles: true }));
     });
 
-    expect(callbacks.navigateSection).toHaveBeenCalledWith('outline');
-    expect(callbacks.selectDocument).toHaveBeenCalledWith('doc-1');
-    expect(callbacks.createDocument).toHaveBeenCalledWith('chapter');
-    expect(callbacks.moveDocument).toHaveBeenCalledWith('doc-1', 1);
+    expect(callbacks.navigateSection).toHaveBeenCalledWith("outline");
+    expect(callbacks.selectDocument).toHaveBeenCalledWith("doc-1");
+    expect(callbacks.createDocument).toHaveBeenCalledWith("chapter");
+    expect(callbacks.moveDocument).toHaveBeenCalledWith("doc-1", 1);
     expect(callbacks.searchSubmit).toHaveBeenCalledTimes(1);
   });
 
-  it('groups manuscript chapters under volume headers in reading order', () => {
-    const firstVolume = volume('volume-1', 1, { title: 'Default Volume' });
-    const bookTwo = volume('volume-2', 2, { title: 'Book Two' });
+  it("groups manuscript chapters under volume headers in reading order", () => {
+    const firstVolume = volume("volume-1", 1, { title: "Default Volume" });
+    const bookTwo = volume("volume-2", 2, { title: "Book Two" });
     const chapterTwo = {
       ...baseDocument,
-      id: 'doc-2',
-      title: 'Second',
+      id: "doc-2",
+      title: "Second",
       position: 2,
-      volume_id: 'volume-2',
+      volume_id: "volume-2",
     };
     const groupedProject: Project = {
       ...baseProject,
@@ -128,35 +128,38 @@ describe('StudioNavigator', () => {
       />,
     );
 
-    const headers = Array.from(container.querySelectorAll('.volume-header'));
-    expect(headers.map((header) => header.textContent)).toEqual(['Default Volume', 'Book Two']);
+    const headers = Array.from(container.querySelectorAll(".volume-header"));
+    expect(headers.map((header) => header.textContent)).toEqual(["Default Volume", "Book Two"]);
 
     // Chapters land under their owning volume; the seed stays in the default
     // volume and the second chapter follows Book Two's header.
-    const groups = Array.from(container.querySelectorAll('.volume-group'));
-    expect(groups[0]?.textContent).toContain('Opening');
-    expect(groups[0]?.textContent).not.toContain('Second');
-    expect(groups[1]?.textContent).toContain('Second');
+    const groups = Array.from(container.querySelectorAll(".volume-group"));
+    expect(groups[0]?.textContent).toContain("Opening");
+    expect(groups[0]?.textContent).not.toContain("Second");
+    expect(groups[1]?.textContent).toContain("Second");
   });
 
-  it('shows the in-volume ordinal and only renders a linked beat title (#376)', () => {
+  it("shows the in-volume ordinal and only renders a linked beat title (#376)", () => {
     const linkedChapter = {
       ...baseDocument,
-      id: 'doc-2',
-      title: 'Second',
+      id: "doc-2",
+      title: "Second",
       position: 2,
-      beat_ref: 'The Harbor Bell',
+      beat_ref: "The Harbor Bell",
     };
     const unlinkedChapter = {
       ...baseDocument,
-      id: 'doc-3',
-      title: 'Third',
+      id: "doc-3",
+      title: "Third",
       position: 3,
       beat_ref: null,
     };
     const container = render(
       <StudioNavigator
-        project={{ ...baseProject, documents: [baseDocument, linkedChapter, unlinkedChapter] }}
+        project={{
+          ...baseProject,
+          documents: [baseDocument, linkedChapter, unlinkedChapter],
+        }}
         section="manuscript"
         activeId="doc-1"
         search=""
@@ -171,17 +174,17 @@ describe('StudioNavigator', () => {
       />,
     );
 
-    const rows = Array.from(container.querySelectorAll('.document-row'));
+    const rows = Array.from(container.querySelectorAll(".document-row"));
     expect(rows).toHaveLength(3);
 
     // Ordinals come from document.position (the in-volume order), not titles.
-    const ordinals = rows.map((row) => row.querySelector('.document-row__ordinal')?.textContent);
-    expect(ordinals).toEqual(['1', '2', '3']);
+    const ordinals = rows.map((row) => row.querySelector(".document-row__ordinal")?.textContent);
+    expect(ordinals).toEqual(["1", "2", "3"]);
 
     // beat_ref is a title soft link: rendered only when non-null (also covers
     // the undefined branch — the first chapter carries no beat_ref at all).
-    expect(rows[0]?.querySelector('.document-row__beat')).toBeNull();
-    expect(rows[1]?.querySelector('.document-row__beat')?.textContent).toBe('The Harbor Bell');
-    expect(rows[2]?.querySelector('.document-row__beat')).toBeNull();
+    expect(rows[0]?.querySelector(".document-row__beat")).toBeNull();
+    expect(rows[1]?.querySelector(".document-row__beat")?.textContent).toBe("The Harbor Bell");
+    expect(rows[2]?.querySelector(".document-row__beat")).toBeNull();
   });
 });

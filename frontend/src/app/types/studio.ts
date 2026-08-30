@@ -1,4 +1,4 @@
-import type { paths } from '../../../generated/api-types';
+import type { paths } from "../../../generated/api-types";
 
 /**
  * Contract types are derived from the TS server OpenAPI baseline
@@ -9,21 +9,21 @@ import type { paths } from '../../../generated/api-types';
  */
 
 type DocumentCreateBody = NonNullable<
-  paths['/api/projects/{projectId}/documents']['post']
->['requestBody']['content']['application/json'];
+  paths["/api/projects/{projectId}/documents"]["post"]
+>["requestBody"]["content"]["application/json"];
 type ExportRequestBody = NonNullable<
-  paths['/api/projects/{projectId}/exports']['post']
->['requestBody']['content']['application/json'];
+  paths["/api/projects/{projectId}/exports"]["post"]
+>["requestBody"]["content"]["application/json"];
 type AIProposalBody = NonNullable<
-  paths['/api/projects/{projectId}/documents/{documentId}/ai-proposals']['post']
->['requestBody']['content']['application/json'];
+  paths["/api/projects/{projectId}/documents/{documentId}/ai-proposals"]["post"]
+>["requestBody"]["content"]["application/json"];
 
-export type DocumentKind = DocumentCreateBody['kind'];
-export type ExportFormat = ExportRequestBody['format'];
-export type StudioJobOperation = AIProposalBody['operation'] | 'review' | 'export';
-export type SessionKind = 'owner';
-export type SaveState = 'idle' | 'saving' | 'saved' | 'conflict' | 'error';
-export type StudioJobStatus = 'pending' | 'running' | 'completed' | 'failed' | 'interrupted';
+export type DocumentKind = DocumentCreateBody["kind"];
+export type ExportFormat = ExportRequestBody["format"];
+export type StudioJobOperation = AIProposalBody["operation"] | "review" | "export";
+export type SessionKind = "owner";
+export type SaveState = "idle" | "saving" | "saved" | "conflict" | "error";
+export type StudioJobStatus = "pending" | "running" | "completed" | "failed" | "interrupted";
 
 export interface ProviderInfo {
   provider: string;
@@ -31,7 +31,7 @@ export interface ProviderInfo {
   model: string | null;
   is_default: boolean;
 }
-export type StudioJobKind = 'proposal' | 'review' | 'export';
+export type StudioJobKind = "proposal" | "review" | "export";
 
 export interface Session {
   session_id: string;
@@ -105,7 +105,7 @@ export interface Revision {
 export interface ReviewIssue {
   id: string;
   document_id: string | null;
-  severity: 'blocker' | 'warning' | 'suggestion';
+  severity: "blocker" | "warning" | "suggestion";
   code: string;
   message: string;
   suggestion: string;

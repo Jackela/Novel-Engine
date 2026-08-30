@@ -1,7 +1,7 @@
-import type { Dispatch, SetStateAction } from 'react';
+import type { Dispatch, SetStateAction } from "react";
 
-import { api } from '@/app/api';
-import type { Project, StudioDocument } from '@/app/types/studio';
+import { api } from "@/app/api";
+import type { Project, StudioDocument } from "@/app/types/studio";
 
 interface AcceptProposalAndRefreshOptions {
   readonly projectId: string;

@@ -1,0 +1,70 @@
+{
+  // Style mirrors server/biome.json (space/2, lineWidth 100, default double
+  // quotes); the whole frontend was reformatted once to that style.
+  "$schema": "https://biomejs.dev/schemas/2.5.11/schema.json",
+  "vcs": {
+    "enabled": true,
+    "clientKind": "git",
+    "useIgnoreFile": true,
+    "root": ".."
+  },
+  "files": {
+    "includes": [
+      "**",
+      "!dist",
+      "!coverage",
+      "!test-results",
+      "!playwright-report",
+      // Generated output must stay byte-identical to `pnpm gen:api-types`
+      // (enforced by scripts/check-api-types-drift.mjs); biome must never
+      // rewrite it.
+      "!generated",
+      // Browser-served static assets (favicon.svg); not source under review.
+      "!public"
+    ]
+  },
+  "formatter": {
+    "enabled": true,
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineWidth": 100
+  },
+  "overrides": [
+    {
+      // The `!important` flags in layout.css guard the prefers-reduced-motion
+      // media query against higher-specificity animation/transition rules;
+      // they are intentional accessibility fallbacks, not specificity debt.
+      "includes": ["**/*.css"],
+      "linter": {
+        "rules": {
+          "complexity": {
+            "noImportantStyles": "off"
+          }
+        }
+      }
+    }
+  ],
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "preset": "recommended"
+      // Gaps accepted in ticket #432 (no biome equivalent, not silently
+      // weakened):
+      // 1. eslint-plugin-react-refresh `only-export-components`
+      //    (allowConstantExport): biome has no rule enforcing that a
+      //    fast-refresh module exports only components/constants. No current
+      //    source file violates the intent; enforcement relies on review.
+      // 2. Type-aware semantics recently added to typescript-eslint
+      //    (e.g. `preserve-caught-error`): biome has no type-aware linter.
+      //    That protection is carried by `tsc -p tsconfig.typecheck.json`
+      //    plus code review instead.
+    }
+  },
+  "assist": {
+    "actions": {
+      "source": {
+        "organizeImports": "on"
+      }
+    }
+  }
+}

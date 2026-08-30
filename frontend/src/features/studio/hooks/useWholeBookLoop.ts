@@ -1,12 +1,12 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import type { Dispatch, SetStateAction } from 'react';
+import type { Dispatch, SetStateAction } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
-import { api } from '@/app/api';
-import type { Project, StudioDocument } from '@/app/types/studio';
+import { api } from "@/app/api";
+import type { Project, StudioDocument } from "@/app/types/studio";
 
-import { acceptProposalAndRefresh } from './acceptProposalAndRefresh';
-import { toErrorMessage } from './toErrorMessage';
-import type { WholeBookChapter } from './wholeBookPlan';
+import { acceptProposalAndRefresh } from "./acceptProposalAndRefresh";
+import { toErrorMessage } from "./toErrorMessage";
+import type { WholeBookChapter } from "./wholeBookPlan";
 
 /**
  * #318 whole-book loop state machine: idle → running(current,total) →
@@ -15,11 +15,19 @@ import type { WholeBookChapter } from './wholeBookPlan';
  * can report preserved work after a stop or failure.
  */
 export type WholeBookPhase =
-  | { readonly kind: 'idle' }
-  | { readonly kind: 'running'; readonly current: number; readonly total: number }
-  | { readonly kind: 'done'; readonly generated: number; readonly stoppedEarly: boolean }
+  | { readonly kind: "idle" }
   | {
-      readonly kind: 'failed';
+      readonly kind: "running";
+      readonly current: number;
+      readonly total: number;
+    }
+  | {
+      readonly kind: "done";
+      readonly generated: number;
+      readonly stoppedEarly: boolean;
+    }
+  | {
+      readonly kind: "failed";
       readonly generated: number;
       readonly failedChapterTitle: string;
       readonly message: string;
@@ -52,7 +60,7 @@ export function useWholeBookLoop({
   loadJobs,
   onAccepted,
 }: UseWholeBookLoopArgs) {
-  const [phase, setPhase] = useState<WholeBookPhase>({ kind: 'idle' });
+  const [phase, setPhase] = useState<WholeBookPhase>({ kind: "idle" });
   const runningRef = useRef(false);
   const stopRequestedRef = useRef(false);
 
@@ -75,22 +83,26 @@ export function useWholeBookLoop({
       if (runningRef.current) return Promise.resolve();
       runningRef.current = true;
       stopRequestedRef.current = false;
-      setPhase({ kind: 'running', current: 1, total: plan.length });
+      setPhase({ kind: "running", current: 1, total: plan.length });
 
       const run = async (): Promise<void> => {
         let generated = 0;
-        let failingTitle = plan[0]?.title ?? '';
+        let failingTitle = plan[0]?.title ?? "";
         try {
           for (let index = 0; index < plan.length; index += 1) {
             if (stopRequestedRef.current) break;
             const chapter = plan[index];
             failingTitle = chapter.title;
-            setPhase({ kind: 'running', current: index + 1, total: plan.length });
+            setPhase({
+              kind: "running",
+              current: index + 1,
+              total: plan.length,
+            });
             // Sequential by design (#318): every draft depends on the previous
             // accept having landed, and stop/progress semantics keep exactly
             // one chapter in flight.
             // react-doctor-disable-next-line async-await-in-loop
-            const job = await api.proposal(projectId, chapter.id, 'generate', '', provider);
+            const job = await api.proposal(projectId, chapter.id, "generate", "", provider);
             if (stopRequestedRef.current) break;
             await acceptProposalAndRefresh({
               projectId,
@@ -103,20 +115,20 @@ export function useWholeBookLoop({
             generated += 1;
           }
           if (stopRequestedRef.current) {
-            setPhase({ kind: 'done', generated, stoppedEarly: true });
+            setPhase({ kind: "done", generated, stoppedEarly: true });
           } else {
-            setPhase({ kind: 'done', generated, stoppedEarly: false });
+            setPhase({ kind: "done", generated, stoppedEarly: false });
           }
         } catch (reason) {
           // A stop racing an error still reports the stop, not the noise.
           if (stopRequestedRef.current) {
-            setPhase({ kind: 'done', generated, stoppedEarly: true });
+            setPhase({ kind: "done", generated, stoppedEarly: true });
           } else {
             setPhase({
-              kind: 'failed',
+              kind: "failed",
               generated,
               failedChapterTitle: failingTitle,
-              message: toErrorMessage(reason, 'Unable to generate the chapter.'),
+              message: toErrorMessage(reason, "Unable to generate the chapter."),
             });
           }
         } finally {

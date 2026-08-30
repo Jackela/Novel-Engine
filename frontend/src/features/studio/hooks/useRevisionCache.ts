@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useSyncExternalStore } from 'react';
+import { useCallback, useEffect, useSyncExternalStore } from "react";
 
-import { api } from '@/app/api';
-import type { Revision } from '@/app/types/studio';
+import { api } from "@/app/api";
+import type { Revision } from "@/app/types/studio";
 
 const emptyRevisions: Revision[] = [];
 const revisionCache = new Map<string, Revision[]>();

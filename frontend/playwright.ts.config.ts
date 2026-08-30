@@ -1,8 +1,8 @@
-import { mkdtempSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { mkdtempSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 
-import { defineConfig, devices } from '@playwright/test';
+import { defineConfig, devices } from "@playwright/test";
 
 /**
  * #274: the TS-stack SPA suite. The emitted TS backend serves the built
@@ -18,29 +18,29 @@ import { defineConfig, devices } from '@playwright/test';
 // content-acceptance specs can assert on-disk export artifacts and database
 // rows of the exact stack under test.
 const ownsDataDirectory = process.env.TS_E2E_DATA_DIR === undefined;
-process.env.TS_E2E_DATA_DIR ??= mkdtempSync(join(tmpdir(), 'ne-ts-e2e-'));
+process.env.TS_E2E_DATA_DIR ??= mkdtempSync(join(tmpdir(), "ne-ts-e2e-"));
 // The teardown module reads the ownership marker from the environment.
-process.env.TS_E2E_OWN_DATA_DIR = ownsDataDirectory ? '1' : '';
+process.env.TS_E2E_OWN_DATA_DIR = ownsDataDirectory ? "1" : "";
 
 const chromiumExecutablePath = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH;
 
 export default defineConfig({
-  testDir: './tests/e2e-ts',
+  testDir: "./tests/e2e-ts",
   timeout: 60_000,
   // The second test relies on the owner the first test creates, so the two
   // flows must run in file order against the shared fresh store.
   fullyParallel: false,
   use: {
-    baseURL: 'http://127.0.0.1:4274',
-    trace: 'retain-on-failure',
+    baseURL: "http://127.0.0.1:4274",
+    trace: "retain-on-failure",
   },
   // A passing run leaves nothing behind (scripts/ts-e2e-teardown.mjs);
   // failures keep the data directory for debugging, matching the trace
   // retain-on-failure policy.
-  globalTeardown: './scripts/ts-e2e-teardown.mjs',
+  globalTeardown: "./scripts/ts-e2e-teardown.mjs",
   webServer: {
-    command: 'node ./scripts/start-ts-e2e-stack.mjs',
-    url: 'http://127.0.0.1:4274/health/ready',
+    command: "node ./scripts/start-ts-e2e-stack.mjs",
+    url: "http://127.0.0.1:4274/health/ready",
     // Always boot a fresh TS server and SQLite store so no leaked session or
     // data state can affect the deterministic suite.
     reuseExistingServer: false,
@@ -48,9 +48,9 @@ export default defineConfig({
   },
   projects: [
     {
-      name: 'chromium',
+      name: "chromium",
       use: {
-        ...devices['Desktop Chrome'],
+        ...devices["Desktop Chrome"],
         ...(chromiumExecutablePath
           ? { launchOptions: { executablePath: chromiumExecutablePath } }
           : {}),

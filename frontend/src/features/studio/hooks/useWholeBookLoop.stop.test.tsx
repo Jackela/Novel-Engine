@@ -1,10 +1,8 @@
-import { act } from 'react';
-import { describe, expect, it, vi } from 'vitest';
+import { act } from "react";
+import { describe, expect, it, vi } from "vitest";
 
-import { api } from '@/app/api';
-import type { StudioJob } from '@/app/types/studio';
-
-import { wholeBookPlan } from './wholeBookPlan';
+import { api } from "@/app/api";
+import type { StudioJob } from "@/app/types/studio";
 import {
   baseProject,
   deferred,
@@ -13,10 +11,11 @@ import {
   renderLoopHook,
   secondChapter,
   traceApiCalls,
-} from './useWholeBookLoop.test-harness';
+} from "./useWholeBookLoop.test-harness";
+import { wholeBookPlan } from "./wholeBookPlan";
 
-vi.mock('@/app/api', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@/app/api')>();
+vi.mock("@/app/api", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/app/api")>();
 
   return {
     ...actual,
@@ -29,8 +28,8 @@ vi.mock('@/app/api', async (importOriginal) => {
   };
 });
 
-describe('useWholeBookLoop interruption', () => {
-  it('abandons an in-flight draft once stopped and never starts the next chapter', async () => {
+describe("useWholeBookLoop interruption", () => {
+  it("abandons an in-flight draft once stopped and never starts the next chapter", async () => {
     const events: string[] = [];
     const firstDraft = deferred<StudioJob>();
     const secondDraft = deferred<StudioJob>();
@@ -55,7 +54,7 @@ describe('useWholeBookLoop interruption', () => {
       finished = harness.result().hook.start(wholeBookPlan(baseProject));
       firstDraft.resolve(proposalJobFor(firstChapter.id));
       await vi.waitFor(() =>
-        expect(events.filter((event) => event.startsWith('proposal:'))).toHaveLength(2),
+        expect(events.filter((event) => event.startsWith("proposal:"))).toHaveLength(2),
       );
       // Stop lands while the second draft request is still unresolved.
       harness.result().hook.stop();
@@ -63,17 +62,17 @@ describe('useWholeBookLoop interruption', () => {
       await finished;
     });
 
-    expect(events.filter((event) => event === 'accept:job-two')).toEqual([]);
-    expect(events.filter((event) => event === 'refresh')).toHaveLength(1);
+    expect(events.filter((event) => event === "accept:job-two")).toEqual([]);
+    expect(events.filter((event) => event === "refresh")).toHaveLength(1);
     expect(harness.result().hook.phase).toEqual({
-      kind: 'done',
+      kind: "done",
       generated: 1,
       stoppedEarly: true,
     });
-    expect(harness.result().accepted.map((document) => document.id)).toEqual(['one']);
+    expect(harness.result().accepted.map((document) => document.id)).toEqual(["one"]);
   });
 
-  it('#390 halts the loop when the page unmounts: no further chapter is drafted or accepted', async () => {
+  it("#390 halts the loop when the page unmounts: no further chapter is drafted or accepted", async () => {
     const events: string[] = [];
     const firstDraft = deferred<StudioJob>();
     traceApiCalls(events);
@@ -88,7 +87,7 @@ describe('useWholeBookLoop interruption', () => {
     await act(async () => {
       finished = harness.result().hook.start(wholeBookPlan(baseProject));
       await vi.waitFor(() =>
-        expect(events.filter((event) => event.startsWith('proposal:'))).toHaveLength(1),
+        expect(events.filter((event) => event.startsWith("proposal:"))).toHaveLength(1),
       );
       // Unmount while the first draft is still in flight.
       harness.unmount();
@@ -98,8 +97,8 @@ describe('useWholeBookLoop interruption', () => {
 
     // The unmounted run never accepts the in-flight draft and never starts
     // the next chapter.
-    expect(events.some((event) => event.startsWith('accept:'))).toBe(false);
-    expect(events.filter((event) => event.startsWith('proposal:'))).toEqual(['proposal:one']);
+    expect(events.some((event) => event.startsWith("accept:"))).toBe(false);
+    expect(events.filter((event) => event.startsWith("proposal:"))).toEqual(["proposal:one"]);
     expect(vi.mocked(api.acceptProposal)).not.toHaveBeenCalled();
   });
 });

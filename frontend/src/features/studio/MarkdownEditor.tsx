@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef } from "react";
 
 interface MarkdownEditorProps {
   value: string;
@@ -6,13 +6,13 @@ interface MarkdownEditorProps {
 }
 
 interface CodeMirrorRuntime {
-  readonly EditorSelection: typeof import('@codemirror/state').EditorSelection;
-  readonly Transaction: typeof import('@codemirror/state').Transaction;
+  readonly EditorSelection: typeof import("@codemirror/state").EditorSelection;
+  readonly Transaction: typeof import("@codemirror/state").Transaction;
 }
 
 export function MarkdownEditor({ value, onChange }: MarkdownEditorProps) {
   const parent = useRef<HTMLDivElement>(null);
-  const view = useRef<import('@codemirror/view').EditorView | null>(null);
+  const view = useRef<import("@codemirror/view").EditorView | null>(null);
   const runtime = useRef<CodeMirrorRuntime | null>(null);
   const latestValueRef = useRef(value);
   const onChangeRef = useRef(onChange);
@@ -26,14 +26,14 @@ export function MarkdownEditor({ value, onChange }: MarkdownEditorProps) {
   }, [value]);
 
   useEffect(() => {
-    let mountedView: import('@codemirror/view').EditorView | null = null;
+    let mountedView: import("@codemirror/view").EditorView | null = null;
     let cancelled = false;
 
     void Promise.all([
-      import('@codemirror/lang-markdown'),
-      import('@codemirror/state'),
-      import('@codemirror/view'),
-      import('@codemirror/commands'),
+      import("@codemirror/lang-markdown"),
+      import("@codemirror/state"),
+      import("@codemirror/view"),
+      import("@codemirror/commands"),
     ]).then(([language, state, editorView, commands]) => {
       if (cancelled || !parent.current) return;
       const nextView = new editorView.EditorView({
@@ -46,26 +46,33 @@ export function MarkdownEditor({ value, onChange }: MarkdownEditorProps) {
             language.markdown(),
             editorView.EditorView.lineWrapping,
             editorView.EditorView.contentAttributes.of({
-              'aria-label': 'Markdown editor',
-              'aria-multiline': 'true',
+              "aria-label": "Markdown editor",
+              "aria-multiline": "true",
             }),
             editorView.EditorView.updateListener.of((update) => {
               if (update.docChanged) onChangeRef.current(update.state.doc.toString());
             }),
             editorView.EditorView.theme({
-              '&': { height: '100%', backgroundColor: '#fff' },
-              '.cm-scroller': {
+              "&": { height: "100%", backgroundColor: "#fff" },
+              ".cm-scroller": {
                 fontFamily: 'ui-serif, Georgia, Cambria, "Times New Roman", Times, serif',
-                fontSize: '19px',
-                lineHeight: '1.8',
-                padding: 'clamp(24px, 4vw, 34px) clamp(20px, 6vw, 54px) 80px',
+                fontSize: "19px",
+                lineHeight: "1.8",
+                padding: "clamp(24px, 4vw, 34px) clamp(20px, 6vw, 54px) 80px",
               },
-              '.cm-content': { maxWidth: '72ch', margin: '0 auto', caretColor: '#0f766e' },
-              '&.cm-focused': { outline: '3px solid #0f766e', outlineOffset: '-3px' },
-              '.cm-gutters': { display: 'none' },
-              '.cm-activeLine': { backgroundColor: 'transparent' },
-              '&.cm-focused > .cm-scroller > .cm-selectionLayer .cm-selectionBackground': {
-                backgroundColor: '#ccfbf1',
+              ".cm-content": {
+                maxWidth: "72ch",
+                margin: "0 auto",
+                caretColor: "#0f766e",
+              },
+              "&.cm-focused": {
+                outline: "3px solid #0f766e",
+                outlineOffset: "-3px",
+              },
+              ".cm-gutters": { display: "none" },
+              ".cm-activeLine": { backgroundColor: "transparent" },
+              "&.cm-focused > .cm-scroller > .cm-selectionLayer .cm-selectionBackground": {
+                backgroundColor: "#ccfbf1",
               },
             }),
           ],

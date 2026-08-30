@@ -18,7 +18,7 @@
   --danger: #b91c1c;
   --danger-soft: #fff1f2;
   --on-accent: #fff;
-  font-family: 'IBM Plex Sans', system-ui, sans-serif;
+  font-family: "IBM Plex Sans", system-ui, sans-serif;
   color: var(--ink);
   background: var(--canvas);
   font-synthesis: none;

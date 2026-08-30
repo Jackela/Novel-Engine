@@ -1,5 +1,5 @@
-import { act, type ReactElement } from 'react';
-import { createRoot, type Root } from 'react-dom/client';
+import { act, type ReactElement } from "react";
+import { createRoot, type Root } from "react-dom/client";
 
 /**
  * Shared React test harness (#410): mount/cleanup bookkeeping for
@@ -34,7 +34,7 @@ export function createMountHarness(): {
   const mountedRoots: MountedRoot[] = [];
 
   function mount(element: ReactElement): MountedRoot {
-    const container = document.createElement('div');
+    const container = document.createElement("div");
     document.body.appendChild(container);
     const root = createRoot(container);
     mountedRoots.push({ container, root });

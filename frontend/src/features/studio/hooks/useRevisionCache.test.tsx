@@ -1,16 +1,16 @@
-import { act, useState } from 'react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { act, useState } from "react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { api } from '@/app/api';
-import type { Project, Revision } from '@/app/types/studio';
-import { chapter, projectWith, revision } from '@/test/factories';
-import { createMountHarness } from '@/test/harness';
+import { api } from "@/app/api";
+import type { Project, Revision } from "@/app/types/studio";
+import { chapter, projectWith, revision } from "@/test/factories";
+import { createMountHarness } from "@/test/harness";
 
-import { useDocumentDraft } from './useDocumentDraft';
-import { useRevisionCache } from './useRevisionCache';
+import { useDocumentDraft } from "./useDocumentDraft";
+import { useRevisionCache } from "./useRevisionCache";
 
-vi.mock('@/app/api', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@/app/api')>();
+vi.mock("@/app/api", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/app/api")>();
   return {
     ...actual,
     api: {
@@ -31,22 +31,24 @@ afterEach(() => {
   vi.resetAllMocks();
 });
 
-const revisionOne = revision('revision-1');
-const staleRevision = revision('revision-stale', { content_markdown: 'Stale draft' });
-
-const activeDocument = chapter('document-1', {
-  title: 'Chapter One',
-  current_revision_id: 'revision-current',
-  content_markdown: 'Draft',
+const revisionOne = revision("revision-1");
+const staleRevision = revision("revision-stale", {
+  content_markdown: "Stale draft",
 });
 
-const project = projectWith([activeDocument], { title: 'Novel' });
+const activeDocument = chapter("document-1", {
+  title: "Chapter One",
+  current_revision_id: "revision-current",
+  content_markdown: "Draft",
+});
+
+const project = projectWith([activeDocument], { title: "Novel" });
 
 const restoredDocument = {
   ...activeDocument,
-  current_revision_id: 'revision-restored',
-  content_markdown: 'Restored draft',
-  updated_at: '2026-08-27T00:01:00Z',
+  current_revision_id: "revision-restored",
+  content_markdown: "Restored draft",
+  updated_at: "2026-08-27T00:01:00Z",
 };
 
 function renderCache(): {
@@ -57,7 +59,7 @@ function renderCache(): {
   const onError = vi.fn();
 
   function Wrapper(): null {
-    current = { hook: useRevisionCache('project-1', 'document-1', onError) };
+    current = { hook: useRevisionCache("project-1", "document-1", onError) };
     return null;
   }
 
@@ -65,7 +67,7 @@ function renderCache(): {
 
   return {
     result: () => {
-      if (current === undefined) throw new Error('Expected hook result after render.');
+      if (current === undefined) throw new Error("Expected hook result after render.");
       return current;
     },
     dispose: () => {
@@ -74,14 +76,16 @@ function renderCache(): {
   };
 }
 
-function renderDraft(): { readonly result: () => { readonly hook: DraftHookResult } } {
+function renderDraft(): {
+  readonly result: () => { readonly hook: DraftHookResult };
+} {
   let current: { readonly hook: DraftHookResult } | undefined;
 
   function Wrapper(): null {
     const [, setProject] = useState<Project | null>(project);
     const [, setError] = useState<string | null>(null);
     current = {
-      hook: useDocumentDraft(activeDocument, 'project-1', setProject, setError),
+      hook: useDocumentDraft(activeDocument, "project-1", setProject, setError),
     };
     return null;
   }
@@ -90,14 +94,14 @@ function renderDraft(): { readonly result: () => { readonly hook: DraftHookResul
 
   return {
     result: () => {
-      if (current === undefined) throw new Error('Expected hook result after render.');
+      if (current === undefined) throw new Error("Expected hook result after render.");
       return current;
     },
   };
 }
 
-describe('useRevisionCache', () => {
-  it('resolves refresh after the latest revision response updates the cache', async () => {
+describe("useRevisionCache", () => {
+  it("resolves refresh after the latest revision response updates the cache", async () => {
     let resolveResponse: ((response: { revisions: Revision[] }) => void) | undefined;
     vi.mocked(api.revisions)
       .mockResolvedValueOnce({ revisions: [] })
@@ -109,7 +113,7 @@ describe('useRevisionCache', () => {
     const cache = renderCache();
 
     let settled = false;
-    const refresh = cache.result().hook.refreshDocumentRevisions('document-1');
+    const refresh = cache.result().hook.refreshDocumentRevisions("document-1");
     refresh.then(() => {
       settled = true;
     });
@@ -129,7 +133,7 @@ describe('useRevisionCache', () => {
     expect(cache.result().hook.revisions).toEqual([revisionOne]);
   });
 
-  it('does not let an unmounted cache instance overwrite a newer response', async () => {
+  it("does not let an unmounted cache instance overwrite a newer response", async () => {
     let resolveStale: ((response: { revisions: Revision[] }) => void) | undefined;
     let resolveCurrent: ((response: { revisions: Revision[] }) => void) | undefined;
     vi.mocked(api.revisions)
@@ -160,7 +164,7 @@ describe('useRevisionCache', () => {
     expect(currentCache.result().hook.revisions).toEqual([revisionOne]);
   });
 
-  it('keeps restore pending until the revision refresh completes', async () => {
+  it("keeps restore pending until the revision refresh completes", async () => {
     let resolveRefresh: ((response: { revisions: Revision[] }) => void) | undefined;
     vi.mocked(api.revisions)
       .mockResolvedValueOnce({ revisions: [] })
@@ -173,7 +177,7 @@ describe('useRevisionCache', () => {
     const draft = renderDraft();
 
     let settled = false;
-    const restore = draft.result().hook.restoreRevision('revision-old');
+    const restore = draft.result().hook.restoreRevision("revision-old");
     restore.then(() => {
       settled = true;
     });
@@ -182,9 +186,9 @@ describe('useRevisionCache', () => {
       await Promise.resolve();
     });
     expect(api.restoreRevision).toHaveBeenCalledWith(
-      'project-1',
+      "project-1",
       activeDocument.id,
-      'revision-old',
+      "revision-old",
       activeDocument.current_revision_id,
     );
     expect(settled).toBe(false);

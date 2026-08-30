@@ -1,3 +1,0 @@
-# Generated output must stay byte-identical to `pnpm gen:api-types`; prettier
-# must never rewrite it (enforced by scripts/check-api-types-drift.mjs).
-generated/

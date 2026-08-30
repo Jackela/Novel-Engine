@@ -1,11 +1,10 @@
-import { Loader2 } from 'lucide-react';
-import { useNavigate, useParams } from 'react-router-dom';
-
-import { StudioPageView } from './StudioPageView';
-import { useStudioPageModel } from './hooks/useStudioPageModel';
+import { Loader2 } from "lucide-react";
+import { useNavigate, useParams } from "react-router-dom";
+import { useStudioPageModel } from "./hooks/useStudioPageModel";
+import { StudioPageView } from "./StudioPageView";
 
 export function StudioPage() {
-  const { projectId = '', section = 'manuscript' } = useParams();
+  const { projectId = "", section = "manuscript" } = useParams();
   const navigate = useNavigate();
   const { project, viewProps, loadError } = useStudioPageModel(projectId, section, navigate);
 

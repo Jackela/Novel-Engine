@@ -1,10 +1,10 @@
-import { existsSync, readFileSync } from 'node:fs';
-import { join, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { inflateRawSync } from 'node:zlib';
-import { DatabaseSync } from 'node:sqlite';
+import { existsSync, readFileSync } from "node:fs";
+import { join, resolve } from "node:path";
+import { DatabaseSync } from "node:sqlite";
+import { fileURLToPath } from "node:url";
+import { inflateRawSync } from "node:zlib";
 
-import { expect, type Page } from '@playwright/test';
+import { expect, type Page } from "@playwright/test";
 
 /**
  * #276 content-level acceptance helpers. Two SSOT rules drive this module:
@@ -37,10 +37,10 @@ export function loadServerProseContract(): Promise<ServerProseContract> {
 }
 
 async function importCompiledProseContract(): Promise<ServerProseContract> {
-  const helpersDir = fileURLToPath(new URL('.', import.meta.url));
+  const helpersDir = fileURLToPath(new URL(".", import.meta.url));
   const compiledModule = resolve(
     helpersDir,
-    '../../../server/dist/contexts/studio/application/sanitization.js',
+    "../../../server/dist/contexts/studio/application/sanitization.js",
   );
   if (!existsSync(compiledModule)) {
     throw new Error(`Compiled server sanitization module not found at ${compiledModule}.`);
@@ -51,10 +51,10 @@ async function importCompiledProseContract(): Promise<ServerProseContract> {
   if (
     !Array.isArray(phrases) ||
     phrases.length === 0 ||
-    phrases.some((phrase) => typeof phrase !== 'string') ||
-    typeof guard !== 'function'
+    phrases.some((phrase) => typeof phrase !== "string") ||
+    typeof guard !== "function"
   ) {
-    throw new Error('Compiled server sanitization module no longer exports the prose contract.');
+    throw new Error("Compiled server sanitization module no longer exports the prose contract.");
   }
   return {
     forbiddenPhrases: phrases as readonly string[],
@@ -69,15 +69,15 @@ async function importCompiledProseContract(): Promise<ServerProseContract> {
  */
 export async function assertNarrativeProse(markdown: string): Promise<void> {
   const prose = await loadServerProseContract();
-  expect(prose.isNarrativeProse(markdown), 'compiled #240 guard accepts the content').toBe(true);
+  expect(prose.isNarrativeProse(markdown), "compiled #240 guard accepts the content").toBe(true);
   expect(markdown.length).toBeGreaterThan(400);
   const folded = markdown.toLowerCase();
   for (const phrase of prose.forbiddenPhrases) {
     expect(folded).not.toContain(phrase.toLowerCase());
   }
-  expect(markdown).not.toContain('[REDACTED]');
-  expect(markdown).not.toContain('[BEGIN AUTHOR INSTRUCTION]');
-  expect(markdown).not.toContain('[BEGIN UNTRUSTED MANUSCRIPT JSON]');
+  expect(markdown).not.toContain("[REDACTED]");
+  expect(markdown).not.toContain("[BEGIN AUTHOR INSTRUCTION]");
+  expect(markdown).not.toContain("[BEGIN UNTRUSTED MANUSCRIPT JSON]");
   expect(markdown).not.toContain('"echo"');
   expect(markdown).not.toContain('"result"');
 }
@@ -86,18 +86,18 @@ export async function assertNarrativeProse(markdown: string): Promise<void> {
 export function tsStackDataDirectory(): string {
   const dataDirectory = process.env.TS_E2E_DATA_DIR;
   if (!dataDirectory) {
-    throw new Error('TS_E2E_DATA_DIR is unset; run through pnpm test:e2e:ts.');
+    throw new Error("TS_E2E_DATA_DIR is unset; run through pnpm test:e2e:ts.");
   }
   return dataDirectory;
 }
 
 /** Fixed allowlist: table plus its project column — never user input. */
 const PROJECT_ROW_TABLES: readonly (readonly [table: string, column: string])[] = [
-  ['projects', 'id'],
-  ['documents', 'project_id'],
-  ['project_snapshots', 'project_id'],
-  ['exports', 'project_id'],
-  ['jobs', 'project_id'],
+  ["projects", "id"],
+  ["documents", "project_id"],
+  ["project_snapshots", "project_id"],
+  ["exports", "project_id"],
+  ["jobs", "project_id"],
 ];
 
 /**
@@ -108,7 +108,7 @@ export function readStoreRowCounts(
   dataDirectory: string,
   projectId: string,
 ): Record<string, number> {
-  const database = new DatabaseSync(join(dataDirectory, 'novel-engine.sqlite3'));
+  const database = new DatabaseSync(join(dataDirectory, "novel-engine.sqlite3"));
   try {
     const counts: Record<string, number> = {};
     for (const [table, column] of PROJECT_ROW_TABLES) {
@@ -135,7 +135,7 @@ function findEndOfCentralDirectory(archive: Buffer): number {
       return index;
     }
   }
-  throw new Error('ZIP end-of-central-directory record not found.');
+  throw new Error("ZIP end-of-central-directory record not found.");
 }
 
 /**
@@ -159,9 +159,9 @@ export function readZipEntries(archive: Buffer): Map<string, Buffer> {
     const extraLength = archive.readUInt16LE(cursor + 30);
     const commentLength = archive.readUInt16LE(cursor + 32);
     const localOffset = archive.readUInt32LE(cursor + 42);
-    const name = archive.toString('utf8', cursor + 46, cursor + 46 + nameLength);
+    const name = archive.toString("utf8", cursor + 46, cursor + 46 + nameLength);
     cursor += 46 + nameLength + extraLength + commentLength;
-    if (name.endsWith('/')) {
+    if (name.endsWith("/")) {
       continue;
     }
     const entryBuffer = readStoredEntry(archive, name, localOffset, compressedSize, method);
@@ -185,11 +185,11 @@ export function zipFirstEntryIsStoredMimetype(archive: Buffer, expected: string)
   const extraLength = archive.readUInt16LE(28);
   const dataStart = 30 + nameLength + extraLength;
   return (
-    archive.toString('utf8', 30, 30 + nameLength) === 'mimetype' &&
+    archive.toString("utf8", 30, 30 + nameLength) === "mimetype" &&
     method === 0 &&
     compressedSize === expected.length &&
     uncompressedSize === expected.length &&
-    archive.toString('utf8', dataStart, dataStart + expected.length) === expected
+    archive.toString("utf8", dataStart, dataStart + expected.length) === expected
   );
 }
 
@@ -230,22 +230,22 @@ export interface ChapterDocument {
 }
 
 export async function createProject(page: Page, title: string): Promise<string> {
-  await page.goto('/');
-  await page.getByLabel('Title').fill(title);
-  await page.getByRole('button', { name: /create project/i }).click();
+  await page.goto("/");
+  await page.getByLabel("Title").fill(title);
+  await page.getByRole("button", { name: /create project/i }).click();
   await expect(page).toHaveURL(/\/projects\/([^/]+)\/manuscript/);
-  return page.url().match(/\/projects\/([^/]+)\/manuscript/)?.[1] ?? '';
+  return page.url().match(/\/projects\/([^/]+)\/manuscript/)?.[1] ?? "";
 }
 
 export async function typeChapter(page: Page, markdown: string): Promise<void> {
-  const editor = page.locator('.cm-content');
+  const editor = page.locator(".cm-content");
   await editor.click();
   // ControlOrMeta resolves to the platform's select-all chord: CodeMirror maps
   // Mod-A to selectAll, so the typed chapter REPLACES the seed content (a
   // plain Control+A on macOS only moves to the line start).
-  await page.keyboard.press('ControlOrMeta+a');
+  await page.keyboard.press("ControlOrMeta+a");
   await page.keyboard.type(markdown);
-  await expect(page.locator('.studio-editor .save-state')).toHaveText(/saved/i, {
+  await expect(page.locator(".studio-editor .save-state")).toHaveText(/saved/i, {
     timeout: 15_000,
   });
 }
@@ -256,7 +256,7 @@ export async function studioChapters(page: Page, projectId: string): Promise<Cha
   expect(response.status(), await response.text()).toBe(200);
   const body = (await response.json()) as { documents: ChapterDocument[] };
   return body.documents
-    .filter((document) => document.kind === 'chapter')
+    .filter((document) => document.kind === "chapter")
     .sort((left, right) => left.position - right.position);
 }
 
@@ -266,8 +266,8 @@ export async function exportThroughUi(
   filename: string,
 ): Promise<Buffer> {
   const [download] = await Promise.all([
-    page.waitForEvent('download'),
-    page.getByRole('button', { name: new RegExp(formatLabel, 'i') }).click(),
+    page.waitForEvent("download"),
+    page.getByRole("button", { name: new RegExp(formatLabel, "i") }).click(),
   ]);
   const downloadPath = await download.path();
   if (!downloadPath) {
