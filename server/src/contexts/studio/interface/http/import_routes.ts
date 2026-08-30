@@ -3,7 +3,11 @@ import { Type } from "@fastify/type-provider-typebox";
 import type { FastifyPluginAsync } from "fastify";
 import type { Principal } from "../../../../shared/application/ports/auth.js";
 import { principalGuard, requirePrincipal } from "../../../../shared/interface/http/auth_guard.js";
-import { AppError } from "../../../../shared/interface/http/error_envelope.js";
+import {
+  AppError,
+  ERROR_CODES,
+  errorEnvelopeResponse,
+} from "../../../../shared/interface/http/error_envelope.js";
 import type { JsonResponseSchema } from "./json_response_schema.js";
 import { requireServices, type StudioRoutesOptions } from "./project_routes.js";
 import { withStudioErrors } from "./studio_error_mapping.js";
@@ -45,7 +49,7 @@ function requireLocalOwner(principal: Principal): void {
   if (principal.kind !== "owner") {
     throw new AppError({
       statusCode: 403,
-      code: "FORBIDDEN",
+      code: ERROR_CODES.FORBIDDEN,
       message: "This operation requires the local Owner.",
     });
   }
@@ -71,7 +75,15 @@ export const importRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fast
       ],
       schema: {
         body: legacyPreviewRequestSchema,
-        response: { 200: legacyPreviewResponseSchema },
+        response: {
+          200: legacyPreviewResponseSchema,
+          // Local-owner gate, scope misses, and the database-free mode.
+          401: errorEnvelopeResponse,
+          403: errorEnvelopeResponse,
+          404: errorEnvelopeResponse,
+          422: errorEnvelopeResponse,
+          503: errorEnvelopeResponse,
+        },
       },
     },
     async (request) => {
@@ -80,7 +92,7 @@ export const importRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fast
       if (dataDirectory === undefined) {
         throw new AppError({
           statusCode: 503,
-          code: "SERVICE_UNAVAILABLE",
+          code: ERROR_CODES.SERVICE_UNAVAILABLE,
           message: "The persistence layer is not configured.",
         });
       }

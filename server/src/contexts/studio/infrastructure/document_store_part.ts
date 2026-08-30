@@ -301,7 +301,10 @@ function documentWithCurrent(tx: Tx, projectId: string, documentId: string): Doc
     .where(and(eq(documents.id, documentId), eq(documents.projectId, projectId)))
     .get();
   if (row === undefined) {
-    throw new NotFoundError("Document not found.");
+    throw new NotFoundError(
+      `No document '${documentId}' exists in project '${projectId}': the id does not exist ` +
+        `there, or the document belongs to a different project.`,
+    );
   }
   return { ...row.document, currentRevision: row.revision };
 }

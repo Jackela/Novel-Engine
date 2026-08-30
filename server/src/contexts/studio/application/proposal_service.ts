@@ -178,7 +178,10 @@ export class AiProposalService {
     const job = this.store.findJob(scope, projectId, jobId);
     if (job.kind !== "proposal" || job.documentId === null) {
       // A job of another kind is not a proposal at this address (Python: NotFound).
-      throw new NotFoundError("AI proposal not found.");
+      throw new NotFoundError(
+        `No AI proposal job '${jobId}' exists in project '${projectId}': the id does not ` +
+          `exist there, or the job belongs to a different project.`,
+      );
     }
     if (job.status !== "completed") {
       throw new InvalidOperationError("Only a completed proposal can be accepted.");

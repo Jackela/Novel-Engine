@@ -1,6 +1,7 @@
 import { InvalidOperationError } from "../../../../shared/domain/exceptions.js";
 import {
   AppError,
+  ERROR_CODES,
   INVALID_OPERATION_CODE,
   INVALID_OPERATION_STATUS_CODE,
 } from "../../../../shared/interface/http/error_envelope.js";
@@ -20,29 +21,45 @@ import {
  */
 function toAppError(error: unknown): unknown {
   if (error instanceof NotFoundError) {
-    return new AppError({ statusCode: 404, code: "NOT_FOUND", message: error.message });
+    return new AppError({
+      statusCode: 404,
+      code: ERROR_CODES.NOT_FOUND,
+      message: error.message,
+    });
   }
   if (error instanceof DuplicateVolumeError) {
-    return new AppError({ statusCode: 409, code: "VOLUME_CONFLICT", message: error.message });
+    return new AppError({
+      statusCode: 409,
+      code: ERROR_CODES.VOLUME_CONFLICT,
+      message: error.message,
+    });
   }
   if (error instanceof RevisionConflictError) {
     return new AppError({
       statusCode: 409,
-      code: "REVISION_CONFLICT",
+      code: ERROR_CODES.REVISION_CONFLICT,
       message: error.message,
       details: { current_revision_id: error.currentRevisionId },
     });
   }
   if (error instanceof SnapshotConflict) {
-    return new AppError({ statusCode: 409, code: "SNAPSHOT_CONFLICT", message: error.message });
+    return new AppError({
+      statusCode: 409,
+      code: ERROR_CODES.SNAPSHOT_CONFLICT,
+      message: error.message,
+    });
   }
   if (error instanceof DuplicateDocumentError) {
-    return new AppError({ statusCode: 409, code: "DOCUMENT_CONFLICT", message: error.message });
+    return new AppError({
+      statusCode: 409,
+      code: ERROR_CODES.DOCUMENT_CONFLICT,
+      message: error.message,
+    });
   }
   if (error instanceof OperationInFlightError) {
     return new AppError({
       statusCode: 409,
-      code: "OPERATION_IN_FLIGHT",
+      code: ERROR_CODES.OPERATION_IN_FLIGHT,
       message: error.message,
       details: {
         project_id: error.projectId,

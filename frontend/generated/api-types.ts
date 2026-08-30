@@ -48,6 +48,51 @@ export interface paths {
                         };
                     };
                 };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
             };
         };
         delete?: never;
@@ -129,6 +174,24 @@ export interface paths {
                         };
                     };
                 };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
             };
         };
         put?: never;
@@ -200,6 +263,42 @@ export interface paths {
                         } & {
                             [key: string]: unknown;
                         };
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
                     };
                 };
             };
@@ -281,6 +380,33 @@ export interface paths {
                         };
                     };
                 };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
             };
         };
         put?: never;
@@ -302,6 +428,42 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content?: never;
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
                 };
             };
         };
@@ -370,6 +532,51 @@ export interface paths {
                         } & {
                             [key: string]: unknown;
                         };
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
                     };
                 };
             };
@@ -444,6 +651,33 @@ export interface paths {
                         };
                     };
                 };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
                 /** @description Default Response */
                 409: {
                     headers: {
@@ -457,6 +691,24 @@ export interface paths {
                                 message: string;
                             };
                         };
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
                     };
                 };
             };
@@ -524,6 +776,51 @@ export interface paths {
                         } & {
                             [key: string]: unknown;
                         };
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
                     };
                 };
             };
@@ -596,6 +893,33 @@ export interface paths {
                         };
                     };
                 };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
                 /** @description Default Response */
                 409: {
                     headers: {
@@ -612,6 +936,24 @@ export interface paths {
                                 message: string;
                             };
                         };
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
                     };
                 };
             };
@@ -636,6 +978,33 @@ export interface paths {
                     };
                     content?: never;
                 };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
                 /** @description Default Response */
                 409: {
                     headers: {
@@ -650,6 +1019,15 @@ export interface paths {
                                 message: "Document is referenced by an immutable snapshot.";
                             };
                         };
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
                     };
                 };
             };
@@ -735,6 +1113,33 @@ export interface paths {
                         };
                     };
                 };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
                 /** @description Default Response */
                 409: {
                     headers: {
@@ -753,6 +1158,24 @@ export interface paths {
                                 message: string;
                             };
                         };
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
                     };
                 };
             };
@@ -807,6 +1230,33 @@ export interface paths {
                         "text/event-stream": string;
                     };
                 };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
                 /** @description Default Response */
                 409: {
                     headers: {
@@ -825,6 +1275,24 @@ export interface paths {
                                 message: string;
                             };
                         };
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
                     };
                 };
             };
@@ -865,6 +1333,33 @@ export interface paths {
                         };
                     };
                 };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
             };
         };
         put: {
@@ -894,6 +1389,51 @@ export interface paths {
                         "application/json": {
                             aliases: string[];
                         };
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
                     };
                 };
             };
@@ -938,6 +1478,33 @@ export interface paths {
                         };
                     };
                 };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
             };
         };
         put: {
@@ -970,6 +1537,51 @@ export interface paths {
                                 title: string;
                             } | null;
                         };
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
                     };
                 };
             };
@@ -1026,6 +1638,33 @@ export interface paths {
                         } & {
                             [key: string]: unknown;
                         };
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
                     };
                 };
             };
@@ -1096,6 +1735,33 @@ export interface paths {
                         };
                     };
                 };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
                 /** @description Default Response */
                 409: {
                     headers: {
@@ -1112,6 +1778,24 @@ export interface paths {
                                 message: string;
                             };
                         };
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
                     };
                 };
             };
@@ -1178,6 +1862,51 @@ export interface paths {
                         };
                     };
                 };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
             };
         };
         post?: never;
@@ -1225,6 +1954,33 @@ export interface paths {
                                 snapshot_id: string;
                             }[];
                         };
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
                     };
                 };
             };
@@ -1289,6 +2045,33 @@ export interface paths {
                         };
                     };
                 };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
                 /** @description Default Response */
                 409: {
                     headers: {
@@ -1307,6 +2090,24 @@ export interface paths {
                                 message: string;
                             };
                         };
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
                     };
                 };
             };
@@ -1346,6 +2147,39 @@ export interface paths {
                         "application/epub+zip": string;
                         "application/vnd.openxmlformats-officedocument.wordprocessingml.document": string;
                         "text/markdown; charset=utf-8": string;
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/epub+zip": components["schemas"]["ErrorEnvelope"];
+                        "application/vnd.openxmlformats-officedocument.wordprocessingml.document": components["schemas"]["ErrorEnvelope"];
+                        "text/markdown; charset=utf-8": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/epub+zip": components["schemas"]["ErrorEnvelope"];
+                        "application/vnd.openxmlformats-officedocument.wordprocessingml.document": components["schemas"]["ErrorEnvelope"];
+                        "text/markdown; charset=utf-8": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/epub+zip": components["schemas"]["ErrorEnvelope"];
+                        "application/vnd.openxmlformats-officedocument.wordprocessingml.document": components["schemas"]["ErrorEnvelope"];
+                        "text/markdown; charset=utf-8": components["schemas"]["ErrorEnvelope"];
                     };
                 };
             };
@@ -1421,6 +2255,33 @@ export interface paths {
                         };
                     };
                 };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
             };
         };
         put?: never;
@@ -1493,6 +2354,33 @@ export interface paths {
                         };
                     };
                 };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
                 /** @description Default Response */
                 409: {
                     headers: {
@@ -1511,6 +2399,24 @@ export interface paths {
                                 message: string;
                             };
                         };
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
                     };
                 };
             };
@@ -1571,6 +2477,33 @@ export interface paths {
                         };
                     };
                 };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
             };
         };
         put?: never;
@@ -1626,6 +2559,51 @@ export interface paths {
                         };
                     };
                 };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
             };
         };
         delete?: never;
@@ -1671,6 +2649,42 @@ export interface paths {
                         } & {
                             [key: string]: unknown;
                         };
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
                     };
                 };
             };
@@ -1728,6 +2742,33 @@ export interface paths {
                         };
                     };
                 };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
             };
         };
         put?: never;
@@ -1778,6 +2819,33 @@ export interface paths {
                         };
                     };
                 };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
             };
         };
         put?: never;
@@ -1816,6 +2884,33 @@ export interface paths {
                         };
                     };
                 };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
                 /** @description Default Response */
                 409: {
                     headers: {
@@ -1829,6 +2924,24 @@ export interface paths {
                                 message: string;
                             };
                         };
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
                     };
                 };
             };
@@ -1886,6 +2999,51 @@ export interface paths {
                         };
                     };
                 };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
             };
         };
         post?: never;
@@ -1939,6 +3097,33 @@ export interface paths {
                         };
                     };
                 };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
                 /** @description Default Response */
                 409: {
                     headers: {
@@ -1952,6 +3137,24 @@ export interface paths {
                                 message: string;
                             };
                         };
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
                     };
                 };
             };
@@ -1975,6 +3178,51 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content?: never;
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
                 };
             };
         };
@@ -2014,6 +3262,33 @@ export interface paths {
                                 provider: "mock" | "dashscope" | "openai_compatible";
                             }[];
                         };
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
                     };
                 };
             };
@@ -2057,6 +3332,24 @@ export interface paths {
                         };
                     };
                 };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
             };
         };
         put?: never;
@@ -2076,6 +3369,33 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content?: never;
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
                 };
             };
         };
@@ -2124,6 +3444,33 @@ export interface paths {
                         };
                     };
                 };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
             };
         };
         delete?: never;
@@ -2160,6 +3507,24 @@ export interface paths {
                         };
                     };
                 };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
             };
         };
         put?: never;
@@ -2189,6 +3554,42 @@ export interface paths {
                             id: string;
                             username: string;
                         };
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
                     };
                 };
             };
@@ -2381,7 +3782,19 @@ export interface paths {
 }
 export type webhooks = Record<string, never>;
 export interface components {
-    schemas: never;
+    schemas: {
+        /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+        ErrorEnvelope: {
+            error: {
+                /** @description Stable code from the ERROR_CODES catalog. */
+                code: string;
+                details?: {
+                    [key: string]: unknown;
+                };
+                message: string;
+            };
+        };
+    };
     responses: never;
     parameters: never;
     requestBodies: never;

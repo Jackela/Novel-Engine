@@ -73,7 +73,10 @@ export function scopedDocument(
     .where(and(eq(documents.id, documentId), eq(projects.id, projectId), scopeCondition(scope)))
     .get();
   if (row === undefined) {
-    throw new NotFoundError("Document not found.");
+    throw new NotFoundError(
+      `No document '${documentId}' exists in project '${projectId}': the id does not exist ` +
+        `there, or the document belongs to a different project.`,
+    );
   }
   return row.document;
 }

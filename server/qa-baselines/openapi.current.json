@@ -1,6 +1,38 @@
 {
   "components": {
-    "schemas": {},
+    "schemas": {
+      "ErrorEnvelope": {
+        "additionalProperties": false,
+        "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}.",
+        "properties": {
+          "error": {
+            "additionalProperties": false,
+            "properties": {
+              "code": {
+                "description": "Stable code from the ERROR_CODES catalog.",
+                "type": "string"
+              },
+              "details": {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              "message": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "code",
+              "message"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "error"
+        ],
+        "type": "object"
+      }
+    },
     "securitySchemes": {
       "cookieAuth": {
         "in": "cookie",
@@ -95,6 +127,56 @@
               }
             },
             "description": "Default Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
           }
         }
       }
@@ -274,6 +356,26 @@
               }
             },
             "description": "Default Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
           }
         }
       },
@@ -467,6 +569,46 @@
               }
             },
             "description": "Default Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
           }
         }
       }
@@ -486,6 +628,46 @@
         "responses": {
           "204": {
             "description": "Default Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
           }
         }
       },
@@ -663,6 +845,36 @@
               }
             },
             "description": "Default Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
           }
         }
       }
@@ -793,6 +1005,56 @@
               }
             },
             "description": "Default Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
           }
         }
       }
@@ -940,6 +1202,36 @@
             },
             "description": "Default Response"
           },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
           "409": {
             "content": {
               "application/json": {
@@ -974,6 +1266,26 @@
               }
             },
             "description": "Default Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
           }
         }
       }
@@ -1110,6 +1422,56 @@
               }
             },
             "description": "Default Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
           }
         }
       }
@@ -1137,6 +1499,36 @@
         "responses": {
           "204": {
             "description": "Default Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
           },
           "409": {
             "content": {
@@ -1175,6 +1567,16 @@
               }
             },
             "description": "Default Response"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
           }
         }
       },
@@ -1315,6 +1717,36 @@
             },
             "description": "Default Response"
           },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
           "409": {
             "content": {
               "application/json": {
@@ -1363,6 +1795,26 @@
               }
             },
             "description": "Default Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
           }
         }
       }
@@ -1532,6 +1984,36 @@
             },
             "description": "Default Response"
           },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
           "409": {
             "content": {
               "application/json": {
@@ -1588,6 +2070,26 @@
               }
             },
             "description": "Default Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
           }
         }
       }
@@ -1661,6 +2163,36 @@
             },
             "description": "Server-Sent Events stream of proposal frames (delta/done/error)."
           },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
           "409": {
             "content": {
               "application/json": {
@@ -1717,6 +2249,26 @@
               }
             },
             "description": "Default Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
           }
         }
       }
@@ -1763,6 +2315,36 @@
               }
             },
             "description": "Default Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
           }
         }
       },
@@ -1831,6 +2413,56 @@
               }
             },
             "description": "Default Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
           }
         }
       }
@@ -1888,6 +2520,36 @@
               }
             },
             "description": "Default Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
           }
         }
       },
@@ -1964,6 +2626,56 @@
               }
             },
             "description": "Default Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
           }
         }
       }
@@ -2058,6 +2770,36 @@
               }
             },
             "description": "Default Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
           }
         }
       }
@@ -2196,6 +2938,36 @@
             },
             "description": "Default Response"
           },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
           "409": {
             "content": {
               "application/json": {
@@ -2244,6 +3016,26 @@
               }
             },
             "description": "Default Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
           }
         }
       }
@@ -2373,6 +3165,56 @@
               }
             },
             "description": "Default Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
           }
         }
       }
@@ -2456,6 +3298,36 @@
               }
             },
             "description": "Default Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
           }
         },
         "security": [
@@ -2606,6 +3478,36 @@
             },
             "description": "Default Response"
           },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
           "409": {
             "content": {
               "application/json": {
@@ -2662,6 +3564,26 @@
               }
             },
             "description": "Default Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
           }
         }
       }
@@ -2716,6 +3638,66 @@
                 }
               }
             }
+          },
+          "401": {
+            "content": {
+              "application/epub+zip": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              },
+              "application/vnd.openxmlformats-officedocument.wordprocessingml.document": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              },
+              "text/markdown; charset=utf-8": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "404": {
+            "content": {
+              "application/epub+zip": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              },
+              "application/vnd.openxmlformats-officedocument.wordprocessingml.document": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              },
+              "text/markdown; charset=utf-8": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "503": {
+            "content": {
+              "application/epub+zip": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              },
+              "application/vnd.openxmlformats-officedocument.wordprocessingml.document": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              },
+              "text/markdown; charset=utf-8": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
           }
         },
         "security": [
@@ -2855,6 +3837,36 @@
               }
             },
             "description": "Default Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
           }
         }
       }
@@ -2986,6 +3998,36 @@
             },
             "description": "Default Response"
           },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
           "409": {
             "content": {
               "application/json": {
@@ -3042,6 +4084,26 @@
               }
             },
             "description": "Default Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
           }
         }
       }
@@ -3160,6 +4222,36 @@
               }
             },
             "description": "Default Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
           }
         }
       },
@@ -3280,6 +4372,56 @@
               }
             },
             "description": "Default Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
           }
         }
       }
@@ -3343,6 +4485,46 @@
               }
             },
             "description": "Default Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
           }
         }
       }
@@ -3456,6 +4638,36 @@
               }
             },
             "description": "Default Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
           }
         }
       }
@@ -3523,6 +4735,36 @@
               }
             },
             "description": "Default Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
           }
         }
       },
@@ -3598,6 +4840,36 @@
             },
             "description": "Default Response"
           },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
           "409": {
             "content": {
               "application/json": {
@@ -3632,6 +4904,26 @@
               }
             },
             "description": "Default Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
           }
         }
       }
@@ -3722,6 +5014,56 @@
               }
             },
             "description": "Default Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
           }
         }
       }
@@ -3749,6 +5091,56 @@
         "responses": {
           "204": {
             "description": "Default Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
           }
         }
       },
@@ -3832,6 +5224,36 @@
             },
             "description": "Default Response"
           },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
           "409": {
             "content": {
               "application/json": {
@@ -3866,6 +5288,26 @@
               }
             },
             "description": "Default Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
           }
         }
       }
@@ -3920,6 +5362,36 @@
               }
             },
             "description": "Default Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
           }
         }
       }
@@ -3929,6 +5401,36 @@
         "responses": {
           "204": {
             "description": "Default Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
           }
         }
       },
@@ -3968,6 +5470,26 @@
               }
             },
             "description": "Default Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
           }
         }
       }
@@ -4032,6 +5554,36 @@
               }
             },
             "description": "Default Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
           }
         }
       }
@@ -4060,6 +5612,26 @@
               }
             },
             "description": "Default Response"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
           }
         }
       },
@@ -4109,6 +5681,46 @@
               }
             },
             "description": "Default Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
           }
         }
       }

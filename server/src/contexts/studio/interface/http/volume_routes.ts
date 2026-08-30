@@ -1,6 +1,10 @@
 import type { TypeBoxTypeProvider } from "@fastify/type-provider-typebox";
 import type { FastifyPluginAsync } from "fastify";
 import { principalGuard, requirePrincipal } from "../../../../shared/interface/http/auth_guard.js";
+import {
+  ERROR_CODES,
+  errorEnvelopeResponse,
+} from "../../../../shared/interface/http/error_envelope.js";
 import type { JsonResponseSchema } from "./json_response_schema.js";
 import { requireServices, type StudioRoutesOptions } from "./project_routes.js";
 import { withStudioErrors } from "./studio_error_mapping.js";
@@ -22,7 +26,7 @@ export const volumeConflictSchema: JsonResponseSchema = {
       type: "object",
       additionalProperties: false,
       properties: {
-        code: { type: "string", enum: ["VOLUME_CONFLICT"] },
+        code: { type: "string", enum: [ERROR_CODES.VOLUME_CONFLICT] },
         message: { type: "string" },
       },
       required: ["code", "message"],
@@ -31,8 +35,32 @@ export const volumeConflictSchema: JsonResponseSchema = {
   required: ["error"],
 } as const;
 
-const CREATE_RESPONSES = { 201: volumeResponseSchema, 409: volumeConflictSchema } as const;
-const RETITLE_RESPONSES = { 200: volumeResponseSchema, 409: volumeConflictSchema } as const;
+const CREATE_RESPONSES = {
+  201: volumeResponseSchema,
+  401: errorEnvelopeResponse,
+  403: errorEnvelopeResponse,
+  // The parent project is scoped first: a foreign or missing project 404s.
+  404: errorEnvelopeResponse,
+  422: errorEnvelopeResponse,
+  409: volumeConflictSchema,
+  503: errorEnvelopeResponse,
+} as const;
+const RETITLE_RESPONSES = {
+  200: volumeResponseSchema,
+  401: errorEnvelopeResponse,
+  403: errorEnvelopeResponse,
+  404: errorEnvelopeResponse,
+  422: errorEnvelopeResponse,
+  409: volumeConflictSchema,
+  503: errorEnvelopeResponse,
+} as const;
+
+/** Guard failures shared by the volume reads. */
+const VOLUME_READ_ERROR_RESPONSES = {
+  401: errorEnvelopeResponse,
+  404: errorEnvelopeResponse,
+  503: errorEnvelopeResponse,
+} as const;
 
 /**
  * Volume surface on the project path (ADR-0005): list in reading order,
@@ -47,7 +75,10 @@ export const volumeRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fast
     "/api/projects/:projectId/volumes",
     {
       preHandler: [guard],
-      schema: { params: projectIdParams, response: { 200: volumeListResponseSchema } },
+      schema: {
+        params: projectIdParams,
+        response: { 200: volumeListResponseSchema, ...VOLUME_READ_ERROR_RESPONSES },
+      },
     },
     async (request) =>
       withStudioErrors(() => ({
@@ -90,7 +121,12 @@ export const volumeRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fast
       schema: {
         params: projectIdParams,
         body: volumeReorderSchema,
-        response: { 200: volumeListResponseSchema },
+        response: {
+          200: volumeListResponseSchema,
+          ...VOLUME_READ_ERROR_RESPONSES,
+          403: errorEnvelopeResponse,
+          422: errorEnvelopeResponse,
+        },
       },
     },
     async (request) =>
@@ -130,7 +166,16 @@ export const volumeRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fast
     "/api/projects/:projectId/volumes/:volumeId",
     {
       preHandler: [guard],
-      schema: { params: volumeIdParams, response: { 204: { type: "null" } } },
+      schema: {
+        params: volumeIdParams,
+        response: {
+          204: { type: "null" },
+          ...VOLUME_READ_ERROR_RESPONSES,
+          403: errorEnvelopeResponse,
+          // The at-least-one-volume guard answers 422 INVALID_OPERATION.
+          422: errorEnvelopeResponse,
+        },
+      },
     },
     async (request, reply) => {
       withStudioErrors(() =>

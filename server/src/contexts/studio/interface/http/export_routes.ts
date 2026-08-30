@@ -2,6 +2,7 @@ import type { TypeBoxTypeProvider } from "@fastify/type-provider-typebox";
 import { Type } from "@fastify/type-provider-typebox";
 import type { FastifyPluginAsync } from "fastify";
 import { principalGuard, requirePrincipal } from "../../../../shared/interface/http/auth_guard.js";
+import { errorEnvelopeResponse } from "../../../../shared/interface/http/error_envelope.js";
 import type {
   ExportArtifactFormat,
   ExportArtifactRecord,
@@ -82,6 +83,13 @@ function exportPayload(artifact: ExportArtifactRecord, projectId: string) {
   };
 }
 
+/** Guard + scope failures shared by the project-scoped export reads. */
+const EXPORT_READ_ERROR_RESPONSES = {
+  401: errorEnvelopeResponse,
+  404: errorEnvelopeResponse,
+  503: errorEnvelopeResponse,
+} as const;
+
 /**
  * Project-scoped export surface: the synchronous POST bridge that reports a
  * terminal job, the read-only artifact catalog, and confined binary delivery.
@@ -97,7 +105,14 @@ export const exportRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fast
       schema: {
         params: projectIdParams,
         body: exportCreateSchema,
-        response: { 201: jobResponseSchema, 409: operationInFlightSchema },
+        response: {
+          201: jobResponseSchema,
+          ...EXPORT_READ_ERROR_RESPONSES,
+          403: errorEnvelopeResponse,
+          // A project with no chapter answers 422 INVALID_OPERATION.
+          422: errorEnvelopeResponse,
+          409: operationInFlightSchema,
+        },
       },
     },
     async (request, reply) => {
@@ -121,7 +136,7 @@ export const exportRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fast
       schema: {
         params: projectIdParams,
         security: [{ cookieAuth: [] }],
-        response: { 200: exportListResponseSchema },
+        response: { 200: exportListResponseSchema, ...EXPORT_READ_ERROR_RESPONSES },
       },
     },
     async (request) =>
@@ -144,7 +159,7 @@ export const exportRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fast
           "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
           "application/epub+zip",
         ],
-        response: { 200: binaryExportSchema },
+        response: { 200: binaryExportSchema, ...EXPORT_READ_ERROR_RESPONSES },
       },
     },
     async (request, reply) => {

@@ -4,7 +4,7 @@ import type { AuthService, IssuedSession } from "../../application/auth_service.
 import type { Principal } from "../../application/ports/auth.js";
 import type { RateLimiter } from "../../application/ports/rate_limit.js";
 import { FIRST_CONTACT_PATHS, principalGuard } from "./auth_guard.js";
-import { AppError } from "./error_envelope.js";
+import { AppError, ERROR_CODES, errorEnvelopeResponse } from "./error_envelope.js";
 import { isSameOriginRequest } from "./origin_validation.js";
 import {
   clearSessionCookies,
@@ -50,7 +50,7 @@ function requireService(options: AuthRoutesOptions): AuthService {
   if (options.authService === undefined) {
     throw new AppError({
       statusCode: 503,
-      code: "SERVICE_UNAVAILABLE",
+      code: ERROR_CODES.SERVICE_UNAVAILABLE,
       message: "The persistence layer is not configured.",
     });
   }
@@ -88,7 +88,7 @@ export const authRoutes: FastifyPluginAsync<AuthRoutesOptions> = async (app, opt
       reply.header("retry-after", String(decision.retryAfterSeconds));
       throw new AppError({
         statusCode: 429,
-        code: "RATE_LIMIT_EXCEEDED",
+        code: ERROR_CODES.RATE_LIMIT_EXCEEDED,
         message: "Rate limit exceeded.",
         details: { retry_after_seconds: decision.retryAfterSeconds },
       });
@@ -108,6 +108,9 @@ export const authRoutes: FastifyPluginAsync<AuthRoutesOptions> = async (app, opt
             },
             required: ["owner_configured", "version"],
           },
+          // Rate limiting guards both first-contact paths regardless of method.
+          429: errorEnvelopeResponse,
+          503: errorEnvelopeResponse,
         },
       },
     },
@@ -128,6 +131,10 @@ export const authRoutes: FastifyPluginAsync<AuthRoutesOptions> = async (app, opt
             properties: { id: { type: "string" }, username: { type: "string" } },
             required: ["id", "username"],
           },
+          403: errorEnvelopeResponse,
+          422: errorEnvelopeResponse,
+          429: errorEnvelopeResponse,
+          503: errorEnvelopeResponse,
         },
       },
     },
@@ -136,8 +143,11 @@ export const authRoutes: FastifyPluginAsync<AuthRoutesOptions> = async (app, opt
       if (!isSameOriginRequest(request, options.corsOrigins)) {
         throw new AppError({
           statusCode: 403,
-          code: "FORBIDDEN",
-          message: "Setup requests must be same-origin.",
+          code: ERROR_CODES.FORBIDDEN,
+          message:
+            "Setup requests must be same-origin: any Origin/Referer header must match this " +
+            "server's own origin or one of the configured CORS origins (SECURITY_CORS_ORIGINS). " +
+            "Non-browser clients that send no Origin/Referer are accepted.",
         });
       }
       const body = request.body as { username: string; password: string };
@@ -149,7 +159,18 @@ export const authRoutes: FastifyPluginAsync<AuthRoutesOptions> = async (app, opt
 
   app.post(
     "/api/session/login",
-    { schema: { body: credentialsBodySchema, response: { 200: principalResponseSchema } } },
+    {
+      schema: {
+        body: credentialsBodySchema,
+        response: {
+          200: principalResponseSchema,
+          // Wrong credentials answer 422 INVALID_OPERATION (constant-time path).
+          422: errorEnvelopeResponse,
+          429: errorEnvelopeResponse,
+          503: errorEnvelopeResponse,
+        },
+      },
+    },
     async (request, reply) => {
       const body = request.body as { username: string; password: string };
       const issued = await requireService(options).createOwnerSession(body.username, body.password);
@@ -161,7 +182,13 @@ export const authRoutes: FastifyPluginAsync<AuthRoutesOptions> = async (app, opt
     "/api/session",
     {
       preHandler: [guard],
-      schema: { response: { 200: principalResponseSchema } },
+      schema: {
+        response: {
+          200: principalResponseSchema,
+          401: errorEnvelopeResponse,
+          503: errorEnvelopeResponse,
+        },
+      },
     },
     // The guard has already resolved and attached the principal.
     async (request) => principalPayload(request.principal as Principal),
@@ -171,7 +198,14 @@ export const authRoutes: FastifyPluginAsync<AuthRoutesOptions> = async (app, opt
     "/api/session",
     {
       preHandler: [guard],
-      schema: { response: { 204: { type: "null" } } },
+      schema: {
+        response: {
+          204: { type: "null" },
+          401: errorEnvelopeResponse,
+          403: errorEnvelopeResponse,
+          503: errorEnvelopeResponse,
+        },
+      },
     },
     async (request, reply) => {
       requireService(options).terminateSession(request.cookies[SESSION_COOKIE]);
