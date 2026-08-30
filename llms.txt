@@ -22,7 +22,7 @@ A self-hosted writing studio: a TypeScript/Fastify + SQLite backend with a React
 - [ADR-0003: Cutover execution](https://raw.githubusercontent.com/Jackela/Novel-Engine/main/docs/adr/0003-cutover-execution.md): How the Python-to-TypeScript cutover was planned and executed.
 - [ADR-0004: Two-layer generation context](https://raw.githubusercontent.com/Jackela/Novel-Engine/main/docs/adr/0004-two-layer-generation-context.md): Design of the two-layer AI generation context model.
 - [ADR-0005: Fixed two-level hierarchy](https://raw.githubusercontent.com/Jackela/Novel-Engine/main/docs/adr/0005-fixed-two-level-hierarchy.md): Decision to fix the work structure at two hierarchy levels.
-- [OpenAPI snapshot](https://raw.githubusercontent.com/Jackela/Novel-Engine/main/server/qa-baselines/openapi.current.json): Frozen code-first OpenAPI snapshot used as the API contract baseline.
+- [OpenAPI snapshot](https://raw.githubusercontent.com/Jackela/Novel-Engine/main/server/qa-baselines/openapi.current.json): Frozen code-first OpenAPI snapshot used as the API contract baseline. A running server also serves the equivalent live document at `/openapi.json` (registered in `server/src/apps/api/app.ts`); the snapshot is regenerated deliberately via `pnpm --dir server openapi:snapshot`, so drift between the two means it is time to re-snapshot.
 - [Changelog](https://raw.githubusercontent.com/Jackela/Novel-Engine/main/CHANGELOG.md): Release history and notable changes per version.
 - [Design notes](https://raw.githubusercontent.com/Jackela/Novel-Engine/main/DESIGN.md): Product design rationale and direction.
 - [Security policy](https://raw.githubusercontent.com/Jackela/Novel-Engine/main/.github/SECURITY.md): How to report security vulnerabilities responsibly.

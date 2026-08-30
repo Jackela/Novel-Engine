@@ -115,10 +115,14 @@ async function request<T>(
         (error instanceof Error || error instanceof DOMException) &&
         error.name === 'AbortError'
       ) {
-        throw new Error(timedOut ? 'Request timed out. Please retry.' : 'Request cancelled.');
+        throw new Error(timedOut ? 'Request timed out. Please retry.' : 'Request cancelled.', {
+          cause: error,
+        });
       }
       if (error instanceof TypeError) {
-        throw new Error('Novel Engine is unavailable. Check the local service and retry.');
+        throw new Error('Novel Engine is unavailable. Check the local service and retry.', {
+          cause: error,
+        });
       }
       throw error;
     }
@@ -154,10 +158,12 @@ async function downloadBlob(path: string): Promise<Blob> {
   } catch (error) {
     if (error instanceof HttpError) throw error;
     if ((error instanceof Error || error instanceof DOMException) && error.name === 'AbortError') {
-      throw new Error('Download timed out. Please retry.');
+      throw new Error('Download timed out. Please retry.', { cause: error });
     }
     if (error instanceof TypeError) {
-      throw new Error('Novel Engine is unavailable. Check the local service and retry.');
+      throw new Error('Novel Engine is unavailable. Check the local service and retry.', {
+        cause: error,
+      });
     }
     throw error;
   } finally {

@@ -6,10 +6,20 @@ This page covers local operation, migration preparation, and the fastest checks 
 
 ## Install and start
 
-The application reads `.env.local`; begin from the non-secret template rather than committing credentials:
+The application reads `.env.local`; begin from the non-secret template rather than committing credentials. OS-specific commands are shown for both PowerShell (Windows) and POSIX shells (macOS/Linux); the `pnpm` commands are identical on both:
 
 ```powershell
 Copy-Item .env.example .env.local
+pnpm install --frozen-lockfile
+pnpm --dir frontend build
+pnpm --dir server build
+pnpm --dir server cli serve
+```
+
+macOS/Linux equivalent:
+
+```bash
+cp .env.example .env.local
 pnpm install --frozen-lockfile
 pnpm --dir frontend build
 pnpm --dir server build
@@ -83,6 +93,16 @@ Invoke-WebRequest http://127.0.0.1:8000/health/live
 Invoke-WebRequest http://127.0.0.1:8000/health/ready
 Invoke-WebRequest http://127.0.0.1:8000/health
 Invoke-WebRequest http://127.0.0.1:8000/version
+pnpm --dir server cli doctor
+```
+
+macOS/Linux equivalent (`curl -f` fails on non-2xx responses, matching `Invoke-WebRequest`'s behavior on error statuses):
+
+```bash
+curl -fsS http://127.0.0.1:8000/health/live
+curl -fsS http://127.0.0.1:8000/health/ready
+curl -fsS http://127.0.0.1:8000/health
+curl -fsS http://127.0.0.1:8000/version
 pnpm --dir server cli doctor
 ```
 
