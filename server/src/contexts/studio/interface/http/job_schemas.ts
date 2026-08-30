@@ -1,72 +1,20 @@
+import { Type } from "@fastify/type-provider-typebox";
+import { jobPayloadSchema } from "../../application/payload_schemas/job.js";
 import type { JsonResponseSchema } from "./json_response_schema.js";
 
-const timestamp = { type: "string" } as const;
-const metadataObject = { type: "object", additionalProperties: true } as const;
+/**
+ * The synchronous job payload is the TypeBox SSOT from
+ * `application/payload_schemas/job.ts` (#433); the usage surface below stays
+ * a hand-written response schema (computed aggregate, not a stored resource).
+ */
 
-const jobEventSchema = {
-  type: "object",
-  additionalProperties: true,
-  properties: {
-    id: { type: "string" },
-    status: { type: "string" },
-    details: metadataObject,
-    created_at: timestamp,
-  },
-  required: ["id", "status", "details", "created_at"],
-} as const;
-
-/** The synchronous job payload: request/result JSON plus the event trail. */
-export const jobResponseSchema: JsonResponseSchema = {
-  type: "object",
-  additionalProperties: true,
-  properties: {
-    id: { type: "string" },
-    project_id: { type: "string" },
-    document_id: { type: "string", nullable: true },
-    kind: { type: "string" },
-    operation: { type: "string" },
-    status: { type: "string" },
-    provider: { type: "string" },
-    model: { type: "string" },
-    request: metadataObject,
-    result: metadataObject,
-    error: { type: "string", nullable: true },
-    retry_of_job_id: { type: "string", nullable: true },
-    created_at: timestamp,
-    updated_at: timestamp,
-    events: {
-      type: "array",
-      items: jobEventSchema,
-      description:
-        "Chronological trail (oldest first) on a single job payload; the jobs LIST endpoint is the spec-mandated newest-first surface.",
-    },
-  },
-  required: [
-    "id",
-    "project_id",
-    "document_id",
-    "kind",
-    "operation",
-    "status",
-    "provider",
-    "model",
-    "request",
-    "result",
-    "error",
-    "retry_of_job_id",
-    "created_at",
-    "updated_at",
-    "events",
-  ],
-} as const;
+export { jobPayloadSchema as jobResponseSchema } from "../../application/payload_schemas/job.js";
 
 /** The jobs audit listing: newest job first, each event newest first. */
-export const jobListResponseSchema: JsonResponseSchema = {
-  type: "object",
-  additionalProperties: true,
-  properties: { jobs: { type: "array", items: jobResponseSchema } },
-  required: ["jobs"],
-} as const;
+export const jobListResponseSchema = Type.Object(
+  { jobs: Type.Array(jobPayloadSchema) },
+  { additionalProperties: false },
+);
 
 /** The project usage surface (#317): totals plus a per-model breakdown and
  * the trailing-30-UTC-day buckets (#384, optional for consumers). */
