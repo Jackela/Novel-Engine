@@ -1,7 +1,12 @@
 import { describe, expect, it } from "vitest";
 
 import { buildApp } from "../../src/apps/api/app.js";
-import { AppError } from "../../src/shared/interface/http/error_envelope.js";
+import {
+  AppError,
+  ERROR_CODES,
+  ERROR_HTTP_STATUS,
+  errorEnvelopeResponse,
+} from "../../src/shared/interface/http/error_envelope.js";
 
 const titleBodySchema = {
   type: "object",
@@ -156,6 +161,50 @@ describe("unified error envelope", () => {
       expect(body.error).not.toHaveProperty("detail");
     } finally {
       await app.close();
+    }
+  });
+
+  it("keeps envelope serialization intact under a declared shared-schema 4xx response", async () => {
+    const app = await buildQuietApp();
+
+    try {
+      app.get(
+        "/test/guarded",
+        { schema: { response: { 200: { type: "object" }, 401: errorEnvelopeResponse } } },
+        async () => {
+          throw new AppError({
+            statusCode: 401,
+            code: ERROR_CODES.UNAUTHORIZED,
+            message: "Owner session required.",
+            details: { error_id: "corr-1" },
+          });
+        },
+      );
+
+      const response = await app.inject({ method: "GET", url: "/test/guarded" });
+      expect(response.statusCode).toBe(401);
+      expect(response.json()).toEqual({
+        error: {
+          code: "UNAUTHORIZED",
+          message: "Owner session required.",
+          details: { error_id: "corr-1" },
+        },
+      });
+
+      const document = await app.inject({ method: "GET", url: "/openapi.json" });
+      const body = document.json();
+      expect(body.components.schemas.ErrorEnvelope).toBeDefined();
+      expect(
+        body.paths["/test/guarded"].get.responses["401"].content["application/json"].schema,
+      ).toEqual({ $ref: "#/components/schemas/ErrorEnvelope" });
+    } finally {
+      await app.close();
+    }
+  });
+
+  it("maps every catalog code to a documented HTTP status", async () => {
+    for (const code of Object.values(ERROR_CODES)) {
+      expect(ERROR_HTTP_STATUS[code]).toEqual(expect.any(Number));
     }
   });
 });

@@ -21,13 +21,7 @@ export const GROUPS: Array<{
  * keyboard addressable.
  */
 export type InspectorTab =
-  | 'copilot'
-  | 'review'
-  | 'history'
-  | 'export'
-  | 'jobs'
-  | 'usage'
-  | 'settings';
+  'copilot' | 'review' | 'history' | 'export' | 'jobs' | 'usage' | 'settings';
 
 export const INSPECTOR_TABS: Exclude<InspectorTab, 'settings'>[] = [
   'copilot',

@@ -211,6 +211,12 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
         },
       },
     },
+    // Shared schemas land in components.schemas under their $id (e.g.
+    // ErrorEnvelope) instead of positional def-N names, keeping the frozen
+    // snapshot stable when shared-schema count changes.
+    refResolver: {
+      buildLocalReference: (json) => (typeof json.$id === "string" ? json.$id : `def-0`),
+    },
   });
   const corsOrigins = options.corsOrigins ?? options.config?.corsOrigins ?? DEFAULT_CORS_ORIGINS;
   const allowList = corsAllowList(corsOrigins);

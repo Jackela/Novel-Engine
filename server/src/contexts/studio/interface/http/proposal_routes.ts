@@ -1,6 +1,7 @@
 import type { TypeBoxTypeProvider } from "@fastify/type-provider-typebox";
 import type { FastifyPluginAsync, FastifyReply } from "fastify";
 import { principalGuard, requirePrincipal } from "../../../../shared/interface/http/auth_guard.js";
+import { errorEnvelopeResponse } from "../../../../shared/interface/http/error_envelope.js";
 import type { ProposalStreamFrame } from "../../application/proposal_streaming.js";
 import { jobResponseSchema } from "./job_schemas.js";
 import type { JsonResponseSchema } from "./json_response_schema.js";
@@ -20,6 +21,15 @@ const proposalStreamResponseSchema: JsonResponseSchema = {
   content: {
     "text/event-stream": { schema: { type: "string" } },
   },
+} as const;
+
+/** Guard + CSRF failures shared by the proposal writes; scope misses answer 404. */
+const PROPOSAL_ERROR_RESPONSES = {
+  401: errorEnvelopeResponse,
+  403: errorEnvelopeResponse,
+  404: errorEnvelopeResponse,
+  422: errorEnvelopeResponse,
+  503: errorEnvelopeResponse,
 } as const;
 
 /** One SSE event: a single JSON frame per `data:` field, blank-line ended. */
@@ -76,7 +86,11 @@ export const proposalRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fa
       schema: {
         params: documentIdParams,
         body: proposalCreateSchema,
-        response: { 200: jobResponseSchema, 409: operationInFlightSchema },
+        response: {
+          200: jobResponseSchema,
+          ...PROPOSAL_ERROR_RESPONSES,
+          409: operationInFlightSchema,
+        },
       },
     },
     async (request) => {
@@ -109,7 +123,11 @@ export const proposalRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fa
       schema: {
         params: documentIdParams,
         body: proposalCreateSchema,
-        response: { 200: proposalStreamResponseSchema, 409: operationInFlightSchema },
+        response: {
+          200: proposalStreamResponseSchema,
+          ...PROPOSAL_ERROR_RESPONSES,
+          409: operationInFlightSchema,
+        },
       },
     },
     async (request, reply) => {
@@ -148,7 +166,13 @@ export const proposalRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fa
     "/api/projects/:projectId/ai-proposals/:jobId/accept",
     {
       preHandler: [guard],
-      schema: { params: jobIdParams, response: { 200: jobResponseSchema } },
+      schema: {
+        params: jobIdParams,
+        response: {
+          200: jobResponseSchema,
+          ...PROPOSAL_ERROR_RESPONSES,
+        },
+      },
     },
     async (request) => {
       return withStudioErrors(() =>

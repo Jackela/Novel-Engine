@@ -116,10 +116,12 @@ export async function streamProposal({
     });
   } catch (error) {
     if ((error instanceof Error || error instanceof DOMException) && error.name === 'AbortError') {
-      throw new Error('Request cancelled.');
+      throw new Error('Request cancelled.', { cause: error });
     }
     if (error instanceof TypeError) {
-      throw new Error('Novel Engine is unavailable. Check the local service and retry.');
+      throw new Error('Novel Engine is unavailable. Check the local service and retry.', {
+        cause: error,
+      });
     }
     throw error;
   }
@@ -149,7 +151,7 @@ export async function streamProposal({
     }
   } catch (error) {
     if ((error instanceof Error || error instanceof DOMException) && error.name === 'AbortError') {
-      throw new Error('Request cancelled.');
+      throw new Error('Request cancelled.', { cause: error });
     }
     throw error;
   }

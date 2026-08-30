@@ -1,3 +1,4 @@
+import { ERROR_CODES } from "../../../../shared/interface/http/error_envelope.js";
 import { DOCUMENT_KINDS, REVISION_SOURCES } from "../../domain/kinds.js";
 import type { JsonResponseSchema } from "./json_response_schema.js";
 import { volumeResponseSchema } from "./volume_schemas.js";
@@ -144,7 +145,7 @@ export const revisionConflictSchema: JsonResponseSchema = {
       type: "object",
       additionalProperties: false,
       properties: {
-        code: { type: "string", enum: ["REVISION_CONFLICT"] },
+        code: { type: "string", enum: [ERROR_CODES.REVISION_CONFLICT] },
         message: { type: "string" },
         details: {
           type: "object",
@@ -167,7 +168,7 @@ export const documentConflictSchema: JsonResponseSchema = {
       type: "object",
       additionalProperties: false,
       properties: {
-        code: { type: "string", enum: ["DOCUMENT_CONFLICT"] },
+        code: { type: "string", enum: [ERROR_CODES.DOCUMENT_CONFLICT] },
         message: { type: "string" },
       },
       required: ["code", "message"],
@@ -185,7 +186,7 @@ export const operationInFlightSchema: JsonResponseSchema = {
       type: "object",
       additionalProperties: false,
       properties: {
-        code: { type: "string", enum: ["OPERATION_IN_FLIGHT"] },
+        code: { type: "string", enum: [ERROR_CODES.OPERATION_IN_FLIGHT] },
         message: { type: "string" },
         details: {
           type: "object",
@@ -213,7 +214,7 @@ export const snapshotConflictSchema: JsonResponseSchema = {
       type: "object",
       additionalProperties: false,
       properties: {
-        code: { type: "string", enum: ["SNAPSHOT_CONFLICT"] },
+        code: { type: "string", enum: [ERROR_CODES.SNAPSHOT_CONFLICT] },
         message: {
           type: "string",
           enum: ["Document is referenced by an immutable snapshot."],

@@ -2,7 +2,11 @@ import type { TypeBoxTypeProvider } from "@fastify/type-provider-typebox";
 import type { FastifyPluginAsync } from "fastify";
 import type { AuthService } from "../../../../shared/application/auth_service.js";
 import { principalGuard, requirePrincipal } from "../../../../shared/interface/http/auth_guard.js";
-import { AppError } from "../../../../shared/interface/http/error_envelope.js";
+import {
+  AppError,
+  ERROR_CODES,
+  errorEnvelopeResponse,
+} from "../../../../shared/interface/http/error_envelope.js";
 import type { StudioServices } from "../../application/studio_services.js";
 import { withStudioErrors } from "./studio_error_mapping.js";
 import {
@@ -28,7 +32,7 @@ export function requireServices(options: StudioRoutesOptions): StudioServices {
   if (options.services === undefined) {
     throw new AppError({
       statusCode: 503,
-      code: "SERVICE_UNAVAILABLE",
+      code: ERROR_CODES.SERVICE_UNAVAILABLE,
       message: "The persistence layer is not configured.",
     });
   }
@@ -49,7 +53,16 @@ export const projectRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fas
 
   app.get(
     "/api/projects",
-    { preHandler: [guard], schema: { response: { 200: projectListResponseSchema } } },
+    {
+      preHandler: [guard],
+      schema: {
+        response: {
+          200: projectListResponseSchema,
+          401: errorEnvelopeResponse,
+          503: errorEnvelopeResponse,
+        },
+      },
+    },
     async (request) =>
       withStudioErrors(() => ({
         projects: requireServices(options).projects.listProjects(requirePrincipal(request)),
@@ -60,7 +73,16 @@ export const projectRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fas
     "/api/projects",
     {
       preHandler: [guard],
-      schema: { body: projectCreateSchema, response: { 201: projectDetailResponseSchema } },
+      schema: {
+        body: projectCreateSchema,
+        response: {
+          201: projectDetailResponseSchema,
+          401: errorEnvelopeResponse,
+          403: errorEnvelopeResponse,
+          422: errorEnvelopeResponse,
+          503: errorEnvelopeResponse,
+        },
+      },
     },
     async (request, reply) => {
       const payload = withStudioErrors(() =>
@@ -78,7 +100,15 @@ export const projectRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fas
     "/api/projects/:projectId",
     {
       preHandler: [guard],
-      schema: { params: projectIdParams, response: { 200: projectDetailResponseSchema } },
+      schema: {
+        params: projectIdParams,
+        response: {
+          200: projectDetailResponseSchema,
+          401: errorEnvelopeResponse,
+          404: errorEnvelopeResponse,
+          503: errorEnvelopeResponse,
+        },
+      },
     },
     async (request) =>
       withStudioErrors(
@@ -97,7 +127,13 @@ export const projectRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fas
       schema: {
         params: projectIdParams,
         querystring: projectMatchQuerySchema,
-        response: { 200: matchListResponseSchema },
+        response: {
+          200: matchListResponseSchema,
+          401: errorEnvelopeResponse,
+          404: errorEnvelopeResponse,
+          422: errorEnvelopeResponse,
+          503: errorEnvelopeResponse,
+        },
       },
     },
     async (request) =>
@@ -114,7 +150,16 @@ export const projectRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fas
     "/api/projects/:projectId",
     {
       preHandler: [guard],
-      schema: { params: projectIdParams, response: { 204: { type: "null" } } },
+      schema: {
+        params: projectIdParams,
+        response: {
+          204: { type: "null" },
+          401: errorEnvelopeResponse,
+          403: errorEnvelopeResponse,
+          404: errorEnvelopeResponse,
+          503: errorEnvelopeResponse,
+        },
+      },
     },
     async (request, reply) => {
       withStudioErrors(() =>

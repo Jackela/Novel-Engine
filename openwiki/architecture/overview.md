@@ -35,8 +35,9 @@ state is shared through module globals between commands.
 
 ## Bounded contexts and enforced dependency direction
 
-`server/src` is split into `src/apps` (composition roots), `src/contexts/studio`,
-`src/contexts/ai`, and `src/shared`. Each context is layered into `domain`,
+`server/src` is split into `server/src/apps` (composition roots),
+`server/src/contexts/studio`, `server/src/contexts/ai`, and `server/src/shared`.
+Each context is layered into `domain`,
 `application`, `infrastructure`, and `interface`. The contracts, enforced by
 `server/.dependency-cruiser.cjs` and checked by `pnpm --dir server arch` in CI:
 

@@ -1,6 +1,7 @@
 import type { TypeBoxTypeProvider } from "@fastify/type-provider-typebox";
 import type { FastifyPluginAsync } from "fastify";
 import { principalGuard, requirePrincipal } from "../../../../shared/interface/http/auth_guard.js";
+import { errorEnvelopeResponse } from "../../../../shared/interface/http/error_envelope.js";
 import { loreAliasResponseSchema, loreAliasWriteSchema } from "./lore_schemas.js";
 import { requireServices, type StudioRoutesOptions } from "./project_routes.js";
 import { withStudioErrors } from "./studio_error_mapping.js";
@@ -19,7 +20,15 @@ export const loreRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fastif
     "/api/projects/:projectId/documents/:documentId/aliases",
     {
       preHandler: [guard],
-      schema: { params: documentIdParams, response: { 200: loreAliasResponseSchema } },
+      schema: {
+        params: documentIdParams,
+        response: {
+          200: loreAliasResponseSchema,
+          401: errorEnvelopeResponse,
+          404: errorEnvelopeResponse,
+          503: errorEnvelopeResponse,
+        },
+      },
     },
     async (request) =>
       withStudioErrors(() => ({
@@ -38,7 +47,15 @@ export const loreRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fastif
       schema: {
         params: documentIdParams,
         body: loreAliasWriteSchema,
-        response: { 200: loreAliasResponseSchema },
+        response: {
+          200: loreAliasResponseSchema,
+          // Non-lore document kinds answer 422 INVALID_OPERATION.
+          401: errorEnvelopeResponse,
+          403: errorEnvelopeResponse,
+          404: errorEnvelopeResponse,
+          422: errorEnvelopeResponse,
+          503: errorEnvelopeResponse,
+        },
       },
     },
     async (request) =>
