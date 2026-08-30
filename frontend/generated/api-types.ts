@@ -124,11 +124,11 @@ export interface paths {
                     };
                     content: {
                         "application/json": {
-                            projects: ({
+                            projects: {
                                 created_at: string;
                                 description: string;
-                                documents?: ({
-                                    beat_ref?: string | null;
+                                documents?: {
+                                    beat_ref: string | null;
                                     content_markdown: string;
                                     created_at: string;
                                     current_revision_id: string;
@@ -146,9 +146,7 @@ export interface paths {
                                     updated_at: string;
                                     volume_id: string | null;
                                     word_count: number;
-                                } & {
-                                    [key: string]: unknown;
-                                })[];
+                                }[];
                                 id: string;
                                 import_hash: string | null;
                                 settings: {
@@ -156,21 +154,15 @@ export interface paths {
                                 };
                                 title: string;
                                 updated_at: string;
-                                volumes?: ({
+                                volumes?: {
                                     created_at: string;
                                     id: string;
                                     position: number;
                                     project_id: string;
                                     title: string;
                                     updated_at: string;
-                                } & {
-                                    [key: string]: unknown;
-                                })[];
-                            } & {
-                                [key: string]: unknown;
-                            })[];
-                        } & {
-                            [key: string]: unknown;
+                                }[];
+                            }[];
                         };
                     };
                 };
@@ -221,8 +213,8 @@ export interface paths {
                         "application/json": {
                             created_at: string;
                             description: string;
-                            documents: ({
-                                beat_ref?: string | null;
+                            documents: {
+                                beat_ref: string | null;
                                 content_markdown: string;
                                 created_at: string;
                                 current_revision_id: string;
@@ -240,9 +232,7 @@ export interface paths {
                                 updated_at: string;
                                 volume_id: string | null;
                                 word_count: number;
-                            } & {
-                                [key: string]: unknown;
-                            })[];
+                            }[];
                             id: string;
                             import_hash: string | null;
                             settings: {
@@ -250,18 +240,14 @@ export interface paths {
                             };
                             title: string;
                             updated_at: string;
-                            volumes: ({
+                            volumes: {
                                 created_at: string;
                                 id: string;
                                 position: number;
                                 project_id: string;
                                 title: string;
                                 updated_at: string;
-                            } & {
-                                [key: string]: unknown;
-                            })[];
-                        } & {
-                            [key: string]: unknown;
+                            }[];
                         };
                     };
                 };
@@ -336,8 +322,8 @@ export interface paths {
                         "application/json": {
                             created_at: string;
                             description: string;
-                            documents: ({
-                                beat_ref?: string | null;
+                            documents: {
+                                beat_ref: string | null;
                                 content_markdown: string;
                                 created_at: string;
                                 current_revision_id: string;
@@ -355,9 +341,7 @@ export interface paths {
                                 updated_at: string;
                                 volume_id: string | null;
                                 word_count: number;
-                            } & {
-                                [key: string]: unknown;
-                            })[];
+                            }[];
                             id: string;
                             import_hash: string | null;
                             settings: {
@@ -365,18 +349,14 @@ export interface paths {
                             };
                             title: string;
                             updated_at: string;
-                            volumes: ({
+                            volumes: {
                                 created_at: string;
                                 id: string;
                                 position: number;
                                 project_id: string;
                                 title: string;
                                 updated_at: string;
-                            } & {
-                                [key: string]: unknown;
-                            })[];
-                        } & {
-                            [key: string]: unknown;
+                            }[];
                         };
                     };
                 };
@@ -504,16 +484,14 @@ export interface paths {
                             document_id: string | null;
                             error: string | null;
                             /** @description Chronological trail (oldest first) on a single job payload; the jobs LIST endpoint is the spec-mandated newest-first surface. */
-                            events: ({
+                            events: {
                                 created_at: string;
                                 details: {
                                     [key: string]: unknown;
                                 };
                                 id: string;
                                 status: string;
-                            } & {
-                                [key: string]: unknown;
-                            })[];
+                            }[];
                             id: string;
                             kind: string;
                             model: string;
@@ -529,8 +507,6 @@ export interface paths {
                             retry_of_job_id: string | null;
                             status: string;
                             updated_at: string;
-                        } & {
-                            [key: string]: unknown;
                         };
                     };
                 };
@@ -628,7 +604,7 @@ export interface paths {
                     };
                     content: {
                         "application/json": {
-                            beat_ref?: string | null;
+                            beat_ref: string | null;
                             content_markdown: string;
                             created_at: string;
                             current_revision_id: string;
@@ -646,8 +622,6 @@ export interface paths {
                             updated_at: string;
                             volume_id: string | null;
                             word_count: number;
-                        } & {
-                            [key: string]: unknown;
                         };
                     };
                 };
@@ -751,8 +725,8 @@ export interface paths {
                     };
                     content: {
                         "application/json": {
-                            documents: ({
-                                beat_ref?: string | null;
+                            documents: {
+                                beat_ref: string | null;
                                 content_markdown: string;
                                 created_at: string;
                                 current_revision_id: string;
@@ -770,11 +744,7 @@ export interface paths {
                                 updated_at: string;
                                 volume_id: string | null;
                                 word_count: number;
-                            } & {
-                                [key: string]: unknown;
-                            })[];
-                        } & {
-                            [key: string]: unknown;
+                            }[];
                         };
                     };
                 };
@@ -870,7 +840,7 @@ export interface paths {
                     };
                     content: {
                         "application/json": {
-                            beat_ref?: string | null;
+                            beat_ref: string | null;
                             content_markdown: string;
                             created_at: string;
                             current_revision_id: string;
@@ -888,8 +858,6 @@ export interface paths {
                             updated_at: string;
                             volume_id: string | null;
                             word_count: number;
-                        } & {
-                            [key: string]: unknown;
                         };
                     };
                 };
@@ -1083,16 +1051,14 @@ export interface paths {
                             document_id: string | null;
                             error: string | null;
                             /** @description Chronological trail (oldest first) on a single job payload; the jobs LIST endpoint is the spec-mandated newest-first surface. */
-                            events: ({
+                            events: {
                                 created_at: string;
                                 details: {
                                     [key: string]: unknown;
                                 };
                                 id: string;
                                 status: string;
-                            } & {
-                                [key: string]: unknown;
-                            })[];
+                            }[];
                             id: string;
                             kind: string;
                             model: string;
@@ -1108,8 +1074,6 @@ export interface paths {
                             retry_of_job_id: string | null;
                             status: string;
                             updated_at: string;
-                        } & {
-                            [key: string]: unknown;
                         };
                     };
                 };
@@ -1619,7 +1583,7 @@ export interface paths {
                     };
                     content: {
                         "application/json": {
-                            revisions: ({
+                            revisions: {
                                 content_markdown: string;
                                 created_at: string;
                                 document_id: string;
@@ -1632,11 +1596,7 @@ export interface paths {
                                 /** @enum {string} */
                                 source: "author" | "ai-accepted" | "restore";
                                 word_count: number;
-                            } & {
-                                [key: string]: unknown;
-                            })[];
-                        } & {
-                            [key: string]: unknown;
+                            }[];
                         };
                     };
                 };
@@ -1712,7 +1672,7 @@ export interface paths {
                     };
                     content: {
                         "application/json": {
-                            beat_ref?: string | null;
+                            beat_ref: string | null;
                             content_markdown: string;
                             created_at: string;
                             current_revision_id: string;
@@ -1730,8 +1690,6 @@ export interface paths {
                             updated_at: string;
                             volume_id: string | null;
                             word_count: number;
-                        } & {
-                            [key: string]: unknown;
                         };
                     };
                 };
@@ -1839,7 +1797,7 @@ export interface paths {
                     };
                     content: {
                         "application/json": {
-                            beat_ref?: string | null;
+                            beat_ref: string | null;
                             content_markdown: string;
                             created_at: string;
                             current_revision_id: string;
@@ -1857,8 +1815,6 @@ export interface paths {
                             updated_at: string;
                             volume_id: string | null;
                             word_count: number;
-                        } & {
-                            [key: string]: unknown;
                         };
                     };
                 };
@@ -2015,16 +1971,14 @@ export interface paths {
                             document_id: string | null;
                             error: string | null;
                             /** @description Chronological trail (oldest first) on a single job payload; the jobs LIST endpoint is the spec-mandated newest-first surface. */
-                            events: ({
+                            events: {
                                 created_at: string;
                                 details: {
                                     [key: string]: unknown;
                                 };
                                 id: string;
                                 status: string;
-                            } & {
-                                [key: string]: unknown;
-                            })[];
+                            }[];
                             id: string;
                             kind: string;
                             model: string;
@@ -2040,8 +1994,6 @@ export interface paths {
                             retry_of_job_id: string | null;
                             status: string;
                             updated_at: string;
-                        } & {
-                            [key: string]: unknown;
                         };
                     };
                 };
@@ -2217,21 +2169,19 @@ export interface paths {
                     };
                     content: {
                         "application/json": {
-                            jobs: ({
+                            jobs: {
                                 created_at: string;
                                 document_id: string | null;
                                 error: string | null;
                                 /** @description Chronological trail (oldest first) on a single job payload; the jobs LIST endpoint is the spec-mandated newest-first surface. */
-                                events: ({
+                                events: {
                                     created_at: string;
                                     details: {
                                         [key: string]: unknown;
                                     };
                                     id: string;
                                     status: string;
-                                } & {
-                                    [key: string]: unknown;
-                                })[];
+                                }[];
                                 id: string;
                                 kind: string;
                                 model: string;
@@ -2247,11 +2197,7 @@ export interface paths {
                                 retry_of_job_id: string | null;
                                 status: string;
                                 updated_at: string;
-                            } & {
-                                [key: string]: unknown;
-                            })[];
-                        } & {
-                            [key: string]: unknown;
+                            }[];
                         };
                     };
                 };
@@ -2324,16 +2270,14 @@ export interface paths {
                             document_id: string | null;
                             error: string | null;
                             /** @description Chronological trail (oldest first) on a single job payload; the jobs LIST endpoint is the spec-mandated newest-first surface. */
-                            events: ({
+                            events: {
                                 created_at: string;
                                 details: {
                                     [key: string]: unknown;
                                 };
                                 id: string;
                                 status: string;
-                            } & {
-                                [key: string]: unknown;
-                            })[];
+                            }[];
                             id: string;
                             kind: string;
                             model: string;
@@ -2349,8 +2293,6 @@ export interface paths {
                             retry_of_job_id: string | null;
                             status: string;
                             updated_at: string;
-                        } & {
-                            [key: string]: unknown;
                         };
                     };
                 };
@@ -2529,16 +2471,14 @@ export interface paths {
                             document_id: string | null;
                             error: string | null;
                             /** @description Chronological trail (oldest first) on a single job payload; the jobs LIST endpoint is the spec-mandated newest-first surface. */
-                            events: ({
+                            events: {
                                 created_at: string;
                                 details: {
                                     [key: string]: unknown;
                                 };
                                 id: string;
                                 status: string;
-                            } & {
-                                [key: string]: unknown;
-                            })[];
+                            }[];
                             id: string;
                             kind: string;
                             model: string;
@@ -2554,8 +2494,6 @@ export interface paths {
                             retry_of_job_id: string | null;
                             status: string;
                             updated_at: string;
-                        } & {
-                            [key: string]: unknown;
                         };
                     };
                 };
@@ -2639,15 +2577,11 @@ export interface paths {
                     };
                     content: {
                         "application/json": {
-                            results: ({
+                            results: {
                                 document_id: string;
                                 excerpt: string;
                                 title: string;
-                            } & {
-                                [key: string]: unknown;
-                            })[];
-                        } & {
-                            [key: string]: unknown;
+                            }[];
                         };
                     };
                 };
@@ -2804,18 +2738,14 @@ export interface paths {
                     };
                     content: {
                         "application/json": {
-                            volumes: ({
+                            volumes: {
                                 created_at: string;
                                 id: string;
                                 position: number;
                                 project_id: string;
                                 title: string;
                                 updated_at: string;
-                            } & {
-                                [key: string]: unknown;
-                            })[];
-                        } & {
-                            [key: string]: unknown;
+                            }[];
                         };
                     };
                 };
@@ -2879,8 +2809,6 @@ export interface paths {
                             project_id: string;
                             title: string;
                             updated_at: string;
-                        } & {
-                            [key: string]: unknown;
                         };
                     };
                 };
@@ -2984,18 +2912,14 @@ export interface paths {
                     };
                     content: {
                         "application/json": {
-                            volumes: ({
+                            volumes: {
                                 created_at: string;
                                 id: string;
                                 position: number;
                                 project_id: string;
                                 title: string;
                                 updated_at: string;
-                            } & {
-                                [key: string]: unknown;
-                            })[];
-                        } & {
-                            [key: string]: unknown;
+                            }[];
                         };
                     };
                 };
@@ -3092,8 +3016,6 @@ export interface paths {
                             project_id: string;
                             title: string;
                             updated_at: string;
-                        } & {
-                            [key: string]: unknown;
                         };
                     };
                 };

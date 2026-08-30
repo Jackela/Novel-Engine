@@ -1,140 +1,50 @@
+import { Type } from "@fastify/type-provider-typebox";
 import { ERROR_CODES } from "../../../../shared/interface/http/error_envelope.js";
-import { DOCUMENT_KINDS, REVISION_SOURCES } from "../../domain/kinds.js";
+import {
+  documentPayloadSchema,
+  matchResultPayloadSchema,
+} from "../../application/payload_schemas/document.js";
+import { projectPayloadSchema } from "../../application/payload_schemas/project.js";
+import { revisionPayloadSchema } from "../../application/payload_schemas/revision.js";
 import type { JsonResponseSchema } from "./json_response_schema.js";
-import { volumeResponseSchema } from "./volume_schemas.js";
 
 /**
- * Response payload shapes (fast-json-stringify passes unknown fields through).
- * Request schemas live in `studio_request_schemas.ts` as TypeBox schemas.
+ * Core resource response schemas are the TypeBox payload SSOT declared in
+ * `application/payload_schemas/` (#433): the objects below are the same
+ * schemas the payload builders type their output with, re-exported under
+ * their HTTP-surface names. List envelopes wrap those items; conflict and
+ * error envelopes stay hand-written JSON Schema.
  */
 
-const kindLiteral = {
-  type: "string",
-  enum: [...DOCUMENT_KINDS],
-} as const;
-const sourceLiteral = { type: "string", enum: [...REVISION_SOURCES] } as const;
-const timestamp = { type: "string" } as const;
-const metadataObject = { type: "object", additionalProperties: true } as const;
+export {
+  documentPayloadSchema as documentResponseSchema,
+  matchResultPayloadSchema as matchResultSchema,
+} from "../../application/payload_schemas/document.js";
+export {
+  projectDetailPayloadSchema as projectDetailResponseSchema,
+  projectPayloadSchema as projectResponseSchema,
+} from "../../application/payload_schemas/project.js";
+export { revisionPayloadSchema as revisionResponseSchema } from "../../application/payload_schemas/revision.js";
 
-/** Response payload shapes live above; the schemas below document hit shapes and error envelopes. */
+export const documentListResponseSchema = Type.Object(
+  { documents: Type.Array(documentPayloadSchema) },
+  { additionalProperties: false },
+);
 
-export const documentResponseSchema: JsonResponseSchema = {
-  type: "object",
-  additionalProperties: true,
-  properties: {
-    id: { type: "string" },
-    project_id: { type: "string" },
-    kind: kindLiteral,
-    title: { type: "string" },
-    position: { type: "integer" },
-    volume_id: { type: "string", nullable: true },
-    beat_ref: { type: "string", nullable: true },
-    current_revision_id: { type: "string" },
-    content_markdown: { type: "string" },
-    metadata: metadataObject,
-    revision_source: sourceLiteral,
-    word_count: { type: "integer" },
-    created_at: timestamp,
-    updated_at: timestamp,
-  },
-  required: [
-    "id",
-    "project_id",
-    "kind",
-    "title",
-    "position",
-    "volume_id",
-    "current_revision_id",
-    "content_markdown",
-    "metadata",
-    "revision_source",
-    "word_count",
-    "created_at",
-    "updated_at",
-  ],
-} as const;
+export const revisionListResponseSchema = Type.Object(
+  { revisions: Type.Array(revisionPayloadSchema) },
+  { additionalProperties: false },
+);
 
-export const revisionResponseSchema: JsonResponseSchema = {
-  type: "object",
-  additionalProperties: true,
-  properties: {
-    id: { type: "string" },
-    document_id: { type: "string" },
-    parent_revision_id: { type: "string", nullable: true },
-    revision_number: { type: "integer" },
-    content_markdown: { type: "string" },
-    metadata: metadataObject,
-    source: sourceLiteral,
-    word_count: { type: "integer" },
-    created_at: timestamp,
-  },
-  required: [
-    "id",
-    "document_id",
-    "parent_revision_id",
-    "revision_number",
-    "content_markdown",
-    "metadata",
-    "source",
-    "word_count",
-    "created_at",
-  ],
-} as const;
+export const projectListResponseSchema = Type.Object(
+  { projects: Type.Array(projectPayloadSchema) },
+  { additionalProperties: false },
+);
 
-const projectResponseProperties = {
-  id: { type: "string" },
-  title: { type: "string" },
-  description: { type: "string" },
-  settings: metadataObject,
-  import_hash: { type: "string", nullable: true },
-  created_at: timestamp,
-  updated_at: timestamp,
-  documents: { type: "array", items: documentResponseSchema },
-  volumes: { type: "array", items: volumeResponseSchema },
-} as const;
-
-/** One ranked full-text hit: identifier, title, plain-text excerpt. */
-export const matchResultSchema: JsonResponseSchema = {
-  type: "object",
-  additionalProperties: true,
-  properties: {
-    document_id: { type: "string" },
-    title: { type: "string" },
-    excerpt: { type: "string" },
-  },
-  required: ["document_id", "title", "excerpt"],
-} as const;
-
-export const matchListResponseSchema: JsonResponseSchema = {
-  type: "object",
-  additionalProperties: true,
-  properties: { results: { type: "array", items: matchResultSchema } },
-  required: ["results"],
-} as const;
-
-const PROJECT_REQUIRED = [
-  "id",
-  "title",
-  "description",
-  "settings",
-  "import_hash",
-  "created_at",
-  "updated_at",
-] as const;
-
-export const projectResponseSchema: JsonResponseSchema = {
-  type: "object",
-  additionalProperties: true,
-  properties: projectResponseProperties,
-  required: [...PROJECT_REQUIRED],
-} as const;
-
-export const projectDetailResponseSchema: JsonResponseSchema = {
-  type: "object",
-  additionalProperties: true,
-  properties: projectResponseProperties,
-  required: [...PROJECT_REQUIRED, "documents", "volumes"],
-} as const;
+export const matchListResponseSchema = Type.Object(
+  { results: Type.Array(matchResultPayloadSchema) },
+  { additionalProperties: false },
+);
 
 /** The 409 conflict envelope: details.current_revision_id identifies the winner. */
 export const revisionConflictSchema: JsonResponseSchema = {

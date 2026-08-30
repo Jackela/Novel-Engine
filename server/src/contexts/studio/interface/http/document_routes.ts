@@ -2,7 +2,6 @@ import type { TypeBoxTypeProvider } from "@fastify/type-provider-typebox";
 import type { FastifyPluginAsync } from "fastify";
 import { principalGuard, requirePrincipal } from "../../../../shared/interface/http/auth_guard.js";
 import { errorEnvelopeResponse } from "../../../../shared/interface/http/error_envelope.js";
-import type { JsonResponseSchema } from "./json_response_schema.js";
 import { requireServices, type StudioRoutesOptions } from "./project_routes.js";
 import { withStudioErrors } from "./studio_error_mapping.js";
 import {
@@ -16,26 +15,13 @@ import {
 } from "./studio_request_schemas.js";
 import {
   documentConflictSchema,
+  documentListResponseSchema,
   documentResponseSchema,
   revisionConflictSchema,
-  revisionResponseSchema,
+  revisionListResponseSchema,
   snapshotConflictSchema,
 } from "./studio_schemas.js";
 import { documentPlaceSchema } from "./volume_schemas.js";
-
-const documentListResponseSchema: JsonResponseSchema = {
-  type: "object",
-  additionalProperties: true,
-  properties: { documents: { type: "array", items: documentResponseSchema } },
-  required: ["documents"],
-} as const;
-
-const revisionListResponseSchema: JsonResponseSchema = {
-  type: "object",
-  additionalProperties: true,
-  properties: { revisions: { type: "array", items: revisionResponseSchema } },
-  required: ["revisions"],
-} as const;
 
 const SAVE_RESPONSES = {
   200: documentResponseSchema,

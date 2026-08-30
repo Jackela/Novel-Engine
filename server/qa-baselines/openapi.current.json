@@ -188,11 +188,11 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
+                  "additionalProperties": false,
                   "properties": {
                     "projects": {
                       "items": {
-                        "additionalProperties": true,
+                        "additionalProperties": false,
                         "properties": {
                           "created_at": {
                             "type": "string"
@@ -202,7 +202,7 @@
                           },
                           "documents": {
                             "items": {
-                              "additionalProperties": true,
+                              "additionalProperties": false,
                               "properties": {
                                 "beat_ref": {
                                   "nullable": true,
@@ -269,6 +269,7 @@
                                 "title",
                                 "position",
                                 "volume_id",
+                                "beat_ref",
                                 "current_revision_id",
                                 "content_markdown",
                                 "metadata",
@@ -300,7 +301,7 @@
                           },
                           "volumes": {
                             "items": {
-                              "additionalProperties": true,
+                              "additionalProperties": false,
                               "properties": {
                                 "created_at": {
                                   "type": "string"
@@ -411,7 +412,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
+                  "additionalProperties": false,
                   "properties": {
                     "created_at": {
                       "type": "string"
@@ -421,7 +422,7 @@
                     },
                     "documents": {
                       "items": {
-                        "additionalProperties": true,
+                        "additionalProperties": false,
                         "properties": {
                           "beat_ref": {
                             "nullable": true,
@@ -488,6 +489,7 @@
                           "title",
                           "position",
                           "volume_id",
+                          "beat_ref",
                           "current_revision_id",
                           "content_markdown",
                           "metadata",
@@ -519,7 +521,7 @@
                     },
                     "volumes": {
                       "items": {
-                        "additionalProperties": true,
+                        "additionalProperties": false,
                         "properties": {
                           "created_at": {
                             "type": "string"
@@ -687,7 +689,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
+                  "additionalProperties": false,
                   "properties": {
                     "created_at": {
                       "type": "string"
@@ -697,7 +699,7 @@
                     },
                     "documents": {
                       "items": {
-                        "additionalProperties": true,
+                        "additionalProperties": false,
                         "properties": {
                           "beat_ref": {
                             "nullable": true,
@@ -764,6 +766,7 @@
                           "title",
                           "position",
                           "volume_id",
+                          "beat_ref",
                           "current_revision_id",
                           "content_markdown",
                           "metadata",
@@ -795,7 +798,7 @@
                     },
                     "volumes": {
                       "items": {
-                        "additionalProperties": true,
+                        "additionalProperties": false,
                         "properties": {
                           "created_at": {
                             "type": "string"
@@ -904,7 +907,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
+                  "additionalProperties": false,
                   "properties": {
                     "created_at": {
                       "type": "string"
@@ -920,7 +923,7 @@
                     "events": {
                       "description": "Chronological trail (oldest first) on a single job payload; the jobs LIST endpoint is the spec-mandated newest-first surface.",
                       "items": {
-                        "additionalProperties": true,
+                        "additionalProperties": false,
                         "properties": {
                           "created_at": {
                             "type": "string"
@@ -1121,7 +1124,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
+                  "additionalProperties": false,
                   "properties": {
                     "beat_ref": {
                       "nullable": true,
@@ -1188,6 +1191,7 @@
                     "title",
                     "position",
                     "volume_id",
+                    "beat_ref",
                     "current_revision_id",
                     "content_markdown",
                     "metadata",
@@ -1330,11 +1334,11 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
+                  "additionalProperties": false,
                   "properties": {
                     "documents": {
                       "items": {
-                        "additionalProperties": true,
+                        "additionalProperties": false,
                         "properties": {
                           "beat_ref": {
                             "nullable": true,
@@ -1401,6 +1405,7 @@
                           "title",
                           "position",
                           "volume_id",
+                          "beat_ref",
                           "current_revision_id",
                           "content_markdown",
                           "metadata",
@@ -1636,7 +1641,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
+                  "additionalProperties": false,
                   "properties": {
                     "beat_ref": {
                       "nullable": true,
@@ -1703,6 +1708,7 @@
                     "title",
                     "position",
                     "volume_id",
+                    "beat_ref",
                     "current_revision_id",
                     "content_markdown",
                     "metadata",
@@ -1882,7 +1888,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
+                  "additionalProperties": false,
                   "properties": {
                     "created_at": {
                       "type": "string"
@@ -1898,7 +1904,7 @@
                     "events": {
                       "description": "Chronological trail (oldest first) on a single job payload; the jobs LIST endpoint is the spec-mandated newest-first surface.",
                       "items": {
-                        "additionalProperties": true,
+                        "additionalProperties": false,
                         "properties": {
                           "created_at": {
                             "type": "string"
@@ -2705,11 +2711,11 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
+                  "additionalProperties": false,
                   "properties": {
                     "revisions": {
                       "items": {
-                        "additionalProperties": true,
+                        "additionalProperties": false,
                         "properties": {
                           "content_markdown": {
                             "type": "string"
@@ -2857,7 +2863,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
+                  "additionalProperties": false,
                   "properties": {
                     "beat_ref": {
                       "nullable": true,
@@ -2924,6 +2930,7 @@
                     "title",
                     "position",
                     "volume_id",
+                    "beat_ref",
                     "current_revision_id",
                     "content_markdown",
                     "metadata",
@@ -3085,7 +3092,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
+                  "additionalProperties": false,
                   "properties": {
                     "beat_ref": {
                       "nullable": true,
@@ -3152,6 +3159,7 @@
                     "title",
                     "position",
                     "volume_id",
+                    "beat_ref",
                     "current_revision_id",
                     "content_markdown",
                     "metadata",
@@ -3376,7 +3384,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
+                  "additionalProperties": false,
                   "properties": {
                     "created_at": {
                       "type": "string"
@@ -3392,7 +3400,7 @@
                     "events": {
                       "description": "Chronological trail (oldest first) on a single job payload; the jobs LIST endpoint is the spec-mandated newest-first surface.",
                       "items": {
-                        "additionalProperties": true,
+                        "additionalProperties": false,
                         "properties": {
                           "created_at": {
                             "type": "string"
@@ -3724,11 +3732,11 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
+                  "additionalProperties": false,
                   "properties": {
                     "jobs": {
                       "items": {
-                        "additionalProperties": true,
+                        "additionalProperties": false,
                         "properties": {
                           "created_at": {
                             "type": "string"
@@ -3744,7 +3752,7 @@
                           "events": {
                             "description": "Chronological trail (oldest first) on a single job payload; the jobs LIST endpoint is the spec-mandated newest-first surface.",
                             "items": {
-                              "additionalProperties": true,
+                              "additionalProperties": false,
                               "properties": {
                                 "created_at": {
                                   "type": "string"
@@ -3896,7 +3904,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
+                  "additionalProperties": false,
                   "properties": {
                     "created_at": {
                       "type": "string"
@@ -3912,7 +3920,7 @@
                     "events": {
                       "description": "Chronological trail (oldest first) on a single job payload; the jobs LIST endpoint is the spec-mandated newest-first surface.",
                       "items": {
-                        "additionalProperties": true,
+                        "additionalProperties": false,
                         "properties": {
                           "created_at": {
                             "type": "string"
@@ -4271,7 +4279,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
+                  "additionalProperties": false,
                   "properties": {
                     "created_at": {
                       "type": "string"
@@ -4287,7 +4295,7 @@
                     "events": {
                       "description": "Chronological trail (oldest first) on a single job payload; the jobs LIST endpoint is the spec-mandated newest-first surface.",
                       "items": {
-                        "additionalProperties": true,
+                        "additionalProperties": false,
                         "properties": {
                           "created_at": {
                             "type": "string"
@@ -4451,11 +4459,11 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
+                  "additionalProperties": false,
                   "properties": {
                     "results": {
                       "items": {
-                        "additionalProperties": true,
+                        "additionalProperties": false,
                         "properties": {
                           "document_id": {
                             "type": "string"
@@ -4689,11 +4697,11 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
+                  "additionalProperties": false,
                   "properties": {
                     "volumes": {
                       "items": {
-                        "additionalProperties": true,
+                        "additionalProperties": false,
                         "properties": {
                           "created_at": {
                             "type": "string"
@@ -4805,7 +4813,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
+                  "additionalProperties": false,
                   "properties": {
                     "created_at": {
                       "type": "string"
@@ -4968,11 +4976,11 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
+                  "additionalProperties": false,
                   "properties": {
                     "volumes": {
                       "items": {
-                        "additionalProperties": true,
+                        "additionalProperties": false,
                         "properties": {
                           "created_at": {
                             "type": "string"
@@ -5189,7 +5197,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
+                  "additionalProperties": false,
                   "properties": {
                     "created_at": {
                       "type": "string"
