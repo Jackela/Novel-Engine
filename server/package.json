@@ -41,6 +41,7 @@
     "@biomejs/biome": "2.5.11",
     "@types/better-sqlite3": "9.6.0",
     "@types/node": "^24.13.3",
+    "ajv": "^8.12.0",
     "dependency-cruiser": "^18.2.0",
     "drizzle-kit": "0.31.10",
     "typescript": "~6.0.3",
