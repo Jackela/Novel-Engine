@@ -1,6 +1,6 @@
 /**
- * Executable architecture policy for server/src — the dependency-cruiser twin of
- * .importlinter's six contracts, plus the two gap closures adjudicated in #253:
+ * Executable architecture policy for server/src — the layer-isolation contracts,
+ * plus the gap closures adjudicated in #253 and #420:
  *   (a) the interface layer may not import shared infrastructure either (audit F-8);
  *   (b) the ai context is a leaf provider module, importable only through its
  *       application ports (the composition root src/apps is exempt — it wires
@@ -61,7 +61,15 @@ module.exports = {
         "Audit gap closure: the ai context is a leaf provider module — code outside it may only import it through its application ports. The composition root (src/apps) is exempt, mirroring the Python authority whose runtime wires create_text_generation_provider directly.",
       severity: "error",
       from: { pathNot: ["^src/contexts/ai/", "^src/apps/"] },
-      to: { path: "^src/contexts/ai/(domain|infrastructure|interface)" },
+      to: { path: "^src/contexts/ai/(infrastructure|interface)" },
+    },
+    {
+      name: "ai-ports-only",
+      comment:
+        "Audit gap closure (#420): inside the ai application layer only ports/ is importable from outside the ai context — application internals (e.g. model_resolution) stay private. The composition root (src/apps) is exempt for the same wiring reason as ai-leaf-ports-only.",
+      severity: "error",
+      from: { pathNot: ["^src/contexts/ai/", "^src/apps/"] },
+      to: { path: "^src/contexts/ai/application/(?!ports/)[^/]" },
     },
     {
       name: "ai-never-imports-studio",

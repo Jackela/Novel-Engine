@@ -1,7 +1,51 @@
 # novel-engine Specification
 
+This is the canonical OpenSpec capability specification for Novel Engine.
+Every enforceable product behavior is defined as a `### Requirement:` block
+with `#### Scenario:` examples, and CI enforces this file through
+`pnpm spec:validate`.
+
+Recommended reading order for agents and new contributors:
+
+1. This specification — the behavioral contract.
+2. `CONTEXT.md` — canonical domain vocabulary; use these terms in code, docs, and discussion.
+3. `docs/adr/0004-two-layer-generation-context.md` — the two-layer AI generation context (resident context plus proposal assembly).
+4. `docs/adr/0005-fixed-two-level-hierarchy.md` — the fixed volume/beat work structure.
+
+To change behavior, open an OpenSpec change under `openspec/changes/`, update
+the requirement(s) in this file, pass `pnpm spec:validate`, implement the
+change, then archive it into `openspec/changes/archive/`.
+
 ## Purpose
-TBD - created by archiving change 2026-08-17-rewrite-contract-foundation. Update Purpose after archive.
+
+Novel Engine is a self-hosted, single-author writing studio for long-form
+novel authoring: a TypeScript backend (Fastify, TypeBox, Drizzle) over an
+authoritative SQLite store, serving a React Studio frontend. One Owner works
+on one novel; guest sessions are isolated, disposable sandboxes.
+
+The behavior specified here covers:
+
+- The authoring core: projects and Markdown documents persisted in SQLite as
+  the single authoring authority, with immutable revisions, recoverable save
+  conflicts, full-text search over current content, and durable single-file
+  operation that survives abrupt restarts.
+- The AI proposal pipeline: explicit proposal generation with server-mapped
+  provider steps over deterministic, DashScope, and OpenAI-compatible
+  providers, sanitized prose output behind the untrusted manuscript boundary,
+  and a snapshot-bound proposal → review → accept workflow where acceptance
+  writes an `ai-accepted` revision.
+- Work structure and generation context: a fixed two-level volume/chapter
+  hierarchy with chapter beat association, resident context assembly injected
+  into every generation, and keyword-triggered lore entries.
+- Delivery: snapshot-bound deterministic editorial review, reproducible
+  Markdown/DOCX/EPUB exports, usage accounting for AI requests, and the
+  whole-book generation loop with SSE streaming proposal generation.
+- The platform contract: owner session/CSRF/setup policy with rate limiting
+  and production configuration guards, a unified error envelope, synchronous
+  job execution with retry, health/version surfaces, the operational CLI
+  (`serve`, `import`, `backup`, `doctor`), read-only idempotent legacy
+  import, and a route-driven, editor-first, APG-compliant Studio UI.
+
 ## Requirements
 ### Requirement: One product and version authority
 The system MUST define Novel Engine as the only authoring product, MUST read
