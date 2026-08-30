@@ -1,22 +1,22 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from "vitest";
 
-import { project as projectFixture } from '@/test/factories';
+import { project as projectFixture } from "@/test/factories";
 
-import { buildStudioNavigatorProps } from './studioPageModelView';
+import { buildStudioNavigatorProps } from "./studioPageModelView";
 
-const project = projectFixture({ title: 'Novel' });
+const project = projectFixture({ title: "Novel" });
 
-describe('buildStudioNavigatorProps', () => {
-  it('keeps navigation state local and adapts actions to the view interface', () => {
+describe("buildStudioNavigatorProps", () => {
+  it("keeps navigation state local and adapts actions to the view interface", () => {
     const navigate = vi.fn();
     const createDocument = vi.fn();
     const moveDocument = vi.fn();
     const props = buildStudioNavigatorProps(
       {
         project,
-        section: 'outline',
+        section: "outline",
         activeId: null,
-        search: 'chapter',
+        search: "chapter",
         isSearching: false,
         searchResults: [],
         onSearchChange: vi.fn(),
@@ -30,14 +30,14 @@ describe('buildStudioNavigatorProps', () => {
       navigate,
     );
 
-    props.onNavigateSection('review');
-    props.onCreateDocument('chapter');
-    props.onMoveDocument('document-1', -1);
+    props.onNavigateSection("review");
+    props.onCreateDocument("chapter");
+    props.onMoveDocument("document-1", -1);
 
-    expect(navigate).toHaveBeenCalledWith('/projects/project-1/review');
-    expect(createDocument).toHaveBeenCalledWith('chapter');
-    expect(moveDocument).toHaveBeenCalledWith('document-1', -1);
+    expect(navigate).toHaveBeenCalledWith("/projects/project-1/review");
+    expect(createDocument).toHaveBeenCalledWith("chapter");
+    expect(moveDocument).toHaveBeenCalledWith("document-1", -1);
     expect(props.isCreatingDocument).toBe(true);
-    expect(props.section).toBe('outline');
+    expect(props.section).toBe("outline");
   });
 });

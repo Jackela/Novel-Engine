@@ -2,4 +2,4 @@
 
 declare const __APP_VERSION__: string;
 
-declare module '@fontsource-variable/ibm-plex-sans';
+declare module "@fontsource-variable/ibm-plex-sans";

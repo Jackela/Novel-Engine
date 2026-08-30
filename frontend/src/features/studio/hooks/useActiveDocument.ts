@@ -1,15 +1,15 @@
-import { useMemo } from 'react';
+import { useMemo } from "react";
 
-import type { DocumentKind, Project, StudioDocument } from '@/app/types/studio';
+import type { DocumentKind, Project, StudioDocument } from "@/app/types/studio";
 
 function documentKindForSection(section: string): DocumentKind | null {
   switch (section) {
-    case 'outline':
-      return 'outline';
-    case 'characters':
-      return 'character';
-    case 'world':
-      return 'world';
+    case "outline":
+      return "outline";
+    case "characters":
+      return "character";
+    case "world":
+      return "world";
     default:
       return null;
   }

@@ -1,17 +1,17 @@
-import { useCallback, useEffect, useState, type FormEvent } from 'react';
-import { BookOpen, LogOut, Plus } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { BookOpen, LogOut, Plus } from "lucide-react";
+import { type FormEvent, useCallback, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
-import { api } from '@/app/api';
-import type { Project } from '@/app/types/studio';
+import { api } from "@/app/api";
+import type { Project } from "@/app/types/studio";
 
-import { toErrorMessage } from './hooks/toErrorMessage';
+import { toErrorMessage } from "./hooks/toErrorMessage";
 
 export function ProjectLibraryPage() {
   const navigate = useNavigate();
   const [projects, setProjects] = useState<Project[]>([]);
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
@@ -19,7 +19,7 @@ export function ProjectLibraryPage() {
       const [, response] = await Promise.all([api.session(), api.projects()]);
       setProjects(response.projects);
     } catch {
-      navigate('/', { replace: true });
+      navigate("/", { replace: true });
     }
   }, [navigate]);
 
@@ -34,7 +34,7 @@ export function ProjectLibraryPage() {
       const project = await api.createProject(title, description);
       navigate(`/projects/${project.id}/manuscript`);
     } catch (reason) {
-      setError(toErrorMessage(reason, 'Unable to create project.'));
+      setError(toErrorMessage(reason, "Unable to create project."));
     }
   };
 
@@ -42,10 +42,10 @@ export function ProjectLibraryPage() {
     try {
       await api.logout();
     } catch (reason) {
-      setError(toErrorMessage(reason, 'Unable to sign out.'));
+      setError(toErrorMessage(reason, "Unable to sign out."));
       return;
     }
-    navigate('/');
+    navigate("/");
   };
 
   return (
@@ -107,7 +107,7 @@ export function ProjectLibraryPage() {
               <BookOpen aria-hidden="true" />
               <span>
                 <strong>{project.title}</strong>
-                <small>{project.description || 'No premise yet'}</small>
+                <small>{project.description || "No premise yet"}</small>
               </span>
               <time>{new Date(project.updated_at).toLocaleDateString()}</time>
             </button>

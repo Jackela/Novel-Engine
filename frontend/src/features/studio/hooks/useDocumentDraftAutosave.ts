@@ -1,9 +1,9 @@
-import { useEffect, type Dispatch, type MutableRefObject, type SetStateAction } from 'react';
+import { type Dispatch, type MutableRefObject, type SetStateAction, useEffect } from "react";
 
-import { HttpError, api } from '@/app/api';
-import type { Project, SaveState, StudioDocument } from '@/app/types/studio';
+import { api, HttpError } from "@/app/api";
+import type { Project, SaveState, StudioDocument } from "@/app/types/studio";
 
-import { toErrorMessage } from './toErrorMessage';
+import { toErrorMessage } from "./toErrorMessage";
 
 interface DraftRefValue {
   readonly draft: string;
@@ -65,17 +65,17 @@ export function useDocumentDraftAutosave({
       persisted.draft === draft &&
       persisted.titleDraft === titleDraft
     ) {
-      if (saveState === 'saving') setCurrentSaveState('saved');
+      if (saveState === "saving") setCurrentSaveState("saved");
       return;
     }
     const unchanged =
       draft === activeDocument.content_markdown && titleDraft === activeDocument.title;
     if (unchanged) {
-      setCurrentSaveState('idle');
+      setCurrentSaveState("idle");
       return;
     }
-    if (saveStateRef.current === 'conflict' || conflictActionPendingRef.current) return;
-    setCurrentSaveState('saving');
+    if (saveStateRef.current === "conflict" || conflictActionPendingRef.current) return;
+    setCurrentSaveState("saving");
     if (saveTimerRef.current) window.clearTimeout(saveTimerRef.current);
     saveTimerRef.current = window.setTimeout(async () => {
       const {
@@ -95,8 +95,8 @@ export function useDocumentDraftAutosave({
         );
       } catch (reason) {
         const isConflict = reason instanceof HttpError && reason.status === 409;
-        setCurrentSaveState(isConflict ? 'conflict' : 'error');
-        setError(toErrorMessage(reason, 'Unable to save.'));
+        setCurrentSaveState(isConflict ? "conflict" : "error");
+        setError(toErrorMessage(reason, "Unable to save."));
         if (isConflict) {
           void refreshLatestDocument(currentDocument.id).catch(() => undefined);
         }
@@ -141,7 +141,7 @@ export async function loadLatestDocument(
 ): Promise<{ readonly project: Project; readonly document: StudioDocument }> {
   const project = await api.project(projectId);
   const document = project.documents?.find((candidate) => candidate.id === documentId);
-  if (!document) throw new Error('The document is no longer available.');
+  if (!document) throw new Error("The document is no longer available.");
   return { project, document };
 }
 

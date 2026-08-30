@@ -1,6 +1,6 @@
-import type { UsageDailyBucket } from '@/app/types/studio';
+import type { UsageDailyBucket } from "@/app/types/studio";
 
-const formatCount = (value: number) => value.toLocaleString('en-US');
+const formatCount = (value: number) => value.toLocaleString("en-US");
 
 function dailyTotal(bucket: UsageDailyBucket): number {
   return bucket.prompt_tokens + bucket.completion_tokens;
@@ -8,11 +8,15 @@ function dailyTotal(bucket: UsageDailyBucket): number {
 
 function UsageDailyRow({ bucket, max }: { bucket: UsageDailyBucket; max: number }) {
   const total = dailyTotal(bucket);
-  const width = max > 0 ? `${Math.max((total / max) * 100, total > 0 ? 2 : 0)}%` : '0%';
+  const width = max > 0 ? `${Math.max((total / max) * 100, total > 0 ? 2 : 0)}%` : "0%";
   return (
-    <div aria-label={`${bucket.date}: ${formatCount(total)} tokens`} className="usage-daily-row">
+    <div className="usage-daily-row">
       <span className="usage-daily-date">{bucket.date}</span>
-      <span className="usage-daily-bar-track">
+      <span
+        aria-label={`${bucket.date}: ${formatCount(total)} tokens`}
+        className="usage-daily-bar-track"
+        role="img"
+      >
         <span className="usage-daily-bar" style={{ width }} />
       </span>
       <span className="usage-daily-count">{formatCount(total)}</span>

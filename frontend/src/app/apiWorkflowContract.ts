@@ -1,3 +1,14 @@
+import {
+  arrayField,
+  literalField,
+  nullableString,
+  nullableStringField,
+  numberField,
+  objectValue,
+  recordField,
+  stringField,
+  stringValue,
+} from "@/app/apiContract";
 import type {
   ExportFormat,
   ProjectUsage,
@@ -10,25 +21,13 @@ import type {
   StudioJobOperation,
   StudioJobStatus,
   UsageModelRow,
-} from '@/app/types/studio';
+} from "@/app/types/studio";
 
-import {
-  arrayField,
-  literalField,
-  nullableString,
-  nullableStringField,
-  numberField,
-  objectValue,
-  recordField,
-  stringField,
-  stringValue,
-} from '@/app/apiContract';
-
-const exportFormats = ['markdown', 'docx', 'epub'] as const;
-const jobKinds = ['proposal', 'review', 'export'] as const;
-const jobOperations = ['continue', 'rewrite', 'generate', 'review', 'export'] as const;
-const jobStatuses = ['pending', 'running', 'completed', 'failed', 'interrupted'] as const;
-const severities = ['blocker', 'warning', 'suggestion'] as const;
+const exportFormats = ["markdown", "docx", "epub"] as const;
+const jobKinds = ["proposal", "review", "export"] as const;
+const jobOperations = ["continue", "rewrite", "generate", "review", "export"] as const;
+const jobStatuses = ["pending", "running", "completed", "failed", "interrupted"] as const;
+const severities = ["blocker", "warning", "suggestion"] as const;
 
 function optionalString(
   source: Record<string, unknown>,
@@ -42,36 +41,36 @@ function optionalString(
 function parseIssue(value: unknown, label: string): ReviewIssue {
   const item = objectValue(value, label);
   return {
-    id: stringField(item, 'id', label),
-    document_id: nullableStringField(item, 'document_id', label),
-    severity: literalField(item, 'severity', label, severities),
-    code: stringField(item, 'code', label),
-    message: stringField(item, 'message', label),
-    suggestion: stringField(item, 'suggestion', label),
-    evidence: recordField(item, 'evidence', label),
+    id: stringField(item, "id", label),
+    document_id: nullableStringField(item, "document_id", label),
+    severity: literalField(item, "severity", label, severities),
+    code: stringField(item, "code", label),
+    message: stringField(item, "message", label),
+    suggestion: stringField(item, "suggestion", label),
+    evidence: recordField(item, "evidence", label),
   };
 }
 
-function parseReview(value: unknown, label = 'review'): Review {
+function parseReview(value: unknown, label = "review"): Review {
   const item = objectValue(value, label);
   return {
-    id: stringField(item, 'id', label),
-    project_id: stringField(item, 'project_id', label),
-    snapshot_id: stringField(item, 'snapshot_id', label),
-    provider: stringField(item, 'provider', label),
-    model: stringField(item, 'model', label),
-    summary: stringField(item, 'summary', label),
-    created_at: stringField(item, 'created_at', label),
-    issues: arrayField(item, 'issues', label, (issue, index) =>
+    id: stringField(item, "id", label),
+    project_id: stringField(item, "project_id", label),
+    snapshot_id: stringField(item, "snapshot_id", label),
+    provider: stringField(item, "provider", label),
+    model: stringField(item, "model", label),
+    summary: stringField(item, "summary", label),
+    created_at: stringField(item, "created_at", label),
+    issues: arrayField(item, "issues", label, (issue, index) =>
       parseIssue(issue, `${label}.issues[${index}]`),
     ),
   };
 }
 
 export function parseReviews(value: unknown): { reviews: Review[] } {
-  const item = objectValue(value, 'reviews response');
+  const item = objectValue(value, "reviews response");
   return {
-    reviews: arrayField(item, 'reviews', 'reviews response', (entry, index) =>
+    reviews: arrayField(item, "reviews", "reviews response", (entry, index) =>
       parseReview(entry, `reviews[${index}]`),
     ),
   };
@@ -80,104 +79,104 @@ export function parseReviews(value: unknown): { reviews: Review[] } {
 function parseJobEvent(value: unknown, label: string): StudioJobEvent {
   const item = objectValue(value, label);
   return {
-    id: stringField(item, 'id', label),
-    status: literalField(item, 'status', label, jobStatuses) as StudioJobStatus,
-    details: recordField(item, 'details', label),
-    created_at: stringField(item, 'created_at', label),
+    id: stringField(item, "id", label),
+    status: literalField(item, "status", label, jobStatuses) as StudioJobStatus,
+    details: recordField(item, "details", label),
+    created_at: stringField(item, "created_at", label),
   };
 }
 
-export function parseJob(value: unknown, label = 'job'): StudioJob {
+export function parseJob(value: unknown, label = "job"): StudioJob {
   const item = objectValue(value, label);
-  const result = recordField(item, 'result', label);
+  const result = recordField(item, "result", label);
   return {
-    id: stringField(item, 'id', label),
-    project_id: stringField(item, 'project_id', label),
-    document_id: nullableStringField(item, 'document_id', label),
-    kind: literalField(item, 'kind', label, jobKinds) as StudioJobKind,
-    operation: literalField(item, 'operation', label, jobOperations) as StudioJobOperation,
-    status: literalField(item, 'status', label, jobStatuses) as StudioJobStatus,
-    provider: stringField(item, 'provider', label),
-    model: stringField(item, 'model', label),
-    request: recordField(item, 'request', label),
+    id: stringField(item, "id", label),
+    project_id: stringField(item, "project_id", label),
+    document_id: nullableStringField(item, "document_id", label),
+    kind: literalField(item, "kind", label, jobKinds) as StudioJobKind,
+    operation: literalField(item, "operation", label, jobOperations) as StudioJobOperation,
+    status: literalField(item, "status", label, jobStatuses) as StudioJobStatus,
+    provider: stringField(item, "provider", label),
+    model: stringField(item, "model", label),
+    request: recordField(item, "request", label),
     result: {
       proposal_markdown: optionalString(
         result,
-        'proposal_markdown',
+        "proposal_markdown",
         `${label}.result.proposal_markdown`,
       ),
       base_revision_id: optionalString(
         result,
-        'base_revision_id',
+        "base_revision_id",
         `${label}.result.base_revision_id`,
       ),
       accepted_revision_id:
         result.accepted_revision_id === undefined
           ? undefined
           : nullableString(result.accepted_revision_id, `${label}.result.accepted_revision_id`),
-      export_id: optionalString(result, 'export_id', `${label}.result.export_id`),
-      review_id: optionalString(result, 'review_id', `${label}.result.review_id`),
+      export_id: optionalString(result, "export_id", `${label}.result.export_id`),
+      review_id: optionalString(result, "review_id", `${label}.result.review_id`),
     },
-    error: nullableStringField(item, 'error', label),
-    retry_of_job_id: nullableStringField(item, 'retry_of_job_id', label),
-    events: arrayField(item, 'events', label, (event, index) =>
+    error: nullableStringField(item, "error", label),
+    retry_of_job_id: nullableStringField(item, "retry_of_job_id", label),
+    events: arrayField(item, "events", label, (event, index) =>
       parseJobEvent(event, `${label}.events[${index}]`),
     ),
-    created_at: stringField(item, 'created_at', label),
-    updated_at: stringField(item, 'updated_at', label),
+    created_at: stringField(item, "created_at", label),
+    updated_at: stringField(item, "updated_at", label),
   };
 }
 
 export function parseJobs(value: unknown): { jobs: StudioJob[] } {
-  const item = objectValue(value, 'jobs response');
+  const item = objectValue(value, "jobs response");
   return {
-    jobs: arrayField(item, 'jobs', 'jobs response', (entry, index) =>
+    jobs: arrayField(item, "jobs", "jobs response", (entry, index) =>
       parseJob(entry, `jobs[${index}]`),
     ),
   };
 }
 
-function parseExport(value: unknown, label = 'export'): StudioExport {
+function parseExport(value: unknown, label = "export"): StudioExport {
   const item = objectValue(value, label);
   return {
-    id: stringField(item, 'id', label),
-    project_id: stringField(item, 'project_id', label),
-    snapshot_id: stringField(item, 'snapshot_id', label),
-    format: literalField(item, 'format', label, exportFormats) as ExportFormat,
-    size_bytes: numberField(item, 'size_bytes', label),
-    checksum_sha256: stringField(item, 'checksum_sha256', label),
-    created_at: stringField(item, 'created_at', label),
-    download_url: stringField(item, 'download_url', label),
+    id: stringField(item, "id", label),
+    project_id: stringField(item, "project_id", label),
+    snapshot_id: stringField(item, "snapshot_id", label),
+    format: literalField(item, "format", label, exportFormats) as ExportFormat,
+    size_bytes: numberField(item, "size_bytes", label),
+    checksum_sha256: stringField(item, "checksum_sha256", label),
+    created_at: stringField(item, "created_at", label),
+    download_url: stringField(item, "download_url", label),
   };
 }
 
 function parseUsageModelRow(value: unknown, label: string): UsageModelRow {
   const item = objectValue(value, label);
   return {
-    model: stringField(item, 'model', label),
-    requests: numberField(item, 'requests', label),
-    prompt_tokens: numberField(item, 'prompt_tokens', label),
-    completion_tokens: numberField(item, 'completion_tokens', label),
+    model: stringField(item, "model", label),
+    requests: numberField(item, "requests", label),
+    prompt_tokens: numberField(item, "prompt_tokens", label),
+    completion_tokens: numberField(item, "completion_tokens", label),
   };
 }
 
 export function parseUsage(value: unknown): ProjectUsage {
-  const item = objectValue(value, 'usage response');
+  const item = objectValue(value, "usage response");
   return {
-    project_id: stringField(item, 'project_id', 'usage response'),
-    request_count: numberField(item, 'request_count', 'usage response'),
-    prompt_tokens: numberField(item, 'prompt_tokens', 'usage response'),
-    completion_tokens: numberField(item, 'completion_tokens', 'usage response'),
-    per_model: arrayField(item, 'per_model', 'usage response', (entry, index) =>
+    project_id: stringField(item, "project_id", "usage response"),
+    request_count: numberField(item, "request_count", "usage response"),
+    prompt_tokens: numberField(item, "prompt_tokens", "usage response"),
+    completion_tokens: numberField(item, "completion_tokens", "usage response"),
+    per_model: arrayField(item, "per_model", "usage response", (entry, index) =>
       parseUsageModelRow(entry, `per_model[${index}]`),
     ),
   };
 }
 
 export function parseExports(value: unknown): { exports: StudioExport[] } {
-  const item = objectValue(value, 'exports response');
+  const item = objectValue(value, "exports response");
   return {
-    exports: arrayField(item, 'exports', 'exports response', (entry, index) =>
+    exports: arrayField(item, "exports", "exports response", (entry, index) =>
       parseExport(entry, `exports[${index}]`),
     ),
   };
@@ -188,12 +187,12 @@ export function parseExports(value: unknown): { exports: StudioExport[] } {
  * the TS backend — the only contract since the cutover retired the Python
  * stack.
  */
-export function parseReviewJobResponse(value: unknown, label = 'review job response'): StudioJob {
+export function parseReviewJobResponse(value: unknown, label = "review job response"): StudioJob {
   const item = objectValue(value, label);
   return parseJob(item, label);
 }
 
-export function parseExportJobResponse(value: unknown, label = 'export job response'): StudioJob {
+export function parseExportJobResponse(value: unknown, label = "export job response"): StudioJob {
   const item = objectValue(value, label);
   return parseJob(item, label);
 }

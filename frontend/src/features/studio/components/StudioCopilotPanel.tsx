@@ -1,14 +1,14 @@
-import { Check, Sparkles, X } from 'lucide-react';
-import type { Dispatch, SetStateAction } from 'react';
+import { Check, Sparkles, X } from "lucide-react";
+import type { Dispatch, SetStateAction } from "react";
 
-import type { StudioJob } from '@/app/types/studio';
+import type { StudioJob } from "@/app/types/studio";
 
 interface StudioCopilotPanelProps {
   instruction: string;
   setInstruction: Dispatch<SetStateAction<string>>;
   proposal: StudioJob | null;
   setProposal: Dispatch<SetStateAction<StudioJob | null>>;
-  onRunProposal: (operation: 'continue' | 'rewrite') => void;
+  onRunProposal: (operation: "continue" | "rewrite") => void;
   onAcceptProposal: () => void;
   /** True while a proposal request is in flight. */
   isRunningProposal?: boolean;
@@ -52,7 +52,7 @@ export function StudioCopilotPanel({
           aria-busy={isRunningProposal}
           className="command"
           disabled={isBusy}
-          onClick={() => onRunProposal('rewrite')}
+          onClick={() => onRunProposal("rewrite")}
           type="button"
         >
           <Sparkles /> Rewrite
@@ -61,10 +61,10 @@ export function StudioCopilotPanel({
           aria-busy={isRunningProposal}
           className="command"
           disabled={isBusy}
-          onClick={() => onRunProposal('continue')}
+          onClick={() => onRunProposal("continue")}
           type="button"
         >
-          {isRunningProposal ? 'Generating…' : 'Continue'}
+          {isRunningProposal ? "Generating…" : "Continue"}
         </button>
       </div>
       {isStreaming ? (

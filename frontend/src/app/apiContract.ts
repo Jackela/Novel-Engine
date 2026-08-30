@@ -8,7 +8,7 @@ import type {
   SetupStatus,
   StudioDocument,
   Volume,
-} from '@/app/types/studio';
+} from "@/app/types/studio";
 
 class ApiContractError extends Error {
   constructor(label: string) {
@@ -19,25 +19,25 @@ class ApiContractError extends Error {
 
 type JsonRecord = Record<string, unknown>;
 
-const documentKinds = ['chapter', 'outline', 'character', 'world', 'note'] as const;
-const sessionKinds = ['owner'] as const;
+const documentKinds = ["chapter", "outline", "character", "world", "note"] as const;
+const sessionKinds = ["owner"] as const;
 
 function fail(label: string): never {
   throw new ApiContractError(label);
 }
 
 export function objectValue(value: unknown, label: string): JsonRecord {
-  if (typeof value !== 'object' || value === null || Array.isArray(value)) fail(label);
+  if (typeof value !== "object" || value === null || Array.isArray(value)) fail(label);
   return value as JsonRecord;
 }
 
 function field(source: JsonRecord, key: string, parent: string): unknown {
-  if (!Object.prototype.hasOwnProperty.call(source, key)) fail(`${parent}.${key}`);
+  if (!Object.hasOwn(source, key)) fail(`${parent}.${key}`);
   return source[key];
 }
 
 export function stringValue(value: unknown, label: string): string {
-  return typeof value === 'string' ? value : fail(label);
+  return typeof value === "string" ? value : fail(label);
 }
 
 export function stringField(source: JsonRecord, key: string, parent: string): string {
@@ -58,12 +58,12 @@ export function nullableStringField(
 
 export function numberField(source: JsonRecord, key: string, parent: string): number {
   const value = field(source, key, parent);
-  return typeof value === 'number' && Number.isFinite(value) ? value : fail(`${parent}.${key}`);
+  return typeof value === "number" && Number.isFinite(value) ? value : fail(`${parent}.${key}`);
 }
 
 export function booleanField(source: JsonRecord, key: string, parent: string): boolean {
   const value = field(source, key, parent);
-  return typeof value === 'boolean' ? value : fail(`${parent}.${key}`);
+  return typeof value === "boolean" ? value : fail(`${parent}.${key}`);
 }
 
 export function recordField(
@@ -96,7 +96,7 @@ function literalValue<T extends readonly string[]>(
   allowed: T,
   label: string,
 ): T[number] {
-  return typeof value === 'string' && allowed.includes(value) ? (value as T[number]) : fail(label);
+  return typeof value === "string" && allowed.includes(value) ? (value as T[number]) : fail(label);
 }
 
 export function literalField<T extends readonly string[]>(
@@ -108,22 +108,22 @@ export function literalField<T extends readonly string[]>(
   return literalValue(field(source, key, parent), allowed, `${parent}.${key}`);
 }
 
-function parseDocument(value: unknown, label = 'document'): StudioDocument {
+function parseDocument(value: unknown, label = "document"): StudioDocument {
   const item = objectValue(value, label);
   const volumeId = item.volume_id;
   return {
-    id: stringField(item, 'id', label),
-    project_id: stringField(item, 'project_id', label),
-    kind: literalField(item, 'kind', label, documentKinds) as DocumentKind,
-    title: stringField(item, 'title', label),
-    position: numberField(item, 'position', label),
-    current_revision_id: stringField(item, 'current_revision_id', label),
-    content_markdown: stringField(item, 'content_markdown', label),
-    metadata: recordField(item, 'metadata', label),
-    revision_source: stringField(item, 'revision_source', label),
-    word_count: numberField(item, 'word_count', label),
-    created_at: stringField(item, 'created_at', label),
-    updated_at: stringField(item, 'updated_at', label),
+    id: stringField(item, "id", label),
+    project_id: stringField(item, "project_id", label),
+    kind: literalField(item, "kind", label, documentKinds) as DocumentKind,
+    title: stringField(item, "title", label),
+    position: numberField(item, "position", label),
+    current_revision_id: stringField(item, "current_revision_id", label),
+    content_markdown: stringField(item, "content_markdown", label),
+    metadata: recordField(item, "metadata", label),
+    revision_source: stringField(item, "revision_source", label),
+    word_count: numberField(item, "word_count", label),
+    created_at: stringField(item, "created_at", label),
+    updated_at: stringField(item, "updated_at", label),
     // Volume links are always present on the TS contract; the optional parse
     // keeps hand-built fixtures in tests friction-free.
     ...(volumeId === undefined || volumeId === null
@@ -139,47 +139,47 @@ function parseDocument(value: unknown, label = 'document'): StudioDocument {
 
 /** The lore-alias envelope (#315): one document's extra prompt keys. */
 export function parseAliases(value: unknown): { aliases: string[] } {
-  const item = objectValue(value, 'aliases response');
+  const item = objectValue(value, "aliases response");
   return {
-    aliases: arrayField(item, 'aliases', 'aliases response', (entry, index) =>
+    aliases: arrayField(item, "aliases", "aliases response", (entry, index) =>
       stringValue(entry, `aliases[${index}]`),
     ),
   };
 }
 
-export function parseVolume(value: unknown, label = 'volume'): Volume {
+export function parseVolume(value: unknown, label = "volume"): Volume {
   const item = objectValue(value, label);
   return {
-    id: stringField(item, 'id', label),
-    project_id: stringField(item, 'project_id', label),
-    title: stringField(item, 'title', label),
-    position: numberField(item, 'position', label),
-    created_at: stringField(item, 'created_at', label),
-    updated_at: stringField(item, 'updated_at', label),
+    id: stringField(item, "id", label),
+    project_id: stringField(item, "project_id", label),
+    title: stringField(item, "title", label),
+    position: numberField(item, "position", label),
+    created_at: stringField(item, "created_at", label),
+    updated_at: stringField(item, "updated_at", label),
   };
 }
 
 export function parseVolumes(value: unknown): { volumes: Volume[] } {
-  const item = objectValue(value, 'volumes response');
+  const item = objectValue(value, "volumes response");
   return {
-    volumes: arrayField(item, 'volumes', 'volumes response', (entry, index) =>
+    volumes: arrayField(item, "volumes", "volumes response", (entry, index) =>
       parseVolume(entry, `volumes[${index}]`),
     ),
   };
 }
 
-export function parseProject(value: unknown, label = 'project'): Project {
+export function parseProject(value: unknown, label = "project"): Project {
   const item = objectValue(value, label);
   const documents = item.documents;
   const volumes = item.volumes;
   return {
-    id: stringField(item, 'id', label),
-    title: stringField(item, 'title', label),
-    description: stringField(item, 'description', label),
-    settings: recordField(item, 'settings', label),
-    import_hash: nullableStringField(item, 'import_hash', label),
-    created_at: stringField(item, 'created_at', label),
-    updated_at: stringField(item, 'updated_at', label),
+    id: stringField(item, "id", label),
+    title: stringField(item, "title", label),
+    description: stringField(item, "description", label),
+    settings: recordField(item, "settings", label),
+    import_hash: nullableStringField(item, "import_hash", label),
+    created_at: stringField(item, "created_at", label),
+    updated_at: stringField(item, "updated_at", label),
     ...(documents === undefined
       ? {}
       : {
@@ -198,8 +198,10 @@ export function parseProject(value: unknown, label = 'project'): Project {
 }
 
 export function parseProjects(value: unknown): { projects: Project[] } {
-  const item = objectValue(value, 'projects response');
-  return { projects: arrayField(item, 'projects', 'projects response', parseProjectListItem) };
+  const item = objectValue(value, "projects response");
+  return {
+    projects: arrayField(item, "projects", "projects response", parseProjectListItem),
+  };
 }
 
 function parseProjectListItem(value: unknown, index: number): Project {
@@ -207,42 +209,48 @@ function parseProjectListItem(value: unknown, index: number): Project {
 }
 
 export function parseSetupStatus(value: unknown): SetupStatus {
-  const item = objectValue(value, 'setup');
+  const item = objectValue(value, "setup");
   return {
-    owner_configured: booleanField(item, 'owner_configured', 'setup'),
-    version: stringField(item, 'version', 'setup'),
+    owner_configured: booleanField(item, "owner_configured", "setup"),
+    version: stringField(item, "version", "setup"),
   };
 }
 
-export function parseOwnerSetup(value: unknown): { id: string; username: string } {
-  const item = objectValue(value, 'owner');
-  return { id: stringField(item, 'id', 'owner'), username: stringField(item, 'username', 'owner') };
+export function parseOwnerSetup(value: unknown): {
+  id: string;
+  username: string;
+} {
+  const item = objectValue(value, "owner");
+  return {
+    id: stringField(item, "id", "owner"),
+    username: stringField(item, "username", "owner"),
+  };
 }
 
 export function parseSession(value: unknown): Session {
-  const item = objectValue(value, 'session');
+  const item = objectValue(value, "session");
   return {
-    session_id: stringField(item, 'session_id', 'session'),
-    kind: literalField(item, 'kind', 'session', sessionKinds) as SessionKind,
-    owner_id: nullableStringField(item, 'owner_id', 'session'),
-    expires_at: nullableStringField(item, 'expires_at', 'session'),
+    session_id: stringField(item, "session_id", "session"),
+    kind: literalField(item, "kind", "session", sessionKinds) as SessionKind,
+    owner_id: nullableStringField(item, "owner_id", "session"),
+    expires_at: nullableStringField(item, "expires_at", "session"),
   };
 }
 
 function parseProvider(value: unknown, label: string): ProviderInfo {
   const item = objectValue(value, label);
   return {
-    provider: stringField(item, 'provider', label),
-    configured: booleanField(item, 'configured', label),
-    model: nullableStringField(item, 'model', label),
-    is_default: booleanField(item, 'is_default', label),
+    provider: stringField(item, "provider", label),
+    configured: booleanField(item, "configured", label),
+    model: nullableStringField(item, "model", label),
+    is_default: booleanField(item, "is_default", label),
   };
 }
 
 export function parseProviders(value: unknown): { providers: ProviderInfo[] } {
-  const item = objectValue(value, 'providers response');
+  const item = objectValue(value, "providers response");
   return {
-    providers: arrayField(item, 'providers', 'providers response', (entry, index) =>
+    providers: arrayField(item, "providers", "providers response", (entry, index) =>
       parseProvider(entry, `providers[${index}]`),
     ),
   };
@@ -250,10 +258,12 @@ export function parseProviders(value: unknown): { providers: ProviderInfo[] } {
 
 export const parseStudioDocument = parseDocument;
 
-export function parseDocuments(value: unknown): { documents: StudioDocument[] } {
-  const item = objectValue(value, 'documents response');
+export function parseDocuments(value: unknown): {
+  documents: StudioDocument[];
+} {
+  const item = objectValue(value, "documents response");
   return {
-    documents: arrayField(item, 'documents', 'documents response', (entry, index) =>
+    documents: arrayField(item, "documents", "documents response", (entry, index) =>
       parseDocument(entry, `documents[${index}]`),
     ),
   };
@@ -262,22 +272,22 @@ export function parseDocuments(value: unknown): { documents: StudioDocument[] } 
 function parseRevision(value: unknown, label: string): Revision {
   const item = objectValue(value, label);
   return {
-    id: stringField(item, 'id', label),
-    document_id: stringField(item, 'document_id', label),
-    parent_revision_id: nullableStringField(item, 'parent_revision_id', label),
-    revision_number: numberField(item, 'revision_number', label),
-    content_markdown: stringField(item, 'content_markdown', label),
-    metadata: recordField(item, 'metadata', label),
-    source: stringField(item, 'source', label),
-    word_count: numberField(item, 'word_count', label),
-    created_at: stringField(item, 'created_at', label),
+    id: stringField(item, "id", label),
+    document_id: stringField(item, "document_id", label),
+    parent_revision_id: nullableStringField(item, "parent_revision_id", label),
+    revision_number: numberField(item, "revision_number", label),
+    content_markdown: stringField(item, "content_markdown", label),
+    metadata: recordField(item, "metadata", label),
+    source: stringField(item, "source", label),
+    word_count: numberField(item, "word_count", label),
+    created_at: stringField(item, "created_at", label),
   };
 }
 
 export function parseRevisions(value: unknown): { revisions: Revision[] } {
-  const item = objectValue(value, 'revisions response');
+  const item = objectValue(value, "revisions response");
   return {
-    revisions: arrayField(item, 'revisions', 'revisions response', (entry, index) =>
+    revisions: arrayField(item, "revisions", "revisions response", (entry, index) =>
       parseRevision(entry, `revisions[${index}]`),
     ),
   };
@@ -286,19 +296,17 @@ export function parseRevisions(value: unknown): { revisions: Revision[] } {
 export function parseSearch(value: unknown): {
   results: Array<{ document_id: string; title: string; excerpt: string }>;
 } {
-  const item = objectValue(value, 'search response');
+  const item = objectValue(value, "search response");
   return {
-    results: arrayField(item, 'results', 'search response', (entry, index) => {
+    results: arrayField(item, "results", "search response", (entry, index) => {
       const result = objectValue(entry, `results[${index}]`);
       return {
-        document_id: stringField(result, 'document_id', `results[${index}]`),
-        title: stringField(result, 'title', `results[${index}]`),
-        excerpt: stringField(result, 'excerpt', `results[${index}]`),
+        document_id: stringField(result, "document_id", `results[${index}]`),
+        title: stringField(result, "title", `results[${index}]`),
+        excerpt: stringField(result, "excerpt", `results[${index}]`),
       };
     }),
   };
 }
 
-export function parseVoid(): void {
-  return undefined;
-}
+export function parseVoid(): void {}

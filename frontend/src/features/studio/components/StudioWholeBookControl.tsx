@@ -1,6 +1,6 @@
-import { Sparkles } from 'lucide-react';
+import { Sparkles } from "lucide-react";
 
-import type { WholeBookPhase } from '../hooks/useWholeBookLoop';
+import type { WholeBookPhase } from "../hooks/useWholeBookLoop";
 
 interface StudioWholeBookControlProps {
   /** Loop state machine snapshot (#318). */
@@ -12,7 +12,7 @@ interface StudioWholeBookControlProps {
 }
 
 function chaptersLabel(count: number): string {
-  return count === 1 ? '1 chapter' : `${count} chapters`;
+  return count === 1 ? "1 chapter" : `${count} chapters`;
 }
 
 /**
@@ -26,7 +26,7 @@ export function StudioWholeBookControl({
   onStart,
   onStop,
 }: StudioWholeBookControlProps) {
-  const isBusy = phase.kind === 'running';
+  const isBusy = phase.kind === "running";
 
   return (
     <section aria-label="Whole book generation" className="whole-book">
@@ -49,24 +49,24 @@ export function StudioWholeBookControl({
             disabled={remaining === 0}
             onClick={onStart}
             title={
-              remaining === 0 ? 'Every chapter already has an accepted AI revision' : undefined
+              remaining === 0 ? "Every chapter already has an accepted AI revision" : undefined
             }
             type="button"
           >
             <Sparkles aria-hidden="true" /> Generate whole book
           </button>
-          {phase.kind === 'done' ? (
+          {phase.kind === "done" ? (
             <p className="whole-book__outcome" role="status">
               {phase.stoppedEarly
                 ? `Stopped — ${chaptersLabel(phase.generated)} accepted this run.`
                 : phase.generated === 0
-                  ? 'Every chapter already has an accepted AI revision.'
+                  ? "Every chapter already has an accepted AI revision."
                   : `Completed — ${chaptersLabel(phase.generated)} accepted.`}
             </p>
           ) : null}
-          {phase.kind === 'failed' ? (
+          {phase.kind === "failed" ? (
             <p className="form-error whole-book__failure" role="alert">
-              Failed on “{phase.failedChapterTitle}” after {chaptersLabel(phase.generated)}{' '}
+              Failed on “{phase.failedChapterTitle}” after {chaptersLabel(phase.generated)}{" "}
               accepted: {phase.message}
             </p>
           ) : null}

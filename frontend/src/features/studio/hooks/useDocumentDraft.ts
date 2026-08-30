@@ -1,17 +1,16 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import type { Dispatch, SetStateAction } from 'react';
+import type { Dispatch, SetStateAction } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
-import { HttpError } from '@/app/api';
-import type { Project, SaveState, StudioDocument } from '@/app/types/studio';
-
-import { useRevisionCache } from './useRevisionCache';
-import { toErrorMessage } from './toErrorMessage';
+import { HttpError } from "@/app/api";
+import type { Project, SaveState, StudioDocument } from "@/app/types/studio";
+import { toErrorMessage } from "./toErrorMessage";
 import {
   loadLatestDocument,
   restoreDocumentRevision,
   saveDocumentDraft,
   useDocumentDraftAutosave,
-} from './useDocumentDraftAutosave';
+} from "./useDocumentDraftAutosave";
+import { useRevisionCache } from "./useRevisionCache";
 
 interface DraftState {
   readonly documentId: string | null;
@@ -26,11 +25,11 @@ interface PersistedDraft {
   readonly titleDraft: string;
 }
 
-function draftStateFor(document: StudioDocument | null, saveState: SaveState = 'idle'): DraftState {
+function draftStateFor(document: StudioDocument | null, saveState: SaveState = "idle"): DraftState {
   return {
     documentId: document?.id ?? null,
-    draft: document?.content_markdown ?? '',
-    titleDraft: document?.title ?? '',
+    draft: document?.content_markdown ?? "",
+    titleDraft: document?.title ?? "",
     saveState,
   };
 }
@@ -73,7 +72,7 @@ export function useDocumentDraft(
 
   const reportRevisionError = useCallback(
     (reason: unknown) => {
-      setError(toErrorMessage(reason, 'Unable to load revisions.'));
+      setError(toErrorMessage(reason, "Unable to load revisions."));
     },
     [setError],
   );
@@ -88,7 +87,7 @@ export function useDocumentDraft(
       const currentState = stateForDocument(current, draftRef.current.activeDocument);
       return {
         ...currentState,
-        draft: typeof nextDraft === 'function' ? nextDraft(currentState.draft) : nextDraft,
+        draft: typeof nextDraft === "function" ? nextDraft(currentState.draft) : nextDraft,
       };
     });
   }, []);
@@ -99,7 +98,7 @@ export function useDocumentDraft(
       return {
         ...currentState,
         titleDraft:
-          typeof nextTitle === 'function' ? nextTitle(currentState.titleDraft) : nextTitle,
+          typeof nextTitle === "function" ? nextTitle(currentState.titleDraft) : nextTitle,
       };
     });
   }, []);
@@ -113,7 +112,7 @@ export function useDocumentDraft(
   }, []);
 
   const resetFor = useCallback(
-    (document: StudioDocument, nextSaveState: SaveState = 'idle') => {
+    (document: StudioDocument, nextSaveState: SaveState = "idle") => {
       loadedRevision.current = document.current_revision_id;
       lastPersistedDraft.current = {
         documentId: document.id,
@@ -145,7 +144,7 @@ export function useDocumentDraft(
     ): Promise<StudioDocument> => {
       const saved = await saveDocumentDraft(projectId, document, content, title, baseRevisionId);
       loadedRevision.current = saved.current_revision_id;
-      saveStateRef.current = 'saved';
+      saveStateRef.current = "saved";
       lastPersistedDraft.current = {
         documentId: saved.id,
         draft: content,
@@ -164,7 +163,7 @@ export function useDocumentDraft(
       setDraftState((current) => ({
         ...stateForDocument(current, document),
         titleDraft: saved.title,
-        saveState: 'saved',
+        saveState: "saved",
       }));
       refreshDocumentRevisions(document.id);
       setError(null);
@@ -203,13 +202,13 @@ export function useDocumentDraft(
         draft: latestDocument.content_markdown,
         titleDraft: latestDocument.title,
       };
-      saveStateRef.current = 'idle';
+      saveStateRef.current = "idle";
       setDraftState(draftStateFor(latestDocument));
       refreshDocumentRevisions(latestDocument.id);
       setError(null);
     } catch (reason) {
-      setCurrentSaveState('error');
-      setError(toErrorMessage(reason, 'Unable to load the latest document.'));
+      setCurrentSaveState("error");
+      setError(toErrorMessage(reason, "Unable to load the latest document."));
     } finally {
       setIsConflictActionPending(false);
       conflictActionPendingRef.current = false;
@@ -231,7 +230,7 @@ export function useDocumentDraft(
     const { draft: currentDraft, titleDraft: currentTitle } = draftRef.current;
     try {
       const latestDocument = await refreshLatestDocument(activeDocument.id);
-      setCurrentSaveState('saving');
+      setCurrentSaveState("saving");
       await persistDraft(
         latestDocument,
         currentDraft,
@@ -240,9 +239,9 @@ export function useDocumentDraft(
       );
     } catch (reason) {
       setCurrentSaveState(
-        reason instanceof HttpError && reason.status === 409 ? 'conflict' : 'error',
+        reason instanceof HttpError && reason.status === 409 ? "conflict" : "error",
       );
-      setError(toErrorMessage(reason, 'Unable to overwrite the latest document.'));
+      setError(toErrorMessage(reason, "Unable to overwrite the latest document."));
     } finally {
       saveInFlight.current = false;
       setIsConflictActionPending(false);
@@ -277,7 +276,7 @@ export function useDocumentDraft(
         );
         await refreshDocumentRevisions(activeDocument.id);
       } catch (reason) {
-        setError(toErrorMessage(reason, 'Unable to restore revision.'));
+        setError(toErrorMessage(reason, "Unable to restore revision."));
       }
     },
     [activeDocument, projectId, refreshDocumentRevisions, setError, setProject],

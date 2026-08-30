@@ -1,25 +1,25 @@
-import { defineConfig } from 'vitest/config';
-import path from 'node:path';
+import path from "node:path";
+import { defineConfig } from "vitest/config";
 
 export default defineConfig({
   define: {
-    __APP_VERSION__: JSON.stringify('test'),
+    __APP_VERSION__: JSON.stringify("test"),
   },
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, 'src'),
+      "@": path.resolve(__dirname, "src"),
     },
   },
   test: {
-    environment: 'jsdom',
-    setupFiles: './tests/setup.ts',
+    environment: "jsdom",
+    setupFiles: "./tests/setup.ts",
     css: true,
-    include: ['src/**/*.test.ts', 'src/**/*.test.tsx'],
-    exclude: ['tests/e2e/**'],
+    include: ["src/**/*.test.ts", "src/**/*.test.tsx"],
+    exclude: ["tests/e2e/**"],
     coverage: {
-      reporter: ['text', 'html'],
-      include: ['src/**/*.ts', 'src/**/*.tsx'],
-      exclude: ['src/main.tsx', 'src/vite-env.d.ts'],
+      reporter: ["text", "html"],
+      include: ["src/**/*.ts", "src/**/*.tsx"],
+      exclude: ["src/main.tsx", "src/vite-env.d.ts"],
     },
   },
 });

@@ -1,6 +1,6 @@
-import { FileText } from 'lucide-react';
+import { FileText } from "lucide-react";
 
-import type { StudioDocument } from '@/app/types/studio';
+import type { StudioDocument } from "@/app/types/studio";
 
 interface StudioDocumentRowProps {
   document: StudioDocument;
@@ -21,9 +21,9 @@ export function StudioDocumentRow({ document, isActive, onSelect }: StudioDocume
 
   return (
     <button
-      aria-current={isActive ? 'page' : undefined}
+      aria-current={isActive ? "page" : undefined}
       aria-label={label}
-      className={isActive ? 'document-row document-row--active' : 'document-row'}
+      className={isActive ? "document-row document-row--active" : "document-row"}
       onClick={() => onSelect(document.id)}
       type="button"
     >

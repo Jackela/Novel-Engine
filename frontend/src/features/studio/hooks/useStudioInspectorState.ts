@@ -1,10 +1,9 @@
-import { useCallback, useState } from 'react';
-import type { Dispatch, SetStateAction } from 'react';
+import type { Dispatch, SetStateAction } from "react";
+import { useCallback, useState } from "react";
 
-import type { Project } from '@/app/types/studio';
-
-import type { SettingsFormState } from '../studioInspectorTypes';
-import type { InspectorTab } from '../studioConstants';
+import type { Project } from "@/app/types/studio";
+import type { InspectorTab } from "../studioConstants";
+import type { SettingsFormState } from "../studioInspectorTypes";
 
 interface UseStudioInspectorStateArgs {
   readonly section: string;
@@ -25,24 +24,24 @@ interface SettingsFormSnapshot {
 }
 
 function inspectorForSection(section: string): InspectorTab | null {
-  if (section === 'review') return 'review';
-  if (section === 'history') return 'history';
-  if (section === 'export') return 'export';
-  if (section === 'settings') return 'settings';
+  if (section === "review") return "review";
+  if (section === "history") return "history";
+  if (section === "export") return "export";
+  if (section === "settings") return "settings";
   return null;
 }
 
 function projectKey(project: Project | null): string | null {
   return project
-    ? `${project.id}:${project.title}:${project.description}:${String(project.settings.provider ?? 'mock')}`
+    ? `${project.id}:${project.title}:${project.description}:${String(project.settings.provider ?? "mock")}`
     : null;
 }
 
 function settingsFormFor(project: Project | null): SettingsFormState {
   return {
-    title: project?.title ?? '',
-    description: project?.description ?? '',
-    provider: String(project?.settings.provider ?? 'mock'),
+    title: project?.title ?? "",
+    description: project?.description ?? "",
+    provider: String(project?.settings.provider ?? "mock"),
   };
 }
 
@@ -51,7 +50,7 @@ export function useStudioInspectorState({
   project,
   loadJobs,
 }: UseStudioInspectorStateArgs): StudioInspectorState {
-  const [selectedInspector, setSelectedInspector] = useState<InspectorTab>('copilot');
+  const [selectedInspector, setSelectedInspector] = useState<InspectorTab>("copilot");
   const currentProjectKey = projectKey(project);
   const [settingsSnapshot, setSettingsSnapshot] = useState<SettingsFormSnapshot>(() => ({
     projectKey: currentProjectKey,
@@ -61,8 +60,8 @@ export function useStudioInspectorState({
   const setInspector = useCallback<Dispatch<SetStateAction<InspectorTab>>>(
     (nextInspector) => {
       setSelectedInspector((current) => {
-        const next = typeof nextInspector === 'function' ? nextInspector(current) : nextInspector;
-        if (next === 'jobs') {
+        const next = typeof nextInspector === "function" ? nextInspector(current) : nextInspector;
+        if (next === "jobs") {
           void loadJobs();
         }
         return next;
@@ -78,7 +77,7 @@ export function useStudioInspectorState({
           current.projectKey === currentProjectKey ? current.form : settingsFormFor(project);
         return {
           projectKey: currentProjectKey,
-          form: typeof nextForm === 'function' ? nextForm(currentForm) : nextForm,
+          form: typeof nextForm === "function" ? nextForm(currentForm) : nextForm,
         };
       });
     },

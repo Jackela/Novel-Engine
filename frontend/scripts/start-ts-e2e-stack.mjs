@@ -1,11 +1,10 @@
-import { spawn } from 'node:child_process';
-import { mkdtempSync, existsSync, rmSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
-import { setTimeout as sleep } from 'node:timers/promises';
-import { fileURLToPath } from 'node:url';
-import path from 'node:path';
-import process from 'node:process';
+import { spawn } from "node:child_process";
+import { existsSync, mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import path, { join } from "node:path";
+import process from "node:process";
+import { setTimeout as sleep } from "node:timers/promises";
+import { fileURLToPath } from "node:url";
 
 /**
  * Boots the TypeScript backend for the #274 SPA Playwright suite: the emitted
@@ -19,10 +18,10 @@ import process from 'node:process';
  */
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
-const frontendDir = path.resolve(scriptDir, '..');
-const repoRoot = path.resolve(frontendDir, '..');
-const serverDistCli = path.join(repoRoot, 'server', 'dist', 'apps', 'cli', 'main.js');
-const frontendDist = path.join(frontendDir, 'dist');
+const frontendDir = path.resolve(scriptDir, "..");
+const repoRoot = path.resolve(frontendDir, "..");
+const serverDistCli = path.join(repoRoot, "server", "dist", "apps", "cli", "main.js");
+const frontendDist = path.join(frontendDir, "dist");
 
 const PORT = Number(process.env.TS_E2E_PORT ?? 4274);
 const baseURL = `http://127.0.0.1:${PORT}`;
@@ -35,7 +34,7 @@ function fail(message) {
 if (!existsSync(serverDistCli)) {
   fail(`Emitted TS CLI not found at ${serverDistCli}. Run pnpm --dir server build first.`);
 }
-if (!existsSync(path.join(frontendDist, 'index.html'))) {
+if (!existsSync(path.join(frontendDist, "index.html"))) {
   fail(`Built SPA not found at ${frontendDist}. Run pnpm --dir frontend build first.`);
 }
 
@@ -44,22 +43,22 @@ if (!existsSync(path.join(frontendDist, 'index.html'))) {
 // Standalone boots (no TS_E2E_DATA_DIR from the Playwright config) own their
 // directory and remove it on a clean exit; failures keep it for debugging.
 const ownsDataDir = process.env.TS_E2E_DATA_DIR === undefined;
-const dataDir = process.env.TS_E2E_DATA_DIR ?? mkdtempSync(join(tmpdir(), 'ne-ts-e2e-'));
-const databasePath = path.join(dataDir, 'novel-engine.sqlite3').replaceAll('\\', '/');
+const dataDir = process.env.TS_E2E_DATA_DIR ?? mkdtempSync(join(tmpdir(), "ne-ts-e2e-"));
+const databasePath = path.join(dataDir, "novel-engine.sqlite3").replaceAll("\\", "/");
 
 const serverEnv = {
   ...process.env,
-  APP_ENVIRONMENT: 'testing',
+  APP_ENVIRONMENT: "testing",
   DB_URL: `sqlite:///${databasePath}`,
   SECURITY_SECRET_KEY:
-    process.env.SECURITY_SECRET_KEY ?? 'test-secret-key-for-ts-playwright-1234567890',
+    process.env.SECURITY_SECRET_KEY ?? "test-secret-key-for-ts-playwright-1234567890",
   SECURITY_CORS_ORIGINS: process.env.SECURITY_CORS_ORIGINS ?? `${baseURL},http://localhost:${PORT}`,
 };
 
 const server = spawn(
   process.execPath,
-  [serverDistCli, 'serve', '--host', '127.0.0.1', '--port', String(PORT)],
-  { cwd: repoRoot, env: serverEnv, stdio: 'inherit' },
+  [serverDistCli, "serve", "--host", "127.0.0.1", "--port", String(PORT)],
+  { cwd: repoRoot, env: serverEnv, stdio: "inherit" },
 );
 
 let shuttingDown = false;
@@ -70,7 +69,7 @@ const shutdown = (exitCode = 0) => {
   }
 
   shuttingDown = true;
-  server.kill('SIGTERM');
+  server.kill("SIGTERM");
   setTimeout(() => {
     if (ownsDataDir && exitCode === 0) {
       rmSync(dataDir, { recursive: true, force: true });
@@ -80,17 +79,17 @@ const shutdown = (exitCode = 0) => {
 };
 
 const isControlledExit = (code, signal) =>
-  shuttingDown || code === 0 || signal === 'SIGTERM' || signal === 'SIGINT';
+  shuttingDown || code === 0 || signal === "SIGTERM" || signal === "SIGINT";
 
-server.on('exit', (code, signal) => {
+server.on("exit", (code, signal) => {
   if (!isControlledExit(code, signal)) {
-    console.error(`TS server exited with code ${code ?? 'unknown'}`);
+    console.error(`TS server exited with code ${code ?? "unknown"}`);
     shutdown(code ?? 1);
   }
 });
 
-process.on('SIGINT', () => shutdown(0));
-process.on('SIGTERM', () => shutdown(0));
+process.on("SIGINT", () => shutdown(0));
+process.on("SIGTERM", () => shutdown(0));
 
 async function waitForReady(url) {
   const deadline = Date.now() + 90_000;

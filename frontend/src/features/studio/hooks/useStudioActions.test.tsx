@@ -1,16 +1,16 @@
-import { act, useState } from 'react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { act, useState } from "react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { api } from '@/app/api';
-import type { Project, Review, StudioJob } from '@/app/types/studio';
-import type { InspectorTab } from '@/features/studio/studioConstants';
-import { chapter, job, projectWith, review } from '@/test/factories';
-import { createMountHarness } from '@/test/harness';
+import { api } from "@/app/api";
+import type { Project, Review, StudioJob } from "@/app/types/studio";
+import type { InspectorTab } from "@/features/studio/studioConstants";
+import { chapter, job, projectWith, review } from "@/test/factories";
+import { createMountHarness } from "@/test/harness";
 
-import { useStudioActions } from './useStudioActions';
+import { useStudioActions } from "./useStudioActions";
 
-vi.mock('@/app/api', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@/app/api')>();
+vi.mock("@/app/api", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/app/api")>();
   return {
     ...actual,
     api: {
@@ -34,47 +34,47 @@ interface HarnessSnapshot {
   readonly inspector: InspectorTab;
 }
 
-const chapterOne = chapter('chapter-1', {
-  title: 'Chapter One',
-  current_revision_id: 'revision-1',
-  content_markdown: '# Chapter 1\n\n',
-  revision_source: 'manual',
+const chapterOne = chapter("chapter-1", {
+  title: "Chapter One",
+  current_revision_id: "revision-1",
+  content_markdown: "# Chapter 1\n\n",
+  revision_source: "manual",
   word_count: 2,
 });
 const note = {
   ...chapterOne,
-  id: 'note-1',
-  kind: 'note' as const,
-  title: 'Note One',
+  id: "note-1",
+  kind: "note" as const,
+  title: "Note One",
   position: 1,
-  content_markdown: '',
+  content_markdown: "",
 };
 const projectFixture = projectWith([chapterOne, note], {
-  description: 'Old description',
-  settings: { provider: 'mock', temperature: 0.5 },
+  description: "Old description",
+  settings: { provider: "mock", temperature: 0.5 },
 });
 const reviewFixture = review({ project_id: projectFixture.id });
 const reviewJob = job({
-  id: 'job-review-1',
+  id: "job-review-1",
   project_id: projectFixture.id,
   document_id: null,
-  kind: 'review' as const,
-  operation: 'review' as const,
-  result: { review_id: 'review-1' },
+  kind: "review" as const,
+  operation: "review" as const,
+  result: { review_id: "review-1" },
   events: [
     {
-      id: 'event-1',
-      status: 'completed' as const,
-      details: { review_id: 'review-1' },
-      created_at: '2026-08-27T00:01:00Z',
+      id: "event-1",
+      status: "completed" as const,
+      details: { review_id: "review-1" },
+      created_at: "2026-08-27T00:01:00Z",
     },
   ],
 });
 const retriedJob = job({
   project_id: projectFixture.id,
   document_id: chapterOne.id,
-  status: 'pending' as const,
-  retry_of_job_id: 'failed-job-1',
+  status: "pending" as const,
+  retry_of_job_id: "failed-job-1",
 });
 const harness = createMountHarness();
 
@@ -97,9 +97,9 @@ function renderActions(
   function Wrapper() {
     const [project, setProject] = useState<Project | null>(projectFixture);
     const [reviews, setReviews] = useState<Review[]>([]);
-    const [error, setError] = useState<string | null>('previous error');
+    const [error, setError] = useState<string | null>("previous error");
     const [activeId, setActiveId] = useState<string | null>(null);
-    const [inspector, setInspector] = useState<InspectorTab>('history');
+    const [inspector, setInspector] = useState<InspectorTab>("history");
     const actions = useStudioActions({
       project,
       projectId: projectFixture.id,
@@ -109,9 +109,9 @@ function renderActions(
       setActiveId,
       setInspector,
       settingsForm: {
-        title: 'Updated Harbor',
-        description: 'Updated description',
-        provider: 'dashscope',
+        title: "Updated Harbor",
+        description: "Updated description",
+        provider: "dashscope",
       },
       loadJobs,
     });
@@ -120,48 +120,53 @@ function renderActions(
   }
 
   const { container } = harness.mount(<Wrapper />);
-  const form = container.querySelector('form');
+  const form = container.querySelector("form");
   if (form === null) {
-    throw new Error('Expected settings form after render.');
+    throw new Error("Expected settings form after render.");
   }
 
   return {
     result: () => {
       if (current === undefined) {
-        throw new Error('Expected actions hook result after render.');
+        throw new Error("Expected actions hook result after render.");
       }
       return current;
     },
     loadJobs,
     submitSettings: () => {
-      form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+      form.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
     },
   };
 }
 
-describe('useStudioActions', () => {
-  it('creates a numbered chapter, appends it, and activates it', async () => {
+describe("useStudioActions", () => {
+  it("creates a numbered chapter, appends it, and activates it", async () => {
     // Given
-    const created = { ...chapterOne, id: 'chapter-2', title: 'Chapter 2', position: 2 };
+    const created = {
+      ...chapterOne,
+      id: "chapter-2",
+      title: "Chapter 2",
+      position: 2,
+    };
     vi.mocked(api.createDocument).mockResolvedValue(created);
     const harness = renderActions();
 
     // When
     await act(async () => {
-      await harness.result().actions.createDocument('chapter');
+      await harness.result().actions.createDocument("chapter");
     });
 
     // Then
     expect(api.createDocument).toHaveBeenCalledWith(projectFixture.id, {
-      kind: 'chapter',
-      title: 'Chapter 2',
-      content_markdown: '# Chapter 2\n\n',
+      kind: "chapter",
+      title: "Chapter 2",
+      content_markdown: "# Chapter 2\n\n",
     });
     expect(harness.result().project?.documents).toEqual([chapterOne, note, created]);
     expect(harness.result().activeId).toBe(created.id);
   });
 
-  it('reorders documents and publishes the server ordering', async () => {
+  it("reorders documents and publishes the server ordering", async () => {
     // Given
     const reordered = [
       { ...note, position: 0 },
@@ -180,7 +185,7 @@ describe('useStudioActions', () => {
     expect(harness.result().project?.documents).toEqual(reordered);
   });
 
-  it('runs a review job and refreshes the assessment list', async () => {
+  it("runs a review job and refreshes the assessment list", async () => {
     // Given
     vi.mocked(api.createReview).mockResolvedValue(reviewJob);
     vi.mocked(api.reviews).mockResolvedValue({ reviews: [reviewFixture] });
@@ -194,15 +199,15 @@ describe('useStudioActions', () => {
     // Then
     expect(api.reviews).toHaveBeenCalledWith(projectFixture.id);
     expect(harness.result().reviews).toEqual([reviewFixture]);
-    expect(harness.result().inspector).toBe('review');
+    expect(harness.result().inspector).toBe("review");
   });
 
-  it('reports a failed review job without switching inspector', async () => {
+  it("reports a failed review job without switching inspector", async () => {
     // Given
     vi.mocked(api.createReview).mockResolvedValue({
       ...reviewJob,
-      status: 'failed',
-      error: 'Review could not be evaluated.',
+      status: "failed",
+      error: "Review could not be evaluated.",
     });
     const harness = renderActions();
 
@@ -214,16 +219,16 @@ describe('useStudioActions', () => {
     // Then
     expect(api.reviews).not.toHaveBeenCalled();
     expect(harness.result().reviews).toEqual([]);
-    expect(harness.result().error).toBe('Review could not be evaluated.');
+    expect(harness.result().error).toBe("Review could not be evaluated.");
   });
 
-  it('updates settings while preserving unrelated project settings', async () => {
+  it("updates settings while preserving unrelated project settings", async () => {
     // Given
     const updated = {
       ...projectFixture,
-      title: 'Updated Harbor',
-      description: 'Updated description',
-      settings: { provider: 'dashscope', temperature: 0.5 },
+      title: "Updated Harbor",
+      description: "Updated description",
+      settings: { provider: "dashscope", temperature: 0.5 },
     };
     vi.mocked(api.updateProject).mockResolvedValue(updated);
     const harness = renderActions();
@@ -235,15 +240,15 @@ describe('useStudioActions', () => {
 
     // Then
     expect(api.updateProject).toHaveBeenCalledWith(projectFixture.id, {
-      title: 'Updated Harbor',
-      description: 'Updated description',
-      settings: { provider: 'dashscope', temperature: 0.5 },
+      title: "Updated Harbor",
+      description: "Updated description",
+      settings: { provider: "dashscope", temperature: 0.5 },
     });
     expect(harness.result().project).toEqual(updated);
     expect(harness.result().error).toBeNull();
   });
 
-  it('reloads jobs after retrying a failed job', async () => {
+  it("reloads jobs after retrying a failed job", async () => {
     // Given
     let resolveLoadJobs: (() => void) | undefined;
     const loadJobs = vi.fn<() => Promise<void>>().mockReturnValue(
@@ -260,14 +265,14 @@ describe('useStudioActions', () => {
     const harness = renderActions(loadJobs);
 
     // When
-    const retryPromise = harness.result().actions.retryJob('job-1');
+    const retryPromise = harness.result().actions.retryJob("job-1");
     await act(async () => {
       await Promise.resolve();
     });
 
     // Then
-    expect(api.retryJob).toHaveBeenCalledWith(projectFixture.id, 'job-1');
-    expect(harness.result().actions.retryingJobId).toBe('job-1');
+    expect(api.retryJob).toHaveBeenCalledWith(projectFixture.id, "job-1");
+    expect(harness.result().actions.retryingJobId).toBe("job-1");
 
     await act(async () => {
       resolveRetry?.(retriedJob);
@@ -275,7 +280,7 @@ describe('useStudioActions', () => {
     });
 
     expect(harness.loadJobs).toHaveBeenCalledTimes(1);
-    expect(harness.result().actions.retryingJobId).toBe('job-1');
+    expect(harness.result().actions.retryingJobId).toBe("job-1");
 
     await act(async () => {
       resolveLoadJobs?.();

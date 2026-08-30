@@ -1,4 +1,4 @@
-import type { Dispatch, FormEvent, SetStateAction } from 'react';
+import type { Dispatch, FormEvent, SetStateAction } from "react";
 
 import type {
   ExportFormat,
@@ -7,7 +7,7 @@ import type {
   Revision,
   StudioExport,
   StudioJob,
-} from '@/app/types/studio';
+} from "@/app/types/studio";
 
 export interface SettingsFormState {
   title: string;
@@ -38,7 +38,7 @@ export interface InspectorCopilotModel {
   proposal: StudioJob | null;
   /** #308: markdown received so far while the proposal stream is running. */
   streamingText: string | null;
-  onRunProposal: (operation: 'continue' | 'rewrite') => void;
+  onRunProposal: (operation: "continue" | "rewrite") => void;
   onAcceptProposal: () => void;
   /** #308: aborts the running proposal stream. */
   onStopProposal?: () => void;
