@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface MarkdownEditorProps {
   value: string;
@@ -16,6 +16,7 @@ export function MarkdownEditor({ value, onChange }: MarkdownEditorProps) {
   const runtime = useRef<CodeMirrorRuntime | null>(null);
   const latestValueRef = useRef(value);
   const onChangeRef = useRef(onChange);
+  const [failed, setFailed] = useState(false);
 
   useEffect(() => {
     onChangeRef.current = onChange;
@@ -29,7 +30,7 @@ export function MarkdownEditor({ value, onChange }: MarkdownEditorProps) {
     let mountedView: import("@codemirror/view").EditorView | null = null;
     let cancelled = false;
 
-    void Promise.all([
+    const promise = Promise.all([
       import("@codemirror/lang-markdown"),
       import("@codemirror/state"),
       import("@codemirror/view"),
@@ -86,6 +87,14 @@ export function MarkdownEditor({ value, onChange }: MarkdownEditorProps) {
       view.current = nextView;
     });
 
+    // Surface loader failures instead of leaving the editor silently unset;
+    // the error stays visible through the component's failed state.
+    promise.catch((error: unknown) => {
+      if (cancelled) return;
+      setFailed(true);
+      console.error("Markdown editor failed to load", error);
+    });
+
     return () => {
       cancelled = true;
       mountedView?.destroy();
@@ -113,5 +122,11 @@ export function MarkdownEditor({ value, onChange }: MarkdownEditorProps) {
     });
   }, [value]);
 
-  return <div className="markdown-editor" ref={parent} />;
+  return (
+    <div className="markdown-editor" ref={parent}>
+      {failed ? (
+        <p className="form-error">The markdown editor failed to load. Please refresh the page.</p>
+      ) : null}
+    </div>
+  );
 }

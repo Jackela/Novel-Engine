@@ -6,6 +6,6 @@
     "spec:validate": "openspec validate --all --strict"
   },
   "devDependencies": {
-    "@fission-ai/openspec": "1.4.1"
+    "@fission-ai/openspec": "1.11.0"
   }
 }
