@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useRef, useState } from "react";
 
 export interface PendingActionController<K extends string> {
   /** Reactive snapshot: which action keys are currently in flight. */
@@ -21,7 +21,10 @@ export function usePendingAction<K extends string>(keys: readonly K[]): PendingA
   const pendingRef = useRef<Set<K> | null>(null);
 
   const begin = useCallback((key: K) => {
-    const current = pendingRef.current ?? (pendingRef.current = new Set<K>());
+    if (pendingRef.current === null) {
+      pendingRef.current = new Set<K>();
+    }
+    const current = pendingRef.current;
     if (current.has(key)) return false;
     current.add(key);
     setPending((current) => ({ ...current, [key]: true }));

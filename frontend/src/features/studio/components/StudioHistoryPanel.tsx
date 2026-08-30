@@ -1,6 +1,6 @@
-import { RotateCcw } from 'lucide-react';
+import { RotateCcw } from "lucide-react";
 
-import type { Revision } from '@/app/types/studio';
+import type { Revision } from "@/app/types/studio";
 
 interface StudioHistoryPanelProps {
   revisions: Revision[];

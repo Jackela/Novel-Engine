@@ -1,13 +1,13 @@
-import { fireEvent } from '@testing-library/dom';
-import { act } from 'react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { fireEvent } from "@testing-library/dom";
+import { act } from "react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { chapter } from '@/test/factories';
-import { createMountHarness } from '@/test/harness';
+import { chapter } from "@/test/factories";
+import { createMountHarness } from "@/test/harness";
 
-import { StudioEditorPane } from './StudioEditorPane';
+import { StudioEditorPane } from "./StudioEditorPane";
 
-vi.mock('./MarkdownEditor', () => ({
+vi.mock("./MarkdownEditor", () => ({
   MarkdownEditor: ({ value, onChange }: { value: string; onChange: (value: string) => void }) => (
     <textarea
       aria-label="Markdown body"
@@ -27,17 +27,17 @@ afterEach(() => {
   harness.cleanup();
 });
 
-const baseDocument = chapter('doc-1', {
-  title: 'Opening',
+const baseDocument = chapter("doc-1", {
+  title: "Opening",
   position: 1,
-  current_revision_id: 'revision-abcdefghi',
-  content_markdown: '# Opening',
-  revision_source: 'author',
+  current_revision_id: "revision-abcdefghi",
+  content_markdown: "# Opening",
+  revision_source: "author",
   word_count: 42,
 });
 
-describe('Studio editor pane', () => {
-  it('renders editor state and forwards title/body edits', async () => {
+describe("Studio editor pane", () => {
+  it("renders editor state and forwards title/body edits", async () => {
     const onTitleChange = vi.fn();
     const onDraftChange = vi.fn();
     const container = render(
@@ -57,23 +57,23 @@ describe('Studio editor pane', () => {
 
     const title = container.querySelector('input[aria-label="Document title"]');
     const body = container.querySelector('textarea[aria-label="Markdown body"]');
-    expect(container.textContent).toContain('42 words');
-    expect(container.textContent).toContain('saving');
+    expect(container.textContent).toContain("42 words");
+    expect(container.textContent).toContain("saving");
 
     act(() => {
       if (title instanceof HTMLInputElement) {
-        fireEvent.input(title, { target: { value: 'New Opening' } });
+        fireEvent.input(title, { target: { value: "New Opening" } });
       }
       if (body instanceof HTMLTextAreaElement) {
-        fireEvent.input(body, { target: { value: '# New Opening' } });
+        fireEvent.input(body, { target: { value: "# New Opening" } });
       }
     });
 
-    expect(onTitleChange).toHaveBeenCalledWith('New Opening');
-    expect(onDraftChange).toHaveBeenCalledWith('# New Opening');
+    expect(onTitleChange).toHaveBeenCalledWith("New Opening");
+    expect(onDraftChange).toHaveBeenCalledWith("# New Opening");
   });
 
-  it('renders a successful save status without the failure label', () => {
+  it("renders a successful save status without the failure label", () => {
     const container = render(
       <StudioEditorPane
         activeDocument={baseDocument}
@@ -85,8 +85,8 @@ describe('Studio editor pane', () => {
       />,
     );
 
-    const saveStatus = container.querySelector('.save-state');
-    expect(saveStatus?.textContent).toContain('Saved');
-    expect(saveStatus?.textContent).not.toContain('Save failed');
+    const saveStatus = container.querySelector(".save-state");
+    expect(saveStatus?.textContent).toContain("Saved");
+    expect(saveStatus?.textContent).not.toContain("Save failed");
   });
 });

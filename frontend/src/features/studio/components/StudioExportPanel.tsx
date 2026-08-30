@@ -1,6 +1,6 @@
-import { Download, ExternalLink } from 'lucide-react';
+import { Download, ExternalLink } from "lucide-react";
 
-import type { ExportFormat, StudioExport } from '@/app/types/studio';
+import type { ExportFormat, StudioExport } from "@/app/types/studio";
 
 interface StudioExportPanelProps {
   exports: StudioExport[];
@@ -11,10 +11,18 @@ interface StudioExportPanelProps {
   onRetry?: (format: ExportFormat) => void;
 }
 
-const FORMATS: Array<{ format: ExportFormat; label: string; description: string }> = [
-  { format: 'markdown', label: 'Markdown', description: 'Portable source text' },
-  { format: 'docx', label: 'Word document', description: 'Editable document' },
-  { format: 'epub', label: 'EPUB', description: 'E-reader package' },
+const FORMATS: Array<{
+  format: ExportFormat;
+  label: string;
+  description: string;
+}> = [
+  {
+    format: "markdown",
+    label: "Markdown",
+    description: "Portable source text",
+  },
+  { format: "docx", label: "Word document", description: "Editable document" },
+  { format: "epub", label: "EPUB", description: "E-reader package" },
 ];
 
 export function StudioExportPanel({
@@ -35,7 +43,8 @@ export function StudioExportPanel({
         <Download aria-hidden="true" />
       </header>
 
-      <div aria-label="Export formats" className="export-format-list">
+      {/* biome-ignore lint/a11y/useSemanticElements: this button group is not a form control group; <fieldset> would misrepresent semantics and drag in default fieldset styling. */}
+      <div aria-label="Export formats" className="export-format-list" role="group">
         {FORMATS.map(({ format, label, description }) => {
           const isExporting = exportingFormat === format;
           return (
@@ -51,7 +60,7 @@ export function StudioExportPanel({
                 <strong>{label}</strong>
                 <small>{description}</small>
               </span>
-              <span aria-hidden="true">{isExporting ? 'Working…' : 'Export'}</span>
+              <span aria-hidden="true">{isExporting ? "Working…" : "Export"}</span>
             </button>
           );
         })}
@@ -83,7 +92,7 @@ export function StudioExportPanel({
                 <span>
                   <strong>{item.format.toUpperCase()}</strong>
                   <small>
-                    {Math.ceil(item.size_bytes / 1024)} KB ·{' '}
+                    {Math.ceil(item.size_bytes / 1024)} KB ·{" "}
                     {new Date(item.created_at).toLocaleString()}
                   </small>
                 </span>

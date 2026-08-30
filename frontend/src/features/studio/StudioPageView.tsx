@@ -1,13 +1,13 @@
-import type { ComponentProps } from 'react';
+import type { ComponentProps } from "react";
 
-import { StudioEditorPane } from './StudioEditorPane';
-import { StudioInspector } from './StudioInspector';
-import { StudioNavigator } from './StudioNavigator';
-import { StudioStatusbar } from './StudioStatusbar';
-import { StudioTopbar } from './StudioTopbar';
+import { StudioEditorPane } from "./StudioEditorPane";
+import { StudioInspector } from "./StudioInspector";
+import { StudioNavigator } from "./StudioNavigator";
+import { StudioStatusbar } from "./StudioStatusbar";
+import { StudioTopbar } from "./StudioTopbar";
 
 interface StudioPageViewProps {
-  project: ComponentProps<typeof StudioTopbar>['project'];
+  project: ComponentProps<typeof StudioTopbar>["project"];
   onBack: () => void;
   navigator: ComponentProps<typeof StudioNavigator>;
   editor: ComponentProps<typeof StudioEditorPane>;

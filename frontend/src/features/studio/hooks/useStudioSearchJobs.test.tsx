@@ -1,15 +1,15 @@
-import { act, useState } from 'react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { act, useState } from "react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { api } from '@/app/api';
-import { job } from '@/test/factories';
-import { createMountHarness } from '@/test/harness';
+import { api } from "@/app/api";
+import { job } from "@/test/factories";
+import { createMountHarness } from "@/test/harness";
 
-import { useStudioJobs } from './useStudioJobs';
-import { useStudioSearch } from './useStudioSearch';
+import { useStudioJobs } from "./useStudioJobs";
+import { useStudioSearch } from "./useStudioSearch";
 
-vi.mock('@/app/api', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@/app/api')>();
+vi.mock("@/app/api", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/app/api")>();
   return {
     ...actual,
     api: {
@@ -43,39 +43,39 @@ function renderQueryHooks(): {
 
   function Wrapper() {
     const [error, setError] = useState<string | null>(null);
-    const jobs = useStudioJobs('project-1', setError);
-    const search = useStudioSearch('project-1', setError);
+    const jobs = useStudioJobs("project-1", setError);
+    const search = useStudioSearch("project-1", setError);
     current = { jobs, search, error };
     return <form onSubmit={search.runSearch} />;
   }
 
   const { container } = harness.mount(<Wrapper />);
-  const form = container.querySelector('form');
+  const form = container.querySelector("form");
   if (form === null) {
-    throw new Error('Expected search form after render.');
+    throw new Error("Expected search form after render.");
   }
 
   return {
     result: () => {
       if (current === undefined) {
-        throw new Error('Expected query hook result after render.');
+        throw new Error("Expected query hook result after render.");
       }
       return current;
     },
     submitSearch: () => {
-      form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+      form.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
     },
   };
 }
 
-describe('Studio query hooks', () => {
-  it('publishes search results and returns to the idle state', async () => {
+describe("Studio query hooks", () => {
+  it("publishes search results and returns to the idle state", async () => {
     // Given
-    const results = [{ document_id: 'document-1', title: 'Chapter', excerpt: 'Clockwork' }];
+    const results = [{ document_id: "document-1", title: "Chapter", excerpt: "Clockwork" }];
     vi.mocked(api.search).mockResolvedValue({ results });
     const harness = renderQueryHooks();
     act(() => {
-      harness.result().search.setSearch('clockwork');
+      harness.result().search.setSearch("clockwork");
     });
 
     // When
@@ -89,14 +89,14 @@ describe('Studio query hooks', () => {
     expect(harness.result().error).toBeNull();
   });
 
-  it('skips whitespace-only searches and clears prior results', async () => {
+  it("skips whitespace-only searches and clears prior results", async () => {
     // Given
     vi.mocked(api.search).mockResolvedValue({
-      results: [{ document_id: 'document-1', title: 'Chapter', excerpt: 'Clockwork' }],
+      results: [{ document_id: "document-1", title: "Chapter", excerpt: "Clockwork" }],
     });
     const harness = renderQueryHooks();
     act(() => {
-      harness.result().search.setSearch('clockwork');
+      harness.result().search.setSearch("clockwork");
     });
     await act(async () => {
       harness.submitSearch();
@@ -104,7 +104,7 @@ describe('Studio query hooks', () => {
 
     // When
     act(() => {
-      harness.result().search.setSearch('   ');
+      harness.result().search.setSearch("   ");
     });
     await act(async () => {
       harness.submitSearch();
@@ -115,12 +115,12 @@ describe('Studio query hooks', () => {
     expect(api.search).toHaveBeenCalledTimes(1);
   });
 
-  it('reports a search failure and resets the searching state', async () => {
+  it("reports a search failure and resets the searching state", async () => {
     // Given
-    vi.mocked(api.search).mockRejectedValue(new Error('search unavailable'));
+    vi.mocked(api.search).mockRejectedValue(new Error("search unavailable"));
     const harness = renderQueryHooks();
     act(() => {
-      harness.result().search.setSearch('clockwork');
+      harness.result().search.setSearch("clockwork");
     });
 
     // When
@@ -129,11 +129,11 @@ describe('Studio query hooks', () => {
     });
 
     // Then
-    expect(harness.result().error).toBe('search unavailable');
+    expect(harness.result().error).toBe("search unavailable");
     expect(harness.result().search.isSearching).toBe(false);
   });
 
-  it('loads jobs into observable hook state', async () => {
+  it("loads jobs into observable hook state", async () => {
     // Given
     vi.mocked(api.jobs).mockResolvedValue({ jobs: [jobFixture] });
     const harness = renderQueryHooks();
@@ -148,9 +148,9 @@ describe('Studio query hooks', () => {
     expect(harness.result().error).toBeNull();
   });
 
-  it('reports a jobs loading failure', async () => {
+  it("reports a jobs loading failure", async () => {
     // Given
-    vi.mocked(api.jobs).mockRejectedValue(new Error('jobs unavailable'));
+    vi.mocked(api.jobs).mockRejectedValue(new Error("jobs unavailable"));
     const harness = renderQueryHooks();
 
     // When
@@ -160,6 +160,6 @@ describe('Studio query hooks', () => {
 
     // Then
     expect(harness.result().jobs.jobs).toEqual([]);
-    expect(harness.result().error).toBe('jobs unavailable');
+    expect(harness.result().error).toBe("jobs unavailable");
   });
 });

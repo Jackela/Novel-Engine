@@ -1,23 +1,23 @@
-import { useCallback, useState } from 'react';
-import type { ComponentProps } from 'react';
-import type { NavigateFunction } from 'react-router-dom';
+import type { ComponentProps } from "react";
+import { useCallback, useState } from "react";
+import type { NavigateFunction } from "react-router-dom";
 
-import type { StudioDocument } from '@/app/types/studio';
+import type { StudioDocument } from "@/app/types/studio";
 
-import { StudioPageView } from '../StudioPageView';
-import { buildStudioNavigatorProps } from './studioPageModelView';
-import { useActiveDocument } from './useActiveDocument';
-import { useDocumentDraft } from './useDocumentDraft';
-import { useExportDownload } from './useExportDownload';
-import { useStudioActions } from './useStudioActions';
-import { useStudioInspectorState } from './useStudioInspectorState';
-import { useStudioJobs } from './useStudioJobs';
-import { useStudioProject } from './useStudioProject';
-import { useStudioProposal } from './useStudioProposal';
-import { useStudioProviders } from './useStudioProviders';
-import { useStudioSearch } from './useStudioSearch';
-import { wholeBookPlan } from './wholeBookPlan';
-import { useWholeBookLoop } from './useWholeBookLoop';
+import type { StudioPageView } from "../StudioPageView";
+import { buildStudioNavigatorProps } from "./studioPageModelView";
+import { useActiveDocument } from "./useActiveDocument";
+import { useDocumentDraft } from "./useDocumentDraft";
+import { useExportDownload } from "./useExportDownload";
+import { useStudioActions } from "./useStudioActions";
+import { useStudioInspectorState } from "./useStudioInspectorState";
+import { useStudioJobs } from "./useStudioJobs";
+import { useStudioProject } from "./useStudioProject";
+import { useStudioProposal } from "./useStudioProposal";
+import { useStudioProviders } from "./useStudioProviders";
+import { useStudioSearch } from "./useStudioSearch";
+import { useWholeBookLoop } from "./useWholeBookLoop";
+import { wholeBookPlan } from "./wholeBookPlan";
 
 type StudioViewProps = ComponentProps<typeof StudioPageView>;
 
@@ -26,7 +26,7 @@ export function useStudioPageModel(
   section: string,
   navigate: NavigateFunction,
 ): {
-  project: StudioViewProps['project'] | null;
+  project: StudioViewProps["project"] | null;
   viewProps: StudioViewProps | null;
   loadError: string | null;
 } {
@@ -66,7 +66,7 @@ export function useStudioPageModel(
     loadJobs,
   });
   const onProposalAccepted = useCallback(
-    (document: StudioDocument) => resetFor(document, 'saved'),
+    (document: StudioDocument) => resetFor(document, "saved"),
     [resetFor],
   );
   const onRestoreRevision = useCallback(
@@ -109,7 +109,7 @@ export function useStudioPageModel(
   // editor cache resets whenever the loop accepts the active document.
   const wholeBookLoop = useWholeBookLoop({
     projectId,
-    provider: String(project?.settings.provider ?? 'mock'),
+    provider: String(project?.settings.provider ?? "mock"),
     setProject,
     loadJobs,
     onAccepted: onProposalAccepted,
@@ -168,7 +168,7 @@ export function useStudioPageModel(
     loadError,
     viewProps: {
       project,
-      onBack: () => navigate('/projects'),
+      onBack: () => navigate("/projects"),
       navigator: buildStudioNavigatorProps(
         {
           project,
@@ -227,7 +227,7 @@ export function useStudioPageModel(
             exports,
             exportingFormat,
             failedFormat,
-            errorForExport: section === 'export' ? error : null,
+            errorForExport: section === "export" ? error : null,
             onExport: (format) => void exportProject(format),
             onRetryExport: (format) => void exportProject(format),
           },

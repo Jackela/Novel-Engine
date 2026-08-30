@@ -1,4 +1,4 @@
-import type { Project, StudioDocument } from '@/app/types/studio';
+import type { Project, StudioDocument } from "@/app/types/studio";
 
 export interface WholeBookChapter {
   readonly id: string;
@@ -15,7 +15,7 @@ export interface WholeBookChapter {
  * document history.
  */
 export function needsGeneration(document: StudioDocument): boolean {
-  return document.revision_source !== 'ai-accepted';
+  return document.revision_source !== "ai-accepted";
 }
 
 /**
@@ -25,7 +25,7 @@ export function needsGeneration(document: StudioDocument): boolean {
  * guarantees every chapter is placed.
  */
 export function readingOrderChapters(project: Project): StudioDocument[] {
-  const chapters = (project.documents ?? []).filter((document) => document.kind === 'chapter');
+  const chapters = (project.documents ?? []).filter((document) => document.kind === "chapter");
   const volumes = [...(project.volumes ?? [])].sort(
     (left, right) => left.position - right.position,
   );

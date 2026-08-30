@@ -5,9 +5,9 @@
   height: 100vh;
   display: grid;
   grid-template:
-    'top top top' var(--top)
-    'nav editor inspector' minmax(0, 1fr)
-    'status status status' var(--bottom)
+    "top top top" var(--top)
+    "nav editor inspector" minmax(0, 1fr)
+    "status status status" var(--bottom)
     / 294px minmax(430px, 1fr) 360px;
   background: var(--surface);
   overflow: hidden;

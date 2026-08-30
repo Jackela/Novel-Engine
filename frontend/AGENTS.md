@@ -38,7 +38,7 @@ scripts/                  # Playwright/server wrappers
 - `useStudioActions` is the main create/move/review/settings/retry mutation hub; avoid parallel ad hoc action paths.
 - Co-locate unit tests with source. Mock the API boundary for hook tests and assert visible/callback behavior for components.
 - Vitest uses jsdom and `tests/setup.ts`; Playwright launches isolated servers with no reused local state.
-- Use the `@/` alias for `src/` imports and the existing ESLint/Prettier rules.
+- Use the `@/` alias for `src/` imports and the Biome rules in `biome.jsonc`.
 
 ## ANTI-PATTERNS
 

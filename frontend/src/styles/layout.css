@@ -59,11 +59,11 @@ summary:focus-visible {
     min-height: 100vh;
     overflow: visible;
     grid-template:
-      'top' auto
-      'editor' minmax(70vh, auto)
-      'nav' auto
-      'inspector' auto
-      'status' 34px
+      "top" auto
+      "editor" minmax(70vh, auto)
+      "nav" auto
+      "inspector" auto
+      "status" 34px
       / 1fr;
   }
   .studio-topbar {
@@ -110,11 +110,11 @@ summary:focus-visible {
     min-height: 100vh;
     overflow: visible;
     grid-template:
-      'top' auto
-      'editor' minmax(70vh, auto)
-      'nav' auto
-      'inspector' auto
-      'status' 34px
+      "top" auto
+      "editor" minmax(70vh, auto)
+      "nav" auto
+      "inspector" auto
+      "status" 34px
       / 1fr;
   }
   .studio-topbar {

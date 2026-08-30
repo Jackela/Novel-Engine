@@ -1,10 +1,10 @@
-import { useRef } from 'react';
-import type { Dispatch, FormEvent, SetStateAction } from 'react';
+import type { Dispatch, FormEvent, SetStateAction } from "react";
+import { useRef } from "react";
 
-import type { ProviderInfo } from '@/app/types/studio';
+import type { ProviderInfo } from "@/app/types/studio";
 
-import { DEFAULT_PROVIDER_OPTIONS } from '../studioConstants';
-import type { SettingsFormState } from '../studioInspectorTypes';
+import { DEFAULT_PROVIDER_OPTIONS } from "../studioConstants";
+import type { SettingsFormState } from "../studioInspectorTypes";
 
 interface StudioSettingsPanelProps {
   settingsForm: SettingsFormState;
@@ -43,7 +43,10 @@ export function StudioSettingsPanel({
         <input
           maxLength={240}
           onChange={(event) =>
-            setSettingsForm((current) => ({ ...current, title: event.target.value }))
+            setSettingsForm((current) => ({
+              ...current,
+              title: event.target.value,
+            }))
           }
           value={settingsForm.title}
         />
@@ -53,7 +56,10 @@ export function StudioSettingsPanel({
         <textarea
           maxLength={10000}
           onChange={(event) =>
-            setSettingsForm((current) => ({ ...current, description: event.target.value }))
+            setSettingsForm((current) => ({
+              ...current,
+              description: event.target.value,
+            }))
           }
           rows={4}
           value={settingsForm.description}
@@ -64,7 +70,10 @@ export function StudioSettingsPanel({
         <select
           aria-label="Provider"
           onChange={(event) =>
-            setSettingsForm((current) => ({ ...current, provider: event.target.value }))
+            setSettingsForm((current) => ({
+              ...current,
+              provider: event.target.value,
+            }))
           }
           value={settingsForm.provider}
         >
@@ -91,11 +100,11 @@ export function StudioSettingsPanel({
           ref={saveButtonRef}
           type="submit"
         >
-          {isSaving ? 'Saving…' : 'Save settings'}
+          {isSaving ? "Saving…" : "Save settings"}
         </button>
       </div>
       <p aria-live="polite" className="sr-only">
-        {isSaving ? 'Saving project settings.' : ''}
+        {isSaving ? "Saving project settings." : ""}
       </p>
     </form>
   );

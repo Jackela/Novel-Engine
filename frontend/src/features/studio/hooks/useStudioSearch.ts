@@ -1,9 +1,9 @@
-import { useCallback, useReducer } from 'react';
-import type { Dispatch, FormEvent, SetStateAction } from 'react';
+import type { Dispatch, FormEvent, SetStateAction } from "react";
+import { useCallback, useReducer } from "react";
 
-import { api } from '@/app/api';
+import { api } from "@/app/api";
 
-import { toErrorMessage } from './toErrorMessage';
+import { toErrorMessage } from "./toErrorMessage";
 
 interface SearchResult {
   readonly document_id: string;
@@ -18,24 +18,24 @@ interface SearchState {
 }
 
 type SearchAction =
-  | { readonly type: 'searchChanged'; readonly search: string }
-  | { readonly type: 'searchStarted' }
-  | { readonly type: 'searchSucceeded'; readonly results: SearchResult[] }
-  | { readonly type: 'searchFailed' };
+  | { readonly type: "searchChanged"; readonly search: string }
+  | { readonly type: "searchStarted" }
+  | { readonly type: "searchSucceeded"; readonly results: SearchResult[] }
+  | { readonly type: "searchFailed" };
 
 function reduceSearchState(state: SearchState, action: SearchAction): SearchState {
   switch (action.type) {
-    case 'searchChanged':
+    case "searchChanged":
       return {
         ...state,
         search: action.search,
         searchResults: action.search.trim() ? state.searchResults : [],
       };
-    case 'searchStarted':
+    case "searchStarted":
       return { ...state, isSearching: true };
-    case 'searchSucceeded':
+    case "searchSucceeded":
       return { ...state, isSearching: false, searchResults: action.results };
-    case 'searchFailed':
+    case "searchFailed":
       return { ...state, isSearching: false };
   }
   const unreachable: never = action;
@@ -47,7 +47,7 @@ export function useStudioSearch(
   setError: Dispatch<SetStateAction<string | null>>,
 ) {
   const [{ search, isSearching, searchResults }, dispatch] = useReducer(reduceSearchState, {
-    search: '',
+    search: "",
     isSearching: false,
     searchResults: [],
   });
@@ -55,8 +55,8 @@ export function useStudioSearch(
   const setSearch = useCallback<Dispatch<SetStateAction<string>>>(
     (nextSearch) => {
       dispatch({
-        type: 'searchChanged',
-        search: typeof nextSearch === 'function' ? nextSearch(search) : nextSearch,
+        type: "searchChanged",
+        search: typeof nextSearch === "function" ? nextSearch(search) : nextSearch,
       });
     },
     [search],
@@ -66,16 +66,16 @@ export function useStudioSearch(
     async (event: FormEvent) => {
       event.preventDefault();
       if (!search.trim()) {
-        dispatch({ type: 'searchChanged', search });
+        dispatch({ type: "searchChanged", search });
         return;
       }
-      dispatch({ type: 'searchStarted' });
+      dispatch({ type: "searchStarted" });
       try {
         const response = await api.search(projectId, search);
-        dispatch({ type: 'searchSucceeded', results: response.results });
+        dispatch({ type: "searchSucceeded", results: response.results });
       } catch (reason) {
-        setError(toErrorMessage(reason, 'Search failed.'));
-        dispatch({ type: 'searchFailed' });
+        setError(toErrorMessage(reason, "Search failed."));
+        dispatch({ type: "searchFailed" });
       }
     },
     [projectId, search, setError],

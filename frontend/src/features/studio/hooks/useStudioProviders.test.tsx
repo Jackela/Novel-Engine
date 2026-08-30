@@ -1,13 +1,13 @@
-import { act } from 'react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { act } from "react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { api } from '@/app/api';
-import type { ProviderInfo } from '@/app/types/studio';
-import { createMountHarness } from '@/test/harness';
+import { api } from "@/app/api";
+import type { ProviderInfo } from "@/app/types/studio";
+import { createMountHarness } from "@/test/harness";
 
-import { useStudioProviders } from './useStudioProviders';
+import { useStudioProviders } from "./useStudioProviders";
 
-vi.mock('@/app/api', () => ({
+vi.mock("@/app/api", () => ({
   api: {
     providers: vi.fn(),
   },
@@ -32,24 +32,29 @@ function renderHook<T>(useHook: () => T): { result: { current: T } } {
   return { result };
 }
 
-describe('useStudioProviders', () => {
-  it('returns fallback providers before the API responds', () => {
+describe("useStudioProviders", () => {
+  it("returns fallback providers before the API responds", () => {
     vi.mocked(api.providers).mockResolvedValue({ providers: [] });
 
     const { result } = renderHook(() => useStudioProviders());
 
     expect(result.current.map((item: ProviderInfo) => item.provider)).toEqual([
-      'mock',
-      'dashscope',
-      'openai_compatible',
+      "mock",
+      "dashscope",
+      "openai_compatible",
     ]);
   });
 
-  it('replaces fallback providers with API results once loaded', async () => {
+  it("replaces fallback providers with API results once loaded", async () => {
     vi.mocked(api.providers).mockResolvedValue({
       providers: [
-        { provider: 'openai_compatible', configured: true, model: 'gpt-4o', is_default: true },
-        { provider: 'mock', configured: true, model: null, is_default: false },
+        {
+          provider: "openai_compatible",
+          configured: true,
+          model: "gpt-4o",
+          is_default: true,
+        },
+        { provider: "mock", configured: true, model: null, is_default: false },
       ],
     });
 
@@ -60,13 +65,13 @@ describe('useStudioProviders', () => {
     });
 
     expect(result.current.map((item: ProviderInfo) => item.provider)).toEqual([
-      'openai_compatible',
-      'mock',
+      "openai_compatible",
+      "mock",
     ]);
   });
 
-  it('keeps fallback providers when the API fails', async () => {
-    vi.mocked(api.providers).mockRejectedValue(new Error('offline'));
+  it("keeps fallback providers when the API fails", async () => {
+    vi.mocked(api.providers).mockRejectedValue(new Error("offline"));
 
     const { result } = renderHook(() => useStudioProviders());
 
@@ -75,9 +80,9 @@ describe('useStudioProviders', () => {
     });
 
     expect(result.current.map((item: ProviderInfo) => item.provider)).toEqual([
-      'mock',
-      'dashscope',
-      'openai_compatible',
+      "mock",
+      "dashscope",
+      "openai_compatible",
     ]);
   });
 });

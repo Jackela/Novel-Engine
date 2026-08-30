@@ -7,11 +7,11 @@
  * (`block__element--modifier`); legacy flat classes are not migrated.
  */
 
-@import './styles/base.css';
-@import './styles/entry.css';
-@import './styles/library.css';
-@import './styles/studio-nav.css';
-@import './styles/editor.css';
-@import './styles/inspector.css';
-@import './styles/usage.css';
-@import './styles/layout.css';
+@import "./styles/base.css";
+@import "./styles/entry.css";
+@import "./styles/library.css";
+@import "./styles/studio-nav.css";
+@import "./styles/editor.css";
+@import "./styles/inspector.css";
+@import "./styles/usage.css";
+@import "./styles/layout.css";

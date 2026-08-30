@@ -1,10 +1,10 @@
-import { act } from 'react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { act } from "react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { project } from '@/test/factories';
-import { createMountHarness } from '@/test/harness';
+import { project } from "@/test/factories";
+import { createMountHarness } from "@/test/harness";
 
-import { useStudioInspectorState } from './useStudioInspectorState';
+import { useStudioInspectorState } from "./useStudioInspectorState";
 
 type HookArgs = Parameters<typeof useStudioInspectorState>[0];
 type HookResult = ReturnType<typeof useStudioInspectorState>;
@@ -33,7 +33,7 @@ function renderInspectorHook(initialArgs: HookArgs): {
   return {
     result: () => {
       if (current === undefined) {
-        throw new Error('Expected hook result after render.');
+        throw new Error("Expected hook result after render.");
       }
       return current;
     },
@@ -47,39 +47,39 @@ function renderInspectorHook(initialArgs: HookArgs): {
 }
 
 const baseProject = project({
-  description: 'A harbor of brass clocks.',
-  settings: { provider: 'dashscope' },
+  description: "A harbor of brass clocks.",
+  settings: { provider: "dashscope" },
 });
 
-describe('useStudioInspectorState', () => {
-  it('selects the matching inspector tab when route sections change', () => {
+describe("useStudioInspectorState", () => {
+  it("selects the matching inspector tab when route sections change", () => {
     const loadJobs = vi.fn<() => Promise<void>>().mockResolvedValue(undefined);
     const hook = renderInspectorHook({
-      section: 'manuscript',
+      section: "manuscript",
       project: baseProject,
       loadJobs,
     });
 
-    expect(hook.result().inspector).toBe('copilot');
+    expect(hook.result().inspector).toBe("copilot");
 
-    hook.rerender({ section: 'review', project: baseProject, loadJobs });
-    expect(hook.result().inspector).toBe('review');
+    hook.rerender({ section: "review", project: baseProject, loadJobs });
+    expect(hook.result().inspector).toBe("review");
 
-    hook.rerender({ section: 'history', project: baseProject, loadJobs });
-    expect(hook.result().inspector).toBe('history');
+    hook.rerender({ section: "history", project: baseProject, loadJobs });
+    expect(hook.result().inspector).toBe("history");
 
-    hook.rerender({ section: 'export', project: baseProject, loadJobs });
-    expect(hook.result().inspector).toBe('export');
+    hook.rerender({ section: "export", project: baseProject, loadJobs });
+    expect(hook.result().inspector).toBe("export");
 
-    hook.rerender({ section: 'settings', project: baseProject, loadJobs });
-    expect(hook.result().inspector).toBe('settings');
+    hook.rerender({ section: "settings", project: baseProject, loadJobs });
+    expect(hook.result().inspector).toBe("settings");
     expect(loadJobs).not.toHaveBeenCalled();
   });
 
-  it('loads jobs only when the jobs inspector is selected', () => {
+  it("loads jobs only when the jobs inspector is selected", () => {
     const loadJobs = vi.fn<() => Promise<void>>().mockResolvedValue(undefined);
     const hook = renderInspectorHook({
-      section: 'manuscript',
+      section: "manuscript",
       project: baseProject,
       loadJobs,
     });
@@ -87,42 +87,42 @@ describe('useStudioInspectorState', () => {
     expect(loadJobs).not.toHaveBeenCalled();
 
     act(() => {
-      hook.result().setInspector('jobs');
+      hook.result().setInspector("jobs");
     });
 
-    expect(hook.result().inspector).toBe('jobs');
+    expect(hook.result().inspector).toBe("jobs");
     expect(loadJobs).toHaveBeenCalledTimes(1);
   });
 
-  it('copies the selected project into settings form state', () => {
+  it("copies the selected project into settings form state", () => {
     const loadJobs = vi.fn<() => Promise<void>>().mockResolvedValue(undefined);
     const hook = renderInspectorHook({
-      section: 'settings',
+      section: "settings",
       project: baseProject,
       loadJobs,
     });
 
     expect(hook.result().settingsForm).toEqual({
-      title: 'Clockwork Harbor',
-      description: 'A harbor of brass clocks.',
-      provider: 'dashscope',
+      title: "Clockwork Harbor",
+      description: "A harbor of brass clocks.",
+      provider: "dashscope",
     });
 
     hook.rerender({
-      section: 'settings',
+      section: "settings",
       project: {
         ...baseProject,
-        title: 'Mock Harbor',
-        description: '',
+        title: "Mock Harbor",
+        description: "",
         settings: {},
       },
       loadJobs,
     });
 
     expect(hook.result().settingsForm).toEqual({
-      title: 'Mock Harbor',
-      description: '',
-      provider: 'mock',
+      title: "Mock Harbor",
+      description: "",
+      provider: "mock",
     });
   });
 });

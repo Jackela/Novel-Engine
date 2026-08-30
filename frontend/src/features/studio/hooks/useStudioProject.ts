@@ -1,12 +1,12 @@
-import { useCallback, useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useCallback, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
-import { HttpError, api } from '@/app/api';
-import type { Project, Review, StudioExport } from '@/app/types/studio';
+import { api, HttpError } from "@/app/api";
+import type { Project, Review, StudioExport } from "@/app/types/studio";
 
-import { toErrorMessage } from './toErrorMessage';
+import { toErrorMessage } from "./toErrorMessage";
 
-const DEFAULT_LOAD_ERROR = 'Unable to load the project. Please retry.';
+const DEFAULT_LOAD_ERROR = "Unable to load the project. Please retry.";
 
 /**
  * #390 request lifecycle: the project aggregate loads under an abortable
@@ -40,7 +40,7 @@ export function useStudioProject(projectId: string) {
         // Stale load (project switched or unmounted): discard, never publish.
         if (signal.aborted) return;
         if (reason instanceof HttpError && reason.status === 404) {
-          navigate('/', { replace: true });
+          navigate("/", { replace: true });
           return;
         }
         setLoadError(toErrorMessage(reason, DEFAULT_LOAD_ERROR));

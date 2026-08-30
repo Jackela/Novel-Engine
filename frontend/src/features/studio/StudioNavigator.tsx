@@ -1,11 +1,11 @@
-import { ArrowDown, ArrowUp, ChevronDown, Loader2, Plus, Search } from 'lucide-react';
-import type { ComponentProps, FormEvent } from 'react';
+import { ArrowDown, ArrowUp, ChevronDown, Loader2, Plus, Search } from "lucide-react";
+import type { ComponentProps, FormEvent } from "react";
 
-import type { DocumentKind, Project, StudioDocument } from '@/app/types/studio';
+import type { DocumentKind, Project, StudioDocument } from "@/app/types/studio";
 
-import { StudioDocumentRow } from './components/StudioDocumentRow';
-import { StudioWholeBookControl } from './components/StudioWholeBookControl';
-import { GROUPS, SECTIONS } from './studioConstants';
+import { StudioDocumentRow } from "./components/StudioDocumentRow";
+import { StudioWholeBookControl } from "./components/StudioWholeBookControl";
+import { GROUPS, SECTIONS } from "./studioConstants";
 
 interface SearchResult {
   document_id: string;
@@ -44,7 +44,7 @@ function DocumentRows({
               aria-busy={isMovingDocument || undefined}
               disabled={isMovingDocument || index === 0}
               onClick={() => onMoveDocument(document.id, -1)}
-              title={isMovingDocument ? 'Reordering documents' : 'Move up'}
+              title={isMovingDocument ? "Reordering documents" : "Move up"}
               type="button"
             >
               <ArrowUp aria-hidden="true" />
@@ -54,7 +54,7 @@ function DocumentRows({
               aria-busy={isMovingDocument || undefined}
               disabled={isMovingDocument || index === rows.length - 1}
               onClick={() => onMoveDocument(document.id, 1)}
-              title={isMovingDocument ? 'Reordering documents' : 'Move down'}
+              title={isMovingDocument ? "Reordering documents" : "Move down"}
               type="button"
             >
               <ArrowDown aria-hidden="true" />
@@ -103,9 +103,9 @@ export function StudioNavigator({
   wholeBook,
 }: StudioNavigatorProps) {
   const visibleGroups = GROUPS.flatMap((group) => {
-    if (section === 'outline' && group.kind !== 'outline') return [];
-    if (section === 'characters' && group.kind !== 'character') return [];
-    if (section === 'world' && group.kind !== 'world') return [];
+    if (section === "outline" && group.kind !== "outline") return [];
+    if (section === "characters" && group.kind !== "character") return [];
+    if (section === "world" && group.kind !== "world") return [];
     return [group];
   });
 
@@ -127,8 +127,8 @@ export function StudioNavigator({
           <nav className="section-nav" aria-label="Project sections">
             {SECTIONS.map(([path, label]) => (
               <button
-                aria-current={section === path ? 'page' : undefined}
-                className={section === path ? 'active' : ''}
+                aria-current={section === path ? "page" : undefined}
+                className={section === path ? "active" : ""}
                 key={path}
                 onClick={() => onNavigateSection(path)}
                 type="button"
@@ -166,7 +166,7 @@ export function StudioNavigator({
               ))}
             </section>
           ) : null}
-          {section === 'manuscript' && wholeBook ? <StudioWholeBookControl {...wholeBook} /> : null}
+          {section === "manuscript" && wholeBook ? <StudioWholeBookControl {...wholeBook} /> : null}
           <div className="document-tree">
             {visibleGroups.map(({ kind, label, icon: Icon }) => {
               const documents =
@@ -175,7 +175,7 @@ export function StudioNavigator({
               // headered volume per project volume in reading order; chapters
               // without a resolved link fall back to the first volume. Other
               // kinds keep their flat list.
-              const volumes = kind === 'chapter' ? (project.volumes ?? null) : null;
+              const volumes = kind === "chapter" ? (project.volumes ?? null) : null;
               const inVolume = (volumeId: string | undefined) =>
                 documents.filter(
                   (document) => (document.volume_id ?? volumes?.[0]?.id) === volumeId,

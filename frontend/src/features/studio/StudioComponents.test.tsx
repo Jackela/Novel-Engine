@@ -1,18 +1,18 @@
-import { act, type ReactElement } from 'react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { act, type ReactElement } from "react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { chapter, projectWith } from '@/test/factories';
-import { createMountHarness } from '@/test/harness';
+import { chapter, projectWith } from "@/test/factories";
+import { createMountHarness } from "@/test/harness";
 
-import { StudioInspector } from './StudioInspector';
-import { StudioTopbar } from './StudioTopbar';
-import type { StudioInspectorModel } from './studioInspectorTypes';
+import { StudioInspector } from "./StudioInspector";
+import { StudioTopbar } from "./StudioTopbar";
+import type { StudioInspectorModel } from "./studioInspectorTypes";
 
 /** #412: grouped per-tab model matching the new Inspector boundary. */
 function buildInspectorModel(): StudioInspectorModel {
   return {
     copilot: {
-      instruction: '',
+      instruction: "",
       proposal: null,
       streamingText: null,
       onRunProposal: vi.fn(),
@@ -33,9 +33,9 @@ function buildInspectorModel(): StudioInspectorModel {
       onRestoreRevision: vi.fn(),
     },
     jobs: { jobs: [], onLoadJobs: vi.fn(), onRetryJob: vi.fn() },
-    usage: { projectId: 'project-1' },
+    usage: { projectId: "project-1" },
     settings: {
-      settingsForm: { title: '', description: '', provider: '' },
+      settingsForm: { title: "", description: "", provider: "" },
       providers: [],
       onUpdateSettings: vi.fn(),
       setSettingsForm: vi.fn(),
@@ -51,7 +51,7 @@ function render(element: ReactElement): HTMLDivElement {
 
 function click(element: Element | null): void {
   if (!(element instanceof HTMLElement)) {
-    throw new Error('Expected a clickable element.');
+    throw new Error("Expected a clickable element.");
   }
   act(() => {
     element.click();
@@ -62,28 +62,28 @@ afterEach(() => {
   harness.cleanup();
 });
 
-const baseDocument = chapter('doc-1', {
-  title: 'Opening',
+const baseDocument = chapter("doc-1", {
+  title: "Opening",
   position: 1,
-  current_revision_id: 'revision-abcdefghi',
-  content_markdown: '# Opening',
-  revision_source: 'author',
+  current_revision_id: "revision-abcdefghi",
+  content_markdown: "# Opening",
+  revision_source: "author",
   word_count: 42,
 });
 
 const secondDocument = {
   ...baseDocument,
-  id: 'doc-2',
-  title: 'Second',
+  id: "doc-2",
+  title: "Second",
   position: 2,
-  current_revision_id: 'revision-second',
+  current_revision_id: "revision-second",
   word_count: 12,
 };
 
 const baseProject = projectWith([baseDocument, secondDocument]);
 
-describe('Studio split components', () => {
-  it('exposes the inspector tabs and active panel as an associated ARIA tab set', () => {
+describe("Studio split components", () => {
+  it("exposes the inspector tabs and active panel as an associated ARIA tab set", () => {
     const setInspector = vi.fn();
     const container = render(
       <StudioInspector
@@ -95,32 +95,32 @@ describe('Studio split components', () => {
     );
 
     const tablist = container.querySelector('[role="tablist"]');
-    const disclosure = container.querySelector('details.studio-inspector__disclosure');
+    const disclosure = container.querySelector("details.studio-inspector__disclosure");
     const tabs = Array.from(container.querySelectorAll('[role="tab"]'));
-    const activeTab = tabs.find((tab) => tab.getAttribute('aria-selected') === 'true');
+    const activeTab = tabs.find((tab) => tab.getAttribute("aria-selected") === "true");
     const panels = Array.from(container.querySelectorAll('[role="tabpanel"]'));
-    const activePanel = panels.find((panel) => !panel.hasAttribute('hidden'));
+    const activePanel = panels.find((panel) => !panel.hasAttribute("hidden"));
 
     expect(tablist).not.toBeNull();
     expect(disclosure).not.toBeNull();
-    expect(disclosure?.querySelector('summary')?.textContent).toContain('Inspector');
-    expect(disclosure?.hasAttribute('open')).toBe(true);
+    expect(disclosure?.querySelector("summary")?.textContent).toContain("Inspector");
+    expect(disclosure?.hasAttribute("open")).toBe(true);
     expect(tabs).toHaveLength(6);
     expect(panels).toHaveLength(6);
-    expect(activeTab?.textContent).toContain('Copilot');
-    expect(tabs.filter((tab) => tab.getAttribute('aria-selected') === 'false')).toHaveLength(5);
-    expect(activeTab?.getAttribute('aria-controls')).toBe(activePanel?.id);
-    expect(activePanel?.getAttribute('aria-labelledby')).toBe(activeTab?.id);
+    expect(activeTab?.textContent).toContain("Copilot");
+    expect(tabs.filter((tab) => tab.getAttribute("aria-selected") === "false")).toHaveLength(5);
+    expect(activeTab?.getAttribute("aria-controls")).toBe(activePanel?.id);
+    expect(activePanel?.getAttribute("aria-labelledby")).toBe(activeTab?.id);
     expect(
-      tabs.every((tab) => panels.some((panel) => panel.id === tab.getAttribute('aria-controls'))),
+      tabs.every((tab) => panels.some((panel) => panel.id === tab.getAttribute("aria-controls"))),
     ).toBe(true);
-    expect(panels.filter((panel) => panel.hasAttribute('hidden'))).toHaveLength(5);
+    expect(panels.filter((panel) => panel.hasAttribute("hidden"))).toHaveLength(5);
 
-    click(tabs.find((tab) => tab.textContent?.includes('Review')) ?? null);
-    expect(setInspector).toHaveBeenCalledWith('review');
+    click(tabs.find((tab) => tab.textContent?.includes("Review")) ?? null);
+    expect(setInspector).toHaveBeenCalledWith("review");
   });
 
-  it('supports APG tablist keyboard navigation and keeps one tab in the tab sequence', () => {
+  it("supports APG tablist keyboard navigation and keeps one tab in the tab sequence", () => {
     const setInspector = vi.fn();
     const container = render(
       <StudioInspector
@@ -135,26 +135,26 @@ describe('Studio split components', () => {
     expect(tabs.filter((tab) => tab.tabIndex === 0)).toHaveLength(1);
 
     act(() => {
-      tabs[0].dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+      tabs[0].dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true }));
     });
-    expect(setInspector).toHaveBeenCalledWith('review');
+    expect(setInspector).toHaveBeenCalledWith("review");
     // #411: focus moves through the tab ref array, not DOM queries.
     expect(document.activeElement).toBe(tabs[1]);
 
     act(() => {
-      tabs[0].dispatchEvent(new KeyboardEvent('keydown', { key: 'End', bubbles: true }));
+      tabs[0].dispatchEvent(new KeyboardEvent("keydown", { key: "End", bubbles: true }));
     });
-    expect(setInspector).toHaveBeenCalledWith('usage');
+    expect(setInspector).toHaveBeenCalledWith("usage");
     expect(document.activeElement).toBe(tabs[5]);
 
     act(() => {
-      tabs[2].dispatchEvent(new KeyboardEvent('keydown', { key: 'Home', bubbles: true }));
+      tabs[2].dispatchEvent(new KeyboardEvent("keydown", { key: "Home", bubbles: true }));
     });
-    expect(setInspector).toHaveBeenCalledWith('copilot');
+    expect(setInspector).toHaveBeenCalledWith("copilot");
     expect(document.activeElement).toBe(tabs[0]);
   });
 
-  it('does not expose an unselected tablist while the settings route is active', () => {
+  it("does not expose an unselected tablist while the settings route is active", () => {
     const container = render(
       <StudioInspector
         error={null}
@@ -170,17 +170,17 @@ describe('Studio split components', () => {
     expect(tabs).toHaveLength(0);
     // #411: no orphan tabpanels without a tablist in the settings state.
     expect(container.querySelectorAll('[role="tabpanel"]')).toHaveLength(0);
-    expect(container.querySelector('form.inspector-content')).not.toBeNull();
+    expect(container.querySelector("form.inspector-content")).not.toBeNull();
   });
 
-  it('keeps topbar navigation focused on returning to the project library', () => {
+  it("keeps topbar navigation focused on returning to the project library", () => {
     const back = vi.fn();
 
     const container = render(<StudioTopbar project={baseProject} onBack={back} />);
 
-    expect(container.textContent).toContain('Clockwork Harbor');
+    expect(container.textContent).toContain("Clockwork Harbor");
     click(container.querySelector('button[aria-label="Back to projects"]'));
     expect(back).toHaveBeenCalledTimes(1);
-    expect(container.querySelector('.export-menu')).toBeNull();
+    expect(container.querySelector(".export-menu")).toBeNull();
   });
 });

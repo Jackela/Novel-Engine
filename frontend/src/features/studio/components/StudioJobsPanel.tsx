@@ -1,6 +1,6 @@
-import { RotateCcw } from 'lucide-react';
+import { RotateCcw } from "lucide-react";
 
-import type { StudioJob } from '@/app/types/studio';
+import type { StudioJob } from "@/app/types/studio";
 
 interface StudioJobsPanelProps {
   jobs: StudioJob[];
@@ -28,7 +28,7 @@ export function StudioJobsPanel({
         </div>
         <button
           aria-busy={isLoading}
-          aria-label={isLoading ? 'Refreshing jobs' : 'Refresh jobs'}
+          aria-label={isLoading ? "Refreshing jobs" : "Refresh jobs"}
           className="icon-command"
           disabled={isBusy}
           onClick={onLoadJobs}
@@ -50,7 +50,7 @@ export function StudioJobsPanel({
                 </small>
                 {job.error ? <small className="job-error">{job.error}</small> : null}
               </div>
-              {job.status === 'failed' || job.status === 'interrupted' ? (
+              {job.status === "failed" || job.status === "interrupted" ? (
                 <button
                   aria-busy={retryingJobId === job.id}
                   aria-label={

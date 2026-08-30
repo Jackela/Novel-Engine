@@ -1,12 +1,12 @@
-import { useRef, useState } from 'react';
-import { afterEach, vi } from 'vitest';
+import { useRef, useState } from "react";
+import { afterEach, vi } from "vitest";
 
-import { api } from '@/app/api';
-import type { Project, StudioDocument, StudioJob } from '@/app/types/studio';
-import { chapter, job, projectWith } from '@/test/factories';
-import { createMountHarness, deferred as sharedDeferred } from '@/test/harness';
+import { api } from "@/app/api";
+import type { Project, StudioDocument, StudioJob } from "@/app/types/studio";
+import { chapter, job, projectWith } from "@/test/factories";
+import { createMountHarness, deferred as sharedDeferred } from "@/test/harness";
 
-import { useWholeBookLoop } from './useWholeBookLoop';
+import { useWholeBookLoop } from "./useWholeBookLoop";
 
 export type HookResult = ReturnType<typeof useWholeBookLoop>;
 
@@ -25,8 +25,14 @@ const harness = createMountHarness();
 
 export const deferred = sharedDeferred;
 
-export const firstChapter = chapter('one', { title: 'Chapter One', position: 0 });
-export const secondChapter = chapter('two', { title: 'Chapter Two', position: 1 });
+export const firstChapter = chapter("one", {
+  title: "Chapter One",
+  position: 0,
+});
+export const secondChapter = chapter("two", {
+  title: "Chapter Two",
+  position: 1,
+});
 export const baseProject = projectWith([firstChapter, secondChapter]);
 
 export function proposalJobFor(documentId: string): StudioJob {
@@ -34,7 +40,7 @@ export function proposalJobFor(documentId: string): StudioJob {
     id: `job-${documentId}`,
     project_id: baseProject.id,
     document_id: documentId,
-    operation: 'generate' as const,
+    operation: "generate" as const,
     result: { proposal_markdown: `Generated prose for ${documentId}.` },
   });
 }
@@ -57,7 +63,7 @@ export function renderLoopHook(initialProject: Project): {
     const accepted = useRef<StudioDocument[]>([]);
     const hook = useWholeBookLoop({
       projectId: initialProject.id,
-      provider: 'mock',
+      provider: "mock",
       setProject,
       loadJobs: vi.fn(),
       onAccepted: (document) => {
@@ -72,7 +78,7 @@ export function renderLoopHook(initialProject: Project): {
 
   return {
     result: () => {
-      if (current === undefined) throw new Error('Expected hook result after render.');
+      if (current === undefined) throw new Error("Expected hook result after render.");
       return current;
     },
     // Unmount now and keep afterEach from unmounting the same root twice.
@@ -90,10 +96,10 @@ export function traceApiCalls(events: string[], refreshedProject: Project = base
   });
   vi.mocked(api.acceptProposal).mockImplementation(async (_projectId, jobId) => {
     events.push(`accept:${jobId}`);
-    return proposalJobFor(jobId.replace('job-', ''));
+    return proposalJobFor(jobId.replace("job-", ""));
   });
   vi.mocked(api.project).mockImplementation(async () => {
-    events.push('refresh');
+    events.push("refresh");
     return refreshedProject;
   });
 }

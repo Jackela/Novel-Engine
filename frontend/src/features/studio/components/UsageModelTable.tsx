@@ -1,6 +1,6 @@
-import type { UsageModelRow } from '@/app/types/studio';
+import type { UsageModelRow } from "@/app/types/studio";
 
-const formatCount = (value: number) => value.toLocaleString('en-US');
+const formatCount = (value: number) => value.toLocaleString("en-US");
 
 /**
  * Per-model usage detail table for the Usage inspector panel (#377).

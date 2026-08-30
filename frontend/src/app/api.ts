@@ -1,4 +1,3 @@
-import { appConfig } from '@/app/config';
 import {
   parseAliases,
   parseDocuments,
@@ -14,7 +13,7 @@ import {
   parseVoid,
   parseVolume,
   parseVolumes,
-} from '@/app/apiContract';
+} from "@/app/apiContract";
 import {
   parseExportJobResponse,
   parseExports,
@@ -23,8 +22,9 @@ import {
   parseReviewJobResponse,
   parseReviews,
   parseUsage,
-} from '@/app/apiWorkflowContract';
-import type { DocumentKind, ExportFormat } from '@/app/types/studio';
+} from "@/app/apiWorkflowContract";
+import { appConfig } from "@/app/config";
+import type { DocumentKind, ExportFormat } from "@/app/types/studio";
 
 export class HttpError extends Error {
   constructor(
@@ -44,7 +44,7 @@ const url = (path: string) => (appConfig.apiBaseUrl ? `${appConfig.apiBaseUrl}${
 export const apiUrl = url;
 
 export function getCsrfToken(): string | undefined {
-  if (typeof document === 'undefined') {
+  if (typeof document === "undefined") {
     return undefined;
   }
   const engine = document.cookie.match(/(?:^|; )novel_engine_csrf=([^;]*)/);
@@ -54,7 +54,7 @@ export function getCsrfToken(): string | undefined {
 type ResponseParser<T> = (value: unknown) => T;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
 /**
@@ -69,8 +69,8 @@ export async function readHttpError(
   const payload = await response.json().catch(() => null);
   if (isRecord(payload) && isRecord(payload.error)) {
     const envelope = payload.error;
-    const message = typeof envelope.message === 'string' ? envelope.message : fallbackMessage;
-    const code = typeof envelope.code === 'string' ? envelope.code : undefined;
+    const message = typeof envelope.message === "string" ? envelope.message : fallbackMessage;
+    const code = typeof envelope.code === "string" ? envelope.code : undefined;
     return new HttpError(message, response.status, envelope.details, code);
   }
   return new HttpError(fallbackMessage, response.status, undefined, undefined);
@@ -88,7 +88,9 @@ async function request<T>(
   if (externalSignal?.aborted) {
     abortFromExternal();
   } else {
-    externalSignal?.addEventListener('abort', abortFromExternal, { once: true });
+    externalSignal?.addEventListener("abort", abortFromExternal, {
+      once: true,
+    });
   }
   const timeout = window.setTimeout(() => {
     timedOut = true;
@@ -99,13 +101,13 @@ async function request<T>(
     try {
       const method = init?.method?.toUpperCase();
       const csrfToken =
-        method && ['POST', 'PUT', 'PATCH', 'DELETE'].includes(method) ? getCsrfToken() : undefined;
+        method && ["POST", "PUT", "PATCH", "DELETE"].includes(method) ? getCsrfToken() : undefined;
       response = await fetch(url(path), {
-        credentials: 'include',
+        credentials: "include",
         ...init,
         headers: {
-          ...(init?.body ? { 'Content-Type': 'application/json' } : {}),
-          ...(csrfToken ? { 'X-CSRF-Token': csrfToken } : {}),
+          ...(init?.body ? { "Content-Type": "application/json" } : {}),
+          ...(csrfToken ? { "X-CSRF-Token": csrfToken } : {}),
           ...(init?.headers ?? {}),
         },
         signal: controller.signal,
@@ -113,14 +115,14 @@ async function request<T>(
     } catch (error) {
       if (
         (error instanceof Error || error instanceof DOMException) &&
-        error.name === 'AbortError'
+        error.name === "AbortError"
       ) {
-        throw new Error(timedOut ? 'Request timed out. Please retry.' : 'Request cancelled.', {
+        throw new Error(timedOut ? "Request timed out. Please retry." : "Request cancelled.", {
           cause: error,
         });
       }
       if (error instanceof TypeError) {
-        throw new Error('Novel Engine is unavailable. Check the local service and retry.', {
+        throw new Error("Novel Engine is unavailable. Check the local service and retry.", {
           cause: error,
         });
       }
@@ -133,35 +135,38 @@ async function request<T>(
     return parse(await response.json());
   } finally {
     window.clearTimeout(timeout);
-    externalSignal?.removeEventListener('abort', abortFromExternal);
+    externalSignal?.removeEventListener("abort", abortFromExternal);
   }
 }
 
 const json = (value: unknown) => JSON.stringify(value);
 
 const postJson = <T>(path: string, value: unknown, parse: ResponseParser<T>) =>
-  request(path, { method: 'POST', body: json(value) }, parse);
+  request(path, { method: "POST", body: json(value) }, parse);
 const putJson = <T>(path: string, value: unknown, parse: ResponseParser<T>) =>
-  request(path, { method: 'PUT', body: json(value) }, parse);
+  request(path, { method: "PUT", body: json(value) }, parse);
 const patchJson = <T>(path: string, value: unknown, parse: ResponseParser<T>) =>
-  request(path, { method: 'PATCH', body: json(value) }, parse);
+  request(path, { method: "PATCH", body: json(value) }, parse);
 
 async function downloadBlob(path: string): Promise<Blob> {
   const controller = new AbortController();
   const timeout = window.setTimeout(() => controller.abort(), appConfig.apiTimeoutMs);
   try {
-    const response = await fetch(url(path), { credentials: 'include', signal: controller.signal });
+    const response = await fetch(url(path), {
+      credentials: "include",
+      signal: controller.signal,
+    });
     if (!response.ok) {
       throw await readHttpError(response, `Download failed with status ${response.status}`);
     }
     return await response.blob();
   } catch (error) {
     if (error instanceof HttpError) throw error;
-    if ((error instanceof Error || error instanceof DOMException) && error.name === 'AbortError') {
-      throw new Error('Download timed out. Please retry.', { cause: error });
+    if ((error instanceof Error || error instanceof DOMException) && error.name === "AbortError") {
+      throw new Error("Download timed out. Please retry.", { cause: error });
     }
     if (error instanceof TypeError) {
-      throw new Error('Novel Engine is unavailable. Check the local service and retry.', {
+      throw new Error("Novel Engine is unavailable. Check the local service and retry.", {
         cause: error,
       });
     }
@@ -172,19 +177,19 @@ async function downloadBlob(path: string): Promise<Blob> {
 }
 
 export const api = {
-  setupStatus: () => request('/api/setup', undefined, parseSetupStatus),
+  setupStatus: () => request("/api/setup", undefined, parseSetupStatus),
   setupOwner: (username: string, password: string) =>
-    postJson('/api/setup', { username, password }, parseOwnerSetup),
+    postJson("/api/setup", { username, password }, parseOwnerSetup),
   login: (username: string, password: string) =>
-    postJson('/api/session/login', { username, password }, parseSession),
-  session: (init?: RequestInit) => request('/api/session', init, parseSession),
-  logout: () => request('/api/session', { method: 'DELETE' }, parseVoid),
-  providers: () => request('/api/providers', undefined, parseProviders),
-  projects: (init?: RequestInit) => request('/api/projects', init, parseProjects),
+    postJson("/api/session/login", { username, password }, parseSession),
+  session: (init?: RequestInit) => request("/api/session", init, parseSession),
+  logout: () => request("/api/session", { method: "DELETE" }, parseVoid),
+  providers: () => request("/api/providers", undefined, parseProviders),
+  projects: (init?: RequestInit) => request("/api/projects", init, parseProjects),
   project: (projectId: string, init?: RequestInit) =>
     request(`/api/projects/${projectId}`, init, parseProject),
   createProject: (title: string, description: string) =>
-    postJson('/api/projects', { title, description }, parseProject),
+    postJson("/api/projects", { title, description }, parseProject),
   createDocument: (
     projectId: string,
     payload: {
@@ -206,7 +211,7 @@ export const api = {
   renameVolume: (projectId: string, volumeId: string, title: string) =>
     putJson(`/api/projects/${projectId}/volumes/${volumeId}`, { title }, parseVolume),
   deleteVolume: (projectId: string, volumeId: string) =>
-    request(`/api/projects/${projectId}/volumes/${volumeId}`, { method: 'DELETE' }, parseVoid),
+    request(`/api/projects/${projectId}/volumes/${volumeId}`, { method: "DELETE" }, parseVoid),
   reorderVolumes: (projectId: string, volumeIds: string[]) =>
     putJson(`/api/projects/${projectId}/volumes/reorder`, { volume_ids: volumeIds }, parseVolumes),
   moveChapterToVolume: (projectId: string, documentId: string, volumeId: string) =>
@@ -255,7 +260,7 @@ export const api = {
   proposal: (
     projectId: string,
     documentId: string,
-    operation: 'continue' | 'rewrite' | 'generate',
+    operation: "continue" | "rewrite" | "generate",
     instruction: string,
     provider: string,
   ) =>
@@ -267,13 +272,13 @@ export const api = {
   acceptProposal: (projectId: string, jobId: string) =>
     request(
       `/api/projects/${projectId}/ai-proposals/${jobId}/accept`,
-      { method: 'POST' },
+      { method: "POST" },
       parseJob,
     ),
   reviews: (projectId: string, init?: RequestInit) =>
     request(`/api/projects/${projectId}/reviews`, init, parseReviews),
   createReview: (projectId: string) =>
-    request(`/api/projects/${projectId}/reviews`, { method: 'POST' }, parseReviewJobResponse),
+    request(`/api/projects/${projectId}/reviews`, { method: "POST" }, parseReviewJobResponse),
   exports: (projectId: string, init?: RequestInit) =>
     request(`/api/projects/${projectId}/exports`, init, parseExports),
   createExport: (projectId: string, format: ExportFormat) =>
@@ -287,14 +292,14 @@ export const api = {
     },
   ) => patchJson(`/api/projects/${projectId}`, payload, parseProject),
   deleteProject: (projectId: string) =>
-    request(`/api/projects/${projectId}`, { method: 'DELETE' }, parseVoid),
+    request(`/api/projects/${projectId}`, { method: "DELETE" }, parseVoid),
   deleteDocument: (projectId: string, documentId: string) =>
-    request(`/api/projects/${projectId}/documents/${documentId}`, { method: 'DELETE' }, parseVoid),
+    request(`/api/projects/${projectId}/documents/${documentId}`, { method: "DELETE" }, parseVoid),
   jobs: (projectId: string, init?: RequestInit) =>
     request(`/api/projects/${projectId}/jobs`, init, parseJobs),
   usage: (projectId: string, init?: RequestInit) =>
     request(`/api/projects/${projectId}/usage`, init, parseUsage),
   retryJob: (projectId: string, jobId: string) =>
-    request(`/api/projects/${projectId}/jobs/${jobId}/retry`, { method: 'POST' }, parseJob),
+    request(`/api/projects/${projectId}/jobs/${jobId}/retry`, { method: "POST" }, parseJob),
   download: (path: string) => downloadBlob(path),
 };

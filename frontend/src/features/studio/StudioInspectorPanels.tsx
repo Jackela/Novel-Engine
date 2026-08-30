@@ -1,17 +1,17 @@
-import { StudioCopilotPanel } from './components/StudioCopilotPanel';
-import { StudioExportPanel } from './components/StudioExportPanel';
-import { StudioHistoryPanel } from './components/StudioHistoryPanel';
-import { StudioJobsPanel } from './components/StudioJobsPanel';
-import { StudioUsagePanel } from './components/StudioUsagePanel';
-import { StudioReviewPanel } from './components/StudioReviewPanel';
-import { StudioSettingsPanel } from './components/StudioSettingsPanel';
-import { type InspectorTab } from './studioConstants';
-import type { InspectorPendingState, StudioInspectorModel } from './studioInspectorTypes';
+import { StudioCopilotPanel } from "./components/StudioCopilotPanel";
+import { StudioExportPanel } from "./components/StudioExportPanel";
+import { StudioHistoryPanel } from "./components/StudioHistoryPanel";
+import { StudioJobsPanel } from "./components/StudioJobsPanel";
+import { StudioReviewPanel } from "./components/StudioReviewPanel";
+import { StudioSettingsPanel } from "./components/StudioSettingsPanel";
+import { StudioUsagePanel } from "./components/StudioUsagePanel";
+import type { InspectorTab } from "./studioConstants";
+import type { InspectorPendingState, StudioInspectorModel } from "./studioInspectorTypes";
 
 interface StudioInspectorPanelsProps {
   inspector: InspectorTab;
-  tabId: (tab: Exclude<InspectorTab, 'settings'>) => string;
-  panelId: (tab: Exclude<InspectorTab, 'settings'>) => string;
+  tabId: (tab: Exclude<InspectorTab, "settings">) => string;
+  panelId: (tab: Exclude<InspectorTab, "settings">) => string;
   pending: InspectorPendingState;
   model: StudioInspectorModel;
 }
@@ -23,7 +23,7 @@ export function StudioInspectorPanels({
   pending,
   model,
 }: StudioInspectorPanelsProps) {
-  if (inspector === 'settings') {
+  if (inspector === "settings") {
     return (
       <StudioSettingsPanel
         settingsForm={model.settings.settingsForm}
@@ -38,9 +38,9 @@ export function StudioInspectorPanels({
   return (
     <>
       <div
-        aria-labelledby={tabId('copilot')}
-        hidden={inspector !== 'copilot'}
-        id={panelId('copilot')}
+        aria-labelledby={tabId("copilot")}
+        hidden={inspector !== "copilot"}
+        id={panelId("copilot")}
         role="tabpanel"
       >
         <StudioCopilotPanel
@@ -57,9 +57,9 @@ export function StudioInspectorPanels({
         />
       </div>
       <div
-        aria-labelledby={tabId('export')}
-        hidden={inspector !== 'export'}
-        id={panelId('export')}
+        aria-labelledby={tabId("export")}
+        hidden={inspector !== "export"}
+        id={panelId("export")}
         role="tabpanel"
       >
         <StudioExportPanel
@@ -72,9 +72,9 @@ export function StudioInspectorPanels({
         />
       </div>
       <div
-        aria-labelledby={tabId('review')}
-        hidden={inspector !== 'review'}
-        id={panelId('review')}
+        aria-labelledby={tabId("review")}
+        hidden={inspector !== "review"}
+        id={panelId("review")}
         role="tabpanel"
       >
         <StudioReviewPanel
@@ -84,9 +84,9 @@ export function StudioInspectorPanels({
         />
       </div>
       <div
-        aria-labelledby={tabId('history')}
-        hidden={inspector !== 'history'}
-        id={panelId('history')}
+        aria-labelledby={tabId("history")}
+        hidden={inspector !== "history"}
+        id={panelId("history")}
         role="tabpanel"
       >
         <StudioHistoryPanel
@@ -97,9 +97,9 @@ export function StudioInspectorPanels({
         />
       </div>
       <div
-        aria-labelledby={tabId('jobs')}
-        hidden={inspector !== 'jobs'}
-        id={panelId('jobs')}
+        aria-labelledby={tabId("jobs")}
+        hidden={inspector !== "jobs"}
+        id={panelId("jobs")}
         role="tabpanel"
       >
         <StudioJobsPanel
@@ -111,19 +111,19 @@ export function StudioInspectorPanels({
             pending.jobs.retryingJobId ??
             (pending.jobs.retrying
               ? (model.jobs.jobs.find(
-                  (job) => job.status === 'failed' || job.status === 'interrupted',
-                )?.id ?? '__retrying__')
+                  (job) => job.status === "failed" || job.status === "interrupted",
+                )?.id ?? "__retrying__")
               : null)
           }
         />
       </div>
       <div
-        aria-labelledby={tabId('usage')}
-        hidden={inspector !== 'usage'}
-        id={panelId('usage')}
+        aria-labelledby={tabId("usage")}
+        hidden={inspector !== "usage"}
+        id={panelId("usage")}
         role="tabpanel"
       >
-        <StudioUsagePanel active={inspector === 'usage'} projectId={model.usage.projectId} />
+        <StudioUsagePanel active={inspector === "usage"} projectId={model.usage.projectId} />
       </div>
     </>
   );

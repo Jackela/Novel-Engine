@@ -1,10 +1,10 @@
-import { ChevronDown } from 'lucide-react';
-import { useId, type Dispatch, type SetStateAction } from 'react';
+import { ChevronDown } from "lucide-react";
+import { type Dispatch, type SetStateAction, useId } from "react";
 
-import { StudioInspectorPanels } from './StudioInspectorPanels';
-import { StudioInspectorTabs } from './StudioInspectorTabs';
-import { type InspectorTab } from './studioConstants';
-import type { InspectorPendingState, StudioInspectorModel } from './studioInspectorTypes';
+import { StudioInspectorPanels } from "./StudioInspectorPanels";
+import { StudioInspectorTabs } from "./StudioInspectorTabs";
+import type { InspectorTab } from "./studioConstants";
+import type { InspectorPendingState, StudioInspectorModel } from "./studioInspectorTypes";
 
 const DEFAULT_INSPECTOR_PENDING: InspectorPendingState = {
   proposal: { running: false, accepting: false },
@@ -30,8 +30,8 @@ export function StudioInspector({
   model,
 }: StudioInspectorProps) {
   const inspectorId = useId();
-  const tabId = (tab: Exclude<InspectorTab, 'settings'>) => `${inspectorId}-${tab}-tab`;
-  const panelId = (tab: Exclude<InspectorTab, 'settings'>) => `${inspectorId}-${tab}-panel`;
+  const tabId = (tab: Exclude<InspectorTab, "settings">) => `${inspectorId}-${tab}-tab`;
+  const panelId = (tab: Exclude<InspectorTab, "settings">) => `${inspectorId}-${tab}-panel`;
 
   return (
     <aside className="studio-inspector">
@@ -41,7 +41,7 @@ export function StudioInspector({
           <ChevronDown aria-hidden="true" />
         </summary>
         <div className="studio-inspector__content">
-          {inspector !== 'settings' && (
+          {inspector !== "settings" && (
             <StudioInspectorTabs
               inspector={inspector}
               tabId={tabId}
@@ -50,7 +50,7 @@ export function StudioInspector({
             />
           )}
 
-          {error && inspector !== 'export' ? (
+          {error && inspector !== "export" ? (
             <div aria-live="assertive" className="inspector-error" role="alert">
               {error}
             </div>

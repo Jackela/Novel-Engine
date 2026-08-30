@@ -75,7 +75,7 @@
 }
 .entry__divider::before,
 .entry__divider::after {
-  content: '';
+  content: "";
   height: 1px;
   flex: 1;
   background: #e5e7eb;

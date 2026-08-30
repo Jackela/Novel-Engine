@@ -1,10 +1,10 @@
-import { Check, Loader2, X } from 'lucide-react';
-import { lazy, Suspense } from 'react';
+import { Check, Loader2, X } from "lucide-react";
+import { lazy, Suspense } from "react";
 
-import type { SaveState, StudioDocument } from '@/app/types/studio';
+import type { SaveState, StudioDocument } from "@/app/types/studio";
 
 const MarkdownEditor = lazy(async () => {
-  const module = await import('./MarkdownEditor');
+  const module = await import("./MarkdownEditor");
   return { default: module.MarkdownEditor };
 });
 
@@ -33,12 +33,12 @@ export function StudioEditorPane({
   onLoadLatest,
   onRetryOverwrite,
 }: StudioEditorPaneProps) {
-  const saveNeedsAttention = saveState === 'conflict' || saveState === 'error';
-  const conflictActionsDisabled = isConflictActionPending || saveState === 'saving';
+  const saveNeedsAttention = saveState === "conflict" || saveState === "error";
+  const conflictActionsDisabled = isConflictActionPending || saveState === "saving";
 
   return (
     <section
-      aria-busy={isConflictActionPending || saveState === 'saving'}
+      aria-busy={isConflictActionPending || saveState === "saving"}
       className="studio-editor"
     >
       {activeDocument ? (
@@ -53,29 +53,29 @@ export function StudioEditorPane({
               />
               <span
                 aria-atomic="true"
-                aria-live={saveNeedsAttention ? 'assertive' : 'polite'}
+                aria-live={saveNeedsAttention ? "assertive" : "polite"}
                 className={`save-state save-state--${saveState}`}
-                role={saveNeedsAttention ? 'alert' : 'status'}
+                role={saveNeedsAttention ? "alert" : "status"}
               >
-                {saveState === 'saving' ? (
+                {saveState === "saving" ? (
                   <Loader2 aria-hidden="true" className="spin" />
                 ) : saveNeedsAttention ? (
                   <X aria-hidden="true" />
                 ) : (
                   <Check aria-hidden="true" />
                 )}
-                {saveState === 'idle' || saveState === 'saved'
-                  ? 'Saved'
-                  : saveState === 'saving'
-                    ? 'saving'
-                    : saveState === 'conflict'
-                      ? 'Save conflict'
-                      : 'Save failed'}
+                {saveState === "idle" || saveState === "saved"
+                  ? "Saved"
+                  : saveState === "saving"
+                    ? "saving"
+                    : saveState === "conflict"
+                      ? "Save conflict"
+                      : "Save failed"}
               </span>
             </div>
             <span className="editor-word-count">{activeDocument.word_count} words</span>
           </header>
-          {saveState === 'conflict' ? (
+          {saveState === "conflict" ? (
             <div aria-live="assertive" className="editor-conflict" role="alert">
               <strong>Someone else changed this document.</strong>
               {error ? <span>{error}</span> : null}
