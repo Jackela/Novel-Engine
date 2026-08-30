@@ -8,7 +8,7 @@ const formatCount = (value: number) => value.toLocaleString("en-US");
  */
 export function UsageModelTable({ rows }: { rows: UsageModelRow[] }) {
   return (
-    <table aria-label="Usage per model" className="usage-table">
+    <table aria-label="Usage per model" className="usage__table">
       <thead>
         <tr>
           <th scope="col">Model</th>

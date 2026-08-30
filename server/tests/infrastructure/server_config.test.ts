@@ -115,6 +115,8 @@ describe("environment configuration surface", () => {
         LLM_TIMEOUT: "180",
         LLM_RETRY_ATTEMPTS: "3",
         LLM_RETRY_DELAY: "2.5",
+        LLM_STREAM_FIRST_BYTE_TIMEOUT_MS: "45000",
+        LLM_STREAM_IDLE_TIMEOUT_MS: "90000",
       },
     }) as ServerConfig;
 
@@ -132,6 +134,8 @@ describe("environment configuration surface", () => {
       timeoutSeconds: 180,
       retryAttempts: 3,
       retryDelayMs: 2_500,
+      streamFirstByteTimeoutMs: 45_000,
+      streamIdleTimeoutMs: 90_000,
     });
   });
 
@@ -140,6 +144,14 @@ describe("environment configuration surface", () => {
     const cases: readonly [Record<string, string>, string][] = [
       [{ LLM_TIMEOUT: "301", LLM_API_KEY: credential }, "LLM_TIMEOUT"],
       [{ LLM_RETRY_DELAY: "10.1", LLM_API_KEY: credential }, "LLM_RETRY_DELAY"],
+      [
+        { LLM_STREAM_FIRST_BYTE_TIMEOUT_MS: "300001", LLM_API_KEY: credential },
+        "LLM_STREAM_FIRST_BYTE_TIMEOUT_MS",
+      ],
+      [
+        { LLM_STREAM_IDLE_TIMEOUT_MS: "300001", LLM_API_KEY: credential },
+        "LLM_STREAM_IDLE_TIMEOUT_MS",
+      ],
     ];
 
     for (const [env, expectedSetting] of cases) {

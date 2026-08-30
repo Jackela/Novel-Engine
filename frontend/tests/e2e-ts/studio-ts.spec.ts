@@ -39,15 +39,15 @@ test("owner setup, editing, AI proposal accept, search, and deep links", async (
   await expect(page).toHaveURL(/\/projects$/);
 
   await createProject(page, "The Glass Harbor");
-  const saveStatus = page.locator(".studio-editor .save-state");
+  const saveStatus = page.locator(".studio-editor .editor__save-state");
   await expect(saveStatus).toHaveText(/saved/i);
 
   // Volume hierarchy (#312): the manuscript navigation groups chapters under
   // volume headers, and a fresh project starts with its default volume.
-  const chapterGroup = page.locator(".document-group", {
+  const chapterGroup = page.locator(".studio-nav__document-group", {
     has: page.getByRole("button", { name: "Add Manuscript" }),
   });
-  await expect(chapterGroup.locator(".volume-header")).toHaveText("Default Volume");
+  await expect(chapterGroup.locator(".studio-nav__volume-header")).toHaveText("Default Volume");
   await expect(
     chapterGroup.locator(".volume-group .document-row", {
       hasText: "Chapter 1",
@@ -128,7 +128,7 @@ test("owner login issues novel_engine cookies and the editor renders the real er
   await editor.click();
   await first.keyboard.press("ControlOrMeta+a");
   await first.keyboard.type("First tab draft.");
-  await expect(first.locator(".studio-editor .save-state")).toHaveText(/saved/i, {
+  await expect(first.locator(".studio-editor .editor__save-state")).toHaveText(/saved/i, {
     timeout: 10_000,
   });
 
@@ -141,7 +141,7 @@ test("owner login issues novel_engine cookies and the editor renders the real er
   await second.locator(".cm-content").click();
   await second.keyboard.press("ControlOrMeta+a");
   await second.keyboard.type("Second tab wins.");
-  await expect(second.locator(".studio-editor .save-state")).toHaveText(/saved/i, {
+  await expect(second.locator(".studio-editor .editor__save-state")).toHaveText(/saved/i, {
     timeout: 10_000,
   });
 
@@ -156,7 +156,7 @@ test("owner login issues novel_engine cookies and the editor renders the real er
 
   // Conflict recovery: load latest resolves onto the newest revision.
   await first.getByRole("button", { name: "Load latest (discard local)" }).click();
-  await expect(first.locator(".studio-editor .save-state")).toHaveText(/saved/i, {
+  await expect(first.locator(".studio-editor .editor__save-state")).toHaveText(/saved/i, {
     timeout: 10_000,
   });
   await expect(first.locator(".cm-content")).toContainText("Second tab wins.");

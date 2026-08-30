@@ -1,3 +1,4 @@
+/* BEM-ish only: feature-prefixed blocks with block__element--modifier; no legacy flat classes (#442). */
 .library {
   min-height: 100vh;
   background: var(--canvas);
@@ -16,7 +17,7 @@
   align-items: center;
   gap: 8px;
 }
-.session-expiry {
+.library__session-expiry {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -42,7 +43,7 @@
   gap: 28px;
   align-items: start;
 }
-.project-create {
+.library-create {
   background: var(--surface);
   border: 1px solid #dfe2e3;
   border-radius: 7px;
@@ -50,7 +51,7 @@
   display: grid;
   gap: 15px;
 }
-.project-create__icon {
+.library-create__icon {
   width: 42px;
   height: 42px;
   display: grid;
@@ -59,14 +60,14 @@
   color: var(--teal-strong);
   background: #e8f7f5;
 }
-.project-create h2 {
+.library-create h2 {
   margin: 0;
   font-size: 18px;
 }
-.project-create textarea {
+.library-create textarea {
   resize: vertical;
 }
-.project-row {
+.library__project-row {
   width: 100%;
   min-height: 88px;
   background: var(--surface);
@@ -80,27 +81,27 @@
   align-items: center;
   margin-bottom: 10px;
 }
-.project-row:hover {
+.library__project-row:hover {
   border-color: #8dbab6;
 }
-.project-row > svg {
+.library__project-row > svg {
   color: var(--teal-strong);
   width: 22px;
   height: 22px;
 }
-.project-row span {
+.library__project-row span {
   min-width: 0;
   display: grid;
   gap: 6px;
 }
-.project-row strong,
-.project-row small {
+.library__project-row strong,
+.library__project-row small {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.project-row small,
-.project-row time {
+.library__project-row small,
+.library__project-row time {
   color: #626a6b;
   font-size: 12px;
 }

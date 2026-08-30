@@ -170,7 +170,7 @@ describe("Studio split components", () => {
     expect(tabs).toHaveLength(0);
     // #411: no orphan tabpanels without a tablist in the settings state.
     expect(container.querySelectorAll('[role="tabpanel"]')).toHaveLength(0);
-    expect(container.querySelector("form.inspector-content")).not.toBeNull();
+    expect(container.querySelector("form.studio-inspector__panel")).not.toBeNull();
   });
 
   it("keeps topbar navigation focused on returning to the project library", () => {
@@ -181,6 +181,6 @@ describe("Studio split components", () => {
     expect(container.textContent).toContain("Clockwork Harbor");
     click(container.querySelector('button[aria-label="Back to projects"]'));
     expect(back).toHaveBeenCalledTimes(1);
-    expect(container.querySelector(".export-menu")).toBeNull();
+    expect(container.querySelector(".editor-export-menu")).toBeNull();
   });
 });

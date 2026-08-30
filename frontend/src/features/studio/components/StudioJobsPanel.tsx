@@ -20,8 +20,8 @@ export function StudioJobsPanel({
   const isBusy = isLoading || retryingJobId !== null;
 
   return (
-    <div aria-busy={isBusy} className="inspector-content">
-      <header className="inspector-heading">
+    <div aria-busy={isBusy} className="studio-inspector__panel">
+      <header className="studio-inspector__heading">
         <div>
           <h2>Jobs</h2>
           <p>Durable operation status.</p>
@@ -29,7 +29,7 @@ export function StudioJobsPanel({
         <button
           aria-busy={isLoading}
           aria-label={isLoading ? "Refreshing jobs" : "Refresh jobs"}
-          className="icon-command"
+          className="ui-command--icon"
           disabled={isBusy}
           onClick={onLoadJobs}
           title="Refresh jobs"
@@ -39,7 +39,7 @@ export function StudioJobsPanel({
         </button>
       </header>
       {jobs.length ? (
-        <div className="revision-list">
+        <div className="studio-inspector__revision-list">
           {jobs.map((job) => (
             <article key={job.id}>
               <div>
@@ -58,7 +58,7 @@ export function StudioJobsPanel({
                       ? `Retrying ${job.operation}`
                       : `Retry ${job.operation}`
                   }
-                  className="icon-command"
+                  className="ui-command--icon"
                   disabled={isBusy}
                   onClick={() => onRetryJob(job.id)}
                   title="Retry job"
@@ -71,7 +71,7 @@ export function StudioJobsPanel({
           ))}
         </div>
       ) : (
-        <p className="empty-panel">No jobs yet.</p>
+        <p className="studio-inspector__empty">No jobs yet.</p>
       )}
     </div>
   );

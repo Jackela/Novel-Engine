@@ -89,6 +89,20 @@ describe("Studio query hooks", () => {
     expect(harness.result().error).toBeNull();
   });
 
+  it("applies consecutive setSearch updates against the latest value", () => {
+    // Given
+    const harness = renderQueryHooks();
+
+    // When: both updates land in one batch, before any re-render commits.
+    act(() => {
+      harness.result().search.setSearch("clock");
+      harness.result().search.setSearch((current) => `${current}-work`);
+    });
+
+    // Then: the functional update sees "clock", not the initial "".
+    expect(harness.result().search.search).toBe("clock-work");
+  });
+
   it("skips whitespace-only searches and clears prior results", async () => {
     // Given
     vi.mocked(api.search).mockResolvedValue({

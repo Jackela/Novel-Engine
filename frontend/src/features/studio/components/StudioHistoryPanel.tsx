@@ -18,10 +18,10 @@ export function StudioHistoryPanel({
   const isBusy = restoringRevisionId !== null;
 
   return (
-    <div aria-busy={isBusy} className="inspector-content">
+    <div aria-busy={isBusy} className="studio-inspector__panel">
       <h2>Revision history</h2>
       <p>Restoring creates a new revision and preserves the chain.</p>
-      <div className="revision-list">
+      <div className="studio-inspector__revision-list">
         {revisions.map((revision) => (
           <article key={revision.id}>
             <div>
@@ -39,7 +39,7 @@ export function StudioHistoryPanel({
                     ? `Restoring revision ${revision.id.slice(0, 8)}`
                     : `Restore revision ${revision.id.slice(0, 8)}`
                 }
-                className="icon-command"
+                className="ui-command--icon"
                 disabled={isBusy}
                 onClick={() => onRestoreRevision(revision.id)}
                 title="Restore revision"
@@ -48,7 +48,7 @@ export function StudioHistoryPanel({
                 <RotateCcw />
               </button>
             ) : (
-              <span className="current-revision">Current</span>
+              <span className="studio-inspector__current-revision">Current</span>
             )}
           </article>
         ))}

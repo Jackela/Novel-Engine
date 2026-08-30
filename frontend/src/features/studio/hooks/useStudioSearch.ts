@@ -1,5 +1,5 @@
 import type { Dispatch, FormEvent, SetStateAction } from "react";
-import { useCallback, useReducer } from "react";
+import { useCallback, useReducer, useRef } from "react";
 
 import { api } from "@/app/api";
 
@@ -51,34 +51,35 @@ export function useStudioSearch(
     isSearching: false,
     searchResults: [],
   });
+  // #446: mirrors the latest dispatched `search` so functional updates and
+  // submits resolve against the committed value instead of the render-phase
+  // closure (which goes stale when several updates land in one batch).
+  const searchRef = useRef(search);
 
-  const setSearch = useCallback<Dispatch<SetStateAction<string>>>(
-    (nextSearch) => {
-      dispatch({
-        type: "searchChanged",
-        search: typeof nextSearch === "function" ? nextSearch(search) : nextSearch,
-      });
-    },
-    [search],
-  );
+  const setSearch = useCallback<Dispatch<SetStateAction<string>>>((nextSearch) => {
+    const resolved = typeof nextSearch === "function" ? nextSearch(searchRef.current) : nextSearch;
+    searchRef.current = resolved;
+    dispatch({ type: "searchChanged", search: resolved });
+  }, []);
 
   const runSearch = useCallback(
     async (event: FormEvent) => {
       event.preventDefault();
-      if (!search.trim()) {
-        dispatch({ type: "searchChanged", search });
+      const query = searchRef.current;
+      if (!query.trim()) {
+        dispatch({ type: "searchChanged", search: query });
         return;
       }
       dispatch({ type: "searchStarted" });
       try {
-        const response = await api.search(projectId, search);
+        const response = await api.search(projectId, query);
         dispatch({ type: "searchSucceeded", results: response.results });
       } catch (reason) {
         setError(toErrorMessage(reason, "Search failed."));
         dispatch({ type: "searchFailed" });
       }
     },
-    [projectId, search, setError],
+    [projectId, setError],
   );
 
   return { search, setSearch, isSearching, searchResults, runSearch };

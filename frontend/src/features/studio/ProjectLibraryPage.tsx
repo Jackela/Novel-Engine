@@ -51,13 +51,13 @@ export function ProjectLibraryPage() {
   return (
     <main className="library">
       <header className="library__header">
-        <div className="brand">
+        <div className="ui-brand">
           <BookOpen aria-hidden="true" /> Novel Engine
         </div>
         <div className="library__header-actions">
           <button
             aria-label="Sign out"
-            className="icon-command"
+            className="ui-command--icon"
             onClick={() => void logout()}
             title="Sign out"
             type="button"
@@ -75,8 +75,8 @@ export function ProjectLibraryPage() {
           </div>
         </div>
         <div className="library__grid">
-          <form className="project-create" onSubmit={createProject}>
-            <div className="project-create__icon">
+          <form className="library-create" onSubmit={createProject}>
+            <div className="library-create__icon">
               <Plus />
             </div>
             <h2>New project</h2>
@@ -92,14 +92,14 @@ export function ProjectLibraryPage() {
                 rows={4}
               />
             </label>
-            {error ? <p className="form-error">{error}</p> : null}
-            <button className="command command--primary" type="submit">
+            {error ? <p className="ui-form-error">{error}</p> : null}
+            <button className="ui-command ui-command--primary" type="submit">
               Create project
             </button>
           </form>
           {projects.map((project) => (
             <button
-              className="project-row"
+              className="library__project-row"
               key={project.id}
               onClick={() => navigate(`/projects/${project.id}/manuscript`)}
               type="button"

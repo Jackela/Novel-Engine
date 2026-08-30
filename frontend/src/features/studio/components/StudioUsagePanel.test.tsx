@@ -81,7 +81,7 @@ describe("StudioUsagePanel", () => {
     await flush();
 
     expect(api.usage).toHaveBeenCalledWith("project-1");
-    expect(container.querySelector(".usage-table")).toBeNull();
+    expect(container.querySelector(".usage__table")).toBeNull();
     expect(container.textContent).toContain("No usage recorded yet.");
     expect(container.textContent).toContain("0");
   });
@@ -91,14 +91,14 @@ describe("StudioUsagePanel", () => {
     const container = renderUsagePanel(true);
     await flush();
 
-    const cards = Array.from(container.querySelectorAll(".usage-total-card"));
+    const cards = Array.from(container.querySelectorAll(".usage__total-card"));
     expect(cards.map((card) => card.textContent)).toEqual([
       "1,234Requests",
       "120,000Prompt tokens",
       "4,500Completion tokens",
     ]);
 
-    const rows = Array.from(container.querySelectorAll(".usage-table tbody tr"));
+    const rows = Array.from(container.querySelectorAll(".usage__table tbody tr"));
     expect(rows).toHaveLength(2);
     expect(rows[0].textContent).toContain("qwen-max");
     expect(rows[0].textContent).toContain("100,000");
@@ -111,21 +111,21 @@ describe("StudioUsagePanel", () => {
     const container = renderUsagePanel(true);
     await flush();
 
-    const daily = container.querySelector(".usage-daily");
+    const daily = container.querySelector(".usage__daily");
     expect(daily).not.toBeNull();
     if (daily === null) throw new Error("expected daily section");
     expect(daily?.querySelector("h3")?.textContent).toBe("Last 30 days");
-    const dailyRows = Array.from(daily?.querySelectorAll(".usage-daily-row") ?? []);
+    const dailyRows = Array.from(daily?.querySelectorAll(".usage__daily-row") ?? []);
     expect(dailyRows).toHaveLength(30);
     // Today's row (last) carries the only usage; bar width is set inline.
     const todayRow = dailyRows[dailyRows.length - 1];
     expect(todayRow.textContent).toContain("400");
-    const bar = todayRow.querySelector<HTMLElement>(".usage-daily-bar");
+    const bar = todayRow.querySelector<HTMLElement>(".usage__daily-bar");
     expect(bar?.style.width).toBe("100%");
-    const zeroBar = dailyRows[0]?.querySelector<HTMLElement>(".usage-daily-bar");
+    const zeroBar = dailyRows[0]?.querySelector<HTMLElement>(".usage__daily-bar");
     expect(zeroBar?.style.width).toBe("0%");
     // The daily section sits above the per-model table.
-    const table = container.querySelector(".usage-table");
+    const table = container.querySelector(".usage__table");
     expect(table).not.toBeNull();
     if (table === null) throw new Error("expected usage table");
     expect(daily.compareDocumentPosition(table) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0);
@@ -135,7 +135,7 @@ describe("StudioUsagePanel", () => {
     const container = renderUsagePanel(true);
     await flush();
 
-    expect(container.querySelector(".usage-daily")).toBeNull();
+    expect(container.querySelector(".usage__daily")).toBeNull();
     expect(container.textContent).toContain("No usage recorded yet.");
   });
 
