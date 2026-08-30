@@ -1,4 +1,10 @@
 import { InvalidOperationError } from "../../../shared/domain/exceptions.js";
+import type { DocumentKind, RevisionSource } from "../domain/kinds.js";
+import type { DocumentPayload, MatchResultPayload } from "./payload_schemas/document.js";
+import type { JobPayload } from "./payload_schemas/job.js";
+import type { ProjectPayload } from "./payload_schemas/project.js";
+import type { RevisionPayload } from "./payload_schemas/revision.js";
+import type { VolumePayload } from "./payload_schemas/volume.js";
 import type {
   DocumentMatchRecord,
   DocumentWithCurrent,
@@ -6,6 +12,13 @@ import type {
   RevisionRecord,
 } from "./ports/studio_store.js";
 import type { VolumeRecord } from "./ports/volume_store.js";
+
+/**
+ * Payload builders for the studio HTTP surfaces. Return types are `Static`
+ * projections of the TypeBox payload SSOT (`payload_schemas/`), which the
+ * interface layer declares verbatim as its response schemas — builder and
+ * schema are one shape by construction (#433).
+ */
 
 /** Mirror of the Python authority's \b[\w'-]+\b word counter (UNICODE-aware). */
 export function wordCount(markdown: string): number {
@@ -48,8 +61,8 @@ export function projectPayload(
   project: ProjectPayloadInput,
   documents?: DocumentWithCurrent[],
   volumes?: VolumeRecord[],
-): Record<string, unknown> {
-  const payload: Record<string, unknown> = {
+): ProjectPayload {
+  const payload: ProjectPayload = {
     id: project.id,
     title: project.title,
     description: project.description,
@@ -67,7 +80,7 @@ export function projectPayload(
   return payload;
 }
 
-export function documentPayload(document: DocumentWithCurrent): Record<string, unknown> {
+export function documentPayload(document: DocumentWithCurrent): DocumentPayload {
   const revision = document.currentRevision;
   if (revision === null) {
     throw new InvalidOperationError("Document has no current revision.");
@@ -75,7 +88,9 @@ export function documentPayload(document: DocumentWithCurrent): Record<string, u
   return {
     id: document.id,
     project_id: document.projectId,
-    kind: document.kind,
+    // Store rows carry write-validated enum values; the payload narrows to
+    // the closed sets declared in `domain/kinds.ts`.
+    kind: document.kind as DocumentKind,
     title: document.title,
     position: document.position,
     volume_id: document.volumeId,
@@ -83,7 +98,7 @@ export function documentPayload(document: DocumentWithCurrent): Record<string, u
     current_revision_id: revision.id,
     content_markdown: revision.contentMarkdown,
     metadata: safeLoadJson(revision.metadataJson),
-    revision_source: revision.source,
+    revision_source: revision.source as RevisionSource,
     word_count: wordCount(revision.contentMarkdown),
     created_at: iso(document.createdAt),
     updated_at: iso(document.updatedAt),
@@ -91,7 +106,7 @@ export function documentPayload(document: DocumentWithCurrent): Record<string, u
 }
 
 /** The ordered list-level volume shape handed to every HTTP surface. */
-export function volumePayload(volume: VolumeRecord): Record<string, unknown> {
+export function volumePayload(volume: VolumeRecord): VolumePayload {
   return {
     id: volume.id,
     project_id: volume.projectId,
@@ -103,7 +118,7 @@ export function volumePayload(volume: VolumeRecord): Record<string, unknown> {
 }
 
 /** One full-text hit: identifier, title, and a plain-text excerpt. */
-export function documentMatchPayload(match: DocumentMatchRecord): Record<string, unknown> {
+export function documentMatchPayload(match: DocumentMatchRecord): MatchResultPayload {
   return {
     document_id: match.documentId,
     title: match.title,
@@ -111,7 +126,7 @@ export function documentMatchPayload(match: DocumentMatchRecord): Record<string,
   };
 }
 
-export function revisionPayload(revision: RevisionRecord): Record<string, unknown> {
+export function revisionPayload(revision: RevisionRecord): RevisionPayload {
   return {
     id: revision.id,
     document_id: revision.documentId,
@@ -119,13 +134,13 @@ export function revisionPayload(revision: RevisionRecord): Record<string, unknow
     revision_number: revision.revisionNumber,
     content_markdown: revision.contentMarkdown,
     metadata: safeLoadJson(revision.metadataJson),
-    source: revision.source,
+    source: revision.source as RevisionSource,
     word_count: wordCount(revision.contentMarkdown),
     created_at: iso(revision.createdAt),
   };
 }
 
-export function jobPayload(job: JobRecord): Record<string, unknown> {
+export function jobPayload(job: JobRecord): JobPayload {
   return {
     id: job.id,
     project_id: job.projectId,

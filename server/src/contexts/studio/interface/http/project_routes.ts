@@ -17,7 +17,7 @@ import {
 import {
   matchListResponseSchema,
   projectDetailResponseSchema,
-  projectResponseSchema,
+  projectListResponseSchema,
 } from "./studio_schemas.js";
 
 export interface StudioRoutesOptions {
@@ -38,13 +38,6 @@ export function requireServices(options: StudioRoutesOptions): StudioServices {
   }
   return options.services;
 }
-
-const projectListResponseSchema = {
-  type: "object",
-  additionalProperties: true,
-  properties: { projects: { type: "array", items: projectResponseSchema } },
-  required: ["projects"],
-} as const;
 
 /** Project surface: create with seeding, list (updated_at DESC), detail, delete. */
 export const projectRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fastify, options) => {

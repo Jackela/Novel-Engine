@@ -1,25 +1,35 @@
 /**
- * Payload drift guard (#426): every builder in `payloads.ts` is validated
- * against the response schema its HTTP surface declares. Response schemas are
- * read directly from the current route schema modules (no snapshot baseline):
- * a builder that drops a field, retypes one, or grows an undeclared key turns
- * red here instead of drifting silently through fast-json-stringify, which
- * only serializes responses and never validates them.
+ * Payload drift guard (#426, #433): every builder in `payloads.ts` is
+ * validated against the TypeBox payload SSOT its HTTP surface declares
+ * (`application/payload_schemas/`). Builders type their output with `Static`
+ * of these very schemas, so compile-time drift is already impossible; this
+ * guard pins the runtime half — a fixture-built payload must validate against
+ * the same schema object the routes serialize with. Fast-json-stringify only
+ * serializes and never validates, so this test is where drift would turn red.
  *
  * Strictness contract:
- * - Missing fields and mistyped fields fail via AJV (no coercion).
+ * - Resource objects are strict (`additionalProperties: false`): extra keys
+ *   fail via AJV itself, alongside missing/mistyped fields (no coercion).
  * - OpenAPI-3.0 `nullable: true` is mapped to a draft-07 `["<type>", "null"]`
  *   union before compiling (see `toAjvSchema`); dropping `nullable` from a
  *   schema therefore also turns red via the null-bearing fixtures.
- * - `additionalProperties` keeps its current per-schema behavior; extra keys
- *   are caught by the explicit key-set guard `assertKeysDeclared`, because the
- *   hand-written resource schemas intentionally declare
- *   `additionalProperties: true` for forward compatibility.
+ * - Free-form stored JSON (metadata/settings/request/result/details) keeps
+ *   `additionalProperties: true` and stays exempt from the extra-key check.
  */
 
 import { Ajv, type ValidateFunction } from "ajv";
 import { describe, expect, it } from "vitest";
-
+import {
+  documentPayloadSchema,
+  matchResultPayloadSchema,
+} from "../../src/contexts/studio/application/payload_schemas/document.js";
+import { jobPayloadSchema } from "../../src/contexts/studio/application/payload_schemas/job.js";
+import {
+  projectDetailPayloadSchema,
+  projectPayloadSchema,
+} from "../../src/contexts/studio/application/payload_schemas/project.js";
+import { revisionPayloadSchema } from "../../src/contexts/studio/application/payload_schemas/revision.js";
+import { volumePayloadSchema } from "../../src/contexts/studio/application/payload_schemas/volume.js";
 import {
   documentMatchPayload,
   documentPayload,
@@ -35,15 +45,6 @@ import type {
   RevisionRecord,
 } from "../../src/contexts/studio/application/ports/studio_store.js";
 import type { VolumeRecord } from "../../src/contexts/studio/application/ports/volume_store.js";
-import { jobResponseSchema } from "../../src/contexts/studio/interface/http/job_schemas.js";
-import {
-  documentResponseSchema,
-  matchResultSchema,
-  projectDetailResponseSchema,
-  projectResponseSchema,
-  revisionResponseSchema,
-} from "../../src/contexts/studio/interface/http/studio_schemas.js";
-import { volumeResponseSchema } from "../../src/contexts/studio/interface/http/volume_schemas.js";
 
 type SchemaNode = Record<string, unknown>;
 
@@ -150,33 +151,7 @@ function toAjvSchema(node: unknown): unknown {
 const ajv = new Ajv({ allErrors: true });
 const compiled = new WeakMap<SchemaNode, ValidateFunction>();
 
-/**
- * Extra-key guard: every emitted key must be declared in the schema's
- * `properties` (recursing through arrays and nested objects); objects without
- * declared properties (settings/metadata/request/result) stay free-form.
- */
-function assertKeysDeclared(value: unknown, schema: SchemaNode, path: string): void {
-  if (Array.isArray(value)) {
-    const items = schema.items as SchemaNode | undefined;
-    if (items === undefined) return;
-    value.forEach((item, index) => {
-      assertKeysDeclared(item, items, `${path}[${index}]`);
-    });
-    return;
-  }
-  if (value === null || typeof value !== "object") return;
-  const properties = schema.properties as Record<string, SchemaNode> | undefined;
-  if (properties === undefined) return;
-  for (const [key, child] of Object.entries(value)) {
-    const childSchema = properties[key];
-    if (childSchema === undefined) {
-      throw new Error(`Undeclared payload key at ${path}.${key} (drift against schema)`);
-    }
-    assertKeysDeclared(child, childSchema, `${path}.${key}`);
-  }
-}
-
-/** Compile (once per schema) and run the AJV type/required/enum checks. */
+/** Compile (once per schema) and run the AJV strictness checks. */
 function validateAgainstSchema(
   payload: Record<string, unknown>,
   schema: SchemaNode,
@@ -187,9 +162,8 @@ function validateAgainstSchema(
   return validate(payload) ? null : validate.errors;
 }
 
-/** Full strict validation: declared keys plus AJV type/required/enum checks. */
+/** Full strict validation of a builder payload against its SSOT schema. */
 function assertConforms(payload: Record<string, unknown>, schema: SchemaNode): void {
-  assertKeysDeclared(payload, schema, "$");
   const errors = validateAgainstSchema(payload, schema);
   if (errors !== null && errors !== undefined) {
     throw new Error(ajv.errorsText(errors, { dataVar: "payload" }));
@@ -198,48 +172,48 @@ function assertConforms(payload: Record<string, unknown>, schema: SchemaNode): v
 
 const CASES: Array<{ name: string; build: () => Record<string, unknown>; schema: SchemaNode }> = [
   {
-    name: "projectPayload (list form) -> projectResponseSchema",
+    name: "projectPayload (list form) -> projectPayloadSchema",
     build: () => projectPayload(projectFixture()),
-    schema: projectResponseSchema as SchemaNode,
+    schema: projectPayloadSchema as unknown as SchemaNode,
   },
   {
-    name: "projectPayload (detail form) -> projectDetailResponseSchema",
+    name: "projectPayload (detail form) -> projectDetailPayloadSchema",
     build: () => projectPayload(projectFixture(), [documentFixture()], [volumeFixture()]),
-    schema: projectDetailResponseSchema as SchemaNode,
+    schema: projectDetailPayloadSchema as unknown as SchemaNode,
   },
   {
-    name: "documentPayload (in volume) -> documentResponseSchema",
+    name: "documentPayload (in volume) -> documentPayloadSchema",
     build: () => documentPayload(documentFixture()),
-    schema: documentResponseSchema as SchemaNode,
+    schema: documentPayloadSchema as unknown as SchemaNode,
   },
   {
-    name: "documentPayload (volumeless nulls) -> documentResponseSchema",
+    name: "documentPayload (volumeless nulls) -> documentPayloadSchema",
     build: () => documentPayload({ ...documentFixture(), volumeId: null, beatRef: null }),
-    schema: documentResponseSchema as SchemaNode,
+    schema: documentPayloadSchema as unknown as SchemaNode,
   },
   {
-    name: "volumePayload -> volumeResponseSchema",
+    name: "volumePayload -> volumePayloadSchema",
     build: () => volumePayload(volumeFixture()),
-    schema: volumeResponseSchema as SchemaNode,
+    schema: volumePayloadSchema as unknown as SchemaNode,
   },
   {
-    name: "documentMatchPayload -> matchResultSchema",
+    name: "documentMatchPayload -> matchResultPayloadSchema",
     build: () => documentMatchPayload(matchFixture()),
-    schema: matchResultSchema as SchemaNode,
+    schema: matchResultPayloadSchema as unknown as SchemaNode,
   },
   {
-    name: "revisionPayload -> revisionResponseSchema",
+    name: "revisionPayload -> revisionPayloadSchema",
     build: () => revisionPayload(revisionFixture()),
-    schema: revisionResponseSchema as SchemaNode,
+    schema: revisionPayloadSchema as unknown as SchemaNode,
   },
   {
-    name: "jobPayload -> jobResponseSchema",
+    name: "jobPayload -> jobPayloadSchema",
     build: () => jobPayload(jobFixture()),
-    schema: jobResponseSchema as SchemaNode,
+    schema: jobPayloadSchema as unknown as SchemaNode,
   },
 ];
 
-describe("payload builders conform to their response schemas", () => {
+describe("payload builders conform to their payload SSOT schemas", () => {
   it.each(CASES)("validates $name", ({ build, schema }) => {
     expect(() => assertConforms(build(), schema)).not.toThrow();
   });
@@ -256,7 +230,7 @@ function firstRequired(schema: SchemaNode): string {
 describe("payload drift guard trips on every drift class", () => {
   it.each(CASES)("rejects an undeclared extra field in $name", ({ build, schema }) => {
     const drifted = { ...build(), drift_extra_field: true };
-    expect(() => assertConforms(drifted, schema)).toThrow(/Undeclared payload key/);
+    expect(() => assertConforms(drifted, schema)).toThrow(/must NOT have additional properties/);
   });
 
   it.each(CASES)("rejects a missing required field in $name", ({ build, schema }) => {
