@@ -13,7 +13,18 @@ const frontendRoot = dirname(fileURLToPath(new URL(".", import.meta.url)));
 const projectRoot = join(frontendRoot, "..");
 const snapshotPath = join(projectRoot, "server", "qa-baselines", "openapi.current.json");
 const committedPath = join(frontendRoot, "generated", "api-types.ts");
-const cliPath = join(frontendRoot, "node_modules", "openapi-typescript", "bin", "cli.js");
+// openapi-typescript runs from the tools/api-types container: it crashes on
+// typescript@7 (ts.factory undefined — no JS API yet, upstream issue
+// openapi-ts/openapi-typescript#2841), so the container pins typescript@6.
+const cliPath = join(
+  projectRoot,
+  "tools",
+  "api-types",
+  "node_modules",
+  "openapi-typescript",
+  "bin",
+  "cli.js",
+);
 
 function fail(message) {
   console.error(`[api-types-drift] ${message}`);
