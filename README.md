@@ -1,6 +1,6 @@
 # Novel Engine
 
-Novel Engine `0.5.0` is a self-hosted single-author novel writing IDE. SQLite is
+Novel Engine `0.6.0` is a self-hosted single-author novel writing IDE. SQLite is
 the content authority and Markdown is the document syntax. One Node.js process
 serves the Studio SPA and the JSON API.
 
