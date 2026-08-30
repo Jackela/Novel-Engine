@@ -81,11 +81,14 @@ module.exports = {
     },
   ],
   options: {
+    // TypeScript 7 ships no JS compiler API yet (that lands with typescript@7.1),
+    // so dependency-cruiser's tsc parser range (>=2 <7) would silently skip every
+    // TS source. The swc parser (>=1 <2) parses TS itself and keeps the gate
+    // meaningful; server/src uses no tsconfig path aliases, so dropping the
+    // tsConfig option loses nothing.
+    parser: "swc",
     doNotFollow: {
       path: "node_modules",
-    },
-    tsConfig: {
-      fileName: "tsconfig.json",
     },
     enhancedResolveOptions: {
       extensions: [".ts", ".mts", ".cts", ".js", ".mjs", ".cjs"],
