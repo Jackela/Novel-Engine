@@ -2,6 +2,7 @@ import type { TypeBoxTypeProvider } from "@fastify/type-provider-typebox";
 import type { FastifyPluginAsync } from "fastify";
 import { principalGuard, requirePrincipal } from "../../../../shared/interface/http/auth_guard.js";
 import { errorEnvelopeResponse } from "../../../../shared/interface/http/error_envelope.js";
+import { loreAliasPayload } from "../../application/payloads.js";
 import { loreAliasResponseSchema, loreAliasWriteSchema } from "./lore_schemas.js";
 import { requireServices, type StudioRoutesOptions } from "./project_routes.js";
 import { withStudioErrors } from "./studio_error_mapping.js";
@@ -31,13 +32,15 @@ export const loreRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fastif
       },
     },
     async (request) =>
-      withStudioErrors(() => ({
-        aliases: requireServices(options).lore.listDocumentLoreAliases(
-          requirePrincipal(request),
-          request.params.projectId,
-          request.params.documentId,
+      withStudioErrors(() =>
+        loreAliasPayload(
+          requireServices(options).lore.listDocumentLoreAliases(
+            requirePrincipal(request),
+            request.params.projectId,
+            request.params.documentId,
+          ),
         ),
-      })),
+      ),
   );
 
   app.put(

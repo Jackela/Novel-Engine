@@ -7,6 +7,7 @@ import {
 import type { Principal } from "../../../shared/application/ports/auth.js";
 import { InvalidOperationError } from "../../../shared/domain/exceptions.js";
 import type { InFlightOperationGuard } from "./operation_in_flight.js";
+import type { ProposalStreamFramePayload } from "./payload_schemas/proposal_frame.js";
 import { jobPayload } from "./payloads.js";
 import type { StudioStore } from "./ports/studio_store.js";
 import { scopeForPrincipal } from "./ports/studio_store.js";
@@ -20,17 +21,13 @@ import {
 } from "./proposal_landing.js";
 import { buildProposalSeed, validateProposalRequest } from "./proposal_pipeline.js";
 
-/** The terminal frame vocabulary of a streamed proposal (#308). */
-export type ProposalStreamFrame =
-  | { readonly type: "delta"; readonly text: string }
-  | { readonly type: "done"; readonly job: Record<string, unknown> }
-  | { readonly type: "error"; readonly error: ProposalStreamError };
-
-/** In-stream failures carry the failed-job message; codes stay closed. */
-export interface ProposalStreamError {
-  readonly code: "PROVIDER_FAILED";
-  readonly message: string;
-}
+/**
+ * The terminal frame vocabulary of a streamed proposal (#308), declared as
+ * the TypeBox SSE-frame SSOT in `payload_schemas/proposal_frame.ts` (#440):
+ * the generator types its yields with the same `Static` shape the drift
+ * guard pins and the HTTP surface serializes verbatim.
+ */
+export type ProposalStreamFrame = ProposalStreamFramePayload;
 
 export interface ProposalStreamDeps {
   readonly store: StudioStore;

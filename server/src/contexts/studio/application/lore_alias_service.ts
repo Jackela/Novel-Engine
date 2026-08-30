@@ -1,5 +1,7 @@
 import type { Principal } from "../../../shared/application/ports/auth.js";
 import { normalizeLoreAliases, parseLoreAliases } from "./lorebook.js";
+import type { LoreAliasPayload } from "./payload_schemas/lore.js";
+import { loreAliasPayload } from "./payloads.js";
 import type { StudioStore } from "./ports/studio_store.js";
 import { scopeForPrincipal } from "./ports/studio_store.js";
 
@@ -30,12 +32,12 @@ export class LoreAliasService {
     projectId: string,
     documentId: string,
     input: { aliases: readonly string[] },
-  ): { aliases: string[] } {
+  ): LoreAliasPayload {
     const normalized = normalizeLoreAliases(input.aliases);
     this.store.setLoreAliases(scopeForPrincipal(principal), projectId, documentId, {
       aliases: normalized,
       now: this.now(),
     });
-    return { aliases: normalized };
+    return loreAliasPayload(normalized);
   }
 }
