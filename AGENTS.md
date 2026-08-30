@@ -67,7 +67,7 @@ Generated/runtime trees such as caches, `htmlcov/`, `frontend/coverage/`, `front
 - Application orchestrates domain behavior through ports; it must not import infrastructure or interface.
 - Infrastructure implements ports and owns Drizzle, files, and external transports.
 - Interface owns HTTP/request/response concerns and must not import infrastructure directly.
-- Contexts do not import `src.apps`; `src.shared` does not import bounded contexts. The `ai` context has its own domain/application/interface/infrastructure layers, but code outside `ai` (except the composition root) may import it only through its application ports, and `ai` never imports `studio`.
+- Contexts do not import `src.apps`; `src.shared` does not import bounded contexts. The `ai` context has its own application/interface/infrastructure layers, but code outside `ai` (except the composition root) may import it only through its application ports, and `ai` never imports `studio`.
 - `server/.dependency-cruiser.cjs` is executable policy, not documentation.
 
 ## ABSOLUTE FORBIDDEN ZONES
@@ -98,8 +98,8 @@ Require separate human confirmation before changing root package/lock files, `RE
 - Revisions and snapshots are immutable references. Exports must write from the exact snapshot revision set.
 - The OpenAPI baseline (`server/qa-baselines/openapi.current.json`) regenerates deliberately via `pnpm --dir server openapi:snapshot`; route-adding changes must regenerate it.
 - Frontend requests go through `frontend/src/app/api.ts`; keep CSRF, credentials, abort, and error-envelope semantics intact.
-- Product identity and API shape are enforced by SSOT, repo-hygiene, file-size, migration-channel, OpenAPI snapshot, and OpenSpec gates.
-- Migrations generate only through `pnpm --dir server db:generate`; never hand-edit `server/drizzle/meta/*`.
+- Product identity and API shape are enforced by SSOT, repo-hygiene, file-size, migration-channel, llms-txt, OpenAPI snapshot, and OpenSpec gates.
+- Migrations generate only through `pnpm --dir server db:generate --name <semantic-slug>`; drizzle-kit splices the name verbatim into `NNNN_<slug>.sql` (it does not normalize it, so pass a kebab-case semantic name instead of its random codename). Never hand-edit `server/drizzle/meta/*`.
 
 ## WORKFLOW CONSTRAINTS
 
