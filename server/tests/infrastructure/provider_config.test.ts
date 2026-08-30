@@ -33,6 +33,8 @@ describe("provider configuration parser", () => {
       timeoutSeconds: 30,
       retryAttempts: 3,
       retryDelayMs: 1_000,
+      streamFirstByteTimeoutMs: 30_000,
+      streamIdleTimeoutMs: 60_000,
     });
   });
 
@@ -55,6 +57,8 @@ describe("provider configuration parser", () => {
           LLM_TIMEOUT: " ",
           LLM_RETRY_ATTEMPTS: " ",
           LLM_RETRY_DELAY: " ",
+          LLM_STREAM_FIRST_BYTE_TIMEOUT_MS: " ",
+          LLM_STREAM_IDLE_TIMEOUT_MS: " ",
         }),
       ),
     ).toMatchObject({
@@ -63,6 +67,8 @@ describe("provider configuration parser", () => {
       timeoutSeconds: 30,
       retryAttempts: 3,
       retryDelayMs: 1_000,
+      streamFirstByteTimeoutMs: 30_000,
+      streamIdleTimeoutMs: 60_000,
       dashscopeApiKey: undefined,
       openaiCompatibleApiKey: undefined,
     });
@@ -79,6 +85,14 @@ describe("provider configuration parser", () => {
       [{ LLM_RETRY_ATTEMPTS: "4" }, "LLM_RETRY_ATTEMPTS"],
       [{ LLM_RETRY_DELAY: "later" }, "LLM_RETRY_DELAY"],
       [{ LLM_RETRY_DELAY: "0.09" }, "LLM_RETRY_DELAY"],
+      [{ LLM_STREAM_FIRST_BYTE_TIMEOUT_MS: "soon" }, "LLM_STREAM_FIRST_BYTE_TIMEOUT_MS"],
+      [{ LLM_STREAM_FIRST_BYTE_TIMEOUT_MS: "0" }, "LLM_STREAM_FIRST_BYTE_TIMEOUT_MS"],
+      [{ LLM_STREAM_FIRST_BYTE_TIMEOUT_MS: "-5" }, "LLM_STREAM_FIRST_BYTE_TIMEOUT_MS"],
+      [{ LLM_STREAM_FIRST_BYTE_TIMEOUT_MS: "300001" }, "LLM_STREAM_FIRST_BYTE_TIMEOUT_MS"],
+      [{ LLM_STREAM_IDLE_TIMEOUT_MS: "soon" }, "LLM_STREAM_IDLE_TIMEOUT_MS"],
+      [{ LLM_STREAM_IDLE_TIMEOUT_MS: "0" }, "LLM_STREAM_IDLE_TIMEOUT_MS"],
+      [{ LLM_STREAM_IDLE_TIMEOUT_MS: "-5" }, "LLM_STREAM_IDLE_TIMEOUT_MS"],
+      [{ LLM_STREAM_IDLE_TIMEOUT_MS: "300001" }, "LLM_STREAM_IDLE_TIMEOUT_MS"],
     ];
 
     for (const [values, expectedSetting] of cases) {
@@ -86,5 +100,30 @@ describe("provider configuration parser", () => {
       expect(error.message).toContain(expectedSetting);
       expect(error.message).not.toContain(credential);
     }
+  });
+
+  it("parses configured stream silence budgets within the adjudicated bounds", () => {
+    expect(
+      loadLlmServerConfig(
+        environment({
+          LLM_STREAM_FIRST_BYTE_TIMEOUT_MS: "45000",
+          LLM_STREAM_IDLE_TIMEOUT_MS: "90000",
+        }),
+      ),
+    ).toMatchObject({
+      streamFirstByteTimeoutMs: 45_000,
+      streamIdleTimeoutMs: 90_000,
+    });
+    expect(
+      loadLlmServerConfig(
+        environment({
+          LLM_STREAM_FIRST_BYTE_TIMEOUT_MS: "1",
+          LLM_STREAM_IDLE_TIMEOUT_MS: "300000",
+        }),
+      ),
+    ).toMatchObject({
+      streamFirstByteTimeoutMs: 1,
+      streamIdleTimeoutMs: 300_000,
+    });
   });
 });
