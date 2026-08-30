@@ -86,7 +86,9 @@ describe("proposal stream endpoint (#308)", () => {
       );
       expect(deltas.length).toBeGreaterThan(1);
       const joined = deltas.map((frame) => frame.text).join("");
-      const job = done.job as {
+      // #440: `done.job` is now the narrowed job-payload SSOT type, so the
+      // cast routes through `unknown`; every assertion below is unchanged.
+      const job = done.job as unknown as {
         status: string;
         kind: string;
         provider: string;

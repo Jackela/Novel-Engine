@@ -80,10 +80,10 @@ describe("StudioNavigator", () => {
     expect(container.querySelector('button[aria-label="Add Manuscript"]')).not.toBeNull();
     expect(container.querySelector('button[aria-label="Move Second down"]')).not.toBeNull();
 
-    click(Array.from(container.querySelectorAll(".section-nav button"))[1]);
-    click(container.querySelector(".search-results button"));
-    click(container.querySelector(".document-group header button"));
-    click(container.querySelector(".document-order button:last-child"));
+    click(Array.from(container.querySelectorAll(".studio-nav__sections button"))[1]);
+    click(container.querySelector(".studio-nav__search-results button"));
+    click(container.querySelector(".studio-nav__document-group header button"));
+    click(container.querySelector(".document-row__order button:last-child"));
     act(() => {
       container.querySelector("form")?.dispatchEvent(new Event("submit", { bubbles: true }));
     });
@@ -128,7 +128,7 @@ describe("StudioNavigator", () => {
       />,
     );
 
-    const headers = Array.from(container.querySelectorAll(".volume-header"));
+    const headers = Array.from(container.querySelectorAll(".studio-nav__volume-header"));
     expect(headers.map((header) => header.textContent)).toEqual(["Default Volume", "Book Two"]);
 
     // Chapters land under their owning volume; the seed stays in the default

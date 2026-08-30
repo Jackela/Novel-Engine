@@ -3,8 +3,9 @@
  * import order below MUST match the original selector order in the
  * monolithic file (CSS is order-sensitive — do not reorder).
  *
- * Convention: new code uses BEM-ish class names within its feature module
- * (`block__element--modifier`); legacy flat classes are not migrated.
+ * Convention: every class is BEM-ish — feature-prefixed blocks
+ * (`feature-block`, `ui-block` for cross-feature primitives) with
+ * `block__element--modifier` descendants. No legacy flat classes remain (#442).
  */
 
 @import "./styles/base.css";

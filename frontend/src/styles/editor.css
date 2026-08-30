@@ -1,3 +1,4 @@
+/* BEM-ish only: feature-prefixed blocks with block__element--modifier; no legacy flat classes (#442). */
 .studio-editor {
   grid-area: editor;
   min-width: 0;
@@ -9,7 +10,7 @@
   overflow: hidden;
   background: var(--surface);
 }
-.editor-header {
+.editor__header {
   display: grid;
   align-items: center;
   grid-template-columns: minmax(0, 1fr) auto;
@@ -18,14 +19,14 @@
   padding: 0 24px;
   border-bottom: 1px solid #e1e4e5;
 }
-.editor-header > div {
+.editor__header > div {
   display: grid;
   align-items: center;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 12px;
   min-width: 0;
 }
-.editor-title {
+.editor__title {
   border: 0;
   outline: none;
   font-family: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
@@ -34,12 +35,12 @@
   min-width: 0;
   width: 100%;
 }
-.editor-header > span {
+.editor__header > span {
   color: #626a6b;
   font-size: 12px;
   white-space: nowrap;
 }
-.save-state {
+.editor__save-state {
   display: inline-flex;
   align-items: center;
   gap: 5px;
@@ -48,18 +49,18 @@
   text-transform: capitalize;
   white-space: nowrap;
 }
-.save-state svg {
+.editor__save-state svg {
   width: 13px;
   height: 13px;
 }
-.save-state--saved {
+.editor__save-state--saved {
   color: var(--teal-strong);
 }
-.save-state--conflict,
-.save-state--error {
+.editor__save-state--conflict,
+.editor__save-state--error {
   color: var(--danger);
 }
-.editor-toolbar {
+.editor__toolbar {
   display: flex;
   align-items: center;
   justify-content: flex-end;
@@ -68,21 +69,21 @@
   border-bottom: 1px solid #e4e7e8;
   color: #626a6b;
 }
-.editor-toolbar span {
+.editor__toolbar span {
   font-size: 11px;
   text-transform: uppercase;
 }
-.export-menu {
+.editor-export-menu {
   position: relative;
 }
-.export-menu > summary {
+.editor-export-menu > summary {
   cursor: pointer;
   list-style: none;
 }
-.export-menu > summary::-webkit-details-marker {
+.editor-export-menu > summary::-webkit-details-marker {
   display: none;
 }
-.export-menu__items {
+.editor-export-menu__items {
   position: absolute;
   z-index: 20;
   top: calc(100% + 6px);
@@ -93,7 +94,7 @@
   border-radius: 6px;
   background: var(--surface);
 }
-.export-menu__items button {
+.editor-export-menu__items button {
   min-height: 44px;
   width: 100%;
   border: 0;
@@ -102,41 +103,41 @@
   padding: 8px 10px;
   text-align: left;
 }
-.export-menu__items button:hover,
-.export-menu__items button:focus-visible {
+.editor-export-menu__items button:hover,
+.editor-export-menu__items button:focus-visible {
   background: var(--surface-hover);
 }
-.markdown-editor {
+.editor__markdown {
   flex: 1 1 auto;
   min-height: 0;
   overflow: hidden;
 }
-.markdown-editor .cm-content {
+.editor__markdown .cm-content {
   max-width: 75ch;
   margin-inline: auto;
   padding-inline: clamp(0px, 1vw, 12px);
 }
-.markdown-editor .cm-line {
+.editor__markdown .cm-line {
   max-width: 75ch;
   margin-inline: auto;
 }
-.markdown-editor .cm-editor.cm-focused {
+.editor__markdown .cm-editor.cm-focused {
   outline: 3px solid var(--teal-strong);
   outline-offset: -3px;
 }
-.editor-loading {
+.editor__loading {
   display: grid;
   min-height: 240px;
   place-items: center;
   color: #6f7778;
 }
-.empty-editor,
-.studio-loading {
+.editor__empty,
+.studio__loading {
   display: grid;
   place-items: center;
   color: #6f7778;
 }
-.studio-loading {
+.studio__loading {
   height: 100vh;
   gap: 8px;
   align-content: center;

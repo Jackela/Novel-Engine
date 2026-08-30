@@ -1,3 +1,4 @@
+/* BEM-ish only: feature-prefixed blocks with block__element--modifier; no legacy flat classes (#442). */
 .studio {
   --top: 58px;
   --bottom: 34px;
@@ -22,7 +23,7 @@
   background: var(--surface);
   z-index: 3;
 }
-.studio-project-title {
+.studio-topbar__project-title {
   min-width: 180px;
   border-left: 1px solid #e1e4e5;
   padding-left: 18px;
@@ -70,7 +71,7 @@
 .studio-nav__content {
   min-width: 0;
 }
-.studio-search {
+.studio-nav__search {
   margin: 13px 12px 8px;
   min-height: 44px;
   display: flex;
@@ -82,7 +83,7 @@
   background: var(--surface);
 }
 
-.section-nav {
+.studio-nav__sections {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 4px;
@@ -90,7 +91,7 @@
   border-bottom: 1px solid var(--line);
 }
 
-.section-nav button {
+.studio-nav__section {
   min-width: 0;
   min-height: 44px;
   padding: 7px 8px;
@@ -102,14 +103,14 @@
   cursor: pointer;
 }
 
-.section-nav button.active {
+.studio-nav__section--active {
   background: var(--teal-soft);
   color: var(--teal-strong);
 }
-.studio-search svg {
+.studio-nav__search svg {
   color: #717879;
 }
-.studio-search input {
+.studio-nav__search input {
   min-width: 0;
   width: 100%;
   border: 0;
@@ -117,12 +118,12 @@
   background: transparent;
   font-size: 13px;
 }
-.search-results {
+.studio-nav__search-results {
   padding: 6px 12px 10px;
   display: grid;
   gap: 5px;
 }
-.search-results button {
+.studio-nav__search-results button {
   min-height: 44px;
   border: 1px solid #dfe2e3;
   background: var(--surface);
@@ -130,12 +131,12 @@
   padding: 9px;
   text-align: left;
 }
-.search-results strong,
-.search-results span {
+.studio-nav__search-results strong,
+.studio-nav__search-results span {
   display: block;
   font-size: 12px;
 }
-.search-results span {
+.studio-nav__search-results span {
   color: #4f595a;
   margin-top: 3px;
 }
@@ -171,13 +172,13 @@
 .whole-book__failure {
   font-size: 12px;
 }
-.document-tree {
+.studio-nav__tree {
   padding: 3px 8px 30px;
 }
-.document-group {
+.studio-nav__document-group {
   margin-top: 14px;
 }
-.document-group header {
+.studio-nav__document-group header {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -187,28 +188,28 @@
   font-weight: 700;
   text-transform: uppercase;
 }
-.document-group header span {
+.studio-nav__document-group header span {
   display: inline-flex;
   align-items: center;
   gap: 7px;
 }
-.document-group header svg {
+.studio-nav__document-group header svg {
   width: 14px;
   height: 14px;
 }
-.document-group header button {
+.studio-nav__document-group header button {
   border: 0;
   background: transparent;
   padding: 3px;
   color: #4f595a;
 }
-.document-group header button {
+.studio-nav__document-group header button {
   min-width: 44px;
   min-height: 44px;
   display: grid;
   place-items: center;
 }
-.volume-header {
+.studio-nav__volume-header {
   margin: 8px 6px 4px;
   color: #6a7475;
   font-size: 11px;
@@ -232,23 +233,23 @@
   font-size: 13px;
 }
 
-.document-row-wrap {
+.document-row__wrap {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
 }
 
-.document-order {
+.document-row__order {
   display: flex;
   opacity: 0;
 }
 
-.document-row-wrap:hover .document-order,
-.document-row-wrap:focus-within .document-order {
+.document-row__wrap:hover .document-row__order,
+.document-row__wrap:focus-within .document-row__order {
   opacity: 1;
 }
 
-.document-order button {
+.document-row__order button {
   display: grid;
   width: 44px;
   height: 44px;
@@ -259,25 +260,25 @@
   cursor: pointer;
 }
 
-.document-order button:disabled {
+.document-row__order button:disabled {
   opacity: 0.25;
   cursor: default;
 }
 
-.document-order svg {
+.document-row__order svg {
   width: 16px;
 }
 
-.settings-field {
+.studio-inspector__settings-field {
   display: grid;
   gap: 7px;
   font-size: 13px;
   font-weight: 600;
 }
 
-.settings-field input,
-.settings-field textarea,
-.settings-field select {
+.studio-inspector__settings-field input,
+.studio-inspector__settings-field textarea,
+.studio-inspector__settings-field select {
   width: 100%;
   border: 1px solid #d7dcdd;
   border-radius: 5px;
@@ -287,14 +288,14 @@
   font-weight: 400;
 }
 
-.settings-field input:focus,
-.settings-field textarea:focus,
-.settings-field select:focus {
+.studio-inspector__settings-field input:focus,
+.studio-inspector__settings-field textarea:focus,
+.studio-inspector__settings-field select:focus {
   border-color: var(--teal-strong);
   box-shadow: 0 0 0 3px var(--focus-ring);
 }
 
-.settings-field textarea {
+.studio-inspector__settings-field textarea {
   resize: vertical;
 }
 .document-row svg {

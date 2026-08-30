@@ -97,8 +97,12 @@ export function EntryPage() {
               value={password}
             />
           </label>
-          {error ? <p className="form-error">{error}</p> : null}
-          <button className="command command--primary" disabled={busy || !setup} type="submit">
+          {error ? <p className="ui-form-error">{error}</p> : null}
+          <button
+            className="ui-command ui-command--primary"
+            disabled={busy || !setup}
+            type="submit"
+          >
             <LogIn aria-hidden="true" />
             {busy ? "Opening..." : setup?.owner_configured ? "Sign in" : "Create owner"}
           </button>

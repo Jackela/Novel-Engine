@@ -49,7 +49,11 @@ export function StudioInspectorTabs({
     <button
       aria-controls={panelId(tab)}
       aria-selected={inspector === tab}
-      className={inspector === tab ? "active" : ""}
+      className={
+        inspector === tab
+          ? "studio-inspector__tab studio-inspector__tab--active"
+          : "studio-inspector__tab"
+      }
       id={tabId(tab)}
       onClick={() => setInspector(tab)}
       onKeyDown={(event) => onTabKeyDown(event, tab)}
@@ -68,7 +72,7 @@ export function StudioInspectorTabs({
     <div
       aria-label="Inspector panels"
       aria-orientation="horizontal"
-      className="inspector-tabs"
+      className="studio-inspector__tabs"
       role="tablist"
     >
       {tabButton("copilot", "Copilot", <Bot aria-hidden="true" />)}

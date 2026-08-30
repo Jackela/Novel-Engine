@@ -1,3 +1,4 @@
+/* BEM-ish only: feature-prefixed blocks with block__element--modifier; no legacy flat classes (#442). */
 .studio-inspector {
   grid-area: inspector;
   min-width: 0;
@@ -36,7 +37,7 @@
 .studio-inspector__content {
   min-width: 0;
 }
-.inspector-tabs {
+.studio-inspector__tabs {
   position: sticky;
   top: 0;
   z-index: 2;
@@ -46,7 +47,7 @@
   border-bottom: 1px solid #dfe2e3;
   background: var(--surface);
 }
-.inspector-tabs button {
+.studio-inspector__tab {
   min-height: 44px;
   border: 0;
   border-bottom: 2px solid transparent;
@@ -58,36 +59,36 @@
   gap: 6px;
   font-size: 12px;
 }
-.inspector-tabs button svg {
+.studio-inspector__tab svg {
   width: 15px;
   height: 15px;
 }
-.inspector-tabs button.active {
+.studio-inspector__tab--active {
   color: var(--teal-strong);
   border-bottom-color: var(--teal-strong);
 }
-.inspector-error {
+.studio-inspector__error {
   margin: 12px;
   padding: 10px;
   border: 1px solid #fecaca;
   border-radius: 5px;
   background: var(--danger-soft);
 }
-.inspector-content {
+.studio-inspector__panel {
   padding: 17px 14px 28px;
 }
-.inspector-content h2 {
+.studio-inspector__panel h2 {
   margin: 0 0 5px;
   font-size: 14px;
 }
-.inspector-content > p,
-.inspector-heading p {
+.studio-inspector__panel > p,
+.studio-inspector__heading p {
   margin: 0 0 14px;
   color: #4f595a;
   font-size: 12px;
   line-height: 1.5;
 }
-.inspector-content textarea {
+.studio-inspector__panel textarea {
   width: 100%;
   resize: vertical;
   border: 1px solid #d6dada;
@@ -95,39 +96,39 @@
   padding: 10px;
   outline: none;
 }
-.inspector-content textarea:focus {
+.studio-inspector__panel textarea:focus {
   border-color: var(--teal-strong);
   box-shadow: 0 0 0 3px var(--focus-ring);
 }
-.inspector-actions {
+.studio-inspector__actions {
   display: flex;
   flex-wrap: wrap;
   gap: 7px;
   margin-top: 10px;
 }
-.inspector-heading {
+.studio-inspector__heading {
   display: flex;
   justify-content: space-between;
   align-items: start;
 }
-.proposal {
+.studio-inspector__proposal {
   margin-top: 17px;
   border: 1px solid #c8dedd;
   border-radius: 6px;
   overflow: hidden;
   background: var(--surface);
 }
-.proposal header {
+.studio-inspector__proposal header {
   display: flex;
   justify-content: space-between;
   padding: 10px;
   border-bottom: 1px solid #dfe8e7;
   font-size: 12px;
 }
-.proposal header span {
+.studio-inspector__proposal header span {
   color: var(--teal-strong);
 }
-.proposal pre {
+.studio-inspector__proposal pre {
   margin: 0;
   max-height: 330px;
   overflow: auto;
@@ -138,41 +139,41 @@
     monospace;
   background: #f4fbfa;
 }
-.proposal .inspector-actions {
+.studio-inspector__proposal .studio-inspector__actions {
   padding: 0 10px 10px;
 }
-.review-issue {
+.studio-inspector__review-issue {
   margin-top: 10px;
   border: 1px solid #d6a318;
   border-radius: 5px;
   padding: 10px 12px;
   background: #fff;
 }
-.review-issue--blocker {
+.studio-inspector__review-issue--blocker {
   border-color: #dc2626;
 }
-.review-issue--suggestion {
+.studio-inspector__review-issue--suggestion {
   border-color: var(--teal-strong);
 }
-.review-issue header {
+.studio-inspector__review-issue header {
   display: flex;
   justify-content: space-between;
   text-transform: capitalize;
   font-size: 12px;
 }
-.review-issue header span {
+.studio-inspector__review-issue header span {
   color: #4f595a;
 }
-.review-issue p {
+.studio-inspector__review-issue p {
   margin: 8px 0 5px;
   font-size: 12px;
   line-height: 1.45;
 }
-.review-issue small {
+.studio-inspector__review-issue small {
   color: #697172;
   line-height: 1.4;
 }
-.empty-panel {
+.studio-inspector__empty {
   padding: 18px;
   border: 1px dashed #ced4d4;
   border-radius: 5px;

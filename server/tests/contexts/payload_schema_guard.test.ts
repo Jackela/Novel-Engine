@@ -1,23 +1,15 @@
 /**
- * Payload drift guard (#426, #433): every builder in `payloads.ts` is
- * validated against the TypeBox payload SSOT its HTTP surface declares
- * (`application/payload_schemas/`). Builders type their output with `Static`
- * of these very schemas, so compile-time drift is already impossible; this
- * guard pins the runtime half — a fixture-built payload must validate against
- * the same schema object the routes serialize with. Fast-json-stringify only
- * serializes and never validates, so this test is where drift would turn red.
- *
- * Strictness contract:
- * - Resource objects are strict (`additionalProperties: false`): extra keys
- *   fail via AJV itself, alongside missing/mistyped fields (no coercion).
- * - OpenAPI-3.0 `nullable: true` is mapped to a draft-07 `["<type>", "null"]`
- *   union before compiling (see `toAjvSchema`); dropping `nullable` from a
- *   schema therefore also turns red via the null-bearing fixtures.
- * - Free-form stored JSON (metadata/settings/request/result/details) keeps
- *   `additionalProperties: true` and stays exempt from the extra-key check.
+ * Payload drift guard, core resources (#426, #433): every builder feeding a
+ * studio HTTP surface is validated against the TypeBox payload SSOT its route
+ * declares (`application/payload_schemas/`). Builders type their output with
+ * `Static` of these very schemas, so compile-time drift is already
+ * impossible; this guard pins the runtime half — a fixture-built payload must
+ * validate against the same schema object the routes serialize with.
+ * Fast-json-stringify only serializes and never validates, so this test is
+ * where drift would turn red. Batch-2 surfaces (beat, lore, review, export,
+ * SSE frames) live in `payload_schema_guard_batch2.test.ts`.
  */
 
-import { Ajv, type ValidateFunction } from "ajv";
 import { describe, expect, it } from "vitest";
 import {
   documentPayloadSchema,
@@ -38,139 +30,25 @@ import {
   revisionPayload,
   volumePayload,
 } from "../../src/contexts/studio/application/payloads.js";
-import type {
-  DocumentMatchRecord,
-  DocumentWithCurrent,
-  JobRecord,
-  RevisionRecord,
-} from "../../src/contexts/studio/application/ports/studio_store.js";
-import type { VolumeRecord } from "../../src/contexts/studio/application/ports/volume_store.js";
+import {
+  assertConforms,
+  documentFixture,
+  firstRequired,
+  jobFixture,
+  matchFixture,
+  projectFixture,
+  revisionFixture,
+  type SchemaNode,
+  volumeFixture,
+} from "./payload_guard_harness.js";
 
-type SchemaNode = Record<string, unknown>;
-
-const NOW = new Date("2026-01-15T10:30:00.000Z");
-
-function revisionFixture(): RevisionRecord {
-  return {
-    id: "rev-1",
-    documentId: "doc-1",
-    parentRevisionId: "rev-0",
-    revisionNumber: 2,
-    contentMarkdown: "# Chapter One\n\nThe harbour wakes.",
-    metadataJson: JSON.stringify({ pov: "Ada" }),
-    source: "author",
-    createdAt: NOW,
-  };
-}
-
-function documentFixture(): DocumentWithCurrent {
-  return {
-    id: "doc-1",
-    projectId: "proj-1",
-    kind: "chapter",
-    title: "Chapter One",
-    position: 3,
-    volumeId: "vol-1",
-    beatRef: "beat-7",
-    loreAliasesJson: "[]",
-    currentRevisionId: "rev-1",
-    createdAt: NOW,
-    updatedAt: NOW,
-    currentRevision: revisionFixture(),
-  };
-}
-
-function volumeFixture(): VolumeRecord {
-  return {
-    id: "vol-1",
-    projectId: "proj-1",
-    title: "Act One",
-    position: 1,
-    createdAt: NOW,
-    updatedAt: NOW,
-  };
-}
-
-function matchFixture(): DocumentMatchRecord {
-  return { documentId: "doc-1", title: "Chapter One", excerpt: "the harbour wakes" };
-}
-
-function jobFixture(): JobRecord {
-  return {
-    id: "job-1",
-    projectId: "proj-1",
-    documentId: "doc-1",
-    kind: "proposal",
-    operation: "chapter-draft",
-    status: "succeeded",
-    provider: "mock",
-    model: "mock-small",
-    requestJson: JSON.stringify({ brief: "draft it" }),
-    resultJson: JSON.stringify({ revision_id: "rev-1" }),
-    error: null,
-    retryOfJobId: null,
-    createdAt: NOW,
-    updatedAt: NOW,
-    events: [
-      {
-        id: "evt-1",
-        jobId: "job-1",
-        status: "succeeded",
-        detailsJson: JSON.stringify({ note: "done" }),
-        createdAt: NOW,
-      },
-    ],
-  };
-}
-
-function projectFixture() {
-  return {
-    id: "proj-1",
-    title: "Harbour Lights",
-    description: "A novel about tides.",
-    settingsJson: JSON.stringify({ genre: "literary" }),
-    importHash: null,
-    createdAt: NOW,
-    updatedAt: NOW,
-  };
-}
-
-/** Map OpenAPI-3.0 `nullable` onto a draft-07 union type, recursively. */
-function toAjvSchema(node: unknown): unknown {
-  if (Array.isArray(node)) return node.map(toAjvSchema);
-  if (node === null || typeof node !== "object") return node;
-  const mapped: SchemaNode = {};
-  for (const [key, value] of Object.entries(node)) mapped[key] = toAjvSchema(value);
-  if (mapped.nullable === true && typeof mapped.type === "string") {
-    mapped.type = [mapped.type, "null"];
-    delete mapped.nullable;
-  }
-  return mapped;
-}
-
-const ajv = new Ajv({ allErrors: true });
-const compiled = new WeakMap<SchemaNode, ValidateFunction>();
-
-/** Compile (once per schema) and run the AJV strictness checks. */
-function validateAgainstSchema(
-  payload: Record<string, unknown>,
-  schema: SchemaNode,
-): ValidateFunction["errors"] {
-  const cached = compiled.get(schema);
-  const validate = cached ?? ajv.compile(toAjvSchema(schema) as SchemaNode);
-  if (cached === undefined) compiled.set(schema, validate);
-  return validate(payload) ? null : validate.errors;
-}
-
-/** Full strict validation of a builder payload against its SSOT schema. */
-function assertConforms(payload: Record<string, unknown>, schema: SchemaNode): void {
-  const errors = validateAgainstSchema(payload, schema);
-  if (errors !== null && errors !== undefined) {
-    throw new Error(ajv.errorsText(errors, { dataVar: "payload" }));
-  }
-}
-
-const CASES: Array<{ name: string; build: () => Record<string, unknown>; schema: SchemaNode }> = [
+const CASES: Array<{
+  name: string;
+  build: () => Record<string, unknown>;
+  schema: SchemaNode;
+  /** Overrides the default mistyped sentinel when the first required field is not primitive-typed. */
+  mistypedValue?: unknown;
+}> = [
   {
     name: "projectPayload (list form) -> projectPayloadSchema",
     build: () => projectPayload(projectFixture()),
@@ -219,14 +97,6 @@ describe("payload builders conform to their payload SSOT schemas", () => {
   });
 });
 
-/** First schema-required key; every guarded schema requires at least one. */
-function firstRequired(schema: SchemaNode): string {
-  const required = schema.required as string[] | undefined;
-  const key = required?.[0];
-  if (key === undefined) throw new Error("schema declares no required fields");
-  return key;
-}
-
 describe("payload drift guard trips on every drift class", () => {
   it.each(CASES)("rejects an undeclared extra field in $name", ({ build, schema }) => {
     const drifted = { ...build(), drift_extra_field: true };
@@ -239,9 +109,9 @@ describe("payload drift guard trips on every drift class", () => {
     expect(() => assertConforms(payload, schema)).toThrow(/required/);
   });
 
-  it.each(CASES)("rejects a mistyped field in $name", ({ build, schema }) => {
+  it.each(CASES)("rejects a mistyped field in $name", ({ build, schema, mistypedValue }) => {
     const payload = build();
-    payload[firstRequired(schema)] = { drifted: "object" };
+    payload[firstRequired(schema)] = mistypedValue ?? { drifted: "object" };
     expect(() => assertConforms(payload, schema)).toThrow(/must be/);
   });
 });

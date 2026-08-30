@@ -1,3 +1,4 @@
+/* BEM-ish only: feature-prefixed blocks with block__element--modifier; no legacy flat classes (#442). */
 .entry {
   min-height: 100vh;
   display: grid;
@@ -38,7 +39,7 @@
   margin-top: 24px;
 }
 .entry__form label,
-.project-create label {
+.library-create label {
   display: grid;
   gap: 7px;
   font-size: 13px;
@@ -46,8 +47,8 @@
 }
 .entry input,
 .entry textarea,
-.project-create input,
-.project-create textarea {
+.library-create input,
+.library-create textarea {
   width: 100%;
   border: 1px solid #d7dcdd;
   border-radius: 5px;
@@ -56,13 +57,13 @@
 }
 .entry input:focus,
 .entry textarea:focus,
-.project-create input:focus,
-.project-create textarea:focus {
+.library-create input:focus,
+.library-create textarea:focus {
   border-color: var(--teal-strong);
   box-shadow: 0 0 0 3px var(--focus-ring);
 }
-.entry__form .command,
-.entry__panel > .command {
+.entry__form .ui-command,
+.entry__panel > .ui-command {
   width: 100%;
 }
 .entry__divider {

@@ -3,10 +3,9 @@ import { Type } from "@fastify/type-provider-typebox";
 import type { FastifyPluginAsync } from "fastify";
 import { principalGuard, requirePrincipal } from "../../../../shared/interface/http/auth_guard.js";
 import { errorEnvelopeResponse } from "../../../../shared/interface/http/error_envelope.js";
-import type {
-  ExportArtifactFormat,
-  ExportArtifactRecord,
-} from "../../application/ports/export_store.js";
+import { exportArtifactPayloadSchema } from "../../application/payload_schemas/export.js";
+import { exportArtifactPayload } from "../../application/payloads.js";
+import type { ExportArtifactFormat } from "../../application/ports/export_store.js";
 import { jobResponseSchema } from "./job_schemas.js";
 import type { JsonResponseSchema } from "./json_response_schema.js";
 import { requireServices, type StudioRoutesOptions } from "./project_routes.js";
@@ -14,37 +13,15 @@ import { withAsyncStudioErrors, withStudioErrors } from "./studio_error_mapping.
 import { exportIdParams, projectIdParams } from "./studio_request_schemas.js";
 import { operationInFlightSchema } from "./studio_schemas.js";
 
-const timestampSchema = { type: "string", format: "date-time" } as const;
-const exportResponseSchema: JsonResponseSchema = {
-  type: "object",
-  additionalProperties: false,
-  properties: {
-    id: { type: "string" },
-    project_id: { type: "string" },
-    snapshot_id: { type: "string" },
-    format: { type: "string", enum: ["markdown", "docx", "epub"] },
-    size_bytes: { type: "integer", minimum: 0 },
-    checksum_sha256: { type: "string", pattern: "^[a-f0-9]{64}$" },
-    created_at: timestampSchema,
-    download_url: { type: "string" },
-  },
-  required: [
-    "id",
-    "project_id",
-    "snapshot_id",
-    "format",
-    "size_bytes",
-    "checksum_sha256",
-    "created_at",
-    "download_url",
-  ],
-} as const;
-const exportListResponseSchema: JsonResponseSchema = {
-  type: "object",
-  additionalProperties: false,
-  properties: { exports: { type: "array", items: exportResponseSchema } },
-  required: ["exports"],
-} as const;
+/**
+ * The export artifact response (#440) is the TypeBox payload SSOT from
+ * `application/payload_schemas/export.ts`; the LIST envelope wraps those
+ * items. Binary delivery keeps its hand-written binary schema below.
+ */
+const exportListResponseSchema = Type.Object(
+  { exports: Type.Array(exportArtifactPayloadSchema) },
+  { additionalProperties: false },
+);
 const binaryExportSchema: JsonResponseSchema = {
   type: "string",
   format: "binary",
@@ -67,21 +44,6 @@ const deliveryByFormat: Record<ExportArtifactFormat, { contentType: string; exte
   },
   epub: { contentType: "application/epub+zip", extension: "epub" },
 };
-
-function exportPayload(artifact: ExportArtifactRecord, projectId: string) {
-  return {
-    id: artifact.id,
-    project_id: artifact.projectId,
-    snapshot_id: artifact.snapshotId,
-    format: artifact.format,
-    size_bytes: artifact.sizeBytes,
-    checksum_sha256: artifact.checksumSha256,
-    created_at: artifact.createdAt.toISOString(),
-    download_url:
-      `/api/projects/${encodeURIComponent(projectId)}/exports/` +
-      `${encodeURIComponent(artifact.id)}/download`,
-  };
-}
 
 /** Guard + scope failures shared by the project-scoped export reads. */
 const EXPORT_READ_ERROR_RESPONSES = {
@@ -143,7 +105,7 @@ export const exportRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fast
       withStudioErrors(() => ({
         exports: requireServices(options)
           .artifacts.catalogProjectArtifacts(requirePrincipal(request), request.params.projectId)
-          .map((artifact) => exportPayload(artifact, request.params.projectId)),
+          .map((artifact) => exportArtifactPayload(artifact, request.params.projectId)),
       })),
   );
 

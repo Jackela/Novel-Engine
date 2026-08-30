@@ -32,13 +32,13 @@ function DocumentRows({
   return (
     <>
       {rows.map((document, index) => (
-        <div className="document-row-wrap" key={document.id}>
+        <div className="document-row__wrap" key={document.id}>
           <StudioDocumentRow
             document={document}
             isActive={document.id === activeId}
             onSelect={onSelectDocument}
           />
-          <span className="document-order">
+          <span className="document-row__order">
             <button
               aria-label={`Move ${document.title} up`}
               aria-busy={isMovingDocument || undefined}
@@ -124,11 +124,15 @@ export function StudioNavigator({
           <ChevronDown aria-hidden="true" />
         </summary>
         <div className="studio-nav__content">
-          <nav className="section-nav" aria-label="Project sections">
+          <nav className="studio-nav__sections" aria-label="Project sections">
             {SECTIONS.map(([path, label]) => (
               <button
                 aria-current={section === path ? "page" : undefined}
-                className={section === path ? "active" : ""}
+                className={
+                  section === path
+                    ? "studio-nav__section studio-nav__section--active"
+                    : "studio-nav__section"
+                }
                 key={path}
                 onClick={() => onNavigateSection(path)}
                 type="button"
@@ -137,9 +141,9 @@ export function StudioNavigator({
               </button>
             ))}
           </nav>
-          <form className="studio-search" onSubmit={onSearchSubmit}>
+          <form className="studio-nav__search" onSubmit={onSearchSubmit}>
             {isSearching ? (
-              <Loader2 aria-hidden="true" className="spin" />
+              <Loader2 aria-hidden="true" className="ui-spin" />
             ) : (
               <Search aria-hidden="true" />
             )}
@@ -152,7 +156,7 @@ export function StudioNavigator({
             />
           </form>
           {searchResults.length ? (
-            <section aria-label="Search results" className="search-results">
+            <section aria-label="Search results" className="studio-nav__search-results">
               {searchResults.map((result) => (
                 <button
                   aria-label={`Open ${result.title}`}
@@ -167,7 +171,7 @@ export function StudioNavigator({
             </section>
           ) : null}
           {section === "manuscript" && wholeBook ? <StudioWholeBookControl {...wholeBook} /> : null}
-          <div className="document-tree">
+          <div className="studio-nav__tree">
             {visibleGroups.map(({ kind, label, icon: Icon }) => {
               const documents =
                 project.documents?.filter((document) => document.kind === kind) ?? [];
@@ -181,7 +185,7 @@ export function StudioNavigator({
                   (document) => (document.volume_id ?? volumes?.[0]?.id) === volumeId,
                 );
               return (
-                <section className="document-group" key={kind}>
+                <section className="studio-nav__document-group" key={kind}>
                   <header>
                     <span>
                       <Icon aria-hidden="true" /> {label}
@@ -195,7 +199,7 @@ export function StudioNavigator({
                       type="button"
                     >
                       {isCreatingDocument ? (
-                        <Loader2 aria-hidden="true" className="spin" />
+                        <Loader2 aria-hidden="true" className="ui-spin" />
                       ) : (
                         <Plus aria-hidden="true" />
                       )}
@@ -204,7 +208,7 @@ export function StudioNavigator({
                   {volumes && volumes.length > 0 ? (
                     volumes.map((volume) => (
                       <div className="volume-group" key={volume.id}>
-                        <p className="volume-header">{volume.title}</p>
+                        <p className="studio-nav__volume-header">{volume.title}</p>
                         <DocumentRows rows={inVolume(volume.id)} {...rowProps} />
                       </div>
                     ))

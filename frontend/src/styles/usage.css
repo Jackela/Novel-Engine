@@ -1,10 +1,11 @@
-.usage-totals {
+/* BEM-ish only: feature-prefixed blocks with block__element--modifier; no legacy flat classes (#442). */
+.usage__totals {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 7px;
   margin-top: 14px;
 }
-.usage-total-card {
+.usage__total-card {
   display: grid;
   gap: 2px;
   padding: 10px;
@@ -13,44 +14,44 @@
   background: #fff;
   text-align: center;
 }
-.usage-total-card strong {
+.usage__total-card strong {
   font-size: 13px;
   font-variant-numeric: tabular-nums;
 }
-.usage-total-card span {
+.usage__total-card span {
   color: #4f595a;
   font-size: 10px;
 }
-.usage-table {
+.usage__table {
   width: 100%;
   margin-top: 14px;
   border-collapse: collapse;
   font-size: 11px;
 }
-.usage-table th,
-.usage-table td {
+.usage__table th,
+.usage__table td {
   padding: 6px 7px;
   border-bottom: 1px solid #dfe2e3;
   text-align: left;
   font-variant-numeric: tabular-nums;
 }
-.usage-table thead th {
+.usage__table thead th {
   color: #4f595a;
   font-size: 10px;
   text-transform: uppercase;
 }
-.usage-daily {
+.usage__daily {
   margin-top: 14px;
   display: grid;
   gap: 2px;
 }
-.usage-daily h3 {
+.usage__daily h3 {
   margin: 0 0 4px;
   color: #4f595a;
   font-size: 10px;
   text-transform: uppercase;
 }
-.usage-daily-row {
+.usage__daily-row {
   display: grid;
   grid-template-columns: 64px minmax(0, 1fr) auto;
   align-items: center;
@@ -58,30 +59,30 @@
   font-size: 11px;
   font-variant-numeric: tabular-nums;
 }
-.usage-daily-date {
+.usage__daily-date {
   color: #4f595a;
 }
-.usage-daily-bar-track {
+.usage__daily-bar-track {
   display: block;
   height: 8px;
   border-radius: 4px;
   background: #eef0f1;
 }
-.usage-daily-bar {
+.usage__daily-bar {
   display: block;
   height: 100%;
   border-radius: 4px;
   background: #4f595a;
 }
-.usage-daily-count {
+.usage__daily-count {
   text-align: right;
 }
-.revision-list {
+.studio-inspector__revision-list {
   display: grid;
   gap: 7px;
   margin-top: 14px;
 }
-.revision-list article {
+.studio-inspector__revision-list article {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -90,26 +91,26 @@
   border-radius: 5px;
   background: #fff;
 }
-.revision-list article > div {
+.studio-inspector__revision-list article > div {
   display: grid;
   gap: 3px;
   min-width: 0;
 }
-.revision-list strong {
+.studio-inspector__revision-list strong {
   font-size: 12px;
   text-transform: capitalize;
 }
-.revision-list time,
-.revision-list small {
+.studio-inspector__revision-list time,
+.studio-inspector__revision-list small {
   color: #4f595a;
   font-size: 10px;
 }
-.current-revision {
+.studio-inspector__current-revision {
   color: var(--teal-strong);
   font-size: 10px;
   font-weight: 700;
 }
-.export-row {
+.studio-inspector__export-row {
   display: flex;
   align-items: center;
   gap: 8px;

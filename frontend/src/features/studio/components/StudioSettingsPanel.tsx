@@ -34,11 +34,11 @@ export function StudioSettingsPanel({
   return (
     <form
       aria-busy={isSaving}
-      className="inspector-content"
+      className="studio-inspector__panel"
       onSubmit={(event) => void handleSubmit(event)}
     >
       <h2>Project settings</h2>
-      <label className="settings-field">
+      <label className="studio-inspector__settings-field">
         <span>Title</span>
         <input
           maxLength={240}
@@ -51,7 +51,7 @@ export function StudioSettingsPanel({
           value={settingsForm.title}
         />
       </label>
-      <label className="settings-field">
+      <label className="studio-inspector__settings-field">
         <span>Description</span>
         <textarea
           maxLength={10000}
@@ -65,7 +65,7 @@ export function StudioSettingsPanel({
           value={settingsForm.description}
         />
       </label>
-      <label className="settings-field">
+      <label className="studio-inspector__settings-field">
         <span>Provider</span>
         <select
           aria-label="Provider"
@@ -84,18 +84,18 @@ export function StudioSettingsPanel({
           ))}
         </select>
       </label>
-      <div className="settings-field">
+      <div className="studio-inspector__settings-field">
         <span>Storage</span>
         <span>SQLite</span>
       </div>
-      <div className="settings-field">
+      <div className="studio-inspector__settings-field">
         <span>Document syntax</span>
         <span>Markdown</span>
       </div>
-      <div className="inspector-actions">
+      <div className="studio-inspector__actions">
         <button
           aria-busy={isSaving}
-          className="command command--primary"
+          className="ui-command ui-command--primary"
           disabled={isSaving}
           ref={saveButtonRef}
           type="submit"

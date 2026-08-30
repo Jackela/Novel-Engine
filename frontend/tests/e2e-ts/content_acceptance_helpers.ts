@@ -245,7 +245,7 @@ export async function typeChapter(page: Page, markdown: string): Promise<void> {
   // plain Control+A on macOS only moves to the line start).
   await page.keyboard.press("ControlOrMeta+a");
   await page.keyboard.type(markdown);
-  await expect(page.locator(".studio-editor .save-state")).toHaveText(/saved/i, {
+  await expect(page.locator(".studio-editor .editor__save-state")).toHaveText(/saved/i, {
     timeout: 15_000,
   });
 }
