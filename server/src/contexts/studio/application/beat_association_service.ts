@@ -1,6 +1,8 @@
 import type { Principal } from "../../../shared/application/ports/auth.js";
 import { InvalidOperationError } from "../../../shared/domain/exceptions.js";
 import { type OutlineBeat, splitOutlineBeats } from "./outline_beats.js";
+import type { ChapterBeatPayload } from "./payload_schemas/beat.js";
+import { chapterBeatPayload } from "./payloads.js";
 import type { DocumentWithCurrent, ProjectScope } from "./ports/studio_store.js";
 import { type StudioStore, scopeForPrincipal } from "./ports/studio_store.js";
 
@@ -30,7 +32,7 @@ export class BeatAssociationService {
     projectId: string,
     documentId: string,
     input: { beat: string | null },
-  ): Record<string, unknown> {
+  ): ChapterBeatPayload {
     const scope = scopeForPrincipal(principal);
     const requested = input.beat === null ? null : input.beat.trim();
     if (requested !== null && requested === "") {
@@ -52,11 +54,7 @@ export class BeatAssociationService {
   }
 
   /** The chapter's effective association, resolved against the live outline. */
-  chapterBeat(
-    principal: Principal,
-    projectId: string,
-    documentId: string,
-  ): Record<string, unknown> {
+  chapterBeat(principal: Principal, projectId: string, documentId: string): ChapterBeatPayload {
     const scope = scopeForPrincipal(principal);
     const document = this.store.findDocument(scope, projectId, documentId);
     return chapterBeatView(document, projectOutlineBeats(this.store, scope, projectId));
@@ -100,16 +98,13 @@ export function linkedChapterBeat(
 }
 
 /** The read contract: `beat` is null when unlinked or when the beat vanished. */
-function chapterBeatView(
+export function chapterBeatView(
   document: DocumentWithCurrent,
   beats: OutlineBeat[],
-): Record<string, unknown> {
+): ChapterBeatPayload {
   const resolved =
     document.beatRef === null
       ? null
       : (beats.find((beat) => beat.title === document.beatRef) ?? null);
-  if (resolved === null) {
-    return { beat: null };
-  }
-  return { beat: { title: resolved.title, content: resolved.content } };
+  return chapterBeatPayload(resolved);
 }

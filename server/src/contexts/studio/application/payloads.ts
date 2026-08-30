@@ -1,10 +1,15 @@
 import { InvalidOperationError } from "../../../shared/domain/exceptions.js";
 import type { DocumentKind, RevisionSource } from "../domain/kinds.js";
+import type { ChapterBeatPayload } from "./payload_schemas/beat.js";
 import type { DocumentPayload, MatchResultPayload } from "./payload_schemas/document.js";
+import type { ExportArtifactPayload } from "./payload_schemas/export.js";
 import type { JobPayload } from "./payload_schemas/job.js";
+import type { LoreAliasPayload } from "./payload_schemas/lore.js";
 import type { ProjectPayload } from "./payload_schemas/project.js";
+import type { ReviewPayload, ReviewSeverity } from "./payload_schemas/review.js";
 import type { RevisionPayload } from "./payload_schemas/revision.js";
 import type { VolumePayload } from "./payload_schemas/volume.js";
+import type { ExportArtifactRecord } from "./ports/export_store.js";
 import type {
   DocumentMatchRecord,
   DocumentWithCurrent,
@@ -12,12 +17,13 @@ import type {
   RevisionRecord,
 } from "./ports/studio_store.js";
 import type { VolumeRecord } from "./ports/volume_store.js";
+import type { EditorialAssessment } from "./review_service.js";
 
 /**
  * Payload builders for the studio HTTP surfaces. Return types are `Static`
  * projections of the TypeBox payload SSOT (`payload_schemas/`), which the
  * interface layer declares verbatim as its response schemas — builder and
- * schema are one shape by construction (#433).
+ * schema are one shape by construction (#433, #440).
  */
 
 /** Mirror of the Python authority's \b[\w'-]+\b word counter (UNICODE-aware). */
@@ -191,4 +197,62 @@ export function exportJobResultJson(
       `/api/projects/${encodeURIComponent(projectId)}/exports/` +
       `${encodeURIComponent(artifact.id)}/download`,
   });
+}
+
+/** The lorebook alias envelope served by both alias surface verbs (#315). */
+export function loreAliasPayload(aliases: readonly string[]): LoreAliasPayload {
+  return { aliases: [...aliases] };
+}
+
+/**
+ * One stored editorial assessment for the review LIST surface; identical to
+ * the shape the review bridge lands in the job `result` JSON.
+ */
+export function reviewPayload(assessment: EditorialAssessment): ReviewPayload {
+  return {
+    id: assessment.id,
+    project_id: assessment.projectId,
+    snapshot_id: assessment.snapshotId,
+    provider: assessment.provider,
+    model: assessment.model,
+    summary: assessment.summary,
+    created_at: assessment.createdAt.toISOString(),
+    issues: assessment.issues.map((issue) => ({
+      id: issue.id,
+      document_id: issue.documentId,
+      // Store rows carry write-coerced severities; the payload declares the
+      // closed read-compatible set from the review SSOT.
+      severity: issue.severity as ReviewSeverity,
+      code: issue.code,
+      message: issue.message,
+      suggestion: issue.suggestion,
+      evidence: { ...issue.evidence },
+    })),
+  };
+}
+
+/** One immutable export artifact for the export catalog surface. */
+export function exportArtifactPayload(
+  artifact: ExportArtifactRecord,
+  projectId: string,
+): ExportArtifactPayload {
+  return {
+    id: artifact.id,
+    project_id: artifact.projectId,
+    snapshot_id: artifact.snapshotId,
+    format: artifact.format,
+    size_bytes: artifact.sizeBytes,
+    checksum_sha256: artifact.checksumSha256,
+    created_at: artifact.createdAt.toISOString(),
+    download_url:
+      `/api/projects/${encodeURIComponent(projectId)}/exports/` +
+      `${encodeURIComponent(artifact.id)}/download`,
+  };
+}
+
+/** The resolved beat association view shared by both chapter beat verbs. */
+export function chapterBeatPayload(
+  resolved: { title: string; content: string } | null,
+): ChapterBeatPayload {
+  return { beat: resolved === null ? null : { title: resolved.title, content: resolved.content } };
 }

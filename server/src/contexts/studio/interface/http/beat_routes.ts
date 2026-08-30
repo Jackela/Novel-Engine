@@ -3,29 +3,18 @@ import { Type } from "@fastify/type-provider-typebox";
 import type { FastifyPluginAsync } from "fastify";
 import { principalGuard, requirePrincipal } from "../../../../shared/interface/http/auth_guard.js";
 import { errorEnvelopeResponse } from "../../../../shared/interface/http/error_envelope.js";
-import type { JsonResponseSchema } from "./json_response_schema.js";
+import { chapterBeatPayloadSchema } from "../../application/payload_schemas/beat.js";
 import { requireServices, type StudioRoutesOptions } from "./project_routes.js";
 import { withStudioErrors } from "./studio_error_mapping.js";
 import { documentIdParams } from "./studio_request_schemas.js";
 
-/** The resolved association view: the live beat, or null when unlinked/vanished. */
-export const chapterBeatResponseSchema: JsonResponseSchema = {
-  type: "object",
-  additionalProperties: false,
-  properties: {
-    beat: {
-      type: "object",
-      nullable: true,
-      additionalProperties: false,
-      properties: {
-        title: { type: "string" },
-        content: { type: "string" },
-      },
-      required: ["title", "content"],
-    },
-  },
-  required: ["beat"],
-} as const;
+/**
+ * The chapter beat response (#440) is the TypeBox payload SSOT from
+ * `application/payload_schemas/beat.ts`: the resolved association view —
+ * the live beat, or null when unlinked/vanished — under its HTTP-surface
+ * name.
+ */
+export const chapterBeatResponseSchema = chapterBeatPayloadSchema;
 
 // A beat title links; explicit null clears the association. `nullable: true`
 // keeps Fastify's coercing AJV from turning the null into "".

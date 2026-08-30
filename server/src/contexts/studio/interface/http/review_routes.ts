@@ -6,33 +6,12 @@ import {
   ERROR_CODES,
   errorEnvelopeResponse,
 } from "../../../../shared/interface/http/error_envelope.js";
-import type { EditorialAssessment } from "../../application/review_service.js";
+import { reviewPayload } from "../../application/payloads.js";
 import { jobResponseSchema } from "./job_schemas.js";
 import { requireServices, type StudioRoutesOptions } from "./project_routes.js";
 import { reviewCreateSchema, reviewListResponseSchema } from "./review_schemas.js";
 import { withAsyncStudioErrors, withStudioErrors } from "./studio_error_mapping.js";
 import { projectIdParams } from "./studio_request_schemas.js";
-
-function reviewPayload(assessment: EditorialAssessment) {
-  return {
-    id: assessment.id,
-    project_id: assessment.projectId,
-    snapshot_id: assessment.snapshotId,
-    provider: assessment.provider,
-    model: assessment.model,
-    summary: assessment.summary,
-    created_at: assessment.createdAt.toISOString(),
-    issues: assessment.issues.map((issue) => ({
-      id: issue.id,
-      document_id: issue.documentId,
-      severity: issue.severity,
-      code: issue.code,
-      message: issue.message,
-      suggestion: issue.suggestion,
-      evidence: { ...issue.evidence },
-    })),
-  };
-}
 
 /** Snapshot-bound editorial assessments, with server-owned provider provenance. */
 export const reviewRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fastify, options) => {
