@@ -15,7 +15,7 @@ function RouteErrorBoundary() {
         <p>
           The application encountered an unexpected error. Please refresh the page to try again.
         </p>
-        {message ? <p className="form-error">{message}</p> : null}
+        {message ? <p className="ui-form-error">{message}</p> : null}
       </div>
     </div>
   );

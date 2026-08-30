@@ -1,3 +1,4 @@
+/* BEM-ish only: feature-prefixed blocks with block__element--modifier; no legacy flat classes (#442). */
 .studio-statusbar {
   grid-area: status;
   border-top: 1px solid #dfe2e3;
@@ -39,7 +40,7 @@ summary:focus-visible {
     transition-duration: 0.01ms !important;
   }
 
-  .spin {
+  .ui-spin {
     animation: none !important;
   }
 }
@@ -48,7 +49,7 @@ summary:focus-visible {
   .studio {
     grid-template-columns: 250px minmax(390px, 1fr) 310px;
   }
-  .session-expiry {
+  .library__session-expiry {
     display: none;
   }
 }
@@ -71,7 +72,7 @@ summary:focus-visible {
     flex-wrap: wrap;
     padding: 10px;
   }
-  .studio-project-title {
+  .studio-topbar__project-title {
     display: none;
   }
   .studio-nav {
@@ -93,7 +94,7 @@ summary:focus-visible {
   .studio-inspector__summary {
     display: flex;
   }
-  .editor-header {
+  .editor__header {
     padding-inline: 18px;
   }
   .studio-statusbar {
@@ -122,10 +123,10 @@ summary:focus-visible {
     flex-wrap: wrap;
     padding: 10px;
   }
-  .studio-topbar .brand {
+  .studio-topbar .ui-brand {
     font-size: 15px;
   }
-  .studio-project-title {
+  .studio-topbar__project-title {
     display: none;
   }
   .studio-nav {
@@ -136,10 +137,10 @@ summary:focus-visible {
   .studio-editor {
     min-height: 70vh;
   }
-  .studio-editor .editor-header {
+  .studio-editor .editor__header {
     min-height: 64px;
   }
-  .studio-editor .markdown-editor {
+  .studio-editor .editor__markdown {
     min-height: 520px;
   }
   .studio-inspector {
@@ -147,10 +148,10 @@ summary:focus-visible {
     border-top: 1px solid #dfe2e3;
     min-height: 0;
   }
-  .editor-header {
+  .editor__header {
     padding: 0 16px;
   }
-  .editor-title {
+  .editor__title {
     font-size: 19px;
   }
   .studio-statusbar {

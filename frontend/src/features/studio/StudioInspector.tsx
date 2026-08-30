@@ -51,7 +51,7 @@ export function StudioInspector({
           )}
 
           {error && inspector !== "export" ? (
-            <div aria-live="assertive" className="inspector-error" role="alert">
+            <div aria-live="assertive" className="studio-inspector__error" role="alert">
               {error}
             </div>
           ) : null}

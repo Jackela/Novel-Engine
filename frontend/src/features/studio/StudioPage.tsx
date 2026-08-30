@@ -13,14 +13,14 @@ export function StudioPage() {
     // surfaced as a readable error state instead of a silent redirect.
     if (loadError) {
       return (
-        <main className="studio-loading studio-load-error" role="alert">
+        <main className="studio__loading studio-load-error" role="alert">
           <p>{loadError}</p>
         </main>
       );
     }
     return (
-      <main className="studio-loading">
-        <Loader2 className="spin" /> Loading Studio
+      <main className="studio__loading">
+        <Loader2 className="ui-spin" /> Loading Studio
       </main>
     );
   }

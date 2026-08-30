@@ -43,22 +43,22 @@ export function StudioEditorPane({
     >
       {activeDocument ? (
         <>
-          <header className="editor-header">
+          <header className="editor__header">
             <div>
               <input
                 aria-label="Document title"
-                className="editor-title"
+                className="editor__title"
                 value={titleDraft}
                 onChange={(event) => onTitleChange(event.target.value)}
               />
               <span
                 aria-atomic="true"
                 aria-live={saveNeedsAttention ? "assertive" : "polite"}
-                className={`save-state save-state--${saveState}`}
+                className={`editor__save-state editor__save-state--${saveState}`}
                 role={saveNeedsAttention ? "alert" : "status"}
               >
                 {saveState === "saving" ? (
-                  <Loader2 aria-hidden="true" className="spin" />
+                  <Loader2 aria-hidden="true" className="ui-spin" />
                 ) : saveNeedsAttention ? (
                   <X aria-hidden="true" />
                 ) : (
@@ -97,15 +97,15 @@ export function StudioEditorPane({
               </div>
             </div>
           ) : null}
-          <div className="editor-toolbar">
+          <div className="editor__toolbar">
             <span>Markdown</span>
           </div>
-          <Suspense fallback={<div className="editor-loading">Loading editor...</div>}>
+          <Suspense fallback={<div className="editor__loading">Loading editor...</div>}>
             <MarkdownEditor value={draft} onChange={onDraftChange} />
           </Suspense>
         </>
       ) : (
-        <div className="empty-editor">Create a document to begin writing.</div>
+        <div className="editor__empty">Create a document to begin writing.</div>
       )}
     </section>
   );

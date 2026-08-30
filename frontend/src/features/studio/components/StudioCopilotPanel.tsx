@@ -36,7 +36,7 @@ export function StudioCopilotPanel({
   const isStreaming = streamingText !== null;
 
   return (
-    <div aria-busy={isBusy} className="inspector-content">
+    <div aria-busy={isBusy} className="studio-inspector__panel">
       <h2>AI proposal</h2>
       <p>Copilot never changes the manuscript until you accept a proposal.</p>
       <textarea
@@ -47,10 +47,10 @@ export function StudioCopilotPanel({
         rows={5}
         value={instruction}
       />
-      <div className="inspector-actions">
+      <div className="studio-inspector__actions">
         <button
           aria-busy={isRunningProposal}
-          className="command"
+          className="ui-command"
           disabled={isBusy}
           onClick={() => onRunProposal("rewrite")}
           type="button"
@@ -59,7 +59,7 @@ export function StudioCopilotPanel({
         </button>
         <button
           aria-busy={isRunningProposal}
-          className="command"
+          className="ui-command"
           disabled={isBusy}
           onClick={() => onRunProposal("continue")}
           type="button"
@@ -68,29 +68,29 @@ export function StudioCopilotPanel({
         </button>
       </div>
       {isStreaming ? (
-        <section aria-busy="true" className="proposal">
+        <section aria-busy="true" className="studio-inspector__proposal">
           <header>
             <strong>Proposed Markdown</strong>
             <span>Streaming…</span>
           </header>
           <pre aria-live="polite">{streamingText}</pre>
-          <div className="inspector-actions">
-            <button className="command" onClick={() => onStopProposal?.()} type="button">
+          <div className="studio-inspector__actions">
+            <button className="ui-command" onClick={() => onStopProposal?.()} type="button">
               <X /> Stop
             </button>
           </div>
         </section>
       ) : proposal?.result.proposal_markdown ? (
-        <section className="proposal">
+        <section className="studio-inspector__proposal">
           <header>
             <strong>Proposed Markdown</strong>
             <span>Preview only</span>
           </header>
           <pre>{proposal.result.proposal_markdown}</pre>
-          <div className="inspector-actions">
+          <div className="studio-inspector__actions">
             <button
               aria-busy={isAcceptingProposal}
-              className="command command--primary"
+              className="ui-command ui-command--primary"
               disabled={isBusy}
               onClick={onAcceptProposal}
               type="button"
@@ -98,7 +98,7 @@ export function StudioCopilotPanel({
               <Check /> Accept
             </button>
             <button
-              className="command"
+              className="ui-command"
               disabled={isBusy}
               onClick={() => setProposal(null)}
               type="button"

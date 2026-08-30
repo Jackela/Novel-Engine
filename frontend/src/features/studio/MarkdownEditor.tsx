@@ -123,9 +123,11 @@ export function MarkdownEditor({ value, onChange }: MarkdownEditorProps) {
   }, [value]);
 
   return (
-    <div className="markdown-editor" ref={parent}>
+    <div className="editor__markdown" ref={parent}>
       {failed ? (
-        <p className="form-error">The markdown editor failed to load. Please refresh the page.</p>
+        <p className="ui-form-error">
+          The markdown editor failed to load. Please refresh the page.
+        </p>
       ) : null}
     </div>
   );

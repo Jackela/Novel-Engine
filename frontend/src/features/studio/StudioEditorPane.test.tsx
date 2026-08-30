@@ -85,7 +85,7 @@ describe("Studio editor pane", () => {
       />,
     );
 
-    const saveStatus = container.querySelector(".save-state");
+    const saveStatus = container.querySelector(".editor__save-state");
     expect(saveStatus?.textContent).toContain("Saved");
     expect(saveStatus?.textContent).not.toContain("Save failed");
   });
