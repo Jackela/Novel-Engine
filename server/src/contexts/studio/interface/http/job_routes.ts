@@ -1,11 +1,19 @@
 import type { TypeBoxTypeProvider } from "@fastify/type-provider-typebox";
 import type { FastifyPluginAsync } from "fastify";
 import { principalGuard, requirePrincipal } from "../../../../shared/interface/http/auth_guard.js";
+import { errorEnvelopeResponse } from "../../../../shared/interface/http/error_envelope.js";
 import { jobListResponseSchema, jobResponseSchema, usageResponseSchema } from "./job_schemas.js";
 import { requireServices, type StudioRoutesOptions } from "./project_routes.js";
 import { withAsyncStudioErrors, withStudioErrors } from "./studio_error_mapping.js";
 import { jobIdParams, projectIdParams } from "./studio_request_schemas.js";
 import { operationInFlightSchema } from "./studio_schemas.js";
+
+/** Guard + scope failures shared by the project-scoped job reads. */
+const JOB_READ_ERROR_RESPONSES = {
+  401: errorEnvelopeResponse,
+  404: errorEnvelopeResponse,
+  503: errorEnvelopeResponse,
+} as const;
 
 /**
  * The synchronous jobs audit surface: the persisted listing (newest first)
@@ -20,7 +28,10 @@ export const jobRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fastify
     "/api/projects/:projectId/jobs",
     {
       preHandler: [guard],
-      schema: { params: projectIdParams, response: { 200: jobListResponseSchema } },
+      schema: {
+        params: projectIdParams,
+        response: { 200: jobListResponseSchema, ...JOB_READ_ERROR_RESPONSES },
+      },
     },
     async (request) =>
       withStudioErrors(() => ({
@@ -37,7 +48,14 @@ export const jobRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fastify
       preHandler: [guard],
       schema: {
         params: jobIdParams,
-        response: { 200: jobResponseSchema, 409: operationInFlightSchema },
+        response: {
+          200: jobResponseSchema,
+          ...JOB_READ_ERROR_RESPONSES,
+          403: errorEnvelopeResponse,
+          // Non-retryable terminal states answer 422 INVALID_OPERATION.
+          422: errorEnvelopeResponse,
+          409: operationInFlightSchema,
+        },
       },
     },
     async (request) => {
@@ -62,7 +80,10 @@ export const jobRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fastify
     "/api/projects/:projectId/usage",
     {
       preHandler: [guard],
-      schema: { params: projectIdParams, response: { 200: usageResponseSchema } },
+      schema: {
+        params: projectIdParams,
+        response: { 200: usageResponseSchema, ...JOB_READ_ERROR_RESPONSES },
+      },
     },
     async (request) => {
       return withStudioErrors(() => {

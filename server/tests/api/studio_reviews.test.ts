@@ -274,9 +274,9 @@ describe("review HTTP surface", () => {
       });
 
       expect(response.statusCode).toBe(403);
-      expect(response.json()).toEqual({
-        error: { code: "CSRF_TOKEN_MISSING", message: "CSRF token missing." },
-      });
+      // The envelope names the double-submit headers so a client can recover.
+      expect(response.json().error.code).toBe("CSRF_TOKEN_MISSING");
+      expect(response.json().error.message).toContain("x-csrf-token");
       expect(jobHistory.recordedReviewProjectIds).toEqual([]);
     } finally {
       await app.close();

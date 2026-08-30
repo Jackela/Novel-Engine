@@ -16,6 +16,7 @@ A self-hosted writing studio: a TypeScript/Fastify + SQLite backend with a React
 - [CI gates](https://raw.githubusercontent.com/Jackela/Novel-Engine/main/docs/agents/ci-gates.md): Description of the QA gates and validation commands enforced in CI.
 - [Issue tracker](https://raw.githubusercontent.com/Jackela/Novel-Engine/main/docs/agents/issue-tracker.md): Conventions for using GitHub Issues as the work tracker.
 - [Triage labels](https://raw.githubusercontent.com/Jackela/Novel-Engine/main/docs/agents/triage-labels.md): The five canonical triage labels and how to apply them.
+- [Error codes](https://raw.githubusercontent.com/Jackela/Novel-Engine/main/docs/agents/error-codes.md): Catalog of stable API error codes with HTTP status, meaning, and the suggested agent action for each.
 - [ADR-0001: TypeScript greenfield rewrite](https://raw.githubusercontent.com/Jackela/Novel-Engine/main/docs/adr/0001-typescript-greenfield-rewrite.md): Decision to retire the Python stack and rewrite in TypeScript.
 - [ADR-0002: TS backend stack](https://raw.githubusercontent.com/Jackela/Novel-Engine/main/docs/adr/0002-ts-backend-stack.md): Choice of Fastify v5, TypeBox, and Drizzle over better-sqlite3.
 - [ADR-0003: Cutover execution](https://raw.githubusercontent.com/Jackela/Novel-Engine/main/docs/adr/0003-cutover-execution.md): How the Python-to-TypeScript cutover was planned and executed.

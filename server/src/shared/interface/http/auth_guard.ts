@@ -3,7 +3,7 @@ import type { FastifyReply, FastifyRequest, HookHandlerDoneFunction } from "fast
 
 import type { AuthService } from "../../application/auth_service.js";
 import type { Principal } from "../../application/ports/auth.js";
-import { AppError } from "./error_envelope.js";
+import { AppError, ERROR_CODES } from "./error_envelope.js";
 import { CSRF_COOKIE, CSRF_HEADER, SESSION_COOKIE } from "./session_cookies.js";
 
 /**
@@ -40,7 +40,7 @@ export function principalGuard(
     if (service === undefined) {
       throw new AppError({
         statusCode: 503,
-        code: "SERVICE_UNAVAILABLE",
+        code: ERROR_CODES.SERVICE_UNAVAILABLE,
         message: "The persistence layer is not configured.",
       });
     }
@@ -48,7 +48,7 @@ export function principalGuard(
     if (principal === null) {
       throw new AppError({
         statusCode: 401,
-        code: "UNAUTHORIZED",
+        code: ERROR_CODES.UNAUTHORIZED,
         message: "Owner session required.",
       });
     }
@@ -64,15 +64,15 @@ export function principalGuard(
       ) {
         throw new AppError({
           statusCode: 403,
-          code: "CSRF_TOKEN_MISSING",
-          message: "CSRF token missing.",
+          code: ERROR_CODES.CSRF_TOKEN_MISSING,
+          message: `CSRF token missing: echo the ${CSRF_COOKIE} cookie value in the ${CSRF_HEADER} header (issued together at login). First-contact paths (${[...FIRST_CONTACT_PATHS].join(", ")}) are exempt.`,
         });
       }
       if (!tokensEqual(cookieToken, headerToken)) {
         throw new AppError({
           statusCode: 403,
-          code: "CSRF_TOKEN_INVALID",
-          message: "CSRF token invalid.",
+          code: ERROR_CODES.CSRF_TOKEN_INVALID,
+          message: `CSRF token invalid: the ${CSRF_HEADER} header does not match the ${CSRF_COOKIE} cookie — the pair is issued together at login and rotates with the session, so re-login via POST /api/session/login for a fresh pair, then retry. First-contact paths (${[...FIRST_CONTACT_PATHS].join(", ")}) are exempt.`,
         });
       }
     }
@@ -90,7 +90,7 @@ export function requirePrincipal(request: FastifyRequest): Principal {
   if (request.principal === undefined) {
     throw new AppError({
       statusCode: 401,
-      code: "UNAUTHORIZED",
+      code: ERROR_CODES.UNAUTHORIZED,
       message: "Owner session required.",
     });
   }

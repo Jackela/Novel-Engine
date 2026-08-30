@@ -2,6 +2,7 @@ import type { TypeBoxTypeProvider } from "@fastify/type-provider-typebox";
 import { Type } from "@fastify/type-provider-typebox";
 import type { FastifyPluginAsync } from "fastify";
 import { principalGuard, requirePrincipal } from "../../../../shared/interface/http/auth_guard.js";
+import { errorEnvelopeResponse } from "../../../../shared/interface/http/error_envelope.js";
 import type { JsonResponseSchema } from "./json_response_schema.js";
 import { requireServices, type StudioRoutesOptions } from "./project_routes.js";
 import { withStudioErrors } from "./studio_error_mapping.js";
@@ -52,7 +53,15 @@ export const beatRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fastif
     "/api/projects/:projectId/documents/:documentId/beat",
     {
       preHandler: [guard],
-      schema: { params: documentIdParams, response: { 200: chapterBeatResponseSchema } },
+      schema: {
+        params: documentIdParams,
+        response: {
+          200: chapterBeatResponseSchema,
+          401: errorEnvelopeResponse,
+          404: errorEnvelopeResponse,
+          503: errorEnvelopeResponse,
+        },
+      },
     },
     async (request) =>
       withStudioErrors(() =>
@@ -71,7 +80,14 @@ export const beatRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fastif
       schema: {
         params: documentIdParams,
         body: chapterBeatLinkSchema,
-        response: { 200: chapterBeatResponseSchema },
+        response: {
+          200: chapterBeatResponseSchema,
+          401: errorEnvelopeResponse,
+          403: errorEnvelopeResponse,
+          404: errorEnvelopeResponse,
+          422: errorEnvelopeResponse,
+          503: errorEnvelopeResponse,
+        },
       },
     },
     async (request) =>

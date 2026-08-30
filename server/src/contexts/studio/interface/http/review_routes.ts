@@ -1,7 +1,11 @@
 import type { TypeBoxTypeProvider } from "@fastify/type-provider-typebox";
 import type { FastifyPluginAsync } from "fastify";
 import { principalGuard, requirePrincipal } from "../../../../shared/interface/http/auth_guard.js";
-import { AppError } from "../../../../shared/interface/http/error_envelope.js";
+import {
+  AppError,
+  ERROR_CODES,
+  errorEnvelopeResponse,
+} from "../../../../shared/interface/http/error_envelope.js";
 import type { EditorialAssessment } from "../../application/review_service.js";
 import { jobResponseSchema } from "./job_schemas.js";
 import { requireServices, type StudioRoutesOptions } from "./project_routes.js";
@@ -51,7 +55,7 @@ export const reviewRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fast
         ) {
           throw new AppError({
             statusCode: 422,
-            code: "VALIDATION_ERROR",
+            code: ERROR_CODES.VALIDATION_ERROR,
             message: "Request validation failed.",
             details: {
               errors: [
@@ -69,7 +73,14 @@ export const reviewRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fast
       schema: {
         params: projectIdParams,
         body: reviewCreateSchema,
-        response: { 201: jobResponseSchema },
+        response: {
+          201: jobResponseSchema,
+          401: errorEnvelopeResponse,
+          403: errorEnvelopeResponse,
+          404: errorEnvelopeResponse,
+          422: errorEnvelopeResponse,
+          503: errorEnvelopeResponse,
+        },
       },
       config: {
         swaggerTransform: ({ schema, url }) => {
@@ -95,7 +106,15 @@ export const reviewRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fast
     "/api/projects/:projectId/reviews",
     {
       preHandler: [guard],
-      schema: { params: projectIdParams, response: { 200: reviewListResponseSchema } },
+      schema: {
+        params: projectIdParams,
+        response: {
+          200: reviewListResponseSchema,
+          401: errorEnvelopeResponse,
+          404: errorEnvelopeResponse,
+          503: errorEnvelopeResponse,
+        },
+      },
     },
     async (request) =>
       withStudioErrors(() => ({

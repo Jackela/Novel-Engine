@@ -1,6 +1,7 @@
 import type { TypeBoxTypeProvider } from "@fastify/type-provider-typebox";
 import type { FastifyPluginAsync } from "fastify";
 import { principalGuard, requirePrincipal } from "../../../../shared/interface/http/auth_guard.js";
+import { errorEnvelopeResponse } from "../../../../shared/interface/http/error_envelope.js";
 import type { JsonResponseSchema } from "./json_response_schema.js";
 import { requireServices, type StudioRoutesOptions } from "./project_routes.js";
 import { withStudioErrors } from "./studio_error_mapping.js";
@@ -38,12 +39,36 @@ const revisionListResponseSchema: JsonResponseSchema = {
 
 const SAVE_RESPONSES = {
   200: documentResponseSchema,
+  401: errorEnvelopeResponse,
+  403: errorEnvelopeResponse,
+  404: errorEnvelopeResponse,
+  422: errorEnvelopeResponse,
   409: revisionConflictSchema,
+  503: errorEnvelopeResponse,
 } as const;
 
 const CREATE_RESPONSES = {
   201: documentResponseSchema,
+  401: errorEnvelopeResponse,
+  403: errorEnvelopeResponse,
+  // The parent project is scoped first: a foreign or missing project 404s.
+  404: errorEnvelopeResponse,
+  422: errorEnvelopeResponse,
   409: documentConflictSchema,
+  503: errorEnvelopeResponse,
+} as const;
+
+/** Guard failures shared by every authenticated document surface. */
+const GUARD_RESPONSES = {
+  401: errorEnvelopeResponse,
+  503: errorEnvelopeResponse,
+} as const;
+
+/** Guard + CSRF double-submit failures shared by authenticated writes. */
+const WRITE_RESPONSES = {
+  ...GUARD_RESPONSES,
+  403: errorEnvelopeResponse,
+  422: errorEnvelopeResponse,
 } as const;
 
 /**
@@ -91,7 +116,11 @@ export const documentRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fa
       schema: {
         params: projectIdParams,
         body: reorderSchema,
-        response: { 200: documentListResponseSchema },
+        response: {
+          200: documentListResponseSchema,
+          ...WRITE_RESPONSES,
+          404: errorEnvelopeResponse,
+        },
       },
     },
     async (request) =>
@@ -137,7 +166,11 @@ export const documentRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fa
       schema: {
         params: documentIdParams,
         body: documentPlaceSchema,
-        response: { 200: documentResponseSchema },
+        response: {
+          200: documentResponseSchema,
+          ...WRITE_RESPONSES,
+          404: errorEnvelopeResponse,
+        },
       },
     },
     async (request) =>
@@ -157,7 +190,13 @@ export const documentRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fa
       preHandler: [guard],
       schema: {
         params: documentIdParams,
-        response: { 204: { type: "null" }, 409: snapshotConflictSchema },
+        response: {
+          204: { type: "null" },
+          ...GUARD_RESPONSES,
+          403: errorEnvelopeResponse,
+          404: errorEnvelopeResponse,
+          409: snapshotConflictSchema,
+        },
       },
     },
     async (request, reply) => {
@@ -179,7 +218,11 @@ export const documentRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fa
       preHandler: [guard],
       schema: {
         params: documentIdParams,
-        response: { 200: revisionListResponseSchema },
+        response: {
+          200: revisionListResponseSchema,
+          ...GUARD_RESPONSES,
+          404: errorEnvelopeResponse,
+        },
       },
     },
     async (request) =>
@@ -199,7 +242,12 @@ export const documentRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fa
       schema: {
         params: revisionIdParams,
         body: restoreSchema,
-        response: { 200: documentResponseSchema, 409: revisionConflictSchema },
+        response: {
+          200: documentResponseSchema,
+          ...WRITE_RESPONSES,
+          404: errorEnvelopeResponse,
+          409: revisionConflictSchema,
+        },
       },
     },
     async (request) =>
