@@ -187,4 +187,55 @@ describe("StudioNavigator", () => {
     expect(rows[1]?.querySelector(".document-row__beat")?.textContent).toBe("The Harbor Bell");
     expect(rows[2]?.querySelector(".document-row__beat")).toBeNull();
   });
+
+  it("renders lore lifecycle status badges on lore rows only (#444)", () => {
+    const stableCharacter = {
+      ...baseDocument,
+      id: "doc-2",
+      kind: "character" as const,
+      title: "Mara",
+      position: 1,
+      lore_status: "stable" as const,
+    };
+    const draftWorld = {
+      ...baseDocument,
+      id: "doc-3",
+      kind: "world" as const,
+      title: "Sable Reaches",
+      position: 2,
+      lore_status: "draft" as const,
+    };
+    const container = render(
+      <StudioNavigator
+        project={projectWith([baseDocument, stableCharacter, draftWorld])}
+        section="manuscript"
+        activeId="doc-1"
+        search=""
+        isSearching={false}
+        searchResults={[]}
+        onSearchChange={() => undefined}
+        onSearchSubmit={(event) => event.preventDefault()}
+        onNavigateSection={() => undefined}
+        onSelectDocument={() => undefined}
+        onCreateDocument={() => undefined}
+        onMoveDocument={() => undefined}
+      />,
+    );
+
+    const rows = Array.from(container.querySelectorAll(".document-row"));
+    expect(rows).toHaveLength(3);
+
+    // Badges ride only on lore rows and carry the closed status vocabulary.
+    expect(rows[0]?.querySelector(".document-row__lore-status")).toBeNull();
+    const stableBadge = rows[1]?.querySelector(".document-row__lore-status");
+    expect(stableBadge?.textContent).toBe("stable");
+    expect(stableBadge?.className).toContain("document-row__lore-status--stable");
+    const draftBadge = rows[2]?.querySelector(".document-row__lore-status");
+    expect(draftBadge?.textContent).toBe("draft");
+    expect(draftBadge?.className).toContain("document-row__lore-status--draft");
+
+    // Badges are presentational; the row name carries the status instead.
+    expect(rows[1]?.getAttribute("aria-label")).toBe("Mara — stable");
+    expect(rows[2]?.getAttribute("aria-label")).toBe("Sable Reaches — draft");
+  });
 });

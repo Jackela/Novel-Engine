@@ -106,6 +106,39 @@
   gap: 7px;
   margin-top: 10px;
 }
+/* Lore lifecycle-status panel (#444): a compact document-scoped form above
+   the inspector tab panels. */
+.studio-lore-status {
+  display: grid;
+  gap: 7px;
+  margin: 12px 12px 0;
+  padding: 12px;
+  border: 1px solid #d6dada;
+  border-radius: 5px;
+  background: #f4f7f7;
+}
+.studio-lore-status .studio-inspector__settings-field select {
+  width: 100%;
+  border: 1px solid #d7dcdd;
+  border-radius: 5px;
+  padding: 10px 11px;
+  outline: none;
+  background: var(--surface);
+  font-weight: 400;
+}
+.studio-lore-status .studio-inspector__settings-field select:focus {
+  border-color: var(--teal-strong);
+  box-shadow: 0 0 0 3px var(--focus-ring);
+}
+.studio-lore-status__hint {
+  margin: 0;
+  color: #4f595a;
+  font-size: 12px;
+  line-height: 1.5;
+}
+.studio-lore-status .studio-inspector__actions {
+  margin-top: 2px;
+}
 .studio-inspector__heading {
   display: flex;
   justify-content: space-between;

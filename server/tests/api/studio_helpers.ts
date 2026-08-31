@@ -122,6 +122,8 @@ export interface DocumentPayload {
   volume_id?: string | null;
   /** The stored outline-beat reference (#313); resolved reads use GET /beat. */
   beat_ref?: string | null;
+  /** Lore lifecycle status (#444); null for non-lore kinds. */
+  lore_status?: string | null;
   current_revision_id: string;
   content_markdown: string;
   metadata: Record<string, unknown>;

@@ -67,6 +67,18 @@ injected into generation prompts when its keys appear in recent manuscript
 text.
 _Avoid_: world info, memory, wiki
 
+**Lifecycle status**:
+The lore-entry gate — `draft`, `stable`, or `deprecated`. New lore entries
+start at `draft`; only `stable` entries participate in keyword-triggered
+injection, so half-written or retired documents never reach a prompt.
+_Avoid_: publish state, quality flag
+
+**Canon**:
+The author-approved lore a project generates against: the `stable` lore
+entries. Pre-gate lore entries were admitted as canon by migration; `draft`
+is not-yet-canon and `deprecated` is retired canon.
+_Avoid_: truth, official setting
+
 **Resident context**:
 The context layer always injected into generation prompts: the outline
 position, a rolling summary of prior chapters, and the tail of the most

@@ -2,9 +2,11 @@ import type { Dispatch, FormEvent, SetStateAction } from "react";
 
 import type {
   ExportFormat,
+  LoreStatus,
   ProviderInfo,
   Review,
   Revision,
+  StudioDocument,
   StudioExport,
   StudioJob,
 } from "@/app/types/studio";
@@ -27,6 +29,8 @@ export interface InspectorPendingState {
     retryingJobId?: string | null;
   };
   settings: boolean;
+  /** #444: lore lifecycle-status save pending. */
+  loreStatus?: boolean;
   history?: {
     restoringRevisionId: string | null;
   };
@@ -84,6 +88,13 @@ export interface InspectorSettingsModel {
   setSettingsForm: Dispatch<SetStateAction<SettingsFormState>>;
 }
 
+/** #444: document-scoped lifecycle gate for the active lore entry. */
+export interface InspectorLoreStatusModel {
+  /** The active document, or null when none is active. */
+  document: StudioDocument | null;
+  onStatusChange: (status: LoreStatus) => void | Promise<void>;
+}
+
 export interface StudioInspectorModel {
   copilot: InspectorCopilotModel;
   export: InspectorExportModel;
@@ -92,4 +103,5 @@ export interface StudioInspectorModel {
   jobs: InspectorJobsModel;
   usage: InspectorUsageModel;
   settings: InspectorSettingsModel;
+  loreStatus: InspectorLoreStatusModel;
 }

@@ -16,6 +16,7 @@ import {
   RevisionConflictError,
   SnapshotConflict,
 } from "../domain/exceptions.js";
+import { DEFAULT_LORE_STATUS } from "../domain/kinds.js";
 import {
   clearDocumentIndex,
   matchDocumentIndex,
@@ -102,6 +103,7 @@ export class DocumentStorePart {
           volumeId: input.volumeId,
           beatRef: null,
           loreAliasesJson: "[]",
+          loreStatus: DEFAULT_LORE_STATUS,
           currentRevisionId: revision.id,
           createdAt: input.now,
           updatedAt: input.now,

@@ -52,6 +52,7 @@ export function documentFixture(): DocumentWithCurrent {
     volumeId: "vol-1",
     beatRef: "beat-7",
     loreAliasesJson: "[]",
+    loreStatus: "stable",
     currentRevisionId: "rev-1",
     createdAt: NOW,
     updatedAt: NOW,
@@ -122,6 +123,12 @@ function toAjvSchema(node: unknown): unknown {
   for (const [key, value] of Object.entries(node)) mapped[key] = toAjvSchema(value);
   if (mapped.nullable === true && typeof mapped.type === "string") {
     mapped.type = [mapped.type, "null"];
+    // Nullable enum members (#444 `lore_status`): OpenAPI 3.0 semantics make
+    // null a legal value alongside the closed set, so the draft-07 projection
+    // must admit it or every null-bearing fixture turns red.
+    if (Array.isArray(mapped.enum) && !mapped.enum.includes(null)) {
+      mapped.enum = [...mapped.enum, null];
+    }
     delete mapped.nullable;
   }
   return mapped;

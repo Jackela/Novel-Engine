@@ -346,3 +346,33 @@
 .document-row--active .document-row__beat {
   color: #0f6862;
 }
+/* Lore lifecycle status badge (#444); rendered only on lore entries. */
+.document-row__lore-status {
+  margin-left: auto;
+  flex: none;
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+.document-row__beat + .document-row__lore-status {
+  margin-left: 6px;
+}
+.document-row__lore-status--draft {
+  background: #e2e8e8;
+  color: #5a6465;
+}
+.document-row__lore-status--stable {
+  background: #cfe4e2;
+  color: #0f6862;
+}
+.document-row__lore-status--deprecated {
+  background: #f3e0dc;
+  color: #8a4a3c;
+}
+.document-row--active .document-row__lore-status--draft {
+  background: #d5dddd;
+  color: #3d4647;
+}

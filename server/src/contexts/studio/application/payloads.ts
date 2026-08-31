@@ -1,10 +1,11 @@
 import { InvalidOperationError } from "../../../shared/domain/exceptions.js";
-import type { DocumentKind, RevisionSource } from "../domain/kinds.js";
+import type { DocumentKind, LoreStatus, RevisionSource } from "../domain/kinds.js";
+import { asLoreStatus, isLoreEntryKind } from "./lorebook.js";
 import type { ChapterBeatPayload } from "./payload_schemas/beat.js";
 import type { DocumentPayload, MatchResultPayload } from "./payload_schemas/document.js";
 import type { ExportArtifactPayload } from "./payload_schemas/export.js";
 import type { JobPayload } from "./payload_schemas/job.js";
-import type { LoreAliasPayload } from "./payload_schemas/lore.js";
+import type { LoreAliasPayload, LoreStatusPayload } from "./payload_schemas/lore.js";
 import type { ProjectPayload } from "./payload_schemas/project.js";
 import type { ReviewPayload, ReviewSeverity } from "./payload_schemas/review.js";
 import type { RevisionPayload } from "./payload_schemas/revision.js";
@@ -101,6 +102,9 @@ export function documentPayload(document: DocumentWithCurrent): DocumentPayload 
     position: document.position,
     volume_id: document.volumeId,
     beat_ref: document.beatRef,
+    // Lore lifecycle status (#444): lore kinds narrow to the closed enum,
+    // every other kind stays null so the semantics never leak beyond lore.
+    lore_status: isLoreEntryKind(document.kind) ? asLoreStatus(document.loreStatus) : null,
     current_revision_id: revision.id,
     content_markdown: revision.contentMarkdown,
     metadata: safeLoadJson(revision.metadataJson),
@@ -202,6 +206,11 @@ export function exportJobResultJson(
 /** The lorebook alias envelope served by both alias surface verbs (#315). */
 export function loreAliasPayload(aliases: readonly string[]): LoreAliasPayload {
   return { aliases: [...aliases] };
+}
+
+/** The lifecycle-status envelope answered by the lore-status write (#444). */
+export function loreStatusPayload(status: LoreStatus): LoreStatusPayload {
+  return { lore_status: status };
 }
 
 /**

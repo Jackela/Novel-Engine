@@ -11,6 +11,9 @@ import type { paths } from "../../../generated/api-types";
 type DocumentCreateBody = NonNullable<
   paths["/api/projects/{projectId}/documents"]["post"]
 >["requestBody"]["content"]["application/json"];
+type LoreStatusWriteBody = NonNullable<
+  paths["/api/projects/{projectId}/documents/{documentId}/lore-status"]["put"]
+>["requestBody"]["content"]["application/json"];
 type ExportRequestBody = NonNullable<
   paths["/api/projects/{projectId}/exports"]["post"]
 >["requestBody"]["content"]["application/json"];
@@ -19,6 +22,8 @@ type AIProposalBody = NonNullable<
 >["requestBody"]["content"]["application/json"];
 
 export type DocumentKind = DocumentCreateBody["kind"];
+/** The lore lifecycle status (#444); only `stable` entries inject (ADR-0006). */
+export type LoreStatus = LoreStatusWriteBody["lore_status"];
 export type ExportFormat = ExportRequestBody["format"];
 export type StudioJobOperation = AIProposalBody["operation"] | "review" | "export";
 export type SessionKind = "owner";
@@ -59,6 +64,12 @@ export interface StudioDocument {
    * in-volume ordinal is `position`.
    */
   beat_ref?: string | null;
+  /**
+   * Lore lifecycle status (#444, ADR-0006): draft | stable | deprecated for
+   * character/world documents; null for every other kind — the lifecycle
+   * semantics never leak beyond lore. Only `stable` entries inject.
+   */
+  lore_status?: LoreStatus | null;
   current_revision_id: string;
   content_markdown: string;
   metadata: Record<string, unknown>;

@@ -49,6 +49,13 @@ export const SECTIONS = [
   ["settings", "Settings"],
 ] as const;
 
+/** The document kinds that serve as lorebook entries (#315); lifecycle-gated (#444). */
+export const LOREBOOK_ENTRY_KINDS: readonly DocumentKind[] = ["character", "world"];
+
+export function isLoreEntryKind(kind: DocumentKind): boolean {
+  return LOREBOOK_ENTRY_KINDS.includes(kind);
+}
+
 export const DEFAULT_PROVIDER_OPTIONS: ProviderInfo[] = [
   { provider: "mock", configured: true, model: null, is_default: true },
   { provider: "dashscope", configured: false, model: null, is_default: false },

@@ -230,6 +230,15 @@
                                   ],
                                   "type": "string"
                                 },
+                                "lore_status": {
+                                  "enum": [
+                                    "draft",
+                                    "stable",
+                                    "deprecated"
+                                  ],
+                                  "nullable": true,
+                                  "type": "string"
+                                },
                                 "metadata": {
                                   "additionalProperties": true,
                                   "type": "object"
@@ -270,6 +279,7 @@
                                 "position",
                                 "volume_id",
                                 "beat_ref",
+                                "lore_status",
                                 "current_revision_id",
                                 "content_markdown",
                                 "metadata",
@@ -450,6 +460,15 @@
                             ],
                             "type": "string"
                           },
+                          "lore_status": {
+                            "enum": [
+                              "draft",
+                              "stable",
+                              "deprecated"
+                            ],
+                            "nullable": true,
+                            "type": "string"
+                          },
                           "metadata": {
                             "additionalProperties": true,
                             "type": "object"
@@ -490,6 +509,7 @@
                           "position",
                           "volume_id",
                           "beat_ref",
+                          "lore_status",
                           "current_revision_id",
                           "content_markdown",
                           "metadata",
@@ -727,6 +747,15 @@
                             ],
                             "type": "string"
                           },
+                          "lore_status": {
+                            "enum": [
+                              "draft",
+                              "stable",
+                              "deprecated"
+                            ],
+                            "nullable": true,
+                            "type": "string"
+                          },
                           "metadata": {
                             "additionalProperties": true,
                             "type": "object"
@@ -767,6 +796,7 @@
                           "position",
                           "volume_id",
                           "beat_ref",
+                          "lore_status",
                           "current_revision_id",
                           "content_markdown",
                           "metadata",
@@ -1152,6 +1182,15 @@
                       ],
                       "type": "string"
                     },
+                    "lore_status": {
+                      "enum": [
+                        "draft",
+                        "stable",
+                        "deprecated"
+                      ],
+                      "nullable": true,
+                      "type": "string"
+                    },
                     "metadata": {
                       "additionalProperties": true,
                       "type": "object"
@@ -1192,6 +1231,7 @@
                     "position",
                     "volume_id",
                     "beat_ref",
+                    "lore_status",
                     "current_revision_id",
                     "content_markdown",
                     "metadata",
@@ -1366,6 +1406,15 @@
                             ],
                             "type": "string"
                           },
+                          "lore_status": {
+                            "enum": [
+                              "draft",
+                              "stable",
+                              "deprecated"
+                            ],
+                            "nullable": true,
+                            "type": "string"
+                          },
                           "metadata": {
                             "additionalProperties": true,
                             "type": "object"
@@ -1406,6 +1455,7 @@
                           "position",
                           "volume_id",
                           "beat_ref",
+                          "lore_status",
                           "current_revision_id",
                           "content_markdown",
                           "metadata",
@@ -1669,6 +1719,15 @@
                       ],
                       "type": "string"
                     },
+                    "lore_status": {
+                      "enum": [
+                        "draft",
+                        "stable",
+                        "deprecated"
+                      ],
+                      "nullable": true,
+                      "type": "string"
+                    },
                     "metadata": {
                       "additionalProperties": true,
                       "type": "object"
@@ -1709,6 +1768,7 @@
                     "position",
                     "volume_id",
                     "beat_ref",
+                    "lore_status",
                     "current_revision_id",
                     "content_markdown",
                     "metadata",
@@ -2686,6 +2746,128 @@
         }
       }
     },
+    "/api/projects/{projectId}/documents/{documentId}/lore-status": {
+      "put": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "documentId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "lore_status": {
+                    "enum": [
+                      "draft",
+                      "stable",
+                      "deprecated"
+                    ],
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "lore_status"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "lore_status": {
+                      "enum": [
+                        "draft",
+                        "stable",
+                        "deprecated"
+                      ],
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "lore_status"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          }
+        }
+      }
+    },
     "/api/projects/{projectId}/documents/{documentId}/revisions": {
       "get": {
         "parameters": [
@@ -2891,6 +3073,15 @@
                       ],
                       "type": "string"
                     },
+                    "lore_status": {
+                      "enum": [
+                        "draft",
+                        "stable",
+                        "deprecated"
+                      ],
+                      "nullable": true,
+                      "type": "string"
+                    },
                     "metadata": {
                       "additionalProperties": true,
                       "type": "object"
@@ -2931,6 +3122,7 @@
                     "position",
                     "volume_id",
                     "beat_ref",
+                    "lore_status",
                     "current_revision_id",
                     "content_markdown",
                     "metadata",
@@ -3120,6 +3312,15 @@
                       ],
                       "type": "string"
                     },
+                    "lore_status": {
+                      "enum": [
+                        "draft",
+                        "stable",
+                        "deprecated"
+                      ],
+                      "nullable": true,
+                      "type": "string"
+                    },
                     "metadata": {
                       "additionalProperties": true,
                       "type": "object"
@@ -3160,6 +3361,7 @@
                     "position",
                     "volume_id",
                     "beat_ref",
+                    "lore_status",
                     "current_revision_id",
                     "content_markdown",
                     "metadata",
