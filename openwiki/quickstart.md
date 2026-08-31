@@ -1,6 +1,6 @@
 # Novel Engine quickstart
 
-Novel Engine **0.4.0** is a self-hosted, single-author writing studio. The authoritative store is SQLite, with repository documentation and configuration kept in version-controlled text files. The application requires **Node.js 24+**; the committed tooling specifies **pnpm 11.6.0**, and CI runs the server on Node 24 with the SPA workflow on Node 22 (`server/package.json`, `package.json`, `.github/workflows/ci.yml`). The Python stack of 0.3.x is retired at git tag `python-final`.
+Novel Engine is a self-hosted, single-author writing studio. The authoritative store is SQLite, with repository documentation and configuration kept in version-controlled text files. The application requires **Node.js 24+**; the committed tooling specifies **pnpm 11.6.0**, and CI runs both the server and SPA workflow on Node 24 (`server/package.json`, `package.json`, `.github/workflows/ci.yml`). The Python stack of 0.3.x is retired at git tag `python-final`.
 
 This page covers local operation, migration preparation, and the fastest checks after a change. The product specification is `openspec/specs/novel-engine/spec.md`.
 
@@ -40,7 +40,7 @@ Vite listens on port **5173** and proxies `/api` to `VITE_API_PROXY_TARGET`, whi
 
 On a new database, the entry screen creates the local Owner account. Keep an unauthenticated service on loopback or a private network until this first setup is complete. The unauthenticated `POST /api/setup` compares every supplied `Origin` and `Referer` with the serving origin or an explicit configured non-wildcard CORS origin (or a supported localhost/127.0.0.1 port wildcard), rejecting cross-site requests with `403`; requests without browser origin metadata remain available to local bootstrap clients. Once an Owner exists, concurrent setup has one `201` winner and controlled `422` responses for later attempts. The API exposes setup state at `GET /api/setup` (`server/src/contexts/studio/interface/http/`).
 
-The browser client uses cookie sessions (`novel_engine_session`) and sends credentials with API requests. Mutating requests include the `X-CSRF-Token` copied from the `novel_engine_csrf` cookie; setup, login, and guest-session creation are the explicit CSRF exemptions (`server/src/contexts/studio/interface/http/`, `frontend/src/app/api.ts`). Error responses use the unified envelope `{ "error": { code, message, details } }`. Guest sessions are 24-hour sandboxes isolated from Owner data; do not treat guest work as permanent.
+The browser client uses the Owner-only cookie session (`novel_engine_session`) and sends credentials with API requests. Mutating requests include the `X-CSRF-Token` copied from the `novel_engine_csrf` cookie; setup and login are the explicit CSRF exemptions (`server/src/shared/interface/http/`, `frontend/src/app/api.ts`). Error responses use the unified envelope `{ "error": { code, message, details } }`. The current product exposes no guest-session surface.
 
 Session tokens are HMAC-derived values keyed by the injected `SECURITY_SECRET_KEY`. In production and staging a non-default secret is mandatory; an unset secret rotates per start and invalidates sessions. Rotate the key as an intentional logout event (`server/src/shared/infrastructure/config/server_config.ts`).
 
