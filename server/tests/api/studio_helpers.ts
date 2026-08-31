@@ -40,6 +40,7 @@ export interface StudioAppOverrides {
   textProviderFactory?: NonNullable<Parameters<typeof buildApp>[0]>["textProviderFactory"];
   config?: AppOptions["config"];
   lorebookBudgetCharacters?: AppOptions["lorebookBudgetCharacters"];
+  logger?: AppOptions["logger"];
 }
 
 /** Build the app with a real SQLite file and the studio surface mounted. */

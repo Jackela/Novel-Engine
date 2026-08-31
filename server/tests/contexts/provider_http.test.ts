@@ -8,7 +8,6 @@ import {
   malformedJsonFailure,
   ProviderTransportError,
   providerFailureIsRetryable,
-  redactCredentialAndTruncateResponseBody,
   runWithRetryPolicy,
   timeoutFailure,
 } from "../../src/contexts/ai/infrastructure/providers/provider_http.js";
@@ -18,12 +17,12 @@ const IMMEDIATE_SLEEP = async () => {};
 describe("retry decisions read structured fields only", () => {
   it("retries exactly the adjudicated HTTP status set", () => {
     for (const status of [429, 500, 502, 503, 504]) {
-      const failure = httpStatusFailure("context", status, "body");
+      const failure = httpStatusFailure("context", status);
       expect(providerFailureIsRetryable(failure), `status ${status}`).toBe(true);
       expect(failure.status).toBe(status);
     }
     for (const status of [400, 401, 403, 404, 422, 501]) {
-      const failure = httpStatusFailure("context", status, "body");
+      const failure = httpStatusFailure("context", status);
       expect(providerFailureIsRetryable(failure), `status ${status}`).toBe(false);
     }
   });
@@ -54,7 +53,7 @@ describe("runWithRetryPolicy", () => {
       async () => {
         calls += 1;
         if (calls === 1) {
-          throw httpStatusFailure("context", 429, "slow down");
+          throw httpStatusFailure("context", 429);
         }
         return "proposal";
       },
@@ -70,7 +69,7 @@ describe("runWithRetryPolicy", () => {
       { maxAttempts: 3, delayMs: 1000, sleep: IMMEDIATE_SLEEP },
       async () => {
         calls += 1;
-        throw httpStatusFailure("context", 503, "unavailable");
+        throw httpStatusFailure("context", 503);
       },
     );
     await expect(attempt).rejects.toBeInstanceOf(ProviderTransportError);
@@ -84,7 +83,7 @@ describe("runWithRetryPolicy", () => {
       { maxAttempts: 3, delayMs: 1000, sleep: IMMEDIATE_SLEEP },
       async () => {
         calls += 1;
-        throw httpStatusFailure("context", 401, "bad key");
+        throw httpStatusFailure("context", 401);
       },
     );
     await expect(attempt).rejects.toThrow(/401/);
@@ -119,7 +118,7 @@ describe("runWithRetryPolicy", () => {
       { maxAttempts: 4, delayMs: 1, sleep: IMMEDIATE_SLEEP },
       async () => {
         calls += 1;
-        throw httpStatusFailure("context", 503, "unavailable");
+        throw httpStatusFailure("context", 503);
       },
     );
     await expect(attempt).rejects.toBeInstanceOf(ProviderTransportError);
@@ -127,17 +126,13 @@ describe("runWithRetryPolicy", () => {
   });
 });
 
-describe("provider error diagnostics", () => {
-  it("redacts a boundary-crossing credential before truncating the response body", () => {
-    const credential = "sk-boundary-credential-which-must-never-leak";
-    const responseBody = `${"x".repeat(990)}${credential}${"y".repeat(20)}`;
+describe("provider public failures", () => {
+  it("builds an HTTP failure only from trusted context and numeric status", () => {
+    const failure = httpStatusFailure("context", 401);
 
-    const detail = redactCredentialAndTruncateResponseBody(responseBody, credential);
-
-    expect(detail).toContain("[REDACTED]");
-    expect(detail).not.toContain(credential);
-    expect(detail).not.toContain(credential.slice(0, 12));
-    expect(detail).toHaveLength(1_000);
+    expect(failure.message).toBe("context: provider returned HTTP 401.");
+    expect(failure.status).toBe(401);
+    expect(providerFailureIsRetryable(failure)).toBe(false);
   });
 });
 

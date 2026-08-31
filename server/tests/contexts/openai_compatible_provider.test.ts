@@ -144,7 +144,9 @@ describe("OpenAI-compatible adapter transient failure handling", () => {
       transport: scriptedTransport([jsonResponse(401, "bad key")], capture),
     }).generateStructured(chapterTask());
 
-    await expect(generation).rejects.toThrow(/401 bad key/);
+    await expect(generation).rejects.toThrow(
+      "OpenAI-compatible generation failed for step 'chapter_draft': provider returned HTTP 401.",
+    );
     expect(capture).toHaveLength(1);
   });
 

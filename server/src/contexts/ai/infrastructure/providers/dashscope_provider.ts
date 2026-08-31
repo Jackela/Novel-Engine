@@ -17,15 +17,13 @@ import {
   classifyTransportRejection,
   DEFAULT_PROVIDER_RETRY_POLICY,
   DEFAULT_PROVIDER_TIMEOUT_SECONDS,
+  discardHttpFailureResponse,
   effectiveTimeoutSeconds,
-  httpStatusFailure,
   isResponseLike,
   normalizedTimeoutSeconds,
   type ProviderRetryPolicy,
   type ProviderTransport,
   ProviderTransportError,
-  readableResponse,
-  redactCredentialAndTruncateResponseBody,
   requiredApiKey,
   runWithRetryPolicy,
 } from "./provider_http.js";
@@ -143,7 +141,6 @@ export class DashScopeTextProvider implements TextGenerationProvider {
         signal: options?.signal,
         context: `DashScope generation failed for step '${step}'`,
         timeoutSeconds: this.timeoutSeconds,
-        credential: this.apiKey,
         model: this.model,
         firstByteTimeoutMs: this.firstByteTimeoutMs,
         idleTimeoutMs: this.idleTimeoutMs,
@@ -183,12 +180,7 @@ export class DashScopeTextProvider implements TextGenerationProvider {
         throw new ProviderTransportError(`${context}: transport returned no response`);
       }
       if (!response.ok) {
-        const responseBody = await readableResponse(response).text();
-        throw httpStatusFailure(
-          context,
-          response.status,
-          redactCredentialAndTruncateResponseBody(responseBody, this.apiKey),
-        );
+        throw await discardHttpFailureResponse(context, response);
       }
 
       const data = await responseJsonObject(response, context);

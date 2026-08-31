@@ -5,7 +5,6 @@ import {
 
 const RETRYABLE_HTTP_STATUSES = new Set([429, 500, 502, 503, 504]);
 const MAX_PROVIDER_ATTEMPTS = 3;
-const MAX_PROVIDER_ERROR_BODY_LENGTH = 1_000;
 
 /** Chapter generation calls must outlive the enclosing request timeout. */
 export const GENERATION_TIMEOUT_FLOOR_SECONDS = 180;
@@ -156,24 +155,20 @@ export function runWithRetryPolicy<T>(
 }
 
 /** Normalize a non-success HTTP response without using its body to choose retry behavior. */
-export function httpStatusFailure(
-  context: string,
-  status: number,
-  responseBody: string,
-): ProviderTransportError {
-  const detail = responseBody.trim();
-  const suffix = detail === "" ? "" : ` ${detail}`;
-  return new ProviderTransportError(`${context}: ${status}${suffix}`, { status });
+export function httpStatusFailure(context: string, status: number): ProviderTransportError {
+  return new ProviderTransportError(`${context}: provider returned HTTP ${status}.`, { status });
 }
 
-/** Redact complete provider credentials before bounding response diagnostics. */
-export function redactCredentialAndTruncateResponseBody(
-  responseBody: string,
-  credential: string,
-): string {
-  const redacted =
-    credential === "" ? responseBody : responseBody.split(credential).join("[REDACTED]");
-  return redacted.slice(0, MAX_PROVIDER_ERROR_BODY_LENGTH);
+/** Cancel an untrusted failure stream without consuming it or exposing cleanup details. */
+export async function discardHttpFailureResponse(
+  context: string,
+  response: Response,
+): Promise<ProviderTransportError> {
+  const failure = httpStatusFailure(context, response.status);
+  const body = response.body;
+  if (body === null || body === undefined) return failure;
+  await body.cancel();
+  return failure;
 }
 
 /** Normalize a response that failed JSON-object parsing. */

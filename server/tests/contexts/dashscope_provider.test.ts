@@ -183,7 +183,7 @@ describe("dashscope adapter transient failure handling", () => {
       transport: scriptedTransport([jsonResponse(503, "unavailable")], capture),
     }).generateStructured(chapterTask("chapter_draft"));
     await expect(attempt).rejects.toThrow(
-      /DashScope generation failed for step 'chapter_draft': 503 unavailable/,
+      "DashScope generation failed for step 'chapter_draft': provider returned HTTP 503.",
     );
     expect(capture).toHaveLength(3);
   });
@@ -193,7 +193,9 @@ describe("dashscope adapter transient failure handling", () => {
     const attempt = provider({
       transport: scriptedTransport([jsonResponse(401, "bad key")], capture),
     }).generateStructured(chapterTask("chapter_draft"));
-    await expect(attempt).rejects.toThrow(/401 bad key/);
+    await expect(attempt).rejects.toThrow(
+      "DashScope generation failed for step 'chapter_draft': provider returned HTTP 401.",
+    );
     expect(capture).toHaveLength(1);
   });
 

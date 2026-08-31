@@ -14,7 +14,6 @@ function streamRequest(overrides: Partial<StreamingTextRequest> = {}): Streaming
     signal: undefined,
     context: "test provider stream",
     timeoutSeconds: 30,
-    credential: "sk-test",
     model: "test-model",
     ...overrides,
   };

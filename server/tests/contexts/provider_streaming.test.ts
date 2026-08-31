@@ -6,7 +6,6 @@ import { DashScopeTextProvider } from "../../src/contexts/ai/infrastructure/prov
 import { DeterministicStoryProvider } from "../../src/contexts/ai/infrastructure/providers/deterministic_story_provider.js";
 import { OpenAICompatibleTextProvider } from "../../src/contexts/ai/infrastructure/providers/openai_compatible_provider.js";
 import type { ProviderTransport } from "../../src/contexts/ai/infrastructure/providers/provider_http.js";
-import { ProviderTransportError } from "../../src/contexts/ai/infrastructure/providers/provider_http.js";
 import { sseDataPayloads } from "../../src/contexts/ai/infrastructure/providers/streaming_generation.js";
 import { fixtureApiKey } from "../credential_fixtures.js";
 
@@ -200,7 +199,7 @@ describe("OpenAI-compatible adapter streaming", () => {
       ),
     });
     await expect(collected(failure.generateStructuredStreaming(chapterTask()))).rejects.toThrow(
-      ProviderTransportError,
+      "OpenAI-compatible generation failed for step 'chapter_draft': provider returned HTTP 401.",
     );
     expect(capture).toHaveLength(1);
   });

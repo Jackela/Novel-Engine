@@ -11,16 +11,14 @@ import {
   classifyTransportRejection,
   DEFAULT_PROVIDER_RETRY_POLICY,
   DEFAULT_PROVIDER_TIMEOUT_SECONDS,
+  discardHttpFailureResponse,
   effectiveTimeoutSeconds,
-  httpStatusFailure,
   isJsonObject,
   isResponseLike,
   normalizedTimeoutSeconds,
   type ProviderRetryPolicy,
   type ProviderTransport,
   ProviderTransportError,
-  readableResponse,
-  redactCredentialAndTruncateResponseBody,
   requiredApiKey,
   runWithRetryPolicy,
   usageToken,
@@ -191,7 +189,6 @@ export class OpenAICompatibleTextProvider implements TextGenerationProvider {
         signal: options?.signal,
         context: `OpenAI-compatible generation failed for step '${step}'`,
         timeoutSeconds: this.timeoutSeconds,
-        credential: this.apiKey,
         model: this.model,
         firstByteTimeoutMs: this.firstByteTimeoutMs,
         idleTimeoutMs: this.idleTimeoutMs,
@@ -231,12 +228,7 @@ export class OpenAICompatibleTextProvider implements TextGenerationProvider {
         throw new ProviderTransportError(`${context}: transport returned no response`);
       }
       if (!response.ok) {
-        const responseBody = await readableResponse(response).text();
-        throw httpStatusFailure(
-          context,
-          response.status,
-          redactCredentialAndTruncateResponseBody(responseBody, this.apiKey),
-        );
+        throw await discardHttpFailureResponse(context, response);
       }
 
       const data = await responseJsonObject(response, context);

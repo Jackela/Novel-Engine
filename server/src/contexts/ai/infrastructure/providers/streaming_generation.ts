@@ -1,14 +1,12 @@
 import type { TextGenerationStreamOptions } from "../../application/ports/text_generation.js";
 import {
   classifyTransportRejection,
-  httpStatusFailure,
+  discardHttpFailureResponse,
   isJsonObject,
   isResponseLike,
   malformedJsonFailure,
   type ProviderTransport,
   ProviderTransportError,
-  readableResponse,
-  redactCredentialAndTruncateResponseBody,
 } from "./provider_http.js";
 
 type JsonObject = Record<string, unknown>;
@@ -62,7 +60,7 @@ function dataPayload(rawEvent: string): string | undefined {
   return dataLines.length === 0 ? undefined : dataLines.join("\n");
 }
 
-/** One outbound SSE generation request; credential redaction stays adapter-side. */
+/** One outbound SSE generation request; failed response bodies never cross this boundary. */
 export interface StreamingTextRequest {
   readonly url: string;
   readonly headers: Record<string, string>;
@@ -70,7 +68,6 @@ export interface StreamingTextRequest {
   readonly signal: AbortSignal | undefined;
   readonly context: string;
   readonly timeoutSeconds: number;
-  readonly credential: string;
   readonly model: string;
   /** Override for the built-in silence ceiling before the first stream byte. */
   readonly firstByteTimeoutMs?: number | undefined;
@@ -183,12 +180,7 @@ export async function* streamProviderTextDeltas(
     throw new ProviderTransportError(`${request.context}: transport returned no response`);
   }
   if (!response.ok) {
-    const responseBody = await readableResponse(response).text();
-    throw httpStatusFailure(
-      request.context,
-      response.status,
-      redactCredentialAndTruncateResponseBody(responseBody, request.credential),
-    );
+    throw await discardHttpFailureResponse(request.context, response);
   }
   const body = response.body;
   if (body === null) {
