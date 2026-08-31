@@ -40,6 +40,8 @@ function buildInspectorModel(): StudioInspectorModel {
       onUpdateSettings: vi.fn(),
       setSettingsForm: vi.fn(),
     },
+    // #444: no active document in this fixture, so no lore panel renders.
+    loreStatus: { document: null, onStatusChange: vi.fn() },
   };
 }
 

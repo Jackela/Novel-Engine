@@ -1,5 +1,5 @@
 import type { StudioSqliteDatabase } from "../../../shared/infrastructure/db/connection.js";
-import type { SetLoreAliasesInput } from "../application/ports/lore_store.js";
+import type { SetLoreAliasesInput, SetLoreStatusInput } from "../application/ports/lore_store.js";
 import type {
   AddDocumentInput,
   AddJobInput,
@@ -131,6 +131,15 @@ export class DrizzleStudioStore extends ProjectStorePart implements StudioStore 
     input: SetLoreAliasesInput,
   ): DocumentWithCurrent {
     return this.loreKeys.setLoreAliases(scope, projectId, documentId, input);
+  }
+
+  setLoreStatus(
+    scope: ProjectScope,
+    projectId: string,
+    documentId: string,
+    input: SetLoreStatusInput,
+  ): DocumentWithCurrent {
+    return this.loreKeys.setLoreStatus(scope, projectId, documentId, input);
   }
 
   renumberDocuments(

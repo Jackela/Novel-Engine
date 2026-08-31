@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  asLoreStatus,
   type LoreEntrySource,
   loreEntryKeys,
   matchLoreEntries,
@@ -25,6 +26,9 @@ import {
 function entry(overrides: Partial<LoreEntrySource> & { title: string }): LoreEntrySource {
   return {
     loreAliasesJson: "[]",
+    // Tests below exercise the matching semantics of injectable entries;
+    // gating-specific cases override this to draft/deprecated (#444).
+    status: "stable",
     contentMarkdown: "Reference prose.",
     ...overrides,
   };
@@ -124,6 +128,46 @@ describe("keyword matching (#315 layer-2 selection)", () => {
       corpora("Third then First", "Second"),
     );
     expect(matched.map((candidate) => candidate.title)).toEqual(["First", "Second", "Third"]);
+  });
+});
+
+describe("lifecycle gating (#444: only stable entries inject)", () => {
+  const corpora = { resident: "Mara and Vex", manuscript: "" };
+
+  it("injects a stable entry on a key hit", () => {
+    const matched = matchLoreEntries([entry({ title: "Mara", status: "stable" })], corpora);
+    expect(matched.map((candidate) => candidate.title)).toEqual(["Mara"]);
+  });
+
+  it("skips a draft entry even when its key occurs", () => {
+    const matched = matchLoreEntries([entry({ title: "Mara", status: "draft" })], corpora);
+    expect(matched).toEqual([]);
+  });
+
+  it("skips a deprecated entry even when its key occurs", () => {
+    const matched = matchLoreEntries([entry({ title: "Mara", status: "deprecated" })], corpora);
+    expect(matched).toEqual([]);
+  });
+
+  it("gates per entry: stable matches survive alongside gated-out neighbors", () => {
+    const matched = matchLoreEntries(
+      [
+        entry({ title: "Mara", status: "draft" }),
+        entry({ title: "Vex", status: "stable" }),
+        entry({ title: "Rho", status: "deprecated" }),
+      ],
+      corpora,
+    );
+    expect(matched.map((candidate) => candidate.title)).toEqual(["Vex"]);
+  });
+
+  it("reads an unknown stored status as draft — fail-closed, never injectable", () => {
+    expect(asLoreStatus("stable")).toBe("stable");
+    expect(asLoreStatus("draft")).toBe("draft");
+    expect(asLoreStatus("deprecated")).toBe("deprecated");
+    for (const corrupted of ["", "STABLE", "archived", "null"]) {
+      expect(asLoreStatus(corrupted)).toBe("draft");
+    }
   });
 });
 

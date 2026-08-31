@@ -44,21 +44,49 @@ describe("keyword-triggered lorebook in proposal prompts (#315)", () => {
         aliases: ["the archivist"],
       });
       // Title-triggered from the resident outline text alone.
-      await seedDocument(app, jar, project.id, {
+      const sable = await seedDocument(app, jar, project.id, {
         kind: "world",
         title: "Sable",
         content_markdown: "Gull-winged pilot of the breakwater lights.",
       });
-      // No key ever occurs: this entry must stay out of the prompt.
-      await seedDocument(app, jar, project.id, {
+      // #444: new lore entries start at `draft`; the tests below pin the
+      // injection semantics, so the fixtures promote their entries to stable
+      // through the lifecycle surface.
+      for (const document of [mara, sable]) {
+        const promoted = await call(
+          app,
+          jar,
+          "PUT",
+          `/api/projects/${project.id}/documents/${document.id}/lore-status`,
+          { lore_status: "stable" },
+        );
+        expect(promoted.statusCode, promoted.body).toBe(200);
+      }
+      // Stable but never keyed: this entry must stay out of the prompt.
+      const vantris = await seedDocument(app, jar, project.id, {
         kind: "character",
         title: "Vantris",
         content_markdown: "A name no scene in this chapter will speak.",
       });
+      await call(
+        app,
+        jar,
+        "PUT",
+        `/api/projects/${project.id}/documents/${vantris.id}/lore-status`,
+        { lore_status: "stable" },
+      );
+      // Key occurs, but the entry is still a draft (#444): the gate must
+      // keep it out of the prompt exactly like a no-key entry.
+      await seedDocument(app, jar, project.id, {
+        kind: "character",
+        title: "Bram",
+        content_markdown: "Half-written notes about the ferryman.",
+      });
       const target = await seedDocument(app, jar, project.id, {
         kind: "chapter",
         title: "Stacks",
-        content_markdown: "She moved like the archivist through the stacks.",
+        content_markdown:
+          "She moved like the archivist through the stacks, past Bram's unlit lantern.",
       });
 
       const response = await propose(app, jar, project.id, target.id, {
@@ -73,6 +101,10 @@ describe("keyword-triggered lorebook in proposal prompts (#315)", () => {
       expect(prompt).toContain("Gull-winged pilot of the breakwater lights.");
       expect(prompt).not.toContain("### Vantris");
       expect(prompt).not.toContain("no scene in this chapter will speak");
+      // The draft gate (#444): Bram's key occurs in the manuscript, but the
+      // half-written entry never reaches the prompt.
+      expect(prompt).not.toContain("### Bram");
+      expect(prompt).not.toContain("Half-written notes about the ferryman.");
 
       const order = [
         PROJECT_OUTLINE_BEGIN,

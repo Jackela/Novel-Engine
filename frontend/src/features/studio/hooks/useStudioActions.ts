@@ -2,7 +2,7 @@ import type { Dispatch, FormEvent, SetStateAction } from "react";
 import { useCallback, useState } from "react";
 
 import { api } from "@/app/api";
-import type { DocumentKind, Project, Review } from "@/app/types/studio";
+import type { DocumentKind, LoreStatus, Project, Review } from "@/app/types/studio";
 
 import { GROUPS, type InspectorTab } from "../studioConstants";
 
@@ -27,6 +27,7 @@ const ACTION_KEYS = [
   "runReview",
   "updateSettings",
   "retryJob",
+  "changeLoreStatus",
 ] as const;
 
 type ActionKey = (typeof ACTION_KEYS)[number];
@@ -171,12 +172,43 @@ export function useStudioActions({
     [begin, finish, projectId, loadJobs, setError],
   );
 
+  /**
+   * Lore lifecycle status change (#444, ADR-0006): a revision-free document
+   * write; the response envelope patches the project's document list in
+   * place so navigator badges and the selector reflect the new gate.
+   */
+  const changeLoreStatus = useCallback(
+    async (documentId: string, loreStatus: LoreStatus) => {
+      if (!project || !begin("changeLoreStatus")) return;
+      setError(null);
+      try {
+        const { lore_status } = await api.saveLoreStatus(project.id, documentId, loreStatus);
+        setProject((current) =>
+          current
+            ? {
+                ...current,
+                documents: (current.documents ?? []).map((document) =>
+                  document.id === documentId ? { ...document, lore_status } : document,
+                ),
+              }
+            : current,
+        );
+      } catch (reason) {
+        setError(toErrorMessage(reason, "Unable to update the lore status."));
+      } finally {
+        finish("changeLoreStatus");
+      }
+    },
+    [begin, finish, project, setError, setProject],
+  );
+
   return {
     createDocument,
     moveDocument,
     runReview,
     updateProjectSettings,
     retryJob,
+    changeLoreStatus,
     pending,
     isCreatingDocument: pending.createDocument,
     isMovingDocument: pending.moveDocument,
@@ -184,5 +216,6 @@ export function useStudioActions({
     isUpdatingSettings: pending.updateSettings,
     isRetryingJob: pending.retryJob,
     retryingJobId,
+    isChangingLoreStatus: pending.changeLoreStatus,
   };
 }

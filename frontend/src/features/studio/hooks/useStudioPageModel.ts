@@ -127,12 +127,14 @@ export function useStudioPageModel(
     runReview,
     updateProjectSettings,
     retryJob,
+    changeLoreStatus,
     isRunningReview,
     isUpdatingSettings,
     isRetryingJob,
     retryingJobId,
     isCreatingDocument,
     isMovingDocument,
+    isChangingLoreStatus,
   } = useStudioActions({
     project,
     projectId,
@@ -160,6 +162,7 @@ export function useStudioPageModel(
       retryingJobId,
     },
     settings: isUpdatingSettings,
+    loreStatus: isChangingLoreStatus,
     history: { restoringRevisionId },
   };
 
@@ -251,6 +254,13 @@ export function useStudioPageModel(
             providers,
             onUpdateSettings: updateProjectSettings,
             setSettingsForm,
+          },
+          loreStatus: {
+            // #444: document-scoped gate; null renders no panel at all.
+            document: activeDocument,
+            onStatusChange: (loreStatus) => {
+              if (activeDocument) void changeLoreStatus(activeDocument.id, loreStatus);
+            },
           },
         },
       },

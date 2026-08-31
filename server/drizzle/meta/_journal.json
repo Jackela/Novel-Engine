@@ -78,6 +78,13 @@
       "when": 1787820880627,
       "tag": "0010_blushing_grandmaster",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "6",
+      "when": 1788100409646,
+      "tag": "0011_lore-entry-status",
+      "breakpoints": true
     }
   ]
 }

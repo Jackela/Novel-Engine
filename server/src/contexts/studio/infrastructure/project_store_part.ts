@@ -11,6 +11,7 @@ import type {
   DocumentWithCurrent,
   ProjectScope,
 } from "../application/ports/studio_store.js";
+import { DEFAULT_LORE_STATUS } from "../domain/kinds.js";
 import { clearProjectDocumentIndex, refreshDocumentIndex } from "./db/document_search.js";
 import { documents, projects } from "./db/schema.js";
 import {
@@ -100,6 +101,7 @@ export class ProjectStorePart {
           volumeId: defaultVolume.id,
           beatRef: null,
           loreAliasesJson: "[]",
+          loreStatus: DEFAULT_LORE_STATUS,
           currentRevisionId: revision.id,
           createdAt: input.now,
           updatedAt: input.now,

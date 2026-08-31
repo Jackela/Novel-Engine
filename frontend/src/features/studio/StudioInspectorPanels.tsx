@@ -2,6 +2,7 @@ import { StudioCopilotPanel } from "./components/StudioCopilotPanel";
 import { StudioExportPanel } from "./components/StudioExportPanel";
 import { StudioHistoryPanel } from "./components/StudioHistoryPanel";
 import { StudioJobsPanel } from "./components/StudioJobsPanel";
+import { StudioLoreStatusPanel } from "./components/StudioLoreStatusPanel";
 import { StudioReviewPanel } from "./components/StudioReviewPanel";
 import { StudioSettingsPanel } from "./components/StudioSettingsPanel";
 import { StudioUsagePanel } from "./components/StudioUsagePanel";
@@ -23,20 +24,34 @@ export function StudioInspectorPanels({
   pending,
   model,
 }: StudioInspectorPanelsProps) {
+  // Document-scoped lore lifecycle gate (#444): visible whenever the active
+  // document is a lore entry, above any tab panel; renders null otherwise.
+  const loreStatus = (
+    <StudioLoreStatusPanel
+      document={model.loreStatus.document}
+      isSaving={pending.loreStatus ?? false}
+      onStatusChange={model.loreStatus.onStatusChange}
+    />
+  );
+
   if (inspector === "settings") {
     return (
-      <StudioSettingsPanel
-        settingsForm={model.settings.settingsForm}
-        setSettingsForm={model.settings.setSettingsForm}
-        onUpdateSettings={model.settings.onUpdateSettings}
-        providers={model.settings.providers}
-        isSaving={pending.settings}
-      />
+      <>
+        {loreStatus}
+        <StudioSettingsPanel
+          settingsForm={model.settings.settingsForm}
+          setSettingsForm={model.settings.setSettingsForm}
+          onUpdateSettings={model.settings.onUpdateSettings}
+          providers={model.settings.providers}
+          isSaving={pending.settings}
+        />
+      </>
     );
   }
 
   return (
     <>
+      {loreStatus}
       <div
         aria-labelledby={tabId("copilot")}
         hidden={inspector !== "copilot"}

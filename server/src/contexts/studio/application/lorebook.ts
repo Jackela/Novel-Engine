@@ -1,3 +1,9 @@
+import {
+  DEFAULT_LORE_STATUS,
+  INJECTABLE_LORE_STATUS,
+  isLoreStatus,
+  type LoreStatus,
+} from "../domain/kinds.js";
 import type { ProjectScope, StudioStore } from "./ports/studio_store.js";
 import { LOREBOOK_BEGIN, LOREBOOK_END } from "./sanitization.js";
 
@@ -5,8 +11,9 @@ import { LOREBOOK_BEGIN, LOREBOOK_END } from "./sanitization.js";
  * Keyword-triggered lorebook (#315, ADR-0004 layer 2): character and world
  * documents are lore entries. Keys are the document title plus its declared
  * aliases; content is the document's current markdown. An entry is injected
- * only when one of its keys occurs in the resident context or the target
- * manuscript, and matched entries render in their documents' reading order.
+ * only when it is `stable` (#444, ADR-0006) and one of its keys occurs in
+ * the resident context or the target manuscript, and matched entries render
+ * in their documents' reading order.
  */
 
 /** The document kinds that serve as lore entries. */
@@ -16,11 +23,24 @@ export function isLoreEntryKind(kind: string): boolean {
   return (LOREBOOK_ENTRY_KINDS as readonly string[]).includes(kind);
 }
 
+/**
+ * Narrow a stored lifecycle value to the closed enum, fail-closed (#444):
+ * anything unreadable reads as `draft`, so an unknown or corrupted value can
+ * never promote an entry into the prompt. Like alias parsing this is defined
+ * gating semantics for advisory stored state, not swallowed errors — write
+ * paths validate the enum strictly before it ever reaches a row.
+ */
+export function asLoreStatus(value: string): LoreStatus {
+  return isLoreStatus(value) ? value : DEFAULT_LORE_STATUS;
+}
+
 /** The minimal entry facts; document rows satisfy this shape directly. */
 export interface LoreEntrySource {
   readonly title: string;
   /** Stored alias JSON (a `string[]` column value); parsed defensively on read. */
   readonly loreAliasesJson: string;
+  /** The entry's lifecycle status; only `stable` entries are injectable (#444). */
+  readonly status: LoreStatus;
   readonly contentMarkdown: string | null;
 }
 
@@ -82,10 +102,14 @@ function hasInjectableContent(entry: LoreEntrySource): boolean {
 }
 
 /**
- * Selection semantics (#315, documented): keys match by case-insensitive
+ * Selection semantics (#315, #444, documented): keys match by case-insensitive
  * SUBSTRING occurrence over either corpus — whole-token boundaries are
  * deliberately not required, so names embedded in larger words still
- * trigger. Entries without injectable content never render.
+ * trigger. Entries without injectable content never render, and the
+ * lifecycle gate (#444, ADR-0006) admits only `stable` entries: a `draft`
+ * keeps half-written documents out of the prompt even when their title is
+ * mentioned, and `deprecated` retires an entry without deleting it. No
+ * downweighting — the gate is binary by adjudication.
  */
 export function matchLoreEntries(
   entries: readonly LoreEntrySource[],
@@ -94,6 +118,11 @@ export function matchLoreEntries(
   const haystack = `${corpora.resident}\n${corpora.manuscript}`.toLowerCase();
   const matched: LoreEntrySource[] = [];
   for (const entry of entries) {
+    // Lifecycle gate first (ADR-0006): non-stable entries are skipped before
+    // any key evaluation.
+    if (entry.status !== INJECTABLE_LORE_STATUS) {
+      continue;
+    }
     if (!hasInjectableContent(entry)) {
       continue;
     }
@@ -155,6 +184,9 @@ export function collectLoreEntries(
     .map((document) => ({
       title: document.title,
       loreAliasesJson: document.loreAliasesJson,
+      // Store rows carry write-validated enum values; the gate narrows
+      // fail-closed so an unknown stored value reads as non-injectable.
+      status: asLoreStatus(document.loreStatus),
       contentMarkdown: document.currentRevision?.contentMarkdown ?? null,
     }));
 }

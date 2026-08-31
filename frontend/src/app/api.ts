@@ -1,6 +1,7 @@
 import {
   parseAliases,
   parseDocuments,
+  parseLoreStatus,
   parseOwnerSetup,
   parseProject,
   parseProjects,
@@ -24,7 +25,7 @@ import {
   parseUsage,
 } from "@/app/apiWorkflowContract";
 import { appConfig } from "@/app/config";
-import type { DocumentKind, ExportFormat } from "@/app/types/studio";
+import type { DocumentKind, ExportFormat, LoreStatus } from "@/app/types/studio";
 
 export class HttpError extends Error {
   constructor(
@@ -227,6 +228,12 @@ export const api = {
       `/api/projects/${projectId}/documents/${documentId}/aliases`,
       { aliases },
       parseAliases,
+    ),
+  saveLoreStatus: (projectId: string, documentId: string, lore_status: LoreStatus) =>
+    putJson(
+      `/api/projects/${projectId}/documents/${documentId}/lore-status`,
+      { lore_status },
+      parseLoreStatus,
     ),
   saveDocument: (
     projectId: string,

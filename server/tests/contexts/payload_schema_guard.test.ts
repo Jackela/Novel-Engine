@@ -70,6 +70,13 @@ const CASES: Array<{
     schema: documentPayloadSchema as unknown as SchemaNode,
   },
   {
+    // #444: a lore-kind document narrows its row value into the closed enum
+    // member; non-lore kinds (the chapter fixture above) stay null.
+    name: "documentPayload (lore status member) -> documentPayloadSchema",
+    build: () => documentPayload({ ...documentFixture(), kind: "character", loreStatus: "stable" }),
+    schema: documentPayloadSchema as unknown as SchemaNode,
+  },
+  {
     name: "volumePayload -> volumePayloadSchema",
     build: () => volumePayload(volumeFixture()),
     schema: volumePayloadSchema as unknown as SchemaNode,

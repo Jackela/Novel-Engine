@@ -74,6 +74,10 @@ export const documents = sqliteTable(
     // ordinary saves replace revision metadata wholesale, so prompt keys live
     // outside revisions to survive them.
     loreAliasesJson: text("lore_aliases_json").notNull().default("[]"),
+    // Lore-entry lifecycle status (#444, ADR-0006): draft | stable |
+    // deprecated for character/world documents. Other kinds keep the column
+    // at its default and ignore it — the semantics never leak beyond lore.
+    loreStatus: text("lore_status").notNull().default("draft"),
     currentRevisionId: text("current_revision_id"),
     createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
     updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),

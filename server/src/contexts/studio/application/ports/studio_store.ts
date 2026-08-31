@@ -31,6 +31,12 @@ export interface DocumentRecord {
    * that must survive metadata-replacing revision writes.
    */
   loreAliasesJson: string;
+  /**
+   * Lore-entry lifecycle status (#444, ADR-0006): a closed `LoreStatus`
+   * value for character/world documents; other kinds keep the `draft`
+   * default and ignore it.
+   */
+  loreStatus: string;
   currentRevisionId: string | null;
   createdAt: Date;
   updatedAt: Date;

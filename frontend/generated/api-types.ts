@@ -135,6 +135,8 @@ export interface paths {
                                     id: string;
                                     /** @enum {string} */
                                     kind: "chapter" | "outline" | "character" | "world" | "note";
+                                    /** @enum {string|null} */
+                                    lore_status: "draft" | "stable" | "deprecated" | null;
                                     metadata: {
                                         [key: string]: unknown;
                                     };
@@ -221,6 +223,8 @@ export interface paths {
                                 id: string;
                                 /** @enum {string} */
                                 kind: "chapter" | "outline" | "character" | "world" | "note";
+                                /** @enum {string|null} */
+                                lore_status: "draft" | "stable" | "deprecated" | null;
                                 metadata: {
                                     [key: string]: unknown;
                                 };
@@ -330,6 +334,8 @@ export interface paths {
                                 id: string;
                                 /** @enum {string} */
                                 kind: "chapter" | "outline" | "character" | "world" | "note";
+                                /** @enum {string|null} */
+                                lore_status: "draft" | "stable" | "deprecated" | null;
                                 metadata: {
                                     [key: string]: unknown;
                                 };
@@ -611,6 +617,8 @@ export interface paths {
                             id: string;
                             /** @enum {string} */
                             kind: "chapter" | "outline" | "character" | "world" | "note";
+                            /** @enum {string|null} */
+                            lore_status: "draft" | "stable" | "deprecated" | null;
                             metadata: {
                                 [key: string]: unknown;
                             };
@@ -733,6 +741,8 @@ export interface paths {
                                 id: string;
                                 /** @enum {string} */
                                 kind: "chapter" | "outline" | "character" | "world" | "note";
+                                /** @enum {string|null} */
+                                lore_status: "draft" | "stable" | "deprecated" | null;
                                 metadata: {
                                     [key: string]: unknown;
                                 };
@@ -847,6 +857,8 @@ export interface paths {
                             id: string;
                             /** @enum {string} */
                             kind: "chapter" | "outline" | "character" | "world" | "note";
+                            /** @enum {string|null} */
+                            lore_status: "draft" | "stable" | "deprecated" | null;
                             metadata: {
                                 [key: string]: unknown;
                             };
@@ -1557,6 +1569,99 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/projects/{projectId}/documents/{documentId}/lore-status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    projectId: string;
+                    documentId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        lore_status: "draft" | "stable" | "deprecated";
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @enum {string} */
+                            lore_status: "draft" | "stable" | "deprecated";
+                        };
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/projects/{projectId}/documents/{documentId}/revisions": {
         parameters: {
             query?: never;
@@ -1679,6 +1784,8 @@ export interface paths {
                             id: string;
                             /** @enum {string} */
                             kind: "chapter" | "outline" | "character" | "world" | "note";
+                            /** @enum {string|null} */
+                            lore_status: "draft" | "stable" | "deprecated" | null;
                             metadata: {
                                 [key: string]: unknown;
                             };
@@ -1804,6 +1911,8 @@ export interface paths {
                             id: string;
                             /** @enum {string} */
                             kind: "chapter" | "outline" | "character" | "world" | "note";
+                            /** @enum {string|null} */
+                            lore_status: "draft" | "stable" | "deprecated" | null;
                             metadata: {
                                 [key: string]: unknown;
                             };
