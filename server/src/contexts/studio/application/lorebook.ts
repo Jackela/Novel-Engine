@@ -5,7 +5,6 @@ import {
   type LoreStatus,
 } from "../domain/kinds.js";
 import type { ProjectScope, StudioStore } from "./ports/studio_store.js";
-import { LOREBOOK_BEGIN, LOREBOOK_END } from "./sanitization.js";
 
 /**
  * Keyword-triggered lorebook (#315, ADR-0004 layer 2): character and world
@@ -13,7 +12,10 @@ import { LOREBOOK_BEGIN, LOREBOOK_END } from "./sanitization.js";
  * aliases; content is the document's current markdown. An entry is injected
  * only when it is `stable` (#444, ADR-0006) and one of its keys occurs in
  * the resident context or the target manuscript, and matched entries render
- * in their documents' reading order.
+ * in their documents' reading order. Under the injection budget (#445,
+ * ADR-0006) matched entries first enter the prompt as one summary line and
+ * are promoted to full text within budget by a deterministic priority
+ * (title hits before alias hits, then reading order).
  */
 
 /** The document kinds that serve as lore entries. */
@@ -101,6 +103,15 @@ function hasInjectableContent(entry: LoreEntrySource): boolean {
   return entry.contentMarkdown !== null && entry.contentMarkdown.trim() !== "";
 }
 
+/** Why an entry triggered: the title itself carries more weight than an alias. */
+export type LoreMatchRank = "title" | "alias";
+
+/** One matched entry plus the deterministic priority evidence (#445). */
+export interface LoreMatch {
+  readonly entry: LoreEntrySource;
+  readonly rank: LoreMatchRank;
+}
+
 /**
  * Selection semantics (#315, #444, documented): keys match by case-insensitive
  * SUBSTRING occurrence over either corpus — whole-token boundaries are
@@ -111,12 +122,12 @@ function hasInjectableContent(entry: LoreEntrySource): boolean {
  * mentioned, and `deprecated` retires an entry without deleting it. No
  * downweighting — the gate is binary by adjudication.
  */
-export function matchLoreEntries(
+export function matchLoreEntriesWithRank(
   entries: readonly LoreEntrySource[],
   corpora: LoreMatchCorpora,
-): LoreEntrySource[] {
+): LoreMatch[] {
   const haystack = `${corpora.resident}\n${corpora.manuscript}`.toLowerCase();
-  const matched: LoreEntrySource[] = [];
+  const matched: LoreMatch[] = [];
   for (const entry of entries) {
     // Lifecycle gate first (ADR-0006): non-stable entries are skipped before
     // any key evaluation.
@@ -126,46 +137,79 @@ export function matchLoreEntries(
     if (!hasInjectableContent(entry)) {
       continue;
     }
-    const hit = loreEntryKeys(entry).some((key) => haystack.includes(key.toLowerCase()));
-    if (hit) {
-      matched.push(entry);
+    const title = entry.title.trim().toLowerCase();
+    if (title !== "" && haystack.includes(title)) {
+      matched.push({ entry, rank: "title" });
+      continue;
+    }
+    const aliasHit = parseLoreAliases(entry.loreAliasesJson).some((alias) => {
+      const key = alias.trim().toLowerCase();
+      return key !== "" && haystack.includes(key);
+    });
+    if (aliasHit) {
+      matched.push({ entry, rank: "alias" });
     }
   }
   return matched;
 }
 
-/** One trusted-context line block per entry: a heading plus the raw markdown body. */
-export function renderLoreSection(matched: readonly LoreEntrySource[]): string[] {
-  if (matched.length === 0) {
-    return [];
-  }
-  const sections: string[] = [
-    "",
-    "LOREBOOK (reference entries triggered by their keys occurring above):",
-    LOREBOOK_BEGIN,
-  ];
-  for (const entry of matched) {
-    // Headings stay single-line so each `###` reliably opens exactly one entry.
-    sections.push(
-      `### ${entry.title.replace(/\s+/g, " ").trim()}`,
-      "",
-      entry.contentMarkdown?.trim() ?? "",
-      "",
-    );
-  }
-  sections.push(LOREBOOK_END);
-  return sections;
+/** Rank-free view of a match list, preserving order; the pre-#445 shape. */
+export function matchLoreEntries(
+  entries: readonly LoreEntrySource[],
+  corpora: LoreMatchCorpora,
+): LoreEntrySource[] {
+  return matchLoreEntriesWithRank(entries, corpora).map((match) => match.entry);
 }
 
-/** Match then render in one step; an empty result renders no section at all. */
-export function triggeredLoreSections(
-  input: {
-    entries: readonly LoreEntrySource[];
-  } & LoreMatchCorpora,
-): string[] {
-  return renderLoreSection(
-    matchLoreEntries(input.entries, { resident: input.resident, manuscript: input.manuscript }),
-  );
+/** The character cap of one rendered summary line (#445); see ADR-0006. */
+export const LOREBOOK_SUMMARY_CHARACTERS = 240;
+
+function flattenLoreProse(markdown: string): string {
+  return String(markdown)
+    .replace(/!\[([^\]]*)\]\([^)]*\)/g, "$1")
+    .replace(/\[([^\]]*)\]\(([^)]*)\)/g, "$1")
+    .replace(/\*\*/g, "")
+    .replace(/\*/g, "")
+    .replace(/`/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/** The first paragraph of prose lines after any leading ATX headings. */
+function firstProseParagraph(markdown: string): string {
+  const paragraph: string[] = [];
+  for (const rawLine of String(markdown).replace(/\r\n?/g, "\n").split("\n")) {
+    const line = rawLine.trim();
+    if (line === "") {
+      if (paragraph.length > 0) break;
+      continue;
+    }
+    if (paragraph.length === 0 && /^#{1,6}\s/.test(line)) {
+      continue;
+    }
+    paragraph.push(line);
+  }
+  return paragraph.join(" ");
+}
+
+/**
+ * The deterministic summary line of an entry (#445): the flattened opening
+ * paragraph of the entry's own markdown — an existing field, so no authoring
+ * burden is added — truncated at the summary cap at a word boundary. An
+ * entry whose text opens with nothing but headings falls back to its full
+ * flattened text, so the summary is never empty for injectable content.
+ */
+export function loreEntrySummary(entry: LoreEntrySource): string {
+  const content = entry.contentMarkdown ?? "";
+  const opening = flattenLoreProse(firstProseParagraph(content));
+  const source = opening !== "" ? opening : flattenLoreProse(content);
+  if (source.length <= LOREBOOK_SUMMARY_CHARACTERS) {
+    return source;
+  }
+  const sliced = source.slice(0, LOREBOOK_SUMMARY_CHARACTERS);
+  const spaceAt = sliced.lastIndexOf(" ");
+  const kept = spaceAt > LOREBOOK_SUMMARY_CHARACTERS / 2 ? sliced.slice(0, spaceAt) : sliced;
+  return `${kept.trimEnd()}…`;
 }
 
 /**

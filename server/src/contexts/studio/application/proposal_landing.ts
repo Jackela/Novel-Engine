@@ -59,6 +59,8 @@ export function buildProposalTask(
   projectId: string,
   document: DocumentWithCurrent,
   revision: RevisionRecord,
+  /** Lorebook character budget (#445); undefined keeps the adjudicated default. */
+  loreBudgetCharacters?: number | undefined,
 ): TextGenerationTask {
   return {
     step,
@@ -69,6 +71,7 @@ export function buildProposalTask(
       source: collectResidentContextSource(store, scope, projectId, document),
       manuscriptMarkdown: revision.contentMarkdown,
       loreEntries: collectLoreEntries(store, scope, projectId),
+      loreBudgetCharacters,
     }),
     responseSchema: { chapter_markdown: { type: "string" } },
     metadata: {

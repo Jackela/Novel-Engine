@@ -50,6 +50,7 @@ export class AiProposalService {
   private readonly providerFactory: TextGenerationProviderFactory;
   private readonly inFlight: InFlightOperationGuard;
   private readonly now: () => Date;
+  private readonly loreBudgetCharacters: number | undefined;
 
   constructor(
     store: StudioStore,
@@ -57,12 +58,15 @@ export class AiProposalService {
     providerFactory: TextGenerationProviderFactory,
     inFlight: InFlightOperationGuard,
     now: () => Date = () => new Date(),
+    /** Lorebook injection budget (#445); undefined keeps the adjudicated default. */
+    loreBudgetCharacters?: number | undefined,
   ) {
     this.store = store;
     this.documents = documents;
     this.providerFactory = providerFactory;
     this.inFlight = inFlight;
     this.now = now;
+    this.loreBudgetCharacters = loreBudgetCharacters;
   }
 
   /** Generate a proposal for a document's current revision and record it on a job. */
@@ -109,6 +113,7 @@ export class AiProposalService {
           projectId,
           document,
           revision,
+          this.loreBudgetCharacters,
         ),
       );
       const { proposal } = validatedProposalOrThrow(result);
@@ -156,6 +161,7 @@ export class AiProposalService {
         providerFactory: this.providerFactory,
         inFlight: this.inFlight,
         now: this.now,
+        loreBudgetCharacters: this.loreBudgetCharacters,
       },
       {
         principal,

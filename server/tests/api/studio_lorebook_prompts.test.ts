@@ -146,4 +146,45 @@ describe("keyword-triggered lorebook in proposal prompts (#315)", () => {
       await app.close();
     }
   });
+
+  it("applies the configured injection budget through the shared assembly (#445)", async () => {
+    const capture = capturingFactory({});
+    // A tiny app-level budget demotes every hit to its summary line.
+    const { app } = await buildStudioApp(undefined, {
+      textProviderFactory: capture.factory,
+      lorebookBudgetCharacters: 1,
+    });
+    try {
+      const jar = await ownerJar(app);
+      const project = await seedProject(app, jar, "Lore Budget");
+      const mara = await seedDocument(app, jar, project.id, {
+        kind: "character",
+        title: "Mara",
+        content_markdown: `${"Opening summary padding. ".repeat(40)}FULL-BODY-SENTENCE-NEVER-SHOWN`,
+      });
+      await call(app, jar, "PUT", `/api/projects/${project.id}/documents/${mara.id}/lore-status`, {
+        lore_status: "stable",
+      });
+      const target = await seedDocument(app, jar, project.id, {
+        kind: "chapter",
+        title: "Stacks",
+        content_markdown: "Mara walked the stacks.",
+      });
+
+      const response = await propose(app, jar, project.id, target.id, {
+        operation: "continue",
+      });
+      expect(response.statusCode, response.body).toBe(200);
+
+      const prompt = firstCapturedTask(capture).userPrompt;
+      expect(prompt).toContain("### Mara (summary only)");
+      expect(prompt).toContain("Opening summary padding.");
+      expect(prompt).not.toContain("FULL-BODY-SENTENCE-NEVER-SHOWN");
+      for (const marker of [LOREBOOK_BEGIN, LOREBOOK_END]) {
+        expect(prompt).toContain(marker);
+      }
+    } finally {
+      await app.close();
+    }
+  });
 });

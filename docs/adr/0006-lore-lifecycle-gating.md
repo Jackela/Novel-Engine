@@ -69,3 +69,63 @@ beyond lore (`lore_status` reads as null for them in every payload).
   finer-grained statuses; if a `planned` or `quarantined` state is ever
   proposed, it must justify itself against the three-state enum's failure
   modes, not as an additional bucket by default.
+
+## Progressive disclosure under the injection budget (#445)
+
+The gate decides **whether** an entry may inject; it says nothing about
+**how much** injects. Unbounded full-text injection scaled linearly with the
+number of stable hits: a project whose outline references many characters
+shipped every referenced body verbatim, and the lorebook section could
+overwhelm the manuscript it exists to serve.
+
+The adjudicated strategy, and the alternatives refused:
+
+- **Summary line first, budgeted promotion** (progressive disclosure): every
+  matched entry enters the lorebook section as `### Title (summary only)`
+  plus one flattened line from the entry's own opening paragraph, then
+  entries are promoted to full text greedily while the rendered section fits
+  the injection budget. Promotion priority is deterministic: title hits
+  before alias hits, ties in the documents' reading order. Summaries are the
+  floor — an entry the budget cannot hold stays visible as a summary line
+  and is never silently dropped; the heading suffix marks the withholding so
+  the model cannot mistake a summary for the whole entry.
+- **Summary source is an existing field**: the entry's own markdown opening
+  (first prose paragraph after leading headings, flattened; the full
+  flattened body when the text opens with nothing but headings). No new
+  author-required field, no migration. A hand-maintained `summary` column
+  was refused: it adds authoring burden and a second text to drift against
+  for a value the opening paragraph already carries.
+- **Budget is measured in characters, on the rendered section**: the unit is
+  the assembled lorebook block itself (headers, headings, bodies, summary
+  lines), so what is measured is exactly what is rendered. Token estimates
+  were refused as a hidden model-dependent conversion. The budget bounds the
+  section, not a hard cut: summaries survive any budget, so no input size
+  can silently erase canon.
+- **Single assembly point**: the plan-and-render runs inside
+  `triggeredLoreSections` behind `buildProposalUserPrompt`, which every
+  proposal pipeline (synchronous draft, SSE stream, retry, and the
+  whole-book loop built on them) already shares. The budget never forks the
+  prompt assembly.
+- **Default `4000` characters** (`DEFAULT_LOREBOOK_BUDGET_CHARACTERS`,
+  env `LLM_LOREBOOK_BUDGET_CHARACTERS`, positive integer): a typical
+  proposal prompt at this scale runs roughly 10k–40k characters (resident
+  context of outline, per-chapter digests, a 1200-character tail, plus the
+  manuscript), so 4000 characters is a deliberate ceiling of roughly
+  10–15% of a typical prompt — about 1.0k–1.3k tokens at the conservative
+  ~3–4 characters per token for mixed Chinese/English prose. It holds full
+  text for roughly 5–10 typical entries or summary lines for dozens, which
+  covers realistic per-chapter key-hit counts while an unbounded section can
+  exceed the manuscript itself. Operators with bigger lorebooks raise the
+  env value; the budget is a prompt-share dial, not a correctness knob.
+
+### Consequences of this section
+
+- Match results now carry a rank (`title` vs `alias`) so promotion priority
+  is computable; selection semantics (substring, case-insensitive, either
+  corpus) are unchanged.
+- Without a key hit nothing renders, exactly as before; below the budget the
+  section renders full text exactly as before, so pre-#445 prompts are
+  unchanged when lore fits. Only over-budget sections demote to summaries.
+- The lorebook env budget joins the server config seam (`LlmServerConfig`);
+  the shared mirror constant is kept in step with
+  `lore_injection.ts` deliberately (shared never imports bounded contexts).

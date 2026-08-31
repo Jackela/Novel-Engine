@@ -42,6 +42,8 @@ export interface CreateStudioServicesOptions {
   artifactFiles: ExportArtifactGateway;
   /** Read-only legacy workspace access; the composition root injects the FS adapter. */
   legacyWorkspaceReader: LegacyWorkspaceReader;
+  /** Lorebook injection budget (#445); undefined keeps the adjudicated default. */
+  loreBudgetCharacters?: number | undefined;
 }
 
 export function createStudioServices(
@@ -73,13 +75,21 @@ export function createStudioServices(
     beats: new BeatAssociationService(store, now),
     lore: new LoreAliasService(store, now),
     revisions: new RevisionService(store, documents),
-    proposals: new AiProposalService(store, documents, options.providerFactory, inFlight, now),
+    proposals: new AiProposalService(
+      store,
+      documents,
+      options.providerFactory,
+      inFlight,
+      now,
+      options.loreBudgetCharacters,
+    ),
     reviewAssessments,
     artifacts,
     jobHistory: new JobHistoryService(store, reviewAssessments, artifacts, {
       now,
       providerFactory: options.providerFactory,
       inFlight,
+      loreBudgetCharacters: options.loreBudgetCharacters,
     }),
     imports: new ImportService(store, options.legacyWorkspaceReader, now),
   };

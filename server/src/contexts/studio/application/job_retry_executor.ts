@@ -37,6 +37,8 @@ const IMPORT_NOT_RETRIED = "Import jobs cannot be retried.";
 export interface JobRetryExecutorOptions {
   readonly now?: (() => Date) | undefined;
   readonly providerFactory: TextGenerationProviderFactory;
+  /** Lorebook injection budget (#445); undefined keeps the adjudicated default. */
+  readonly loreBudgetCharacters?: number | undefined;
 }
 
 /**
@@ -50,6 +52,7 @@ export class JobRetryExecutor {
   private readonly reviews: ReviewService;
   private readonly artifacts: SnapshotArtifactService;
   private readonly providerFactory: TextGenerationProviderFactory;
+  private readonly loreBudgetCharacters: number | undefined;
   private readonly now: () => Date;
 
   constructor(
@@ -62,6 +65,7 @@ export class JobRetryExecutor {
     this.reviews = reviews;
     this.artifacts = artifacts;
     this.providerFactory = options.providerFactory;
+    this.loreBudgetCharacters = options.loreBudgetCharacters;
     this.now = options.now ?? (() => new Date());
   }
 
@@ -163,6 +167,7 @@ export class JobRetryExecutor {
           retry.projectId,
           document,
           revision,
+          this.loreBudgetCharacters,
         ),
       );
       const outcome = validatedProposalOrThrow(result);

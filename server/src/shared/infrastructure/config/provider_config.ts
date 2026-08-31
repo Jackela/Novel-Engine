@@ -26,6 +26,13 @@ const DEFAULT_LLM_STREAM_FIRST_BYTE_TIMEOUT_MS = 30_000;
 const DEFAULT_LLM_STREAM_IDLE_TIMEOUT_MS = 60_000;
 const MIN_LLM_STREAM_TIMEOUT_MS = 1;
 const MAX_LLM_STREAM_TIMEOUT_MS = MAX_LLM_TIMEOUT_SECONDS * 1_000;
+// Mirror of DEFAULT_LOREBOOK_BUDGET_CHARACTERS in studio/application/
+// lore_injection.ts (#445); shared never imports bounded contexts, so the
+// value is kept in step deliberately. The ceiling stays generous because the
+// budget bounds a prompt section, not a transport frame.
+const DEFAULT_LOREBOOK_BUDGET_CHARACTERS = 4_000;
+const MIN_LOREBOOK_BUDGET_CHARACTERS = 1;
+const MAX_LOREBOOK_BUDGET_CHARACTERS = 1_000_000;
 
 export type LlmProvider = (typeof LLM_PROVIDERS)[number];
 export type DashscopeTransportMode = (typeof DASHSCOPE_TRANSPORT_MODES)[number];
@@ -49,6 +56,8 @@ export interface LlmServerConfig {
   readonly streamFirstByteTimeoutMs: number;
   /** Server-wide silence ceiling (ms) between consecutive SSE stream frames. */
   readonly streamIdleTimeoutMs: number;
+  /** Character budget of the lorebook prompt section (#445, ADR-0006). */
+  readonly lorebookBudgetCharacters: number;
 }
 
 /**
@@ -108,6 +117,13 @@ export function loadLlmServerConfig(env: ReadonlyMap<string, string>): LlmServer
       DEFAULT_LLM_STREAM_IDLE_TIMEOUT_MS,
       MIN_LLM_STREAM_TIMEOUT_MS,
       MAX_LLM_STREAM_TIMEOUT_MS,
+    ),
+    lorebookBudgetCharacters: integerFrom(
+      env,
+      "LLM_LOREBOOK_BUDGET_CHARACTERS",
+      DEFAULT_LOREBOOK_BUDGET_CHARACTERS,
+      MIN_LOREBOOK_BUDGET_CHARACTERS,
+      MAX_LOREBOOK_BUDGET_CHARACTERS,
     ),
   };
 }
