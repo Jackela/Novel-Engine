@@ -1,9 +1,7 @@
 import type { FormEvent } from "react";
 import { useRef, useState } from "react";
 
-import type { LoreStatus, StudioDocument } from "@/app/types/studio";
-
-import { isLoreEntryKind } from "../studioConstants";
+import type { LoreStatus } from "@/app/types/studio";
 
 const LORE_STATUS_OPTIONS: Array<{ value: LoreStatus; label: string }> = [
   { value: "draft", label: "Draft (not injected)" },
@@ -12,9 +10,10 @@ const LORE_STATUS_OPTIONS: Array<{ value: LoreStatus; label: string }> = [
 ];
 
 interface StudioLoreStatusPanelProps {
-  document: StudioDocument | null;
+  documentId: string;
+  savedStatus: LoreStatus;
   isSaving?: boolean;
-  onStatusChange: (status: LoreStatus) => void | Promise<void>;
+  onSubmit: (status: LoreStatus) => Promise<void>;
 }
 
 /**
@@ -24,25 +23,37 @@ interface StudioLoreStatusPanelProps {
  * entries join generation prompts.
  */
 export function StudioLoreStatusPanel({
-  document,
+  documentId,
+  savedStatus,
   isSaving = false,
-  onStatusChange,
+  onSubmit,
 }: StudioLoreStatusPanelProps) {
-  const saveButtonRef = useRef<HTMLButtonElement>(null);
-  // Remounted per document via `key`; the saved status stays the source of
-  // truth while the select drafts the next value.
-  const [selectedStatus, setSelectedStatus] = useState<LoreStatus>(
-    document?.lore_status ?? "draft",
+  // Identity is enforced inside the public module; callers cannot forget the
+  // reset boundary when the active Lore document changes.
+  return (
+    <LoreStatusEntryForm
+      key={documentId}
+      savedStatus={savedStatus}
+      isSaving={isSaving}
+      onSubmit={onSubmit}
+    />
   );
+}
 
-  if (document === null || !isLoreEntryKind(document.kind)) {
-    return null;
-  }
+type LoreStatusEntryFormProps = Omit<StudioLoreStatusPanelProps, "documentId">;
+
+function LoreStatusEntryForm({
+  savedStatus,
+  isSaving = false,
+  onSubmit,
+}: LoreStatusEntryFormProps) {
+  const saveButtonRef = useRef<HTMLButtonElement>(null);
+  const [selectedStatus, setSelectedStatus] = useState<LoreStatus>(savedStatus);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     try {
-      await onStatusChange(selectedStatus);
+      await onSubmit(selectedStatus);
     } finally {
       saveButtonRef.current?.focus();
     }
@@ -77,7 +88,7 @@ export function StudioLoreStatusPanel({
         <button
           aria-busy={isSaving}
           className="ui-command ui-command--primary"
-          disabled={isSaving || selectedStatus === document.lore_status}
+          disabled={isSaving || selectedStatus === savedStatus}
           ref={saveButtonRef}
           type="submit"
         >

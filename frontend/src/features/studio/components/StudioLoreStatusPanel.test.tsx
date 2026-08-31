@@ -1,9 +1,8 @@
-import { fireEvent, getByRole, queryByRole } from "@testing-library/dom";
+import { fireEvent, getByRole } from "@testing-library/dom";
 import { act } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { chapter } from "@/test/factories";
-import { createMountHarness } from "@/test/harness";
+import { createMountHarness, deferred } from "@/test/harness";
 
 import { StudioLoreStatusPanel } from "./StudioLoreStatusPanel";
 
@@ -18,23 +17,10 @@ function render(element: React.ReactElement): HTMLDivElement {
 }
 
 describe("StudioLoreStatusPanel (#444)", () => {
-  const character = chapter("doc-1", { kind: "character", title: "Mara", lore_status: "draft" });
-
-  it("renders nothing without an active document", () => {
-    const container = render(<StudioLoreStatusPanel document={null} onStatusChange={vi.fn()} />);
-    expect(queryByRole(container, "combobox", { name: "Lore status" })).toBeNull();
-  });
-
-  it("renders nothing for non-lore kinds — the semantics never leak beyond lore", () => {
-    const note = chapter("doc-2", { kind: "note", title: "Scratch", lore_status: null });
-    const container = render(<StudioLoreStatusPanel document={note} onStatusChange={vi.fn()} />);
-    expect(queryByRole(container, "combobox", { name: "Lore status" })).toBeNull();
-  });
+  const character = { documentId: "doc-1", savedStatus: "draft" as const };
 
   it("offers exactly the closed lifecycle set for a lore document", () => {
-    const container = render(
-      <StudioLoreStatusPanel document={character} onStatusChange={vi.fn()} />,
-    );
+    const container = render(<StudioLoreStatusPanel {...character} onSubmit={vi.fn()} />);
 
     const select = getByRole(container, "combobox", { name: "Lore status" }) as HTMLSelectElement;
     expect(select.value).toBe("draft");
@@ -42,13 +28,38 @@ describe("StudioLoreStatusPanel (#444)", () => {
     expect(options).toEqual(["draft", "stable", "deprecated"]);
   });
 
+  it("discards document A's unsaved selection when document B becomes active", () => {
+    const world = { documentId: "doc-2", savedStatus: "stable" as const };
+    const { container, root } = harness.mount(
+      <StudioLoreStatusPanel {...character} onSubmit={vi.fn()} />,
+    );
+    const characterSelect = getByRole(container, "combobox", {
+      name: "Lore status",
+    }) as HTMLSelectElement;
+    act(() => {
+      characterSelect.value = "deprecated";
+      fireEvent.change(characterSelect);
+    });
+
+    act(() => {
+      root.render(<StudioLoreStatusPanel {...world} onSubmit={vi.fn()} />);
+    });
+
+    const worldSelect = getByRole(container, "combobox", {
+      name: "Lore status",
+    }) as HTMLSelectElement;
+    expect(worldSelect.value).toBe("stable");
+    const saveButton = getByRole(container, "button", {
+      name: "Save status",
+    }) as HTMLButtonElement;
+    expect(saveButton.disabled).toBe(true);
+  });
+
   it("submits the selected status and disables the control while saving", async () => {
-    const onStatusChange = vi.fn(async () => {
+    const onSubmit = vi.fn(async () => {
       await Promise.resolve();
     });
-    const container = render(
-      <StudioLoreStatusPanel document={character} onStatusChange={onStatusChange} />,
-    );
+    const container = render(<StudioLoreStatusPanel {...character} onSubmit={onSubmit} />);
 
     const select = getByRole(container, "combobox", { name: "Lore status" }) as HTMLSelectElement;
     select.value = "stable";
@@ -58,21 +69,41 @@ describe("StudioLoreStatusPanel (#444)", () => {
       fireEvent.submit(getByRole(container, "button", { name: "Save status" }));
     });
 
-    expect(onStatusChange).toHaveBeenCalledTimes(1);
-    expect(onStatusChange).toHaveBeenCalledWith("stable");
+    expect(onSubmit).toHaveBeenCalledTimes(1);
+    expect(onSubmit).toHaveBeenCalledWith("stable");
     // Focus returns to the save button after the update completes.
+    expect(document.activeElement).toBe(getByRole(container, "button", { name: "Save status" }));
+  });
+
+  it("restores focus only after the save Promise settles", async () => {
+    const save = deferred<void>();
+    const container = render(
+      <StudioLoreStatusPanel {...character} onSubmit={() => save.promise} />,
+    );
+    const select = getByRole(container, "combobox", { name: "Lore status" }) as HTMLSelectElement;
+    select.value = "stable";
+    fireEvent.change(select);
+    select.focus();
+
+    act(() => {
+      fireEvent.submit(getByRole(container, "button", { name: "Save status" }));
+    });
+    expect(document.activeElement).toBe(select);
+
+    await act(async () => {
+      save.resolve();
+      await save.promise;
+    });
     expect(document.activeElement).toBe(getByRole(container, "button", { name: "Save status" }));
   });
 
   it("disables the save button while saving or when nothing changed", () => {
     // Unchanged selection: the save button stays disabled even while idle.
-    const idle = render(<StudioLoreStatusPanel document={character} onStatusChange={vi.fn()} />);
+    const idle = render(<StudioLoreStatusPanel {...character} onSubmit={vi.fn()} />);
     const idleSave = getByRole(idle, "button", { name: "Save status" }) as HTMLButtonElement;
     expect(idleSave.disabled).toBe(true);
 
-    const saving = render(
-      <StudioLoreStatusPanel document={character} isSaving onStatusChange={vi.fn()} />,
-    );
+    const saving = render(<StudioLoreStatusPanel {...character} isSaving onSubmit={vi.fn()} />);
     const savingSave = getByRole(saving, "button", { name: "Saving…" }) as HTMLButtonElement;
     expect(savingSave.disabled).toBe(true);
     const select = getByRole(saving, "combobox", { name: "Lore status" }) as HTMLSelectElement;

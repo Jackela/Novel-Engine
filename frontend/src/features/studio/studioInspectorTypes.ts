@@ -6,7 +6,6 @@ import type {
   ProviderInfo,
   Review,
   Revision,
-  StudioDocument,
   StudioExport,
   StudioJob,
 } from "@/app/types/studio";
@@ -90,9 +89,12 @@ export interface InspectorSettingsModel {
 
 /** #444: document-scoped lifecycle gate for the active lore entry. */
 export interface InspectorLoreStatusModel {
-  /** The active document, or null when none is active. */
-  document: StudioDocument | null;
-  onStatusChange: (status: LoreStatus) => void | Promise<void>;
+  /** React identity for the active Lore entry. */
+  readonly documentId: string;
+  /** Server-observed baseline; the form owns only the unsaved selection. */
+  readonly savedStatus: LoreStatus;
+  /** Settles after the mutation owner has cleared its pending state. */
+  readonly submit: (status: LoreStatus) => Promise<void>;
 }
 
 export interface StudioInspectorModel {
@@ -103,5 +105,5 @@ export interface StudioInspectorModel {
   jobs: InspectorJobsModel;
   usage: InspectorUsageModel;
   settings: InspectorSettingsModel;
-  loreStatus: InspectorLoreStatusModel;
+  loreStatus: InspectorLoreStatusModel | null;
 }

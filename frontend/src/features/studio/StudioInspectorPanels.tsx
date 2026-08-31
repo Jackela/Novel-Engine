@@ -24,15 +24,15 @@ export function StudioInspectorPanels({
   pending,
   model,
 }: StudioInspectorPanelsProps) {
-  // Document-scoped lore lifecycle gate (#444): visible whenever the active
-  // document is a lore entry, above any tab panel; renders null otherwise.
-  const loreStatus = (
+  // The page model owns Lore eligibility; the panel owns document identity.
+  const loreStatus = model.loreStatus ? (
     <StudioLoreStatusPanel
-      document={model.loreStatus.document}
+      documentId={model.loreStatus.documentId}
+      savedStatus={model.loreStatus.savedStatus}
       isSaving={pending.loreStatus ?? false}
-      onStatusChange={model.loreStatus.onStatusChange}
+      onSubmit={model.loreStatus.submit}
     />
-  );
+  ) : null;
 
   if (inspector === "settings") {
     return (

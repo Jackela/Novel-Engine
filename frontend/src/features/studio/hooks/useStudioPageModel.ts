@@ -2,9 +2,10 @@ import type { ComponentProps } from "react";
 import { useCallback, useState } from "react";
 import type { NavigateFunction } from "react-router-dom";
 
-import type { StudioDocument } from "@/app/types/studio";
+import type { LoreStatus, StudioDocument } from "@/app/types/studio";
 
 import type { StudioPageView } from "../StudioPageView";
+import { isLoreEntryKind } from "../studioConstants";
 import { buildStudioNavigatorProps } from "./studioPageModelView";
 import { useActiveDocument } from "./useActiveDocument";
 import { useDocumentDraft } from "./useDocumentDraft";
@@ -255,13 +256,18 @@ export function useStudioPageModel(
             onUpdateSettings: updateProjectSettings,
             setSettingsForm,
           },
-          loreStatus: {
-            // #444: document-scoped gate; null renders no panel at all.
-            document: activeDocument,
-            onStatusChange: (loreStatus) => {
-              if (activeDocument) void changeLoreStatus(activeDocument.id, loreStatus);
-            },
-          },
+          loreStatus:
+            activeDocument !== null &&
+            isLoreEntryKind(activeDocument.kind) &&
+            activeDocument.lore_status !== null &&
+            activeDocument.lore_status !== undefined
+              ? {
+                  documentId: activeDocument.id,
+                  savedStatus: activeDocument.lore_status,
+                  submit: (loreStatus: LoreStatus) =>
+                    changeLoreStatus(activeDocument.id, loreStatus),
+                }
+              : null,
         },
       },
       statusbar: {

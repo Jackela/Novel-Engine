@@ -5,7 +5,7 @@ import { api } from "@/app/api";
 import type { Project, Review, StudioJob } from "@/app/types/studio";
 import type { InspectorTab } from "@/features/studio/studioConstants";
 import { chapter, job, projectWith, review } from "@/test/factories";
-import { createMountHarness } from "@/test/harness";
+import { createMountHarness, deferred } from "@/test/harness";
 
 import { useStudioActions } from "./useStudioActions";
 
@@ -21,6 +21,7 @@ vi.mock("@/app/api", async (importOriginal) => {
       reviews: vi.fn<typeof actual.api.reviews>(),
       updateProject: vi.fn<typeof actual.api.updateProject>(),
       retryJob: vi.fn<typeof actual.api.retryJob>(),
+      saveLoreStatus: vi.fn<typeof actual.api.saveLoreStatus>(),
     },
   };
 });
@@ -52,6 +53,22 @@ const note = {
 const projectFixture = projectWith([chapterOne, note], {
   description: "Old description",
   settings: { provider: "mock", temperature: 0.5 },
+});
+const character = chapter("character-1", {
+  kind: "character",
+  title: "Mara",
+  volume_id: null,
+  lore_status: "draft",
+});
+const world = chapter("world-1", {
+  kind: "world",
+  title: "Harbor",
+  volume_id: null,
+  lore_status: "stable",
+});
+const loreProjectFixture = projectWith([character, world], {
+  description: "Lore project",
+  settings: { provider: "mock" },
 });
 const reviewFixture = review({ project_id: projectFixture.id });
 const reviewJob = job({
@@ -87,6 +104,7 @@ function renderActions(
   loadJobs: ReturnType<typeof vi.fn<() => Promise<void>>> = vi
     .fn<() => Promise<void>>()
     .mockResolvedValue(undefined),
+  initialProject: Project = projectFixture,
 ): {
   readonly result: () => HarnessSnapshot;
   readonly loadJobs: ReturnType<typeof vi.fn<() => Promise<void>>>;
@@ -95,14 +113,14 @@ function renderActions(
   let current: HarnessSnapshot | undefined;
 
   function Wrapper() {
-    const [project, setProject] = useState<Project | null>(projectFixture);
+    const [project, setProject] = useState<Project | null>(initialProject);
     const [reviews, setReviews] = useState<Review[]>([]);
     const [error, setError] = useState<string | null>("previous error");
     const [activeId, setActiveId] = useState<string | null>(null);
     const [inspector, setInspector] = useState<InspectorTab>("history");
     const actions = useStudioActions({
       project,
-      projectId: projectFixture.id,
+      projectId: initialProject.id,
       setProject,
       setReviews,
       setError,
@@ -288,5 +306,48 @@ describe("useStudioActions", () => {
     });
 
     expect(harness.result().actions.retryingJobId).toBeNull();
+  });
+
+  it("keeps Lore status pending until the target document is patched", async () => {
+    const response = deferred<{ lore_status: "stable" }>();
+    vi.mocked(api.saveLoreStatus).mockReturnValue(response.promise);
+    const actionsHarness = renderActions(undefined, loreProjectFixture);
+    let savePromise!: Promise<void>;
+
+    act(() => {
+      savePromise = actionsHarness.result().actions.changeLoreStatus(character.id, "stable");
+    });
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    expect(api.saveLoreStatus).toHaveBeenCalledWith(loreProjectFixture.id, character.id, "stable");
+    expect(actionsHarness.result().actions.isChangingLoreStatus).toBe(true);
+    expect(actionsHarness.result().project?.documents).toEqual([character, world]);
+
+    await act(async () => {
+      response.resolve({ lore_status: "stable" });
+      await savePromise;
+    });
+
+    expect(actionsHarness.result().actions.isChangingLoreStatus).toBe(false);
+    expect(actionsHarness.result().project?.documents).toEqual([
+      { ...character, lore_status: "stable" },
+      world,
+    ]);
+    expect(actionsHarness.result().error).toBeNull();
+  });
+
+  it("retains the saved Lore status and publishes an error when the update fails", async () => {
+    vi.mocked(api.saveLoreStatus).mockRejectedValue(new Error("Lore status was rejected."));
+    const actionsHarness = renderActions(undefined, loreProjectFixture);
+
+    await act(async () => {
+      await actionsHarness.result().actions.changeLoreStatus(character.id, "deprecated");
+    });
+
+    expect(actionsHarness.result().project?.documents).toEqual([character, world]);
+    expect(actionsHarness.result().actions.isChangingLoreStatus).toBe(false);
+    expect(actionsHarness.result().error).toBe("Lore status was rejected.");
   });
 });

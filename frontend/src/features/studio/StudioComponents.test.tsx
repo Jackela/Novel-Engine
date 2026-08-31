@@ -40,8 +40,8 @@ function buildInspectorModel(): StudioInspectorModel {
       onUpdateSettings: vi.fn(),
       setSettingsForm: vi.fn(),
     },
-    // #444: no active document in this fixture, so no lore panel renders.
-    loreStatus: { document: null, onStatusChange: vi.fn() },
+    // #444: no active Lore document in this fixture, so no panel renders.
+    loreStatus: null,
   };
 }
 
@@ -117,6 +117,7 @@ describe("Studio split components", () => {
       tabs.every((tab) => panels.some((panel) => panel.id === tab.getAttribute("aria-controls"))),
     ).toBe(true);
     expect(panels.filter((panel) => panel.hasAttribute("hidden"))).toHaveLength(5);
+    expect(container.querySelector('form[aria-label="Lore status"]')).toBeNull();
 
     click(tabs.find((tab) => tab.textContent?.includes("Review")) ?? null);
     expect(setInspector).toHaveBeenCalledWith("review");
