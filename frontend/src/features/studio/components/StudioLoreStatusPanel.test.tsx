@@ -1,5 +1,5 @@
 import { fireEvent, getByRole } from "@testing-library/dom";
-import { act } from "react";
+import { act, useState } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { createMountHarness, deferred } from "@/test/harness";
@@ -14,6 +14,25 @@ afterEach(() => {
 
 function render(element: React.ReactElement): HTMLDivElement {
   return harness.mount(element).container;
+}
+
+function PendingLoreStatusHarness({ save }: { save: ReturnType<typeof deferred<void>> }) {
+  const [isSaving, setIsSaving] = useState(false);
+  return (
+    <StudioLoreStatusPanel
+      documentId="doc-1"
+      savedStatus="draft"
+      isSaving={isSaving}
+      onSubmit={async () => {
+        setIsSaving(true);
+        try {
+          await save.promise;
+        } finally {
+          setIsSaving(false);
+        }
+      }}
+    />
+  );
 }
 
 describe("StudioLoreStatusPanel (#444)", () => {
@@ -95,6 +114,101 @@ describe("StudioLoreStatusPanel (#444)", () => {
       await save.promise;
     });
     expect(document.activeElement).toBe(getByRole(container, "button", { name: "Save status" }));
+  });
+
+  it("restores focus after the committed pending-to-idle render", async () => {
+    const save = deferred<void>();
+    const container = render(<PendingLoreStatusHarness save={save} />);
+    const select = getByRole(container, "combobox", { name: "Lore status" }) as HTMLSelectElement;
+    select.value = "stable";
+    fireEvent.change(select);
+    select.focus();
+
+    act(() => {
+      fireEvent.submit(getByRole(container, "button", { name: "Save status" }));
+    });
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(
+      (getByRole(container, "button", { name: "Saving…" }) as HTMLButtonElement).disabled,
+    ).toBe(true);
+    expect(document.activeElement).toBe(select);
+
+    await act(async () => {
+      save.resolve();
+      await save.promise;
+    });
+
+    const saveButton = getByRole(container, "button", { name: "Save status" });
+    expect((saveButton as HTMLButtonElement).disabled).toBe(false);
+    expect(document.activeElement).toBe(saveButton);
+  });
+
+  it("does not steal focus when document A settles after document B becomes active", async () => {
+    const save = deferred<void>();
+    const { container, root } = harness.mount(
+      <StudioLoreStatusPanel {...character} onSubmit={() => save.promise} />,
+    );
+    const characterSelect = getByRole(container, "combobox", {
+      name: "Lore status",
+    }) as HTMLSelectElement;
+    characterSelect.value = "deprecated";
+    fireEvent.change(characterSelect);
+    act(() => {
+      fireEvent.submit(getByRole(container, "button", { name: "Save status" }));
+    });
+
+    act(() => {
+      root.render(
+        <>
+          <button type="button">Document B focus target</button>
+          <StudioLoreStatusPanel
+            documentId="doc-2"
+            savedStatus="stable"
+            isSaving
+            onSubmit={vi.fn().mockResolvedValue(undefined)}
+          />
+        </>,
+      );
+    });
+    const focusTarget = getByRole(container, "button", { name: "Document B focus target" });
+    focusTarget.focus();
+
+    await act(async () => {
+      save.resolve();
+      await save.promise;
+    });
+
+    expect(document.activeElement).toBe(focusTarget);
+    expect(
+      (getByRole(container, "combobox", { name: "Lore status" }) as HTMLSelectElement).value,
+    ).toBe("stable");
+  });
+
+  it("keeps an attempted status available for retry while the saved baseline is unchanged", async () => {
+    const onSubmit = vi.fn().mockResolvedValue(undefined);
+    const container = render(<StudioLoreStatusPanel {...character} onSubmit={onSubmit} />);
+    const select = getByRole(container, "combobox", { name: "Lore status" }) as HTMLSelectElement;
+    select.value = "deprecated";
+    fireEvent.change(select);
+
+    await act(async () => {
+      fireEvent.submit(getByRole(container, "button", { name: "Save status" }));
+      await Promise.resolve();
+    });
+
+    expect(select.value).toBe("deprecated");
+    expect(
+      (getByRole(container, "button", { name: "Save status" }) as HTMLButtonElement).disabled,
+    ).toBe(false);
+
+    await act(async () => {
+      fireEvent.submit(getByRole(container, "button", { name: "Save status" }));
+      await Promise.resolve();
+    });
+    expect(onSubmit).toHaveBeenCalledTimes(2);
+    expect(onSubmit).toHaveBeenLastCalledWith("deprecated");
   });
 
   it("disables the save button while saving or when nothing changed", () => {

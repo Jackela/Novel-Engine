@@ -176,6 +176,42 @@ describe("Studio split components", () => {
     expect(container.querySelector("form.studio-inspector__panel")).not.toBeNull();
   });
 
+  it("keeps a Lore save failure visible while the contextual Export tab is active", () => {
+    const model = buildInspectorModel();
+    model.loreStatus = {
+      documentId: "character-1",
+      savedStatus: "draft",
+      submit: vi.fn().mockResolvedValue(undefined),
+    };
+    const container = render(
+      <StudioInspector
+        error="Unable to update the lore status."
+        inspector="export"
+        setInspector={vi.fn()}
+        model={model}
+      />,
+    );
+
+    const alerts = Array.from(container.querySelectorAll('[role="alert"]'));
+    expect(alerts).toHaveLength(1);
+    expect(alerts[0]?.textContent).toContain("Unable to update the lore status.");
+  });
+
+  it("does not duplicate an Export failure already rendered by the Export workflow", () => {
+    const model = buildInspectorModel();
+    model.export.errorForExport = "Unable to export the project.";
+    const container = render(
+      <StudioInspector
+        error="Unable to export the project."
+        inspector="export"
+        setInspector={vi.fn()}
+        model={model}
+      />,
+    );
+
+    expect(container.querySelectorAll('[role="alert"]')).toHaveLength(1);
+  });
+
   it("keeps topbar navigation focused on returning to the project library", () => {
     const back = vi.fn();
 

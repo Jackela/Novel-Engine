@@ -1,8 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { project as projectFixture } from "@/test/factories";
+import { chapter, project as projectFixture } from "@/test/factories";
+import { deferred } from "@/test/harness";
 
-import { buildStudioNavigatorProps } from "./studioPageModelView";
+import { buildLoreStatusModel, buildStudioNavigatorProps } from "./studioPageModelView";
 
 const project = projectFixture({ title: "Novel" });
 
@@ -39,5 +40,31 @@ describe("buildStudioNavigatorProps", () => {
     expect(moveDocument).toHaveBeenCalledWith("document-1", -1);
     expect(props.isCreatingDocument).toBe(true);
     expect(props.section).toBe("outline");
+  });
+});
+
+describe("buildLoreStatusModel", () => {
+  it("returns the mutation owner's exact Promise for the active Lore document", async () => {
+    const save = deferred<void>();
+    const changeLoreStatus = vi.fn(() => save.promise);
+    const character = chapter("character-1", {
+      kind: "character",
+      lore_status: "draft",
+    });
+
+    const model = buildLoreStatusModel(character, changeLoreStatus);
+    const submitted = model?.submit("stable");
+
+    expect(changeLoreStatus).toHaveBeenCalledWith(character.id, "stable");
+    expect(submitted).toBe(save.promise);
+
+    save.resolve();
+    await submitted;
+  });
+
+  it("does not expose the Lore editor for a non-Lore document", () => {
+    const note = chapter("note-1", { kind: "note", lore_status: null });
+
+    expect(buildLoreStatusModel(note, vi.fn())).toBeNull();
   });
 });

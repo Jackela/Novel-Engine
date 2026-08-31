@@ -43,10 +43,16 @@ caller cannot accidentally reuse document A's draft for document B. The
 private form awaits `submit` before restoring focus. If it unmounts during the
 request, its ref is null and it cannot steal focus from the new document.
 
-`useStudioPageModel` binds `submit` to the active document ID captured by that
-render and directly returns `changeLoreStatus(...)`. The current action keeps
-its functional project update, global Inspector error behavior, and duplicate
-submission guard.
+`useStudioPageModel` uses a pure adapter that binds `submit` to the active
+document ID captured by that render and directly returns
+`changeLoreStatus(...)`. The current action keeps its functional project
+update, global Inspector error behavior, and duplicate submission guard.
+
+The private form records a completion-time focus request, then restores focus
+from an effect only after React has committed `isSaving=false`. This avoids
+targeting a still-disabled button when the mutation Promise settles before the
+parent pending-state render. If the form unmounts, the request disappears with
+that document identity and cannot move focus in the next form.
 
 ## Alternatives considered
 
@@ -84,8 +90,14 @@ allows one Lore status save at a time, so this is out of scope.
   status immediately.
 - A deferred submit test proves focus restoration occurs after, not before,
   Promise settlement.
+- A pending-state harness proves focus waits for the committed idle render;
+  another regression settles document A after switching to B and proves A
+  cannot steal B's focus.
 - Action tests prove the correct document ID/status are sent, pending spans
   the request, success patches only the target, and failure leaves project
   state unchanged while publishing the error.
+- A page-model adapter test proves the exact mutation Promise is returned, and
+  an Inspector regression proves a Lore failure remains visible even while the
+  contextual Export tab is selected.
 - Frontend lint, format, type-check, unit tests, build, repository gates, and
   strict OpenSpec validation remain green.

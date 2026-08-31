@@ -12,3 +12,7 @@
       changing the existing mutation owner.
 - [x] 6. Run focused tests, frontend quality/build checks, repository gates,
       full server tests, and strict OpenSpec validation; review the final diff.
+- [x] 7. Close dual-axis review findings: wait for the committed idle render
+      before restoring focus, preserve focus across document switches, lock
+      the page-model Promise adapter, prove retryability, and keep Lore errors
+      visible in the contextual Export tab.

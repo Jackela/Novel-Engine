@@ -1,5 +1,5 @@
 import type { FormEvent } from "react";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import type { LoreStatus } from "@/app/types/studio";
 
@@ -48,14 +48,25 @@ function LoreStatusEntryForm({
   onSubmit,
 }: LoreStatusEntryFormProps) {
   const saveButtonRef = useRef<HTMLButtonElement>(null);
+  const handledFocusRequestRef = useRef(0);
+  const [focusRequest, setFocusRequest] = useState(0);
   const [selectedStatus, setSelectedStatus] = useState<LoreStatus>(savedStatus);
+
+  useEffect(() => {
+    if (focusRequest !== handledFocusRequestRef.current && !isSaving) {
+      handledFocusRequestRef.current = focusRequest;
+      saveButtonRef.current?.focus();
+    }
+  }, [focusRequest, isSaving]);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     try {
       await onSubmit(selectedStatus);
     } finally {
-      saveButtonRef.current?.focus();
+      // The mutation Promise may settle before React commits isSaving=false.
+      // Request focus through an effect so disabled controls are never targeted.
+      setFocusRequest((request) => request + 1);
     }
   };
 

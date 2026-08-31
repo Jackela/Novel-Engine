@@ -32,6 +32,7 @@ export function StudioInspector({
   const inspectorId = useId();
   const tabId = (tab: Exclude<InspectorTab, "settings">) => `${inspectorId}-${tab}-tab`;
   const panelId = (tab: Exclude<InspectorTab, "settings">) => `${inspectorId}-${tab}-panel`;
+  const exportPanelOwnsError = inspector === "export" && model.export.errorForExport !== null;
 
   return (
     <aside className="studio-inspector">
@@ -50,7 +51,7 @@ export function StudioInspector({
             />
           )}
 
-          {error && inspector !== "export" ? (
+          {error && !exportPanelOwnsError ? (
             <div aria-live="assertive" className="studio-inspector__error" role="alert">
               {error}
             </div>
