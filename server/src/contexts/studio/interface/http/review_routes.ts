@@ -70,10 +70,17 @@ export const reviewRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fast
       },
     },
     async (request, reply) => {
+      const reportCleanupFailure = (failure: unknown): void => {
+        request.log.error(
+          { err: failure, errorId: request.id, provider_cleanup_failed: true },
+          "provider cleanup failed",
+        );
+      };
       const payload = await withAsyncStudioErrors(() =>
         requireServices(options).jobHistory.recordReviewJob(
           requirePrincipal(request),
           request.params.projectId,
+          reportCleanupFailure,
         ),
       );
       reply.status(201);

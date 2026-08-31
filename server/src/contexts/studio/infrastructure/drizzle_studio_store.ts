@@ -5,18 +5,18 @@ import type {
   AddJobInput,
   AddUsageEventInput,
   AdvanceDocumentInput,
-  CaptureReviewSnapshotInput,
   CompleteJobWithUsageInput,
   DocumentMatchRecord,
   DocumentWithCurrent,
   EditorialAssessmentRecord,
+  EvaluatedReview,
   JobRecord,
   MarkJobOutcomeInput,
   ProjectScope,
   ProjectUsageAggregate,
   RecordCompletedProposalJobInput,
-  RecordSnapshotReviewInput,
-  ReviewSnapshotDocument,
+  ReviewCompletionRecord,
+  ReviewSource,
   StudioStore,
 } from "../application/ports/studio_store.js";
 import type {
@@ -225,20 +225,21 @@ export class DrizzleStudioStore extends ProjectStorePart implements StudioStore 
     return this.proposalAcceptance.acceptCompletedProposal(scope, projectId, jobId, now);
   }
 
-  captureReviewSnapshot(
-    scope: ProjectScope,
-    projectId: string,
-    input: CaptureReviewSnapshotInput,
-  ): { snapshotId: string; documents: ReviewSnapshotDocument[] } {
-    return this.editorialReviews.captureReviewSnapshot(scope, projectId, input);
+  readReviewSource(scope: ProjectScope, projectId: string, capturedAt: Date): ReviewSource {
+    return this.editorialReviews.readReviewSource(scope, projectId, capturedAt);
   }
 
-  recordSnapshotReview(
+  recordCompletedReviewJob(scope: ProjectScope, input: EvaluatedReview): ReviewCompletionRecord {
+    return this.editorialReviews.recordCompletedReviewJob(scope, input);
+  }
+
+  completeReviewRetryJob(
     scope: ProjectScope,
     projectId: string,
-    input: RecordSnapshotReviewInput,
-  ): EditorialAssessmentRecord {
-    return this.editorialReviews.recordSnapshotReview(scope, projectId, input);
+    jobId: string,
+    input: EvaluatedReview,
+  ): ReviewCompletionRecord {
+    return this.editorialReviews.completeReviewRetryJob(scope, projectId, jobId, input);
   }
 
   listEditorialAssessments(scope: ProjectScope, projectId: string): EditorialAssessmentRecord[] {

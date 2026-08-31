@@ -1,11 +1,17 @@
 import { TextGenerationProviderError } from "../../../contexts/ai/application/ports/text_generation.js";
 import type { Principal } from "../../../shared/application/ports/auth.js";
+import { ReviewSourceInvalidatedError } from "../domain/exceptions.js";
 import type { SnapshotArtifactService } from "./export_artifact_service.js";
 import { JobRetryExecutor, type JobRetryExecutorOptions } from "./job_retry_executor.js";
 import type { InFlightOperationGuard } from "./operation_in_flight.js";
-import { dumpJson, exportJobResultJson, jobPayload, reviewJobResultJson } from "./payloads.js";
+import { dumpJson, exportJobResultJson, jobPayload } from "./payloads.js";
 import type { ExportArtifactFormat, ExportArtifactRecord } from "./ports/export_store.js";
-import type { ProjectScope, ProjectUsageAggregate, StudioStore } from "./ports/studio_store.js";
+import type {
+  EvaluatedReview,
+  ProjectScope,
+  ProjectUsageAggregate,
+  StudioStore,
+} from "./ports/studio_store.js";
 import { scopeForPrincipal } from "./ports/studio_store.js";
 import type { ReviewService } from "./review_service.js";
 
@@ -94,29 +100,18 @@ export class JobHistoryService {
     projectId: string,
     reportCleanupFailure?: (failure: unknown) => void,
   ): Promise<Record<string, unknown>> {
+    let evaluation: EvaluatedReview | undefined;
     try {
-      const assessment = await this.reviews.evaluateProject(
-        principal,
-        projectId,
+      evaluation = await this.reviews.evaluateProject(principal, projectId, {
         reportCleanupFailure,
-      );
-      const job = this.store.addJob(scope, {
-        projectId,
-        documentId: null,
-        kind: "review",
-        operation: "review",
-        status: "completed",
-        provider: assessment.provider,
-        model: assessment.model,
-        requestJson: dumpJson({}),
-        resultJson: reviewJobResultJson(assessment),
-        error: null,
-        eventDetailsJson: dumpJson({ review_id: assessment.id }),
-        now: this.now(),
       });
-      return jobPayload(job);
+      const completed = this.store.recordCompletedReviewJob(scope, evaluation);
+      return jobPayload(completed.job);
     } catch (error) {
-      if (!(error instanceof TextGenerationProviderError)) {
+      if (
+        !(error instanceof TextGenerationProviderError) &&
+        !(error instanceof ReviewSourceInvalidatedError)
+      ) {
         throw error;
       }
       return jobPayload(
@@ -126,8 +121,8 @@ export class JobHistoryService {
           kind: "review",
           operation: "review",
           status: "failed",
-          provider: this.reviews.providerName,
-          model: "",
+          provider: evaluation?.provider ?? this.reviews.providerName,
+          model: evaluation?.model ?? "",
           requestJson: dumpJson({}),
           resultJson: dumpJson({ review_id: null, snapshot_id: null, summary: "", issues: [] }),
           error: error.message,

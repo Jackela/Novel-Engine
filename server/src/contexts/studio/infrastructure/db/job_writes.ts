@@ -16,7 +16,11 @@ import type { Tx } from "./studio_query_helpers.js";
  */
 
 /** Insert the job row plus its first event; returns the new job id. */
-export function insertJobAndEvent(tx: Tx, input: AddJobInput): string {
+export function insertJobAndEvent(
+  tx: Tx,
+  input: AddJobInput,
+  beforeEventInsert: (jobId: string) => void = () => {},
+): string {
   const job: typeof jobs.$inferInsert = {
     id: randomUUID(),
     project_id: input.projectId,
@@ -35,6 +39,7 @@ export function insertJobAndEvent(tx: Tx, input: AddJobInput): string {
   tx.insert(jobs)
     .values({ ...job, retry_of_job_id: input.retryOfJobId ?? null })
     .run();
+  beforeEventInsert(job.id);
   tx.insert(jobEvents)
     .values({
       id: randomUUID(),
@@ -66,7 +71,12 @@ export function writeUsageEvent(tx: Tx, input: AddUsageEventInput): void {
 }
 
 /** Apply a terminal outcome transition and append its matching event. */
-export function applyJobOutcome(tx: Tx, jobId: string, input: MarkJobOutcomeInput): void {
+export function applyJobOutcome(
+  tx: Tx,
+  jobId: string,
+  input: MarkJobOutcomeInput,
+  beforeEventInsert: (jobId: string) => void = () => {},
+): void {
   tx.update(jobs)
     .set({
       status: input.status,
@@ -78,6 +88,7 @@ export function applyJobOutcome(tx: Tx, jobId: string, input: MarkJobOutcomeInpu
     })
     .where(eq(jobs.id, jobId))
     .run();
+  beforeEventInsert(jobId);
   tx.insert(jobEvents)
     .values({
       id: randomUUID(),

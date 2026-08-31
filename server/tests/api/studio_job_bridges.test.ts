@@ -7,7 +7,6 @@ import { jobs as jobsTable, usageEvents } from "../../src/shared/infrastructure/
 import {
   firstDocument,
   flakyProviderFactory,
-  forceJobStatus,
   seedProjectWithChapter,
   studioDatabase,
 } from "./job_test_helpers.js";
@@ -102,7 +101,9 @@ describe("terminal job bridges", () => {
     const { app } = await buildStudioApp(clock);
     try {
       const owner = await ownerJar(app);
-      const projectId = await seedProjectWithChapter(app, owner, "Review job bridge");
+      const project = await seedProject(app, owner, "Review job bridge");
+      const document = firstDocument(project);
+      const projectId = project.id;
 
       const created = await call(app, owner, "POST", `/api/projects/${projectId}/reviews`);
       expect(created.statusCode, created.body).toBe(201);
@@ -125,6 +126,15 @@ describe("terminal job bridges", () => {
       expect(listed.statusCode, listed.body).toBe(200);
       expect(listed.json().reviews).toHaveLength(1);
       expect(listed.json().reviews[0].id).toBe(job.result.review_id);
+
+      const protectedSource = await call(
+        app,
+        owner,
+        "DELETE",
+        `/api/projects/${projectId}/documents/${document.id}`,
+      );
+      expect(protectedSource.statusCode, protectedSource.body).toBe(409);
+      expect(protectedSource.json().error.code).toBe("SNAPSHOT_CONFLICT");
     } finally {
       await app.close();
     }
@@ -252,14 +262,18 @@ describe("job retry chains", () => {
 
   it("retries a failed review job into a fresh assessment", async () => {
     const clock = monotonicClock();
-    const { app } = await buildStudioApp(clock);
+    const failures = { count: 1 };
+    const { app } = await buildStudioApp(clock, {
+      textProviderFactory: flakyProviderFactory(failures),
+    });
     try {
       const owner = await ownerJar(app);
       const projectId = await seedProjectWithChapter(app, owner, "Review retry");
 
       const created = await call(app, owner, "POST", `/api/projects/${projectId}/reviews`);
       const reviewJob = created.json() as JobPayload;
-      forceJobStatus(app, reviewJob.id, "failed");
+      expect(reviewJob.status).toBe("failed");
+      expect(reviewJob.model).toBe("");
 
       const retry = await call(
         app,
@@ -272,6 +286,7 @@ describe("job retry chains", () => {
       expect(retryJob.status).toBe("completed");
       expect(retryJob.kind).toBe("review");
       expect(retryJob.retry_of_job_id).toBe(reviewJob.id);
+      expect(retryJob.model).toBe("recovered-model");
       expect(retryJob.result.review_id).toEqual(expect.any(String));
       expect(retryJob.result.review_id).not.toBe(reviewJob.result.review_id);
     } finally {

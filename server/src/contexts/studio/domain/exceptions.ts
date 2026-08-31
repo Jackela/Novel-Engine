@@ -31,6 +31,14 @@ export class SnapshotConflict extends Error {
   }
 }
 
+/** A captured review document/revision disappeared before its result landed. */
+export class ReviewSourceInvalidatedError extends Error {
+  constructor() {
+    super("Review source changed before the evaluated result could be recorded.");
+    this.name = "ReviewSourceInvalidatedError";
+  }
+}
+
 /** A document with the same (project, kind, title) identity already exists. */
 export class DuplicateDocumentError extends Error {
   readonly kind: string;

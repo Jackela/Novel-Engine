@@ -3,6 +3,7 @@ import type { StudioBeatStore } from "./beat_store.js";
 import type { StudioJobLedgerStore } from "./job_ledger_store.js";
 import type { StudioLoreStore } from "./lore_store.js";
 import type { ProposalAcceptanceStore } from "./proposal_acceptance_store.js";
+import type { ReviewOutcomeStore } from "./review_outcome_store.js";
 import type { StudioVolumeStore } from "./volume_store.js";
 
 /** Persistence-neutral row shapes handed to the application layer. */
@@ -78,60 +79,17 @@ export type {
   RecordCompletedProposalJobInput,
 } from "./job_records.js";
 
-/** A document/revision pair frozen into an immutable review snapshot. */
-export interface ReviewSnapshotDocument {
-  /** The source document identifier, retained for finding-to-snapshot mapping. */
-  documentId: string;
-  snapshotDocumentId: string;
-  revisionId: string;
-  kind: string;
-  title: string;
-  contentMarkdown: string;
-  metadataJson: string;
-  position: number;
-}
-
-/** A pure evaluator's finding, before the adapter serializes its evidence. */
-export interface EditorialIssueInput {
-  documentId: string;
-  severity: string;
-  code: string;
-  message: string;
-  suggestion: string;
-  evidence: Record<string, unknown>;
-}
-
-/** One persisted editorial issue, returned without exposing database rows. */
-export interface EditorialIssueRecord extends EditorialIssueInput {
-  id: string;
-  reviewId: string;
-  snapshotDocumentId: string;
-}
-
-/** A snapshot-bound editorial assessment and its stably ordered issues. */
-export interface EditorialAssessmentRecord {
-  id: string;
-  projectId: string;
-  snapshotId: string;
-  provider: string;
-  model: string;
-  summary: string;
-  createdAt: Date;
-  issues: EditorialIssueRecord[];
-}
-
-export interface CaptureReviewSnapshotInput {
-  now: Date;
-}
-
-export interface RecordSnapshotReviewInput {
-  snapshotId: string;
-  provider: string;
-  model: string;
-  summary: string;
-  now: Date;
-  issues: readonly EditorialIssueInput[];
-}
+/** Review-outcome types live in their focused port module; re-exported here. */
+export type {
+  EditorialAssessmentRecord,
+  EditorialIssueInput,
+  EditorialIssueRecord,
+  EvaluatedReview,
+  ReviewCompletionRecord,
+  ReviewSnapshotDocument,
+  ReviewSource,
+  ReviewSourceDocument,
+} from "./review_outcome_store.js";
 
 /**
  * Owner scoping of every project query: the single principal since #311
@@ -216,6 +174,7 @@ export interface StudioStore
     StudioBeatStore,
     StudioLoreStore,
     ProposalAcceptanceStore,
+    ReviewOutcomeStore,
     StudioJobLedgerStore {
   addProject(
     scope: ProjectScope,
@@ -283,22 +242,4 @@ export interface StudioStore
     projectId: string,
     matchQuery: string,
   ): DocumentMatchRecord[];
-
-  /**
-   * Freeze current document content before evaluating it; review history can
-   * therefore never be rewritten by later author edits. The capture commits
-   * on its own so the (asynchronous) evaluation can run against immutable
-   * rows before the review record is persisted.
-   */
-  captureReviewSnapshot(
-    scope: ProjectScope,
-    projectId: string,
-    input: CaptureReviewSnapshotInput,
-  ): { snapshotId: string; documents: ReviewSnapshotDocument[] };
-  recordSnapshotReview(
-    scope: ProjectScope,
-    projectId: string,
-    input: RecordSnapshotReviewInput,
-  ): EditorialAssessmentRecord;
-  listEditorialAssessments(scope: ProjectScope, projectId: string): EditorialAssessmentRecord[];
 }

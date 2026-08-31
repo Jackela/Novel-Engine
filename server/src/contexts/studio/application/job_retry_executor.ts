@@ -5,15 +5,9 @@ import {
 } from "../../../contexts/ai/application/ports/text_generation.js";
 import type { Principal } from "../../../shared/application/ports/auth.js";
 import { InvalidOperationError } from "../../../shared/domain/exceptions.js";
-import { NotFoundError } from "../domain/exceptions.js";
+import { NotFoundError, ReviewSourceInvalidatedError } from "../domain/exceptions.js";
 import type { SnapshotArtifactService } from "./export_artifact_service.js";
-import {
-  dumpJson,
-  exportJobResultJson,
-  jobPayload,
-  reviewJobResultJson,
-  safeLoadJson,
-} from "./payloads.js";
+import { dumpJson, exportJobResultJson, jobPayload, safeLoadJson } from "./payloads.js";
 import type { JobRecord, ProjectScope, StudioStore } from "./ports/studio_store.js";
 import { scopeForPrincipal } from "./ports/studio_store.js";
 import {
@@ -103,7 +97,7 @@ export class JobRetryExecutor {
         return await this.reexecuteProposalJob(scope, retry, reportCleanupFailure);
       }
       if (retry.kind === "review") {
-        return this.reexecuteReviewJob(principal, scope, retry);
+        return await this.reexecuteReviewJob(principal, scope, retry, reportCleanupFailure);
       }
       if (retry.kind === "export") {
         return await this.reexecuteExportJob(principal, scope, retry);
@@ -113,6 +107,7 @@ export class JobRetryExecutor {
       if (
         !(error instanceof InvalidOperationError) &&
         !(error instanceof NotFoundError) &&
+        !(error instanceof ReviewSourceInvalidatedError) &&
         !(error instanceof TextGenerationProviderError)
       ) {
         throw error;
@@ -211,17 +206,28 @@ export class JobRetryExecutor {
     principal: Principal,
     scope: ProjectScope,
     retry: JobRecord,
+    reportCleanupFailure: (failure: unknown) => void,
   ): Promise<Record<string, unknown>> {
-    const assessment = await this.reviews.evaluateProject(principal, retry.projectId);
-    return jobPayload(
-      this.store.markJobOutcome(scope, retry.projectId, retry.id, {
-        status: "completed",
-        resultJson: reviewJobResultJson(assessment),
-        error: null,
-        eventDetailsJson: dumpJson({ review_id: assessment.id }),
-        now: this.now(),
-      }),
-    );
+    const evaluation = await this.reviews.evaluateProject(principal, retry.projectId, {
+      provider: admitTextProvider(retry.provider),
+      reportCleanupFailure,
+    });
+    try {
+      return jobPayload(
+        this.store.completeReviewRetryJob(scope, retry.projectId, retry.id, evaluation).job,
+      );
+    } catch (error) {
+      if (!(error instanceof ReviewSourceInvalidatedError)) throw error;
+      return jobPayload(
+        this.store.markJobOutcome(scope, retry.projectId, retry.id, {
+          status: "failed",
+          model: evaluation.model,
+          error: error.message,
+          eventDetailsJson: dumpJson({ error: error.message }),
+          now: this.now(),
+        }),
+      );
+    }
   }
 
   private async reexecuteExportJob(

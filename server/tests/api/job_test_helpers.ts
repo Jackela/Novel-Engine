@@ -21,18 +21,62 @@ export function flakyProviderFactory(failures: { count: number }): TextGeneratio
           failures.count -= 1;
           throw new TextGenerationProviderError(`simulated provider failure ${provider}`);
         }
+        const content =
+          task.step === "editorial_review"
+            ? { findings: [] }
+            : { chapter_markdown: validProposalProse };
         return {
           step: task.step,
           provider,
           model: "recovered-model",
-          rawText: validProposalProse,
-          content: { chapter_markdown: validProposalProse },
+          rawText: JSON.stringify(content),
+          content,
           promptTokens: 3,
           completionTokens: 5,
         };
       },
     };
     return impl;
+  };
+}
+
+/** Fail early calls, then pause one valid review result until the test releases it. */
+export function deferredReviewFactory(failuresBeforeWait = 0): {
+  factory: TextGenerationProviderFactory;
+  started: Promise<void>;
+  succeed: () => void;
+} {
+  let failures = failuresBeforeWait;
+  let announceStarted: (() => void) | undefined;
+  let complete: (() => void) | undefined;
+  const started = new Promise<void>((resolve) => {
+    announceStarted = resolve;
+  });
+  const pending = new Promise<void>((resolve) => {
+    complete = resolve;
+  });
+  return {
+    factory: (provider) => ({
+      generateStructured: async () => {
+        if (failures > 0) {
+          failures -= 1;
+          throw new TextGenerationProviderError(`simulated provider failure ${provider}`);
+        }
+        announceStarted?.();
+        await pending;
+        return {
+          step: "editorial_review",
+          provider,
+          model: "deferred-review-model",
+          rawText: '{"findings":[]}',
+          content: { findings: [] },
+          promptTokens: null,
+          completionTokens: null,
+        };
+      },
+    }),
+    started,
+    succeed: () => complete?.(),
   };
 }
 
