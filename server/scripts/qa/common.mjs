@@ -60,13 +60,9 @@ export function scanRootFiles(root, relativePath, skipDirectories) {
   return found;
 }
 
-/** File lines; undecodable or unreadable files behave as empty. */
+/** File lines; read failures are fatal so gates cannot silently skip candidates. */
 export function readTextLines(absolutePath) {
-  try {
-    return readFileSync(absolutePath, "utf8").split(/\r?\n/);
-  } catch {
-    return [];
-  }
+  return readFileSync(absolutePath, "utf8").split(/\r?\n/);
 }
 
 export function fileSuffix(relativePath) {

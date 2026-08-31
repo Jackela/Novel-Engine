@@ -48,6 +48,12 @@ jobs:
         run: |
           pnpm --dir server gates
           pnpm spec:validate
+      - name: Validate server architecture, types, lint, and tests
+        run: |
+          pnpm --dir server arch
+          pnpm --dir server type-check
+          pnpm --dir server lint
+          pnpm --dir server test
       - name: Validate frontend
         working-directory: frontend
         run: |
@@ -167,7 +173,15 @@ jobs:
             sleep 2
           done
           curl -fsS http://127.0.0.1:8000/health/ready || { echo '::group::container logs'; docker logs novel-engine; exit 1; }
-          curl -fsS http://127.0.0.1:8000/projects/demo/history | grep -q '<title>Novel Engine</title>'
+          node --input-type=module - <<'NODE'
+          const [identity, html] = await Promise.all([
+            fetch("http://127.0.0.1:8000/version").then((response) => response.json()),
+            fetch("http://127.0.0.1:8000/projects/demo/history").then((response) => response.text()),
+          ]);
+          if (!html.includes(`<title>${identity.name}</title>`)) {
+            throw new Error("container SPA title does not match /version product identity");
+          }
+          NODE
           curl -fsS -H 'Content-Type: application/json' \
             -d '{"username":"owner","password":"container-owner-password"}' \
             http://127.0.0.1:8000/api/setup
