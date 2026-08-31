@@ -3,6 +3,7 @@ import { type FormEvent, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { api } from "@/app/api";
+import { productIdentity, productLabel } from "@/app/productIdentity";
 import type { SetupStatus } from "@/app/types/studio";
 
 import { toErrorMessage } from "./hooks/toErrorMessage";
@@ -35,7 +36,7 @@ export function EntryPage() {
           })
           .catch((reason: unknown) => {
             if (mounted) {
-              setError(toErrorMessage(reason, "Unable to reach Novel Engine."));
+              setError(toErrorMessage(reason, `Unable to reach ${productIdentity.name}.`));
             }
           }),
       );
@@ -66,7 +67,7 @@ export function EntryPage() {
       <section className="entry__panel">
         <div className="entry__brand">
           <BookOpen aria-hidden="true" />
-          <span>Novel Engine</span>
+          <span>{productIdentity.name}</span>
         </div>
         <h1>{setup?.owner_configured ? "Open your writing studio" : "Create the local owner"}</h1>
         <p>
@@ -107,7 +108,7 @@ export function EntryPage() {
             {busy ? "Opening..." : setup?.owner_configured ? "Sign in" : "Create owner"}
           </button>
         </form>
-        <footer>Novel Engine {__APP_VERSION__}</footer>
+        <footer>{productLabel}</footer>
       </section>
     </main>
   );

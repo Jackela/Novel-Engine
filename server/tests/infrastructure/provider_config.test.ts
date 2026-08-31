@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { DEFAULT_LOREBOOK_BUDGET_CHARACTERS } from "../../src/contexts/studio/application/lore_injection.js";
 import { ConfigurationError } from "../../src/shared/infrastructure/config/configuration_error.js";
 import { loadLlmServerConfig } from "../../src/shared/infrastructure/config/provider_config.js";
 
@@ -18,6 +19,12 @@ function rejected(values: Record<string, string>): Error {
 }
 
 describe("provider configuration parser", () => {
+  it("keeps the configuration fallback aligned with the Lore application default", () => {
+    expect(loadLlmServerConfig(environment()).lorebookBudgetCharacters).toBe(
+      DEFAULT_LOREBOOK_BUDGET_CHARACTERS,
+    );
+  });
+
   it("uses the server-owned defaults without exposing a model choice", () => {
     expect(loadLlmServerConfig(environment())).toEqual({
       defaultProvider: "mock",

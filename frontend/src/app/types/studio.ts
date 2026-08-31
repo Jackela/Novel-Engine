@@ -47,6 +47,7 @@ export interface Session {
 
 export interface SetupStatus {
   owner_configured: boolean;
+  name: string;
   version: string;
 }
 
@@ -69,7 +70,7 @@ export interface StudioDocument {
    * character/world documents; null for every other kind — the lifecycle
    * semantics never leak beyond lore. Only `stable` entries inject.
    */
-  lore_status?: LoreStatus | null;
+  lore_status: LoreStatus | null;
   current_revision_id: string;
   content_markdown: string;
   metadata: Record<string, unknown>;

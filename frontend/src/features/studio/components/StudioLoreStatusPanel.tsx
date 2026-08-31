@@ -1,13 +1,8 @@
 import type { FormEvent } from "react";
 import { useEffect, useRef, useState } from "react";
 
+import { LORE_STATUS_OPTIONS } from "@/app/loreStatus";
 import type { LoreStatus } from "@/app/types/studio";
-
-const LORE_STATUS_OPTIONS: Array<{ value: LoreStatus; label: string }> = [
-  { value: "draft", label: "Draft (not injected)" },
-  { value: "stable", label: "Stable (injected)" },
-  { value: "deprecated", label: "Deprecated (not injected)" },
-];
 
 interface StudioLoreStatusPanelProps {
   documentId: string;

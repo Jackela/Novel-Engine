@@ -1,3 +1,4 @@
+import { LORE_STATUSES } from "@/app/loreStatus";
 import type {
   DocumentKind,
   LoreStatus,
@@ -21,8 +22,6 @@ class ApiContractError extends Error {
 type JsonRecord = Record<string, unknown>;
 
 const documentKinds = ["chapter", "outline", "character", "world", "note"] as const;
-// The lore lifecycle closed set (#444); mirrors the server enum.
-const loreStatuses = ["draft", "stable", "deprecated"] as const;
 const sessionKinds = ["owner"] as const;
 
 function fail(label: string): never {
@@ -137,12 +136,11 @@ function parseDocument(value: unknown, label = "document"): StudioDocument {
     ...(item.beat_ref === undefined || item.beat_ref === null
       ? { beat_ref: null }
       : { beat_ref: stringValue(item.beat_ref, `${label}.beat_ref`) }),
-    // lore_status (#444) is a nullable lifecycle enum carried by lore-kind
-    // documents; non-lore kinds answer null and a missing field parses as
-    // null so hand-built fixtures stay friction-free.
-    ...(item.lore_status === undefined || item.lore_status === null
+    // lore_status (#444) is a required nullable lifecycle enum: non-lore
+    // kinds answer null, while a missing field is an API contract failure.
+    ...(item.lore_status === null
       ? { lore_status: null }
-      : { lore_status: literalField(item, "lore_status", label, loreStatuses) as LoreStatus }),
+      : { lore_status: literalField(item, "lore_status", label, LORE_STATUSES) as LoreStatus }),
   };
 }
 
@@ -154,7 +152,7 @@ export function parseLoreStatus(value: unknown): { lore_status: LoreStatus } {
       item,
       "lore_status",
       "lore status response",
-      loreStatuses,
+      LORE_STATUSES,
     ) as LoreStatus,
   };
 }
@@ -234,6 +232,7 @@ export function parseSetupStatus(value: unknown): SetupStatus {
   const item = objectValue(value, "setup");
   return {
     owner_configured: booleanField(item, "owner_configured", "setup"),
+    name: stringField(item, "name", "setup"),
     version: stringField(item, "version", "setup"),
   };
 }

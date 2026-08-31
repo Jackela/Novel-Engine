@@ -5,6 +5,7 @@ import { chapter, projectWith } from "@/test/factories";
 import { createMountHarness } from "@/test/harness";
 
 import { StudioInspector } from "./StudioInspector";
+import { StudioStatusbar } from "./StudioStatusbar";
 import { StudioTopbar } from "./StudioTopbar";
 import type { StudioInspectorModel } from "./studioInspectorTypes";
 
@@ -217,9 +218,22 @@ describe("Studio split components", () => {
 
     const container = render(<StudioTopbar project={baseProject} onBack={back} />);
 
+    expect(container.querySelector(".ui-brand")?.textContent).toContain("Test Engine");
     expect(container.textContent).toContain("Clockwork Harbor");
     click(container.querySelector('button[aria-label="Back to projects"]'));
     expect(back).toHaveBeenCalledTimes(1);
     expect(container.querySelector(".editor-export-menu")).toBeNull();
+  });
+
+  it("renders the build identity in the Studio status bar", () => {
+    const container = render(
+      <StudioStatusbar
+        activeDocument={baseDocument}
+        loadedRevisionId={baseDocument.current_revision_id}
+        saveState="saved"
+      />,
+    );
+
+    expect(container.textContent).toContain("Test Engine test");
   });
 });

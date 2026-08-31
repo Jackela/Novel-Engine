@@ -1,6 +1,7 @@
 import { apiUrl, getCsrfToken, HttpError, readHttpError } from "@/app/api";
 import { objectValue } from "@/app/apiContract";
 import { parseJob } from "@/app/apiWorkflowContract";
+import { localServiceUnavailable } from "@/app/networkError";
 import type { StudioJob } from "@/app/types/studio";
 
 /**
@@ -122,9 +123,7 @@ export async function streamProposal({
       throw new Error("Request cancelled.", { cause: error });
     }
     if (error instanceof TypeError) {
-      throw new Error("Novel Engine is unavailable. Check the local service and retry.", {
-        cause: error,
-      });
+      throw localServiceUnavailable(error);
     }
     throw error;
   }

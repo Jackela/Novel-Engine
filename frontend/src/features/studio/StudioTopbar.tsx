@@ -1,5 +1,6 @@
 import { BookOpen, ChevronLeft } from "lucide-react";
 
+import { productIdentity } from "@/app/productIdentity";
 import type { Project } from "@/app/types/studio";
 
 interface StudioTopbarProps {
@@ -19,7 +20,7 @@ export function StudioTopbar({ project, onBack }: StudioTopbarProps) {
         <ChevronLeft />
       </button>
       <div className="ui-brand">
-        <BookOpen /> Novel Engine
+        <BookOpen /> {productIdentity.name}
       </div>
       <div className="studio-topbar__project-title">{project.title}</div>
       <div className="studio-topbar__spacer" />

@@ -5806,6 +5806,9 @@
               "application/json": {
                 "schema": {
                   "properties": {
+                    "name": {
+                      "type": "string"
+                    },
                     "owner_configured": {
                       "type": "boolean"
                     },
@@ -5815,6 +5818,7 @@
                   },
                   "required": [
                     "owner_configured",
+                    "name",
                     "version"
                   ],
                   "type": "object"

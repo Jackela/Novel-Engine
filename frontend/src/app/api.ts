@@ -25,6 +25,7 @@ import {
   parseUsage,
 } from "@/app/apiWorkflowContract";
 import { appConfig } from "@/app/config";
+import { localServiceUnavailable } from "@/app/networkError";
 import type { DocumentKind, ExportFormat, LoreStatus } from "@/app/types/studio";
 
 export class HttpError extends Error {
@@ -123,9 +124,7 @@ async function request<T>(
         });
       }
       if (error instanceof TypeError) {
-        throw new Error("Novel Engine is unavailable. Check the local service and retry.", {
-          cause: error,
-        });
+        throw localServiceUnavailable(error);
       }
       throw error;
     }
@@ -167,9 +166,7 @@ async function downloadBlob(path: string): Promise<Blob> {
       throw new Error("Download timed out. Please retry.", { cause: error });
     }
     if (error instanceof TypeError) {
-      throw new Error("Novel Engine is unavailable. Check the local service and retry.", {
-        cause: error,
-      });
+      throw localServiceUnavailable(error);
     }
     throw error;
   } finally {

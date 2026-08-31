@@ -10,7 +10,7 @@ import {
 import { DrizzleAuthStore } from "../../shared/infrastructure/db/auth_store.js";
 import { backupDatabaseFile } from "../../shared/infrastructure/db/backup.js";
 import { openStudioDatabase } from "../../shared/infrastructure/db/startup.js";
-import { readWorkspaceVersion } from "../../shared/infrastructure/workspace_manifest.js";
+import { readProductIdentity } from "../../shared/infrastructure/workspace_manifest.js";
 import { buildApp } from "../api/app.js";
 import { runLegacyImportCommand } from "./legacy_import_command.js";
 
@@ -58,7 +58,7 @@ const USAGE = [
   "  backup",
   "      Write a SQLite backup beneath the backups directory and print its path.",
   "  doctor",
-  "      Report version, database integrity, journal mode, foreign keys, owner.",
+  "      Report product identity, database integrity, journal mode, foreign keys, owner.",
 ].join("\n");
 
 const NO_DATABASE_MESSAGE = "No database exists yet.";
@@ -137,6 +137,7 @@ async function backupCommand(context: CliContext, writeLine: WriteLine): Promise
 }
 
 interface DoctorReport {
+  name: string;
   version: string;
   database: string;
   quick_check: string;
@@ -147,8 +148,10 @@ interface DoctorReport {
 
 async function doctorCommand(context: CliContext, writeLine: WriteLine): Promise<number> {
   const config = configFor(context);
+  const identity = readProductIdentity();
   const report: DoctorReport = {
-    version: readWorkspaceVersion(),
+    name: identity.name,
+    version: identity.version,
     database: config.databasePath,
     quick_check: "unknown",
     journal_mode: "unknown",

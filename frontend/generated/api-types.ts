@@ -3533,6 +3533,7 @@ export interface paths {
                     };
                     content: {
                         "application/json": {
+                            name: string;
                             owner_configured: boolean;
                             version: string;
                         };

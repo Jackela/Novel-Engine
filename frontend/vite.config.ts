@@ -1,22 +1,42 @@
-import fs from "node:fs";
 import path from "node:path";
 import react from "@vitejs/plugin-react";
-import { defineConfig } from "vite";
+import { defineConfig, type Plugin } from "vite";
+import { readProductIdentity } from "../server/src/shared/infrastructure/workspace_manifest.js";
 
 const apiProxyTimeoutMs = 5 * 60 * 1000;
-const serverManifest = JSON.parse(
-  fs.readFileSync(path.resolve(__dirname, "..", "server", "package.json"), "utf8"),
-) as { version: string };
-const projectVersion = serverManifest.version ?? "0.0.0";
+const productIdentity = readProductIdentity(
+  path.resolve(import.meta.dirname, "..", "server", "package.json"),
+);
+const PRODUCT_NAME_TOKEN = "__PRODUCT_NAME__";
+
+function escapeHtml(value: string): string {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;");
+}
+
+export function injectProductIdentityHtml(html: string, productName: string): string {
+  if (!html.includes(PRODUCT_NAME_TOKEN)) {
+    throw new Error("frontend/index.html must contain the product-name token");
+  }
+  return html.replaceAll(PRODUCT_NAME_TOKEN, escapeHtml(productName));
+}
+
+const productIdentityHtmlPlugin: Plugin = {
+  name: "product-identity-html",
+  transformIndexHtml: (html) => injectProductIdentityHtml(html, productIdentity.name),
+};
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [productIdentityHtmlPlugin, react()],
   define: {
-    __APP_VERSION__: JSON.stringify(projectVersion),
+    __PRODUCT_IDENTITY__: JSON.stringify(productIdentity),
   },
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "src"),
+      "@": path.resolve(import.meta.dirname, "src"),
     },
   },
   server: {

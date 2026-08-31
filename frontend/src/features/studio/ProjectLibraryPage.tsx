@@ -3,6 +3,7 @@ import { type FormEvent, useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { api } from "@/app/api";
+import { productIdentity } from "@/app/productIdentity";
 import type { Project } from "@/app/types/studio";
 
 import { toErrorMessage } from "./hooks/toErrorMessage";
@@ -52,7 +53,7 @@ export function ProjectLibraryPage() {
     <main className="library">
       <header className="library__header">
         <div className="ui-brand">
-          <BookOpen aria-hidden="true" /> Novel Engine
+          <BookOpen aria-hidden="true" /> {productIdentity.name}
         </div>
         <div className="library__header-actions">
           <button

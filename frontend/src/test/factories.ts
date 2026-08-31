@@ -25,6 +25,7 @@ export function chapter(id: string, overrides: Partial<StudioDocument> = {}): St
     title: `Titled ${id}`,
     position: 0,
     volume_id: "volume-1",
+    lore_status: null,
     current_revision_id: `revision-${id}`,
     content_markdown: "",
     metadata: {},

@@ -3,7 +3,7 @@ import cookie from "@fastify/cookie";
 import cors from "@fastify/cors";
 import swagger from "@fastify/swagger";
 import type { TypeBoxTypeProvider } from "@fastify/type-provider-typebox";
-import Fastify, { type FastifyInstance, type FastifyLoggerOptions } from "fastify";
+import Fastify, { type FastifyInstance, type FastifyServerOptions } from "fastify";
 import type { TextGenerationProviderFactory } from "../../contexts/ai/application/ports/text_generation.js";
 import { providerCatalogRoutes } from "../../contexts/ai/interface/http/provider_routes.js";
 import { createStudioServices } from "../../contexts/studio/application/studio_services.js";
@@ -23,7 +23,10 @@ import { DrizzleAuthStore } from "../../shared/infrastructure/db/auth_store.js";
 import type { StudioDatabase } from "../../shared/infrastructure/db/startup.js";
 import { clientIdentity } from "../../shared/infrastructure/rate_limit/client_identity.js";
 import { TokenBucketRateLimiter } from "../../shared/infrastructure/rate_limit/token_bucket.js";
-import { readWorkspaceVersion } from "../../shared/infrastructure/workspace_manifest.js";
+import {
+  type ProductIdentity,
+  readProductIdentity,
+} from "../../shared/infrastructure/workspace_manifest.js";
 import { authRoutes } from "../../shared/interface/http/auth_routes.js";
 import { corsAllowList } from "../../shared/interface/http/cors_policy.js";
 import { registerErrorEnvelope } from "../../shared/interface/http/error_envelope.js";
@@ -45,7 +48,7 @@ declare module "fastify" {
 }
 
 export interface AppOptions {
-  logger?: boolean | FastifyLoggerOptions | undefined;
+  logger?: FastifyServerOptions["logger"];
   healthProbe?: HealthProbe | undefined;
   environment?: string | undefined;
   buildSha?: string | undefined;
@@ -114,6 +117,25 @@ const AUTH_RATE_LIMIT_KEY_TTL_SECONDS = 60;
 
 const emptyHealthProbe: HealthProbe = async () => ({ components: [] });
 
+function loggerWithProductIdentity(
+  logger: AppOptions["logger"],
+  identity: ProductIdentity,
+): false | Exclude<FastifyServerOptions["logger"], boolean | undefined> {
+  if (logger === false) {
+    return false;
+  }
+  const configured: Exclude<FastifyServerOptions["logger"], boolean | undefined> =
+    logger === true || logger === undefined ? {} : logger;
+  return {
+    ...configured,
+    base: {
+      ...(configured.base ?? {}),
+      product_name: identity.name,
+      product_version: identity.version,
+    },
+  };
+}
+
 /**
  * Composition root of the TS server: correlation-id request logging, the
  * unified error envelope, health probes, /version metadata, the OpenAPI
@@ -128,8 +150,9 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
     assertStartupGuards(options.config);
   }
 
+  const productIdentity = readProductIdentity();
   const app = Fastify({
-    logger: options.logger ?? true,
+    logger: loggerWithProductIdentity(options.logger, productIdentity),
     genReqId: (request) => correlationIdFrom(request.headers[REQUEST_ID_HEADER]) ?? randomUUID(),
   }).withTypeProvider<TypeBoxTypeProvider>();
 
@@ -190,8 +213,8 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
         );
 
   const versionInfo: VersionInfo = {
-    version: readWorkspaceVersion(),
-    name: "Novel Engine",
+    version: productIdentity.version,
+    name: productIdentity.name,
     runtime: { name: "node", version: process.versions.node },
     environment,
     build: options.buildSha ?? process.env.BUILD_SHA ?? "unknown",
@@ -205,7 +228,7 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
   await app.register(swagger, {
     openapi: {
       info: {
-        title: "Novel Engine API",
+        title: `${productIdentity.name} API`,
         version: versionInfo.version,
         description: "Self-hosted writing studio API (TypeScript rewrite).",
       },
@@ -247,7 +270,7 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
       capacity: perMinute,
       keyTtlSeconds: AUTH_RATE_LIMIT_KEY_TTL_SECONDS,
     }),
-    version: versionInfo.version,
+    productIdentity,
     environment,
     corsOrigins,
     resolveClientIdentity: (request) =>

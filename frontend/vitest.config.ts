@@ -3,11 +3,11 @@ import { defineConfig } from "vitest/config";
 
 export default defineConfig({
   define: {
-    __APP_VERSION__: JSON.stringify("test"),
+    __PRODUCT_IDENTITY__: JSON.stringify({ name: "Test Engine", version: "test" }),
   },
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "src"),
+      "@": path.resolve(import.meta.dirname, "src"),
     },
   },
   test: {

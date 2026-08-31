@@ -26,6 +26,13 @@ test("owner setup, editing, AI proposal accept, search, and deep links", async (
   // Fresh store: the entry probe renders the unified setup form with the
   // username prefilled and the new-password autocomplete contract.
   await page.goto("/");
+  const versionResponse = await page.request.get("/version");
+  expect(versionResponse.ok()).toBe(true);
+  const productIdentity = (await versionResponse.json()) as { name: string; version: string };
+  await expect(page.locator(".entry__brand")).toContainText(productIdentity.name);
+  await expect(page.locator(".entry footer")).toHaveText(
+    `${productIdentity.name} ${productIdentity.version}`,
+  );
   await expect(page.getByRole("heading", { name: "Create the local owner" })).toBeVisible();
   await expect(page.getByLabel("Username")).toHaveValue("author");
   await expect(page.locator('input[type="password"]')).toHaveAttribute(

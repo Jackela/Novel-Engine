@@ -1,5 +1,6 @@
 {
   "name": "novel-engine-server",
+  "productName": "Novel Engine",
   "version": "0.6.0",
   "private": true,
   "type": "module",

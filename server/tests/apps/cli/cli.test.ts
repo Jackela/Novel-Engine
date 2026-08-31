@@ -1,4 +1,4 @@
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { mkdir, mkdtemp, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -9,6 +9,10 @@ import { AuthService } from "../../../src/shared/application/auth_service.js";
 import { DrizzleAuthStore } from "../../../src/shared/infrastructure/db/auth_store.js";
 import { openStudioDatabase } from "../../../src/shared/infrastructure/db/startup.js";
 import { makeLegacyWorkspace } from "../../legacy_workspace_fixtures.js";
+
+const productManifest = JSON.parse(
+  readFileSync(new URL("../../../package.json", import.meta.url), "utf8"),
+) as { productName: string; version: string };
 
 interface CliHarness {
   directory: string;
@@ -81,7 +85,8 @@ describe("operational CLI", () => {
     expect(harness.lines).toHaveLength(1);
     const payload = JSON.parse(harness.lines[0] ?? "") as Record<string, unknown>;
     expect(payload).toEqual({
-      version: expect.any(String),
+      name: productManifest.productName,
+      version: productManifest.version,
       database: harness.databasePath,
       quick_check: "ok",
       journal_mode: "wal",
@@ -99,7 +104,8 @@ describe("operational CLI", () => {
 
     expect(code).toBe(1);
     const payload = JSON.parse(harness.lines[0] ?? "") as Record<string, unknown>;
-    expect(payload.version).toEqual(expect.any(String));
+    expect(payload.name).toBe(productManifest.productName);
+    expect(payload.version).toBe(productManifest.version);
     expect(payload.database).toBe(harness.databasePath);
     expect(payload.quick_check).toEqual(expect.any(String));
     expect(payload.quick_check).not.toBe("ok");

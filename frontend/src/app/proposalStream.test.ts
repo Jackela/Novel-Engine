@@ -181,6 +181,14 @@ describe("streamProposal", () => {
     await expect(streamProposal(baseRequest())).rejects.toThrow("Request cancelled.");
   });
 
+  it("uses the injected product name when the stream cannot reach the server", async () => {
+    stubFetch(new TypeError("network unavailable"));
+
+    await expect(streamProposal(baseRequest())).rejects.toThrow(
+      "Test Engine is unavailable. Check the local service and retry.",
+    );
+  });
+
   it("forwards the caller signal to fetch", async () => {
     const controller = new AbortController();
     const fetchMock = vi.fn((_path: string, _init: RequestInit) =>

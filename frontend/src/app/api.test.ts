@@ -110,6 +110,17 @@ describe("Studio API client", () => {
     });
   });
 
+  it.each([
+    ["JSON request", () => api.projects()],
+    ["download", () => api.download("/api/exports/example/download")],
+  ])("uses the injected product name when a %s cannot reach the server", async (_label, run) => {
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new TypeError("network unavailable")));
+
+    await expect(run()).rejects.toThrow(
+      "Test Engine is unavailable. Check the local service and retry.",
+    );
+  });
+
   it("propagates caller cancellation through the internal request signal", async () => {
     const controller = new AbortController();
     vi.stubGlobal(
