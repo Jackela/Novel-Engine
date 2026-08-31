@@ -6,7 +6,7 @@ import { ImportService } from "./import_service.js";
 import { JobHistoryService } from "./job_history_service.js";
 import { LoreAliasService } from "./lore_alias_service.js";
 import { InFlightOperationGuard } from "./operation_in_flight.js";
-import type { ExportStore } from "./ports/export_store.js";
+import type { ExportOutcomeStore } from "./ports/export_store.js";
 import type { LegacyWorkspaceReader } from "./ports/legacy_workspace_reader.js";
 import type { StudioStore } from "./ports/studio_store.js";
 import { ProjectService } from "./project_service.js";
@@ -37,7 +37,7 @@ export interface CreateStudioServicesOptions {
   /** Server-owned review provenance; model choice is never an HTTP input. */
   reviewProvenance?: ReviewProviderProvenance | undefined;
   /** Export snapshots and artifact records have a focused persistence boundary. */
-  artifactStore: ExportStore;
+  artifactStore: ExportOutcomeStore;
   /** Filesystem adapter for atomic artifact writes and confined retrieval. */
   artifactFiles: ExportArtifactGateway;
   /** Read-only legacy workspace access; the composition root injects the FS adapter. */
@@ -60,14 +60,9 @@ export function createStudioServices(
     provenance: options.reviewProvenance,
     providerFactory: options.providerFactory,
   });
-  const artifacts = new SnapshotArtifactService(
-    options.artifactStore,
-    store,
-    options.artifactFiles,
-    {
-      now,
-    },
-  );
+  const artifacts = new SnapshotArtifactService(options.artifactStore, options.artifactFiles, {
+    now,
+  });
   return {
     projects: new ProjectService(store, now),
     documents,

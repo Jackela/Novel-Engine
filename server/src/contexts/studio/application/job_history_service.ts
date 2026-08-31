@@ -1,11 +1,15 @@
 import { TextGenerationProviderError } from "../../../contexts/ai/application/ports/text_generation.js";
 import type { Principal } from "../../../shared/application/ports/auth.js";
-import { ReviewSourceInvalidatedError } from "../domain/exceptions.js";
+import {
+  ExportArtifactWriteError,
+  ExportSourceInvalidatedError,
+  ReviewSourceInvalidatedError,
+} from "../domain/exceptions.js";
 import type { SnapshotArtifactService } from "./export_artifact_service.js";
 import { JobRetryExecutor, type JobRetryExecutorOptions } from "./job_retry_executor.js";
 import type { InFlightOperationGuard } from "./operation_in_flight.js";
-import { dumpJson, exportJobResultJson, jobPayload } from "./payloads.js";
-import type { ExportArtifactFormat, ExportArtifactRecord } from "./ports/export_store.js";
+import { dumpJson, jobPayload } from "./payloads.js";
+import type { ExportArtifactFormat } from "./ports/export_store.js";
 import type {
   EvaluatedReview,
   ProjectScope,
@@ -138,6 +142,7 @@ export class JobHistoryService {
     principal: Principal,
     projectId: string,
     format: ExportArtifactFormat,
+    reportCleanupFailure?: (failure: unknown) => void,
   ): Promise<Record<string, unknown>> {
     const scope = scopeForPrincipal(principal);
     // #305: the artifact write runs before the terminal job row exists;
@@ -149,27 +154,47 @@ export class JobHistoryService {
       operation: `export (${format})`,
     };
     this.inFlight.enter(inFlightTarget);
-    let artifact: ExportArtifactRecord;
     try {
-      artifact = await this.artifacts.materializeSnapshotArtifact(principal, projectId, format);
+      try {
+        const completed = await this.artifacts.recordCompletedExportJob(
+          principal,
+          projectId,
+          format,
+          { reportCleanupFailure },
+        );
+        return jobPayload(completed.job);
+      } catch (error) {
+        if (
+          !(error instanceof ExportArtifactWriteError) &&
+          !(error instanceof ExportSourceInvalidatedError)
+        ) {
+          throw error;
+        }
+        return jobPayload(
+          this.store.addJob(scope, {
+            projectId,
+            documentId: null,
+            kind: "export",
+            operation: "export",
+            status: "failed",
+            provider: STUDIO_EXPORTER_PROVIDER,
+            model: "",
+            requestJson: dumpJson({ format }),
+            resultJson: dumpJson({
+              export_id: null,
+              snapshot_id: null,
+              format,
+              download_url: null,
+            }),
+            error: error.message,
+            eventDetailsJson: dumpJson({ error: error.message }),
+            now: this.now(),
+          }),
+        );
+      }
     } finally {
       this.inFlight.exit(inFlightTarget);
     }
-    const job = this.store.addJob(scope, {
-      projectId,
-      documentId: null,
-      kind: "export",
-      operation: "export",
-      status: "completed",
-      provider: STUDIO_EXPORTER_PROVIDER,
-      model: "",
-      requestJson: dumpJson({ format }),
-      resultJson: exportJobResultJson(projectId, artifact),
-      error: null,
-      eventDetailsJson: dumpJson({ export_id: artifact.id }),
-      now: this.now(),
-    });
-    return jobPayload(job);
   }
 
   /** Retry a failed/interrupted job; see JobRetryExecutor for the contract. */

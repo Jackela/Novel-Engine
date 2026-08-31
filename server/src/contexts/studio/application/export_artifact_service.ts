@@ -5,14 +5,11 @@ import { InvalidOperationError } from "../../../shared/domain/exceptions.js";
 import type {
   ExportArtifactFormat,
   ExportArtifactRecord,
-  ExportStore,
+  ExportCompletionRecord,
+  ExportOutcomeStore,
+  PreparedExportArtifact,
 } from "./ports/export_store.js";
-import {
-  type DocumentWithCurrent,
-  type ProjectRecord,
-  type ProjectScope,
-  scopeForPrincipal,
-} from "./ports/studio_store.js";
+import { scopeForPrincipal } from "./ports/studio_store.js";
 
 /** One frozen chapter handed to the file-format adapter in snapshot order. */
 export interface ArtifactChapter {
@@ -50,22 +47,11 @@ export interface ArtifactReadRequest {
 
 /** Filesystem boundary for rendering and safe retrieval of export artifacts. */
 export interface ExportArtifactGateway {
-  writeSnapshotArtifact(request: ArtifactWriteRequest): Promise<ArtifactFileEvidence>;
+  writeSnapshotArtifact(
+    request: ArtifactWriteRequest,
+    reportCleanupFailure?: (failure: unknown) => void,
+  ): Promise<ArtifactFileEvidence>;
   readArtifactBytes(request: ArtifactReadRequest): Promise<Buffer>;
-}
-
-/** The existing project port supplies only the title needed by renderers. */
-export interface ProjectTitleLookup {
-  findProject(scope: ProjectScope, projectId: string): Pick<ProjectRecord, "title">;
-  /**
-   * The live authoring read prevents a no-chapter request from creating an
-   * otherwise orphaned export snapshot. It remains optional for narrow
-   * artifact-only adapters, which still reject empty snapshot data below.
-   */
-  findDocuments?(
-    scope: ProjectScope,
-    projectId: string,
-  ): ReadonlyArray<Pick<DocumentWithCurrent, "kind">>;
 }
 
 export interface SnapshotArtifactServiceOptions {
@@ -73,17 +59,26 @@ export interface SnapshotArtifactServiceOptions {
   readonly newId?: (() => string) | undefined;
 }
 
+export interface ArtifactOutcomeOptions {
+  readonly reportCleanupFailure?: ((failure: unknown) => void) | undefined;
+}
+
+interface PreparedPublication {
+  readonly input: PreparedExportArtifact;
+  readonly file: ArtifactFileEvidence;
+}
+
 /**
- * Turns immutable export snapshots into files. Snapshot reuse and artifact
- * records remain owned by ExportStore; this service never creates jobs.
+ * Renders one read-only export source, then delegates discoverable outcome
+ * publication to the atomic export store. Filesystem compensation remains
+ * here because SQLite cannot enlist the artifact file in its transaction.
  */
 export class SnapshotArtifactService {
   private readonly now: () => Date;
   private readonly newId: () => string;
 
   constructor(
-    private readonly exportStore: ExportStore,
-    private readonly projectTitles: ProjectTitleLookup,
+    private readonly exportStore: ExportOutcomeStore,
     private readonly artifactGateway: ExportArtifactGateway,
     options: SnapshotArtifactServiceOptions = {},
   ) {
@@ -91,44 +86,88 @@ export class SnapshotArtifactService {
     this.newId = options.newId ?? randomUUID;
   }
 
-  async materializeSnapshotArtifact(
+  async recordCompletedExportJob(
     principal: Principal,
     projectId: string,
     format: ExportArtifactFormat,
-  ): Promise<ExportArtifactRecord> {
+    options: ArtifactOutcomeOptions = {},
+  ): Promise<ExportCompletionRecord> {
     const scope = scopeForPrincipal(principal);
-    const project = this.projectTitles.findProject(scope, projectId);
-    this.assertProjectHasChapter(scope, projectId);
-    const createdAt = this.now();
-    const snapshot = this.exportStore.materializeArtifactSnapshot(scope, projectId, createdAt);
-    const chapters = snapshot.documents
+    const publication = await this.preparePublication(
+      principal,
+      projectId,
+      format,
+      options.reportCleanupFailure,
+    );
+    return this.landPublication(
+      publication,
+      (input) => this.exportStore.recordCompletedExportJob(scope, input),
+      options.reportCleanupFailure,
+    );
+  }
+
+  async completeExportRetryJob(
+    principal: Principal,
+    projectId: string,
+    jobId: string,
+    format: ExportArtifactFormat,
+    options: ArtifactOutcomeOptions = {},
+  ): Promise<ExportCompletionRecord> {
+    const scope = scopeForPrincipal(principal);
+    const publication = await this.preparePublication(
+      principal,
+      projectId,
+      format,
+      options.reportCleanupFailure,
+    );
+    return this.landPublication(
+      publication,
+      (input) => this.exportStore.completeExportRetryJob(scope, projectId, jobId, input),
+      options.reportCleanupFailure,
+    );
+  }
+
+  private async preparePublication(
+    principal: Principal,
+    projectId: string,
+    format: ExportArtifactFormat,
+    reportCleanupFailure?: (failure: unknown) => void,
+  ): Promise<PreparedPublication> {
+    const source = this.exportStore.readExportSource(
+      scopeForPrincipal(principal),
+      projectId,
+      this.now(),
+    );
+    const chapters = source.documents
       .filter((document) => document.kind === "chapter")
       .map((document) => ({ title: document.title, contentMarkdown: document.contentMarkdown }));
     if (chapters.length === 0) {
       throw new InvalidOperationError("A project needs at least one chapter before export.");
     }
     const id = this.newId();
-    const file = await this.artifactGateway.writeSnapshotArtifact({
-      projectId,
-      artifactId: id,
-      format,
-      projectTitle: project.title,
-      chapters,
-    });
-    try {
-      return this.exportStore.appendArtifact(scope, projectId, {
+    const file = await this.artifactGateway.writeSnapshotArtifact(
+      {
+        projectId,
+        artifactId: id,
+        format,
+        projectTitle: source.projectTitle,
+        chapters,
+      },
+      reportCleanupFailure,
+    );
+    const createdAt = this.now();
+    return {
+      file,
+      input: {
+        source,
         id,
-        snapshotId: snapshot.snapshotId,
         format,
         relativePath: file.relativePath,
         sizeBytes: file.sizeBytes,
         checksumSha256: file.checksumSha256,
         createdAt,
-      });
-    } catch (error) {
-      await rollbackWithoutMasking(file);
-      throw error;
-    }
+      },
+    };
   }
 
   catalogProjectArtifacts(principal: Principal, projectId: string): ExportArtifactRecord[] {
@@ -168,10 +207,16 @@ export class SnapshotArtifactService {
     );
   }
 
-  private assertProjectHasChapter(scope: ProjectScope, projectId: string): void {
-    const documents = this.projectTitles.findDocuments?.(scope, projectId);
-    if (documents !== undefined && !documents.some((document) => document.kind === "chapter")) {
-      throw new InvalidOperationError("A project needs at least one chapter before export.");
+  private async landPublication<T>(
+    publication: PreparedPublication,
+    land: (input: PreparedExportArtifact) => T,
+    reportCleanupFailure?: (failure: unknown) => void,
+  ): Promise<T> {
+    try {
+      return land(publication.input);
+    } catch (error) {
+      await rollbackWithoutMasking(publication.file, reportCleanupFailure);
+      throw error;
     }
   }
 
@@ -187,10 +232,18 @@ export class SnapshotArtifactService {
   }
 }
 
-async function rollbackWithoutMasking(file: ArtifactFileEvidence): Promise<void> {
+async function rollbackWithoutMasking(
+  file: ArtifactFileEvidence,
+  reportCleanupFailure?: (failure: unknown) => void,
+): Promise<void> {
   try {
     await file.rollback();
-  } catch {
-    return;
+  } catch (failure) {
+    try {
+      reportCleanupFailure?.(failure);
+    } catch {
+      // Cleanup reporting is secondary evidence and cannot replace the
+      // transaction error that triggered compensation.
+    }
   }
 }

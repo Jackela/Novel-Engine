@@ -79,11 +79,18 @@ export const exportRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fast
     },
     async (request, reply) => {
       const { format } = request.body;
+      const reportCleanupFailure = (failure: unknown): void => {
+        request.log.error(
+          { err: failure, errorId: request.id, artifact_cleanup_failed: true },
+          "artifact cleanup failed",
+        );
+      };
       const payload = await withAsyncStudioErrors(() =>
         requireServices(options).jobHistory.recordExportJob(
           requirePrincipal(request),
           request.params.projectId,
           format,
+          reportCleanupFailure,
         ),
       );
       reply.status(201);

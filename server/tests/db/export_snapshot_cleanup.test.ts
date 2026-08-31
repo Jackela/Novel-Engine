@@ -17,7 +17,9 @@ interface Journal {
 }
 
 afterEach(async () => {
-  await Promise.all(directories.splice(0).map((directory) => rm(directory, { recursive: true })));
+  await Promise.all(
+    directories.splice(0).map((directory) => rm(directory, { recursive: true, force: true })),
+  );
 });
 
 async function migrationsFolderUpto(lastIndex: number): Promise<string> {
@@ -42,69 +44,79 @@ function migrateTo(directory: string, migrationsFolder: string): Database.Databa
   return raw;
 }
 
-function seedLegacyReviewSnapshots(raw: Database.Database): void {
-  const now = Date.parse("2026-08-31T00:00:00.000Z");
+function seedLegacyExportSnapshots(raw: Database.Database): void {
+  const now = Date.parse("2026-08-31T08:00:00.000Z");
   raw.exec(`
     BEGIN;
     INSERT INTO owners (id, username, password_hash, created_at)
-      VALUES ('owner-1', 'legacy-review-owner', 'hash', ${now});
+      VALUES ('owner-1', 'legacy-export-owner', 'hash', ${now});
     INSERT INTO projects
       (id, owner_id, title, description, settings_json, import_hash, created_at, updated_at)
-      VALUES ('project-1', 'owner-1', 'Legacy reviews', '', '{}', NULL, ${now}, ${now});
+      VALUES ('project-1', 'owner-1', 'Legacy exports', '', '{}', NULL, ${now}, ${now});
 
     INSERT INTO documents
       (id, project_id, kind, title, position, current_revision_id, created_at, updated_at)
       VALUES ('doc-orphan', 'project-1', 'chapter', 'Orphan source', 1, NULL, ${now}, ${now});
     INSERT INTO documents
       (id, project_id, kind, title, position, current_revision_id, created_at, updated_at)
-      VALUES ('doc-kept', 'project-1', 'chapter', 'Kept source', 2, NULL, ${now}, ${now});
+      VALUES ('doc-export', 'project-1', 'chapter', 'Exported source', 2, NULL, ${now}, ${now});
+    INSERT INTO documents
+      (id, project_id, kind, title, position, current_revision_id, created_at, updated_at)
+      VALUES ('doc-export-review', 'project-1', 'chapter', 'Cross evidence', 3, NULL, ${now}, ${now});
+    INSERT INTO documents
+      (id, project_id, kind, title, position, current_revision_id, created_at, updated_at)
+      VALUES ('doc-review', 'project-1', 'chapter', 'Review source', 4, NULL, ${now}, ${now});
+
     INSERT INTO document_revisions
       (id, document_id, parent_revision_id, revision_number, content_markdown, metadata_json, source, created_at)
       VALUES ('rev-orphan', 'doc-orphan', NULL, 1, 'orphan content', '{}', 'author', ${now});
     INSERT INTO document_revisions
       (id, document_id, parent_revision_id, revision_number, content_markdown, metadata_json, source, created_at)
-      VALUES ('rev-kept', 'doc-kept', NULL, 1, 'kept content', '{}', 'author', ${now});
+      VALUES ('rev-export', 'doc-export', NULL, 1, 'export content', '{}', 'author', ${now});
+    INSERT INTO document_revisions
+      (id, document_id, parent_revision_id, revision_number, content_markdown, metadata_json, source, created_at)
+      VALUES ('rev-export-review', 'doc-export-review', NULL, 1, 'cross content', '{}', 'author', ${now});
+    INSERT INTO document_revisions
+      (id, document_id, parent_revision_id, revision_number, content_markdown, metadata_json, source, created_at)
+      VALUES ('rev-review', 'doc-review', NULL, 1, 'review content', '{}', 'author', ${now});
     UPDATE documents SET current_revision_id = 'rev-orphan' WHERE id = 'doc-orphan';
-    UPDATE documents SET current_revision_id = 'rev-kept' WHERE id = 'doc-kept';
+    UPDATE documents SET current_revision_id = 'rev-export' WHERE id = 'doc-export';
+    UPDATE documents SET current_revision_id = 'rev-export-review' WHERE id = 'doc-export-review';
+    UPDATE documents SET current_revision_id = 'rev-review' WHERE id = 'doc-review';
 
     INSERT INTO project_snapshots (id, project_id, reason, created_at)
-      VALUES ('snapshot-orphan', 'project-1', 'review', ${now});
+      VALUES ('snapshot-export-orphan', 'project-1', 'export', ${now});
     INSERT INTO project_snapshots (id, project_id, reason, created_at)
-      VALUES ('snapshot-review', 'project-1', 'review', ${now + 1});
+      VALUES ('snapshot-export-completed', 'project-1', 'export', ${now + 1});
     INSERT INTO project_snapshots (id, project_id, reason, created_at)
-      VALUES ('snapshot-export-used', 'project-1', 'export', ${now + 2});
+      VALUES ('snapshot-export-review-guard', 'project-1', 'export', ${now + 2});
     INSERT INTO project_snapshots (id, project_id, reason, created_at)
-      VALUES ('snapshot-export-empty', 'project-1', 'export', ${now + 3});
-    INSERT INTO project_snapshots (id, project_id, reason, created_at)
-      VALUES ('snapshot-review-export-guard', 'project-1', 'review', ${now + 4});
+      VALUES ('snapshot-review', 'project-1', 'review', ${now + 3});
 
     INSERT INTO snapshot_documents
       (id, snapshot_id, document_id, revision_id, document_kind, document_title, revision_metadata_json, position)
-      VALUES ('sd-orphan', 'snapshot-orphan', 'doc-orphan', 'rev-orphan', 'chapter', 'Orphan source', '{}', 1);
+      VALUES ('sd-export-orphan', 'snapshot-export-orphan', 'doc-orphan', 'rev-orphan', 'chapter', 'Orphan source', '{}', 1);
     INSERT INTO snapshot_documents
       (id, snapshot_id, document_id, revision_id, document_kind, document_title, revision_metadata_json, position)
-      VALUES ('sd-review', 'snapshot-review', 'doc-kept', 'rev-kept', 'chapter', 'Kept source', '{}', 1);
+      VALUES ('sd-export-completed', 'snapshot-export-completed', 'doc-export', 'rev-export', 'chapter', 'Exported source', '{}', 1);
     INSERT INTO snapshot_documents
       (id, snapshot_id, document_id, revision_id, document_kind, document_title, revision_metadata_json, position)
-      VALUES ('sd-export-used', 'snapshot-export-used', 'doc-kept', 'rev-kept', 'chapter', 'Kept source', '{}', 1);
+      VALUES ('sd-export-review-guard', 'snapshot-export-review-guard', 'doc-export-review', 'rev-export-review', 'chapter', 'Cross evidence', '{}', 1);
     INSERT INTO snapshot_documents
       (id, snapshot_id, document_id, revision_id, document_kind, document_title, revision_metadata_json, position)
-      VALUES ('sd-export-empty', 'snapshot-export-empty', 'doc-kept', 'rev-kept', 'chapter', 'Kept source', '{}', 1);
-    INSERT INTO snapshot_documents
-      (id, snapshot_id, document_id, revision_id, document_kind, document_title, revision_metadata_json, position)
-      VALUES ('sd-review-export-guard', 'snapshot-review-export-guard', 'doc-kept', 'rev-kept', 'chapter', 'Kept source', '{}', 1);
+      VALUES ('sd-review', 'snapshot-review', 'doc-review', 'rev-review', 'chapter', 'Review source', '{}', 1);
 
+    INSERT INTO exports
+      (id, project_id, snapshot_id, format, relative_path, size_bytes, checksum_sha256, created_at)
+      VALUES ('export-completed', 'project-1', 'snapshot-export-completed', 'markdown', 'exports/project-1/export-completed.md', 14, 'hash-export', ${now + 4});
     INSERT INTO reviews (id, project_id, snapshot_id, provider, model, summary, created_at)
-      VALUES ('review-1', 'project-1', 'snapshot-review', 'mock', 'legacy-model', 'kept', ${now + 4});
+      VALUES ('review-completed', 'project-1', 'snapshot-review', 'mock', 'legacy-model', 'review evidence', ${now + 6});
     INSERT INTO review_issues
       (id, review_id, snapshot_document_id, document_id, severity, code, message, suggestion, evidence_json)
-      VALUES ('issue-1', 'review-1', 'sd-review', 'doc-kept', 'warning', 'pacing', 'kept issue', '', '{}');
-    INSERT INTO exports
-      (id, project_id, snapshot_id, format, relative_path, size_bytes, checksum_sha256, created_at)
-      VALUES ('export-1', 'project-1', 'snapshot-export-used', 'markdown', 'exports/file.md', 4, 'hash', ${now + 5});
-    INSERT INTO exports
-      (id, project_id, snapshot_id, format, relative_path, size_bytes, checksum_sha256, created_at)
-      VALUES ('export-guard', 'project-1', 'snapshot-review-export-guard', 'markdown', 'exports/guard.md', 5, 'hash-guard', ${now + 6});
+      VALUES ('issue-export-guard', 'review-completed', 'sd-export-review-guard', 'doc-export-review', 'warning', 'pacing', 'cross issue', '', '{}');
+    INSERT INTO review_issues
+      (id, review_id, snapshot_document_id, document_id, severity, code, message, suggestion, evidence_json)
+      VALUES ('issue-review', 'review-completed', 'sd-review', 'doc-review', 'warning', 'continuity', 'review issue', '', '{}');
     COMMIT;
   `);
 }
@@ -121,14 +133,14 @@ function ids(raw: Database.Database, table: keyof typeof ID_QUERIES): string[] {
   return (raw.prepare(ID_QUERIES[table]).all() as Array<{ id: string }>).map((row) => row.id);
 }
 
-describe("orphan review snapshot migration", () => {
-  it("removes only review snapshots without durable assessments", async () => {
-    const directory = await mkdtemp(join(tmpdir(), "novel-engine-review-cleanup-"));
+describe("orphan export snapshot migration", () => {
+  it("removes only export snapshots without artifact or review evidence", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "novel-engine-export-cleanup-"));
     directories.push(directory);
-    const preCleanup = await migrationsFolderUpto(11);
+    const preCleanup = await migrationsFolderUpto(12);
     const legacy = migrateTo(directory, preCleanup);
     try {
-      seedLegacyReviewSnapshots(legacy);
+      seedLegacyExportSnapshots(legacy);
     } finally {
       legacy.close();
     }
@@ -136,22 +148,22 @@ describe("orphan review snapshot migration", () => {
     const upgraded = await openStudioDatabase(directory);
     try {
       expect(ids(upgraded.raw, "project_snapshots")).toEqual([
-        "snapshot-export-used",
+        "snapshot-export-completed",
+        "snapshot-export-review-guard",
         "snapshot-review",
-        "snapshot-review-export-guard",
       ]);
       expect(ids(upgraded.raw, "snapshot_documents")).toEqual([
-        "sd-export-used",
+        "sd-export-completed",
+        "sd-export-review-guard",
         "sd-review",
-        "sd-review-export-guard",
       ]);
-      expect(ids(upgraded.raw, "reviews")).toEqual(["review-1"]);
-      expect(ids(upgraded.raw, "review_issues")).toEqual(["issue-1"]);
-      expect(ids(upgraded.raw, "exports")).toEqual(["export-1", "export-guard"]);
+      expect(ids(upgraded.raw, "exports")).toEqual(["export-completed"]);
+      expect(ids(upgraded.raw, "reviews")).toEqual(["review-completed"]);
+      expect(ids(upgraded.raw, "review_issues")).toEqual(["issue-export-guard", "issue-review"]);
       expect(upgraded.raw.pragma("foreign_key_check")).toEqual([]);
-      expect(() =>
-        upgraded.raw.prepare("DELETE FROM documents WHERE id = ?").run("doc-orphan"),
-      ).not.toThrow();
+      expect(
+        upgraded.raw.prepare("DELETE FROM documents WHERE id = ?").run("doc-orphan").changes,
+      ).toBe(1);
     } finally {
       upgraded.close();
     }
@@ -159,10 +171,18 @@ describe("orphan review snapshot migration", () => {
     const restarted = await openStudioDatabase(directory);
     try {
       expect(ids(restarted.raw, "project_snapshots")).toEqual([
-        "snapshot-export-used",
+        "snapshot-export-completed",
+        "snapshot-export-review-guard",
         "snapshot-review",
-        "snapshot-review-export-guard",
       ]);
+      expect(ids(restarted.raw, "snapshot_documents")).toEqual([
+        "sd-export-completed",
+        "sd-export-review-guard",
+        "sd-review",
+      ]);
+      expect(ids(restarted.raw, "exports")).toEqual(["export-completed"]);
+      expect(ids(restarted.raw, "reviews")).toEqual(["review-completed"]);
+      expect(ids(restarted.raw, "review_issues")).toEqual(["issue-export-guard", "issue-review"]);
       expect(restarted.raw.pragma("foreign_key_check")).toEqual([]);
     } finally {
       restarted.close();

@@ -1,26 +1,18 @@
 import { createHash } from "node:crypto";
-import { mkdtemp, readdir, symlink, unlink, writeFile } from "node:fs/promises";
+import { mkdtemp, readdir, readFile, symlink, unlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import JSZip from "jszip";
 import { describe, expect, it } from "vitest";
 import type * as A from "../../src/contexts/studio/application/export_artifact_service.js";
-import { SnapshotArtifactService } from "../../src/contexts/studio/application/export_artifact_service.js";
-import type * as E from "../../src/contexts/studio/application/ports/export_store.js";
-import type { ProjectScope } from "../../src/contexts/studio/application/ports/studio_store.js";
-import { NotFoundError } from "../../src/contexts/studio/domain/exceptions.js";
+import {
+  ExportArtifactWriteError,
+  NotFoundError,
+} from "../../src/contexts/studio/domain/exceptions.js";
 import { FilesystemExportArtifactGateway } from "../../src/contexts/studio/infrastructure/export_artifact_files.js";
-import type { Principal } from "../../src/shared/application/ports/auth.js";
-import { InvalidOperationError } from "../../src/shared/domain/exceptions.js";
 
-const principal: Principal = {
-  sessionId: "session-1",
-  kind: "owner",
-  ownerId: "owner-1",
-  expiresAt: null,
-};
-const projectTitles: A.ProjectTitleLookup = { findProject: () => ({ title: "Ashfall" }) };
 type ReadEvidence = Pick<A.ArtifactFileEvidence, "relativePath" | "sizeBytes" | "checksumSha256">;
+
 const defaultChapters = [
   {
     title: "Chapter one",
@@ -138,165 +130,37 @@ describe("FilesystemExportArtifactGateway", () => {
     expect(await readdir(join(directory, "exports", "project-1"))).toEqual(["repeat.md"]);
   });
 
+  it("does not delete a replacement that takes the published path before rollback", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "novel-engine-artifact-"));
+    const gateway = new FilesystemExportArtifactGateway(directory);
+    const evidence = await gateway.writeSnapshotArtifact(request("markdown", "replaced"));
+    const target = join(directory, evidence.relativePath);
+    await unlink(target);
+    await writeFile(target, "replacement bytes");
+
+    await evidence.rollback();
+
+    await expect(readFile(target, "utf8")).resolves.toBe("replacement bytes");
+  });
+
+  it("classifies known OS write failures without swallowing renderer defects", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "novel-engine-artifact-"));
+    const gateway = new FilesystemExportArtifactGateway(directory);
+    await expect(
+      gateway.writeSnapshotArtifact(request("markdown", "artifact-long", "p".repeat(300))),
+    ).rejects.toThrow(ExportArtifactWriteError);
+
+    const rendererDefect = request("markdown", "artifact-bug");
+    Object.defineProperty(rendererDefect, "chapters", {
+      get() {
+        throw new TypeError("simulated renderer defect");
+      },
+    });
+    await expect(gateway.writeSnapshotArtifact(rendererDefect)).rejects.toThrow(
+      "simulated renderer defect",
+    );
+  });
+
   // XML 1.0 sanitation regressions for both zipped formats live in
   // export_artifact_xml.test.ts (file-size split).
-});
-
-class FakeExportStore implements E.ExportStore {
-  readonly appended: E.ExportArtifactRecord[] = [];
-
-  constructor(
-    private readonly documents: readonly E.ExportSnapshotDocument[],
-    private readonly appendFailure: Error | undefined = undefined,
-  ) {}
-
-  materializeArtifactSnapshot(): E.ExportSnapshotMaterialization {
-    return { snapshotId: "snapshot-1", documents: this.documents };
-  }
-
-  appendArtifact(
-    _scope: ProjectScope,
-    projectId: string,
-    input: E.AppendArtifactInput,
-  ): E.ExportArtifactRecord {
-    if (this.appendFailure !== undefined) throw this.appendFailure;
-    const record: E.ExportArtifactRecord = { projectId, ...input };
-    this.appended.push(record);
-    return record;
-  }
-
-  listProjectArtifacts(): E.ExportArtifactRecord[] {
-    return [...this.appended];
-  }
-
-  findProjectArtifact(
-    _scope: ProjectScope,
-    _projectId: string,
-    artifactId: string,
-  ): E.ExportArtifactRecord {
-    const record = this.appended.find((item) => item.id === artifactId);
-    if (record === undefined) throw new NotFoundError();
-    return record;
-  }
-}
-
-class RecordingGateway implements A.ExportArtifactGateway {
-  readonly writes: A.ArtifactWriteRequest[] = [];
-  readonly reads: A.ArtifactReadRequest[] = [];
-
-  async writeSnapshotArtifact(
-    requestValue: A.ArtifactWriteRequest,
-  ): Promise<A.ArtifactFileEvidence> {
-    this.writes.push(requestValue);
-    const extension = requestValue.format === "markdown" ? "md" : requestValue.format;
-    return {
-      relativePath: `exports/${requestValue.projectId}/${requestValue.artifactId}.${extension}`,
-      sizeBytes: 1,
-      checksumSha256: "a".repeat(64),
-      rollback: async () => undefined,
-    };
-  }
-
-  async readArtifactBytes(input: A.ArtifactReadRequest): Promise<Buffer> {
-    this.reads.push(input);
-    return Buffer.from("safe");
-  }
-}
-
-function snapshotDocument(id: string, kind: string, title: string): E.ExportSnapshotDocument {
-  return {
-    snapshotDocumentId: `snap-${id}`,
-    documentId: id,
-    revisionId: `revision-${id}`,
-    kind,
-    title,
-    contentMarkdown: `${title} content`,
-    metadataJson: "{}",
-    position: 1,
-  };
-}
-
-describe("SnapshotArtifactService", () => {
-  it("renders frozen chapters and forwards all authorized evidence for buffer delivery", async () => {
-    const store = new FakeExportStore([
-      snapshotDocument("outline", "outline", "Outline"),
-      snapshotDocument("second", "chapter", "Second"),
-      snapshotDocument("first", "chapter", "First"),
-    ]);
-    const gateway = new RecordingGateway();
-    let sequence = 0;
-    const service = new SnapshotArtifactService(store, projectTitles, gateway, {
-      now: () => new Date("2026-08-25T00:00:00.000Z"),
-      newId: () => `artifact-${++sequence}`,
-    });
-    const records = await Promise.all(
-      (["markdown", "docx", "epub"] as const).map((format) =>
-        service.materializeSnapshotArtifact(principal, "project-1", format),
-      ),
-    );
-    expect(
-      gateway.writes.every(
-        (write) => write.chapters.map((chapter) => chapter.title).join() === "Second,First",
-      ),
-    ).toBe(true);
-    expect(records.every((record) => record.snapshotId === "snapshot-1")).toBe(true);
-    await expect(service.readArtifactBytes(principal, "project-1", "artifact-1")).resolves.toEqual(
-      Buffer.from("safe"),
-    );
-    const [firstRecord] = records;
-    if (firstRecord === undefined) throw new Error("Expected the first artifact record.");
-    expect(gateway.reads).toEqual([readRequest(firstRecord, "artifact-1", "markdown")]);
-  });
-
-  it("refuses cross-project path substitution even when the other file is in root", async () => {
-    const directory = await mkdtemp(join(tmpdir(), "novel-engine-artifact-"));
-    const gateway = new FilesystemExportArtifactGateway(directory);
-    const other = await gateway.writeSnapshotArtifact(request("markdown", "shared", "project-2"));
-    const store = new FakeExportStore([]);
-    store.appended.push({
-      id: "shared",
-      projectId: "project-1",
-      snapshotId: "snapshot-1",
-      format: "markdown",
-      ...other,
-      createdAt: new Date(),
-    });
-    await expect(
-      new SnapshotArtifactService(store, projectTitles, gateway).readArtifactBytes(
-        principal,
-        "project-1",
-        "shared",
-      ),
-    ).rejects.toThrow(NotFoundError);
-  });
-
-  it("rolls a new publication back when artifact persistence fails", async () => {
-    const directory = await mkdtemp(join(tmpdir(), "novel-engine-artifact-"));
-    const gateway = new FilesystemExportArtifactGateway(directory);
-    const store = new FakeExportStore(
-      [snapshotDocument("chapter", "chapter", "Chapter")],
-      new Error("append failed"),
-    );
-    const service = new SnapshotArtifactService(store, projectTitles, gateway, {
-      newId: () => "orphan",
-    });
-    await expect(
-      service.materializeSnapshotArtifact(principal, "project-1", "markdown"),
-    ).rejects.toThrow("append failed");
-    expect(await readdir(join(directory, "exports", "project-1"))).toEqual([]);
-  });
-
-  it("rejects snapshots without chapters before a file or record is written", async () => {
-    const store = new FakeExportStore([snapshotDocument("outline", "outline", "Outline")]);
-    const gateway = new RecordingGateway();
-    await expect(
-      new SnapshotArtifactService(store, projectTitles, gateway).materializeSnapshotArtifact(
-        principal,
-        "project-1",
-        "markdown",
-      ),
-    ).rejects.toThrow(InvalidOperationError);
-    expect(gateway.writes).toEqual([]);
-    expect(store.appended).toEqual([]);
-  });
 });

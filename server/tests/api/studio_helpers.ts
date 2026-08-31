@@ -38,6 +38,8 @@ export interface StudioTestApp {
 /** Extra buildApp overrides used by the workflow tests (provider seams). */
 export interface StudioAppOverrides {
   textProviderFactory?: NonNullable<Parameters<typeof buildApp>[0]>["textProviderFactory"];
+  exportStoreFactory?: AppOptions["exportStoreFactory"];
+  exportArtifactGateway?: AppOptions["exportArtifactGateway"];
   config?: AppOptions["config"];
   lorebookBudgetCharacters?: AppOptions["lorebookBudgetCharacters"];
   logger?: AppOptions["logger"];

@@ -1,60 +1,73 @@
+import type { JobRecord } from "./job_records.js";
 import type { ProjectScope } from "./studio_store.js";
 
 export type ExportArtifactFormat = "markdown" | "docx" | "epub";
 
-/** One immutable document/revision pair read from an export snapshot. */
-export interface ExportSnapshotDocument {
-  snapshotDocumentId: string;
-  documentId: string;
-  revisionId: string;
-  kind: string;
-  title: string;
-  contentMarkdown: string;
-  metadataJson: string;
-  position: number;
+/** One ordered document/revision payload captured without durable writes. */
+export interface ExportSourceDocument {
+  readonly documentId: string;
+  readonly revisionId: string;
+  readonly kind: string;
+  readonly title: string;
+  readonly contentMarkdown: string;
+  readonly metadataJson: string;
+  readonly position: number;
 }
 
-/** The immutable document set from which a later artifact will be rendered. */
-export interface ExportSnapshotMaterialization {
-  snapshotId: string;
-  documents: readonly ExportSnapshotDocument[];
+/** The exact point-in-time projection rendered by one export attempt. */
+export interface ExportSource {
+  readonly projectId: string;
+  readonly projectTitle: string;
+  readonly capturedAt: Date;
+  readonly reuseSnapshotId: string | null;
+  readonly documents: readonly ExportSourceDocument[];
 }
 
-/** A persisted artifact whose file is managed by a later application service. */
+/** A persisted artifact whose file is managed by the application layer. */
 export interface ExportArtifactRecord {
-  id: string;
-  projectId: string;
-  snapshotId: string;
-  format: ExportArtifactFormat;
-  relativePath: string;
-  sizeBytes: number;
-  checksumSha256: string;
-  createdAt: Date;
+  readonly id: string;
+  readonly projectId: string;
+  readonly snapshotId: string;
+  readonly format: ExportArtifactFormat;
+  readonly relativePath: string;
+  readonly sizeBytes: number;
+  readonly checksumSha256: string;
+  readonly createdAt: Date;
 }
 
-/** The service supplies the generated artifact id and post-write integrity evidence. */
-export interface AppendArtifactInput {
-  id: string;
-  snapshotId: string;
-  format: ExportArtifactFormat;
-  relativePath: string;
-  sizeBytes: number;
-  checksumSha256: string;
-  createdAt: Date;
+/** File evidence plus the captured source needed for one database landing. */
+export interface PreparedExportArtifact {
+  readonly source: ExportSource;
+  readonly id: string;
+  readonly format: ExportArtifactFormat;
+  readonly relativePath: string;
+  readonly sizeBytes: number;
+  readonly checksumSha256: string;
+  readonly createdAt: Date;
 }
 
-/** Persistence boundary for immutable export snapshots and artifact records. */
-export interface ExportStore {
-  materializeArtifactSnapshot(
+/** One completed export outcome returned from its atomic database command. */
+export interface ExportCompletionRecord {
+  readonly artifact: ExportArtifactRecord;
+  readonly job: JobRecord;
+}
+
+/**
+ * Deep persistence interface for read-only export capture and atomic evidence
+ * landing. Rendering stays outside SQLite; all discoverable evidence does not.
+ */
+export interface ExportOutcomeStore {
+  readExportSource(scope: ProjectScope, projectId: string, capturedAt: Date): ExportSource;
+  recordCompletedExportJob(
+    scope: ProjectScope,
+    input: PreparedExportArtifact,
+  ): ExportCompletionRecord;
+  completeExportRetryJob(
     scope: ProjectScope,
     projectId: string,
-    now: Date,
-  ): ExportSnapshotMaterialization;
-  appendArtifact(
-    scope: ProjectScope,
-    projectId: string,
-    input: AppendArtifactInput,
-  ): ExportArtifactRecord;
+    jobId: string,
+    input: PreparedExportArtifact,
+  ): ExportCompletionRecord;
   listProjectArtifacts(scope: ProjectScope, projectId: string): ExportArtifactRecord[];
   findProjectArtifact(
     scope: ProjectScope,

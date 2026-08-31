@@ -1,0 +1,292 @@
+import { existsSync } from "node:fs";
+import { join } from "node:path";
+import type { FastifyInstance } from "fastify";
+import { describe, expect, it, vi } from "vitest";
+import type { ExportArtifactGateway } from "../../src/contexts/studio/application/export_artifact_service.js";
+import { ExportArtifactWriteError } from "../../src/contexts/studio/domain/exceptions.js";
+import {
+  exports as exportRecords,
+  projectSnapshots,
+  snapshotDocuments,
+} from "../../src/contexts/studio/infrastructure/db/schema.js";
+import { ExportStorePart } from "../../src/contexts/studio/infrastructure/export_store_part.js";
+import { jobEvents, jobs } from "../../src/shared/infrastructure/db/schema.js";
+import { seedProjectWithChapter, studioDatabase } from "./job_test_helpers.js";
+import {
+  buildStudioApp,
+  call,
+  type JobPayload,
+  monotonicClock,
+  ownerJar,
+} from "./studio_helpers.js";
+
+function throwingGateway(error: Error): ExportArtifactGateway {
+  return {
+    async writeSnapshotArtifact() {
+      throw error;
+    },
+    async readArtifactBytes() {
+      throw new Error("Unexpected artifact read.");
+    },
+  };
+}
+
+function expectNoExportEvidence(app: FastifyInstance): void {
+  const database = studioDatabase(app);
+  expect(database.select().from(projectSnapshots).all()).toEqual([]);
+  expect(database.select().from(snapshotDocuments).all()).toEqual([]);
+  expect(database.select().from(exportRecords).all()).toEqual([]);
+}
+
+function seedInterruptedExport(
+  app: FastifyInstance,
+  projectId: string,
+  createdAt: Date,
+  id = "export-job-interrupted",
+): void {
+  studioDatabase(app)
+    .insert(jobs)
+    .values({
+      id,
+      project_id: projectId,
+      document_id: null,
+      kind: "export",
+      operation: "export",
+      status: "interrupted",
+      provider: "studio",
+      model: "",
+      request_json: JSON.stringify({ format: "markdown" }),
+      result_json: JSON.stringify({}),
+      error: "Job lost its execution lease during process restart.",
+      created_at: createdAt,
+      updated_at: createdAt,
+    })
+    .run();
+}
+
+describe("export job failure closure", () => {
+  it("records a terminal failed job for a known artifact-write failure", async () => {
+    const { app } = await buildStudioApp(monotonicClock(), {
+      exportArtifactGateway: throwingGateway(new ExportArtifactWriteError()),
+    });
+    try {
+      const owner = await ownerJar(app);
+      const projectId = await seedProjectWithChapter(app, owner, "Known export failure");
+
+      const response = await call(app, owner, "POST", `/api/projects/${projectId}/exports`, {
+        format: "markdown",
+      });
+
+      expect(response.statusCode, response.body).toBe(201);
+      expect(response.json<JobPayload>()).toMatchObject({
+        kind: "export",
+        status: "failed",
+        error: "Export artifact could not be written.",
+        result: {
+          export_id: null,
+          snapshot_id: null,
+          format: "markdown",
+          download_url: null,
+        },
+      });
+      expect(response.json<JobPayload>().events.map((event) => event.status)).toEqual(["failed"]);
+      expectNoExportEvidence(app);
+      expect(studioDatabase(app).select().from(jobs).all()).toHaveLength(1);
+      expect(studioDatabase(app).select().from(jobEvents).all()).toHaveLength(1);
+    } finally {
+      await app.close();
+    }
+  });
+
+  it("keeps an unexpected renderer bug opaque without export or job evidence", async () => {
+    const { app } = await buildStudioApp(monotonicClock(), {
+      exportArtifactGateway: throwingGateway(new TypeError("unexpected renderer bug")),
+    });
+    try {
+      const owner = await ownerJar(app);
+      const projectId = await seedProjectWithChapter(app, owner, "Unexpected export failure");
+
+      const response = await call(app, owner, "POST", `/api/projects/${projectId}/exports`, {
+        format: "epub",
+      });
+
+      expect(response.statusCode, response.body).toBe(500);
+      expect(response.json().error.code).toBe("INTERNAL_ERROR");
+      expect(response.body).not.toContain("unexpected renderer bug");
+      expectNoExportEvidence(app);
+      expect(studioDatabase(app).select().from(jobs).all()).toEqual([]);
+      expect(studioDatabase(app).select().from(jobEvents).all()).toEqual([]);
+    } finally {
+      await app.close();
+    }
+  });
+
+  it("reports compensation failure without masking a database publication defect", async () => {
+    class ExplodingFreshOutcomeStore extends ExportStorePart {
+      protected override beforeFreshJobEventInsert(): never {
+        throw new Error("simulated database publication defect");
+      }
+    }
+    const cleanupFailure = new Error("simulated artifact cleanup failure");
+    const gateway: ExportArtifactGateway = {
+      async writeSnapshotArtifact() {
+        return {
+          relativePath: "exports/project-1/orphan.md",
+          sizeBytes: 1,
+          checksumSha256: "a".repeat(64),
+          rollback: async () => {
+            throw cleanupFailure;
+          },
+        };
+      },
+      async readArtifactBytes() {
+        throw new Error("Unexpected artifact read.");
+      },
+    };
+    const { app } = await buildStudioApp(monotonicClock(), {
+      exportStoreFactory: (database) => new ExplodingFreshOutcomeStore(database),
+      exportArtifactGateway: gateway,
+    });
+    const logError = vi.spyOn(app.log, "error").mockImplementation(() => undefined);
+    try {
+      const owner = await ownerJar(app);
+      const projectId = await seedProjectWithChapter(app, owner, "Failed compensation");
+
+      const response = await call(app, owner, "POST", `/api/projects/${projectId}/exports`, {
+        format: "markdown",
+      });
+
+      expect(response.statusCode, response.body).toBe(500);
+      expect(response.body).not.toContain("simulated database publication defect");
+      expect(response.body).not.toContain(cleanupFailure.message);
+      expect(
+        logError.mock.calls.filter(
+          ([details, message]) =>
+            message === "artifact cleanup failed" &&
+            typeof details === "object" &&
+            (details as Record<string, unknown>).artifact_cleanup_failed === true,
+        ),
+      ).toHaveLength(1);
+      expectNoExportEvidence(app);
+      expect(studioDatabase(app).select().from(jobs).all()).toEqual([]);
+    } finally {
+      await app.close();
+    }
+  });
+
+  it("marks a retry failed for a known write failure and preserves its original", async () => {
+    const clock = monotonicClock();
+    const { app } = await buildStudioApp(clock, {
+      exportArtifactGateway: throwingGateway(new ExportArtifactWriteError()),
+    });
+    try {
+      const owner = await ownerJar(app);
+      const projectId = await seedProjectWithChapter(app, owner, "Known retry failure");
+      seedInterruptedExport(app, projectId, clock());
+
+      const response = await call(
+        app,
+        owner,
+        "POST",
+        `/api/projects/${projectId}/jobs/export-job-interrupted/retry`,
+      );
+
+      expect(response.statusCode, response.body).toBe(200);
+      expect(response.json<JobPayload>()).toMatchObject({
+        status: "failed",
+        retry_of_job_id: "export-job-interrupted",
+        error: "Export artifact could not be written.",
+      });
+      expect(response.json<JobPayload>().events.map((event) => event.status)).toEqual([
+        "running",
+        "failed",
+      ]);
+      const listed = await call(app, owner, "GET", `/api/projects/${projectId}/jobs`);
+      expect(listed.json().jobs).toMatchObject([
+        { status: "failed", retry_of_job_id: "export-job-interrupted" },
+        { id: "export-job-interrupted", status: "interrupted" },
+      ]);
+      expectNoExportEvidence(app);
+    } finally {
+      await app.close();
+    }
+  });
+
+  it("leaves a retry running when an unexpected renderer bug escapes", async () => {
+    const clock = monotonicClock();
+    const { app } = await buildStudioApp(clock, {
+      exportArtifactGateway: throwingGateway(new TypeError("unexpected retry renderer bug")),
+    });
+    try {
+      const owner = await ownerJar(app);
+      const projectId = await seedProjectWithChapter(app, owner, "Unexpected retry failure");
+      seedInterruptedExport(app, projectId, clock());
+
+      const response = await call(
+        app,
+        owner,
+        "POST",
+        `/api/projects/${projectId}/jobs/export-job-interrupted/retry`,
+      );
+
+      expect(response.statusCode, response.body).toBe(500);
+      expect(response.json().error.code).toBe("INTERNAL_ERROR");
+      expect(response.body).not.toContain("unexpected retry renderer bug");
+      const listed = await call(app, owner, "GET", `/api/projects/${projectId}/jobs`);
+      expect(listed.json().jobs).toMatchObject([
+        { status: "running", events: [{ status: "running" }] },
+        { id: "export-job-interrupted", status: "interrupted" },
+      ]);
+      expectNoExportEvidence(app);
+    } finally {
+      await app.close();
+    }
+  });
+
+  it("lands one coherent artifact, snapshot, job, and event on a successful retry", async () => {
+    const clock = monotonicClock();
+    const { app, directory } = await buildStudioApp(clock);
+    try {
+      const owner = await ownerJar(app);
+      const projectId = await seedProjectWithChapter(app, owner, "Successful export retry");
+      seedInterruptedExport(app, projectId, clock());
+
+      const response = await call(
+        app,
+        owner,
+        "POST",
+        `/api/projects/${projectId}/jobs/export-job-interrupted/retry`,
+      );
+
+      expect(response.statusCode, response.body).toBe(200);
+      const retry = response.json<JobPayload>();
+      expect(retry).toMatchObject({
+        status: "completed",
+        retry_of_job_id: "export-job-interrupted",
+        result: { format: "markdown" },
+      });
+      expect(retry.events.map((event) => event.status)).toEqual(["running", "completed"]);
+      const exportId = retry.result.export_id;
+      const snapshotId = retry.result.snapshot_id;
+      if (typeof exportId !== "string" || typeof snapshotId !== "string") {
+        throw new Error("Completed export retry must expose its evidence ids.");
+      }
+      const database = studioDatabase(app);
+      expect(database.select().from(projectSnapshots).all()).toEqual([
+        expect.objectContaining({ id: snapshotId, projectId }),
+      ]);
+      expect(database.select().from(snapshotDocuments).all()).toEqual([
+        expect.objectContaining({ snapshotId }),
+      ]);
+      expect(database.select().from(exportRecords).all()).toEqual([
+        expect.objectContaining({ id: exportId, snapshotId, projectId }),
+      ]);
+      expect(database.select().from(jobs).all()).toHaveLength(2);
+      expect(database.select().from(jobEvents).all()).toHaveLength(2);
+      expect(retry.events.at(-1)?.details).toEqual({ export_id: exportId });
+      expect(existsSync(join(directory, "exports", projectId, `${exportId}.md`))).toBe(true);
+    } finally {
+      await app.close();
+    }
+  });
+});

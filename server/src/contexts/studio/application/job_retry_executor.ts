@@ -5,9 +5,14 @@ import {
 } from "../../../contexts/ai/application/ports/text_generation.js";
 import type { Principal } from "../../../shared/application/ports/auth.js";
 import { InvalidOperationError } from "../../../shared/domain/exceptions.js";
-import { NotFoundError, ReviewSourceInvalidatedError } from "../domain/exceptions.js";
+import {
+  ExportArtifactWriteError,
+  ExportSourceInvalidatedError,
+  NotFoundError,
+  ReviewSourceInvalidatedError,
+} from "../domain/exceptions.js";
 import type { SnapshotArtifactService } from "./export_artifact_service.js";
-import { dumpJson, exportJobResultJson, jobPayload, safeLoadJson } from "./payloads.js";
+import { dumpJson, jobPayload, safeLoadJson } from "./payloads.js";
 import type { JobRecord, ProjectScope, StudioStore } from "./ports/studio_store.js";
 import { scopeForPrincipal } from "./ports/studio_store.js";
 import {
@@ -100,13 +105,15 @@ export class JobRetryExecutor {
         return await this.reexecuteReviewJob(principal, scope, retry, reportCleanupFailure);
       }
       if (retry.kind === "export") {
-        return await this.reexecuteExportJob(principal, scope, retry);
+        return await this.reexecuteExportJob(principal, retry, reportCleanupFailure);
       }
       throw new InvalidOperationError(`Unsupported job kind for retry: ${retry.kind}`);
     } catch (error) {
       if (
         !(error instanceof InvalidOperationError) &&
         !(error instanceof NotFoundError) &&
+        !(error instanceof ExportArtifactWriteError) &&
+        !(error instanceof ExportSourceInvalidatedError) &&
         !(error instanceof ReviewSourceInvalidatedError) &&
         !(error instanceof TextGenerationProviderError)
       ) {
@@ -232,27 +239,21 @@ export class JobRetryExecutor {
 
   private async reexecuteExportJob(
     principal: Principal,
-    scope: ProjectScope,
     retry: JobRecord,
+    reportCleanupFailure: (failure: unknown) => void,
   ): Promise<Record<string, unknown>> {
     const request = safeLoadJson(retry.requestJson);
     const format = request.format;
     if (format !== "markdown" && format !== "docx" && format !== "epub") {
       throw new InvalidOperationError("Original export job is missing its format.");
     }
-    const artifact = await this.artifacts.materializeSnapshotArtifact(
+    const completed = await this.artifacts.completeExportRetryJob(
       principal,
       retry.projectId,
+      retry.id,
       format,
+      { reportCleanupFailure },
     );
-    return jobPayload(
-      this.store.markJobOutcome(scope, retry.projectId, retry.id, {
-        status: "completed",
-        resultJson: exportJobResultJson(retry.projectId, artifact),
-        error: null,
-        eventDetailsJson: dumpJson({ export_id: artifact.id }),
-        now: this.now(),
-      }),
-    );
+    return jobPayload(completed.job);
   }
 }

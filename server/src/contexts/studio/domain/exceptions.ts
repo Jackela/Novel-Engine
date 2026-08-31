@@ -39,6 +39,22 @@ export class ReviewSourceInvalidatedError extends Error {
   }
 }
 
+/** A captured export document/revision disappeared before publication landed. */
+export class ExportSourceInvalidatedError extends Error {
+  constructor() {
+    super("Export source changed before the artifact outcome could be recorded.");
+    this.name = "ExportSourceInvalidatedError";
+  }
+}
+
+/** A known operational filesystem failure prevented artifact publication. */
+export class ExportArtifactWriteError extends Error {
+  constructor() {
+    super("Export artifact could not be written.");
+    this.name = "ExportArtifactWriteError";
+  }
+}
+
 /** A document with the same (project, kind, title) identity already exists. */
 export class DuplicateDocumentError extends Error {
   readonly kind: string;

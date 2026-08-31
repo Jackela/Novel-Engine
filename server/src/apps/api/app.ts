@@ -6,6 +6,8 @@ import type { TypeBoxTypeProvider } from "@fastify/type-provider-typebox";
 import Fastify, { type FastifyInstance, type FastifyServerOptions } from "fastify";
 import type { TextGenerationProviderFactory } from "../../contexts/ai/application/ports/text_generation.js";
 import { providerCatalogRoutes } from "../../contexts/ai/interface/http/provider_routes.js";
+import type { ExportArtifactGateway } from "../../contexts/studio/application/export_artifact_service.js";
+import type { ExportOutcomeStore } from "../../contexts/studio/application/ports/export_store.js";
 import { createStudioServices } from "../../contexts/studio/application/studio_services.js";
 import { DrizzleStudioStore } from "../../contexts/studio/infrastructure/drizzle_studio_store.js";
 import { FilesystemExportArtifactGateway } from "../../contexts/studio/infrastructure/export_artifact_files.js";
@@ -20,6 +22,7 @@ import {
   type ServerConfig,
 } from "../../shared/infrastructure/config/server_config.js";
 import { DrizzleAuthStore } from "../../shared/infrastructure/db/auth_store.js";
+import type { StudioSqliteDatabase } from "../../shared/infrastructure/db/connection.js";
 import type { StudioDatabase } from "../../shared/infrastructure/db/startup.js";
 import { clientIdentity } from "../../shared/infrastructure/rate_limit/client_identity.js";
 import { TokenBucketRateLimiter } from "../../shared/infrastructure/rate_limit/token_bucket.js";
@@ -78,6 +81,10 @@ export interface AppOptions {
    * providers without a key fail explicitly — the mock is never a fallback.
    */
   textProviderFactory?: TextGenerationProviderFactory | undefined;
+  /** Injectable export persistence factory for transaction/failure tests. */
+  exportStoreFactory?: ((database: StudioSqliteDatabase) => ExportOutcomeStore) | undefined;
+  /** Injectable artifact filesystem boundary for publication/failure tests. */
+  exportArtifactGateway?: ExportArtifactGateway | undefined;
   /** Credentials for the HTTP providers; absent keys leave them unconfigured. */
   providerApiKeys?: ProviderApiKeys | undefined;
   /**
@@ -206,8 +213,12 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
               provider: provider.defaultProvider,
               model: provider.reviewModel,
             },
-            artifactStore: new ExportStorePart(persistence.db.db),
-            artifactFiles: new FilesystemExportArtifactGateway(persistence.dataDirectory),
+            artifactStore:
+              options.exportStoreFactory?.(persistence.db.db) ??
+              new ExportStorePart(persistence.db.db),
+            artifactFiles:
+              options.exportArtifactGateway ??
+              new FilesystemExportArtifactGateway(persistence.dataDirectory),
             loreBudgetCharacters,
           },
         );

@@ -6,12 +6,16 @@ import { describe, expect, it } from "vitest";
 
 import { DocumentService } from "../../src/contexts/studio/application/document_service.js";
 import { SnapshotArtifactService } from "../../src/contexts/studio/application/export_artifact_service.js";
+import type {
+  ExportArtifactFormat,
+  ExportSource,
+  PreparedExportArtifact,
+} from "../../src/contexts/studio/application/ports/export_store.js";
 import {
   type ProjectScope,
   scopeForPrincipal,
 } from "../../src/contexts/studio/application/ports/studio_store.js";
 import { ProjectService } from "../../src/contexts/studio/application/project_service.js";
-import { NotFoundError } from "../../src/contexts/studio/domain/exceptions.js";
 import { projectSnapshots } from "../../src/contexts/studio/infrastructure/db/schema.js";
 import { DrizzleStudioStore } from "../../src/contexts/studio/infrastructure/drizzle_studio_store.js";
 import { ExportStorePart } from "../../src/contexts/studio/infrastructure/export_store_part.js";
@@ -77,8 +81,26 @@ function newProject(
   return { projectId: project.id, chapter };
 }
 
-function snapshot(scope: ProjectScope, projectId: string, now: Date, store: ExportStorePart) {
-  return store.materializeArtifactSnapshot(scope, projectId, now);
+function capture(scope: ProjectScope, projectId: string, now: Date, store: ExportStorePart) {
+  return store.readExportSource(scope, projectId, now);
+}
+
+function prepared(
+  source: ExportSource,
+  id: string,
+  format: ExportArtifactFormat,
+  createdAt: Date,
+): PreparedExportArtifact {
+  const extension = format === "markdown" ? "md" : format;
+  return {
+    source,
+    id,
+    format,
+    relativePath: `exports/${source.projectId}/${id}.${extension}`,
+    sizeBytes: id.length,
+    checksumSha256: id.padEnd(64, "a").slice(0, 64),
+    createdAt,
+  };
 }
 
 describe("ExportStorePart", () => {
@@ -97,7 +119,7 @@ describe("ExportStorePart", () => {
         contentMarkdown: "The outline has no exportable chapters.",
       });
       let artifactWrites = 0;
-      const artifacts = new SnapshotArtifactService(harness.exportStore, harness.store, {
+      const artifacts = new SnapshotArtifactService(harness.exportStore, {
         async writeSnapshotArtifact() {
           artifactWrites += 1;
           throw new Error("Zero-chapter export must not write an artifact.");
@@ -108,7 +130,7 @@ describe("ExportStorePart", () => {
       });
 
       await expect(
-        artifacts.materializeSnapshotArtifact(harness.principal, projectId, "markdown"),
+        artifacts.recordCompletedExportJob(harness.principal, projectId, "markdown"),
       ).rejects.toThrow(InvalidOperationError);
 
       expect(artifactWrites).toBe(0);
@@ -151,13 +173,17 @@ describe("ExportStorePart", () => {
         contentMarkdown: "Second chapter.",
       }) as unknown as DocumentPayload;
 
-      const first = snapshot(harness.scope, projectId, harness.clock(), harness.exportStore);
+      const first = capture(harness.scope, projectId, harness.clock(), harness.exportStore);
       expect(first.documents.map((document) => document.documentId)).toContain(character.id);
       expect(
         first.documents
           .filter((document) => document.kind === "chapter")
           .map((document) => document.documentId),
       ).toEqual([firstChapter.id, secondChapter.id]);
+      const firstArtifact = harness.exportStore.recordCompletedExportJob(
+        harness.scope,
+        prepared(first, "artifact-first", "markdown", harness.clock()),
+      ).artifact;
 
       const source = harness.store.readReviewSource(harness.scope, projectId, harness.clock());
       harness.store.recordCompletedReviewJob(harness.scope, {
@@ -168,9 +194,9 @@ describe("ExportStorePart", () => {
         completedAt: harness.clock(),
         issues: [],
       });
-      const second = snapshot(harness.scope, projectId, harness.clock(), harness.exportStore);
+      const second = capture(harness.scope, projectId, harness.clock(), harness.exportStore);
 
-      expect(second.snapshotId).toBe(first.snapshotId);
+      expect(second.reuseSnapshotId).toBe(firstArtifact.snapshotId);
       expect(second.documents).toEqual(first.documents);
     } finally {
       harness.studio.close();
@@ -186,7 +212,11 @@ describe("ExportStorePart", () => {
         title: "Book map",
         contentMarkdown: "Original map.",
       }) as unknown as DocumentPayload;
-      const first = snapshot(harness.scope, projectId, harness.clock(), harness.exportStore);
+      const first = capture(harness.scope, projectId, harness.clock(), harness.exportStore);
+      const firstArtifact = harness.exportStore.recordCompletedExportJob(
+        harness.scope,
+        prepared(first, "artifact-original", "markdown", harness.clock()),
+      ).artifact;
 
       const revisedOutline = harness.documents.storeDocument(
         harness.principal,
@@ -197,15 +227,26 @@ describe("ExportStorePart", () => {
           contentMarkdown: "Revised map.",
         },
       ) as unknown as DocumentPayload;
-      const second = snapshot(harness.scope, projectId, harness.clock(), harness.exportStore);
+      const second = capture(harness.scope, projectId, harness.clock(), harness.exportStore);
+      const secondArtifact = harness.exportStore.recordCompletedExportJob(
+        harness.scope,
+        prepared(second, "artifact-revised", "docx", harness.clock()),
+      ).artifact;
       const note = harness.documents.newDocument(harness.principal, projectId, {
         kind: "note",
         title: "Research",
         contentMarkdown: "New non-chapter.",
       }) as unknown as DocumentPayload;
-      const third = snapshot(harness.scope, projectId, harness.clock(), harness.exportStore);
+      const third = capture(harness.scope, projectId, harness.clock(), harness.exportStore);
+      const thirdArtifact = harness.exportStore.recordCompletedExportJob(
+        harness.scope,
+        prepared(third, "artifact-added", "epub", harness.clock()),
+      ).artifact;
 
-      expect(new Set([first.snapshotId, second.snapshotId, third.snapshotId]).size).toBe(3);
+      expect(
+        new Set([firstArtifact.snapshotId, secondArtifact.snapshotId, thirdArtifact.snapshotId])
+          .size,
+      ).toBe(3);
       expect(
         first.documents.find((document) => document.documentId === outline.id)?.contentMarkdown,
       ).toBe("Original map.");
@@ -216,80 +257,6 @@ describe("ExportStorePart", () => {
         },
       );
       expect(third.documents.map((document) => document.documentId)).toContain(note.id);
-    } finally {
-      harness.studio.close();
-    }
-  });
-
-  it("persists project-scoped artifacts newest first and rejects another project's snapshot", async () => {
-    const harness = await openHarness();
-    try {
-      const firstProject = newProject(harness.projects, harness.principal, "First project");
-      const secondProject = newProject(harness.projects, harness.principal, "Second project");
-      const firstSnapshot = snapshot(
-        harness.scope,
-        firstProject.projectId,
-        harness.clock(),
-        harness.exportStore,
-      );
-      const secondSnapshot = snapshot(
-        harness.scope,
-        secondProject.projectId,
-        harness.clock(),
-        harness.exportStore,
-      );
-      const early = harness.exportStore.appendArtifact(harness.scope, firstProject.projectId, {
-        id: "artifact-early",
-        snapshotId: firstSnapshot.snapshotId,
-        format: "markdown",
-        relativePath: "exports/first/artifact-early.md",
-        sizeBytes: 12,
-        checksumSha256: "a".repeat(64),
-        createdAt: harness.clock(),
-      });
-      const latest = harness.exportStore.appendArtifact(harness.scope, firstProject.projectId, {
-        id: "artifact-latest",
-        snapshotId: firstSnapshot.snapshotId,
-        format: "epub",
-        relativePath: "exports/first/artifact-latest.epub",
-        sizeBytes: 24,
-        checksumSha256: "b".repeat(64),
-        createdAt: harness.clock(),
-      });
-      const other = harness.exportStore.appendArtifact(harness.scope, secondProject.projectId, {
-        id: "artifact-other",
-        snapshotId: secondSnapshot.snapshotId,
-        format: "docx",
-        relativePath: "exports/second/artifact-other.docx",
-        sizeBytes: 48,
-        checksumSha256: "c".repeat(64),
-        createdAt: harness.clock(),
-      });
-
-      expect(
-        harness.exportStore.listProjectArtifacts(harness.scope, firstProject.projectId),
-      ).toEqual([latest, early]);
-      expect(
-        harness.exportStore.findProjectArtifact(harness.scope, firstProject.projectId, latest.id),
-      ).toMatchObject({
-        relativePath: latest.relativePath,
-        sizeBytes: latest.sizeBytes,
-        checksumSha256: latest.checksumSha256,
-      });
-      expect(() =>
-        harness.exportStore.findProjectArtifact(harness.scope, firstProject.projectId, other.id),
-      ).toThrow(NotFoundError);
-      expect(() =>
-        harness.exportStore.appendArtifact(harness.scope, firstProject.projectId, {
-          id: "artifact-cross-project",
-          snapshotId: secondSnapshot.snapshotId,
-          format: "markdown",
-          relativePath: "exports/first/artifact-cross-project.md",
-          sizeBytes: 1,
-          checksumSha256: "d".repeat(64),
-          createdAt: harness.clock(),
-        }),
-      ).toThrow(NotFoundError);
     } finally {
       harness.studio.close();
     }

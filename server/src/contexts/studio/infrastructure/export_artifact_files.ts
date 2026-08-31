@@ -12,7 +12,7 @@ import type {
   ExportArtifactGateway,
 } from "../application/export_artifact_service.js";
 import type { ExportArtifactFormat } from "../application/ports/export_store.js";
-import { NotFoundError } from "../domain/exceptions.js";
+import { ExportArtifactWriteError, NotFoundError } from "../domain/exceptions.js";
 import { epubBytes, plainText, xmlSafeText } from "./epub_xml.js";
 
 const extensionByFormat: Record<ExportArtifactFormat, string> = {
@@ -25,13 +25,27 @@ const extensionByFormat: Record<ExportArtifactFormat, string> = {
 export class FilesystemExportArtifactGateway implements ExportArtifactGateway {
   constructor(private readonly dataDirectory: string) {}
 
-  async writeSnapshotArtifact(request: ArtifactWriteRequest): Promise<ArtifactFileEvidence> {
+  async writeSnapshotArtifact(
+    request: ArtifactWriteRequest,
+    reportCleanupFailure?: (failure: unknown) => void,
+  ): Promise<ArtifactFileEvidence> {
     const names = artifactNames(request.projectId, request.artifactId, request.format);
     const contents = await serializeArtifact(request);
-    const directory = await artifactDirectory(this.dataDirectory, request.projectId, true);
-    const target = resolve(directory, names.filename);
-    const temporary = resolve(directory, `.${request.artifactId}.${randomUUID()}.tmp`);
-    return publishArtifact(temporary, target, contents, names.relativePath);
+    try {
+      const directory = await artifactDirectory(this.dataDirectory, request.projectId, true);
+      const target = resolve(directory, names.filename);
+      const temporary = resolve(directory, `.${request.artifactId}.${randomUUID()}.tmp`);
+      return await publishArtifact(
+        temporary,
+        target,
+        contents,
+        names.relativePath,
+        reportCleanupFailure,
+      );
+    } catch (error) {
+      if (isKnownWriteFailure(error)) throw new ExportArtifactWriteError();
+      throw error;
+    }
   }
 
   async readArtifactBytes(request: ArtifactReadRequest): Promise<Buffer> {
@@ -103,6 +117,7 @@ async function publishArtifact(
   target: string,
   contents: Buffer,
   relativePath: string,
+  reportCleanupFailure?: (failure: unknown) => void,
 ): Promise<ArtifactFileEvidence> {
   let handle: Awaited<ReturnType<typeof open>> | undefined;
   let linked = false;
@@ -124,9 +139,9 @@ async function publishArtifact(
       rollback: () => rollbackPublishedArtifact(target, contents, identity.dev, identity.ino),
     };
   } catch (error) {
-    if (handle !== undefined) await ignore(handle.close());
-    if (linked) await ignore(unlink(target));
-    await ignore(unlink(temporary));
+    if (handle !== undefined) await cleanupWithoutMasking(handle.close(), reportCleanupFailure);
+    if (linked) await cleanupWithoutMasking(unlink(target), reportCleanupFailure);
+    await cleanupWithoutMasking(unlink(temporary), reportCleanupFailure, true);
     throw error;
   }
 }
@@ -157,33 +172,82 @@ async function rollbackPublishedArtifact(
   dev: number,
   ino: number,
 ): Promise<void> {
+  let handle: Awaited<ReturnType<typeof open>>;
   try {
-    const handle = await open(target, constants.O_RDONLY | constants.O_NOFOLLOW);
-    try {
-      const details = await handle.stat();
-      const actual = await handle.readFile();
-      if (
-        !details.isFile() ||
-        details.dev !== dev ||
-        details.ino !== ino ||
-        !actual.equals(contents)
-      ) {
-        return;
-      }
-    } finally {
-      await handle.close();
+    handle = await open(target, constants.O_RDONLY | constants.O_NOFOLLOW);
+  } catch (error) {
+    if (isMissingOrReplacedTarget(error)) return;
+    throw error;
+  }
+  try {
+    const details = await handle.stat();
+    const actual = await handle.readFile();
+    if (
+      !details.isFile() ||
+      details.dev !== dev ||
+      details.ino !== ino ||
+      !actual.equals(contents)
+    ) {
+      return;
     }
+  } finally {
+    await handle.close();
+  }
+  try {
     await unlink(target);
-  } catch {
-    return;
+  } catch (error) {
+    if (isMissingOrReplacedTarget(error)) return;
+    throw error;
   }
 }
 
-async function ignore(promise: Promise<unknown>): Promise<void> {
+const KNOWN_WRITE_ERROR_CODES = new Set([
+  "EACCES",
+  "EBUSY",
+  "EDQUOT",
+  "EFBIG",
+  "EIO",
+  "ENAMETOOLONG",
+  "EMFILE",
+  "ENFILE",
+  "ENOENT",
+  "ENOSPC",
+  "EPERM",
+  "EROFS",
+]);
+
+function errorCode(error: unknown): string | undefined {
+  if (typeof error !== "object" || error === null || !("code" in error)) return undefined;
+  return typeof error.code === "string" ? error.code : undefined;
+}
+
+function isKnownWriteFailure(error: unknown): boolean {
+  const code = errorCode(error);
+  return code !== undefined && KNOWN_WRITE_ERROR_CODES.has(code);
+}
+
+function isMissingOrReplacedTarget(error: unknown): boolean {
+  const code = errorCode(error);
+  if (code === "ENOENT" || code === "ELOOP") {
+    return true;
+  }
+  return false;
+}
+
+async function cleanupWithoutMasking(
+  promise: Promise<unknown>,
+  reportCleanupFailure?: (failure: unknown) => void,
+  ignoreMissing = false,
+): Promise<void> {
   try {
     await promise;
-  } catch {
-    return;
+  } catch (failure) {
+    if (ignoreMissing && errorCode(failure) === "ENOENT") return;
+    try {
+      reportCleanupFailure?.(failure);
+    } catch {
+      // Cleanup reporting is secondary and cannot replace publication failure.
+    }
   }
 }
 

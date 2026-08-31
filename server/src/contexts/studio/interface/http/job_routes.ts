@@ -61,7 +61,14 @@ export const jobRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fastify
     async (request) => {
       const reportCleanupFailure = (failure: unknown): void => {
         request.log.error(
-          { err: failure, errorId: request.id, provider_cleanup_failed: true },
+          {
+            err: failure,
+            errorId: request.id,
+            request_cleanup_failed: true,
+            // Preserve the established retry-cleanup diagnostic consumed by
+            // provider lifecycle monitoring while export retries share this seam.
+            provider_cleanup_failed: true,
+          },
           "provider cleanup failed",
         );
       };
