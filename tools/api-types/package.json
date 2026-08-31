@@ -1,0 +1,9 @@
+{
+  "name": "@novel-engine/api-types-toolchain",
+  "private": true,
+  "description": "Isolated TS 6 container for openapi-typescript: the generator crashes on typescript@7 (no JS API yet; openapi-ts/openapi-typescript#2841), so it runs against its own typescript@6 while the workspaces compile with typescript@7.",
+  "devDependencies": {
+    "openapi-typescript": "^7.13.0",
+    "typescript": "~6.0.3"
+  }
+}

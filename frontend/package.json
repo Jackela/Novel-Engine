@@ -23,7 +23,7 @@
     "format": "biome format --write .",
     "format:check": "biome format .",
     "type-check": "tsc -p tsconfig.typecheck.json --noEmit",
-    "gen:api-types": "openapi-typescript ../server/qa-baselines/openapi.current.json -o generated/api-types.ts",
+    "gen:api-types": "pnpm --dir ../tools/api-types exec openapi-typescript ../../server/qa-baselines/openapi.current.json -o ../../frontend/generated/api-types.ts",
     "check:api-types": "node scripts/check-api-types-drift.mjs"
   },
   "dependencies": {
@@ -48,9 +48,8 @@
     "@vitejs/plugin-react": "6.1.1",
     "@vitest/coverage-v8": "^4.1.11",
     "jsdom": "^30.0.0",
-    "openapi-typescript": "^7.13.0",
     "react-doctor": "0.9.12",
-    "typescript": "^6.0.3",
+    "typescript": "^7.0.2",
     "vite": "^8.2.0",
     "vitest": "^4.1.11"
   }
