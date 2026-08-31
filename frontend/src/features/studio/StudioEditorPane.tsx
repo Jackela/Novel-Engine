@@ -1,7 +1,8 @@
 import { Check, Loader2, X } from "lucide-react";
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useRef, useState } from "react";
 
 import type { SaveState, StudioDocument } from "@/app/types/studio";
+import { useCommandFocusRestoration } from "./hooks/useCommandFocusRestoration";
 
 const MarkdownEditor = lazy(async () => {
   const module = await import("./MarkdownEditor");
@@ -33,8 +34,38 @@ export function StudioEditorPane({
   onLoadLatest,
   onRetryOverwrite,
 }: StudioEditorPaneProps) {
+  const titleRef = useRef<HTMLInputElement>(null);
+  const pendingCommandRef = useRef<"loadLatest" | "retryOverwrite" | null>(null);
+  const [pendingCommand, setPendingCommand] = useState<"loadLatest" | "retryOverwrite" | null>(
+    null,
+  );
   const saveNeedsAttention = saveState === "conflict" || saveState === "error";
-  const conflictActionsDisabled = isConflictActionPending || saveState === "saving";
+  const conflictActionsDisabled =
+    pendingCommand !== null || isConflictActionPending || saveState === "saving";
+  const runWithFocusRestoration = useCommandFocusRestoration(conflictActionsDisabled);
+
+  const runConflictCommand = (
+    commandKey: "loadLatest" | "retryOverwrite",
+    target: HTMLButtonElement,
+    command: (() => void | Promise<void>) | undefined,
+  ) => {
+    if (command === undefined || conflictActionsDisabled || pendingCommandRef.current !== null)
+      return;
+    pendingCommandRef.current = commandKey;
+    setPendingCommand(commandKey);
+    void runWithFocusRestoration(
+      target,
+      async () => {
+        try {
+          await command();
+        } finally {
+          if (pendingCommandRef.current === commandKey) pendingCommandRef.current = null;
+          setPendingCommand((current) => (current === commandKey ? null : current));
+        }
+      },
+      () => titleRef.current,
+    );
+  };
 
   return (
     <section
@@ -48,6 +79,7 @@ export function StudioEditorPane({
               <input
                 aria-label="Document title"
                 className="editor__title"
+                ref={titleRef}
                 value={titleDraft}
                 onChange={(event) => onTitleChange(event.target.value)}
               />
@@ -81,15 +113,21 @@ export function StudioEditorPane({
               {error ? <span>{error}</span> : null}
               <div className="editor-conflict__actions">
                 <button
+                  aria-busy={pendingCommand === "loadLatest" || undefined}
                   disabled={conflictActionsDisabled || onLoadLatest === undefined}
-                  onClick={() => void onLoadLatest?.()}
+                  onClick={(event) =>
+                    runConflictCommand("loadLatest", event.currentTarget, onLoadLatest)
+                  }
                   type="button"
                 >
                   Load latest (discard local)
                 </button>
                 <button
+                  aria-busy={pendingCommand === "retryOverwrite" || undefined}
                   disabled={conflictActionsDisabled || onRetryOverwrite === undefined}
-                  onClick={() => void onRetryOverwrite?.()}
+                  onClick={(event) =>
+                    runConflictCommand("retryOverwrite", event.currentTarget, onRetryOverwrite)
+                  }
                   type="button"
                 >
                   Keep local and retry overwrite

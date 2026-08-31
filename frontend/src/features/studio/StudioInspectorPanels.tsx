@@ -29,35 +29,33 @@ export function StudioInspectorPanels({
     <StudioLoreStatusPanel
       documentId={model.loreStatus.documentId}
       savedStatus={model.loreStatus.savedStatus}
-      isSaving={pending.loreStatus ?? false}
+      attemptedStatus={model.loreStatus.attemptedStatus}
+      isSaving={model.loreStatus.isSaving}
       onSubmit={model.loreStatus.submit}
     />
   ) : null;
 
   if (inspector === "settings") {
     return (
-      <>
-        {loreStatus}
-        <StudioSettingsPanel
-          settingsForm={model.settings.settingsForm}
-          setSettingsForm={model.settings.setSettingsForm}
-          onUpdateSettings={model.settings.onUpdateSettings}
-          providers={model.settings.providers}
-          isSaving={pending.settings}
-        />
-      </>
+      <StudioSettingsPanel
+        settingsForm={model.settings.settingsForm}
+        setSettingsForm={model.settings.setSettingsForm}
+        onUpdateSettings={model.settings.onUpdateSettings}
+        providers={model.settings.providers}
+        isSaving={pending.settings}
+      />
     );
   }
 
   return (
     <>
-      {loreStatus}
       <div
         aria-labelledby={tabId("copilot")}
         hidden={inspector !== "copilot"}
         id={panelId("copilot")}
         role="tabpanel"
       >
+        {inspector === "copilot" ? loreStatus : null}
         <StudioCopilotPanel
           instruction={model.copilot.instruction}
           setInstruction={model.copilot.setInstruction}
@@ -80,6 +78,7 @@ export function StudioInspectorPanels({
         <StudioExportPanel
           exports={model.export.exports}
           exportingFormat={model.export.exportingFormat}
+          retryingFormat={model.export.retryingFormat}
           onExport={model.export.onExport}
           error={model.export.errorForExport}
           failedFormat={model.export.failedFormat}
@@ -122,6 +121,7 @@ export function StudioInspectorPanels({
           onLoadJobs={model.jobs.onLoadJobs}
           onRetryJob={model.jobs.onRetryJob}
           isLoading={pending.jobs.loading}
+          loadingInitiator={pending.jobs.loadingInitiator}
           retryingJobId={
             pending.jobs.retryingJobId ??
             (pending.jobs.retrying

@@ -1,9 +1,10 @@
+import type { Dispatch, SetStateAction } from "react";
 import { act, useState } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { api } from "@/app/api";
 import { job } from "@/test/factories";
-import { createMountHarness } from "@/test/harness";
+import { createMountHarness, deferred, flushEffects } from "@/test/harness";
 
 import { useStudioJobs } from "./useStudioJobs";
 import { useStudioSearch } from "./useStudioSearch";
@@ -24,6 +25,7 @@ interface HarnessSnapshot {
   readonly jobs: ReturnType<typeof useStudioJobs>;
   readonly search: ReturnType<typeof useStudioSearch>;
   readonly error: string | null;
+  readonly setError: Dispatch<SetStateAction<string | null>>;
 }
 
 const jobFixture = job();
@@ -35,21 +37,23 @@ afterEach(() => {
   vi.resetAllMocks();
 });
 
-function renderQueryHooks(): {
+function renderQueryHooks(initialProjectId = "project-1"): {
   readonly result: () => HarnessSnapshot;
   readonly submitSearch: () => void;
+  readonly rerender: (projectId: string) => void;
 } {
+  let projectId = initialProjectId;
   let current: HarnessSnapshot | undefined;
 
   function Wrapper() {
     const [error, setError] = useState<string | null>(null);
-    const jobs = useStudioJobs("project-1", setError);
-    const search = useStudioSearch("project-1", setError);
-    current = { jobs, search, error };
+    const jobs = useStudioJobs(projectId, setError);
+    const search = useStudioSearch(projectId, setError);
+    current = { jobs, search, error, setError };
     return <form onSubmit={search.runSearch} />;
   }
 
-  const { container } = harness.mount(<Wrapper />);
+  const { container, root } = harness.mount(<Wrapper />);
   const form = container.querySelector("form");
   if (form === null) {
     throw new Error("Expected search form after render.");
@@ -64,6 +68,10 @@ function renderQueryHooks(): {
     },
     submitSearch: () => {
       form.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+    },
+    rerender: (nextProjectId: string) => {
+      projectId = nextProjectId;
+      act(() => root.render(<Wrapper />));
     },
   };
 }
@@ -86,6 +94,26 @@ describe("Studio query hooks", () => {
     // Then
     expect(harness.result().search.searchResults).toEqual(results);
     expect(harness.result().search.isSearching).toBe(false);
+    expect(harness.result().error).toBeNull();
+  });
+
+  it("clears a stale error when a later search succeeds", async () => {
+    // Given
+    const results = [{ document_id: "document-1", title: "Chapter", excerpt: "Clockwork" }];
+    vi.mocked(api.search).mockResolvedValue({ results });
+    const harness = renderQueryHooks();
+    act(() => {
+      harness.result().setError("Previous search failed.");
+      harness.result().search.setSearch("clockwork");
+    });
+
+    // When
+    await act(async () => {
+      harness.submitSearch();
+    });
+
+    // Then
+    expect(harness.result().search.searchResults).toEqual(results);
     expect(harness.result().error).toBeNull();
   });
 
@@ -162,6 +190,46 @@ describe("Studio query hooks", () => {
     expect(harness.result().error).toBeNull();
   });
 
+  it("coalesces duplicate jobs refreshes before pending state renders", async () => {
+    const response = deferred<{ jobs: ReturnType<typeof job>[] }>();
+    vi.mocked(api.jobs).mockReturnValue(response.promise);
+    const harness = renderQueryHooks();
+    let first!: Promise<void>;
+    let duplicate!: Promise<void>;
+
+    act(() => {
+      first = harness.result().jobs.loadJobs("refresh");
+      duplicate = harness.result().jobs.loadJobs("refresh");
+    });
+
+    expect(api.jobs).toHaveBeenCalledTimes(1);
+    expect(duplicate).toBe(first);
+    expect(harness.result().jobs.loadingInitiator).toBe("refresh");
+    await act(async () => {
+      response.resolve({ jobs: [jobFixture] });
+      await first;
+    });
+    expect(harness.result().jobs.loadingInitiator).toBeNull();
+  });
+
+  it("clears a stale error when a later jobs refresh succeeds", async () => {
+    // Given
+    vi.mocked(api.jobs).mockResolvedValue({ jobs: [jobFixture] });
+    const harness = renderQueryHooks();
+    act(() => {
+      harness.result().setError("Previous jobs refresh failed.");
+    });
+
+    // When
+    await act(async () => {
+      await harness.result().jobs.loadJobs();
+    });
+
+    // Then
+    expect(harness.result().jobs.jobs).toEqual([jobFixture]);
+    expect(harness.result().error).toBeNull();
+  });
+
   it("reports a jobs loading failure", async () => {
     // Given
     vi.mocked(api.jobs).mockRejectedValue(new Error("jobs unavailable"));
@@ -175,5 +243,102 @@ describe("Studio query hooks", () => {
     // Then
     expect(harness.result().jobs.jobs).toEqual([]);
     expect(harness.result().error).toBe("jobs unavailable");
+  });
+
+  it("hides project-scoped jobs and search state immediately when the project changes", async () => {
+    // Given
+    vi.mocked(api.jobs).mockResolvedValue({ jobs: [jobFixture] });
+    vi.mocked(api.search).mockResolvedValue({
+      results: [{ document_id: "document-1", title: "Chapter", excerpt: "Clockwork" }],
+    });
+    const harness = renderQueryHooks("project-1");
+    await act(async () => {
+      await harness.result().jobs.loadJobs();
+      harness.result().search.setSearch("clockwork");
+      harness.submitSearch();
+      await Promise.resolve();
+    });
+
+    // When
+    harness.rerender("project-2");
+
+    // Then
+    expect(harness.result().jobs.jobs).toEqual([]);
+    expect(harness.result().jobs.isLoading).toBe(false);
+    expect(harness.result().search.search).toBe("");
+    expect(harness.result().search.searchResults).toEqual([]);
+    expect(harness.result().search.isSearching).toBe(false);
+  });
+
+  it("aborts previous-project jobs and discards their reverse-order completion", async () => {
+    // Given
+    const firstRequest = deferred<{ jobs: ReturnType<typeof job>[] }>();
+    const secondJob = job({ id: "job-project-2", project_id: "project-2" });
+    vi.mocked(api.jobs)
+      .mockReturnValueOnce(firstRequest.promise)
+      .mockResolvedValueOnce({ jobs: [secondJob] });
+    const harness = renderQueryHooks("project-1");
+    let firstLoad: Promise<void> | undefined;
+    act(() => {
+      firstLoad = harness.result().jobs.loadJobs();
+    });
+
+    // When
+    harness.rerender("project-2");
+    await act(async () => {
+      await harness.result().jobs.loadJobs();
+    });
+    const firstSignal = vi.mocked(api.jobs).mock.calls[0]?.[1]?.signal;
+    await act(async () => {
+      firstRequest.resolve({ jobs: [jobFixture] });
+      await firstRequest.promise;
+      await firstLoad;
+      await Promise.resolve();
+    });
+
+    // Then
+    expect(firstSignal?.aborted).toBe(true);
+    expect(harness.result().jobs.jobs).toEqual([secondJob]);
+    expect(harness.result().error).toBeNull();
+  });
+
+  it("aborts an earlier search and keeps only the latest project's results", async () => {
+    // Given
+    const firstRequest = deferred<{
+      results: { document_id: string; title: string; excerpt: string }[];
+    }>();
+    const secondResults = [
+      { document_id: "document-2", title: "Second", excerpt: "Second project" },
+    ];
+    vi.mocked(api.search)
+      .mockReturnValueOnce(firstRequest.promise)
+      .mockResolvedValueOnce({ results: secondResults });
+    const harness = renderQueryHooks("project-1");
+    act(() => {
+      harness.result().search.setSearch("first");
+      harness.submitSearch();
+    });
+
+    // When
+    harness.rerender("project-2");
+    act(() => {
+      harness.result().search.setSearch("second");
+    });
+    await act(async () => {
+      harness.submitSearch();
+    });
+    const firstSignal = vi.mocked(api.search).mock.calls[0]?.[2]?.signal;
+    await act(async () => {
+      firstRequest.resolve({
+        results: [{ document_id: "document-1", title: "First", excerpt: "First project" }],
+      });
+      await firstRequest.promise;
+      await flushEffects();
+    });
+
+    // Then
+    expect(firstSignal?.aborted).toBe(true);
+    expect(harness.result().search.searchResults).toEqual(secondResults);
+    expect(harness.result().error).toBeNull();
   });
 });

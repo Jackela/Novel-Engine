@@ -1,4 +1,4 @@
-import type { ComponentProps } from "react";
+import type { ComponentProps, Ref } from "react";
 
 import { StudioEditorPane } from "./StudioEditorPane";
 import { StudioInspector } from "./StudioInspector";
@@ -13,6 +13,7 @@ interface StudioPageViewProps {
   editor: ComponentProps<typeof StudioEditorPane>;
   inspector: ComponentProps<typeof StudioInspector>;
   statusbar: ComponentProps<typeof StudioStatusbar>;
+  headingRef?: Ref<HTMLHeadingElement>;
 }
 
 export function StudioPageView({
@@ -22,10 +23,11 @@ export function StudioPageView({
   editor,
   inspector,
   statusbar,
+  headingRef,
 }: StudioPageViewProps) {
   return (
-    <main className="studio">
-      <StudioTopbar project={project} onBack={onBack} />
+    <main aria-labelledby="studio-project-title" className="studio">
+      <StudioTopbar headingRef={headingRef} project={project} onBack={onBack} />
       <StudioNavigator {...navigator} />
       <StudioEditorPane {...editor} />
       <StudioInspector {...inspector} />

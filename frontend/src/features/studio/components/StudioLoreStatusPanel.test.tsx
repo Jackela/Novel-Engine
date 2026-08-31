@@ -2,6 +2,7 @@ import { fireEvent, getByRole } from "@testing-library/dom";
 import { act, useState } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import type { LoreStatus } from "@/app/types/studio";
 import { createMountHarness, deferred } from "@/test/harness";
 
 import { StudioLoreStatusPanel } from "./StudioLoreStatusPanel";
@@ -30,6 +31,24 @@ function PendingLoreStatusHarness({ save }: { save: ReturnType<typeof deferred<v
         } finally {
           setIsSaving(false);
         }
+      }}
+    />
+  );
+}
+
+function SuccessfulLoreStatusHarness({ save }: { save: ReturnType<typeof deferred<void>> }) {
+  const [isSaving, setIsSaving] = useState(false);
+  const [savedStatus, setSavedStatus] = useState<LoreStatus>("draft");
+  return (
+    <StudioLoreStatusPanel
+      documentId="doc-1"
+      savedStatus={savedStatus}
+      isSaving={isSaving}
+      onSubmit={async (nextStatus) => {
+        setIsSaving(true);
+        await save.promise;
+        setSavedStatus(nextStatus);
+        setIsSaving(false);
       }}
     />
   );
@@ -102,12 +121,13 @@ describe("StudioLoreStatusPanel (#444)", () => {
     const select = getByRole(container, "combobox", { name: "Lore status" }) as HTMLSelectElement;
     select.value = "stable";
     fireEvent.change(select);
-    select.focus();
+    const saveButton = getByRole(container, "button", { name: "Save status" });
+    saveButton.focus();
 
     act(() => {
-      fireEvent.submit(getByRole(container, "button", { name: "Save status" }));
+      fireEvent.submit(saveButton);
     });
-    expect(document.activeElement).toBe(select);
+    expect(document.activeElement).toBe(saveButton);
 
     await act(async () => {
       save.resolve();
@@ -116,16 +136,41 @@ describe("StudioLoreStatusPanel (#444)", () => {
     expect(document.activeElement).toBe(getByRole(container, "button", { name: "Save status" }));
   });
 
+  it("does not override focus the author moved during a status save", async () => {
+    const save = deferred<void>();
+    const container = render(
+      <StudioLoreStatusPanel {...character} onSubmit={() => save.promise} />,
+    );
+    const select = getByRole(container, "combobox", { name: "Lore status" }) as HTMLSelectElement;
+    select.value = "stable";
+    fireEvent.change(select);
+    const saveButton = getByRole(container, "button", { name: "Save status" });
+    const otherButton = document.createElement("button");
+    document.body.appendChild(otherButton);
+    saveButton.focus();
+
+    act(() => fireEvent.submit(saveButton));
+    otherButton.focus();
+    await act(async () => {
+      save.resolve(undefined);
+      await save.promise;
+    });
+
+    expect(document.activeElement).toBe(otherButton);
+    otherButton.remove();
+  });
+
   it("restores focus after the committed pending-to-idle render", async () => {
     const save = deferred<void>();
     const container = render(<PendingLoreStatusHarness save={save} />);
     const select = getByRole(container, "combobox", { name: "Lore status" }) as HTMLSelectElement;
     select.value = "stable";
     fireEvent.change(select);
-    select.focus();
+    const initialSaveButton = getByRole(container, "button", { name: "Save status" });
+    initialSaveButton.focus();
 
     act(() => {
-      fireEvent.submit(getByRole(container, "button", { name: "Save status" }));
+      fireEvent.submit(initialSaveButton);
     });
     await act(async () => {
       await Promise.resolve();
@@ -133,7 +178,7 @@ describe("StudioLoreStatusPanel (#444)", () => {
     expect(
       (getByRole(container, "button", { name: "Saving…" }) as HTMLButtonElement).disabled,
     ).toBe(true);
-    expect(document.activeElement).toBe(select);
+    expect(document.activeElement).toBe(initialSaveButton);
 
     await act(async () => {
       save.resolve();
@@ -143,6 +188,25 @@ describe("StudioLoreStatusPanel (#444)", () => {
     const saveButton = getByRole(container, "button", { name: "Save status" });
     expect((saveButton as HTMLButtonElement).disabled).toBe(false);
     expect(document.activeElement).toBe(saveButton);
+  });
+
+  it("moves focus to the status selector when success disables the initiating button", async () => {
+    const save = deferred<void>();
+    const container = render(<SuccessfulLoreStatusHarness save={save} />);
+    const select = getByRole(container, "combobox", { name: "Lore status" }) as HTMLSelectElement;
+    select.value = "stable";
+    fireEvent.change(select);
+    const saveButton = getByRole(container, "button", { name: "Save status" });
+    saveButton.focus();
+
+    act(() => fireEvent.submit(saveButton));
+    await act(async () => {
+      save.resolve(undefined);
+      await save.promise;
+    });
+
+    expect(getByRole(container, "button", { name: "Save status" })).toBeDisabled();
+    expect(document.activeElement).toBe(select);
   });
 
   it("does not steal focus when document A settles after document B becomes active", async () => {

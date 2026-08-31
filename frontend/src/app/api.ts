@@ -26,6 +26,7 @@ import {
 } from "@/app/apiWorkflowContract";
 import { appConfig } from "@/app/config";
 import { localServiceUnavailable } from "@/app/networkError";
+import { createRequestAbortScope } from "@/app/requestAbortScope";
 import type { DocumentKind, ExportFormat, LoreStatus } from "@/app/types/studio";
 
 export class HttpError extends Error {
@@ -83,21 +84,7 @@ async function request<T>(
   init: RequestInit | undefined,
   parse: ResponseParser<T>,
 ): Promise<T> {
-  const controller = new AbortController();
-  const externalSignal = init?.signal;
-  let timedOut = false;
-  const abortFromExternal = () => controller.abort(externalSignal?.reason);
-  if (externalSignal?.aborted) {
-    abortFromExternal();
-  } else {
-    externalSignal?.addEventListener("abort", abortFromExternal, {
-      once: true,
-    });
-  }
-  const timeout = window.setTimeout(() => {
-    timedOut = true;
-    controller.abort();
-  }, appConfig.apiTimeoutMs);
+  const abortScope = createRequestAbortScope(init?.signal);
   try {
     let response: Response;
     try {
@@ -112,16 +99,17 @@ async function request<T>(
           ...(csrfToken ? { "X-CSRF-Token": csrfToken } : {}),
           ...(init?.headers ?? {}),
         },
-        signal: controller.signal,
+        signal: abortScope.signal,
       });
     } catch (error) {
       if (
         (error instanceof Error || error instanceof DOMException) &&
         error.name === "AbortError"
       ) {
-        throw new Error(timedOut ? "Request timed out. Please retry." : "Request cancelled.", {
-          cause: error,
-        });
+        throw new Error(
+          abortScope.timedOut() ? "Request timed out. Please retry." : "Request cancelled.",
+          { cause: error },
+        );
       }
       if (error instanceof TypeError) {
         throw localServiceUnavailable(error);
@@ -134,8 +122,7 @@ async function request<T>(
     if (response.status === 204) return parse(undefined);
     return parse(await response.json());
   } finally {
-    window.clearTimeout(timeout);
-    externalSignal?.removeEventListener("abort", abortFromExternal);
+    abortScope.dispose();
   }
 }
 
@@ -148,13 +135,13 @@ const putJson = <T>(path: string, value: unknown, parse: ResponseParser<T>) =>
 const patchJson = <T>(path: string, value: unknown, parse: ResponseParser<T>) =>
   request(path, { method: "PATCH", body: json(value) }, parse);
 
-async function downloadBlob(path: string): Promise<Blob> {
-  const controller = new AbortController();
-  const timeout = window.setTimeout(() => controller.abort(), appConfig.apiTimeoutMs);
+async function downloadBlob(path: string, init?: RequestInit): Promise<Blob> {
+  const abortScope = createRequestAbortScope(init?.signal);
   try {
     const response = await fetch(url(path), {
       credentials: "include",
-      signal: controller.signal,
+      ...init,
+      signal: abortScope.signal,
     });
     if (!response.ok) {
       throw await readHttpError(response, `Download failed with status ${response.status}`);
@@ -163,14 +150,17 @@ async function downloadBlob(path: string): Promise<Blob> {
   } catch (error) {
     if (error instanceof HttpError) throw error;
     if ((error instanceof Error || error instanceof DOMException) && error.name === "AbortError") {
-      throw new Error("Download timed out. Please retry.", { cause: error });
+      throw new Error(
+        abortScope.timedOut() ? "Download timed out. Please retry." : "Request cancelled.",
+        { cause: error },
+      );
     }
     if (error instanceof TypeError) {
       throw localServiceUnavailable(error);
     }
     throw error;
   } finally {
-    window.clearTimeout(timeout);
+    abortScope.dispose();
   }
 }
 
@@ -242,12 +232,8 @@ export const api = {
       metadata?: Record<string, unknown>;
     },
   ) => putJson(`/api/projects/${projectId}/documents/${documentId}`, payload, parseStudioDocument),
-  revisions: (projectId: string, documentId: string) =>
-    request(
-      `/api/projects/${projectId}/documents/${documentId}/revisions`,
-      undefined,
-      parseRevisions,
-    ),
+  revisions: (projectId: string, documentId: string, init?: RequestInit) =>
+    request(`/api/projects/${projectId}/documents/${documentId}/revisions`, init, parseRevisions),
   restoreRevision: (
     projectId: string,
     documentId: string,
@@ -285,8 +271,12 @@ export const api = {
     request(`/api/projects/${projectId}/reviews`, { method: "POST" }, parseReviewJobResponse),
   exports: (projectId: string, init?: RequestInit) =>
     request(`/api/projects/${projectId}/exports`, init, parseExports),
-  createExport: (projectId: string, format: ExportFormat) =>
-    postJson(`/api/projects/${projectId}/exports`, { format }, parseExportJobResponse),
+  createExport: (projectId: string, format: ExportFormat, init?: RequestInit) =>
+    request(
+      `/api/projects/${projectId}/exports`,
+      { ...init, method: "POST", body: json({ format }) },
+      parseExportJobResponse,
+    ),
   updateProject: (
     projectId: string,
     payload: {
@@ -305,5 +295,5 @@ export const api = {
     request(`/api/projects/${projectId}/usage`, init, parseUsage),
   retryJob: (projectId: string, jobId: string) =>
     request(`/api/projects/${projectId}/jobs/${jobId}/retry`, { method: "POST" }, parseJob),
-  download: (path: string) => downloadBlob(path),
+  download: (path: string, init?: RequestInit) => downloadBlob(path, init),
 };

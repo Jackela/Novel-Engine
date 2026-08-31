@@ -1,12 +1,14 @@
-import type { FormEvent } from "react";
-import { useEffect, useRef, useState } from "react";
+import type { FormEvent, RefObject } from "react";
+import { useCallback, useLayoutEffect, useRef, useState } from "react";
 
 import { LORE_STATUS_OPTIONS } from "@/app/loreStatus";
 import type { LoreStatus } from "@/app/types/studio";
+import { useCommandFocusRestoration } from "../hooks/useCommandFocusRestoration";
 
 interface StudioLoreStatusPanelProps {
   documentId: string;
   savedStatus: LoreStatus;
+  attemptedStatus?: LoreStatus | null;
   isSaving?: boolean;
   onSubmit: (status: LoreStatus) => Promise<void>;
 }
@@ -20,49 +22,72 @@ interface StudioLoreStatusPanelProps {
 export function StudioLoreStatusPanel({
   documentId,
   savedStatus,
+  attemptedStatus = null,
   isSaving = false,
   onSubmit,
 }: StudioLoreStatusPanelProps) {
-  // Identity is enforced inside the public module; callers cannot forget the
-  // reset boundary when the active Lore document changes.
+  const saveButtonRef = useRef<HTMLButtonElement>(null);
+  const selectRef = useRef<HTMLSelectElement>(null);
+  const activeDocumentIdRef = useRef(documentId);
+  const runWithFocusRestoration = useCommandFocusRestoration(isSaving);
+
+  useLayoutEffect(() => {
+    activeDocumentIdRef.current = documentId;
+  }, [documentId]);
+
+  const submitWithFocusRestoration = useCallback(
+    (trigger: HTMLButtonElement, status: LoreStatus) => {
+      const originDocumentId = documentId;
+      void runWithFocusRestoration(
+        trigger,
+        () => onSubmit(status),
+        () => (activeDocumentIdRef.current === originDocumentId ? selectRef.current : null),
+      );
+    },
+    [documentId, onSubmit, runWithFocusRestoration],
+  );
+
+  // The keyed form resets local selection at the document boundary, while the
+  // persistent owner above can resolve a returning document's semantic target.
   return (
     <LoreStatusEntryForm
       key={documentId}
       savedStatus={savedStatus}
+      attemptedStatus={attemptedStatus}
       isSaving={isSaving}
-      onSubmit={onSubmit}
+      onSubmit={submitWithFocusRestoration}
+      saveButtonRef={saveButtonRef}
+      selectRef={selectRef}
     />
   );
 }
 
-type LoreStatusEntryFormProps = Omit<StudioLoreStatusPanelProps, "documentId">;
+interface LoreStatusEntryFormProps {
+  readonly savedStatus: LoreStatus;
+  readonly attemptedStatus: LoreStatus | null;
+  readonly isSaving: boolean;
+  readonly onSubmit: (trigger: HTMLButtonElement, status: LoreStatus) => void;
+  readonly saveButtonRef: RefObject<HTMLButtonElement | null>;
+  readonly selectRef: RefObject<HTMLSelectElement | null>;
+}
 
 function LoreStatusEntryForm({
   savedStatus,
-  isSaving = false,
+  attemptedStatus,
+  isSaving,
   onSubmit,
+  saveButtonRef,
+  selectRef,
 }: LoreStatusEntryFormProps) {
-  const saveButtonRef = useRef<HTMLButtonElement>(null);
-  const handledFocusRequestRef = useRef(0);
-  const [focusRequest, setFocusRequest] = useState(0);
-  const [selectedStatus, setSelectedStatus] = useState<LoreStatus>(savedStatus);
+  const [selectedStatus, setSelectedStatus] = useState<LoreStatus>(attemptedStatus ?? savedStatus);
 
-  useEffect(() => {
-    if (focusRequest !== handledFocusRequestRef.current && !isSaving) {
-      handledFocusRequestRef.current = focusRequest;
-      saveButtonRef.current?.focus();
-    }
-  }, [focusRequest, isSaving]);
-
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    try {
-      await onSubmit(selectedStatus);
-    } finally {
-      // The mutation Promise may settle before React commits isSaving=false.
-      // Request focus through an effect so disabled controls are never targeted.
-      setFocusRequest((request) => request + 1);
+    const saveButton = saveButtonRef.current;
+    if (saveButton === null) {
+      return;
     }
+    onSubmit(saveButton, selectedStatus);
   };
 
   return (
@@ -78,6 +103,7 @@ function LoreStatusEntryForm({
           aria-label="Lore status"
           disabled={isSaving}
           onChange={(event) => setSelectedStatus(event.target.value as LoreStatus)}
+          ref={selectRef}
           value={selectedStatus}
         >
           {LORE_STATUS_OPTIONS.map((option) => (

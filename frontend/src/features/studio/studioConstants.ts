@@ -15,10 +15,8 @@ export const GROUPS: Array<{
 ];
 
 /**
- * Inspector routes are intentionally independent from the project-level
- * section routes.  In particular, export is its own panel rather than an
- * alias for history so that the two workflows remain discoverable and
- * keyboard addressable.
+ * Inspector selection is URL-owned. Review, history, and export use project
+ * paths; Copilot, jobs, and usage use the authoring route query.
  */
 export type InspectorTab =
   | "copilot"
@@ -43,9 +41,6 @@ export const SECTIONS = [
   ["outline", "Outline"],
   ["characters", "Characters"],
   ["world", "World"],
-  ["review", "Review"],
-  ["history", "History"],
-  ["export", "Export"],
   ["settings", "Settings"],
 ] as const;
 

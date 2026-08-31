@@ -9,6 +9,7 @@ import type {
   StudioExport,
   StudioJob,
 } from "@/app/types/studio";
+import type { JobsLoadInitiator } from "./hooks/useStudioJobs";
 
 export interface SettingsFormState {
   title: string;
@@ -24,12 +25,11 @@ export interface InspectorPendingState {
   review: boolean;
   jobs: {
     loading: boolean;
+    loadingInitiator?: JobsLoadInitiator | null;
     retrying: boolean;
     retryingJobId?: string | null;
   };
   settings: boolean;
-  /** #444: lore lifecycle-status save pending. */
-  loreStatus?: boolean;
   history?: {
     restoringRevisionId: string | null;
   };
@@ -41,8 +41,8 @@ export interface InspectorCopilotModel {
   proposal: StudioJob | null;
   /** #308: markdown received so far while the proposal stream is running. */
   streamingText: string | null;
-  onRunProposal: (operation: "continue" | "rewrite") => void;
-  onAcceptProposal: () => void;
+  onRunProposal: (operation: "continue" | "rewrite") => void | Promise<void>;
+  onAcceptProposal: () => void | Promise<void>;
   /** #308: aborts the running proposal stream. */
   onStopProposal?: () => void;
   setInstruction: Dispatch<SetStateAction<string>>;
@@ -52,27 +52,28 @@ export interface InspectorCopilotModel {
 export interface InspectorExportModel {
   exports: StudioExport[];
   exportingFormat: ExportFormat | null;
+  retryingFormat?: ExportFormat | null;
   failedFormat: ExportFormat | null;
   errorForExport: string | null;
-  onExport?: (format: ExportFormat) => void;
-  onRetryExport?: (format: ExportFormat) => void;
+  onExport?: (format: ExportFormat) => void | Promise<void>;
+  onRetryExport?: (format: ExportFormat) => void | Promise<void>;
 }
 
 export interface InspectorReviewModel {
   latestReview: Review | null;
-  onRunReview: () => void;
+  onRunReview: () => void | Promise<void>;
 }
 
 export interface InspectorHistoryModel {
   revisions: Revision[];
   loadedRevisionId: string | null;
-  onRestoreRevision: (revisionId: string) => void;
+  onRestoreRevision: (revisionId: string) => void | Promise<void>;
 }
 
 export interface InspectorJobsModel {
   jobs: StudioJob[];
-  onLoadJobs: () => void;
-  onRetryJob: (jobId: string) => void;
+  onLoadJobs: () => void | Promise<void>;
+  onRetryJob: (jobId: string) => void | Promise<void>;
 }
 
 export interface InspectorUsageModel {
@@ -93,6 +94,12 @@ export interface InspectorLoreStatusModel {
   readonly documentId: string;
   /** Server-observed baseline; the form owns only the unsaved selection. */
   readonly savedStatus: LoreStatus;
+  /** Pending belongs to this document, never to whichever entry is active now. */
+  readonly isSaving: boolean;
+  /** Failed mutation for this document; other documents do not inherit it. */
+  readonly error: string | null;
+  /** Keeps the failed selection available when the author returns to this entry. */
+  readonly attemptedStatus: LoreStatus | null;
   /** Settles after the mutation owner has cleared its pending state. */
   readonly submit: (status: LoreStatus) => Promise<void>;
 }

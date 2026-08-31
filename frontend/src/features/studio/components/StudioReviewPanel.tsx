@@ -1,10 +1,11 @@
 import { RotateCcw } from "lucide-react";
 
 import type { Review } from "@/app/types/studio";
+import { useCommandFocusRestoration } from "../hooks/useCommandFocusRestoration";
 
 interface StudioReviewPanelProps {
   latestReview: Review | null;
-  onRunReview: () => void;
+  onRunReview: () => void | Promise<void>;
   isRunning?: boolean;
 }
 
@@ -13,6 +14,8 @@ export function StudioReviewPanel({
   onRunReview,
   isRunning = false,
 }: StudioReviewPanelProps) {
+  const runWithFocusRestoration = useCommandFocusRestoration(isRunning);
+
   return (
     <div aria-busy={isRunning} className="studio-inspector__panel">
       <header className="studio-inspector__heading">
@@ -25,7 +28,9 @@ export function StudioReviewPanel({
           aria-label={isRunning ? "Running review" : "Run review"}
           className="ui-command--icon"
           disabled={isRunning}
-          onClick={onRunReview}
+          onClick={(event) => {
+            void runWithFocusRestoration(event.currentTarget, onRunReview);
+          }}
           title="Run review"
           type="button"
         >

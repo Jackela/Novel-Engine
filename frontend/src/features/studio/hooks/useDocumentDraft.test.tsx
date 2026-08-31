@@ -212,7 +212,10 @@ describe("useDocumentDraft", () => {
     });
 
     // Then
-    expect(api.project).toHaveBeenCalledWith(activeDocument.project_id);
+    expect(api.project).toHaveBeenCalledWith(
+      activeDocument.project_id,
+      expect.objectContaining({ signal: expect.any(AbortSignal) }),
+    );
     expect(hook.result().hook.draft).toBe(latestDocument.content_markdown);
     expect(hook.result().hook.titleDraft).toBe(latestDocument.title);
     expect(hook.result().hook.saveState).toBe("idle");

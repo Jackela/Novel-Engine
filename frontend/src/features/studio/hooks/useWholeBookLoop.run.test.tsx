@@ -1,6 +1,7 @@
 import { act } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { api } from "@/app/api";
+import { streamProposal } from "@/app/proposalStream";
 import type { StudioJob } from "@/app/types/studio";
 import {
   baseProject,
@@ -27,20 +28,28 @@ vi.mock("@/app/api", async (importOriginal) => {
   };
 });
 
+vi.mock("@/app/proposalStream", () => ({
+  streamProposal: vi.fn(),
+}));
+
 describe("useWholeBookLoop run lifecycle (#318)", () => {
   it("drafts and auto-accepts every planned chapter in reading order", async () => {
     const events: string[] = [];
     traceApiCalls(events);
-    const harness = renderLoopHook(baseProject);
+    const harness = renderLoopHook(baseProject, (documentId) => {
+      events.push(`capture:${documentId}`);
+    });
 
     await act(async () => {
       await harness.result().hook.start(wholeBookPlan(baseProject));
     });
 
     expect(events).toEqual([
+      "capture:one",
       "proposal:one",
       "accept:job-one",
       "refresh",
+      "capture:two",
       "proposal:two",
       "accept:job-two",
       "refresh",
@@ -51,13 +60,18 @@ describe("useWholeBookLoop run lifecycle (#318)", () => {
       stoppedEarly: false,
     });
     expect(harness.result().accepted.map((document) => document.id)).toEqual(["one", "two"]);
-    expect(vi.mocked(api.proposal).mock.calls[0]?.[2]).toBe("generate");
+    expect(vi.mocked(streamProposal).mock.calls[0]?.[0]).toMatchObject({
+      operation: "generate",
+      instruction: "",
+      provider: "mock",
+    });
+    expect(vi.mocked(streamProposal).mock.calls[0]?.[0].onDelta).toEqual(expect.any(Function));
   });
 
   it("surfaces a proposal failure with the failing chapter identified", async () => {
     const events: string[] = [];
     traceApiCalls(events);
-    vi.mocked(api.proposal).mockRejectedValue(new Error("Provider exploded."));
+    vi.mocked(streamProposal).mockRejectedValue(new Error("Provider exploded."));
     const harness = renderLoopHook(baseProject);
 
     await act(async () => {
@@ -79,12 +93,12 @@ describe("useWholeBookLoop run lifecycle (#318)", () => {
     // Same shadowing rule as above: the value-level stubs also record their
     // initiation. The failing accept stays unrecorded on purpose — it never
     // lands — while its rejection is what the loop must surface.
-    vi.mocked(api.proposal)
-      .mockImplementationOnce(async (_projectId, documentId) => {
+    vi.mocked(streamProposal)
+      .mockImplementationOnce(async ({ documentId }) => {
         events.push(`proposal:${documentId}`);
         return proposalJobFor(firstChapter.id);
       })
-      .mockImplementationOnce(async (_projectId, documentId) => {
+      .mockImplementationOnce(async ({ documentId }) => {
         events.push(`proposal:${documentId}`);
         return proposalJobFor(secondChapter.id);
       })
@@ -115,7 +129,7 @@ describe("useWholeBookLoop run lifecycle (#318)", () => {
   it("ignores a start request while the loop is already running", async () => {
     const gate = deferred<StudioJob>();
     traceApiCalls([]);
-    vi.mocked(api.proposal).mockImplementation((_projectId, documentId) =>
+    vi.mocked(streamProposal).mockImplementation(({ documentId }) =>
       documentId === firstChapter.id ? gate.promise : Promise.resolve(proposalJobFor(documentId)),
     );
     const harness = renderLoopHook(baseProject);
@@ -138,11 +152,50 @@ describe("useWholeBookLoop run lifecycle (#318)", () => {
       await ignoredStart;
     });
 
-    expect(vi.mocked(api.proposal)).toHaveBeenCalledTimes(2);
+    expect(vi.mocked(streamProposal)).toHaveBeenCalledTimes(2);
     expect(vi.mocked(api.acceptProposal)).toHaveBeenCalledTimes(2);
     expect(harness.result().hook.phase).toEqual({
       kind: "done",
       generated: 2,
+      stoppedEarly: false,
+    });
+  });
+
+  it("counts a committed acceptance when refresh fails and skips it on resume", async () => {
+    const draftedDocuments: string[] = [];
+    vi.mocked(streamProposal).mockImplementation(async ({ documentId }) => {
+      draftedDocuments.push(documentId);
+      return proposalJobFor(documentId);
+    });
+    vi.mocked(api.acceptProposal).mockImplementation(async (_projectId, jobId) =>
+      proposalJobFor(jobId.replace("job-", "")),
+    );
+    vi.mocked(api.project)
+      .mockRejectedValueOnce(new Error("Aggregate refresh unavailable."))
+      .mockResolvedValue(baseProject);
+    const harness = renderLoopHook(baseProject);
+
+    await act(async () => {
+      await harness.result().hook.start([firstChapter, secondChapter]);
+    });
+
+    expect(harness.result().hook.phase).toEqual({
+      kind: "failed",
+      generated: 1,
+      failedChapterTitle: firstChapter.title,
+      message:
+        "Proposal was accepted, but refreshing the project failed. Reload the project to sync.",
+    });
+    expect(draftedDocuments).toEqual([firstChapter.id]);
+
+    await act(async () => {
+      await harness.result().hook.start([firstChapter, secondChapter]);
+    });
+
+    expect(draftedDocuments).toEqual([firstChapter.id, secondChapter.id]);
+    expect(harness.result().hook.phase).toEqual({
+      kind: "done",
+      generated: 1,
       stoppedEarly: false,
     });
   });

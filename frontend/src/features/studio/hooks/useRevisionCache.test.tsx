@@ -1,10 +1,10 @@
-import { act, useState } from "react";
+import { act, StrictMode, useState } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { api } from "@/app/api";
 import type { Project, Revision } from "@/app/types/studio";
 import { chapter, projectWith, revision } from "@/test/factories";
-import { createMountHarness } from "@/test/harness";
+import { createMountHarness, deferred, flushEffects } from "@/test/harness";
 
 import { useDocumentDraft } from "./useDocumentDraft";
 import { useRevisionCache } from "./useRevisionCache";
@@ -53,25 +53,58 @@ const restoredDocument = {
 
 function renderCache(): {
   readonly result: () => { readonly hook: HookResult };
+  readonly onError: ReturnType<typeof vi.fn>;
+  readonly rerender: (projectId: string, documentId: string) => void;
   readonly dispose: () => void;
 } {
+  let projectId = "project-1";
+  let documentId = "document-1";
   let current: { readonly hook: HookResult } | undefined;
   const onError = vi.fn();
 
   function Wrapper(): null {
-    current = { hook: useRevisionCache("project-1", "document-1", onError) };
+    current = { hook: useRevisionCache(projectId, documentId, onError) };
     return null;
   }
 
-  const { container } = harness.mount(<Wrapper />);
+  const { container, root } = harness.mount(<Wrapper />);
 
   return {
     result: () => {
       if (current === undefined) throw new Error("Expected hook result after render.");
       return current;
     },
+    onError,
+    rerender: (nextProjectId, nextDocumentId) => {
+      projectId = nextProjectId;
+      documentId = nextDocumentId;
+      act(() => root.render(<Wrapper />));
+    },
     dispose: () => {
       harness.unmount(container);
+    },
+  };
+}
+
+function renderStrictCache(): { readonly result: () => HookResult } {
+  let current: HookResult | undefined;
+  const onError = vi.fn();
+
+  function Wrapper(): null {
+    current = useRevisionCache("project-1", "document-1", onError);
+    return null;
+  }
+
+  harness.mount(
+    <StrictMode>
+      <Wrapper />
+    </StrictMode>,
+  );
+
+  return {
+    result: () => {
+      if (current === undefined) throw new Error("Expected hook result after render.");
+      return current;
     },
   };
 }
@@ -101,6 +134,68 @@ function renderDraft(): {
 }
 
 describe("useRevisionCache", () => {
+  it("aborts requests on document change, project change, and unmount", async () => {
+    vi.mocked(api.revisions).mockReturnValue(new Promise(() => {}));
+    const cache = renderCache();
+    const documentOneInit = vi.mocked(api.revisions).mock.calls[0]?.[2];
+
+    cache.rerender("project-1", "document-2");
+    await flushEffects();
+
+    expect(documentOneInit?.signal?.aborted).toBe(true);
+    const projectOneInit = vi.mocked(api.revisions).mock.calls[1]?.[2];
+    expect(projectOneInit?.signal?.aborted).toBe(false);
+
+    cache.rerender("project-2", "document-2");
+    await flushEffects();
+
+    expect(projectOneInit?.signal?.aborted).toBe(true);
+    const projectTwoInit = vi.mocked(api.revisions).mock.calls[2]?.[2];
+    expect(projectTwoInit?.signal?.aborted).toBe(false);
+
+    cache.dispose();
+    expect(projectTwoInit?.signal?.aborted).toBe(true);
+  });
+
+  it("cancels an older same-owner refresh and ignores its aborted failure", async () => {
+    const firstRequest = deferred<{ revisions: Revision[] }>();
+    let rejectFirst: ((reason: unknown) => void) | undefined;
+    const abortableFirst = new Promise<{ revisions: Revision[] }>((resolve, reject) => {
+      rejectFirst = reject;
+      void firstRequest.promise.then(resolve);
+    });
+    vi.mocked(api.revisions)
+      .mockReturnValueOnce(abortableFirst)
+      .mockResolvedValueOnce({ revisions: [revisionOne] });
+    const cache = renderCache();
+    const firstInit = vi.mocked(api.revisions).mock.calls[0]?.[2];
+
+    await act(async () => {
+      await cache.result().hook.refreshDocumentRevisions("document-1");
+    });
+    rejectFirst?.(new DOMException("cancelled", "AbortError"));
+    await flushEffects();
+
+    expect(firstInit?.signal?.aborted).toBe(true);
+    expect(cache.onError).not.toHaveBeenCalled();
+    expect(cache.result().hook.revisions).toEqual([revisionOne]);
+  });
+
+  it("restarts the owner load after StrictMode aborts the simulated mount", async () => {
+    const firstRequest = deferred<{ revisions: Revision[] }>();
+    vi.mocked(api.revisions)
+      .mockReturnValueOnce(firstRequest.promise)
+      .mockResolvedValueOnce({ revisions: [revisionOne] });
+
+    const cache = renderStrictCache();
+    await flushEffects();
+
+    expect(api.revisions).toHaveBeenCalledTimes(2);
+    const firstInit = vi.mocked(api.revisions).mock.calls[0]?.[2];
+    expect(firstInit?.signal?.aborted).toBe(true);
+    expect(cache.result().revisions).toEqual([revisionOne]);
+  });
+
   it("resolves refresh after the latest revision response updates the cache", async () => {
     let resolveResponse: ((response: { revisions: Revision[] }) => void) | undefined;
     vi.mocked(api.revisions)
@@ -162,6 +257,37 @@ describe("useRevisionCache", () => {
     });
 
     expect(currentCache.result().hook.revisions).toEqual([revisionOne]);
+  });
+
+  it("does not publish a late revision error after the project owner changes", async () => {
+    let rejectStale: ((reason: unknown) => void) | undefined;
+    const projectTwoRevision = revision("project-2-revision", {
+      document_id: "document-1",
+      content_markdown: "Project two draft",
+    });
+    vi.mocked(api.revisions)
+      .mockReturnValueOnce(
+        new Promise((_resolve, reject) => {
+          rejectStale = reject;
+        }),
+      )
+      .mockResolvedValueOnce({ revisions: [projectTwoRevision] });
+    const cache = renderCache();
+
+    cache.rerender("project-2", "document-1");
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    expect(cache.result().hook.revisions).toEqual([projectTwoRevision]);
+
+    await act(async () => {
+      rejectStale?.(new Error("late project one revisions failure"));
+      await Promise.resolve();
+    });
+
+    expect(cache.onError).not.toHaveBeenCalled();
+    expect(cache.result().hook.revisions).toEqual([projectTwoRevision]);
   });
 
   it("keeps restore pending until the revision refresh completes", async () => {

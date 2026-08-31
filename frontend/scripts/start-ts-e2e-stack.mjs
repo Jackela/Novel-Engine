@@ -53,6 +53,11 @@ const serverEnv = {
   SECURITY_SECRET_KEY:
     process.env.SECURITY_SECRET_KEY ?? "test-secret-key-for-ts-playwright-1234567890",
   SECURITY_CORS_ORIGINS: process.env.SECURITY_CORS_ORIGINS ?? `${baseURL},http://localhost:${PORT}`,
+  // Parallel browser files poll the unauthenticated setup status while the
+  // owner fixture is being created. Auth throttling has dedicated server
+  // coverage; a high test-only budget keeps orchestration from exhausting a
+  // shared per-IP bucket before the login assertions begin.
+  SECURITY_RATE_LIMIT: process.env.SECURITY_RATE_LIMIT ?? "1000/minute",
 };
 
 const server = spawn(

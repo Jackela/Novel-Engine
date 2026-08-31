@@ -1,12 +1,16 @@
 import { RotateCcw } from "lucide-react";
+import { useRef } from "react";
 
 import type { StudioJob } from "@/app/types/studio";
+import { useCommandFocusRestoration } from "../hooks/useCommandFocusRestoration";
+import type { JobsLoadInitiator } from "../hooks/useStudioJobs";
 
 interface StudioJobsPanelProps {
   jobs: StudioJob[];
-  onLoadJobs: () => void;
-  onRetryJob: (jobId: string) => void;
+  onLoadJobs: () => void | Promise<void>;
+  onRetryJob: (jobId: string) => void | Promise<void>;
   isLoading?: boolean;
+  loadingInitiator?: JobsLoadInitiator | null;
   retryingJobId?: string | null;
 }
 
@@ -15,9 +19,13 @@ export function StudioJobsPanel({
   onLoadJobs,
   onRetryJob,
   isLoading = false,
+  loadingInitiator = null,
   retryingJobId = null,
 }: StudioJobsPanelProps) {
   const isBusy = isLoading || retryingJobId !== null;
+  const refreshIsInitiator = isLoading && loadingInitiator === "refresh";
+  const runWithFocusRestoration = useCommandFocusRestoration(isBusy);
+  const refreshButtonRef = useRef<HTMLButtonElement>(null);
 
   return (
     <div aria-busy={isBusy} className="studio-inspector__panel">
@@ -27,11 +35,14 @@ export function StudioJobsPanel({
           <p>Durable operation status.</p>
         </div>
         <button
-          aria-busy={isLoading}
-          aria-label={isLoading ? "Refreshing jobs" : "Refresh jobs"}
+          aria-busy={refreshIsInitiator || undefined}
+          aria-label={refreshIsInitiator ? "Refreshing jobs" : "Refresh jobs"}
           className="ui-command--icon"
           disabled={isBusy}
-          onClick={onLoadJobs}
+          onClick={(event) => {
+            void runWithFocusRestoration(event.currentTarget, onLoadJobs);
+          }}
+          ref={refreshButtonRef}
           title="Refresh jobs"
           type="button"
         >
@@ -60,7 +71,13 @@ export function StudioJobsPanel({
                   }
                   className="ui-command--icon"
                   disabled={isBusy}
-                  onClick={() => onRetryJob(job.id)}
+                  onClick={(event) => {
+                    void runWithFocusRestoration(
+                      event.currentTarget,
+                      () => onRetryJob(job.id),
+                      () => refreshButtonRef.current,
+                    );
+                  }}
                   title="Retry job"
                   type="button"
                 >

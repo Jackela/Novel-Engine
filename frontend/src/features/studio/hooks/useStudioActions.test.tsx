@@ -117,7 +117,7 @@ function renderActions(
     const [reviews, setReviews] = useState<Review[]>([]);
     const [error, setError] = useState<string | null>("previous error");
     const [activeId, setActiveId] = useState<string | null>(null);
-    const [inspector, setInspector] = useState<InspectorTab>("history");
+    const [inspector] = useState<InspectorTab>("history");
     const actions = useStudioActions({
       project,
       projectId: initialProject.id,
@@ -125,7 +125,6 @@ function renderActions(
       setReviews,
       setError,
       setActiveId,
-      setInspector,
       settingsForm: {
         title: "Updated Harbor",
         description: "Updated description",
@@ -203,7 +202,7 @@ describe("useStudioActions", () => {
     expect(harness.result().project?.documents).toEqual(reordered);
   });
 
-  it("runs a review job and refreshes the assessment list", async () => {
+  it("runs a review job without reclaiming the deliberate inspector route", async () => {
     // Given
     vi.mocked(api.createReview).mockResolvedValue(reviewJob);
     vi.mocked(api.reviews).mockResolvedValue({ reviews: [reviewFixture] });
@@ -215,9 +214,11 @@ describe("useStudioActions", () => {
     });
 
     // Then
-    expect(api.reviews).toHaveBeenCalledWith(projectFixture.id);
+    expect(api.reviews).toHaveBeenCalledWith(projectFixture.id, {
+      signal: expect.any(AbortSignal),
+    });
     expect(harness.result().reviews).toEqual([reviewFixture]);
-    expect(harness.result().inspector).toBe("review");
+    expect(harness.result().inspector).toBe("history");
   });
 
   it("reports a failed review job without switching inspector", async () => {
@@ -322,7 +323,7 @@ describe("useStudioActions", () => {
     });
 
     expect(api.saveLoreStatus).toHaveBeenCalledWith(loreProjectFixture.id, character.id, "stable");
-    expect(actionsHarness.result().actions.isChangingLoreStatus).toBe(true);
+    expect(actionsHarness.result().actions.loreStatusFor(character.id).isSaving).toBe(true);
     expect(actionsHarness.result().project?.documents).toEqual([character, world]);
 
     await act(async () => {
@@ -330,7 +331,7 @@ describe("useStudioActions", () => {
       await savePromise;
     });
 
-    expect(actionsHarness.result().actions.isChangingLoreStatus).toBe(false);
+    expect(actionsHarness.result().actions.loreStatusFor(character.id).isSaving).toBe(false);
     expect(actionsHarness.result().project?.documents).toEqual([
       { ...character, lore_status: "stable" },
       world,
@@ -338,7 +339,7 @@ describe("useStudioActions", () => {
     expect(actionsHarness.result().error).toBeNull();
   });
 
-  it("retains the saved Lore status and publishes an error when the update fails", async () => {
+  it("retains the saved Lore status and records a document-scoped failure", async () => {
     vi.mocked(api.saveLoreStatus).mockRejectedValue(new Error("Lore status was rejected."));
     const actionsHarness = renderActions(undefined, loreProjectFixture);
 
@@ -347,7 +348,10 @@ describe("useStudioActions", () => {
     });
 
     expect(actionsHarness.result().project?.documents).toEqual([character, world]);
-    expect(actionsHarness.result().actions.isChangingLoreStatus).toBe(false);
-    expect(actionsHarness.result().error).toBe("Lore status was rejected.");
+    expect(actionsHarness.result().actions.loreStatusFor(character.id).isSaving).toBe(false);
+    expect(actionsHarness.result().actions.loreStatusFor(character.id).error).toBe(
+      "Lore status was rejected.",
+    );
+    expect(actionsHarness.result().error).toBeNull();
   });
 });

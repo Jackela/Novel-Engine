@@ -73,6 +73,64 @@ test.describe
       await studioContext.close();
     });
 
+    test("Inspector tabs stay contained and its disclosure recovers across breakpoints", async () => {
+      await createProject(studio, "Inspector Geometry");
+
+      const disclosure = studio.locator("details.studio-inspector__disclosure");
+      const summary = studio.locator("summary.studio-inspector__summary");
+      const tablist = studio.getByRole("tablist", { name: "Inspector panels" });
+      const tabs = tablist.getByRole("tab");
+
+      await expect(summary).toBeVisible();
+      await expect(tabs).toHaveCount(6);
+      const tablistBox = await tablist.boundingBox();
+      const tabBoxes = await tabs.evaluateAll((elements) =>
+        elements.map((element) => {
+          const box = element.getBoundingClientRect();
+          return { x: box.x, y: box.y, right: box.right, bottom: box.bottom };
+        }),
+      );
+      expect(tablistBox).not.toBeNull();
+      if (tablistBox === null) throw new Error("Expected a visible Inspector tablist.");
+      for (const box of tabBoxes) {
+        expect(box.x).toBeGreaterThanOrEqual(tablistBox.x - 0.5);
+        expect(box.right).toBeLessThanOrEqual(tablistBox.x + tablistBox.width + 0.5);
+        expect(box.y).toBeGreaterThanOrEqual(tablistBox.y - 0.5);
+        expect(box.bottom).toBeLessThanOrEqual(tablistBox.y + tablistBox.height + 0.5);
+      }
+      expect(new Set(tabBoxes.map((box) => Math.round(box.y))).size).toBe(2);
+
+      const reviewTab = tablist.getByRole("tab", { name: "Review" });
+      const historyTab = tablist.getByRole("tab", { name: "History" });
+      await reviewTab.click();
+      await expect(studio).toHaveURL(/\/review$/);
+      await expect(reviewTab).toHaveAttribute("aria-selected", "true");
+      await reviewTab.press("ArrowRight");
+      await expect(studio).toHaveURL(/\/history$/);
+      await expect(historyTab).toHaveAttribute("aria-selected", "true");
+      await studio.goBack();
+      await expect(studio).toHaveURL(/\/review$/);
+      await expect(reviewTab).toHaveAttribute("aria-selected", "true");
+      await studio.goForward();
+      await expect(studio).toHaveURL(/\/history$/);
+      await tablist.getByRole("tab", { name: "Copilot" }).click();
+      await expect(studio).toHaveURL(/\/manuscript$/);
+      await tablist.getByRole("tab", { name: "Jobs" }).click();
+      await expect(studio).toHaveURL(/\/manuscript\?inspector=jobs$/);
+
+      await studio.setViewportSize({ width: 900, height: 900 });
+      await expect(summary).toBeVisible();
+      await expect(studio.getByRole("heading", { name: "Inspector Geometry" })).toBeVisible();
+      await summary.click();
+      await expect(disclosure).not.toHaveAttribute("open", "");
+
+      await studio.setViewportSize({ width: 1280, height: 900 });
+      await expect(summary).toBeVisible();
+      await summary.click();
+      await expect(disclosure).toHaveAttribute("open", "");
+      await expect(tablist).toBeVisible();
+    });
+
     test("accepted proposal leaves narrative prose in the editor and the saved document", async () => {
       const projectId = await createProject(studio, "Prose Harbor");
       await typeChapter(studio, "# Chapter 1\n\nThe harbor bell rang twice.");

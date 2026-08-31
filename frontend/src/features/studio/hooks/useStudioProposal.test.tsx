@@ -86,7 +86,7 @@ function renderProposalHook(): {
 
   function Wrapper(): null {
     const [project, setProject] = useState<Project | null>(baseProject);
-    const [inspector, setInspector] = useState<InspectorTab>("history");
+    const [inspector] = useState<InspectorTab>("history");
     const [error, setError] = useState<string | null>("previous error");
     const [accepted, setAccepted] = useState<StudioDocument | null>(null);
     const hook = useStudioProposal(
@@ -94,17 +94,16 @@ function renderProposalHook(): {
       activeDocument,
       project,
       setProject,
-      setInspector,
       setError,
       loadJobs,
-      (document) => setAccepted(document),
+      (documentId) =>
+        documentId === activeDocument.id ? (document) => setAccepted(document) : undefined,
     );
     current = { hook, project, inspector, error, accepted };
     return null;
   }
 
-  const mounted = harness.mount(<Wrapper />);
-  const root = mounted.root;
+  const { root } = harness.mount(<Wrapper />);
 
   const render = () => root.render(<Wrapper />);
 
@@ -196,7 +195,7 @@ describe("useStudioProposal", () => {
     expect(harness.result().hook.proposal).toEqual(proposalJob);
     expect(harness.result().hook.streamingText).toBeNull();
     expect(harness.result().hook.isRunningProposal).toBe(false);
-    expect(harness.result().inspector).toBe("copilot");
+    expect(harness.result().inspector).toBe("history");
     expect(harness.result().error).toBeNull();
   });
 
@@ -270,6 +269,23 @@ describe("useStudioProposal", () => {
     expect(harness.result().accepted).toEqual(acceptedDocument);
     expect(harness.result().hook.proposal).toBeNull();
     expect(harness.loadJobs).toHaveBeenCalledTimes(1);
+  });
+
+  it("reports a committed acceptance truthfully when the aggregate refresh fails", async () => {
+    vi.mocked(api.acceptProposal).mockResolvedValue(proposalJob);
+    vi.mocked(api.project).mockRejectedValue(new Error("refresh unavailable"));
+    const harness = renderProposalHook();
+    act(() => harness.result().hook.setProposal(proposalJob));
+
+    await act(async () => {
+      await harness.result().hook.acceptProposal();
+    });
+
+    expect(harness.result().hook.proposal).toBeNull();
+    expect(harness.result().error).toBe(
+      "Proposal was accepted, but refreshing the project failed. Reload the project to sync.",
+    );
+    expect(harness.loadJobs).not.toHaveBeenCalled();
   });
 
   it("clears a stale proposal when the active document changes", () => {

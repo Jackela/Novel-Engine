@@ -6,6 +6,7 @@ import type { DocumentKind, LoreStatus, StudioDocument } from "@/app/types/studi
 import type { StudioNavigator } from "../StudioNavigator";
 import { isLoreEntryKind } from "../studioConstants";
 import type { InspectorLoreStatusModel } from "../studioInspectorTypes";
+import type { LoreStatusLifecycleState } from "./useStudioLoreStatusActions";
 
 type NavigatorProps = ComponentProps<typeof StudioNavigator>;
 
@@ -23,8 +24,8 @@ export function buildStudioNavigatorProps(
   return {
     ...state,
     onNavigateSection: (nextSection) => navigate(`/projects/${model.project.id}/${nextSection}`),
-    onCreateDocument: (kind) => void createDocument(kind),
-    onMoveDocument: (documentId, direction) => void moveDocument(documentId, direction),
+    onCreateDocument: createDocument,
+    onMoveDocument: moveDocument,
   };
 }
 
@@ -35,6 +36,7 @@ export function buildStudioNavigatorProps(
 export function buildLoreStatusModel(
   document: StudioDocument | null,
   changeLoreStatus: (documentId: string, status: LoreStatus) => Promise<void>,
+  lifecycle: LoreStatusLifecycleState,
 ): InspectorLoreStatusModel | null {
   if (
     document === null ||
@@ -48,6 +50,9 @@ export function buildLoreStatusModel(
   return {
     documentId,
     savedStatus: document.lore_status,
+    isSaving: lifecycle.isSaving,
+    error: lifecycle.error,
+    attemptedStatus: lifecycle.attemptedStatus,
     submit: (status) => changeLoreStatus(documentId, status),
   };
 }

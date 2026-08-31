@@ -177,25 +177,77 @@ describe("Studio split components", () => {
     expect(container.querySelector("form.studio-inspector__panel")).not.toBeNull();
   });
 
+  it("renders the contextual Lore editor only inside Copilot", () => {
+    const model = buildInspectorModel();
+    model.loreStatus = {
+      documentId: "character-1",
+      savedStatus: "draft",
+      isSaving: false,
+      error: null,
+      attemptedStatus: null,
+      submit: vi.fn().mockResolvedValue(undefined),
+    };
+
+    const copilot = render(
+      <StudioInspector error={null} inspector="copilot" setInspector={vi.fn()} model={model} />,
+    );
+    const history = render(
+      <StudioInspector error={null} inspector="history" setInspector={vi.fn()} model={model} />,
+    );
+    const settings = render(
+      <StudioInspector error={null} inspector="settings" setInspector={vi.fn()} model={model} />,
+    );
+
+    expect(copilot.querySelector('form[aria-label="Lore status"]')).not.toBeNull();
+    expect(history.querySelector('form[aria-label="Lore status"]')).toBeNull();
+    expect(settings.querySelector('form[aria-label="Lore status"]')).toBeNull();
+  });
+
   it("keeps a Lore save failure visible while the contextual Export tab is active", () => {
     const model = buildInspectorModel();
     model.loreStatus = {
       documentId: "character-1",
       savedStatus: "draft",
+      isSaving: false,
+      error: "Unable to update the lore status.",
+      attemptedStatus: "stable",
       submit: vi.fn().mockResolvedValue(undefined),
     };
     const container = render(
-      <StudioInspector
-        error="Unable to update the lore status."
-        inspector="export"
-        setInspector={vi.fn()}
-        model={model}
-      />,
+      <StudioInspector error={null} inspector="export" setInspector={vi.fn()} model={model} />,
     );
 
     const alerts = Array.from(container.querySelectorAll('[role="alert"]'));
     expect(alerts).toHaveLength(1);
     expect(alerts[0]?.textContent).toContain("Unable to update the lore status.");
+  });
+
+  it("keeps distinct Lore and workflow failures readable at the same time", () => {
+    const model = buildInspectorModel();
+    model.loreStatus = {
+      documentId: "character-1",
+      savedStatus: "draft",
+      isSaving: false,
+      error: "Unable to update the lore status.",
+      attemptedStatus: "stable",
+      submit: vi.fn().mockResolvedValue(undefined),
+    };
+    const container = render(
+      <StudioInspector
+        error="Unable to create a proposal."
+        inspector="copilot"
+        setInspector={vi.fn()}
+        model={model}
+      />,
+    );
+
+    const alertText = Array.from(container.querySelectorAll('[role="alert"]')).map(
+      (alert) => alert.textContent,
+    );
+    expect(alertText).toEqual([
+      "Unable to update the lore status.",
+      "Unable to create a proposal.",
+    ]);
   });
 
   it("does not duplicate an Export failure already rendered by the Export workflow", () => {

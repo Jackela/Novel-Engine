@@ -32,7 +32,12 @@ export function StudioInspector({
   const inspectorId = useId();
   const tabId = (tab: Exclude<InspectorTab, "settings">) => `${inspectorId}-${tab}-tab`;
   const panelId = (tab: Exclude<InspectorTab, "settings">) => `${inspectorId}-${tab}-panel`;
-  const exportPanelOwnsError = inspector === "export" && model.export.errorForExport !== null;
+  const loreError = model.loreStatus?.error ?? null;
+  const exportPanelOwnsSharedError =
+    inspector === "export" &&
+    model.export.errorForExport !== null &&
+    model.export.errorForExport === error;
+  const sharedError = error !== loreError && !exportPanelOwnsSharedError ? error : null;
 
   return (
     <aside className="studio-inspector">
@@ -51,9 +56,15 @@ export function StudioInspector({
             />
           )}
 
-          {error && !exportPanelOwnsError ? (
+          {loreError ? (
             <div aria-live="assertive" className="studio-inspector__error" role="alert">
-              {error}
+              {loreError}
+            </div>
+          ) : null}
+
+          {sharedError ? (
+            <div aria-live="assertive" className="studio-inspector__error" role="alert">
+              {sharedError}
             </div>
           ) : null}
 

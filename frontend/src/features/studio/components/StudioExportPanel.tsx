@@ -1,14 +1,17 @@
 import { Download, ExternalLink } from "lucide-react";
+import { useRef } from "react";
 
 import type { ExportFormat, StudioExport } from "@/app/types/studio";
+import { useCommandFocusRestoration } from "../hooks/useCommandFocusRestoration";
 
 interface StudioExportPanelProps {
   exports: StudioExport[];
-  onExport?: (format: ExportFormat) => void;
+  onExport?: (format: ExportFormat) => void | Promise<void>;
   exportingFormat?: ExportFormat | null;
+  retryingFormat?: ExportFormat | null;
   error?: string | null;
   failedFormat?: ExportFormat | null;
-  onRetry?: (format: ExportFormat) => void;
+  onRetry?: (format: ExportFormat) => void | Promise<void>;
 }
 
 const FORMATS: Array<{
@@ -29,10 +32,15 @@ export function StudioExportPanel({
   exports,
   onExport,
   exportingFormat = null,
+  retryingFormat = null,
   error = null,
   failedFormat = null,
   onRetry,
 }: StudioExportPanelProps) {
+  const isExporting = exportingFormat !== null;
+  const runWithFocusRestoration = useCommandFocusRestoration(isExporting);
+  const formatButtonRefs = useRef(new Map<ExportFormat, HTMLButtonElement>());
+
   return (
     <div className="studio-inspector__panel export-panel">
       <header className="studio-inspector__heading">
@@ -46,21 +54,29 @@ export function StudioExportPanel({
       {/* biome-ignore lint/a11y/useSemanticElements: this button group is not a form control group; <fieldset> would misrepresent semantics and drag in default fieldset styling. */}
       <div aria-label="Export formats" className="export-format-list" role="group">
         {FORMATS.map(({ format, label, description }) => {
-          const isExporting = exportingFormat === format;
+          const isCurrentFormat = exportingFormat === format && retryingFormat !== format;
           return (
             <button
-              aria-busy={isExporting}
+              aria-busy={isCurrentFormat}
               className="export-format"
-              disabled={Boolean(exportingFormat) || !onExport}
+              disabled={isExporting || !onExport}
               key={format}
-              onClick={() => onExport?.(format)}
+              onClick={(event) => {
+                if (onExport) {
+                  void runWithFocusRestoration(event.currentTarget, () => onExport(format));
+                }
+              }}
+              ref={(node) => {
+                if (node) formatButtonRefs.current.set(format, node);
+                else formatButtonRefs.current.delete(format);
+              }}
               type="button"
             >
               <span>
                 <strong>{label}</strong>
                 <small>{description}</small>
               </span>
-              <span aria-hidden="true">{isExporting ? "Working…" : "Export"}</span>
+              <span aria-hidden="true">{isCurrentFormat ? "Working…" : "Export"}</span>
             </button>
           );
         })}
@@ -72,9 +88,16 @@ export function StudioExportPanel({
           {failedFormat && onRetry ? (
             <button
               aria-label={`Retry ${failedFormat} export`}
+              aria-busy={retryingFormat === failedFormat}
               className="ui-command"
-              disabled={Boolean(exportingFormat)}
-              onClick={() => onRetry(failedFormat)}
+              disabled={isExporting}
+              onClick={(event) => {
+                void runWithFocusRestoration(
+                  event.currentTarget,
+                  () => onRetry(failedFormat),
+                  () => formatButtonRefs.current.get(failedFormat) ?? null,
+                );
+              }}
               type="button"
             >
               Try again

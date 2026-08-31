@@ -31,6 +31,11 @@ summary:focus-visible {
   outline-offset: 2px;
 }
 
+.studio:focus-visible {
+  outline: 3px solid var(--teal-strong);
+  outline-offset: -3px;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -72,9 +77,6 @@ summary:focus-visible {
     flex-wrap: wrap;
     padding: 10px;
   }
-  .studio-topbar__project-title {
-    display: none;
-  }
   .studio-nav {
     border-right: 0;
     border-bottom: 1px solid #dfe2e3;
@@ -90,9 +92,6 @@ summary:focus-visible {
   }
   .studio-inspector__disclosure {
     min-height: 0;
-  }
-  .studio-inspector__summary {
-    display: flex;
   }
   .editor__header {
     padding-inline: 18px;
@@ -125,9 +124,6 @@ summary:focus-visible {
   }
   .studio-topbar .ui-brand {
     font-size: 15px;
-  }
-  .studio-topbar__project-title {
-    display: none;
   }
   .studio-nav {
     max-height: none;

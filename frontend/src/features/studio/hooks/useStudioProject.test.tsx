@@ -5,7 +5,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { api, HttpError } from "@/app/api";
 import type { Project, Review, StudioExport } from "@/app/types/studio";
 import { project, review, studioExport } from "@/test/factories";
-import { createMountHarness, flushEffects } from "@/test/harness";
+import { createMountHarness, deferred, flushEffects } from "@/test/harness";
 
 import { useStudioProject } from "./useStudioProject";
 
@@ -135,7 +135,7 @@ describe("useStudioProject", () => {
     expect(harness.result().hook.exports).toEqual([fixture.studioExport]);
   });
 
-  it("replaces the route with no partial aggregate when the project is missing (404)", async () => {
+  it("replaces to the project library with no partial aggregate when the project is missing", async () => {
     // Given
     const fixture = makeAggregate("project-1", "one");
     let rejectExports: ((reason?: unknown) => void) | undefined;
@@ -159,7 +159,7 @@ describe("useStudioProject", () => {
     });
 
     // Then
-    expect(harness.result().pathname).toBe("/");
+    expect(harness.result().pathname).toBe("/projects");
     expect(harness.result().navigationType).toBe("REPLACE");
     expect(harness.result().hook.project).toBeNull();
     expect(harness.result().hook.reviews).toEqual([]);
@@ -200,6 +200,114 @@ describe("useStudioProject", () => {
     expect(api.project).toHaveBeenNthCalledWith(2, "project-2", {
       signal: expect.any(AbortSignal),
     });
+  });
+
+  it("hides the previous project aggregate and errors as soon as the route identity changes", async () => {
+    // Given
+    const first = makeAggregate("project-1", "one");
+    const secondProject = deferred<Project>();
+    const secondReviews = deferred<{ reviews: Review[] }>();
+    const secondExports = deferred<{ exports: StudioExport[] }>();
+    vi.mocked(api.project)
+      .mockResolvedValueOnce(first.project)
+      .mockReturnValueOnce(secondProject.promise);
+    vi.mocked(api.reviews)
+      .mockResolvedValueOnce({ reviews: [first.review] })
+      .mockReturnValueOnce(secondReviews.promise);
+    vi.mocked(api.exports)
+      .mockResolvedValueOnce({ exports: [first.studioExport] })
+      .mockReturnValueOnce(secondExports.promise);
+    const hook = renderStudioProjectHook("project-1");
+    await flushEffects();
+    act(() => {
+      hook.result().hook.setError("Project one action failed.");
+    });
+
+    // When: project two has not loaded yet.
+    hook.rerender("project-2");
+
+    // Then: no project-one state remains interactive for even one render.
+    expect(hook.result().hook.project).toBeNull();
+    expect(hook.result().hook.reviews).toEqual([]);
+    expect(hook.result().hook.exports).toEqual([]);
+    expect(hook.result().hook.error).toBeNull();
+    expect(hook.result().hook.loadError).toBeNull();
+  });
+
+  it("discards reverse-order aggregate completion from the previous project", async () => {
+    // Given
+    const first = makeAggregate("project-1", "one");
+    const second = makeAggregate("project-2", "two");
+    const firstProject = deferred<Project>();
+    const firstReviews = deferred<{ reviews: Review[] }>();
+    const firstExports = deferred<{ exports: StudioExport[] }>();
+    vi.mocked(api.project)
+      .mockReturnValueOnce(firstProject.promise)
+      .mockResolvedValueOnce(second.project);
+    vi.mocked(api.reviews)
+      .mockReturnValueOnce(firstReviews.promise)
+      .mockResolvedValueOnce({ reviews: [second.review] });
+    vi.mocked(api.exports)
+      .mockReturnValueOnce(firstExports.promise)
+      .mockResolvedValueOnce({ exports: [second.studioExport] });
+    const hook = renderStudioProjectHook("project-1");
+    await flushEffects();
+
+    // When: project two wins, then the transport-ignoring project-one mocks finish late.
+    hook.rerender("project-2");
+    await flushEffects();
+    await act(async () => {
+      firstProject.resolve(first.project);
+      firstReviews.resolve({ reviews: [first.review] });
+      firstExports.resolve({ exports: [first.studioExport] });
+      await Promise.all([firstProject.promise, firstReviews.promise, firstExports.promise]);
+      await Promise.resolve();
+    });
+
+    // Then
+    expect(hook.result().hook.project).toEqual(second.project);
+    expect(hook.result().hook.reviews).toEqual([second.review]);
+    expect(hook.result().hook.exports).toEqual([second.studioExport]);
+  });
+
+  it("retries an operational failure and clears the stale load error on complete success", async () => {
+    // Given
+    const fixture = makeAggregate("project-1", "one");
+    vi.mocked(api.project)
+      .mockRejectedValueOnce(new HttpError("Upstream failure.", 503))
+      .mockResolvedValueOnce(fixture.project);
+    vi.mocked(api.reviews).mockResolvedValue({ reviews: [fixture.review] });
+    vi.mocked(api.exports).mockResolvedValue({ exports: [fixture.studioExport] });
+    const hook = renderStudioProjectHook("project-1");
+    await flushEffects();
+    expect(hook.result().hook.loadError).toBe("Upstream failure.");
+
+    // When
+    await act(async () => {
+      await hook.result().hook.retryLoad();
+    });
+
+    // Then
+    expect(hook.result().hook.loadError).toBeNull();
+    expect(hook.result().hook.project).toEqual(fixture.project);
+    expect(hook.result().hook.reviews).toEqual([fixture.review]);
+    expect(hook.result().hook.exports).toEqual([fixture.studioExport]);
+  });
+
+  it("replaces to the entry route when authentication is required", async () => {
+    // Given
+    vi.mocked(api.project).mockRejectedValue(new HttpError("Authentication required.", 401));
+    vi.mocked(api.reviews).mockResolvedValue({ reviews: [] });
+    vi.mocked(api.exports).mockResolvedValue({ exports: [] });
+
+    // When
+    const hook = renderStudioProjectHook("project-1");
+    await flushEffects();
+
+    // Then
+    expect(hook.result().pathname).toBe("/");
+    expect(hook.result().navigationType).toBe("REPLACE");
+    expect(hook.result().hook.loadError).toBeNull();
   });
 
   it("renders a readable error state and keeps the route when the failure is not a 404", async () => {

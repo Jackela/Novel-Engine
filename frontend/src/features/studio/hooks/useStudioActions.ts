@@ -1,13 +1,14 @@
 import type { Dispatch, FormEvent, SetStateAction } from "react";
-import { useCallback, useState } from "react";
+import { useCallback, useLayoutEffect, useRef, useState } from "react";
 
 import { api } from "@/app/api";
-import type { DocumentKind, LoreStatus, Project, Review } from "@/app/types/studio";
-
-import { GROUPS, type InspectorTab } from "../studioConstants";
-
+import type { Project, Review } from "@/app/types/studio";
+import { mergeProjectSettings } from "./projectState";
 import { toErrorMessage } from "./toErrorMessage";
 import { usePendingAction } from "./usePendingAction";
+import { useStudioDocumentActions } from "./useStudioDocumentActions";
+import type { JobsLoadInitiator } from "./useStudioJobs";
+import { useStudioLoreStatusActions } from "./useStudioLoreStatusActions";
 
 interface UseStudioActionsOptions {
   project: Project | null;
@@ -15,22 +16,31 @@ interface UseStudioActionsOptions {
   setProject: Dispatch<SetStateAction<Project | null>>;
   setReviews: Dispatch<SetStateAction<Review[]>>;
   setError: Dispatch<SetStateAction<string | null>>;
+  errorPublishers?: Partial<StudioActionErrorPublishers>;
   setActiveId: Dispatch<SetStateAction<string | null>>;
-  setInspector: Dispatch<SetStateAction<InspectorTab>>;
   settingsForm: { title: string; description: string; provider: string };
-  loadJobs: () => Promise<void>;
+  loadJobs: (initiator?: JobsLoadInitiator) => Promise<void>;
 }
 
-const ACTION_KEYS = [
-  "createDocument",
-  "moveDocument",
-  "runReview",
-  "updateSettings",
-  "retryJob",
-  "changeLoreStatus",
-] as const;
+export interface StudioActionErrorPublishers {
+  readonly review: Dispatch<SetStateAction<string | null>>;
+  readonly settings: Dispatch<SetStateAction<string | null>>;
+  readonly retryJob: Dispatch<SetStateAction<string | null>>;
+  readonly createDocument: Dispatch<SetStateAction<string | null>>;
+  readonly moveDocument: Dispatch<SetStateAction<string | null>>;
+}
+
+type StudioActionErrorSource = keyof StudioActionErrorPublishers;
+
+const ACTION_KEYS = ["runReview", "updateSettings", "retryJob"] as const;
 
 type ActionKey = (typeof ACTION_KEYS)[number];
+
+interface StudioActionsOwner {
+  readonly projectId: string;
+  readonly controllers: Set<AbortController>;
+  active: boolean;
+}
 
 export function useStudioActions({
   project,
@@ -38,83 +48,85 @@ export function useStudioActions({
   setProject,
   setReviews,
   setError,
+  errorPublishers,
   setActiveId,
-  setInspector,
   settingsForm,
   loadJobs,
 }: UseStudioActionsOptions) {
   const { pending, begin, finish } = usePendingAction<ActionKey>(ACTION_KEYS);
   const [retryingJobId, setRetryingJobId] = useState<string | null>(null);
+  const ownerRef = useRef<StudioActionsOwner | null>(null);
 
-  const createDocument = useCallback(
-    async (kind: DocumentKind) => {
-      if (!project || !begin("createDocument")) return;
-      const count = project.documents?.filter((document) => document.kind === kind).length ?? 0;
-      const label = GROUPS.find((group) => group.kind === kind)?.label ?? "Document";
-      setError(null);
-      try {
-        const document = await api.createDocument(project.id, {
-          kind,
-          title: kind === "chapter" ? `Chapter ${count + 1}` : `${label} ${count + 1}`,
-          content_markdown: kind === "chapter" ? `# Chapter ${count + 1}\n\n` : "",
-        });
-        setProject((current) =>
-          current
-            ? {
-                ...current,
-                documents: [...(current.documents ?? []), document],
-              }
-            : current,
-        );
-        setActiveId(document.id);
-      } catch (reason) {
-        setError(toErrorMessage(reason, "Unable to create document."));
-      } finally {
-        finish("createDocument");
-      }
-    },
-    [begin, finish, project, setActiveId, setError, setProject],
+  useLayoutEffect(() => {
+    const owner: StudioActionsOwner = {
+      projectId,
+      controllers: new Set<AbortController>(),
+      active: true,
+    };
+    ownerRef.current = owner;
+    return () => {
+      owner.active = false;
+      for (const controller of owner.controllers) controller.abort();
+      owner.controllers.clear();
+      if (ownerRef.current === owner) ownerRef.current = null;
+    };
+  }, [projectId]);
+
+  const currentOwner = useCallback((): StudioActionsOwner | null => {
+    const owner = ownerRef.current;
+    return owner?.active && owner.projectId === projectId ? owner : null;
+  }, [projectId]);
+
+  const isCurrentOwner = useCallback(
+    (owner: StudioActionsOwner): boolean => owner.active && ownerRef.current === owner,
+    [],
   );
 
-  const moveDocument = useCallback(
-    async (documentId: string, direction: -1 | 1) => {
-      if (!project?.documents || !begin("moveDocument")) return;
-      const ordered = [...project.documents].sort((a, b) => a.position - b.position);
-      const index = ordered.findIndex((document) => document.id === documentId);
-      const target = index + direction;
-      if (index < 0 || target < 0 || target >= ordered.length) {
-        finish("moveDocument");
-        return;
-      }
-      const currentItem = ordered[index];
-      const targetItem = ordered[target];
-      if (!currentItem || !targetItem) {
-        finish("moveDocument");
-        return;
-      }
-      ordered[index] = targetItem;
-      ordered[target] = currentItem;
-      setError(null);
-      try {
-        const response = await api.reorderDocuments(
-          project.id,
-          ordered.map((item) => item.id),
-        );
-        setProject((current) =>
-          current ? { ...current, documents: response.documents } : current,
-        );
-      } catch (reason) {
-        setError(toErrorMessage(reason, "Unable to reorder documents."));
-      } finally {
-        finish("moveDocument");
-      }
+  const publishError = useCallback(
+    (owner: StudioActionsOwner, source: StudioActionErrorSource, value: string | null) => {
+      if (!isCurrentOwner(owner)) return;
+      const publisher = errorPublishers?.[source] ?? setError;
+      publisher((current) => (isCurrentOwner(owner) ? value : current));
     },
-    [begin, finish, project, setError, setProject],
+    [errorPublishers, isCurrentOwner, setError],
   );
+  const clearSharedError = useCallback(
+    (owner: StudioActionsOwner) => {
+      if (!errorPublishers) publishError(owner, "review", null);
+    },
+    [errorPublishers, publishError],
+  );
+
+  const finishForOwner = useCallback(
+    (owner: StudioActionsOwner, key: ActionKey) => {
+      if (isCurrentOwner(owner)) finish(key);
+    },
+    [finish, isCurrentOwner],
+  );
+
+  const documentActions = useStudioDocumentActions({
+    project,
+    projectId,
+    setProject,
+    setActiveId,
+    currentOwner,
+    isCurrentOwner,
+    publishError,
+  });
+  const loreStatusActions = useStudioLoreStatusActions({
+    project,
+    projectId,
+    setProject,
+    currentOwner,
+    isCurrentOwner,
+    clearSharedError,
+  });
 
   const runReview = useCallback(async () => {
-    if (!begin("runReview")) return;
-    setError(null);
+    const owner = currentOwner();
+    if (!owner || !begin("runReview")) return;
+    publishError(owner, "review", null);
+    let reviewController: AbortController | null = null;
     try {
       // The synchronous job contract (#272): the response is the terminal
       // review job; the assessment list is refreshed afterwards.
@@ -122,100 +134,96 @@ export function useStudioActions({
       if (job.status !== "completed") {
         throw new Error(job.error ?? "Unable to run review.");
       }
-      const response = await api.reviews(projectId);
-      setReviews(response.reviews);
-      setInspector("review");
+      if (!isCurrentOwner(owner)) return;
+      reviewController = new AbortController();
+      owner.controllers.add(reviewController);
+      const response = await api.reviews(projectId, { signal: reviewController.signal });
+      if (!isCurrentOwner(owner) || reviewController.signal.aborted) return;
+      setReviews((current) => (isCurrentOwner(owner) ? response.reviews : current));
     } catch (reason) {
-      setError(toErrorMessage(reason, "Unable to run review."));
+      publishError(owner, "review", toErrorMessage(reason, "Unable to run review."));
     } finally {
-      finish("runReview");
+      if (reviewController) owner.controllers.delete(reviewController);
+      finishForOwner(owner, "runReview");
     }
-  }, [begin, finish, projectId, setError, setInspector, setReviews]);
+  }, [begin, currentOwner, finishForOwner, isCurrentOwner, projectId, publishError, setReviews]);
 
   const updateProjectSettings = useCallback(
     async (event: FormEvent) => {
       event.preventDefault();
-      if (!project || !begin("updateSettings")) return;
-      setError(null);
+      const owner = currentOwner();
+      if (!owner || !project || !begin("updateSettings")) return;
+      publishError(owner, "settings", null);
       try {
         const updated = await api.updateProject(project.id, {
           title: settingsForm.title,
           description: settingsForm.description,
           settings: { ...project.settings, provider: settingsForm.provider },
         });
-        setProject(updated);
-        setError(null);
+        if (!isCurrentOwner(owner)) return;
+        setProject((current) =>
+          isCurrentOwner(owner) && current?.id === owner.projectId
+            ? mergeProjectSettings(current, updated)
+            : current,
+        );
+        publishError(owner, "settings", null);
       } catch (reason) {
-        setError(toErrorMessage(reason, "Unable to update project."));
+        publishError(owner, "settings", toErrorMessage(reason, "Unable to update project."));
       } finally {
-        finish("updateSettings");
+        finishForOwner(owner, "updateSettings");
       }
     },
-    [begin, finish, project, settingsForm, setError, setProject],
+    [
+      begin,
+      currentOwner,
+      finishForOwner,
+      isCurrentOwner,
+      project,
+      publishError,
+      settingsForm,
+      setProject,
+    ],
   );
 
   const retryJob = useCallback(
     async (jobId: string) => {
-      if (!begin("retryJob")) return;
+      const owner = currentOwner();
+      if (!owner || !begin("retryJob")) return;
       setRetryingJobId(jobId);
-      setError(null);
+      publishError(owner, "retryJob", null);
       try {
         await api.retryJob(projectId, jobId);
-        await loadJobs();
+        if (!isCurrentOwner(owner)) return;
+        await loadJobs("retry");
       } catch (reason) {
-        setError(toErrorMessage(reason, "Unable to retry job."));
+        publishError(owner, "retryJob", toErrorMessage(reason, "Unable to retry job."));
       } finally {
-        setRetryingJobId(null);
-        finish("retryJob");
+        if (isCurrentOwner(owner)) setRetryingJobId(null);
+        finishForOwner(owner, "retryJob");
       }
     },
-    [begin, finish, projectId, loadJobs, setError],
-  );
-
-  /**
-   * Lore lifecycle status change (#444, ADR-0006): a revision-free document
-   * write; the response envelope patches the project's document list in
-   * place so navigator badges and the selector reflect the new gate.
-   */
-  const changeLoreStatus = useCallback(
-    async (documentId: string, loreStatus: LoreStatus) => {
-      if (!project || !begin("changeLoreStatus")) return;
-      setError(null);
-      try {
-        const { lore_status } = await api.saveLoreStatus(project.id, documentId, loreStatus);
-        setProject((current) =>
-          current
-            ? {
-                ...current,
-                documents: (current.documents ?? []).map((document) =>
-                  document.id === documentId ? { ...document, lore_status } : document,
-                ),
-              }
-            : current,
-        );
-      } catch (reason) {
-        setError(toErrorMessage(reason, "Unable to update the lore status."));
-      } finally {
-        finish("changeLoreStatus");
-      }
-    },
-    [begin, finish, project, setError, setProject],
+    [begin, currentOwner, finishForOwner, isCurrentOwner, loadJobs, projectId, publishError],
   );
 
   return {
-    createDocument,
-    moveDocument,
+    createDocument: documentActions.createDocument,
+    moveDocument: documentActions.moveDocument,
     runReview,
     updateProjectSettings,
     retryJob,
-    changeLoreStatus,
-    pending,
-    isCreatingDocument: pending.createDocument,
-    isMovingDocument: pending.moveDocument,
+    changeLoreStatus: loreStatusActions.changeLoreStatus,
+    loreStatusFor: loreStatusActions.loreStatusFor,
+    pending: {
+      ...documentActions.pending,
+      ...pending,
+    },
+    creatingDocumentKind: documentActions.creatingDocumentKind,
+    movingDocument: documentActions.movingDocument,
+    isCreatingDocument: documentActions.isCreatingDocument,
+    isMovingDocument: documentActions.isMovingDocument,
     isRunningReview: pending.runReview,
     isUpdatingSettings: pending.updateSettings,
     isRetryingJob: pending.retryJob,
     retryingJobId,
-    isChangingLoreStatus: pending.changeLoreStatus,
   };
 }

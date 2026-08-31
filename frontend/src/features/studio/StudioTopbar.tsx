@@ -1,4 +1,5 @@
 import { BookOpen, ChevronLeft } from "lucide-react";
+import type { Ref } from "react";
 
 import { productIdentity } from "@/app/productIdentity";
 import type { Project } from "@/app/types/studio";
@@ -6,9 +7,10 @@ import type { Project } from "@/app/types/studio";
 interface StudioTopbarProps {
   project: Project;
   onBack: () => void;
+  headingRef?: Ref<HTMLHeadingElement>;
 }
 
-export function StudioTopbar({ project, onBack }: StudioTopbarProps) {
+export function StudioTopbar({ project, onBack, headingRef }: StudioTopbarProps) {
   return (
     <header className="studio-topbar">
       <button
@@ -22,7 +24,14 @@ export function StudioTopbar({ project, onBack }: StudioTopbarProps) {
       <div className="ui-brand">
         <BookOpen /> {productIdentity.name}
       </div>
-      <div className="studio-topbar__project-title">{project.title}</div>
+      <h1
+        className="studio-topbar__project-title"
+        id="studio-project-title"
+        ref={headingRef}
+        tabIndex={-1}
+      >
+        {project.title}
+      </h1>
       <div className="studio-topbar__spacer" />
     </header>
   );

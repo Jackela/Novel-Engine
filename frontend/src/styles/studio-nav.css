@@ -24,6 +24,7 @@
   z-index: 3;
 }
 .studio-topbar__project-title {
+  margin: 0;
   min-width: 180px;
   border-left: 1px solid #e1e4e5;
   padding-left: 18px;

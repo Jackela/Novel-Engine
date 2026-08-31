@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from "react";
+import type { Dispatch, SetStateAction } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { api, HttpError } from "@/app/api";
@@ -8,52 +9,226 @@ import { toErrorMessage } from "./toErrorMessage";
 
 const DEFAULT_LOAD_ERROR = "Unable to load the project. Please retry.";
 
+interface ProjectAggregateState {
+  readonly projectId: string;
+  readonly project: Project | null;
+  readonly reviews: Review[];
+  readonly exports: StudioExport[];
+}
+
+interface ScopedErrorState {
+  readonly projectId: string;
+  readonly value: string | null;
+}
+
+interface ScopedLoadingState {
+  readonly projectId: string;
+  readonly value: boolean;
+}
+
+interface ProjectLoadRequest {
+  readonly projectId: string;
+  readonly controller: AbortController;
+  readonly epoch: number;
+  promise: Promise<void>;
+}
+
+function resolveStateAction<T>(current: T, action: SetStateAction<T>): T {
+  return typeof action === "function" ? (action as (value: T) => T)(current) : action;
+}
+
 /**
- * #390 request lifecycle: the project aggregate loads under an abortable
- * signal owned by the loading effect. A stale load (project switched or the
- * page unmounted) is discarded instead of overwriting the current state, and
- * the loader never swallows a real failure — only a missing project (404)
- * redirects back to the project list; every other error surfaces as a
- * readable load error state.
+ * The route project identity owns one complete aggregate and its errors.
+ * Cancellation plus a request epoch prevents stale completion, while scoped
+ * projections hide prior-project state synchronously before the next effect.
+ * Authentication and absence navigate deliberately; operational failures stay
+ * on the requested route and expose `retryLoad`.
  */
 export function useStudioProject(projectId: string) {
   const navigate = useNavigate();
-  const [project, setProject] = useState<Project | null>(null);
-  const [reviews, setReviews] = useState<Review[]>([]);
-  const [exports, setExports] = useState<StudioExport[]>([]);
-  const [error, setError] = useState<string | null>(null);
-  const [loadError, setLoadError] = useState<string | null>(null);
+  const activeProjectIdRef = useRef<string | null>(null);
+  const requestEpochRef = useRef(0);
+  const requestRef = useRef<ProjectLoadRequest | null>(null);
+  const [aggregate, setAggregate] = useState<ProjectAggregateState>(() => ({
+    projectId,
+    project: null,
+    reviews: [],
+    exports: [],
+  }));
+  const [errorState, setErrorState] = useState<ScopedErrorState>(() => ({
+    projectId,
+    value: null,
+  }));
+  const [loadErrorState, setLoadErrorState] = useState<ScopedErrorState>(() => ({
+    projectId,
+    value: null,
+  }));
+  const [loadingState, setLoadingState] = useState<ScopedLoadingState>(() => ({
+    projectId,
+    value: false,
+  }));
 
-  const loadProject = useCallback(
-    async (signal: AbortSignal) => {
+  useEffect(() => {
+    activeProjectIdRef.current = projectId;
+    return () => {
+      if (activeProjectIdRef.current === projectId) {
+        activeProjectIdRef.current = null;
+      }
+      const request = requestRef.current;
+      if (request?.projectId === projectId) {
+        request.controller.abort();
+        requestRef.current = null;
+      }
+      requestEpochRef.current += 1;
+    };
+  }, [projectId]);
+
+  const setProject = useCallback<Dispatch<SetStateAction<Project | null>>>(
+    (nextProject) => {
+      if (activeProjectIdRef.current !== projectId) return;
+      setAggregate((current) => {
+        if (activeProjectIdRef.current !== projectId) return current;
+        const currentProject = current.projectId === projectId ? current.project : null;
+        return {
+          projectId,
+          project: resolveStateAction(currentProject, nextProject),
+          reviews: current.projectId === projectId ? current.reviews : [],
+          exports: current.projectId === projectId ? current.exports : [],
+        };
+      });
+    },
+    [projectId],
+  );
+
+  const setReviews = useCallback<Dispatch<SetStateAction<Review[]>>>(
+    (nextReviews) => {
+      if (activeProjectIdRef.current !== projectId) return;
+      setAggregate((current) => {
+        if (activeProjectIdRef.current !== projectId) return current;
+        const currentReviews = current.projectId === projectId ? current.reviews : [];
+        return {
+          projectId,
+          project: current.projectId === projectId ? current.project : null,
+          reviews: resolveStateAction(currentReviews, nextReviews),
+          exports: current.projectId === projectId ? current.exports : [],
+        };
+      });
+    },
+    [projectId],
+  );
+
+  const setExports = useCallback<Dispatch<SetStateAction<StudioExport[]>>>(
+    (nextExports) => {
+      if (activeProjectIdRef.current !== projectId) return;
+      setAggregate((current) => {
+        if (activeProjectIdRef.current !== projectId) return current;
+        const currentExports = current.projectId === projectId ? current.exports : [];
+        return {
+          projectId,
+          project: current.projectId === projectId ? current.project : null,
+          reviews: current.projectId === projectId ? current.reviews : [],
+          exports: resolveStateAction(currentExports, nextExports),
+        };
+      });
+    },
+    [projectId],
+  );
+
+  const setError = useCallback<Dispatch<SetStateAction<string | null>>>(
+    (nextError) => {
+      if (activeProjectIdRef.current !== projectId) return;
+      setErrorState((current) => {
+        if (activeProjectIdRef.current !== projectId) return current;
+        const currentError = current.projectId === projectId ? current.value : null;
+        return { projectId, value: resolveStateAction(currentError, nextError) };
+      });
+    },
+    [projectId],
+  );
+
+  const retryLoad = useCallback((): Promise<void> => {
+    if (activeProjectIdRef.current !== projectId) return Promise.resolve();
+    const inFlight = requestRef.current;
+    if (
+      inFlight?.projectId === projectId &&
+      !inFlight.controller.signal.aborted &&
+      inFlight.epoch === requestEpochRef.current
+    ) {
+      return inFlight.promise;
+    }
+
+    const controller = new AbortController();
+    const requestEpoch = ++requestEpochRef.current;
+    const request: ProjectLoadRequest = {
+      projectId,
+      controller,
+      epoch: requestEpoch,
+      promise: Promise.resolve(),
+    };
+    requestRef.current = request;
+    setAggregate({ projectId, project: null, reviews: [], exports: [] });
+    setLoadingState({ projectId, value: true });
+
+    const isCurrentRequest = () =>
+      !controller.signal.aborted &&
+      requestRef.current === request &&
+      requestEpochRef.current === requestEpoch &&
+      activeProjectIdRef.current === projectId;
+
+    request.promise = (async () => {
       try {
         const [nextProject, reviewResponse, exportResponse] = await Promise.all([
-          api.project(projectId, { signal }),
-          api.reviews(projectId, { signal }),
-          api.exports(projectId, { signal }),
+          api.project(projectId, { signal: controller.signal }),
+          api.reviews(projectId, { signal: controller.signal }),
+          api.exports(projectId, { signal: controller.signal }),
         ]);
-        setLoadError(null);
-        setProject(nextProject);
-        setReviews(reviewResponse.reviews);
-        setExports(exportResponse.exports);
+        if (!isCurrentRequest()) return;
+        setAggregate({
+          projectId,
+          project: nextProject,
+          reviews: reviewResponse.reviews,
+          exports: exportResponse.exports,
+        });
+        setLoadErrorState({ projectId, value: null });
       } catch (reason) {
-        // Stale load (project switched or unmounted): discard, never publish.
-        if (signal.aborted) return;
-        if (reason instanceof HttpError && reason.status === 404) {
+        if (!isCurrentRequest()) return;
+        controller.abort();
+        if (reason instanceof HttpError && reason.status === 401) {
           navigate("/", { replace: true });
           return;
         }
-        setLoadError(toErrorMessage(reason, DEFAULT_LOAD_ERROR));
+        if (reason instanceof HttpError && reason.status === 404) {
+          navigate("/projects", { replace: true });
+          return;
+        }
+        setLoadErrorState({
+          projectId,
+          value: toErrorMessage(reason, DEFAULT_LOAD_ERROR),
+        });
+      } finally {
+        if (requestRef.current === request) {
+          requestRef.current = null;
+          if (activeProjectIdRef.current === projectId) {
+            setLoadingState({ projectId, value: false });
+          }
+        }
       }
-    },
-    [navigate, projectId],
-  );
+    })();
+
+    return request.promise;
+  }, [navigate, projectId]);
 
   useEffect(() => {
-    const controller = new AbortController();
-    void loadProject(controller.signal);
-    return () => controller.abort();
-  }, [loadProject]);
+    void retryLoad();
+  }, [retryLoad]);
+
+  const aggregateIsCurrent = aggregate.projectId === projectId;
+  const project = aggregateIsCurrent ? aggregate.project : null;
+  const reviews = aggregateIsCurrent ? aggregate.reviews : [];
+  const exports = aggregateIsCurrent ? aggregate.exports : [];
+  const error = errorState.projectId === projectId ? errorState.value : null;
+  const loadError = loadErrorState.projectId === projectId ? loadErrorState.value : null;
+  const isLoading = loadingState.projectId === projectId ? loadingState.value : false;
 
   return {
     project,
@@ -65,5 +240,7 @@ export function useStudioProject(projectId: string) {
     error,
     setError,
     loadError,
+    isLoading,
+    retryLoad,
   };
 }

@@ -1,138 +1,215 @@
 import type { Dispatch, SetStateAction } from "react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { HttpError } from "@/app/api";
 import type { Project, SaveState, StudioDocument } from "@/app/types/studio";
-import { toErrorMessage } from "./toErrorMessage";
 import {
-  loadLatestDocument,
-  restoreDocumentRevision,
-  saveDocumentDraft,
-  useDocumentDraftAutosave,
-} from "./useDocumentDraftAutosave";
+  type DraftStates,
+  draftStateFor,
+  materializeActiveDraftState,
+  type PersistedDraft,
+  replaceOwnerBaseline,
+  replaceOwnerState,
+  stateForActiveDocument,
+  stateForOwner,
+} from "./documentDraftState";
+import { reconcileCommittedDraft } from "./reconcileCommittedDraft";
+import { toErrorMessage } from "./toErrorMessage";
+import { useAcceptanceCapture } from "./useAcceptanceCapture";
+import { useDocumentDraftActions } from "./useDocumentDraftActions";
+import { saveDocumentDraft, useDocumentDraftAutosave } from "./useDocumentDraftAutosave";
+import { useDocumentDraftOwner } from "./useDocumentDraftOwner";
 import { useRevisionCache } from "./useRevisionCache";
-
-interface DraftState {
-  readonly documentId: string | null;
-  readonly draft: string;
-  readonly titleDraft: string;
-  readonly saveState: SaveState;
-}
-
-interface PersistedDraft {
-  readonly documentId: string;
-  readonly draft: string;
-  readonly titleDraft: string;
-}
-
-function draftStateFor(document: StudioDocument | null, saveState: SaveState = "idle"): DraftState {
-  return {
-    documentId: document?.id ?? null,
-    draft: document?.content_markdown ?? "",
-    titleDraft: document?.title ?? "",
-    saveState,
-  };
-}
-
-function stateForDocument(current: DraftState, document: StudioDocument | null): DraftState {
-  return current.documentId === document?.id ? current : draftStateFor(document);
-}
 
 export function useDocumentDraft(
   activeDocument: StudioDocument | null,
   projectId: string,
   setProject: Dispatch<SetStateAction<Project | null>>,
   setError: Dispatch<SetStateAction<string | null>>,
+  setRevisionError: Dispatch<SetStateAction<string | null>> = setError,
+  setRestoreError: Dispatch<SetStateAction<string | null>> = setError,
 ) {
-  const [draftState, setDraftState] = useState<DraftState>(() => draftStateFor(activeDocument));
-  const activeDocumentId = activeDocument?.id ?? null;
-  const loadedRevision = useRef<string | null>(activeDocument?.current_revision_id ?? null);
+  const { owner, ownerRef, mountedRef, isCurrentOwner, isCurrentProject } = useDocumentDraftOwner(
+    projectId,
+    activeDocument?.id ?? null,
+  );
+  const [draftStates, setDraftStates] = useState<DraftStates>(() => ({
+    [owner.key]: draftStateFor(activeDocument, owner.key),
+  }));
   const saveTimer = useRef<number | null>(null);
-  const saveInFlight = useRef(false);
-  const lastPersistedDraft = useRef<PersistedDraft | null>(null);
-  const activeDraftState = stateForDocument(draftState, activeDocument);
+  const saveInFlight = useRef(new Set<string>());
+  const persistedDraftsRef = useRef(new Map<string, PersistedDraft>());
+  const activeDraftState = stateForActiveDocument(draftStates, activeDocument, owner.key);
   const { draft, titleDraft, saveState } = activeDraftState;
-  const draftRef = useRef({ draft, titleDraft, activeDocument });
-  const [isConflictActionPending, setIsConflictActionPending] = useState(false);
+
+  // Persist a clean aggregate advance into the owner cache. The render-time
+  // projection makes the new baseline visible immediately; materializing it
+  // here ensures a later commit can still reconcile against that baseline
+  // after the author has switched to another document.
+  useEffect(() => {
+    setDraftStates((current) => materializeActiveDraftState(current, activeDocument, owner.key));
+  }, [activeDocument, owner.key]);
+
+  const loadedRevision = useMemo(
+    () => ({ current: activeDraftState.loadedRevisionId, ownerToken: owner.token }),
+    [activeDraftState.loadedRevisionId, owner.token],
+  );
+  const draftRef = useRef({
+    draft,
+    titleDraft,
+    activeDocument,
+    editVersion: activeDraftState.editVersion,
+    ownerToken: owner.token,
+  });
   const saveStateRef = useRef(saveState);
-  const conflictActionPendingRef = useRef(isConflictActionPending);
+  const conflictActionPendingRef = useRef<typeof owner.token | null>(null);
 
   useEffect(() => {
-    draftRef.current = { draft, titleDraft, activeDocument };
-  }, [draft, titleDraft, activeDocument]);
+    draftRef.current = {
+      draft,
+      titleDraft,
+      activeDocument,
+      editVersion: activeDraftState.editVersion,
+      ownerToken: owner.token,
+    };
+  }, [activeDocument, activeDraftState.editVersion, draft, owner.token, titleDraft]);
 
   useEffect(() => {
     saveStateRef.current = saveState;
-    conflictActionPendingRef.current = isConflictActionPending;
-  }, [isConflictActionPending, saveState]);
-
-  useEffect(() => {
-    loadedRevision.current = activeDocument?.current_revision_id ?? null;
-  }, [activeDocument?.current_revision_id]);
+  }, [saveState]);
 
   const reportRevisionError = useCallback(
     (reason: unknown) => {
-      setError(toErrorMessage(reason, "Unable to load revisions."));
+      if (isCurrentOwner(owner)) {
+        setRevisionError(toErrorMessage(reason, "Unable to load revisions."));
+      }
     },
-    [setError],
+    [isCurrentOwner, owner, setRevisionError],
   );
+  const clearRevisionError = useCallback(() => {
+    if (isCurrentOwner(owner)) setRevisionError(null);
+  }, [isCurrentOwner, owner, setRevisionError]);
   const { revisions, refreshDocumentRevisions } = useRevisionCache(
     projectId,
-    activeDocumentId,
+    activeDocument?.id ?? null,
     reportRevisionError,
+    clearRevisionError,
   );
 
-  const setDraft = useCallback<Dispatch<SetStateAction<string>>>((nextDraft) => {
-    setDraftState((current) => {
-      const currentState = stateForDocument(current, draftRef.current.activeDocument);
-      return {
-        ...currentState,
-        draft: typeof nextDraft === "function" ? nextDraft(currentState.draft) : nextDraft,
-      };
-    });
-  }, []);
-
-  const setTitleDraft = useCallback<Dispatch<SetStateAction<string>>>((nextTitle) => {
-    setDraftState((current) => {
-      const currentState = stateForDocument(current, draftRef.current.activeDocument);
-      return {
-        ...currentState,
-        titleDraft:
-          typeof nextTitle === "function" ? nextTitle(currentState.titleDraft) : nextTitle,
-      };
-    });
-  }, []);
-
-  const setCurrentSaveState = useCallback((nextSaveState: SaveState) => {
-    saveStateRef.current = nextSaveState;
-    setDraftState((current) => ({
-      ...stateForDocument(current, draftRef.current.activeDocument),
-      saveState: nextSaveState,
-    }));
-  }, []);
-
-  const resetFor = useCallback(
-    (document: StudioDocument, nextSaveState: SaveState = "idle") => {
-      loadedRevision.current = document.current_revision_id;
-      lastPersistedDraft.current = {
-        documentId: document.id,
-        draft: document.content_markdown,
-        titleDraft: document.title,
-      };
-      setDraftState(draftStateFor(document, nextSaveState));
-      refreshDocumentRevisions(document.id);
+  const setDraft = useCallback<Dispatch<SetStateAction<string>>>(
+    (nextDraft) => {
+      if (!isCurrentOwner(owner)) return;
+      setDraftStates((current) => {
+        if (!isCurrentOwner(owner)) return current;
+        const currentState = stateForActiveDocument(
+          current,
+          draftRef.current.activeDocument,
+          owner.key,
+        );
+        const draft = typeof nextDraft === "function" ? nextDraft(currentState.draft) : nextDraft;
+        if (draft === currentState.draft) return current;
+        return replaceOwnerState(current, {
+          ...currentState,
+          draft,
+          editVersion: currentState.editVersion + 1,
+          saveState: currentState.saveState === "conflict" ? "conflict" : "saving",
+        });
+      });
     },
-    [refreshDocumentRevisions],
+    [isCurrentOwner, owner],
   );
 
-  const refreshLatestDocument = useCallback(
-    async (documentId: string): Promise<StudioDocument> => {
-      const { project, document } = await loadLatestDocument(projectId, documentId);
-      loadedRevision.current = document.current_revision_id;
-      setProject(project);
-      return document;
+  const setTitleDraft = useCallback<Dispatch<SetStateAction<string>>>(
+    (nextTitle) => {
+      if (!isCurrentOwner(owner)) return;
+      setDraftStates((current) => {
+        if (!isCurrentOwner(owner)) return current;
+        const currentState = stateForActiveDocument(
+          current,
+          draftRef.current.activeDocument,
+          owner.key,
+        );
+        const titleDraft =
+          typeof nextTitle === "function" ? nextTitle(currentState.titleDraft) : nextTitle;
+        if (titleDraft === currentState.titleDraft) return current;
+        return replaceOwnerState(current, {
+          ...currentState,
+          titleDraft,
+          editVersion: currentState.editVersion + 1,
+          saveState: currentState.saveState === "conflict" ? "conflict" : "saving",
+        });
+      });
     },
-    [projectId, setProject],
+    [isCurrentOwner, owner],
+  );
+
+  const setCurrentSaveState = useCallback(
+    (nextSaveState: SaveState) => {
+      if (!isCurrentProject(owner)) return;
+      if (ownerRef.current?.key === owner.key) saveStateRef.current = nextSaveState;
+      setDraftStates((current) =>
+        isCurrentProject(owner)
+          ? replaceOwnerState(current, {
+              ...stateForOwner(current, activeDocument, owner.key),
+              saveState: nextSaveState,
+            })
+          : current,
+      );
+    },
+    [activeDocument, isCurrentProject, owner, ownerRef],
+  );
+
+  const applyDocument = useCallback(
+    (document: StudioDocument, nextSaveState: SaveState, rememberPersisted: boolean) => {
+      if (
+        !isCurrentOwner(owner) ||
+        document.project_id !== owner.projectId ||
+        document.id !== owner.documentId
+      ) {
+        return;
+      }
+      loadedRevision.current = document.current_revision_id;
+      saveStateRef.current = nextSaveState;
+      if (rememberPersisted) {
+        persistedDraftsRef.current.set(owner.key, {
+          ownerKey: owner.key,
+          draft: document.content_markdown,
+          titleDraft: document.title,
+        });
+      }
+      setDraftStates((current) =>
+        replaceOwnerBaseline(current, document, owner.key, nextSaveState),
+      );
+    },
+    [isCurrentOwner, loadedRevision, owner],
+  );
+
+  const reconcileCommittedDocument = useCallback(
+    (document: StudioDocument, expectation: Parameters<typeof reconcileCommittedDraft>[2]) =>
+      reconcileCommittedDraft(
+        {
+          owner,
+          mountedRef,
+          ownerRef,
+          draftRef,
+          loadedRevision,
+          saveStateRef,
+          persistedDraftsRef,
+          setProject,
+          setDraftStates,
+        },
+        document,
+        expectation,
+      ),
+    [loadedRevision, mountedRef, owner, ownerRef, setProject],
+  );
+
+  const captureAcceptance = useAcceptanceCapture(
+    owner,
+    ownerRef,
+    draftRef,
+    reconcileCommittedDocument,
+    refreshDocumentRevisions,
+    setError,
   );
 
   const persistDraft = useCallback(
@@ -141,44 +218,82 @@ export function useDocumentDraft(
       content: string,
       title: string,
       baseRevisionId: string,
-    ): Promise<StudioDocument> => {
+      editVersion: number,
+    ): Promise<StudioDocument | null> => {
+      if (
+        !isCurrentOwner(owner) ||
+        document.project_id !== owner.projectId ||
+        document.id !== owner.documentId
+      ) {
+        return null;
+      }
       const saved = await saveDocumentDraft(projectId, document, content, title, baseRevisionId);
-      loadedRevision.current = saved.current_revision_id;
-      saveStateRef.current = "saved";
-      lastPersistedDraft.current = {
-        documentId: saved.id,
+      const outcome = reconcileCommittedDocument(saved, {
+        editVersion,
+        successState: "saved",
         draft: content,
-        titleDraft: saved.title,
-      };
-      setProject((current) =>
-        current
-          ? {
-              ...current,
-              documents: current.documents?.map((currentDocument) =>
-                currentDocument.id === saved.id ? saved : currentDocument,
-              ),
-            }
-          : current,
-      );
-      setDraftState((current) => ({
-        ...stateForDocument(current, document),
-        titleDraft: saved.title,
-        saveState: "saved",
-      }));
-      refreshDocumentRevisions(document.id);
-      setError(null);
+        titleDraft: title,
+      });
+      if (outcome !== null) {
+        void refreshDocumentRevisions(document.id);
+        if (outcome !== "conflict") setError(null);
+      }
       return saved;
     },
-    [projectId, refreshDocumentRevisions, setError, setProject],
+    [
+      isCurrentOwner,
+      owner,
+      projectId,
+      reconcileCommittedDocument,
+      refreshDocumentRevisions,
+      setError,
+    ],
   );
 
+  const isCurrentDraftOwner = useCallback(() => isCurrentOwner(owner), [isCurrentOwner, owner]);
+  const isCurrentDraftProject = useCallback(
+    () => isCurrentProject(owner),
+    [isCurrentProject, owner],
+  );
+
+  const {
+    isConflictActionPending,
+    loadLatest,
+    refreshLatestDocument,
+    restoreRevision,
+    retryOverwrite,
+  } = useDocumentDraftActions({
+    activeDocument,
+    projectId,
+    owner,
+    isCurrentOwner,
+    isCurrentProject,
+    loadedRevision,
+    saveTimerRef: saveTimer,
+    saveInFlightRef: saveInFlight,
+    conflictActionPendingRef,
+    draftRef,
+    applyDocument,
+    persistDraft,
+    reconcileCommittedDocument,
+    refreshDocumentRevisions,
+    setCurrentSaveState,
+    setProject,
+    setError,
+    setRestoreError,
+  });
+
   useDocumentDraftAutosave({
+    ownerKey: owner.key,
+    ownerToken: owner.token,
+    isCurrentOwner: isCurrentDraftOwner,
+    isCurrentProject: isCurrentDraftProject,
     activeDocument,
     draft,
     titleDraft,
     saveState,
     draftRef,
-    lastPersistedDraft,
+    persistedDraftsRef,
     loadedRevision,
     saveStateRef,
     conflictActionPendingRef,
@@ -190,98 +305,6 @@ export function useDocumentDraft(
     setError,
   });
 
-  const loadLatest = useCallback(async () => {
-    if (!activeDocument || conflictActionPendingRef.current || saveInFlight.current) return;
-    if (saveTimer.current) window.clearTimeout(saveTimer.current);
-    setIsConflictActionPending(true);
-    conflictActionPendingRef.current = true;
-    try {
-      const latestDocument = await refreshLatestDocument(activeDocument.id);
-      lastPersistedDraft.current = {
-        documentId: latestDocument.id,
-        draft: latestDocument.content_markdown,
-        titleDraft: latestDocument.title,
-      };
-      saveStateRef.current = "idle";
-      setDraftState(draftStateFor(latestDocument));
-      refreshDocumentRevisions(latestDocument.id);
-      setError(null);
-    } catch (reason) {
-      setCurrentSaveState("error");
-      setError(toErrorMessage(reason, "Unable to load the latest document."));
-    } finally {
-      setIsConflictActionPending(false);
-      conflictActionPendingRef.current = false;
-    }
-  }, [
-    activeDocument,
-    refreshDocumentRevisions,
-    refreshLatestDocument,
-    setCurrentSaveState,
-    setError,
-  ]);
-
-  const retryOverwrite = useCallback(async () => {
-    if (!activeDocument || conflictActionPendingRef.current || saveInFlight.current) return;
-    if (saveTimer.current) window.clearTimeout(saveTimer.current);
-    setIsConflictActionPending(true);
-    conflictActionPendingRef.current = true;
-    saveInFlight.current = true;
-    const { draft: currentDraft, titleDraft: currentTitle } = draftRef.current;
-    try {
-      const latestDocument = await refreshLatestDocument(activeDocument.id);
-      setCurrentSaveState("saving");
-      await persistDraft(
-        latestDocument,
-        currentDraft,
-        currentTitle,
-        latestDocument.current_revision_id,
-      );
-    } catch (reason) {
-      setCurrentSaveState(
-        reason instanceof HttpError && reason.status === 409 ? "conflict" : "error",
-      );
-      setError(toErrorMessage(reason, "Unable to overwrite the latest document."));
-    } finally {
-      saveInFlight.current = false;
-      setIsConflictActionPending(false);
-      conflictActionPendingRef.current = false;
-    }
-  }, [activeDocument, persistDraft, refreshLatestDocument, setCurrentSaveState, setError]);
-
-  const restoreRevision = useCallback(
-    async (revisionId: string) => {
-      if (!activeDocument) return;
-      try {
-        const restored = await restoreDocumentRevision(
-          projectId,
-          activeDocument,
-          revisionId,
-          loadedRevision.current ?? activeDocument.current_revision_id,
-        );
-        loadedRevision.current = restored.current_revision_id;
-        setDraftState((current) => {
-          const currentState = stateForDocument(current, activeDocument);
-          return draftStateFor(restored, currentState.saveState);
-        });
-        setProject((current) =>
-          current
-            ? {
-                ...current,
-                documents: current.documents?.map((document) =>
-                  document.id === restored.id ? restored : document,
-                ),
-              }
-            : current,
-        );
-        await refreshDocumentRevisions(activeDocument.id);
-      } catch (reason) {
-        setError(toErrorMessage(reason, "Unable to restore revision."));
-      }
-    },
-    [activeDocument, projectId, refreshDocumentRevisions, setError, setProject],
-  );
-
   return {
     draft,
     setDraft,
@@ -290,7 +313,7 @@ export function useDocumentDraft(
     saveState,
     loadedRevision,
     revisions,
-    resetFor,
+    captureAcceptance,
     restoreRevision,
     isConflictActionPending,
     loadLatest,

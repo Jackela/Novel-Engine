@@ -1,69 +1,20 @@
-import { ArrowDown, ArrowUp, ChevronDown, Loader2, Plus, Search } from "lucide-react";
+import { ChevronDown, Loader2, Plus, Search } from "lucide-react";
 import type { ComponentProps, FormEvent } from "react";
 
-import type { DocumentKind, Project, StudioDocument } from "@/app/types/studio";
+import type { DocumentKind, Project } from "@/app/types/studio";
 
-import { StudioDocumentRow } from "./components/StudioDocumentRow";
+import {
+  type PendingDocumentMove,
+  StudioNavigatorDocumentRows,
+} from "./components/StudioNavigatorDocumentRows";
 import { StudioWholeBookControl } from "./components/StudioWholeBookControl";
+import { useCommandFocusRestoration } from "./hooks/useCommandFocusRestoration";
 import { GROUPS, SECTIONS } from "./studioConstants";
 
 interface SearchResult {
   document_id: string;
   title: string;
   excerpt: string;
-}
-
-interface DocumentRowsProps {
-  rows: StudioDocument[];
-  activeId: string | null;
-  isMovingDocument: boolean;
-  onSelectDocument: (documentId: string) => void;
-  onMoveDocument: (documentId: string, direction: -1 | 1) => void;
-}
-
-/** The reorderable document rows of one group (or one volume). */
-function DocumentRows({
-  rows,
-  activeId,
-  isMovingDocument,
-  onSelectDocument,
-  onMoveDocument,
-}: DocumentRowsProps) {
-  return (
-    <>
-      {rows.map((document, index) => (
-        <div className="document-row__wrap" key={document.id}>
-          <StudioDocumentRow
-            document={document}
-            isActive={document.id === activeId}
-            onSelect={onSelectDocument}
-          />
-          <span className="document-row__order">
-            <button
-              aria-label={`Move ${document.title} up`}
-              aria-busy={isMovingDocument || undefined}
-              disabled={isMovingDocument || index === 0}
-              onClick={() => onMoveDocument(document.id, -1)}
-              title={isMovingDocument ? "Reordering documents" : "Move up"}
-              type="button"
-            >
-              <ArrowUp aria-hidden="true" />
-            </button>
-            <button
-              aria-label={`Move ${document.title} down`}
-              aria-busy={isMovingDocument || undefined}
-              disabled={isMovingDocument || index === rows.length - 1}
-              onClick={() => onMoveDocument(document.id, 1)}
-              title={isMovingDocument ? "Reordering documents" : "Move down"}
-              type="button"
-            >
-              <ArrowDown aria-hidden="true" />
-            </button>
-          </span>
-        </div>
-      ))}
-    </>
-  );
 }
 
 interface StudioNavigatorProps {
@@ -77,11 +28,12 @@ interface StudioNavigatorProps {
   onSearchSubmit: (event: FormEvent) => void;
   onNavigateSection: (section: string) => void;
   onSelectDocument: (documentId: string) => void;
-  onCreateDocument: (kind: DocumentKind) => void;
-  onMoveDocument: (documentId: string, direction: -1 | 1) => void;
+  onCreateDocument: (kind: DocumentKind) => void | Promise<void>;
+  onMoveDocument: (documentId: string, direction: -1 | 1) => void | Promise<void>;
   isCreatingDocument?: boolean;
   isMovingDocument?: boolean;
-  /** Whole-book generation loop control (#318); manuscript section only. */
+  creatingDocumentKind?: DocumentKind | null;
+  movingDocument?: PendingDocumentMove | null;
   wholeBook?: ComponentProps<typeof StudioWholeBookControl>;
 }
 
@@ -100,8 +52,16 @@ export function StudioNavigator({
   onMoveDocument,
   isCreatingDocument = false,
   isMovingDocument = false,
+  creatingDocumentKind = null,
+  movingDocument = null,
   wholeBook,
 }: StudioNavigatorProps) {
+  const createGroupBusy = isCreatingDocument || creatingDocumentKind !== null;
+  const moveGroupBusy = isMovingDocument || movingDocument !== null;
+  const documentMutationBusy = createGroupBusy || moveGroupBusy;
+  const runCreateWithFocusRestoration = useCommandFocusRestoration(documentMutationBusy);
+  const showWholeBook =
+    wholeBook !== undefined && (section === "manuscript" || wholeBook.phase.kind !== "idle");
   const visibleGroups = GROUPS.flatMap((group) => {
     if (section === "outline" && group.kind !== "outline") return [];
     if (section === "characters" && group.kind !== "character") return [];
@@ -111,7 +71,8 @@ export function StudioNavigator({
 
   const rowProps = {
     activeId,
-    isMovingDocument,
+    isMovingDocument: documentMutationBusy,
+    movingDocument,
     onSelectDocument,
     onMoveDocument,
   };
@@ -141,17 +102,28 @@ export function StudioNavigator({
               </button>
             ))}
           </nav>
-          <form className="studio-nav__search" onSubmit={onSearchSubmit}>
+          <form
+            aria-busy={isSearching}
+            className="studio-nav__search"
+            onSubmit={(event) => {
+              if (isSearching) {
+                event.preventDefault();
+                return;
+              }
+              onSearchSubmit(event);
+            }}
+          >
             {isSearching ? (
               <Loader2 aria-hidden="true" className="ui-spin" />
             ) : (
               <Search aria-hidden="true" />
             )}
             <input
+              aria-busy={isSearching}
               aria-label="Search project"
-              disabled={isSearching}
               onChange={(event) => onSearchChange(event.target.value)}
               placeholder="Search documents"
+              readOnly={isSearching}
               value={search}
             />
           </form>
@@ -170,15 +142,12 @@ export function StudioNavigator({
               ))}
             </section>
           ) : null}
-          {section === "manuscript" && wholeBook ? <StudioWholeBookControl {...wholeBook} /> : null}
+          {showWholeBook ? <StudioWholeBookControl {...wholeBook} /> : null}
           <div className="studio-nav__tree">
             {visibleGroups.map(({ kind, label, icon: Icon }) => {
+              const isCreatingThisKind = creatingDocumentKind === kind;
               const documents =
                 project.documents?.filter((document) => document.kind === kind) ?? [];
-              // Volume grouping (ADR-0005): the manuscript group renders one
-              // headered volume per project volume in reading order; chapters
-              // without a resolved link fall back to the first volume. Other
-              // kinds keep their flat list.
               const volumes = kind === "chapter" ? (project.volumes ?? null) : null;
               const inVolume = (volumeId: string | undefined) =>
                 documents.filter(
@@ -191,14 +160,18 @@ export function StudioNavigator({
                       <Icon aria-hidden="true" /> {label}
                     </span>
                     <button
-                      aria-busy={isCreatingDocument || undefined}
-                      aria-label={isCreatingDocument ? `Adding ${label}` : `Add ${label}`}
-                      disabled={isCreatingDocument}
-                      onClick={() => onCreateDocument(kind)}
-                      title={isCreatingDocument ? `Adding ${label}` : `Add ${label}`}
+                      aria-busy={isCreatingThisKind || undefined}
+                      aria-label={isCreatingThisKind ? `Adding ${label}` : `Add ${label}`}
+                      disabled={documentMutationBusy}
+                      onClick={(event) => {
+                        void runCreateWithFocusRestoration(event.currentTarget, () =>
+                          onCreateDocument(kind),
+                        );
+                      }}
+                      title={isCreatingThisKind ? `Adding ${label}` : `Add ${label}`}
                       type="button"
                     >
-                      {isCreatingDocument ? (
+                      {isCreatingThisKind ? (
                         <Loader2 aria-hidden="true" className="ui-spin" />
                       ) : (
                         <Plus aria-hidden="true" />
@@ -209,11 +182,11 @@ export function StudioNavigator({
                     volumes.map((volume) => (
                       <div className="volume-group" key={volume.id}>
                         <p className="studio-nav__volume-header">{volume.title}</p>
-                        <DocumentRows rows={inVolume(volume.id)} {...rowProps} />
+                        <StudioNavigatorDocumentRows rows={inVolume(volume.id)} {...rowProps} />
                       </div>
                     ))
                   ) : (
-                    <DocumentRows rows={documents} {...rowProps} />
+                    <StudioNavigatorDocumentRows rows={documents} {...rowProps} />
                   )}
                 </section>
               );

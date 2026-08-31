@@ -1,9 +1,9 @@
-import { fireEvent } from "@testing-library/dom";
-import { act } from "react";
+import { fireEvent, getByRole, queryByRole } from "@testing-library/dom";
+import { act, useState } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { chapter } from "@/test/factories";
-import { createMountHarness } from "@/test/harness";
+import { createMountHarness, deferred } from "@/test/harness";
 
 import { StudioEditorPane } from "./StudioEditorPane";
 
@@ -88,5 +88,116 @@ describe("Studio editor pane", () => {
     const saveStatus = container.querySelector(".editor__save-state");
     expect(saveStatus?.textContent).toContain("Saved");
     expect(saveStatus?.textContent).not.toContain("Save failed");
+  });
+
+  it("marks only Load latest busy and returns orphaned focus to the document title", async () => {
+    const completion = deferred<void>();
+
+    function ConflictHarness() {
+      const [saveState, setSaveState] = useState<"conflict" | "idle">("conflict");
+      const [isPending, setIsPending] = useState(false);
+      return (
+        <StudioEditorPane
+          activeDocument={baseDocument}
+          draft="# Local opening"
+          titleDraft="Opening"
+          saveState={saveState}
+          isConflictActionPending={isPending}
+          onDraftChange={vi.fn()}
+          onTitleChange={vi.fn()}
+          onLoadLatest={async () => {
+            setIsPending(true);
+            await completion.promise;
+            setSaveState("idle");
+            setIsPending(false);
+          }}
+          onRetryOverwrite={vi.fn()}
+        />
+      );
+    }
+
+    const container = render(<ConflictHarness />);
+    const loadLatest = getByRole(container, "button", { name: "Load latest (discard local)" });
+    const retryOverwrite = getByRole(container, "button", {
+      name: "Keep local and retry overwrite",
+    });
+    loadLatest.focus();
+
+    act(() => loadLatest.click());
+    expect(loadLatest).toBeDisabled();
+    expect(loadLatest).toHaveAttribute("aria-busy", "true");
+    expect(retryOverwrite).toBeDisabled();
+    expect(retryOverwrite).not.toHaveAttribute("aria-busy");
+
+    await act(async () => {
+      completion.resolve(undefined);
+      await completion.promise;
+    });
+
+    expect(queryByRole(container, "button", { name: "Load latest (discard local)" })).toBeNull();
+    expect(document.activeElement).toBe(
+      container.querySelector('input[aria-label="Document title"]'),
+    );
+  });
+
+  it("marks only Retry overwrite busy while both conflict commands are locked", async () => {
+    const completion = deferred<void>();
+    const container = render(
+      <StudioEditorPane
+        activeDocument={baseDocument}
+        draft="# Local opening"
+        titleDraft="Opening"
+        saveState="conflict"
+        onDraftChange={vi.fn()}
+        onTitleChange={vi.fn()}
+        onLoadLatest={vi.fn()}
+        onRetryOverwrite={() => completion.promise}
+      />,
+    );
+    const loadLatest = getByRole(container, "button", { name: "Load latest (discard local)" });
+    const retryOverwrite = getByRole(container, "button", {
+      name: "Keep local and retry overwrite",
+    });
+
+    act(() => retryOverwrite.click());
+    expect(retryOverwrite).toBeDisabled();
+    expect(retryOverwrite).toHaveAttribute("aria-busy", "true");
+    expect(loadLatest).toBeDisabled();
+    expect(loadLatest).not.toHaveAttribute("aria-busy");
+
+    await act(async () => {
+      completion.resolve(undefined);
+      await completion.promise;
+    });
+  });
+
+  it("does not override focus the author moved during conflict recovery", async () => {
+    const completion = deferred<void>();
+    const container = render(
+      <StudioEditorPane
+        activeDocument={baseDocument}
+        draft="# Local opening"
+        titleDraft="Opening"
+        saveState="conflict"
+        onDraftChange={vi.fn()}
+        onTitleChange={vi.fn()}
+        onLoadLatest={() => completion.promise}
+        onRetryOverwrite={vi.fn()}
+      />,
+    );
+    const loadLatest = getByRole(container, "button", { name: "Load latest (discard local)" });
+    const otherButton = document.createElement("button");
+    document.body.appendChild(otherButton);
+    loadLatest.focus();
+
+    act(() => loadLatest.click());
+    otherButton.focus();
+    await act(async () => {
+      completion.resolve(undefined);
+      await completion.promise;
+    });
+
+    expect(document.activeElement).toBe(otherButton);
+    otherButton.remove();
   });
 });

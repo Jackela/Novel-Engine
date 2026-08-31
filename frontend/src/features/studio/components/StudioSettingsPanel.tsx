@@ -3,6 +3,7 @@ import { useRef } from "react";
 
 import type { ProviderInfo } from "@/app/types/studio";
 
+import { useCommandFocusRestoration } from "../hooks/useCommandFocusRestoration";
 import { DEFAULT_PROVIDER_OPTIONS } from "../studioConstants";
 import type { SettingsFormState } from "../studioInspectorTypes";
 
@@ -22,13 +23,15 @@ export function StudioSettingsPanel({
   isSaving = false,
 }: StudioSettingsPanelProps) {
   const saveButtonRef = useRef<HTMLButtonElement>(null);
+  const runWithFocusRestoration = useCommandFocusRestoration(isSaving);
 
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    try {
-      await onUpdateSettings(event);
-    } finally {
-      saveButtonRef.current?.focus();
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+    const saveButton = saveButtonRef.current;
+    if (saveButton === null) {
+      void onUpdateSettings(event);
+      return;
     }
+    void runWithFocusRestoration(saveButton, () => onUpdateSettings(event));
   };
 
   return (
@@ -41,6 +44,7 @@ export function StudioSettingsPanel({
       <label className="studio-inspector__settings-field">
         <span>Title</span>
         <input
+          disabled={isSaving}
           maxLength={240}
           onChange={(event) =>
             setSettingsForm((current) => ({
@@ -54,6 +58,7 @@ export function StudioSettingsPanel({
       <label className="studio-inspector__settings-field">
         <span>Description</span>
         <textarea
+          disabled={isSaving}
           maxLength={10000}
           onChange={(event) =>
             setSettingsForm((current) => ({
@@ -69,6 +74,7 @@ export function StudioSettingsPanel({
         <span>Provider</span>
         <select
           aria-label="Provider"
+          disabled={isSaving}
           onChange={(event) =>
             setSettingsForm((current) => ({
               ...current,

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useRef, useSyncExternalStore } from "react";
 
 import { api } from "@/app/api";
 import type { Revision } from "@/app/types/studio";
@@ -8,10 +8,18 @@ const revisionCache = new Map<string, Revision[]>();
 const revisionRequestVersions = new Map<string, number>();
 const listeners = new Set<() => void>();
 let revisionStoreVersion = 0;
+const noop = () => undefined;
 
 interface RevisionCacheResult {
   readonly revisions: Revision[];
   readonly refreshDocumentRevisions: (documentId: string) => Promise<void>;
+}
+
+interface ActiveRevisionRequest {
+  readonly controller: AbortController;
+  readonly key: string;
+  readonly lifecycleEpoch: number;
+  readonly requestVersion: number;
 }
 
 function cacheKey(projectId: string, documentId: string): string {
@@ -55,25 +63,75 @@ export function useRevisionCache(
   projectId: string,
   documentId: string | null,
   onError: (reason: unknown) => void,
+  onSuccess: () => void = noop,
 ): RevisionCacheResult {
   useSyncExternalStore(subscribeRevisionStore, getRevisionStoreSnapshot, getRevisionStoreSnapshot);
+  const ownerKey = documentId ? cacheKey(projectId, documentId) : `${projectId}\u0000`;
+  const ownerKeyRef = useRef<string | null>(null);
+  const lifecycleEpochRef = useRef(0);
+  const activeRequestRef = useRef<ActiveRevisionRequest | null>(null);
+
+  useEffect(() => {
+    const lifecycleOwnerKey = ownerKey;
+    const lifecycleEpoch = lifecycleEpochRef.current + 1;
+    ownerKeyRef.current = lifecycleOwnerKey;
+    lifecycleEpochRef.current = lifecycleEpoch;
+    return () => {
+      if (ownerKeyRef.current === lifecycleOwnerKey) {
+        ownerKeyRef.current = null;
+      }
+      if (lifecycleEpochRef.current === lifecycleEpoch) {
+        lifecycleEpochRef.current += 1;
+      }
+      const activeRequest = activeRequestRef.current;
+      if (activeRequest?.key === lifecycleOwnerKey) {
+        activeRequestRef.current = null;
+        activeRequest.controller.abort();
+      }
+    };
+  }, [ownerKey]);
 
   const refreshDocumentRevisions = useCallback(
     async (nextDocumentId: string): Promise<void> => {
       const key = cacheKey(projectId, nextDocumentId);
+      if (ownerKeyRef.current !== key) return;
+      activeRequestRef.current?.controller.abort();
+      const controller = new AbortController();
+      const lifecycleEpoch = lifecycleEpochRef.current;
       const requestVersion = (revisionRequestVersions.get(key) ?? 0) + 1;
       revisionRequestVersions.set(key, requestVersion);
+      const request: ActiveRevisionRequest = {
+        controller,
+        key,
+        lifecycleEpoch,
+        requestVersion,
+      };
+      activeRequestRef.current = request;
+      const isCurrentRequest = (): boolean =>
+        !controller.signal.aborted &&
+        ownerKeyRef.current === key &&
+        lifecycleEpochRef.current === request.lifecycleEpoch &&
+        activeRequestRef.current === request &&
+        revisionRequestVersions.get(key) === request.requestVersion;
       try {
-        if (revisionRequestVersions.get(key) !== requestVersion) return;
-        const response = await api.revisions(projectId, nextDocumentId);
-        if (revisionRequestVersions.get(key) === requestVersion) {
+        const response = await api.revisions(projectId, nextDocumentId, {
+          signal: controller.signal,
+        });
+        if (isCurrentRequest()) {
           replaceCachedRevisions(projectId, nextDocumentId, response.revisions);
+          onSuccess();
         }
       } catch (reason: unknown) {
-        if (revisionRequestVersions.get(key) === requestVersion) onError(reason);
+        if (isCurrentRequest()) {
+          onError(reason);
+        }
+      } finally {
+        if (activeRequestRef.current === request) {
+          activeRequestRef.current = null;
+        }
       }
     },
-    [onError, projectId],
+    [onError, onSuccess, projectId],
   );
 
   useEffect(() => {

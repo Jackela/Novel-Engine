@@ -52,9 +52,15 @@ describe("buildLoreStatusModel", () => {
       lore_status: "draft",
     });
 
-    const model = buildLoreStatusModel(character, changeLoreStatus);
+    const lifecycle = {
+      isSaving: true,
+      error: "Character status failed.",
+      attemptedStatus: "stable" as const,
+    };
+    const model = buildLoreStatusModel(character, changeLoreStatus, lifecycle);
     const submitted = model?.submit("stable");
 
+    expect(model).toMatchObject(lifecycle);
     expect(changeLoreStatus).toHaveBeenCalledWith(character.id, "stable");
     expect(submitted).toBe(save.promise);
 
@@ -65,6 +71,12 @@ describe("buildLoreStatusModel", () => {
   it("does not expose the Lore editor for a non-Lore document", () => {
     const note = chapter("note-1", { kind: "note", lore_status: null });
 
-    expect(buildLoreStatusModel(note, vi.fn())).toBeNull();
+    expect(
+      buildLoreStatusModel(note, vi.fn(), {
+        isSaving: false,
+        error: null,
+        attemptedStatus: null,
+      }),
+    ).toBeNull();
   });
 });

@@ -1,15 +1,16 @@
 import { Check, Sparkles, X } from "lucide-react";
-import type { Dispatch, SetStateAction } from "react";
+import { type Dispatch, type SetStateAction, useRef, useState } from "react";
 
 import type { StudioJob } from "@/app/types/studio";
+import { useCommandFocusRestoration } from "../hooks/useCommandFocusRestoration";
 
 interface StudioCopilotPanelProps {
   instruction: string;
   setInstruction: Dispatch<SetStateAction<string>>;
   proposal: StudioJob | null;
   setProposal: Dispatch<SetStateAction<StudioJob | null>>;
-  onRunProposal: (operation: "continue" | "rewrite") => void;
-  onAcceptProposal: () => void;
+  onRunProposal: (operation: "continue" | "rewrite") => void | Promise<void>;
+  onAcceptProposal: () => void | Promise<void>;
   /** True while a proposal request is in flight. */
   isRunningProposal?: boolean;
   /** True while accepting the currently displayed proposal. */
@@ -17,7 +18,7 @@ interface StudioCopilotPanelProps {
   /** #308: markdown received so far while the proposal stream is running. */
   streamingText?: string | null;
   /** #308: aborts the running stream; nothing is persisted. */
-  onStopProposal?: () => void;
+  onStopProposal?: () => void | Promise<void>;
 }
 
 export function StudioCopilotPanel({
@@ -32,8 +33,31 @@ export function StudioCopilotPanel({
   streamingText = null,
   onStopProposal,
 }: StudioCopilotPanelProps) {
-  const isBusy = isRunningProposal || isAcceptingProposal;
+  const pendingProposalOperationRef = useRef<"continue" | "rewrite" | null>(null);
+  const [pendingProposalOperation, setPendingProposalOperation] = useState<
+    "continue" | "rewrite" | null
+  >(null);
+  const isBusy = isRunningProposal || isAcceptingProposal || pendingProposalOperation !== null;
   const isStreaming = streamingText !== null;
+  const runWithFocusRestoration = useCommandFocusRestoration(isBusy);
+  const instructionRef = useRef<HTMLTextAreaElement>(null);
+  const continueButtonRef = useRef<HTMLButtonElement>(null);
+
+  const runProposalCommand = (operation: "continue" | "rewrite", target: HTMLButtonElement) => {
+    if (isBusy || pendingProposalOperationRef.current !== null) return;
+    pendingProposalOperationRef.current = operation;
+    setPendingProposalOperation(operation);
+    void runWithFocusRestoration(target, async () => {
+      try {
+        await onRunProposal(operation);
+      } finally {
+        if (pendingProposalOperationRef.current === operation) {
+          pendingProposalOperationRef.current = null;
+        }
+        setPendingProposalOperation((current) => (current === operation ? null : current));
+      }
+    });
+  };
 
   return (
     <div aria-busy={isBusy} className="studio-inspector__panel">
@@ -44,27 +68,33 @@ export function StudioCopilotPanel({
         disabled={isBusy}
         onChange={(event) => setInstruction(event.target.value)}
         placeholder="Describe the change or direction..."
+        ref={instructionRef}
         rows={5}
         value={instruction}
       />
       <div className="studio-inspector__actions">
         <button
-          aria-busy={isRunningProposal}
+          aria-busy={pendingProposalOperation === "rewrite" || undefined}
           className="ui-command"
           disabled={isBusy}
-          onClick={() => onRunProposal("rewrite")}
+          onClick={(event) => {
+            runProposalCommand("rewrite", event.currentTarget);
+          }}
           type="button"
         >
-          <Sparkles /> Rewrite
+          <Sparkles /> {pendingProposalOperation === "rewrite" ? "Rewriting…" : "Rewrite"}
         </button>
         <button
-          aria-busy={isRunningProposal}
+          aria-busy={pendingProposalOperation === "continue" || undefined}
           className="ui-command"
           disabled={isBusy}
-          onClick={() => onRunProposal("continue")}
+          onClick={(event) => {
+            runProposalCommand("continue", event.currentTarget);
+          }}
+          ref={continueButtonRef}
           type="button"
         >
-          {isRunningProposal ? "Generating…" : "Continue"}
+          {pendingProposalOperation === "continue" ? "Generating…" : "Continue"}
         </button>
       </div>
       {isStreaming ? (
@@ -75,7 +105,19 @@ export function StudioCopilotPanel({
           </header>
           <pre aria-live="polite">{streamingText}</pre>
           <div className="studio-inspector__actions">
-            <button className="ui-command" onClick={() => onStopProposal?.()} type="button">
+            <button
+              className="ui-command"
+              onClick={(event) => {
+                if (onStopProposal) {
+                  void runWithFocusRestoration(
+                    event.currentTarget,
+                    onStopProposal,
+                    () => continueButtonRef.current ?? instructionRef.current,
+                  );
+                }
+              }}
+              type="button"
+            >
               <X /> Stop
             </button>
           </div>
@@ -92,7 +134,13 @@ export function StudioCopilotPanel({
               aria-busy={isAcceptingProposal}
               className="ui-command ui-command--primary"
               disabled={isBusy}
-              onClick={onAcceptProposal}
+              onClick={(event) => {
+                void runWithFocusRestoration(
+                  event.currentTarget,
+                  onAcceptProposal,
+                  () => instructionRef.current ?? continueButtonRef.current,
+                );
+              }}
               type="button"
             >
               <Check /> Accept

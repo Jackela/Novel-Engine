@@ -1,8 +1,10 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { api } from "./api";
+import { appConfig } from "./config";
 
 afterEach(() => {
+  vi.useRealTimers();
   vi.unstubAllGlobals();
 });
 
@@ -140,6 +142,83 @@ describe("Studio API client", () => {
 
     const error = await pending.catch((reason: unknown) => reason);
     expect(error).toMatchObject({ message: "Request cancelled." });
+  });
+
+  it("keeps create-export POST and CSRF semantics when forwarding caller cancellation", async () => {
+    const controller = new AbortController();
+    vi.stubGlobal("document", { cookie: "novel_engine_csrf=test-csrf-token" });
+    const fetchMock = vi.fn(
+      (_input: RequestInfo | URL, init?: RequestInit) =>
+        new Promise((_resolve, reject) => {
+          init?.signal?.addEventListener("abort", () => {
+            reject(new DOMException("Aborted", "AbortError"));
+          });
+        }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const pending = api.createExport("project-1", "docx", { signal: controller.signal });
+    const init = fetchMock.mock.calls[0]?.[1] as RequestInit | undefined;
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/projects/project-1/exports",
+      expect.objectContaining({
+        method: "POST",
+        credentials: "include",
+        body: JSON.stringify({ format: "docx" }),
+        headers: expect.objectContaining({
+          "Content-Type": "application/json",
+          "X-CSRF-Token": "test-csrf-token",
+        }),
+      }),
+    );
+    expect(init?.signal).not.toBe(controller.signal);
+
+    controller.abort();
+
+    await expect(pending).rejects.toMatchObject({ message: "Request cancelled." });
+    expect(init?.signal?.aborted).toBe(true);
+  });
+
+  it("reports a caller-cancelled blob download as cancellation instead of timeout", async () => {
+    const controller = new AbortController();
+    const fetchMock = vi.fn(
+      (_input: RequestInfo | URL, init?: RequestInit) =>
+        new Promise((_resolve, reject) => {
+          init?.signal?.addEventListener("abort", () => {
+            reject(new DOMException("Aborted", "AbortError"));
+          });
+        }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const pending = api.download("/api/exports/export-1/download", {
+      signal: controller.signal,
+    });
+    const init = fetchMock.mock.calls[0]?.[1] as RequestInit | undefined;
+    controller.abort();
+
+    await expect(pending).rejects.toMatchObject({ message: "Request cancelled." });
+    expect(init?.signal?.aborted).toBe(true);
+  });
+
+  it("preserves the blob download timeout error", async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(
+        (_input: RequestInfo | URL, init?: RequestInit) =>
+          new Promise((_resolve, reject) => {
+            init?.signal?.addEventListener("abort", () => {
+              reject(new DOMException("Aborted", "AbortError"));
+            });
+          }),
+      ),
+    );
+
+    const error = api.download("/api/exports/export-1/download").catch((reason: unknown) => reason);
+    await vi.advanceTimersByTimeAsync(appConfig.apiTimeoutMs);
+
+    await expect(error).resolves.toMatchObject({ message: "Download timed out. Please retry." });
   });
 
   it("sends X-CSRF-Token header on write requests when cookie is present", async () => {
