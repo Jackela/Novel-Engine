@@ -89,6 +89,11 @@ export interface AppOptions {
    * API-only and the root explains the missing build.
    */
   spaDistDirectory?: string | undefined;
+  /**
+   * Lorebook injection budget in characters (#445). Falls back to the
+   * configured `LLM_LOREBOOK_BUDGET_CHARACTERS`, then the adjudicated default.
+   */
+  lorebookBudgetCharacters?: number | undefined;
 }
 
 const CORS_ALLOWED_HEADERS = [
@@ -160,6 +165,8 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
           now: options.clock,
         });
   const provider = buildProviderRuntime(options.config, options);
+  const loreBudgetCharacters =
+    options.lorebookBudgetCharacters ?? options.config?.llm.lorebookBudgetCharacters;
   const studioServices =
     persistence === undefined
       ? undefined
@@ -178,6 +185,7 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
             },
             artifactStore: new ExportStorePart(persistence.db.db),
             artifactFiles: new FilesystemExportArtifactGateway(persistence.dataDirectory),
+            loreBudgetCharacters,
           },
         );
 

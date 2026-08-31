@@ -34,6 +34,8 @@ export interface ProposalStreamDeps {
   readonly providerFactory: TextGenerationProviderFactory;
   readonly inFlight: InFlightOperationGuard;
   readonly now: () => Date;
+  /** Lorebook injection budget (#445); undefined keeps the adjudicated default. */
+  readonly loreBudgetCharacters?: number | undefined;
 }
 
 export interface ProposalStreamRequest {
@@ -103,6 +105,7 @@ export async function* streamProposal(
         projectId,
         document,
         revision,
+        deps.loreBudgetCharacters,
       ),
       {
         signal: request.signal,

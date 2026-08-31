@@ -1,14 +1,16 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  renderLoreSection,
+  triggeredLoreSections,
+} from "../../src/contexts/studio/application/lore_injection.js";
+import {
   asLoreStatus,
   type LoreEntrySource,
   loreEntryKeys,
   matchLoreEntries,
   normalizeLoreAliases,
   parseLoreAliases,
-  renderLoreSection,
-  triggeredLoreSections,
 } from "../../src/contexts/studio/application/lorebook.js";
 import {
   assembleResidentContext,

@@ -17,6 +17,8 @@ export interface JobHistoryServiceOptions {
   readonly providerFactory: JobRetryExecutorOptions["providerFactory"];
   /** Serializes identical exports and retries (#305); shared with proposals. */
   readonly inFlight: InFlightOperationGuard;
+  /** Lorebook injection budget (#445); undefined keeps the adjudicated default. */
+  readonly loreBudgetCharacters?: JobRetryExecutorOptions["loreBudgetCharacters"];
 }
 
 /**
@@ -45,6 +47,7 @@ export class JobHistoryService {
     this.retries = new JobRetryExecutor(store, reviews, artifacts, {
       now: options.now,
       providerFactory: options.providerFactory,
+      loreBudgetCharacters: options.loreBudgetCharacters,
     });
     this.inFlight = options.inFlight;
     this.now = options.now ?? (() => new Date());

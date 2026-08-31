@@ -136,6 +136,7 @@ describe("environment configuration surface", () => {
       retryDelayMs: 2_500,
       streamFirstByteTimeoutMs: 45_000,
       streamIdleTimeoutMs: 90_000,
+      lorebookBudgetCharacters: 4_000,
     });
   });
 

@@ -79,6 +79,18 @@ entries. Pre-gate lore entries were admitted as canon by migration; `draft`
 is not-yet-canon and `deprecated` is retired canon.
 _Avoid_: truth, official setting
 
+**Injection budget**:
+The character budget of the lorebook section in one generation prompt. Hits
+beyond the budget keep their summary line and are never silently dropped.
+_Avoid_: token limit, context cap
+
+**Progressive disclosure**:
+The lore injection strategy: matched entries first enter the prompt as one
+summary line, then are promoted to full text within the injection budget by
+a deterministic priority — title hits before alias hits, ties in reading
+order.
+_Avoid_: tiered lore, lore scoring
+
 **Resident context**:
 The context layer always injected into generation prompts: the outline
 position, a rolling summary of prior chapters, and the tail of the most

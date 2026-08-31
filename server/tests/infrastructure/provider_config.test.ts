@@ -35,6 +35,7 @@ describe("provider configuration parser", () => {
       retryDelayMs: 1_000,
       streamFirstByteTimeoutMs: 30_000,
       streamIdleTimeoutMs: 60_000,
+      lorebookBudgetCharacters: 4_000,
     });
   });
 
@@ -93,6 +94,11 @@ describe("provider configuration parser", () => {
       [{ LLM_STREAM_IDLE_TIMEOUT_MS: "0" }, "LLM_STREAM_IDLE_TIMEOUT_MS"],
       [{ LLM_STREAM_IDLE_TIMEOUT_MS: "-5" }, "LLM_STREAM_IDLE_TIMEOUT_MS"],
       [{ LLM_STREAM_IDLE_TIMEOUT_MS: "300001" }, "LLM_STREAM_IDLE_TIMEOUT_MS"],
+      [{ LLM_LOREBOOK_BUDGET_CHARACTERS: "soon" }, "LLM_LOREBOOK_BUDGET_CHARACTERS"],
+      [{ LLM_LOREBOOK_BUDGET_CHARACTERS: "0" }, "LLM_LOREBOOK_BUDGET_CHARACTERS"],
+      [{ LLM_LOREBOOK_BUDGET_CHARACTERS: "-5" }, "LLM_LOREBOOK_BUDGET_CHARACTERS"],
+      [{ LLM_LOREBOOK_BUDGET_CHARACTERS: "1.5" }, "LLM_LOREBOOK_BUDGET_CHARACTERS"],
+      [{ LLM_LOREBOOK_BUDGET_CHARACTERS: "1000001" }, "LLM_LOREBOOK_BUDGET_CHARACTERS"],
     ];
 
     for (const [values, expectedSetting] of cases) {
@@ -125,5 +131,21 @@ describe("provider configuration parser", () => {
       streamFirstByteTimeoutMs: 1,
       streamIdleTimeoutMs: 300_000,
     });
+  });
+
+  it("parses the lorebook injection budget within the adjudicated bounds (#445)", () => {
+    expect(loadLlmServerConfig(environment()).lorebookBudgetCharacters).toBe(4_000);
+    expect(
+      loadLlmServerConfig(environment({ LLM_LOREBOOK_BUDGET_CHARACTERS: "  " }))
+        .lorebookBudgetCharacters,
+    ).toBe(4_000);
+    expect(
+      loadLlmServerConfig(environment({ LLM_LOREBOOK_BUDGET_CHARACTERS: "12000" }))
+        .lorebookBudgetCharacters,
+    ).toBe(12_000);
+    expect(
+      loadLlmServerConfig(environment({ LLM_LOREBOOK_BUDGET_CHARACTERS: "1" }))
+        .lorebookBudgetCharacters,
+    ).toBe(1);
   });
 });

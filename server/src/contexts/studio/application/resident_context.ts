@@ -1,6 +1,6 @@
 import { linkedChapterBeat } from "./beat_association_service.js";
+import { triggeredLoreSections } from "./lore_injection.js";
 import type { LoreEntrySource } from "./lorebook.js";
-import { triggeredLoreSections } from "./lorebook.js";
 import type { OutlineBeat } from "./outline_beats.js";
 import type { DocumentWithCurrent, ProjectScope, StudioStore } from "./ports/studio_store.js";
 import { renderResidentContextSections, residentMatchCorpus } from "./resident_context_render.js";
@@ -223,6 +223,12 @@ export function buildProposalUserPrompt(input: {
   readonly manuscriptMarkdown: string;
   /** Character/world entries (#315); matches render after the resident sections. */
   readonly loreEntries?: readonly LoreEntrySource[];
+  /**
+   * Character budget of the lorebook section (#445); defaults to the
+   * adjudicated value. The single assembly point every proposal pipeline
+   * (synchronous draft, SSE stream, retry) shares.
+   */
+  readonly loreBudgetCharacters?: number | undefined;
 }): string {
   const lines = [`Operation: ${input.operation}`, formatAuthorInstruction(input.instruction)];
   const view = assembleResidentContext(input.source);
@@ -232,6 +238,7 @@ export function buildProposalUserPrompt(input: {
       entries: input.loreEntries ?? [],
       resident: residentMatchCorpus(view),
       manuscript: input.manuscriptMarkdown,
+      budgetCharacters: input.loreBudgetCharacters,
     }),
   );
   lines.push(
