@@ -2,6 +2,7 @@ import type { Principal } from "../../../../shared/application/ports/auth.js";
 import type { StudioBeatStore } from "./beat_store.js";
 import type { StudioJobLedgerStore } from "./job_ledger_store.js";
 import type { StudioLoreStore } from "./lore_store.js";
+import type { ProposalAcceptanceStore } from "./proposal_acceptance_store.js";
 import type { StudioVolumeStore } from "./volume_store.js";
 
 /** Persistence-neutral row shapes handed to the application layer. */
@@ -214,6 +215,7 @@ export interface StudioStore
   extends StudioVolumeStore,
     StudioBeatStore,
     StudioLoreStore,
+    ProposalAcceptanceStore,
     StudioJobLedgerStore {
   addProject(
     scope: ProjectScope,

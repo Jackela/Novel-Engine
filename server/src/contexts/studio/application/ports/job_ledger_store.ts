@@ -44,11 +44,4 @@ export interface StudioJobLedgerStore {
     jobId: string,
     input: MarkJobOutcomeInput,
   ): JobRecord;
-  setJobResult(
-    scope: ProjectScope,
-    projectId: string,
-    jobId: string,
-    resultJson: string,
-    now: Date,
-  ): JobRecord;
 }

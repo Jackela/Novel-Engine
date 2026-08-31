@@ -28,6 +28,7 @@ import { DocumentStorePart } from "./document_store_part.js";
 import { JobStorePart } from "./job_store_part.js";
 import { LoreStorePart } from "./lore_store_part.js";
 import { ProjectStorePart } from "./project_store_part.js";
+import { ProposalAcceptanceStorePart } from "./proposal_acceptance_store_part.js";
 import { ReviewStorePart } from "./review_store_part.js";
 import { VolumeStorePart } from "./volume_store_part.js";
 
@@ -45,6 +46,7 @@ export class DrizzleStudioStore extends ProjectStorePart implements StudioStore 
   private readonly documentStore: DocumentStorePart;
   private readonly volumeStore: VolumeStorePart;
   private readonly editorialReviews: ReviewStorePart;
+  private readonly proposalAcceptance: ProposalAcceptanceStorePart;
   private readonly workflowJobs: JobStorePart;
   private readonly loreKeys: LoreStorePart;
 
@@ -53,6 +55,7 @@ export class DrizzleStudioStore extends ProjectStorePart implements StudioStore 
     this.documentStore = new DocumentStorePart(options.database);
     this.volumeStore = new VolumeStorePart(options.database);
     this.editorialReviews = new ReviewStorePart(options.database);
+    this.proposalAcceptance = new ProposalAcceptanceStorePart(options.database);
     this.workflowJobs = new JobStorePart(options.database);
     this.loreKeys = new LoreStorePart(options.database);
   }
@@ -218,14 +221,8 @@ export class DrizzleStudioStore extends ProjectStorePart implements StudioStore 
     return this.workflowJobs.markJobOutcome(scope, projectId, jobId, input);
   }
 
-  setJobResult(
-    scope: ProjectScope,
-    projectId: string,
-    jobId: string,
-    resultJson: string,
-    now: Date,
-  ): JobRecord {
-    return this.workflowJobs.setJobResult(scope, projectId, jobId, resultJson, now);
+  acceptCompletedProposal(scope: ProjectScope, projectId: string, jobId: string, now: Date) {
+    return this.proposalAcceptance.acceptCompletedProposal(scope, projectId, jobId, now);
   }
 
   captureReviewSnapshot(

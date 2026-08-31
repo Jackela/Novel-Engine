@@ -77,7 +77,6 @@ export function createStudioServices(
     revisions: new RevisionService(store, documents),
     proposals: new AiProposalService(
       store,
-      documents,
       options.providerFactory,
       inFlight,
       now,

@@ -50,7 +50,7 @@ function toJobRecord(job: JobRow, events: JobEventRow[]): JobRecord {
   };
 }
 
-function jobWithEvents(tx: Tx, jobId: string): JobRecord {
+export function jobWithEvents(tx: Tx, jobId: string): JobRecord {
   const job = tx.select().from(jobs).where(eq(jobs.id, jobId)).get();
   if (job === undefined) {
     throw new NotFoundError("Job not found.");
@@ -179,10 +179,7 @@ export class JobStorePart {
   findJob(scope: ProjectScope, projectId: string, jobId: string): JobRecord {
     return this.db.transaction((tx) => {
       const project: ProjectRow = scopedProject(tx, scope, projectId);
-      const job = tx.select().from(jobs).where(eq(jobs.id, jobId)).get();
-      if (job === undefined || job.project_id !== project.id) {
-        throw new NotFoundError("Job not found.");
-      }
+      const job = this.scopedJob(tx, project.id, jobId);
       return jobWithEvents(tx, job.id);
     });
   }
@@ -250,13 +247,19 @@ export class JobStorePart {
     jobId: string,
     attemptedStatus: string,
   ): void {
+    const job = this.scopedJob(tx, projectId, jobId);
+    if (job.status !== "running" && job.status !== "pending") {
+      throw new InvalidJobTransitionError(jobId, job.status, attemptedStatus);
+    }
+  }
+
+  /** One job lookup guarded by the already-verified project scope. */
+  private scopedJob(tx: Tx, projectId: string, jobId: string): JobRow {
     const job = tx.select().from(jobs).where(eq(jobs.id, jobId)).get();
     if (job === undefined || job.project_id !== projectId) {
       throw new NotFoundError("Job not found.");
     }
-    if (job.status !== "running" && job.status !== "pending") {
-      throw new InvalidJobTransitionError(jobId, job.status, attemptedStatus);
-    }
+    return job;
   }
 
   /**
@@ -266,26 +269,5 @@ export class JobStorePart {
    */
   protected writeUsageEvent(tx: Tx, input: AddUsageEventInput): void {
     writeUsageEventRow(tx, input);
-  }
-
-  setJobResult(
-    scope: ProjectScope,
-    projectId: string,
-    jobId: string,
-    resultJson: string,
-    now: Date,
-  ): JobRecord {
-    return this.db.transaction((tx) => {
-      scopedProject(tx, scope, projectId);
-      const job = tx.select().from(jobs).where(eq(jobs.id, jobId)).get();
-      if (job === undefined || job.project_id !== projectId) {
-        throw new NotFoundError("Job not found.");
-      }
-      tx.update(jobs)
-        .set({ result_json: resultJson, updated_at: now })
-        .where(eq(jobs.id, jobId))
-        .run();
-      return jobWithEvents(tx, jobId);
-    });
   }
 }

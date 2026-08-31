@@ -4,7 +4,6 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
 import { textProviderFactory } from "../../src/contexts/ai/infrastructure/providers/text_provider_factory.js";
-import { DocumentService } from "../../src/contexts/studio/application/document_service.js";
 import { InFlightOperationGuard } from "../../src/contexts/studio/application/operation_in_flight.js";
 import type { StudioStore } from "../../src/contexts/studio/application/ports/studio_store.js";
 import { ProjectService } from "../../src/contexts/studio/application/project_service.js";
@@ -41,7 +40,6 @@ async function openProposalStreamHarness(): Promise<ServiceHarness> {
     database: studio.db,
     dataDirectory: directory,
   });
-  const documents = new DocumentService(store, now);
   const auth = new AuthService({
     store: new DrizzleAuthStore(studio.db),
     sessionSecret: "proposal-stream-test-secret",
@@ -51,7 +49,6 @@ async function openProposalStreamHarness(): Promise<ServiceHarness> {
   return {
     proposals: new AiProposalService(
       store,
-      documents,
       textProviderFactory({}, {}),
       new InFlightOperationGuard(),
       now,

@@ -4,11 +4,8 @@ import {
   type TextGenerationProviderFactory,
 } from "../../../contexts/ai/application/ports/text_generation.js";
 import type { Principal } from "../../../shared/application/ports/auth.js";
-import { InvalidOperationError } from "../../../shared/domain/exceptions.js";
-import { NotFoundError } from "../domain/exceptions.js";
-import type { DocumentService } from "./document_service.js";
 import type { InFlightOperationGuard } from "./operation_in_flight.js";
-import { dumpJson, jobPayload, safeLoadJson } from "./payloads.js";
+import { jobPayload } from "./payloads.js";
 import {
   buildProposalTask,
   completedProposalJob,
@@ -46,7 +43,6 @@ export interface ProposalDraftInput {
  */
 export class AiProposalService {
   private readonly store: StudioStore;
-  private readonly documents: DocumentService;
   private readonly providerFactory: TextGenerationProviderFactory;
   private readonly inFlight: InFlightOperationGuard;
   private readonly now: () => Date;
@@ -54,7 +50,6 @@ export class AiProposalService {
 
   constructor(
     store: StudioStore,
-    documents: DocumentService,
     providerFactory: TextGenerationProviderFactory,
     inFlight: InFlightOperationGuard,
     now: () => Date = () => new Date(),
@@ -62,7 +57,6 @@ export class AiProposalService {
     loreBudgetCharacters?: number | undefined,
   ) {
     this.store = store;
-    this.documents = documents;
     this.providerFactory = providerFactory;
     this.inFlight = inFlight;
     this.now = now;
@@ -180,42 +174,13 @@ export class AiProposalService {
    * accepted revision carries source `ai-accepted` with `metadata.ai_job_id`.
    */
   adoptProposal(principal: Principal, projectId: string, jobId: string): Record<string, unknown> {
-    const scope = scopeForPrincipal(principal);
-    const job = this.store.findJob(scope, projectId, jobId);
-    if (job.kind !== "proposal" || job.documentId === null) {
-      // A job of another kind is not a proposal at this address (Python: NotFound).
-      throw new NotFoundError(
-        `No AI proposal job '${jobId}' exists in project '${projectId}': the id does not ` +
-          `exist there, or the job belongs to a different project.`,
-      );
-    }
-    if (job.status !== "completed") {
-      throw new InvalidOperationError("Only a completed proposal can be accepted.");
-    }
-    const result = safeLoadJson(job.resultJson);
-    if (result.accepted_revision_id) {
-      return jobPayload(job);
-    }
-    const proposal = typeof result.proposal_markdown === "string" ? result.proposal_markdown : "";
-    if (proposal.trim() === "") {
-      throw new InvalidOperationError("Only a completed proposal with content can be accepted.");
-    }
-    const request = safeLoadJson(job.requestJson);
-    const baseRevisionId =
-      typeof request.base_revision_id === "string" ? request.base_revision_id : null;
-    const saved = this.documents.storeDocument(principal, projectId, job.documentId, {
-      contentMarkdown: proposal,
-      baseRevisionId,
-      metadata: { ai_job_id: job.id },
-      source: "ai-accepted",
-    });
-    const updated = this.store.setJobResult(
-      scope,
-      projectId,
-      job.id,
-      dumpJson({ ...result, accepted_revision_id: saved.current_revision_id }),
-      this.now(),
+    return jobPayload(
+      this.store.acceptCompletedProposal(
+        scopeForPrincipal(principal),
+        projectId,
+        jobId,
+        this.now(),
+      ),
     );
-    return jobPayload(updated);
   }
 }
