@@ -1356,14 +1356,16 @@ enabled.
 - **AND** the exit code is non-zero
 
 ### Requirement: Entry flow session probe
-The Studio entry MUST probe the session on mount and take one of two paths:
-a valid session replaces navigation into the project library; otherwise a
-form renders — a unified setup and login form when the owner is
-unconfigured (single submit creates the owner and establishes the session),
-the login form when the owner exists. The form prefills the username
-`author`, enforces the ten-character password minimum, and switches
-autocomplete between new-password and current-password according to setup
-status.
+The Studio entry MUST probe the session on mount. A valid session MUST replace
+navigation into the project library. HTTP 401 MUST continue to setup-status and
+render the unified setup/login form. Network, timeout, contract, and server
+failures MUST remain on the entry surface with a readable error and working
+Retry action; they MUST NOT be interpreted as an unconfigured owner. The form
+prefills the username `author`, enforces the ten-character password minimum,
+switches autocomplete between new-password and current-password according to
+setup status, exposes exact pending state, and prevents duplicate submission.
+Unmount MUST abort cancellable bootstrap reads and late completions MUST neither
+publish state nor navigate.
 
 #### Scenario: Valid session skips to the library
 - **GIVEN** a valid session exists
@@ -1371,10 +1373,17 @@ status.
 - **THEN** navigation replaces into the project library without rendering the form
 
 #### Scenario: First-run single submit sets up and logs in
-- **GIVEN** no owner is configured
+- **GIVEN** the session probe returns HTTP 401 and no owner is configured
 - **WHEN** the author submits the unified form once with valid credentials
 - **THEN** the owner is created and the session established in one flow
 - **AND** navigation proceeds to the project library
+- **AND** duplicate activation cannot start a second setup or login request
+
+#### Scenario: Entry operational failure stays recoverable
+- **GIVEN** the session probe fails because of a network, timeout, contract, or server error
+- **WHEN** the entry page classifies the failure
+- **THEN** it does not request setup status or render a first-run form
+- **AND** it presents the readable failure with a working Retry action
 
 ### Requirement: In-memory document drafts
 Document drafts — content, title, and save state — MUST live only in
@@ -1542,20 +1551,21 @@ selected tab.
 
 ### Requirement: Explicit asynchronous operation state
 The Studio MUST ensure review, AI proposal and acceptance, export, settings
-save, retry, reorder, document creation, and job refresh operations expose
-pending state and prevent duplicate submission while pending. Only the control
-that initiated an operation MUST expose its accessible busy state; related
-controls MAY be disabled to protect invariants but MUST retain their normal
-accessible names. When an operation settles, focus MUST return to its initiating
-control only when the author has not deliberately moved focus elsewhere. If the
-initiator disappears or becomes unavailable, focus MUST move to a stable,
-semantically related fallback. Failures MUST remain readable, and success MUST
-clear stale errors and refresh the affected data. A running whole-book operation
-MUST keep its Stop control reachable from every Inspector surface.
+save, retry, reorder, document creation, project creation, logout, and job
+refresh operations expose pending state and prevent duplicate submission while
+pending. Only the control that initiated an operation MUST expose its accessible
+busy state; related controls MAY be disabled to protect invariants but MUST
+retain their normal accessible names. When an operation settles, focus MUST
+return to its initiating control only when the author has not deliberately moved
+focus elsewhere. If the initiator disappears or becomes unavailable, focus MUST
+move to a stable, semantically related fallback. Failures MUST remain readable,
+and success MUST clear stale errors and refresh the affected data. A running
+whole-book operation MUST keep its Stop control reachable from every Inspector
+surface.
 
 #### Scenario: Duplicate submission guard
-- **GIVEN** an export operation is in progress
-- **WHEN** the author activates Export again
+- **GIVEN** a project creation or export operation is in progress
+- **WHEN** the author activates the initiating command again
 - **THEN** the second submission is ignored or prevented
 - **AND** the initiating control remains disabled and exposes its pending state
 
@@ -1970,3 +1980,31 @@ yet been persisted.
 - **THEN** the Studio retains the local draft and marks it conflicted
 - **AND** refreshes the latest revision baseline without silently overwriting local text
 - **AND** a subsequent explicit restore retry uses that refreshed base revision
+
+### Requirement: Recoverable project-library loading
+The project library MUST verify the owner session before requesting its project
+list. HTTP 401 MUST replace navigation to entry. A project-list network,
+timeout, contract, or server failure MUST retain the library route and present a
+readable error with a working Retry action. Retry MUST supersede any prior read,
+expose pending state, and prevent duplicate requests. Unmount MUST abort
+cancellable reads, and late completions from an earlier attempt MUST neither
+replace the current list nor navigate.
+
+#### Scenario: Operational project-list failure can be retried
+- **GIVEN** the owner session is valid and the project list fails operationally
+- **WHEN** the failure is displayed and the author activates Retry
+- **THEN** the library route is retained
+- **AND** one new project-list request starts with accessible pending state
+- **AND** success replaces the error with the current ordered project list
+
+#### Scenario: Authentication failure returns to entry
+- **GIVEN** the library session probe returns HTTP 401
+- **WHEN** the failure is classified
+- **THEN** navigation replaces to the entry route
+- **AND** no project-list request starts
+
+#### Scenario: Library unmount cancels reads
+- **GIVEN** a session or project-list read is pending
+- **WHEN** the library unmounts
+- **THEN** the cancellable request is aborted
+- **AND** its later completion cannot publish state or navigate

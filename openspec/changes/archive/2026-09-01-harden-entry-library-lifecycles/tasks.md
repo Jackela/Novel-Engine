@@ -6,5 +6,5 @@
       navigation and accessible recovery.
 - [x] 3. Add exact pending and duplicate-invocation guards for setup/login,
       project creation, and logout.
-- [ ] 4. Run focused and full frontend validation, browser workflows, strict
+- [x] 4. Run focused and full frontend validation, browser workflows, strict
       OpenSpec, and independent closure review.
