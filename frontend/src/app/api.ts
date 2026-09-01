@@ -165,7 +165,7 @@ async function downloadBlob(path: string, init?: RequestInit): Promise<Blob> {
 }
 
 export const api = {
-  setupStatus: () => request("/api/setup", undefined, parseSetupStatus),
+  setupStatus: (init?: RequestInit) => request("/api/setup", init, parseSetupStatus),
   setupOwner: (username: string, password: string) =>
     postJson("/api/setup", { username, password }, parseOwnerSetup),
   login: (username: string, password: string) =>
