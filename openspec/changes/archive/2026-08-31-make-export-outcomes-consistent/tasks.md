@@ -19,5 +19,5 @@
       confinement, and enforce project-exclusive deletion semantics.
 - [x] 9. Record the cross-authority decision and reconcile the canonical
       OpenSpec requirements with restart and cleanup behavior.
-- [ ] 10. Run focused and full validation on an exact candidate SHA, obtain
+- [x] 10. Run focused and full validation on an exact candidate SHA, obtain
       independent red-team reviews, and record skipped external gates.
