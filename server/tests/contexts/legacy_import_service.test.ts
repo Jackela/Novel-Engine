@@ -7,6 +7,7 @@ import { DrizzleStudioStore } from "../../src/contexts/studio/infrastructure/dri
 import { FilesystemExportArtifactGateway } from "../../src/contexts/studio/infrastructure/export_artifact_files.js";
 import { ExportStorePart } from "../../src/contexts/studio/infrastructure/export_store_part.js";
 import { FsLegacyWorkspaceReader } from "../../src/contexts/studio/infrastructure/fs_legacy_workspace_reader.js";
+import { FilesystemProjectArtifactCleaner } from "../../src/contexts/studio/infrastructure/project_artifact_files.js";
 import { AuthService } from "../../src/shared/application/auth_service.js";
 import type { Principal } from "../../src/shared/application/ports/auth.js";
 import { InvalidOperationError } from "../../src/shared/domain/exceptions.js";
@@ -32,15 +33,13 @@ async function buildServices() {
     store: new DrizzleAuthStore(database.db),
     sessionSecret: "unit-test-session-secret",
   });
-  const services = createStudioServices(
-    new DrizzleStudioStore({ database: database.db, dataDirectory: directory }),
-    {
-      providerFactory: capturingFactory({}).factory,
-      legacyWorkspaceReader: new FsLegacyWorkspaceReader(),
-      artifactStore: new ExportStorePart(database.db),
-      artifactFiles: new FilesystemExportArtifactGateway(directory),
-    },
-  );
+  const services = createStudioServices(new DrizzleStudioStore({ database: database.db }), {
+    providerFactory: capturingFactory({}).factory,
+    legacyWorkspaceReader: new FsLegacyWorkspaceReader(),
+    artifactStore: new ExportStorePart(database.db),
+    artifactFiles: new FilesystemExportArtifactGateway(directory),
+    projectArtifactCleaner: new FilesystemProjectArtifactCleaner(directory),
+  });
   return { auth, services };
 }
 

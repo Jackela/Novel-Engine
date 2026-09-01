@@ -1,9 +1,9 @@
-import { createHash, randomUUID } from "node:crypto";
+import { createHash } from "node:crypto";
 import { constants } from "node:fs";
-import { link, mkdir, open, realpath, unlink } from "node:fs/promises";
+import { lstat, mkdir, open, realpath } from "node:fs/promises";
 import { isAbsolute, relative, resolve, sep } from "node:path";
 import { Document, HeadingLevel, Packer, Paragraph } from "docx";
-
+import { exportArtifactNames } from "../application/export_artifact_identity.js";
 import type {
   ArtifactChapter,
   ArtifactFileEvidence,
@@ -11,37 +11,55 @@ import type {
   ArtifactWriteRequest,
   ExportArtifactGateway,
 } from "../application/export_artifact_service.js";
-import type { ExportArtifactFormat } from "../application/ports/export_store.js";
 import { ExportArtifactWriteError, NotFoundError } from "../domain/exceptions.js";
 import { epubBytes, plainText, xmlSafeText } from "./epub_xml.js";
+import { errorCode, syncDirectory } from "./export_artifact_fs_support.js";
+import { publishArtifact as publishDurableArtifact } from "./export_artifact_publication.js";
+import type { ExportPublicationCleanupJournal } from "./export_publication_cleanup_journal.js";
 
-const extensionByFormat: Record<ExportArtifactFormat, string> = {
-  markdown: "md",
-  docx: "docx",
-  epub: "epub",
-};
+export interface FilesystemExportArtifactGatewayOptions {
+  /** Durable database authority for replaying interrupted rollback cleanup. */
+  readonly cleanupJournal?: ExportPublicationCleanupJournal | undefined;
+  /** Deterministic publication/temporary ids used only by collision tests. */
+  readonly newId?: (() => string) | undefined;
+  /** Deterministic shared-staging race seam used only by filesystem tests. */
+  readonly afterStagingReady?: (() => Promise<void>) | undefined;
+  /** Deterministic race seam used only by filesystem rollback tests. */
+  readonly afterRollbackQuarantine?:
+    | ((quarantine: string, target: string) => Promise<void>)
+    | undefined;
+}
 
 // Filesystem implementation of atomic rendering and confined artifact lookup.
 export class FilesystemExportArtifactGateway implements ExportArtifactGateway {
-  constructor(private readonly dataDirectory: string) {}
+  constructor(
+    private readonly dataDirectory: string,
+    private readonly options: FilesystemExportArtifactGatewayOptions = {},
+  ) {}
 
   async writeSnapshotArtifact(
     request: ArtifactWriteRequest,
     reportCleanupFailure?: (failure: unknown) => void,
   ): Promise<ArtifactFileEvidence> {
-    const names = artifactNames(request.projectId, request.artifactId, request.format);
+    const names = exportArtifactNames(request.projectId, request.artifactId, request.format);
     const contents = await serializeArtifact(request);
     try {
       const directory = await artifactDirectory(this.dataDirectory, request.projectId, true);
       const target = resolve(directory, names.filename);
-      const temporary = resolve(directory, `.${request.artifactId}.${randomUUID()}.tmp`);
-      return await publishArtifact(
-        temporary,
+      return await publishDurableArtifact({
+        projectDirectory: directory,
         target,
+        relativePath: names.relativePath,
+        projectId: request.projectId,
+        artifactId: request.artifactId,
+        format: request.format,
         contents,
-        names.relativePath,
         reportCleanupFailure,
-      );
+        newId: this.options.newId,
+        afterStagingReady: this.options.afterStagingReady,
+        afterRollbackQuarantine: this.options.afterRollbackQuarantine,
+        cleanupJournal: this.options.cleanupJournal,
+      });
     } catch (error) {
       if (isKnownWriteFailure(error)) throw new ExportArtifactWriteError();
       throw error;
@@ -50,7 +68,7 @@ export class FilesystemExportArtifactGateway implements ExportArtifactGateway {
 
   async readArtifactBytes(request: ArtifactReadRequest): Promise<Buffer> {
     try {
-      const names = artifactNames(request.projectId, request.artifactId, request.format);
+      const names = exportArtifactNames(request.projectId, request.artifactId, request.format);
       if (request.relativePath !== names.relativePath)
         throw new Error("Stored export path is invalid.");
       const directory = await artifactDirectory(this.dataDirectory, request.projectId, false);
@@ -66,84 +84,45 @@ async function artifactDirectory(
   projectId: string,
   create: boolean,
 ): Promise<string> {
-  assertSafePart(projectId);
-  const dataRoot = resolve(dataDirectory);
-  const exportsRoot = resolve(dataRoot, "exports");
-  const directory = resolve(exportsRoot, projectId);
-  if (!isDescendant(dataRoot, exportsRoot) || !isDescendant(exportsRoot, directory)) {
+  const dataRoot = await realpath(resolve(dataDirectory));
+  const exportsRoot = await realChildDirectory(dataRoot, "exports", create);
+  return realChildDirectory(exportsRoot, projectId, create);
+}
+
+async function realChildDirectory(parent: string, name: string, create: boolean): Promise<string> {
+  const candidate = resolve(parent, name);
+  if (!isDescendant(parent, candidate)) {
     throw new Error("Export directory is outside the configured root.");
   }
-  if (create) await mkdir(directory, { recursive: true });
-  const [realDataRoot, realExportsRoot, realDirectory] = await Promise.all([
-    realpath(dataRoot),
-    realpath(exportsRoot),
-    realpath(directory),
-  ]);
-  if (
-    !isDescendant(realDataRoot, realExportsRoot) ||
-    !isDescendant(realExportsRoot, realDirectory)
-  ) {
+  let details: Awaited<ReturnType<typeof lstat>>;
+  try {
+    details = await lstat(candidate);
+  } catch (error) {
+    if (!create || errorCode(error) !== "ENOENT") throw error;
+    try {
+      await mkdir(candidate);
+    } catch (mkdirError) {
+      if (errorCode(mkdirError) !== "EEXIST") throw mkdirError;
+    }
+    details = await lstat(candidate);
+  }
+  if (details.isSymbolicLink() || !details.isDirectory()) {
+    throw new Error("Export directory is not a real directory.");
+  }
+  const actual = await realpath(candidate);
+  if (!isDescendant(parent, actual)) {
     throw new Error("Export directory escapes the configured root.");
   }
-  return realDirectory;
-}
-
-function artifactNames(
-  projectId: string,
-  artifactId: string,
-  format: ExportArtifactFormat,
-): { filename: string; relativePath: string } {
-  assertSafePart(projectId);
-  assertSafePart(artifactId);
-  const extension = extensionByFormat[format];
-  if (extension === undefined) throw new Error("Export format is invalid.");
-  const filename = `${artifactId}.${extension}`;
-  return { filename, relativePath: `exports/${projectId}/${filename}` };
-}
-
-function assertSafePart(value: string): void {
-  if (value === "" || value === "." || value === ".." || /[\\/\0]/.test(value)) {
-    throw new Error("Export identifier is invalid.");
-  }
+  // A first export may create both exports/ and its project leaf. Syncing the
+  // parent before publication makes those directory entries durable before
+  // SQLite can commit the artifact row.
+  if (create) await syncDirectory(parent);
+  return actual;
 }
 
 function isDescendant(root: string, candidate: string): boolean {
   const offset = relative(root, candidate);
   return offset !== "" && offset !== ".." && !offset.startsWith(`..${sep}`) && !isAbsolute(offset);
-}
-
-async function publishArtifact(
-  temporary: string,
-  target: string,
-  contents: Buffer,
-  relativePath: string,
-  reportCleanupFailure?: (failure: unknown) => void,
-): Promise<ArtifactFileEvidence> {
-  let handle: Awaited<ReturnType<typeof open>> | undefined;
-  let linked = false;
-  try {
-    handle = await open(temporary, constants.O_WRONLY | constants.O_CREAT | constants.O_EXCL);
-    await handle.writeFile(contents);
-    await handle.sync();
-    const identity = await handle.stat();
-    await handle.close();
-    handle = undefined;
-    await link(temporary, target);
-    linked = true;
-    await unlink(temporary);
-    const checksumSha256 = createHash("sha256").update(contents).digest("hex");
-    return {
-      relativePath,
-      sizeBytes: contents.length,
-      checksumSha256,
-      rollback: () => rollbackPublishedArtifact(target, contents, identity.dev, identity.ino),
-    };
-  } catch (error) {
-    if (handle !== undefined) await cleanupWithoutMasking(handle.close(), reportCleanupFailure);
-    if (linked) await cleanupWithoutMasking(unlink(target), reportCleanupFailure);
-    await cleanupWithoutMasking(unlink(temporary), reportCleanupFailure, true);
-    throw error;
-  }
 }
 
 async function readVerifiedArtifact(target: string, request: ArtifactReadRequest): Promise<Buffer> {
@@ -166,89 +145,29 @@ async function readVerifiedArtifact(target: string, request: ArtifactReadRequest
   }
 }
 
-async function rollbackPublishedArtifact(
-  target: string,
-  contents: Buffer,
-  dev: number,
-  ino: number,
-): Promise<void> {
-  let handle: Awaited<ReturnType<typeof open>>;
-  try {
-    handle = await open(target, constants.O_RDONLY | constants.O_NOFOLLOW);
-  } catch (error) {
-    if (isMissingOrReplacedTarget(error)) return;
-    throw error;
-  }
-  try {
-    const details = await handle.stat();
-    const actual = await handle.readFile();
-    if (
-      !details.isFile() ||
-      details.dev !== dev ||
-      details.ino !== ino ||
-      !actual.equals(contents)
-    ) {
-      return;
-    }
-  } finally {
-    await handle.close();
-  }
-  try {
-    await unlink(target);
-  } catch (error) {
-    if (isMissingOrReplacedTarget(error)) return;
-    throw error;
-  }
-}
-
 const KNOWN_WRITE_ERROR_CODES = new Set([
   "EACCES",
   "EBUSY",
   "EDQUOT",
+  "EMLINK",
   "EFBIG",
   "EIO",
   "ENAMETOOLONG",
   "EMFILE",
   "ENFILE",
   "ENOENT",
+  "ENOSYS",
   "ENOSPC",
+  "ENOTSUP",
+  "EOPNOTSUPP",
   "EPERM",
   "EROFS",
+  "EXDEV",
 ]);
-
-function errorCode(error: unknown): string | undefined {
-  if (typeof error !== "object" || error === null || !("code" in error)) return undefined;
-  return typeof error.code === "string" ? error.code : undefined;
-}
 
 function isKnownWriteFailure(error: unknown): boolean {
   const code = errorCode(error);
   return code !== undefined && KNOWN_WRITE_ERROR_CODES.has(code);
-}
-
-function isMissingOrReplacedTarget(error: unknown): boolean {
-  const code = errorCode(error);
-  if (code === "ENOENT" || code === "ELOOP") {
-    return true;
-  }
-  return false;
-}
-
-async function cleanupWithoutMasking(
-  promise: Promise<unknown>,
-  reportCleanupFailure?: (failure: unknown) => void,
-  ignoreMissing = false,
-): Promise<void> {
-  try {
-    await promise;
-  } catch (failure) {
-    if (ignoreMissing && errorCode(failure) === "ENOENT") return;
-    try {
-      reportCleanupFailure?.(failure);
-    } catch {
-      // Cleanup reporting is secondary and cannot replace publication failure.
-    }
-  }
 }
 
 async function serializeArtifact(request: ArtifactWriteRequest): Promise<Buffer> {

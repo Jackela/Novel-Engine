@@ -38,8 +38,8 @@ async function openProposalStreamHarness(): Promise<ServiceHarness> {
   const now = (): Date => new Date();
   const store: StudioStore = new DrizzleStudioStore({
     database: studio.db,
-    dataDirectory: directory,
   });
+  const inFlight = new InFlightOperationGuard();
   const auth = new AuthService({
     store: new DrizzleAuthStore(studio.db),
     sessionSecret: "proposal-stream-test-secret",
@@ -47,13 +47,8 @@ async function openProposalStreamHarness(): Promise<ServiceHarness> {
   });
   await auth.configureOwner("streamer", "long-test-password");
   return {
-    proposals: new AiProposalService(
-      store,
-      textProviderFactory({}, {}),
-      new InFlightOperationGuard(),
-      now,
-    ),
-    projects: new ProjectService(store, now),
+    proposals: new AiProposalService(store, textProviderFactory({}, {}), inFlight, now),
+    projects: new ProjectService(store, now, { inFlight }),
     principal: (await auth.createOwnerSession("streamer", "long-test-password")).principal,
     db: studio.db,
     cleanup: async () => {
@@ -75,6 +70,35 @@ async function collectStream(
 }
 
 describe("proposal stream service (#308 abort semantics)", () => {
+  it("releases project ownership when a partially consumed stream is returned", async () => {
+    const harness = await openProposalStreamHarness();
+    try {
+      const project = harness.projects.newProject(harness.principal, {
+        title: "Returned stream",
+      }) as { id: string; documents: Array<{ id: string }> };
+      const document = project.documents[0];
+      if (document === undefined) throw new Error("fixture must seed a document");
+      const stream = harness.proposals.draftProposalStream(
+        harness.principal,
+        project.id,
+        document.id,
+        { operation: "continue", instruction: "", provider: "mock" },
+        () => {},
+      );
+      expect((await stream.next()).done).toBe(false);
+
+      await expect(harness.projects.removeProject(harness.principal, project.id)).rejects.toThrow(
+        /continue operation is already running/i,
+      );
+      await stream.return();
+      await expect(
+        harness.projects.removeProject(harness.principal, project.id),
+      ).resolves.toBeUndefined();
+    } finally {
+      await harness.cleanup();
+    }
+  });
+
   it("aborts with nothing persisted and releases the in-flight guard", async () => {
     const harness = await openProposalStreamHarness();
     try {

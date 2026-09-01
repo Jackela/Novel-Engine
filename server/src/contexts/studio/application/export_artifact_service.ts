@@ -31,7 +31,9 @@ export interface ArtifactFileEvidence {
   readonly relativePath: string;
   readonly sizeBytes: number;
   readonly checksumSha256: string;
-  /** Removes this publication after a later persistence failure, best-effort. */
+  /** Removes durable recovery sidecars after the database commit marker exists. */
+  acknowledge(): Promise<void>;
+  /** Removes this publication after a later persistence failure. */
   rollback(): Promise<void>;
 }
 
@@ -212,12 +214,15 @@ export class SnapshotArtifactService {
     land: (input: PreparedExportArtifact) => T,
     reportCleanupFailure?: (failure: unknown) => void,
   ): Promise<T> {
+    let result: T;
     try {
-      return land(publication.input);
+      result = land(publication.input);
     } catch (error) {
       await rollbackWithoutMasking(publication.file, reportCleanupFailure);
       throw error;
     }
+    await acknowledgeWithoutMasking(publication.file, reportCleanupFailure);
+    return result;
   }
 
   private readArtifactBytesForRecord(artifact: ExportArtifactRecord): Promise<Buffer> {
@@ -244,6 +249,22 @@ async function rollbackWithoutMasking(
     } catch {
       // Cleanup reporting is secondary evidence and cannot replace the
       // transaction error that triggered compensation.
+    }
+  }
+}
+
+async function acknowledgeWithoutMasking(
+  file: ArtifactFileEvidence,
+  reportCleanupFailure?: (failure: unknown) => void,
+): Promise<void> {
+  try {
+    await file.acknowledge();
+  } catch (failure) {
+    try {
+      reportCleanupFailure?.(failure);
+    } catch {
+      // The database already committed. Sidecar cleanup is recoverable startup
+      // work and must not turn a completed outcome into a failed response.
     }
   }
 }

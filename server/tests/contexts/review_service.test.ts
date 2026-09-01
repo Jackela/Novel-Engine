@@ -52,7 +52,6 @@ async function openHarness(): Promise<Harness> {
   const clock = monotonicClock();
   const store: StudioStore = new DrizzleStudioStore({
     database: studio.db,
-    dataDirectory: directory,
   });
   const auth = new AuthService({
     store: new DrizzleAuthStore(studio.db),

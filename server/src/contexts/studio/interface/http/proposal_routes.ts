@@ -143,9 +143,6 @@ export const proposalRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fa
       // itself emits "close" as soon as the request message is fully read,
       // which would abort every stream before it starts.
       const disconnect = new AbortController();
-      request.raw.socket?.on("close", () => disconnect.abort());
-      reply.raw.on("close", () => disconnect.abort());
-      reply.raw.on("error", () => disconnect.abort());
       const frames = requireServices(options).proposals.draftProposalStream(
         requirePrincipal(request),
         request.params.projectId,
@@ -158,7 +155,35 @@ export const proposalRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fa
         reportCleanupFailure,
         disconnect.signal,
       );
-      await writeProposalStream(reply, frames, disconnect);
+      const abort = (): void => disconnect.abort();
+      const socket = request.raw.socket;
+      socket?.on("close", abort);
+      reply.raw.on("close", abort);
+      reply.raw.on("error", abort);
+      let streamFailure: unknown;
+      try {
+        await writeProposalStream(reply, frames, disconnect);
+      } catch (error) {
+        streamFailure = error;
+      }
+      disconnect.abort();
+      socket?.off("close", abort);
+      reply.raw.off("close", abort);
+      reply.raw.off("error", abort);
+      let cleanupFailure: unknown;
+      try {
+        await frames.return();
+      } catch (error) {
+        cleanupFailure = error;
+      }
+      if (streamFailure !== undefined && cleanupFailure !== undefined) {
+        throw new AggregateError(
+          [streamFailure, cleanupFailure],
+          "Proposal stream and generator cleanup both failed.",
+        );
+      }
+      if (streamFailure !== undefined) throw streamFailure;
+      if (cleanupFailure !== undefined) throw cleanupFailure;
     },
   );
 

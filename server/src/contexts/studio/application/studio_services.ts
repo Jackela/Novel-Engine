@@ -8,6 +8,7 @@ import { LoreAliasService } from "./lore_alias_service.js";
 import { InFlightOperationGuard } from "./operation_in_flight.js";
 import type { ExportOutcomeStore } from "./ports/export_store.js";
 import type { LegacyWorkspaceReader } from "./ports/legacy_workspace_reader.js";
+import type { ProjectArtifactCleaner } from "./ports/project_artifact_cleaner.js";
 import type { StudioStore } from "./ports/studio_store.js";
 import { ProjectService } from "./project_service.js";
 import { AiProposalService } from "./proposal_service.js";
@@ -40,6 +41,8 @@ export interface CreateStudioServicesOptions {
   artifactStore: ExportOutcomeStore;
   /** Filesystem adapter for atomic artifact writes and confined retrieval. */
   artifactFiles: ExportArtifactGateway;
+  /** Post-commit cleanup for one deleted project's secondary export tree. */
+  projectArtifactCleaner: ProjectArtifactCleaner;
   /** Read-only legacy workspace access; the composition root injects the FS adapter. */
   legacyWorkspaceReader: LegacyWorkspaceReader;
   /** Lorebook injection budget (#445); undefined keeps the adjudicated default. */
@@ -64,7 +67,10 @@ export function createStudioServices(
     now,
   });
   return {
-    projects: new ProjectService(store, now),
+    projects: new ProjectService(store, now, {
+      inFlight,
+      artifactCleaner: options.projectArtifactCleaner,
+    }),
     documents,
     volumes: new VolumeService(store, now),
     beats: new BeatAssociationService(store, now),

@@ -37,7 +37,7 @@ async function openHarness() {
   directories.push(directory);
   const database = await openStudioDatabase(directory);
   const now = clock();
-  const store = new DrizzleStudioStore({ database: database.db, dataDirectory: directory });
+  const store = new DrizzleStudioStore({ database: database.db });
   const auth = new AuthService({
     store: new DrizzleAuthStore(database.db),
     sessionSecret: "export-outcome-test-secret",
@@ -98,6 +98,47 @@ function exportHistory(
 }
 
 describe("export outcome transactions", () => {
+  it("rejects noncanonical gateway evidence before any database outcome commits", async () => {
+    const harness = await openHarness();
+    let rollbackCalls = 0;
+    try {
+      const artifacts = new SnapshotArtifactService(
+        new ExportStorePart(harness.database.db),
+        {
+          async writeSnapshotArtifact() {
+            return {
+              relativePath: "../../outside.md",
+              sizeBytes: 1,
+              checksumSha256: "a".repeat(64),
+              acknowledge: async () => undefined,
+              rollback: async () => {
+                rollbackCalls += 1;
+              },
+            };
+          },
+          async readArtifactBytes() {
+            throw new Error("unexpected artifact read");
+          },
+        },
+        { now: harness.now, newId: () => "invalid-evidence" },
+      );
+
+      await expect(
+        artifacts.recordCompletedExportJob(harness.principal, harness.project.id, "markdown"),
+      ).rejects.toThrow(/canonical/i);
+      expect(rollbackCalls).toBe(1);
+      expect(evidenceCounts(harness.database)).toEqual({
+        snapshots: 0,
+        snapshotDocuments: 0,
+        artifacts: 0,
+        jobs: 0,
+        events: 0,
+      });
+    } finally {
+      harness.database.close();
+    }
+  });
+
   it("does not persist a snapshot when artifact publication fails", async () => {
     const harness = await openHarness();
     try {
@@ -155,7 +196,7 @@ describe("export outcome transactions", () => {
       });
       await expect(
         readdir(join(harness.directory, "exports", harness.project.id)),
-      ).resolves.toEqual([]);
+      ).resolves.toEqual([".staging"]);
     } finally {
       harness.database.close();
     }
@@ -187,7 +228,7 @@ describe("export outcome transactions", () => {
       });
       await expect(
         readdir(join(harness.directory, "exports", harness.project.id)),
-      ).resolves.toEqual([]);
+      ).resolves.toEqual([".staging"]);
     } finally {
       harness.database.close();
     }

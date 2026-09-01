@@ -12,6 +12,7 @@ import { requireServices, type StudioRoutesOptions } from "./project_routes.js";
 import { reviewCreateSchema, reviewListResponseSchema } from "./review_schemas.js";
 import { withAsyncStudioErrors, withStudioErrors } from "./studio_error_mapping.js";
 import { projectIdParams } from "./studio_request_schemas.js";
+import { operationInFlightSchema } from "./studio_schemas.js";
 
 /** Snapshot-bound editorial assessments, with server-owned provider provenance. */
 export const reviewRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fastify, options) => {
@@ -57,6 +58,7 @@ export const reviewRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fast
           401: errorEnvelopeResponse,
           403: errorEnvelopeResponse,
           404: errorEnvelopeResponse,
+          409: operationInFlightSchema,
           422: errorEnvelopeResponse,
           503: errorEnvelopeResponse,
         },

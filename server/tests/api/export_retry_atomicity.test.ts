@@ -75,7 +75,8 @@ describe("export retry atomicity", () => {
       expect(database.select().from(exportRecords).all()).toEqual([]);
       expect(database.select().from(jobs).all()).toHaveLength(2);
       expect(database.select().from(jobEvents).all()).toHaveLength(1);
-      await expect(readdir(join(directory, "exports", projectId))).resolves.toEqual([]);
+      await expect(readdir(join(directory, "exports", projectId))).resolves.toEqual([".staging"]);
+      await expect(readdir(join(directory, "exports", projectId, ".staging"))).resolves.toEqual([]);
     } finally {
       await app.close();
     }

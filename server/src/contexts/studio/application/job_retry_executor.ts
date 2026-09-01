@@ -11,6 +11,7 @@ import {
   NotFoundError,
   ReviewSourceInvalidatedError,
 } from "../domain/exceptions.js";
+import { isExportArtifactFormat } from "./export_artifact_identity.js";
 import type { SnapshotArtifactService } from "./export_artifact_service.js";
 import { dumpJson, jobPayload, safeLoadJson } from "./payloads.js";
 import type { JobRecord, ProjectScope, StudioStore } from "./ports/studio_store.js";
@@ -244,7 +245,7 @@ export class JobRetryExecutor {
   ): Promise<Record<string, unknown>> {
     const request = safeLoadJson(retry.requestJson);
     const format = request.format;
-    if (format !== "markdown" && format !== "docx" && format !== "epub") {
+    if (!isExportArtifactFormat(format)) {
       throw new InvalidOperationError("Original export job is missing its format.");
     }
     const completed = await this.artifacts.completeExportRetryJob(

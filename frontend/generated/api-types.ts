@@ -442,6 +442,26 @@ export interface paths {
                         "application/json": components["schemas"]["ErrorEnvelope"];
                     };
                 };
+                /** @description Default Response */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error: {
+                                /** @enum {string} */
+                                code: "OPERATION_IN_FLIGHT";
+                                details: {
+                                    document_id: string | null;
+                                    operation: string;
+                                    project_id: string;
+                                };
+                                message: string;
+                            };
+                        };
+                    };
+                };
                 /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
                 503: {
                     headers: {
@@ -2631,6 +2651,26 @@ export interface paths {
                     };
                     content: {
                         "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Default Response */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error: {
+                                /** @enum {string} */
+                                code: "OPERATION_IN_FLIGHT";
+                                details: {
+                                    document_id: string | null;
+                                    operation: string;
+                                    project_id: string;
+                                };
+                                message: string;
+                            };
+                        };
                     };
                 };
                 /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */

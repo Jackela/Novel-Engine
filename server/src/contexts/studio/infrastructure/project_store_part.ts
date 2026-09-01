@@ -1,6 +1,4 @@
 import { randomUUID } from "node:crypto";
-import { rmSync } from "node:fs";
-import { join } from "node:path";
 import { and, desc, eq } from "drizzle-orm";
 
 import type { StudioSqliteDatabase } from "../../../shared/infrastructure/db/connection.js";
@@ -27,15 +25,14 @@ import { DEFAULT_VOLUME_TITLE, insertVolume } from "./volume_store_part.js";
  * The project half of the Drizzle studio store (mirrors the Python
  * ProjectRepositoryMixin): creation with the seed document/revision in one
  * transaction, updated_at-descending lists, and deletion that cascades rows
- * and removes the project's export directory after the commit.
+ * in the same database transaction. Filesystem cleanup belongs to the
+ * application service because it cannot join SQLite's transaction.
  */
 export class ProjectStorePart {
   protected readonly db: StudioSqliteDatabase;
-  protected readonly dataDirectory: string;
 
-  constructor(db: StudioSqliteDatabase, dataDirectory: string) {
+  constructor(db: StudioSqliteDatabase) {
     this.db = db;
-    this.dataDirectory = dataDirectory;
   }
 
   addProject(scope: ProjectScope, input: AddProjectInput) {
@@ -211,13 +208,12 @@ export class ProjectStorePart {
       const project = scopedProject(tx, scope, projectId);
       // The FTS table and the workflow jobs reference the project without a
       // cross-schema FK, so their rows leave explicitly in this same
-      // transaction; cascades remove documents and revisions, and the export
-      // tree belongs to the deleted project alone and goes after the commit.
+      // transaction; cascades remove documents and revisions. Export-file
+      // cleanup runs only after this database commit succeeds.
       clearProjectDocumentIndex(tx, project.id);
       tx.delete(usageEvents).where(eq(usageEvents.project_id, project.id)).run();
       tx.delete(jobs).where(eq(jobs.project_id, project.id)).run();
       tx.delete(projects).where(eq(projects.id, project.id)).run();
     });
-    rmSync(join(this.dataDirectory, "exports", projectId), { recursive: true, force: true });
   }
 }

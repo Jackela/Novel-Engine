@@ -2,6 +2,7 @@ import { mkdtemp } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { exportArtifactNames } from "../../src/contexts/studio/application/export_artifact_identity.js";
 import type {
   ExportArtifactFormat,
   ExportSource,
@@ -29,7 +30,7 @@ async function openHarness() {
   const directory = await mkdtemp(join(tmpdir(), "novel-engine-export-catalog-"));
   const studio = await openStudioDatabase(directory);
   const clock = monotonicClock();
-  const store = new DrizzleStudioStore({ database: studio.db, dataDirectory: directory });
+  const store = new DrizzleStudioStore({ database: studio.db });
   const projects = new ProjectService(store, clock);
   const auth = new AuthService({
     store: new DrizzleAuthStore(studio.db),
@@ -62,14 +63,14 @@ function prepared(
   format: ExportArtifactFormat,
   createdAt: Date,
 ): PreparedExportArtifact {
-  const extension = format === "markdown" ? "md" : format;
+  const { relativePath } = exportArtifactNames(source.projectId, id, format);
   return {
     source,
     id,
     format,
-    relativePath: `exports/${source.projectId}/${id}.${extension}`,
+    relativePath,
     sizeBytes: id.length,
-    checksumSha256: id.padEnd(64, "a").slice(0, 64),
+    checksumSha256: "a".repeat(64),
     createdAt,
   };
 }

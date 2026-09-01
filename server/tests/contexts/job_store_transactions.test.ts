@@ -56,7 +56,7 @@ async function openHarness() {
   const directory = await mkdtemp(join(tmpdir(), "novel-engine-job-store-tx-"));
   const studio = await openStudioDatabase(directory);
   const clock = monotonicClock();
-  const store = new DrizzleStudioStore({ database: studio.db, dataDirectory: directory });
+  const store = new DrizzleStudioStore({ database: studio.db });
   // Projects reference the owners table, so the harness registers a real owner.
   const auth = new AuthService({
     store: new DrizzleAuthStore(studio.db),

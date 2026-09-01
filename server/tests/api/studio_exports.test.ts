@@ -100,7 +100,7 @@ describe("export artifact catalog and delivery", () => {
       const database = app.studioDb?.db;
       if (database === undefined) throw new Error("Expected the real Studio database.");
 
-      const ids = ["evidence markdown+%?", "evidence docx+%?", "evidence epub+%?"];
+      const ids = ["evidence-markdown", "evidence-docx", "evidence-epub"];
       let nextId = 0;
       const artifacts = new SnapshotArtifactService(
         new ExportStorePart(database),

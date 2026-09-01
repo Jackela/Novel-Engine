@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { eq } from "drizzle-orm";
 import { afterEach, describe, expect, it } from "vitest";
-
+import { exportArtifactNames } from "../../src/contexts/studio/application/export_artifact_identity.js";
 import type {
   ExportSource,
   PreparedExportArtifact,
@@ -47,7 +47,7 @@ async function openHarness() {
   directories.push(directory);
   const database = await openStudioDatabase(directory);
   const now = clock();
-  const store = new DrizzleStudioStore({ database: database.db, dataDirectory: directory });
+  const store = new DrizzleStudioStore({ database: database.db });
   const auth = new AuthService({
     store: new DrizzleAuthStore(database.db),
     sessionSecret: "export-store-test-secret",
@@ -80,11 +80,12 @@ function prepared(
   format: PreparedExportArtifact["format"],
   createdAt: Date,
 ): PreparedExportArtifact {
+  const { relativePath } = exportArtifactNames(source.projectId, id, format);
   return {
     source,
     id,
     format,
-    relativePath: `${source.projectId}/${id}.${format}`,
+    relativePath,
     sizeBytes: 17,
     checksumSha256: "a".repeat(64),
     createdAt,

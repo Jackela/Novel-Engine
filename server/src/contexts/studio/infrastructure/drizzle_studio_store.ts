@@ -34,8 +34,6 @@ import { VolumeStorePart } from "./volume_store_part.js";
 
 export interface DrizzleStudioStoreOptions {
   database: StudioSqliteDatabase;
-  /** Data directory owning `novel-engine.sqlite3`; export trees live beneath it. */
-  dataDirectory: string;
 }
 
 /**
@@ -51,7 +49,7 @@ export class DrizzleStudioStore extends ProjectStorePart implements StudioStore 
   private readonly loreKeys: LoreStorePart;
 
   constructor(options: DrizzleStudioStoreOptions) {
-    super(options.database, options.dataDirectory);
+    super(options.database);
     this.documentStore = new DocumentStorePart(options.database);
     this.volumeStore = new VolumeStorePart(options.database);
     this.editorialReviews = new ReviewStorePart(options.database);

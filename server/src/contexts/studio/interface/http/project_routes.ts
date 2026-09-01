@@ -8,7 +8,7 @@ import {
   errorEnvelopeResponse,
 } from "../../../../shared/interface/http/error_envelope.js";
 import type { StudioServices } from "../../application/studio_services.js";
-import { withStudioErrors } from "./studio_error_mapping.js";
+import { withAsyncStudioErrors, withStudioErrors } from "./studio_error_mapping.js";
 import {
   projectCreateSchema,
   projectIdParams,
@@ -16,6 +16,7 @@ import {
 } from "./studio_request_schemas.js";
 import {
   matchListResponseSchema,
+  operationInFlightSchema,
   projectDetailResponseSchema,
   projectListResponseSchema,
 } from "./studio_schemas.js";
@@ -150,15 +151,23 @@ export const projectRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fas
           401: errorEnvelopeResponse,
           403: errorEnvelopeResponse,
           404: errorEnvelopeResponse,
+          409: operationInFlightSchema,
           503: errorEnvelopeResponse,
         },
       },
     },
     async (request, reply) => {
-      withStudioErrors(() =>
+      const reportCleanupFailure = (failure: unknown): void => {
+        request.log.error(
+          { err: failure, errorId: request.id, project_artifact_cleanup_failed: true },
+          "project artifact cleanup failed",
+        );
+      };
+      await withAsyncStudioErrors(() =>
         requireServices(options).projects.removeProject(
           requirePrincipal(request),
           request.params.projectId,
+          reportCleanupFailure,
         ),
       );
       reply.status(204);

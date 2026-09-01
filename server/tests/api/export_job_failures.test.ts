@@ -1,4 +1,5 @@
 import { existsSync } from "node:fs";
+import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { FastifyInstance } from "fastify";
 import { describe, expect, it, vi } from "vitest";
@@ -15,9 +16,11 @@ import { seedProjectWithChapter, studioDatabase } from "./job_test_helpers.js";
 import {
   buildStudioApp,
   call,
+  getProject,
   type JobPayload,
   monotonicClock,
   ownerJar,
+  seedProject,
 } from "./studio_helpers.js";
 
 function throwingGateway(error: Error): ExportArtifactGateway {
@@ -134,6 +137,7 @@ describe("export job failure closure", () => {
           relativePath: "exports/project-1/orphan.md",
           sizeBytes: 1,
           checksumSha256: "a".repeat(64),
+          acknowledge: async () => undefined,
           rollback: async () => {
             throw cleanupFailure;
           },
@@ -243,13 +247,30 @@ describe("export job failure closure", () => {
     }
   });
 
-  it("lands one coherent artifact, snapshot, job, and event on a successful retry", async () => {
+  it("lands one coherent retry from the current source after the original was interrupted", async () => {
     const clock = monotonicClock();
     const { app, directory } = await buildStudioApp(clock);
     try {
       const owner = await ownerJar(app);
-      const projectId = await seedProjectWithChapter(app, owner, "Successful export retry");
+      const project = await seedProject(app, owner, "Successful export retry");
+      const projectId = project.id;
       seedInterruptedExport(app, projectId, clock());
+      const current = await getProject(app, owner, projectId);
+      const document = current.documents.at(0);
+      if (document === undefined) throw new Error("Expected the seeded chapter.");
+      const sourceMarker = "Fresh source selected by retry.";
+      const updated = await call(
+        app,
+        owner,
+        "PUT",
+        `/api/projects/${projectId}/documents/${document.id}`,
+        {
+          content_markdown: `# Revised chapter\n\n${sourceMarker}`,
+          base_revision_id: document.current_revision_id,
+        },
+      );
+      expect(updated.statusCode, updated.body).toBe(200);
+      const updatedRevisionId = updated.json().current_revision_id;
 
       const response = await call(
         app,
@@ -276,7 +297,7 @@ describe("export job failure closure", () => {
         expect.objectContaining({ id: snapshotId, projectId }),
       ]);
       expect(database.select().from(snapshotDocuments).all()).toEqual([
-        expect.objectContaining({ snapshotId }),
+        expect.objectContaining({ snapshotId, revisionId: updatedRevisionId }),
       ]);
       expect(database.select().from(exportRecords).all()).toEqual([
         expect.objectContaining({ id: exportId, snapshotId, projectId }),
@@ -284,7 +305,9 @@ describe("export job failure closure", () => {
       expect(database.select().from(jobs).all()).toHaveLength(2);
       expect(database.select().from(jobEvents).all()).toHaveLength(2);
       expect(retry.events.at(-1)?.details).toEqual({ export_id: exportId });
-      expect(existsSync(join(directory, "exports", projectId, `${exportId}.md`))).toBe(true);
+      const artifactPath = join(directory, "exports", projectId, `${exportId}.md`);
+      expect(existsSync(artifactPath)).toBe(true);
+      await expect(readFile(artifactPath, "utf8")).resolves.toContain(sourceMarker);
     } finally {
       await app.close();
     }

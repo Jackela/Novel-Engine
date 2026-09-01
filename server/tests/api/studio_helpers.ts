@@ -36,7 +36,7 @@ export interface StudioTestApp {
 }
 
 /** Extra buildApp overrides used by the workflow tests (provider seams). */
-export interface StudioAppOverrides {
+export interface StudioAppOverrides extends Pick<AppOptions, "projectArtifactCleaner"> {
   textProviderFactory?: NonNullable<Parameters<typeof buildApp>[0]>["textProviderFactory"];
   exportStoreFactory?: AppOptions["exportStoreFactory"];
   exportArtifactGateway?: AppOptions["exportArtifactGateway"];

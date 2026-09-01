@@ -1,6 +1,7 @@
 import { eq } from "drizzle-orm";
 import type { StudioSqliteDatabase } from "../../../shared/infrastructure/db/connection.js";
 import { jobs } from "../../../shared/infrastructure/db/schema.js";
+import { sameExportSourceProjection } from "../application/export_source_identity.js";
 import { exportJobResultJson } from "../application/payloads.js";
 import type {
   ExportArtifactRecord,
@@ -14,7 +15,6 @@ import type { ProjectScope } from "../application/ports/studio_store.js";
 import { InvalidJobTransitionError, NotFoundError } from "../domain/exceptions.js";
 import {
   findLatestExportSnapshot,
-  hasMatchingRevisionMap,
   insertExportArtifact,
   loadProjectArtifact,
   loadProjectArtifacts,
@@ -39,7 +39,7 @@ export class ExportStorePart implements ExportOutcomeStore {
       const latest = findLatestExportSnapshot(tx, project.id);
       if (latest !== undefined) {
         const captured = readExportSnapshotDocuments(tx, latest.id);
-        if (hasMatchingRevisionMap(current, captured)) {
+        if (sameExportSourceProjection(current, captured)) {
           return {
             projectId: project.id,
             projectTitle: project.title,

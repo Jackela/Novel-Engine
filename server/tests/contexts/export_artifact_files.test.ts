@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { mkdtemp, readdir, readFile, symlink, unlink, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readdir, readFile, symlink, unlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import JSZip from "jszip";
@@ -57,7 +57,9 @@ async function artifactBytes(
   artifactId: string,
 ): Promise<Buffer> {
   const evidence = await gateway.writeSnapshotArtifact(request(format, artifactId));
-  return gateway.readArtifactBytes(readRequest(evidence, artifactId, format));
+  const bytes = await gateway.readArtifactBytes(readRequest(evidence, artifactId, format));
+  await evidence.acknowledge();
+  return bytes;
 }
 
 describe("FilesystemExportArtifactGateway", () => {
@@ -73,7 +75,17 @@ describe("FilesystemExportArtifactGateway", () => {
     expect(evidence.relativePath).toBe("exports/project-1/artifact-md.md");
     expect(evidence.sizeBytes).toBe(bytes.length);
     expect(evidence.checksumSha256).toBe(createHash("sha256").update(bytes).digest("hex"));
-    expect(await readdir(join(directory, "exports", "project-1"))).toEqual(["artifact-md.md"]);
+    const staging = join(directory, "exports", "project-1", ".staging");
+    expect((await readdir(staging)).sort()).toEqual([
+      expect.stringMatching(/^artifact-md\..+\.manifest\.json$/),
+      expect.stringMatching(/^artifact-md\..+\.stage$/),
+    ]);
+    await evidence.acknowledge();
+    expect((await readdir(join(directory, "exports", "project-1"))).sort()).toEqual([
+      ".staging",
+      "artifact-md.md",
+    ]);
+    await expect(readdir(staging)).resolves.toEqual([]);
   });
 
   it("writes DOCX and EPUB with plain text and required structures", async () => {
@@ -118,16 +130,94 @@ describe("FilesystemExportArtifactGateway", () => {
     ).rejects.toThrow(NotFoundError);
   });
 
+  it("rejects a symlinked exports root before creating anything outside", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "novel-engine-artifact-"));
+    const outside = await mkdtemp(join(tmpdir(), "novel-engine-artifact-outside-"));
+    await symlink(outside, join(directory, "exports"), "dir");
+    const gateway = new FilesystemExportArtifactGateway(directory);
+
+    await expect(
+      gateway.writeSnapshotArtifact(request("markdown", "artifact-link", "project-link")),
+    ).rejects.toThrow("Export directory is not a real directory.");
+    await expect(readdir(outside)).resolves.toEqual([]);
+  });
+
+  it("rejects a symlinked project directory before publishing outside", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "novel-engine-artifact-"));
+    const outside = await mkdtemp(join(tmpdir(), "novel-engine-artifact-outside-"));
+    await mkdir(join(directory, "exports"));
+    await symlink(outside, join(directory, "exports", "project-link"), "dir");
+    const gateway = new FilesystemExportArtifactGateway(directory);
+
+    await expect(
+      gateway.writeSnapshotArtifact(request("markdown", "artifact-link", "project-link")),
+    ).rejects.toThrow("Export directory is not a real directory.");
+    await expect(readdir(outside)).resolves.toEqual([]);
+  });
+
+  it("rejects a symlinked staging directory before writing outside", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "novel-engine-artifact-"));
+    const outside = await mkdtemp(join(tmpdir(), "novel-engine-artifact-outside-"));
+    const projectDirectory = join(directory, "exports", "project-link");
+    await mkdir(projectDirectory, { recursive: true });
+    await symlink(outside, join(projectDirectory, ".staging"), "dir");
+    const gateway = new FilesystemExportArtifactGateway(directory);
+
+    await expect(
+      gateway.writeSnapshotArtifact(request("markdown", "artifact-link", "project-link")),
+    ).rejects.toThrow("Export staging path is not a real directory.");
+    await expect(readdir(outside)).resolves.toEqual([]);
+  });
+
   it("never clobbers an existing artifact id and leaves no temporary file", async () => {
     const directory = await mkdtemp(join(tmpdir(), "novel-engine-artifact-"));
     const gateway = new FilesystemExportArtifactGateway(directory);
     const first = await gateway.writeSnapshotArtifact(request("markdown", "repeat"));
     const original = await gateway.readArtifactBytes(readRequest(first, "repeat", "markdown"));
+    await first.acknowledge();
     await expect(gateway.writeSnapshotArtifact(request("markdown", "repeat"))).rejects.toThrow();
     expect(await gateway.readArtifactBytes(readRequest(first, "repeat", "markdown"))).toEqual(
       original,
     );
-    expect(await readdir(join(directory, "exports", "project-1"))).toEqual(["repeat.md"]);
+    expect((await readdir(join(directory, "exports", "project-1"))).sort()).toEqual([
+      ".staging",
+      "repeat.md",
+    ]);
+    await expect(readdir(join(directory, "exports", "project-1", ".staging"))).resolves.toEqual([]);
+  });
+
+  it("keeps shared staging stable while another format acknowledges", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "novel-engine-artifact-"));
+    const firstGateway = new FilesystemExportArtifactGateway(directory);
+    const first = await firstGateway.writeSnapshotArtifact(request("markdown", "parallel-md"));
+    let announceReady: (() => void) | undefined;
+    let releaseWrite: (() => void) | undefined;
+    const ready = new Promise<void>((resolve) => {
+      announceReady = resolve;
+    });
+    const blocked = new Promise<void>((resolve) => {
+      releaseWrite = resolve;
+    });
+    const secondGateway = new FilesystemExportArtifactGateway(directory, {
+      afterStagingReady: async () => {
+        announceReady?.();
+        await blocked;
+      },
+    });
+    const pending = secondGateway.writeSnapshotArtifact(request("docx", "parallel-docx"));
+    await ready;
+
+    await first.acknowledge();
+    releaseWrite?.();
+    const second = await pending;
+    await second.acknowledge();
+
+    expect((await readdir(join(directory, "exports", "project-1"))).sort()).toEqual([
+      ".staging",
+      "parallel-docx.docx",
+      "parallel-md.md",
+    ]);
+    await expect(readdir(join(directory, "exports", "project-1", ".staging"))).resolves.toEqual([]);
   });
 
   it("does not delete a replacement that takes the published path before rollback", async () => {
@@ -138,9 +228,51 @@ describe("FilesystemExportArtifactGateway", () => {
     await unlink(target);
     await writeFile(target, "replacement bytes");
 
-    await evidence.rollback();
+    await expect(evidence.rollback()).rejects.toThrow(/preserved a replacement/i);
 
     await expect(readFile(target, "utf8")).resolves.toBe("replacement bytes");
+    await expect(
+      readdir(join(directory, "exports", "project-1", ".staging")),
+    ).resolves.toHaveLength(2);
+  });
+
+  it("does not delete a replacement created after rollback quarantines its file", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "novel-engine-artifact-"));
+    const gateway = new FilesystemExportArtifactGateway(directory, {
+      afterRollbackQuarantine: async (_quarantine, target) => {
+        await writeFile(target, "late replacement bytes");
+      },
+    });
+    const evidence = await gateway.writeSnapshotArtifact(request("markdown", "late-replaced"));
+    const target = join(directory, evidence.relativePath);
+
+    await evidence.rollback();
+
+    await expect(readFile(target, "utf8")).resolves.toBe("late replacement bytes");
+  });
+
+  it("preserves both replacements when rollback cannot restore its quarantine", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "novel-engine-artifact-"));
+    const gateway = new FilesystemExportArtifactGateway(directory, {
+      afterRollbackQuarantine: async (_quarantine, target) => {
+        await writeFile(target, "late replacement bytes");
+      },
+    });
+    const evidence = await gateway.writeSnapshotArtifact(request("markdown", "double-replaced"));
+    const target = join(directory, evidence.relativePath);
+    await unlink(target);
+    await writeFile(target, "early replacement bytes");
+
+    await expect(evidence.rollback()).rejects.toMatchObject({ code: "EEXIST" });
+
+    await expect(readFile(target, "utf8")).resolves.toBe("late replacement bytes");
+    const quarantines = (await readdir(join(directory, "exports", "project-1"))).filter((name) =>
+      name.includes(".rollback-"),
+    );
+    expect(quarantines).toHaveLength(1);
+    await expect(
+      readFile(join(directory, "exports", "project-1", quarantines[0] ?? ""), "utf8"),
+    ).resolves.toBe("early replacement bytes");
   });
 
   it("classifies known OS write failures without swallowing renderer defects", async () => {
@@ -160,6 +292,22 @@ describe("FilesystemExportArtifactGateway", () => {
       "simulated renderer defect",
     );
   });
+
+  it.each(["EXDEV", "ENOTSUP", "EOPNOTSUPP", "ENOSYS", "EMLINK"])(
+    "classifies unsupported durable-write error %s",
+    async (code) => {
+      const directory = await mkdtemp(join(tmpdir(), "novel-engine-artifact-"));
+      const gateway = new FilesystemExportArtifactGateway(directory, {
+        afterStagingReady: async () => {
+          throw Object.assign(new Error("unsupported durable write"), { code });
+        },
+      });
+
+      await expect(
+        gateway.writeSnapshotArtifact(request("markdown", `artifact-${code.toLowerCase()}`)),
+      ).rejects.toThrow(ExportArtifactWriteError);
+    },
+  );
 
   // XML 1.0 sanitation regressions for both zipped formats live in
   // export_artifact_xml.test.ts (file-size split).

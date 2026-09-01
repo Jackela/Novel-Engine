@@ -111,6 +111,7 @@ class RecordingGateway implements A.ExportArtifactGateway {
       relativePath: `exports/${requestValue.projectId}/${requestValue.artifactId}.${extension}`,
       sizeBytes: 1,
       checksumSha256: "a".repeat(64),
+      acknowledge: async () => undefined,
       rollback: async () => undefined,
     };
   }
@@ -231,7 +232,8 @@ describe("SnapshotArtifactService", () => {
     await expect(
       service.recordCompletedExportJob(principal, "project-1", "markdown"),
     ).rejects.toThrow("append failed");
-    expect(await readdir(join(directory, "exports", "project-1"))).toEqual([]);
+    expect(await readdir(join(directory, "exports", "project-1"))).toEqual([".staging"]);
+    await expect(readdir(join(directory, "exports", "project-1", ".staging"))).resolves.toEqual([]);
   });
 
   it("reports one rollback failure without replacing the persistence error", async () => {
@@ -248,6 +250,7 @@ describe("SnapshotArtifactService", () => {
           relativePath: "exports/project-1/orphan.md",
           sizeBytes: 1,
           checksumSha256: "a".repeat(64),
+          acknowledge: async () => undefined,
           rollback: async () => {
             rollbackCalls += 1;
             throw cleanupFailure;

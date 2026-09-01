@@ -18,14 +18,29 @@ no matching completed job, or a published file whose database outcome failed.
 - Revalidate the captured immutable source when the database outcome lands.
 - Compensate a published file when database publication fails, while preserving
   and reporting the original failure.
+- Reuse snapshots only when the complete ordered document projection matches,
+  so title, metadata, kind, or reading-order changes cannot render stale bytes.
+- Retain a durable staging file and publication manifest until the database
+  commit marker exists, then reconcile every crash window before serving.
+- Persist a write-ahead cleanup intent with lossless stage/manifest inode
+  identities before the final link; clear it only after managed-file cleanup.
+- Enforce one process-lifetime owner for a data directory before backup or
+  reconciliation, and durably sync SQLite commit markers before removing file
+  recovery evidence.
+- Make project deletion exclusive with in-flight project work; treat database
+  deletion as the success boundary and filesystem removal as reported,
+  restart-recoverable cleanup.
 - Remove historical export snapshots that have no artifact or other evidence.
 
 ## Impact
 
 - Affected application code: export artifact preparation, fresh export jobs,
-  retry execution, and service wiring.
-- Affected persistence code: the export outcome port/store and generated
-  orphan-snapshot cleanup migration.
+  retry execution, project deletion, in-flight coordination, and service wiring.
+- Affected persistence code: the export outcome port/store, generated
+  orphan-snapshot cleanup migration, and generated publication-cleanup-intent
+  migration.
+- Affected startup/filesystem code: durable publication, pre-serve
+  reconciliation, confined project cleanup, and database lifecycle ordering.
 - Affected validation: transaction failure injection, filesystem compensation,
-  source invalidation, fresh/retry API behavior, migration upgrade, and existing
-  export format/download coverage.
+  crash-window restart fixtures, source ordering, concurrent deletion,
+  migration upgrade, and existing export format/download coverage.

@@ -3,6 +3,10 @@ import { Type } from "@fastify/type-provider-typebox";
 import type { FastifyPluginAsync } from "fastify";
 import { principalGuard, requirePrincipal } from "../../../../shared/interface/http/auth_guard.js";
 import { errorEnvelopeResponse } from "../../../../shared/interface/http/error_envelope.js";
+import {
+  EXPORT_ARTIFACT_FORMATS,
+  exportArtifactExtension,
+} from "../../application/export_artifact_identity.js";
 import { exportArtifactPayloadSchema } from "../../application/payload_schemas/export.js";
 import { exportArtifactPayload } from "../../application/payloads.js";
 import type { ExportArtifactFormat } from "../../application/ports/export_store.js";
@@ -31,18 +35,17 @@ const exportCreateSchema = Type.Object(
   {
     format: Type.Unsafe<ExportArtifactFormat>({
       type: "string",
-      enum: ["markdown", "docx", "epub"],
+      enum: [...EXPORT_ARTIFACT_FORMATS],
     }),
   },
   { additionalProperties: false },
 );
-const deliveryByFormat: Record<ExportArtifactFormat, { contentType: string; extension: string }> = {
-  markdown: { contentType: "text/markdown; charset=utf-8", extension: "md" },
+const deliveryByFormat: Record<ExportArtifactFormat, { contentType: string }> = {
+  markdown: { contentType: "text/markdown; charset=utf-8" },
   docx: {
     contentType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-    extension: "docx",
   },
-  epub: { contentType: "application/epub+zip", extension: "epub" },
+  epub: { contentType: "application/epub+zip" },
 };
 
 /** Guard + scope failures shared by the project-scoped export reads. */
@@ -142,7 +145,10 @@ export const exportRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fast
       const delivery = deliveryByFormat[artifact.format];
       return reply
         .type(delivery.contentType)
-        .header("content-disposition", `attachment; filename="export.${delivery.extension}"`)
+        .header(
+          "content-disposition",
+          `attachment; filename="export.${exportArtifactExtension(artifact.format)}"`,
+        )
         .send(artifact.bytes);
     },
   );

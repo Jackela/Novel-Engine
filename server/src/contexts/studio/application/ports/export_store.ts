@@ -1,7 +1,8 @@
+import type { ExportArtifactFormat } from "../export_artifact_identity.js";
 import type { JobRecord } from "./job_records.js";
 import type { ProjectScope } from "./studio_store.js";
 
-export type ExportArtifactFormat = "markdown" | "docx" | "epub";
+export type { ExportArtifactFormat } from "../export_artifact_identity.js";
 
 /** One ordered document/revision payload captured without durable writes. */
 export interface ExportSourceDocument {

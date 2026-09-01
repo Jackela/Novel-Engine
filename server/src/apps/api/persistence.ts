@@ -1,5 +1,6 @@
 import type { FastifyInstance } from "fastify";
-import { openStudioDatabase, type StudioDatabase } from "../../shared/infrastructure/db/startup.js";
+import { openReconciledStudioDatabase } from "../../contexts/studio/infrastructure/reconciled_studio_database.js";
+import type { StudioDatabase } from "../../shared/infrastructure/db/startup.js";
 
 /** Persistence handles bound to a configured data directory. */
 export interface PersistenceHandles {
@@ -7,18 +8,33 @@ export interface PersistenceHandles {
   db: StudioDatabase;
 }
 
-/**
- * Open the content-authority database for a configured data directory. A
- * failed start closes the app before rethrowing so no listeners survive.
- */
+/** Open the content-authority database and immediately bind its lifetime to the app. */
 export async function openPersistence(
   app: FastifyInstance,
   dataDirectory: string,
 ): Promise<PersistenceHandles> {
+  const db = await openReconciledStudioDatabase(dataDirectory, {
+    onReconciled: (report) => {
+      app.log.info(
+        { export_publication_recovery: true, ...report },
+        "export publication recovery completed",
+      );
+    },
+  });
   try {
-    return { dataDirectory, db: await openStudioDatabase(dataDirectory) };
+    app.addHook("onClose", async () => {
+      db.close();
+    });
   } catch (error) {
-    await app.close();
+    try {
+      db.close();
+    } catch (cleanupError) {
+      throw new AggregateError(
+        [error, cleanupError],
+        "Database opened but lifecycle registration and cleanup both failed.",
+      );
+    }
     throw error;
   }
+  return { dataDirectory, db };
 }

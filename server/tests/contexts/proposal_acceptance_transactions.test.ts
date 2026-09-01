@@ -27,7 +27,7 @@ async function openHarness() {
   directories.push(directory);
   const database = await openStudioDatabase(directory);
   const now = clock();
-  const store = new DrizzleStudioStore({ database: database.db, dataDirectory: directory });
+  const store = new DrizzleStudioStore({ database: database.db });
   const auth = new AuthService({
     store: new DrizzleAuthStore(database.db),
     sessionSecret: "proposal-acceptance-test-secret",

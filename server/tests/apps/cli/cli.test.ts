@@ -5,8 +5,14 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
 import { runCli } from "../../../src/apps/cli/main.js";
+import {
+  exports as exportArtifacts,
+  projectSnapshots,
+  projects,
+} from "../../../src/contexts/studio/infrastructure/db/schema.js";
 import { AuthService } from "../../../src/shared/application/auth_service.js";
 import { DrizzleAuthStore } from "../../../src/shared/infrastructure/db/auth_store.js";
+import { owners } from "../../../src/shared/infrastructure/db/schema.js";
 import { openStudioDatabase } from "../../../src/shared/infrastructure/db/startup.js";
 import { makeLegacyWorkspace } from "../../legacy_workspace_fixtures.js";
 
@@ -51,6 +57,59 @@ async function seedDatabase(harness: CliHarness): Promise<void> {
   expect(existsSync(harness.databasePath)).toBe(true);
 }
 
+async function seedMissingCommittedExport(harness: CliHarness): Promise<void> {
+  const studio = await openStudioDatabase(harness.dataDirectory);
+  const now = new Date("2026-08-31T18:00:00.000Z");
+  try {
+    studio.db
+      .insert(owners)
+      .values({
+        id: "owner-recovery",
+        username: "owner",
+        password_hash: "test-only",
+        created_at: now,
+      })
+      .run();
+    studio.db
+      .insert(projects)
+      .values({
+        id: "project-recovery",
+        ownerId: "owner-recovery",
+        title: "Recovery evidence",
+        description: "",
+        settingsJson: "{}",
+        importHash: null,
+        createdAt: now,
+        updatedAt: now,
+      })
+      .run();
+    studio.db
+      .insert(projectSnapshots)
+      .values({
+        id: "snapshot-recovery",
+        projectId: "project-recovery",
+        reason: "export",
+        createdAt: now,
+      })
+      .run();
+    studio.db
+      .insert(exportArtifacts)
+      .values({
+        id: "artifact-recovery",
+        projectId: "project-recovery",
+        snapshotId: "snapshot-recovery",
+        format: "markdown",
+        relativePath: "exports/project-recovery/artifact-recovery.md",
+        sizeBytes: 7,
+        checksumSha256: "a".repeat(64),
+        createdAt: now,
+      })
+      .run();
+  } finally {
+    studio.close();
+  }
+}
+
 describe("operational CLI", () => {
   it("backs up an existing database and prints the backup path", async () => {
     const harness = await cliHarness();
@@ -64,6 +123,25 @@ describe("operational CLI", () => {
     expect(typeof target).toBe("string");
     expect(existsSync(target ?? "")).toBe(true);
     expect(target).toContain("backups");
+  });
+
+  it("refuses backup while another process owns the data directory", async () => {
+    const harness = await cliHarness();
+    const active = await openStudioDatabase(harness.dataDirectory);
+    try {
+      const blockedCode = await runCli(["backup"], harness.context);
+
+      expect(blockedCode).toBe(1);
+      expect(harness.lines.join("\n")).toMatch(/already owned by another Novel Engine process/i);
+      expect(existsSync(join(harness.dataDirectory, "backups"))).toBe(false);
+    } finally {
+      active.close();
+    }
+
+    harness.lines.length = 0;
+    const completedCode = await runCli(["backup"], harness.context);
+    expect(completedCode).toBe(0);
+    expect(harness.lines[0]).toContain("backups");
   });
 
   it("reports when no database exists to back up", async () => {
@@ -110,6 +188,36 @@ describe("operational CLI", () => {
     expect(payload.quick_check).toEqual(expect.any(String));
     expect(payload.quick_check).not.toBe("ok");
     expect(payload.foreign_keys).toBe(false);
+  });
+
+  it("fails doctor and import before mutation when committed export bytes are missing", async () => {
+    const harness = await cliHarness();
+    await seedMissingCommittedExport(harness);
+
+    const doctorCode = await runCli(["doctor"], harness.context);
+    expect(doctorCode).toBe(1);
+    const doctor = JSON.parse(harness.lines[0] ?? "") as Record<string, unknown>;
+    expect(doctor.quick_check).toMatch(/missing/i);
+
+    harness.lines.length = 0;
+    const source = makeLegacyWorkspace(join(harness.directory, "blocked-import"), {
+      title: "Must not import",
+      chapters: [{ filename: "chapter-001.md", content: "# Blocked\n" }],
+    });
+    const importCode = await runCli(
+      ["import", "--source", source, "--owner", "owner"],
+      harness.context,
+    );
+    expect(importCode).toBe(1);
+    expect(harness.lines.join("\n")).toMatch(/missing/i);
+
+    const unchanged = await openStudioDatabase(harness.dataDirectory);
+    try {
+      expect(unchanged.db.select().from(projects).all()).toHaveLength(1);
+      expect(unchanged.db.select().from(exportArtifacts).all()).toHaveLength(1);
+    } finally {
+      unchanged.close();
+    }
   });
 
   it("backs up and migrates before serve starts listening", async () => {

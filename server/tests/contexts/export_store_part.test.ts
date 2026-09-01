@@ -5,6 +5,7 @@ import { and, eq } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
 
 import { DocumentService } from "../../src/contexts/studio/application/document_service.js";
+import { exportArtifactNames } from "../../src/contexts/studio/application/export_artifact_identity.js";
 import { SnapshotArtifactService } from "../../src/contexts/studio/application/export_artifact_service.js";
 import type {
   ExportArtifactFormat,
@@ -46,7 +47,7 @@ async function openHarness() {
   const directory = await mkdtemp(join(tmpdir(), "novel-engine-export-store-"));
   const studio = await openStudioDatabase(directory);
   const clock = monotonicClock();
-  const store = new DrizzleStudioStore({ database: studio.db, dataDirectory: directory });
+  const store = new DrizzleStudioStore({ database: studio.db });
   const projects = new ProjectService(store, clock);
   const documents = new DocumentService(store, clock);
   const auth = new AuthService({
@@ -91,14 +92,14 @@ function prepared(
   format: ExportArtifactFormat,
   createdAt: Date,
 ): PreparedExportArtifact {
-  const extension = format === "markdown" ? "md" : format;
+  const { relativePath } = exportArtifactNames(source.projectId, id, format);
   return {
     source,
     id,
     format,
-    relativePath: `exports/${source.projectId}/${id}.${extension}`,
+    relativePath,
     sizeBytes: id.length,
-    checksumSha256: id.padEnd(64, "a").slice(0, 64),
+    checksumSha256: "a".repeat(64),
     createdAt,
   };
 }
@@ -144,6 +145,37 @@ describe("ExportStorePart", () => {
           )
           .all(),
       ).toEqual([]);
+    } finally {
+      harness.studio.close();
+    }
+  });
+
+  it("rejects malformed artifact evidence without committing a database outcome", async () => {
+    const harness = await openHarness();
+    try {
+      const { projectId } = newProject(
+        harness.projects,
+        harness.principal,
+        "Invalid artifact evidence",
+      );
+      const source = capture(harness.scope, projectId, harness.clock(), harness.exportStore);
+      const valid = prepared(source, "invalid-evidence", "markdown", harness.clock());
+      const unsupportedFormat = { ...valid };
+      Reflect.set(unsupportedFormat, "format", "pdf");
+      const invalid: PreparedExportArtifact[] = [
+        { ...valid, id: "../artifact" },
+        { ...valid, relativePath: "outside.md" },
+        { ...valid, sizeBytes: -1 },
+        { ...valid, checksumSha256: "not-a-checksum" },
+        unsupportedFormat,
+      ];
+
+      for (const input of invalid) {
+        expect(() => harness.exportStore.recordCompletedExportJob(harness.scope, input)).toThrow();
+        expect(harness.exportStore.listProjectArtifacts(harness.scope, projectId)).toEqual([]);
+        expect(harness.store.collectProjectJobs(harness.scope, projectId)).toEqual([]);
+      }
+      expect(harness.studio.db.select().from(projectSnapshots).all()).toEqual([]);
     } finally {
       harness.studio.close();
     }

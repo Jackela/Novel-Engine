@@ -1,6 +1,8 @@
 import type { Principal } from "../../../shared/application/ports/auth.js";
 import { InvalidOperationError } from "../../../shared/domain/exceptions.js";
+import { InFlightOperationGuard } from "./operation_in_flight.js";
 import { dumpJson, projectPayload } from "./payloads.js";
+import type { ProjectArtifactCleaner } from "./ports/project_artifact_cleaner.js";
 import {
   type DocumentWithCurrent,
   type StudioStore,
@@ -12,13 +14,28 @@ const SEED_DOCUMENT_TITLE = "Chapter 1";
 const SEED_DOCUMENT_CONTENT = "# Chapter 1\n\n";
 const DEFAULT_SETTINGS = dumpJson({ provider: "mock" });
 
+export interface ProjectServiceOptions {
+  /** Shared with provider/export operations in the app composition root. */
+  readonly inFlight?: InFlightOperationGuard | undefined;
+  /** Optional only for persistence-focused unit harnesses. */
+  readonly artifactCleaner?: ProjectArtifactCleaner | undefined;
+}
+
 export class ProjectService {
   private readonly store: StudioStore;
   private readonly now: () => Date;
+  private readonly inFlight: InFlightOperationGuard;
+  private readonly artifactCleaner: ProjectArtifactCleaner | undefined;
 
-  constructor(store: StudioStore, now: () => Date = () => new Date()) {
+  constructor(
+    store: StudioStore,
+    now: () => Date = () => new Date(),
+    options: ProjectServiceOptions = {},
+  ) {
     this.store = store;
     this.now = now;
+    this.inFlight = options.inFlight ?? new InFlightOperationGuard();
+    this.artifactCleaner = options.artifactCleaner;
   }
 
   /** Create a project with the Chapter 1 seed and default provider settings. */
@@ -72,8 +89,32 @@ export class ProjectService {
     return { payload, documents };
   }
 
-  /** Delete the project; dependent rows cascade and the export dir is removed. */
-  removeProject(principal: Principal, projectId: string): void {
-    this.store.dropProject(scopeForPrincipal(principal), projectId);
+  /** Delete database authority, then converge its secondary export tree. */
+  async removeProject(
+    principal: Principal,
+    projectId: string,
+    reportCleanupFailure?: (failure: unknown) => void,
+  ): Promise<void> {
+    const scope = scopeForPrincipal(principal);
+    // Authorize before consulting the process-local guard so another owner's
+    // in-flight operation is never disclosed through a 409 response.
+    this.store.findProject(scope, projectId);
+    this.inFlight.enterProjectExclusive(projectId, "project deletion");
+    try {
+      this.store.dropProject(scope, projectId);
+      if (this.artifactCleaner === undefined) return;
+      try {
+        await this.artifactCleaner.removeProjectArtifacts(projectId);
+      } catch (failure) {
+        try {
+          reportCleanupFailure?.(failure);
+        } catch {
+          // SQLite already committed. Startup reconciliation owns eventual
+          // cleanup, so reporting failure cannot change the DELETE outcome.
+        }
+      }
+    } finally {
+      this.inFlight.exitProjectExclusive(projectId);
+    }
   }
 }

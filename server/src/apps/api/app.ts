@@ -8,11 +8,14 @@ import type { TextGenerationProviderFactory } from "../../contexts/ai/applicatio
 import { providerCatalogRoutes } from "../../contexts/ai/interface/http/provider_routes.js";
 import type { ExportArtifactGateway } from "../../contexts/studio/application/export_artifact_service.js";
 import type { ExportOutcomeStore } from "../../contexts/studio/application/ports/export_store.js";
+import type { ProjectArtifactCleaner } from "../../contexts/studio/application/ports/project_artifact_cleaner.js";
 import { createStudioServices } from "../../contexts/studio/application/studio_services.js";
 import { DrizzleStudioStore } from "../../contexts/studio/infrastructure/drizzle_studio_store.js";
 import { FilesystemExportArtifactGateway } from "../../contexts/studio/infrastructure/export_artifact_files.js";
+import { DatabaseExportPublicationCleanupJournal } from "../../contexts/studio/infrastructure/export_publication_cleanup_journal.js";
 import { ExportStorePart } from "../../contexts/studio/infrastructure/export_store_part.js";
 import { FsLegacyWorkspaceReader } from "../../contexts/studio/infrastructure/fs_legacy_workspace_reader.js";
+import { FilesystemProjectArtifactCleaner } from "../../contexts/studio/infrastructure/project_artifact_files.js";
 import { studioRoutes } from "../../contexts/studio/interface/http/studio_routes.js";
 import { AuthService } from "../../shared/application/auth_service.js";
 import type { HealthProbe } from "../../shared/application/ports/health.js";
@@ -26,10 +29,7 @@ import type { StudioSqliteDatabase } from "../../shared/infrastructure/db/connec
 import type { StudioDatabase } from "../../shared/infrastructure/db/startup.js";
 import { clientIdentity } from "../../shared/infrastructure/rate_limit/client_identity.js";
 import { TokenBucketRateLimiter } from "../../shared/infrastructure/rate_limit/token_bucket.js";
-import {
-  type ProductIdentity,
-  readProductIdentity,
-} from "../../shared/infrastructure/workspace_manifest.js";
+import { readProductIdentity } from "../../shared/infrastructure/workspace_manifest.js";
 import { authRoutes } from "../../shared/interface/http/auth_routes.js";
 import { corsAllowList } from "../../shared/interface/http/cors_policy.js";
 import { registerErrorEnvelope } from "../../shared/interface/http/error_envelope.js";
@@ -39,7 +39,9 @@ import {
   registerSpaServing,
 } from "../../shared/interface/http/spa_serving.js";
 import { type VersionInfo, versionRoutes } from "../../shared/interface/http/version_route.js";
+import { closeAppAndRethrow } from "./app_lifecycle.js";
 import { openPersistence } from "./persistence.js";
+import { loggerWithProductIdentity } from "./product_logger.js";
 import { buildProviderRuntime, type ProviderApiKeys } from "./provider_runtime.js";
 import { correlationIdFrom, REQUEST_ID_HEADER } from "./request_correlation.js";
 
@@ -57,8 +59,9 @@ export interface AppOptions {
   buildSha?: string | undefined;
   /**
    * Directory holding novel-engine.sqlite3. When set, startup runs the
-   * persistence pipeline (backup → migrations → restart recovery) before
-   * serving; when absent the app stays database-free (walking skeleton).
+   * persistence pipeline (backup → migrations → export reconciliation →
+   * job-state recovery) before serving; when absent the app stays
+   * database-free (walking skeleton).
    */
   dataDirectory?: string | undefined;
   /**
@@ -85,6 +88,8 @@ export interface AppOptions {
   exportStoreFactory?: ((database: StudioSqliteDatabase) => ExportOutcomeStore) | undefined;
   /** Injectable artifact filesystem boundary for publication/failure tests. */
   exportArtifactGateway?: ExportArtifactGateway | undefined;
+  /** Injectable post-commit project artifact cleanup boundary for tests. */
+  projectArtifactCleaner?: ProjectArtifactCleaner | undefined;
   /** Credentials for the HTTP providers; absent keys leave them unconfigured. */
   providerApiKeys?: ProviderApiKeys | undefined;
   /**
@@ -124,31 +129,13 @@ const AUTH_RATE_LIMIT_KEY_TTL_SECONDS = 60;
 
 const emptyHealthProbe: HealthProbe = async () => ({ components: [] });
 
-function loggerWithProductIdentity(
-  logger: AppOptions["logger"],
-  identity: ProductIdentity,
-): false | Exclude<FastifyServerOptions["logger"], boolean | undefined> {
-  if (logger === false) {
-    return false;
-  }
-  const configured: Exclude<FastifyServerOptions["logger"], boolean | undefined> =
-    logger === true || logger === undefined ? {} : logger;
-  return {
-    ...configured,
-    base: {
-      ...(configured.base ?? {}),
-      product_name: identity.name,
-      product_version: identity.version,
-    },
-  };
-}
-
 /**
  * Composition root of the TS server: correlation-id request logging, the
  * unified error envelope, health probes, /version metadata, the OpenAPI
  * document seam consumed by the snapshot gate, and — when a data directory
- * is configured — the persistence pipeline (backup → migrate → recover)
- * that must complete before the app serves traffic.
+ * is configured — the persistence pipeline (backup → migrate → reconcile
+ * export publications → recover job state) that must complete before the app
+ * serves traffic.
  */
 export async function buildApp(options: AppOptions = {}): Promise<FastifyInstance> {
   // Guards run before any side effect: a misconfigured production start must
@@ -163,159 +150,164 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
     genReqId: (request) => correlationIdFrom(request.headers[REQUEST_ID_HEADER]) ?? randomUUID(),
   }).withTypeProvider<TypeBoxTypeProvider>();
 
-  app.addHook("onRequest", async (request, reply) => {
-    reply.header("x-request-id", request.id);
-  });
-
-  const dataDirectory = options.dataDirectory ?? options.config?.dataDirectory;
-  // The content-authority database exists exactly when a data directory is
-  // configured, so the handles travel together and downstream guards need a
-  // single check (audit hard-10: the former `studioDb === undefined ||
-  // dataDirectory === undefined` clause was unreachable).
-  const persistence =
-    dataDirectory === undefined ? undefined : await openPersistence(app, dataDirectory);
-  if (persistence !== undefined) {
-    app.decorate("studioDb", persistence.db);
-    app.addHook("onClose", async () => {
-      persistence.db.close();
+  try {
+    app.addHook("onRequest", async (request, reply) => {
+      reply.header("x-request-id", request.id);
     });
-  }
 
-  const environment =
-    options.environment ?? options.config?.environment ?? process.env.NODE_ENV ?? "development";
-  const authService =
-    persistence === undefined
-      ? undefined
-      : new AuthService({
-          store: new DrizzleAuthStore(persistence.db.db),
-          sessionSecret:
-            options.sessionSecret ??
-            options.config?.sessionSecret ??
-            randomBytes(32).toString("base64url"),
-          now: options.clock,
-        });
-  const provider = buildProviderRuntime(options.config, options);
-  const loreBudgetCharacters =
-    options.lorebookBudgetCharacters ?? options.config?.llm.lorebookBudgetCharacters;
-  const studioServices =
-    persistence === undefined
-      ? undefined
-      : createStudioServices(
-          new DrizzleStudioStore({
-            database: persistence.db.db,
-            dataDirectory: persistence.dataDirectory,
-          }),
-          {
+    const dataDirectory = options.dataDirectory ?? options.config?.dataDirectory;
+    // The content-authority database exists exactly when a data directory is
+    // configured, so the handles travel together and downstream guards need a
+    // single check (audit hard-10: the former `studioDb === undefined ||
+    // dataDirectory === undefined` clause was unreachable).
+    const persistence =
+      dataDirectory === undefined ? undefined : await openPersistence(app, dataDirectory);
+    if (persistence !== undefined) {
+      app.decorate("studioDb", persistence.db);
+    }
+
+    const environment =
+      options.environment ?? options.config?.environment ?? process.env.NODE_ENV ?? "development";
+    const authService =
+      persistence === undefined
+        ? undefined
+        : new AuthService({
+            store: new DrizzleAuthStore(persistence.db.db),
+            sessionSecret:
+              options.sessionSecret ??
+              options.config?.sessionSecret ??
+              randomBytes(32).toString("base64url"),
             now: options.clock,
-            providerFactory: provider.providerFactory,
-            legacyWorkspaceReader: new FsLegacyWorkspaceReader(),
-            reviewProvenance: {
-              provider: provider.defaultProvider,
-              model: provider.reviewModel,
+          });
+    const provider = buildProviderRuntime(options.config, options);
+    const loreBudgetCharacters =
+      options.lorebookBudgetCharacters ?? options.config?.llm.lorebookBudgetCharacters;
+    const studioServices =
+      persistence === undefined
+        ? undefined
+        : createStudioServices(
+            new DrizzleStudioStore({
+              database: persistence.db.db,
+            }),
+            {
+              now: options.clock,
+              providerFactory: provider.providerFactory,
+              legacyWorkspaceReader: new FsLegacyWorkspaceReader(),
+              reviewProvenance: {
+                provider: provider.defaultProvider,
+                model: provider.reviewModel,
+              },
+              artifactStore:
+                options.exportStoreFactory?.(persistence.db.db) ??
+                new ExportStorePart(persistence.db.db),
+              artifactFiles:
+                options.exportArtifactGateway ??
+                new FilesystemExportArtifactGateway(persistence.dataDirectory, {
+                  cleanupJournal: new DatabaseExportPublicationCleanupJournal(persistence.db.db),
+                }),
+              projectArtifactCleaner:
+                options.projectArtifactCleaner ??
+                new FilesystemProjectArtifactCleaner(persistence.dataDirectory),
+              loreBudgetCharacters,
             },
-            artifactStore:
-              options.exportStoreFactory?.(persistence.db.db) ??
-              new ExportStorePart(persistence.db.db),
-            artifactFiles:
-              options.exportArtifactGateway ??
-              new FilesystemExportArtifactGateway(persistence.dataDirectory),
-            loreBudgetCharacters,
-          },
-        );
+          );
 
-  const versionInfo: VersionInfo = {
-    version: productIdentity.version,
-    name: productIdentity.name,
-    runtime: { name: "node", version: process.versions.node },
-    environment,
-    build: options.buildSha ?? process.env.BUILD_SHA ?? "unknown",
-  };
+    const versionInfo: VersionInfo = {
+      version: productIdentity.version,
+      name: productIdentity.name,
+      runtime: { name: "node", version: process.versions.node },
+      environment,
+      build: options.buildSha ?? process.env.BUILD_SHA ?? "unknown",
+    };
 
-  // The envelope must be installed before route plugins: Fastify child
-  // contexts snapshot their parent's error handler at registration time.
-  registerErrorEnvelope(app);
+    // The envelope must be installed before route plugins: Fastify child
+    // contexts snapshot their parent's error handler at registration time.
+    registerErrorEnvelope(app);
 
-  await app.register(cookie);
-  await app.register(swagger, {
-    openapi: {
-      info: {
-        title: `${productIdentity.name} API`,
-        version: versionInfo.version,
-        description: "Self-hosted writing studio API (TypeScript rewrite).",
-      },
-      components: {
-        securitySchemes: {
-          cookieAuth: {
-            type: "apiKey",
-            in: "cookie",
-            name: "novel_engine_session",
+    await app.register(cookie);
+    await app.register(swagger, {
+      openapi: {
+        info: {
+          title: `${productIdentity.name} API`,
+          version: versionInfo.version,
+          description: "Self-hosted writing studio API (TypeScript rewrite).",
+        },
+        components: {
+          securitySchemes: {
+            cookieAuth: {
+              type: "apiKey",
+              in: "cookie",
+              name: "novel_engine_session",
+            },
           },
         },
       },
-    },
-    // Shared schemas land in components.schemas under their $id (e.g.
-    // ErrorEnvelope) instead of positional def-N names, keeping the frozen
-    // snapshot stable when shared-schema count changes.
-    refResolver: {
-      buildLocalReference: (json) => (typeof json.$id === "string" ? json.$id : `def-0`),
-    },
-  });
-  const corsOrigins = options.corsOrigins ?? options.config?.corsOrigins ?? DEFAULT_CORS_ORIGINS;
-  const allowList = corsAllowList(corsOrigins);
-  await app.register(cors, {
-    origin: allowList.allowAll ? true : allowList.origins,
-    credentials: true,
-    allowedHeaders: CORS_ALLOWED_HEADERS,
-    methods: CORS_ALLOWED_METHODS,
-    exposedHeaders: ["x-request-id", "x-total-count"],
-    maxAge: 600,
-  });
-  const perMinute =
-    options.authRateLimitPerMinute ??
-    options.config?.authRateLimitPerMinute ??
-    DEFAULT_AUTH_RATE_LIMIT_PER_MINUTE;
-  await app.register(authRoutes, {
-    authService,
-    limiter: new TokenBucketRateLimiter({
-      ratePerSecond: perMinute / 60,
-      capacity: perMinute,
-      keyTtlSeconds: AUTH_RATE_LIMIT_KEY_TTL_SECONDS,
-    }),
-    productIdentity,
-    environment,
-    corsOrigins,
-    resolveClientIdentity: (request) =>
-      clientIdentity(
-        request.socket?.remoteAddress,
-        typeof request.headers["x-forwarded-for"] === "string"
-          ? request.headers["x-forwarded-for"]
-          : undefined,
-        options.trustedProxies ?? options.config?.trustedProxies ?? [],
-      ),
-  });
-  await app.register(healthRoutes, { healthProbe: options.healthProbe ?? emptyHealthProbe });
-  await app.register(versionRoutes, { info: versionInfo });
-  await app.register(providerCatalogRoutes, {
-    authService,
-    defaultProvider: provider.defaultProvider,
-    settings: provider.providerModelSettings,
-    credentials: provider.providerApiKeys,
-  });
-  await app.register(studioRoutes, {
-    authService,
-    services: studioServices,
-    dataDirectory,
-  });
+      // Shared schemas land in components.schemas under their $id (e.g.
+      // ErrorEnvelope) instead of positional def-N names, keeping the frozen
+      // snapshot stable when shared-schema count changes.
+      refResolver: {
+        buildLocalReference: (json) => (typeof json.$id === "string" ? json.$id : `def-0`),
+      },
+    });
+    const corsOrigins = options.corsOrigins ?? options.config?.corsOrigins ?? DEFAULT_CORS_ORIGINS;
+    const allowList = corsAllowList(corsOrigins);
+    await app.register(cors, {
+      origin: allowList.allowAll ? true : allowList.origins,
+      credentials: true,
+      allowedHeaders: CORS_ALLOWED_HEADERS,
+      methods: CORS_ALLOWED_METHODS,
+      exposedHeaders: ["x-request-id", "x-total-count"],
+      maxAge: 600,
+    });
+    const perMinute =
+      options.authRateLimitPerMinute ??
+      options.config?.authRateLimitPerMinute ??
+      DEFAULT_AUTH_RATE_LIMIT_PER_MINUTE;
+    await app.register(authRoutes, {
+      authService,
+      limiter: new TokenBucketRateLimiter({
+        ratePerSecond: perMinute / 60,
+        capacity: perMinute,
+        keyTtlSeconds: AUTH_RATE_LIMIT_KEY_TTL_SECONDS,
+      }),
+      productIdentity,
+      environment,
+      corsOrigins,
+      resolveClientIdentity: (request) =>
+        clientIdentity(
+          request.socket?.remoteAddress,
+          typeof request.headers["x-forwarded-for"] === "string"
+            ? request.headers["x-forwarded-for"]
+            : undefined,
+          options.trustedProxies ?? options.config?.trustedProxies ?? [],
+        ),
+    });
+    await app.register(healthRoutes, { healthProbe: options.healthProbe ?? emptyHealthProbe });
+    await app.register(versionRoutes, { info: versionInfo });
+    await app.register(providerCatalogRoutes, {
+      authService,
+      defaultProvider: provider.defaultProvider,
+      settings: provider.providerModelSettings,
+      credentials: provider.providerApiKeys,
+    });
+    await app.register(studioRoutes, {
+      authService,
+      services: studioServices,
+      dataDirectory,
+    });
 
-  app.get("/openapi.json", { schema: { hide: true } }, async () => app.swagger());
+    app.get("/openapi.json", { schema: { hide: true } }, async () => app.swagger());
 
-  // The SPA surface registers last: its wildcard only fires when no API,
-  // health, or version route matched, so the JSON API stays distinct.
-  await registerSpaServing(app, {
-    distDirectory: options.spaDistDirectory ?? defaultSpaDistDirectory(),
-    productName: versionInfo.name,
-    version: versionInfo.version,
-  });
+    // The SPA surface registers last: its wildcard only fires when no API,
+    // health, or version route matched, so the JSON API stays distinct.
+    await registerSpaServing(app, {
+      distDirectory: options.spaDistDirectory ?? defaultSpaDistDirectory(),
+      productName: versionInfo.name,
+      version: versionInfo.version,
+    });
 
-  return app;
+    return app;
+  } catch (error) {
+    return closeAppAndRethrow(app, error, "Application initialization and cleanup both failed.");
+  }
 }

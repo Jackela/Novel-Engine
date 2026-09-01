@@ -116,8 +116,18 @@ describe("restart persistence", () => {
       first.close();
     }
 
-    const second = await openStudioDatabase(directory);
+    let statusBeforeJobRecovery: string | undefined;
+    const second = await openStudioDatabase(directory, {
+      beforeJobRecovery: (database) => {
+        statusBeforeJobRecovery = database
+          .select({ status: jobs.status })
+          .from(jobs)
+          .where(eq(jobs.id, "job-running"))
+          .get()?.status;
+      },
+    });
     try {
+      expect(statusBeforeJobRecovery).toBe("running");
       const interrupted = await second.db.select().from(jobs).where(eq(jobs.id, "job-running"));
       expect(interrupted).toHaveLength(1);
       expect(interrupted[0]?.status).toBe("interrupted");

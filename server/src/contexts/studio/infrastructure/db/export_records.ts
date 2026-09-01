@@ -2,6 +2,11 @@ import { randomUUID } from "node:crypto";
 import { and, asc, desc, eq, inArray } from "drizzle-orm";
 
 import { InvalidOperationError } from "../../../../shared/domain/exceptions.js";
+import {
+  assertCanonicalExportArtifactEvidence,
+  isExportArtifactFormat,
+} from "../../application/export_artifact_identity.js";
+import { sameExportSourceProjection } from "../../application/export_source_identity.js";
 import type {
   ExportArtifactFormat,
   ExportArtifactRecord,
@@ -99,18 +104,6 @@ export function readExportSnapshotDocuments(tx: Tx, snapshotId: string): ExportS
     });
 }
 
-export function hasMatchingRevisionMap(
-  current: readonly ExportSourceDocument[],
-  captured: readonly ExportSourceDocument[],
-): boolean {
-  if (current.length !== captured.length) return false;
-  const byDocument = new Map(captured.map((item) => [item.documentId, item.revisionId]));
-  return (
-    byDocument.size === current.length &&
-    current.every((item) => byDocument.get(item.documentId) === item.revisionId)
-  );
-}
-
 /** Resolve or create the exact snapshot represented by a captured source. */
 export function resolveExportSnapshot(tx: Tx, projectId: string, source: ExportSource): string {
   assertCapturedExportSource(tx, projectId, source.documents);
@@ -120,7 +113,9 @@ export function resolveExportSnapshot(tx: Tx, projectId: string, source: ExportS
   if (source.reuseSnapshotId !== null) {
     const candidate = findExportSnapshot(tx, projectId, source.reuseSnapshotId);
     if (candidate === undefined) throw new Error("Reusable export snapshot disappeared.");
-    if (!hasSameProjection(readExportSnapshotDocuments(tx, candidate.id), source.documents)) {
+    if (
+      !sameExportSourceProjection(readExportSnapshotDocuments(tx, candidate.id), source.documents)
+    ) {
       throw new Error("Reusable export snapshot projection changed after capture.");
     }
     return candidate.id;
@@ -128,7 +123,7 @@ export function resolveExportSnapshot(tx: Tx, projectId: string, source: ExportS
   const latest = findLatestExportSnapshot(tx, projectId);
   if (
     latest !== undefined &&
-    hasSameProjection(readExportSnapshotDocuments(tx, latest.id), source.documents)
+    sameExportSourceProjection(readExportSnapshotDocuments(tx, latest.id), source.documents)
   ) {
     return latest.id;
   }
@@ -142,6 +137,14 @@ export function insertExportArtifact(
   input: PreparedExportArtifact,
   beforeInsert: (artifactId: string) => void = () => {},
 ): ExportArtifactRecord {
+  assertCanonicalExportArtifactEvidence({
+    projectId,
+    id: input.id,
+    format: input.format,
+    relativePath: input.relativePath,
+    sizeBytes: input.sizeBytes,
+    checksumSha256: input.checksumSha256,
+  });
   beforeInsert(input.id);
   tx.insert(exportArtifacts)
     .values({
@@ -226,28 +229,6 @@ function findExportSnapshot(tx: Tx, projectId: string, snapshotId: string) {
     .get();
 }
 
-function hasSameProjection(
-  left: readonly ExportSourceDocument[],
-  right: readonly ExportSourceDocument[],
-): boolean {
-  return (
-    left.length === right.length &&
-    left.every((item, index) => {
-      const other = right[index];
-      return (
-        other !== undefined &&
-        item.documentId === other.documentId &&
-        item.revisionId === other.revisionId &&
-        item.kind === other.kind &&
-        item.title === other.title &&
-        item.contentMarkdown === other.contentMarkdown &&
-        item.metadataJson === other.metadataJson &&
-        item.position === other.position
-      );
-    })
-  );
-}
-
 function writeExportSnapshot(
   tx: Tx,
   projectId: string,
@@ -293,6 +274,6 @@ function toArtifactRecord(
 }
 
 function readArtifactFormat(format: string): ExportArtifactFormat {
-  if (format === "markdown" || format === "docx" || format === "epub") return format;
+  if (isExportArtifactFormat(format)) return format;
   throw new Error("Export artifact format is invalid.");
 }

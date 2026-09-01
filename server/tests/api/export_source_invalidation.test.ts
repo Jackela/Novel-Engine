@@ -40,6 +40,7 @@ function deferredGateway(): {
           relativePath: `exports/${request.projectId}/${request.artifactId}.md`,
           sizeBytes: 1,
           checksumSha256: "a".repeat(64),
+          acknowledge: async () => undefined,
           rollback: async () => {
             rollbacks += 1;
           },

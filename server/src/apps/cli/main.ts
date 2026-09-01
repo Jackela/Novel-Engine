@@ -2,6 +2,7 @@
 import { pathToFileURL } from "node:url";
 
 import type { FastifyInstance } from "fastify";
+import { openReconciledStudioDatabase } from "../../contexts/studio/infrastructure/reconciled_studio_database.js";
 import {
   type LoadServerConfigInput,
   loadServerConfig,
@@ -9,9 +10,10 @@ import {
 } from "../../shared/infrastructure/config/server_config.js";
 import { DrizzleAuthStore } from "../../shared/infrastructure/db/auth_store.js";
 import { backupDatabaseFile } from "../../shared/infrastructure/db/backup.js";
-import { openStudioDatabase } from "../../shared/infrastructure/db/startup.js";
+import { acquireDataDirectoryLock } from "../../shared/infrastructure/db/data_directory_lock.js";
 import { readProductIdentity } from "../../shared/infrastructure/workspace_manifest.js";
 import { buildApp } from "../api/app.js";
+import { closeAppAndRethrow, closeResourceAndRethrow } from "../api/app_lifecycle.js";
 import { runLegacyImportCommand } from "./legacy_import_command.js";
 
 /**
@@ -45,6 +47,10 @@ export interface CliContext {
   /** Injectable listener for tests; the default binds the built app. */
   readonly serve?: ServeRunner | undefined;
   readonly importRunner?: ImportRunner | undefined;
+  /** Injectable backup boundary for lifecycle failure tests. */
+  readonly backupDatabaseFile?: typeof backupDatabaseFile | undefined;
+  /** Injectable ownership boundary for lifecycle failure tests. */
+  readonly acquireDataDirectoryLock?: typeof acquireDataDirectoryLock | undefined;
 }
 
 const USAGE = [
@@ -52,7 +58,7 @@ const USAGE = [
   "",
   "Commands:",
   "  serve [--host HOST] [--port PORT]",
-  "      Back up the SQLite store, apply migrations, then serve the API.",
+  "      Back up, migrate, reconcile exports, recover jobs, then serve the API.",
   "  import --source DIR [--owner NAME]",
   "      Import a legacy file workspace as the owner principal.",
   "  backup",
@@ -62,6 +68,15 @@ const USAGE = [
 ].join("\n");
 
 const NO_DATABASE_MESSAGE = "No database exists yet.";
+
+function writeCliError(error: unknown, writeLine: WriteLine): void {
+  if (error instanceof AggregateError) {
+    writeLine(error.message);
+    for (const nested of error.errors) writeCliError(nested, writeLine);
+    return;
+  }
+  writeLine(error instanceof Error ? error.message : String(error));
+}
 
 interface ParsedArguments {
   command: string | undefined;
@@ -109,7 +124,7 @@ async function defaultServe(app: FastifyInstance, host: string, port: number): P
   await app.listen({ host, port });
 }
 
-/** serve: the persistence pipeline (backup → migrate → recover) runs inside buildApp. */
+/** serve: backup → migrate → reconcile exports → recover jobs runs inside buildApp. */
 async function serveCommand(
   parsed: ParsedArguments,
   context: CliContext,
@@ -125,13 +140,30 @@ async function serveCommand(
   }
   const app = await buildApp({ logger: true, config });
   const runServe = context.serve ?? defaultServe;
-  await runServe(app, host, port);
+  try {
+    await runServe(app, host, port);
+  } catch (error) {
+    return closeAppAndRethrow(app, error, "Server listen and cleanup both failed.");
+  }
   return 0;
 }
 
 async function backupCommand(context: CliContext, writeLine: WriteLine): Promise<number> {
   const config = configFor(context);
-  const target = await backupDatabaseFile(config.databasePath);
+  const acquireOwnership = context.acquireDataDirectoryLock ?? acquireDataDirectoryLock;
+  const runBackup = context.backupDatabaseFile ?? backupDatabaseFile;
+  const ownership = acquireOwnership(config.dataDirectory);
+  let target: string | null;
+  try {
+    target = await runBackup(config.databasePath);
+  } catch (error) {
+    return closeResourceAndRethrow(
+      () => ownership.close(),
+      error,
+      "Database backup and ownership cleanup both failed.",
+    );
+  }
+  ownership.close();
   writeLine(target ?? NO_DATABASE_MESSAGE);
   return 0;
 }
@@ -159,7 +191,7 @@ async function doctorCommand(context: CliContext, writeLine: WriteLine): Promise
     owner_configured: false,
   };
   try {
-    const studio = await openStudioDatabase(config.dataDirectory);
+    const studio = await openReconciledStudioDatabase(config.dataDirectory);
     try {
       report.quick_check = String(studio.raw.pragma("quick_check", { simple: true }));
       report.journal_mode = String(studio.raw.pragma("journal_mode", { simple: true }));
@@ -205,7 +237,7 @@ const legacyImportRunner: ImportRunner = async (args, context) => {
     context.writeLine(JSON.stringify(imported, null, 2));
     return 0;
   } catch (error) {
-    context.writeLine(error instanceof Error ? error.message : String(error));
+    writeCliError(error, context.writeLine);
     return 1;
   }
 };
@@ -231,7 +263,7 @@ export async function runCli(argv: readonly string[], context: CliContext = {}):
   } catch (error) {
     // Every command reports failures through the same error channel; an
     // unhandled rejection would still exit 1 but silently.
-    writeLine(error instanceof Error ? error.message : String(error));
+    writeCliError(error, writeLine);
     return 1;
   }
 }

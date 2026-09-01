@@ -3,14 +3,16 @@ import { textProviderFactory } from "../../contexts/ai/infrastructure/providers/
 import { createStudioServices } from "../../contexts/studio/application/studio_services.js";
 import { DrizzleStudioStore } from "../../contexts/studio/infrastructure/drizzle_studio_store.js";
 import { FilesystemExportArtifactGateway } from "../../contexts/studio/infrastructure/export_artifact_files.js";
+import { DatabaseExportPublicationCleanupJournal } from "../../contexts/studio/infrastructure/export_publication_cleanup_journal.js";
 import { ExportStorePart } from "../../contexts/studio/infrastructure/export_store_part.js";
 import { FsLegacyWorkspaceReader } from "../../contexts/studio/infrastructure/fs_legacy_workspace_reader.js";
+import { FilesystemProjectArtifactCleaner } from "../../contexts/studio/infrastructure/project_artifact_files.js";
+import { openReconciledStudioDatabase } from "../../contexts/studio/infrastructure/reconciled_studio_database.js";
 import { AuthService } from "../../shared/application/auth_service.js";
 import { DrizzleAuthStore } from "../../shared/infrastructure/db/auth_store.js";
-import { openStudioDatabase } from "../../shared/infrastructure/db/startup.js";
 
 export interface LegacyImportCommandInput {
-  /** Data directory owning novel-engine.sqlite3 (backup → migrate → recover runs first). */
+  /** Data directory owner (backup → migrate → reconcile exports → recover jobs runs first). */
   dataDirectory: string;
   /** Explicit legacy workspace path; the CLI is not confined to data/imports. */
   source: string;
@@ -28,7 +30,7 @@ export interface LegacyImportCommandInput {
 export async function runLegacyImportCommand(
   input: LegacyImportCommandInput,
 ): Promise<Record<string, unknown>> {
-  const database = await openStudioDatabase(input.dataDirectory);
+  const database = await openReconciledStudioDatabase(input.dataDirectory);
   try {
     const authService = new AuthService({
       store: new DrizzleAuthStore(database.db),
@@ -37,17 +39,17 @@ export async function runLegacyImportCommand(
       sessionSecret: randomBytes(32).toString("base64url"),
     });
     const principal = authService.localOwnerPrincipal(input.owner);
-    const services = createStudioServices(
-      new DrizzleStudioStore({ database: database.db, dataDirectory: input.dataDirectory }),
-      {
-        providerFactory: textProviderFactory({}),
-        legacyWorkspaceReader: new FsLegacyWorkspaceReader(),
-        // The import command never touches exports, but the service graph is
-        // complete: the same store/gateway the API composition root wires.
-        artifactStore: new ExportStorePart(database.db),
-        artifactFiles: new FilesystemExportArtifactGateway(input.dataDirectory),
-      },
-    );
+    const services = createStudioServices(new DrizzleStudioStore({ database: database.db }), {
+      providerFactory: textProviderFactory({}),
+      legacyWorkspaceReader: new FsLegacyWorkspaceReader(),
+      // The import command never touches exports, but the service graph is
+      // complete: the same store/gateway the API composition root wires.
+      artifactStore: new ExportStorePart(database.db),
+      artifactFiles: new FilesystemExportArtifactGateway(input.dataDirectory, {
+        cleanupJournal: new DatabaseExportPublicationCleanupJournal(database.db),
+      }),
+      projectArtifactCleaner: new FilesystemProjectArtifactCleaner(input.dataDirectory),
+    });
     return services.imports.importLegacyWorkspace(principal, input.source);
   } finally {
     database.close();

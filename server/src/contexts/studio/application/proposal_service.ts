@@ -14,7 +14,11 @@ import {
   type ProviderCleanupFailureReporter,
   validatedProposalOrThrow,
 } from "./proposal_landing.js";
-import { buildProposalSeed, validateProposalRequest } from "./proposal_pipeline.js";
+import {
+  admitProposalOperation,
+  buildProposalSeed,
+  resolveProposalRevision,
+} from "./proposal_pipeline.js";
 
 export {
   INVALID_PROPOSAL_PROSE,
@@ -72,11 +76,14 @@ export class AiProposalService {
     reportCleanupFailure: ProviderCleanupFailureReporter,
   ): Promise<Record<string, unknown>> {
     const scope = scopeForPrincipal(principal);
-    const { step, providerName, operation, instruction, document, revision } =
-      validateProposalRequest(this.store, scope, projectId, documentId, input);
+    const { step, providerName } = admitProposalOperation(input.operation, input.provider);
+    const operation = input.operation;
+    const instruction = input.instruction;
     // #305: the provider call runs before any job row exists, so identical
     // concurrent submissions are deduplicated by the in-flight guard — the
-    // loser receives a 409 instead of running the work twice.
+    // loser receives a 409 instead of running the work twice. Enter before
+    // resolving the revision so a committed deletion still owns the project
+    // throughout post-commit artifact cleanup rather than degrading to 404.
     const inFlightTarget = {
       projectId,
       documentId,
@@ -84,52 +91,63 @@ export class AiProposalService {
     };
     this.inFlight.enter(inFlightTarget);
 
-    const seed = buildProposalSeed({
-      projectId,
-      documentId,
-      operation,
-      provider: providerName,
-      instruction,
-      baseRevisionId: revision.id,
-      now: this.now(),
-    });
     let provider: TextGenerationProvider | undefined;
 
     try {
-      provider = this.providerFactory(providerName);
-      const result = await provider.generateStructured(
-        buildProposalTask(
-          step,
-          operation,
-          instruction,
-          this.store,
-          scope,
-          projectId,
-          document,
-          revision,
-          this.loreBudgetCharacters,
-        ),
+      const { document, revision } = resolveProposalRevision(
+        this.store,
+        scope,
+        projectId,
+        documentId,
       );
-      const { proposal } = validatedProposalOrThrow(result);
-      return jobPayload(
-        completedProposalJob(this.store, scope, seed, revision.id, {
-          proposal,
-          provider: providerName,
-          model: result.model,
-          promptTokens: result.promptTokens,
-          completionTokens: result.completionTokens,
-          instruction,
-        }),
-      );
-    } catch (error) {
-      if (!(error instanceof TextGenerationProviderError)) {
-        throw error;
+      const seed = buildProposalSeed({
+        projectId,
+        documentId,
+        operation,
+        provider: providerName,
+        instruction,
+        baseRevisionId: revision.id,
+        now: this.now(),
+      });
+      try {
+        provider = this.providerFactory(providerName);
+        const result = await provider.generateStructured(
+          buildProposalTask(
+            step,
+            operation,
+            instruction,
+            this.store,
+            scope,
+            projectId,
+            document,
+            revision,
+            this.loreBudgetCharacters,
+          ),
+        );
+        const { proposal } = validatedProposalOrThrow(result);
+        return jobPayload(
+          completedProposalJob(this.store, scope, seed, revision.id, {
+            proposal,
+            provider: providerName,
+            model: result.model,
+            promptTokens: result.promptTokens,
+            completionTokens: result.completionTokens,
+            instruction,
+          }),
+        );
+      } catch (error) {
+        if (!(error instanceof TextGenerationProviderError)) {
+          throw error;
+        }
+        return jobPayload(failedProposalJob(this.store, scope, seed, revision.id, error.message));
       }
-      return jobPayload(failedProposalJob(this.store, scope, seed, revision.id, error.message));
     } finally {
-      this.inFlight.exit(inFlightTarget);
-      if (provider !== undefined) {
-        await disposeProvider(provider, reportCleanupFailure);
+      try {
+        if (provider !== undefined) {
+          await disposeProvider(provider, reportCleanupFailure);
+        }
+      } finally {
+        this.inFlight.exit(inFlightTarget);
       }
     }
   }
