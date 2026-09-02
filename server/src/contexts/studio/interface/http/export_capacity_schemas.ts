@@ -2,7 +2,7 @@ import { ERROR_CODES } from "../../../../shared/interface/http/error_envelope.js
 import { EXPORT_CAPACITY_RESOURCES } from "../../domain/exceptions.js";
 import type { JsonResponseSchema } from "./json_response_schema.js";
 
-const invalidOperationEnvelope = {
+export const invalidOperationEnvelope = {
   type: "object",
   additionalProperties: false,
   properties: {
@@ -19,7 +19,7 @@ const invalidOperationEnvelope = {
   required: ["error"],
 } as const;
 
-const validationErrorEnvelope = {
+export const validationErrorEnvelope = {
   type: "object",
   additionalProperties: false,
   properties: {
@@ -56,7 +56,7 @@ const validationErrorEnvelope = {
   required: ["error"],
 } as const;
 
-function capacityEnvelope(resources: readonly string[]) {
+export function exportCapacityEnvelope(resources: readonly string[]) {
   return {
     type: "object",
     additionalProperties: false,
@@ -102,7 +102,7 @@ export const exportCreateOrRetry422ResponseSchema: JsonResponseSchema = {
       schema: {
         oneOf: [
           invalidOperationEnvelope,
-          capacityEnvelope(EXPORT_CAPACITY_RESOURCES),
+          exportCapacityEnvelope(EXPORT_CAPACITY_RESOURCES),
           validationErrorEnvelope,
         ],
       },
@@ -114,7 +114,7 @@ export const exportDownload422ResponseSchema: JsonResponseSchema = {
   description: "Permanent artifact download capacity refusal with bounded evidence.",
   content: {
     "application/json": {
-      schema: capacityEnvelope(["artifact_bytes"]),
+      schema: exportCapacityEnvelope(["artifact_bytes"]),
     },
   },
 } as const;

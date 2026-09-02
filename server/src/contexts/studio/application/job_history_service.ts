@@ -9,6 +9,7 @@ import {
 } from "../domain/exceptions.js";
 import type { SnapshotArtifactService } from "./export_artifact_service.js";
 import { replayedExportCapacityError } from "./export_retry_capacity_outcome.js";
+import { replayedGenerationCapacityError } from "./generation_retry_capacity_outcome.js";
 import { JobRetryExecutor, type JobRetryExecutorOptions } from "./job_retry_executor.js";
 import type { InFlightOperationGuard } from "./operation_in_flight.js";
 import type { JobPayload, JobSummaryPayload } from "./payload_schemas/job.js";
@@ -242,7 +243,8 @@ export class JobHistoryService {
       requestKey,
     );
     if (replay !== null) {
-      const capacityError = replayedExportCapacityError(replay);
+      const capacityError =
+        replayedExportCapacityError(replay) ?? replayedGenerationCapacityError(replay);
       if (capacityError !== null) throw capacityError;
       if (replay.status === "running") {
         throw new OperationInFlightError(projectId, null, `retry (${jobId})`, 1);

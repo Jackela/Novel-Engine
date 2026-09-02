@@ -2,6 +2,7 @@ import type { TypeBoxTypeProvider } from "@fastify/type-provider-typebox";
 import type { FastifyPluginAsync } from "fastify";
 import { principalGuard, requirePrincipal } from "../../../../shared/interface/http/auth_guard.js";
 import { errorEnvelopeResponse } from "../../../../shared/interface/http/error_envelope.js";
+import { proposalGeneration422ResponseSchema } from "./generation_capacity_schemas.js";
 import { jobResponseSchema } from "./job_schemas.js";
 import type { JsonResponseSchema } from "./json_response_schema.js";
 import { requireServices, type StudioRoutesOptions } from "./project_routes.js";
@@ -28,8 +29,12 @@ const PROPOSAL_ERROR_RESPONSES = {
   401: errorEnvelopeResponse,
   403: errorEnvelopeResponse,
   404: errorEnvelopeResponse,
-  422: errorEnvelopeResponse,
   503: errorEnvelopeResponse,
+} as const;
+
+const PROPOSAL_GENERATION_ERROR_RESPONSES = {
+  ...PROPOSAL_ERROR_RESPONSES,
+  422: proposalGeneration422ResponseSchema,
 } as const;
 
 /**
@@ -51,7 +56,7 @@ export const proposalRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fa
         body: proposalCreateSchema,
         response: {
           200: jobResponseSchema,
-          ...PROPOSAL_ERROR_RESPONSES,
+          ...PROPOSAL_GENERATION_ERROR_RESPONSES,
           409: operationInFlightSchema,
           503: operationCapacityResponseSchema,
         },
@@ -89,7 +94,7 @@ export const proposalRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fa
         body: proposalCreateSchema,
         response: {
           200: proposalStreamResponseSchema,
-          ...PROPOSAL_ERROR_RESPONSES,
+          ...PROPOSAL_GENERATION_ERROR_RESPONSES,
           409: operationInFlightSchema,
           503: operationCapacityResponseSchema,
         },
@@ -141,6 +146,7 @@ export const proposalRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fa
         response: {
           200: jobResponseSchema,
           ...PROPOSAL_ERROR_RESPONSES,
+          422: errorEnvelopeResponse,
         },
       },
     },

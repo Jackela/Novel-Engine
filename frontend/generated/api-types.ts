@@ -1156,13 +1156,46 @@ export interface paths {
                         };
                     };
                 };
-                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                /** @description Invalid proposal input or permanent generation-capacity refusal. */
                 422: {
                     headers: {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["ErrorEnvelope"];
+                        "application/json": {
+                            error: {
+                                /** @enum {string} */
+                                code: "INVALID_OPERATION";
+                                message: string;
+                            };
+                        } | {
+                            error: {
+                                /** @enum {string} */
+                                code: "GENERATION_CAPACITY_EXCEEDED";
+                                details: {
+                                    limit: number;
+                                    observed: number;
+                                    /** @enum {string} */
+                                    resource: "prompt_bytes";
+                                };
+                                /** @enum {string} */
+                                message: "Generation capacity exceeded.";
+                            };
+                        } | {
+                            error: {
+                                /** @enum {string} */
+                                code: "VALIDATION_ERROR";
+                                details: {
+                                    errors: {
+                                        field: string;
+                                        message: string;
+                                        type: string;
+                                    }[];
+                                };
+                                /** @enum {string} */
+                                message: "Request validation failed.";
+                            };
+                        };
                     };
                 };
                 /** @description Workflow capacity exhaustion or unavailable persistence. */
@@ -1299,13 +1332,46 @@ export interface paths {
                         };
                     };
                 };
-                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                /** @description Invalid proposal input or permanent generation-capacity refusal. */
                 422: {
                     headers: {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["ErrorEnvelope"];
+                        "application/json": {
+                            error: {
+                                /** @enum {string} */
+                                code: "INVALID_OPERATION";
+                                message: string;
+                            };
+                        } | {
+                            error: {
+                                /** @enum {string} */
+                                code: "GENERATION_CAPACITY_EXCEEDED";
+                                details: {
+                                    limit: number;
+                                    observed: number;
+                                    /** @enum {string} */
+                                    resource: "prompt_bytes";
+                                };
+                                /** @enum {string} */
+                                message: "Generation capacity exceeded.";
+                            };
+                        } | {
+                            error: {
+                                /** @enum {string} */
+                                code: "VALIDATION_ERROR";
+                                details: {
+                                    errors: {
+                                        field: string;
+                                        message: string;
+                                        type: string;
+                                    }[];
+                                };
+                                /** @enum {string} */
+                                message: "Request validation failed.";
+                            };
+                        };
                     };
                 };
                 /** @description Workflow capacity exhaustion or unavailable persistence. */
@@ -2734,7 +2800,7 @@ export interface paths {
                         };
                     };
                 };
-                /** @description Invalid export precondition or permanent export-capacity outcome with bounded evidence. */
+                /** @description Invalid retry input or permanent export/generation capacity outcome. */
                 422: {
                     headers: {
                         [name: string]: unknown;
@@ -2758,6 +2824,19 @@ export interface paths {
                                 };
                                 /** @enum {string} */
                                 message: "Export capacity exceeded.";
+                            };
+                        } | {
+                            error: {
+                                /** @enum {string} */
+                                code: "GENERATION_CAPACITY_EXCEEDED";
+                                details: {
+                                    limit: number;
+                                    observed: number;
+                                    /** @enum {string} */
+                                    resource: "prompt_bytes";
+                                };
+                                /** @enum {string} */
+                                message: "Generation capacity exceeded.";
                             };
                         } | {
                             error: {

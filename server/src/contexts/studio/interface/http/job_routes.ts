@@ -3,7 +3,7 @@ import type { FastifyPluginAsync } from "fastify";
 import { principalGuard, requirePrincipal } from "../../../../shared/interface/http/auth_guard.js";
 import { errorEnvelopeResponse } from "../../../../shared/interface/http/error_envelope.js";
 import { jobPageLimit } from "../../application/ports/job_records.js";
-import { exportCreateOrRetry422ResponseSchema } from "./export_capacity_schemas.js";
+import { jobRetry422ResponseSchema } from "./generation_capacity_schemas.js";
 import { decodeJobCursor, encodeJobCursor } from "./job_cursor.js";
 import {
   jobDetailParamsSchema,
@@ -108,7 +108,7 @@ export const jobRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fastify
           200: jobResponseSchema,
           ...JOB_READ_ERROR_RESPONSES,
           403: errorEnvelopeResponse,
-          422: exportCreateOrRetry422ResponseSchema,
+          422: jobRetry422ResponseSchema,
           409: keyedRetryInFlightResponseSchema,
           503: operationCapacityResponseSchema,
         },

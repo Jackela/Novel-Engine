@@ -9,6 +9,7 @@ import {
   ExportArtifactWriteError,
   ExportCapacityExceededError,
   ExportSourceInvalidatedError,
+  GenerationCapacityExceededError,
   NotFoundError,
   ReviewSourceInvalidatedError,
 } from "../domain/exceptions.js";
@@ -18,6 +19,10 @@ import {
   exportRetryCapacityOutcome,
   replayedExportCapacityError,
 } from "./export_retry_capacity_outcome.js";
+import {
+  generationRetryCapacityOutcome,
+  replayedGenerationCapacityError,
+} from "./generation_retry_capacity_outcome.js";
 import { dumpJson, jobPayload, safeLoadJson } from "./payloads.js";
 import type { JobRecord, ProjectScope, StudioStore } from "./ports/studio_store.js";
 import { scopeForPrincipal } from "./ports/studio_store.js";
@@ -79,7 +84,8 @@ export class JobRetryExecutor {
     const scope = scopeForPrincipal(principal);
     const replay = this.store.findJobRetry(scope, projectId, jobId, requestKey);
     if (replay !== null) {
-      const capacityError = replayedExportCapacityError(replay);
+      const capacityError =
+        replayedExportCapacityError(replay) ?? replayedGenerationCapacityError(replay);
       if (capacityError !== null) throw capacityError;
       return this.claimAndExecute(
         principal,
@@ -121,7 +127,8 @@ export class JobRetryExecutor {
       now: this.now(),
     });
     if (!claim.created) {
-      const capacityError = replayedExportCapacityError(claim.job);
+      const capacityError =
+        replayedExportCapacityError(claim.job) ?? replayedGenerationCapacityError(claim.job);
       if (capacityError !== null) throw capacityError;
       return jobPayload(claim.job);
     }
@@ -144,6 +151,15 @@ export class JobRetryExecutor {
           projectId,
           retry.id,
           exportRetryCapacityOutcome(retry, error, this.now()),
+        );
+        throw error;
+      }
+      if (error instanceof GenerationCapacityExceededError) {
+        this.store.markJobOutcome(
+          scope,
+          projectId,
+          retry.id,
+          generationRetryCapacityOutcome(retry, error, this.now()),
         );
         throw error;
       }
@@ -194,22 +210,21 @@ export class JobRetryExecutor {
     );
     let provider: TextGenerationProvider | undefined;
     try {
+      const task = buildProposalTask(
+        step,
+        retry.operation,
+        instruction,
+        this.store,
+        scope,
+        retry.projectId,
+        document,
+        revision,
+        this.loreBudgetCharacters,
+      );
       provider = this.providerFactory(providerName);
       // A retried generation is a proposal generation too (#314): it assembles
       // the same resident context instead of the amnesiac historical shape.
-      const result = await provider.generateStructured(
-        buildProposalTask(
-          step,
-          retry.operation,
-          instruction,
-          this.store,
-          scope,
-          retry.projectId,
-          document,
-          revision,
-          this.loreBudgetCharacters,
-        ),
-      );
+      const result = await provider.generateStructured(task);
       const outcome = validatedProposalOrThrow(result);
       const now = this.now();
       // #392: the outcome transition and its usage event commit together, so

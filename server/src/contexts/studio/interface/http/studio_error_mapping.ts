@@ -10,6 +10,7 @@ import {
   DuplicateDocumentError,
   DuplicateVolumeError,
   ExportCapacityExceededError,
+  GenerationCapacityExceededError,
   ImportCapacityExceededError,
   NotFoundError,
   OperationCapacityExceededError,
@@ -106,6 +107,18 @@ function toAppError(error: unknown): unknown {
     return new AppError({
       statusCode: ERROR_HTTP_STATUS[ERROR_CODES.EXPORT_CAPACITY_EXCEEDED],
       code: ERROR_CODES.EXPORT_CAPACITY_EXCEEDED,
+      message: error.message,
+      details: {
+        resource: error.resource,
+        limit: error.limit,
+        observed: error.observed,
+      },
+    });
+  }
+  if (error instanceof GenerationCapacityExceededError) {
+    return new AppError({
+      statusCode: ERROR_HTTP_STATUS[ERROR_CODES.GENERATION_CAPACITY_EXCEEDED],
+      code: ERROR_CODES.GENERATION_CAPACITY_EXCEEDED,
       message: error.message,
       details: {
         resource: error.resource,
