@@ -345,6 +345,14 @@
                           "project_id": {
                             "type": "string"
                           },
+                          "revision_source": {
+                            "enum": [
+                              "author",
+                              "ai-accepted",
+                              "restore"
+                            ],
+                            "type": "string"
+                          },
                           "title": {
                             "type": "string"
                           },
@@ -370,6 +378,7 @@
                           "beat_ref",
                           "lore_status",
                           "current_revision_id",
+                          "revision_source",
                           "word_count",
                           "created_at",
                           "updated_at"
@@ -672,6 +681,14 @@
                           "project_id": {
                             "type": "string"
                           },
+                          "revision_source": {
+                            "enum": [
+                              "author",
+                              "ai-accepted",
+                              "restore"
+                            ],
+                            "type": "string"
+                          },
                           "title": {
                             "type": "string"
                           },
@@ -697,6 +714,7 @@
                           "beat_ref",
                           "lore_status",
                           "current_revision_id",
+                          "revision_source",
                           "word_count",
                           "created_at",
                           "updated_at"
@@ -1314,6 +1332,14 @@
                           "project_id": {
                             "type": "string"
                           },
+                          "revision_source": {
+                            "enum": [
+                              "author",
+                              "ai-accepted",
+                              "restore"
+                            ],
+                            "type": "string"
+                          },
                           "title": {
                             "type": "string"
                           },
@@ -1339,6 +1365,7 @@
                           "beat_ref",
                           "lore_status",
                           "current_revision_id",
+                          "revision_source",
                           "word_count",
                           "created_at",
                           "updated_at"

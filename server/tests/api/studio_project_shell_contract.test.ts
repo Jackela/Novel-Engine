@@ -25,21 +25,22 @@ const SUMMARY_KEYS = [
   "lore_status",
   "position",
   "project_id",
+  "revision_source",
   "title",
   "updated_at",
   "volume_id",
   "word_count",
 ];
 
-const DOCUMENT_KEYS = [...SUMMARY_KEYS, "content_markdown", "metadata", "revision_source"].sort();
+const DOCUMENT_KEYS = [...SUMMARY_KEYS, "content_markdown", "metadata"].sort();
 
 function expectSummary(value: Record<string, unknown>): void {
   expect(Object.keys(value).sort()).toEqual(SUMMARY_KEYS);
   expect(value.current_revision_id).toEqual(expect.any(String));
+  expect(["author", "ai-accepted", "restore"]).toContain(value.revision_source);
   expect(value.word_count).toEqual(expect.any(Number));
   expect(value).not.toHaveProperty("content_markdown");
   expect(value).not.toHaveProperty("metadata");
-  expect(value).not.toHaveProperty("revision_source");
 }
 
 describe("bounded project shell contract", () => {
@@ -56,6 +57,7 @@ describe("bounded project shell contract", () => {
       expect(created.volumes).toHaveLength(1);
       expectSummary(created.documents[0]);
       expect(created.documents[0].word_count).toBe(2);
+      expect(created.documents[0].revision_source).toBe("author");
 
       await seedDocument(app, owner, created.id, {
         kind: "note",
@@ -228,6 +230,11 @@ describe("bounded project shell contract", () => {
         first.id,
       ]);
       for (const summary of reordered.json().documents) expectSummary(summary);
+      expect(
+        reordered
+          .json()
+          .documents.map((summary: { revision_source: string }) => summary.revision_source),
+      ).toEqual(["author", "author"]);
       expect(reordered.body).not.toContain("second body");
     } finally {
       await app.close();

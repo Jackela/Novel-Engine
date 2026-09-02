@@ -126,6 +126,7 @@ export interface DocumentSummaryPayload {
   /** Lore lifecycle status (#444); null for non-lore kinds. */
   lore_status?: string | null;
   current_revision_id: string;
+  revision_source: "author" | "ai-accepted" | "restore";
   word_count: number;
   created_at: string;
   updated_at: string;
@@ -134,7 +135,6 @@ export interface DocumentSummaryPayload {
 export interface DocumentPayload extends DocumentSummaryPayload {
   content_markdown: string;
   metadata: Record<string, unknown>;
-  revision_source: string;
 }
 
 export interface RevisionPayload {

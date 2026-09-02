@@ -61,6 +61,10 @@ export const documentSummaryPayloadSchema = Type.Object(
       nullable: true,
     }),
     current_revision_id: Type.String(),
+    revision_source: Type.Unsafe<RevisionSource>({
+      type: "string",
+      enum: [...REVISION_SOURCES],
+    }),
     word_count: Type.Integer({ minimum: 0 }),
     created_at: Type.String(),
     updated_at: Type.String(),

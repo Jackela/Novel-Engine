@@ -1,3 +1,4 @@
+import type { RevisionSource } from "../../domain/kinds.js";
 import type { ProjectRecord } from "./studio_store.js";
 import type { VolumeRecord } from "./volume_store.js";
 
@@ -12,6 +13,7 @@ export interface DocumentSummaryRecord {
   beatRef: string | null;
   loreStatus: string;
   currentRevisionId: string;
+  revisionSource: RevisionSource;
   wordCount: number;
   createdAt: Date;
   updatedAt: Date;

@@ -6,7 +6,7 @@ import { eq } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
 
 import { scopeForPrincipal } from "../../src/contexts/studio/application/ports/studio_store.js";
-import { RevisionWordCountInvariantError } from "../../src/contexts/studio/domain/revision_word_count.js";
+import { RevisionSourceInvariantError } from "../../src/contexts/studio/domain/revision_source.js";
 import {
   documentRevisions,
   documents,
@@ -27,6 +27,7 @@ const SUMMARY_KEYS = [
   "loreStatus",
   "position",
   "projectId",
+  "revisionSource",
   "title",
   "updatedAt",
   "volumeId",
@@ -72,6 +73,7 @@ describe("project shell store seam", () => {
       expect(shell.documents[0]).toMatchObject({
         id: document.id,
         currentRevisionId: document.currentRevision?.id,
+        revisionSource: "author",
         wordCount: 3,
       });
 
@@ -184,7 +186,7 @@ describe("project shell store seam", () => {
         .run();
 
       expect(() => store.readProjectShell(scope, created.project.id)).toThrow(
-        RevisionWordCountInvariantError,
+        RevisionSourceInvariantError,
       );
       expect(() => store.readCurrentDocument(scope, created.project.id, document.id)).toThrow(
         "Document not found.",

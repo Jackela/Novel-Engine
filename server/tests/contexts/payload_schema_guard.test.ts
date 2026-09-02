@@ -117,6 +117,14 @@ describe("payload builders conform to their payload SSOT schemas", () => {
 });
 
 describe("payload drift guard trips on every drift class", () => {
+  it("rejects an open revision source in a document summary", () => {
+    const payload = documentSummaryPayload(documentSummaryFixture()) as Record<string, unknown>;
+    payload.revision_source = "external";
+    expect(() =>
+      assertConforms(payload, documentSummaryPayloadSchema as unknown as SchemaNode),
+    ).toThrow(/allowed values/);
+  });
+
   it.each(CASES)("rejects an undeclared extra field in $name", ({ build, schema }) => {
     const drifted = { ...build(), drift_extra_field: true };
     expect(() => assertConforms(drifted, schema)).toThrow(/must NOT have additional properties/);

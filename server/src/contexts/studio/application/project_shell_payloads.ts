@@ -1,5 +1,6 @@
 import { InvalidOperationError } from "../../../shared/domain/exceptions.js";
 import type { DocumentKind } from "../domain/kinds.js";
+import { assertStoredRevisionSource } from "../domain/revision_source.js";
 import { assertStoredRevisionWordCount } from "../domain/revision_word_count.js";
 import { asLoreStatus, isLoreEntryKind } from "./lorebook.js";
 import type { DocumentSummaryPayload } from "./payload_schemas/document.js";
@@ -36,6 +37,7 @@ export function summarizeDocument(document: DocumentWithCurrent): DocumentSummar
     beatRef: document.beatRef,
     loreStatus: document.loreStatus,
     currentRevisionId: revision.id,
+    revisionSource: assertStoredRevisionSource(revision.source),
     wordCount: assertStoredRevisionWordCount(revision.wordCount),
     createdAt: document.createdAt,
     updatedAt: document.updatedAt,
@@ -53,6 +55,7 @@ export function documentSummaryPayload(document: DocumentSummaryRecord): Documen
     beat_ref: document.beatRef,
     lore_status: isLoreEntryKind(document.kind) ? asLoreStatus(document.loreStatus) : null,
     current_revision_id: document.currentRevisionId,
+    revision_source: document.revisionSource,
     word_count: assertStoredRevisionWordCount(document.wordCount),
     created_at: iso(document.createdAt),
     updated_at: iso(document.updatedAt),

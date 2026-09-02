@@ -61,8 +61,10 @@ describe("public project-read query budgets", () => {
       expect(shellProjection).toHaveLength(3);
       expect(statements).toHaveLength(shellAuth.length + shellProjection.length);
       expect(shellProjection.map(({ query }) => query).join("\n")).not.toMatch(
-        /content_markdown|metadata_json|\."source"/,
+        /content_markdown|metadata_json/,
       );
+      expect(shellProjection.map(({ query }) => query).join("\n")).toMatch(/\."source"/);
+      expect(shell.json().documents[0]?.revision_source).toBe("author");
 
       statements.length = 0;
       const current = await call(
@@ -103,7 +105,8 @@ describe("public project-read query budgets", () => {
         studioStatements(statements)
           .map(({ query }) => query)
           .join("\n"),
-      ).not.toMatch(/content_markdown|metadata_json|\."source"/);
+      ).not.toMatch(/content_markdown|metadata_json/);
+      expect(reorder.json().documents[0]?.revision_source).toBe("author");
 
       statements.length = 0;
       const anonymous = await app.inject({
@@ -136,7 +139,8 @@ describe("public project-read query budgets", () => {
       const shellQuery = studio.db.transaction((tx) =>
         buildDocumentSummariesQuery(tx, project.id).toSQL(),
       );
-      expect(shellQuery.sql).not.toMatch(/content_markdown|metadata_json|\."source"/);
+      expect(shellQuery.sql).not.toMatch(/content_markdown|metadata_json/);
+      expect(shellQuery.sql).toMatch(/\."source"/);
       const shellPlan = studio.raw
         .prepare(`EXPLAIN QUERY PLAN ${shellQuery.sql}`)
         .all(...shellQuery.params) as Array<{ detail: string }>;

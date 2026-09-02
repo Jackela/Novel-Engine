@@ -74,6 +74,7 @@ export function documentSummaryFixture(): DocumentSummaryRecord {
     beatRef: document.beatRef,
     loreStatus: document.loreStatus,
     currentRevisionId: "rev-1",
+    revisionSource: "author",
     wordCount: 5,
     createdAt: document.createdAt,
     updatedAt: document.updatedAt,

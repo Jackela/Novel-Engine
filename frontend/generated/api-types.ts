@@ -196,6 +196,8 @@ export interface paths {
                                 lore_status: "draft" | "stable" | "deprecated" | null;
                                 position: number;
                                 project_id: string;
+                                /** @enum {string} */
+                                revision_source: "author" | "ai-accepted" | "restore";
                                 title: string;
                                 updated_at: string;
                                 volume_id: string | null;
@@ -301,6 +303,8 @@ export interface paths {
                                 lore_status: "draft" | "stable" | "deprecated" | null;
                                 position: number;
                                 project_id: string;
+                                /** @enum {string} */
+                                revision_source: "author" | "ai-accepted" | "restore";
                                 title: string;
                                 updated_at: string;
                                 volume_id: string | null;
@@ -722,6 +726,8 @@ export interface paths {
                                 lore_status: "draft" | "stable" | "deprecated" | null;
                                 position: number;
                                 project_id: string;
+                                /** @enum {string} */
+                                revision_source: "author" | "ai-accepted" | "restore";
                                 title: string;
                                 updated_at: string;
                                 volume_id: string | null;

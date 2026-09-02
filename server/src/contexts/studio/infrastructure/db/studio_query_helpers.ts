@@ -8,6 +8,7 @@ import type {
   ProjectScope,
 } from "../../application/ports/studio_store.js";
 import { NotFoundError } from "../../domain/exceptions.js";
+import { assertStoredRevisionSource } from "../../domain/revision_source.js";
 import {
   assertStoredRevisionWordCount,
   revisionWordCount,
@@ -159,6 +160,7 @@ export function buildDocumentSummariesQuery(tx: Tx, projectId: string) {
       beatRef: documents.beatRef,
       loreStatus: documents.loreStatus,
       currentRevisionId: documents.currentRevisionId,
+      revisionSource: documentRevisions.source,
       wordCount: documentRevisions.wordCount,
       createdAt: documents.createdAt,
       updatedAt: documents.updatedAt,
@@ -176,13 +178,14 @@ export function buildDocumentSummariesQuery(tx: Tx, projectId: string) {
     .where(eq(documents.projectId, projectId));
 }
 
-/** Ordered shell summaries; body, metadata, and revision source are never selected. */
+/** Ordered shell summaries; body and revision metadata are never selected. */
 export function documentSummaries(tx: Tx, projectId: string): DocumentSummaryRecord[] {
   return buildDocumentSummariesQuery(tx, projectId)
     .all()
     .map((row) => ({
       ...row,
       currentRevisionId: requiredCurrentRevisionId(row.currentRevisionId),
+      revisionSource: assertStoredRevisionSource(row.revisionSource),
       wordCount: assertStoredRevisionWordCount(row.wordCount),
     }))
     .sort(compareReadingOrder)
