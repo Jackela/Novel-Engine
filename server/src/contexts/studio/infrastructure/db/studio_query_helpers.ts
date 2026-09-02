@@ -165,7 +165,13 @@ export function buildDocumentSummariesQuery(tx: Tx, projectId: string) {
       volumePosition: volumes.position,
     })
     .from(documents)
-    .leftJoin(documentRevisions, eq(documents.currentRevisionId, documentRevisions.id))
+    .leftJoin(
+      documentRevisions,
+      and(
+        eq(documents.currentRevisionId, documentRevisions.id),
+        eq(documentRevisions.documentId, documents.id),
+      ),
+    )
     .leftJoin(volumes, eq(documents.volumeId, volumes.id))
     .where(eq(documents.projectId, projectId));
 }
@@ -230,7 +236,13 @@ export function buildScopedCurrentDocumentQuery(
     .select({ document: documents, revision: documentRevisions })
     .from(documents)
     .innerJoin(projects, eq(documents.projectId, projects.id))
-    .leftJoin(documentRevisions, eq(documents.currentRevisionId, documentRevisions.id))
+    .leftJoin(
+      documentRevisions,
+      and(
+        eq(documents.currentRevisionId, documentRevisions.id),
+        eq(documentRevisions.documentId, documents.id),
+      ),
+    )
     .where(
       and(eq(documents.id, documentId), eq(documents.projectId, projectId), scopeCondition(scope)),
     );
@@ -244,7 +256,9 @@ export function scopedCurrentDocument(
   documentId: string,
 ): DocumentWithCurrent {
   const row = buildScopedCurrentDocumentQuery(tx, scope, projectId, documentId).get();
-  if (row === undefined) throw new NotFoundError("Document not found.");
+  if (row === undefined || row.revision === null) {
+    throw new NotFoundError("Document not found.");
+  }
   return { ...row.document, currentRevision: row.revision };
 }
 
