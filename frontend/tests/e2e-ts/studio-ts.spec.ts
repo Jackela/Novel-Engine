@@ -1,4 +1,4 @@
-import { expect, type Page, test } from "@playwright/test";
+import { expect, type Page, type Route, test } from "@playwright/test";
 
 /**
  * #274 acceptance: the studio UI served by the TS backend itself. The
@@ -18,6 +18,16 @@ async function createProject(page: Page, title: string) {
   await page.getByLabel("Title").fill(title);
   await page.getByRole("button", { name: /create project/i }).click();
   await expect(page).toHaveURL(/\/projects\/[^/]+\/manuscript/);
+}
+
+interface RevisionSummary {
+  id: string;
+  revision_number: number;
+}
+
+interface RevisionPage {
+  revisions: RevisionSummary[];
+  next_cursor: string | null;
 }
 
 test("owner setup, editing, AI proposal accept, search, and deep links", async ({ page }) => {
@@ -169,4 +179,135 @@ test("owner login issues novel_engine cookies and the editor renders the real er
   await expect(first.locator(".cm-content")).toContainText("Second tab wins.");
 
   await context.close();
+});
+
+test("History loads bounded revision pages and keeps keyboard retry state", async ({ page }) => {
+  test.setTimeout(180_000);
+
+  await page.goto("/");
+  await page.getByLabel("Password").fill(OWNER_PASSWORD);
+  await page.getByRole("button", { name: "Sign in" }).click();
+  await expect(page).toHaveURL(/\/projects$/);
+
+  await createProject(page, "Bounded History Ledger");
+  const projectId = page.url().match(/\/projects\/([^/]+)\/manuscript/)?.[1];
+  expect(projectId).toBeTruthy();
+
+  const projectResponse = await page.request.get(`/api/projects/${projectId}`);
+  expect(projectResponse.status(), await projectResponse.text()).toBe(200);
+  const project = (await projectResponse.json()) as {
+    documents: Array<{
+      id: string;
+      kind: string;
+      title: string;
+      current_revision_id: string;
+    }>;
+  };
+  const chapter = project.documents.find(
+    (document) => document.kind === "chapter" && document.title === "Chapter 1",
+  );
+  expect(chapter).toBeTruthy();
+
+  const csrfToken = (await page.context().cookies()).find(
+    (cookie) => cookie.name === "novel_engine_csrf",
+  )?.value;
+  expect(csrfToken).toBeTruthy();
+
+  let baseRevisionId = chapter?.current_revision_id ?? "";
+  for (let revision = 2; revision <= 51; revision += 1) {
+    const saveResponse = await page.request.put(
+      `/api/projects/${projectId}/documents/${chapter?.id}`,
+      {
+        data: {
+          content_markdown: `# Chapter 1\n\nRevision ${revision}.`,
+          base_revision_id: baseRevisionId,
+        },
+        headers: { "x-csrf-token": csrfToken ?? "" },
+      },
+    );
+    expect(saveResponse.status(), await saveResponse.text()).toBe(200);
+    baseRevisionId = ((await saveResponse.json()) as { current_revision_id: string })
+      .current_revision_id;
+  }
+
+  const revisionsPath = `/api/projects/${projectId}/documents/${chapter?.id}/revisions`;
+  const firstPageResponsePromise = page.waitForResponse((response) => {
+    const requestUrl = new URL(response.url());
+    return requestUrl.pathname === revisionsPath && !requestUrl.searchParams.has("cursor");
+  });
+  await page.goto(`/projects/${projectId}/history`);
+
+  const firstPageResponse = await firstPageResponsePromise;
+  const firstPageUrl = new URL(firstPageResponse.url());
+  expect(firstPageResponse.status()).toBe(200);
+  expect([...firstPageUrl.searchParams.entries()]).toEqual([["limit", "50"]]);
+  const firstPage = (await firstPageResponse.json()) as RevisionPage;
+  expect(firstPage.revisions).toHaveLength(50);
+  expect(firstPage.revisions.map((revision) => revision.revision_number)).toEqual(
+    Array.from({ length: 50 }, (_, index) => 51 - index),
+  );
+  expect(firstPage.next_cursor).toBeTruthy();
+
+  const revisionRows = page.locator(".studio-inspector__revision-list article");
+  await expect(revisionRows).toHaveCount(50);
+  const loadOlder = page.getByRole("button", { name: "Load older revisions" });
+  await expect(loadOlder).toBeVisible();
+
+  const olderCursor = firstPage.next_cursor ?? "";
+  const isExactOlderRequest = (url: URL) =>
+    url.pathname === revisionsPath &&
+    [...url.searchParams.entries()].length === 2 &&
+    url.searchParams.get("limit") === "50" &&
+    url.searchParams.get("cursor") === olderCursor;
+  let interceptedOlderRequests = 0;
+  const failOlderPage = async (route: Route) => {
+    interceptedOlderRequests += 1;
+    await route.fulfill({
+      status: 503,
+      contentType: "application/json",
+      body: JSON.stringify({
+        error: {
+          code: "SERVICE_UNAVAILABLE",
+          message: "Revision history is temporarily unavailable.",
+        },
+      }),
+    });
+  };
+  await page.route(isExactOlderRequest, failOlderPage);
+
+  await loadOlder.focus();
+  const failedPageResponse = page.waitForResponse(
+    (response) => isExactOlderRequest(new URL(response.url())) && response.status() === 503,
+  );
+  await page.keyboard.press("Enter");
+  await failedPageResponse;
+  expect(interceptedOlderRequests).toBe(1);
+  await expect(revisionRows).toHaveCount(50);
+  await expect(page.getByRole("alert")).toContainText(
+    "Revision history is temporarily unavailable.",
+  );
+  await expect(loadOlder).toBeFocused();
+
+  await page.unroute(isExactOlderRequest, failOlderPage);
+  const terminalPageResponsePromise = page.waitForResponse(
+    (response) => isExactOlderRequest(new URL(response.url())) && response.status() === 200,
+  );
+  await page.keyboard.press("Enter");
+  const terminalPageResponse = await terminalPageResponsePromise;
+  const terminalPage = (await terminalPageResponse.json()) as RevisionPage;
+  expect(terminalPage.revisions).toHaveLength(1);
+  expect(terminalPage.revisions[0]?.revision_number).toBe(1);
+  expect(terminalPage.next_cursor).toBeNull();
+
+  await expect(revisionRows).toHaveCount(51);
+  const expectedRowIds = [...firstPage.revisions, ...terminalPage.revisions].map(({ id }) =>
+    id.slice(0, 8),
+  );
+  const renderedRowIds = await revisionRows
+    .locator("small")
+    .evaluateAll((nodes) => nodes.map((node) => node.textContent?.split("·").at(-1)?.trim() ?? ""));
+  expect(new Set(renderedRowIds).size).toBe(51);
+  expect(renderedRowIds).toEqual(expectedRowIds);
+  await expect(page.getByText("All revisions loaded", { exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Revision history" })).toBeFocused();
 });
