@@ -1,5 +1,5 @@
 import { spawnSync } from "node:child_process";
-import { copyFile, mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { copyFile, mkdir, mkdtemp, rename, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
@@ -124,6 +124,37 @@ describe("QA gate regressions", () => {
       expect(result.status).toBe(1);
       expect(result.stderr).toContain("api_private_payload_surface");
       expect(result.stderr).toContain(relativePath);
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+
+  it("accepts an unstaged active OpenSpec archive rename", async () => {
+    const root = await createQaRepository("check_repo_hygiene.mjs");
+    const changeName = "2026-09-02-archive-fixture";
+    const activeDirectory = `openspec/changes/${changeName}`;
+    const archiveDirectory = `openspec/changes/archive/${changeName}`;
+    const activeDesign = `${activeDirectory}/design.md`;
+
+    try {
+      initializeGitRepository(root);
+      await writeCandidate(root, activeDesign, "# Candidate design\n");
+      commitFiles(root, activeDesign);
+      await mkdir(dirname(join(root, archiveDirectory)), { recursive: true });
+      await rename(join(root, activeDirectory), join(root, archiveDirectory));
+
+      const status = spawnSync("git", ["status", "--short", "--untracked-files=all"], {
+        cwd: root,
+        encoding: "utf8",
+      });
+      expect(status.status).toBe(0);
+      expect(status.stdout).toContain(` D ${activeDesign}`);
+      expect(status.stdout).toContain(`?? ${archiveDirectory}/design.md`);
+
+      const result = runGate(root, "check_repo_hygiene.mjs");
+
+      expect(result.status).toBe(0);
+      expect(result.stdout).toContain("[repo-hygiene] clean");
     } finally {
       await rm(root, { recursive: true, force: true });
     }
