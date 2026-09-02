@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { and, asc, desc, eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 
 import { InvalidOperationError } from "../../../shared/domain/exceptions.js";
 import type { StudioSqliteDatabase } from "../../../shared/infrastructure/db/connection.js";
@@ -9,9 +9,13 @@ import type {
   DocumentMatchRecord,
   DocumentWithCurrent,
   ProjectScope,
+  RevisionPageInput,
+  RevisionSummaryPage,
 } from "../application/ports/studio_store.js";
+import { revisionPageLimit } from "../application/ports/studio_store.js";
 import { DuplicateDocumentError, NotFoundError, SnapshotConflict } from "../domain/exceptions.js";
 import { DEFAULT_LORE_STATUS } from "../domain/kinds.js";
+import { assertStoredRevisionWordCount } from "../domain/revision_word_count.js";
 import { advanceDocumentInTransaction } from "./db/document_revision_writes.js";
 import {
   clearDocumentIndex,
@@ -28,6 +32,7 @@ import {
   scopedDocument,
   scopedProject,
 } from "./db/studio_query_helpers.js";
+import { buildRevisionSummariesQuery } from "./revision_page_queries.js";
 
 /**
  * The document, revision, and FTS half of the Drizzle studio store. Every
@@ -201,19 +206,28 @@ export class DocumentStorePart {
     return (rows[0]?.position ?? 0) + 1;
   }
 
-  findRevisions(scope: ProjectScope, projectId: string, documentId: string): RevisionRow[] {
+  findRevisionSummaries(
+    scope: ProjectScope,
+    projectId: string,
+    documentId: string,
+    input: RevisionPageInput,
+  ): RevisionSummaryPage {
+    const limit = revisionPageLimit(input.limit);
     return this.db.transaction((tx) => {
       scopedDocument(tx, scope, projectId, documentId);
-      return tx
-        .select({ revision: documentRevisions })
-        .from(documentRevisions)
-        .innerJoin(documents, eq(documentRevisions.documentId, documents.id))
-        .where(
-          and(eq(documentRevisions.documentId, documentId), eq(documents.projectId, projectId)),
-        )
-        .orderBy(asc(documentRevisions.revisionNumber))
-        .all()
-        .map((row) => row.revision);
+      const rows = buildRevisionSummariesQuery(tx, documentId, { ...input, limit }).all();
+      const revisions = rows.slice(0, limit).map((row) => ({
+        ...row,
+        wordCount: assertStoredRevisionWordCount(row.wordCount),
+      }));
+      const boundary = revisions.at(-1);
+      return {
+        revisions,
+        nextCursor:
+          rows.length > limit && boundary !== undefined
+            ? { revisionNumber: boundary.revisionNumber, id: boundary.id }
+            : null,
+      };
     });
   }
 

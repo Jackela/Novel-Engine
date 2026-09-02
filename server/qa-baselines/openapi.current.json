@@ -3455,6 +3455,28 @@
       "get": {
         "parameters": [
           {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "maxLength": 1024,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9_-]+$",
+              "type": "string"
+            }
+          },
+          {
             "in": "path",
             "name": "projectId",
             "required": true,
@@ -3478,14 +3500,16 @@
                 "schema": {
                   "additionalProperties": false,
                   "properties": {
+                    "next_cursor": {
+                      "nullable": true,
+                      "type": "string"
+                    },
                     "revisions": {
                       "items": {
                         "additionalProperties": false,
                         "properties": {
-                          "content_markdown": {
-                            "type": "string"
-                          },
                           "created_at": {
+                            "format": "date-time",
                             "type": "string"
                           },
                           "document_id": {
@@ -3494,15 +3518,12 @@
                           "id": {
                             "type": "string"
                           },
-                          "metadata": {
-                            "additionalProperties": true,
-                            "type": "object"
-                          },
                           "parent_revision_id": {
                             "nullable": true,
                             "type": "string"
                           },
                           "revision_number": {
+                            "minimum": 1,
                             "type": "integer"
                           },
                           "source": {
@@ -3514,6 +3535,7 @@
                             "type": "string"
                           },
                           "word_count": {
+                            "minimum": 0,
                             "type": "integer"
                           }
                         },
@@ -3522,8 +3544,6 @@
                           "document_id",
                           "parent_revision_id",
                           "revision_number",
-                          "content_markdown",
-                          "metadata",
                           "source",
                           "word_count",
                           "created_at"
@@ -3534,7 +3554,8 @@
                     }
                   },
                   "required": [
-                    "revisions"
+                    "revisions",
+                    "next_cursor"
                   ],
                   "type": "object"
                 }
@@ -3553,6 +3574,16 @@
             "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
           },
           "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "422": {
             "content": {
               "application/json": {
                 "schema": {

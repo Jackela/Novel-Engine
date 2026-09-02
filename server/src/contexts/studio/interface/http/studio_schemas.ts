@@ -5,7 +5,7 @@ import {
   matchResultPayloadSchema,
 } from "../../application/payload_schemas/document.js";
 import { projectPayloadSchema } from "../../application/payload_schemas/project.js";
-import { revisionPayloadSchema } from "../../application/payload_schemas/revision.js";
+import { revisionSummaryPayloadSchema } from "../../application/payload_schemas/revision.js";
 import type { JsonResponseSchema } from "./json_response_schema.js";
 
 /**
@@ -32,7 +32,10 @@ export const documentListResponseSchema = Type.Object(
 );
 
 export const revisionListResponseSchema = Type.Object(
-  { revisions: Type.Array(revisionPayloadSchema) },
+  {
+    revisions: Type.Array(revisionSummaryPayloadSchema),
+    next_cursor: Type.Unsafe<string | null>({ type: "string", nullable: true }),
+  },
   { additionalProperties: false },
 );
 

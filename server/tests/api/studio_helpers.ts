@@ -139,8 +139,6 @@ export interface RevisionPayload {
   document_id: string;
   parent_revision_id: string | null;
   revision_number: number;
-  content_markdown: string;
-  metadata: Record<string, unknown>;
   source: string;
   word_count: number;
   created_at: string;

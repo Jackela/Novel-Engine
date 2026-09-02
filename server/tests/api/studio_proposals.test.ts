@@ -252,11 +252,11 @@ describe("proposal flow", () => {
       expect(revisions).toHaveLength(2);
       const acceptedRevision = revisions.find((revision) => revision.id === acceptedRevisionId);
       expect(acceptedRevision?.source).toBe("ai-accepted");
-      expect(acceptedRevision?.metadata.ai_job_id).toBe(job.id);
-      expect(acceptedRevision?.content_markdown).toBe(job.result.proposal_markdown);
 
       const after = (await getProject(app, jar, project.id)).documents[0] as DocumentPayload;
       expect(after.current_revision_id).toBe(acceptedRevisionId);
+      expect(after.metadata.ai_job_id).toBe(job.id);
+      expect(after.content_markdown).toBe(job.result.proposal_markdown);
       expect(wordCount(after.content_markdown)).toBeGreaterThan(50);
     } finally {
       await app.close();

@@ -1813,7 +1813,10 @@ export interface paths {
         };
         get: {
             parameters: {
-                query?: never;
+                query?: {
+                    limit?: number;
+                    cursor?: string;
+                };
                 header?: never;
                 path: {
                     projectId: string;
@@ -1830,14 +1833,12 @@ export interface paths {
                     };
                     content: {
                         "application/json": {
+                            next_cursor: string | null;
                             revisions: {
-                                content_markdown: string;
+                                /** Format: date-time */
                                 created_at: string;
                                 document_id: string;
                                 id: string;
-                                metadata: {
-                                    [key: string]: unknown;
-                                };
                                 parent_revision_id: string | null;
                                 revision_number: number;
                                 /** @enum {string} */
@@ -1858,6 +1859,15 @@ export interface paths {
                 };
                 /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
                 404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                422: {
                     headers: {
                         [name: string]: unknown;
                     };

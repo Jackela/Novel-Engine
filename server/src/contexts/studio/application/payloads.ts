@@ -15,7 +15,7 @@ import {
 import type { LoreAliasPayload, LoreStatusPayload } from "./payload_schemas/lore.js";
 import type { ProjectPayload } from "./payload_schemas/project.js";
 import type { ReviewPayload, ReviewSeverity } from "./payload_schemas/review.js";
-import type { RevisionPayload } from "./payload_schemas/revision.js";
+import type { RevisionPayload, RevisionSummaryPayload } from "./payload_schemas/revision.js";
 import type { VolumePayload } from "./payload_schemas/volume.js";
 import type { ExportArtifactRecord } from "./ports/export_store.js";
 import type { JobSummaryRecord } from "./ports/job_records.js";
@@ -24,6 +24,7 @@ import type {
   DocumentWithCurrent,
   JobRecord,
   RevisionRecord,
+  RevisionSummaryRecord,
 } from "./ports/studio_store.js";
 import type { VolumeRecord } from "./ports/volume_store.js";
 import type { EditorialAssessment } from "./review_service.js";
@@ -149,6 +150,19 @@ export function revisionPayload(revision: RevisionRecord): RevisionPayload {
     revision_number: revision.revisionNumber,
     content_markdown: revision.contentMarkdown,
     metadata: safeLoadJson(revision.metadataJson),
+    source: revision.source as RevisionSource,
+    word_count: assertStoredRevisionWordCount(revision.wordCount),
+    created_at: iso(revision.createdAt),
+  };
+}
+
+/** Public History projection: no immutable body or metadata crosses this boundary. */
+export function revisionSummaryPayload(revision: RevisionSummaryRecord): RevisionSummaryPayload {
+  return {
+    id: revision.id,
+    document_id: revision.documentId,
+    parent_revision_id: revision.parentRevisionId,
+    revision_number: revision.revisionNumber,
     source: revision.source as RevisionSource,
     word_count: assertStoredRevisionWordCount(revision.wordCount),
     created_at: iso(revision.createdAt),

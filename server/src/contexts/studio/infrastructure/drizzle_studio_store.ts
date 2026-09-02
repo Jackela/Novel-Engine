@@ -21,6 +21,8 @@ import type {
   RecordCompletedProposalJobInput,
   ReviewCompletionRecord,
   ReviewSource,
+  RevisionPageInput,
+  RevisionSummaryPage,
   StudioStore,
 } from "../application/ports/studio_store.js";
 import type {
@@ -173,8 +175,13 @@ export class DrizzleStudioStore extends ProjectStorePart implements StudioStore 
     return this.documentStore.nextPosition(scope, projectId, kind, volumeId);
   }
 
-  findRevisions(scope: ProjectScope, projectId: string, documentId: string) {
-    return this.documentStore.findRevisions(scope, projectId, documentId);
+  findRevisionSummaries(
+    scope: ProjectScope,
+    projectId: string,
+    documentId: string,
+    input: RevisionPageInput,
+  ): RevisionSummaryPage {
+    return this.documentStore.findRevisionSummaries(scope, projectId, documentId, input);
   }
 
   findRevision(scope: ProjectScope, projectId: string, documentId: string, revisionId: string) {

@@ -3,7 +3,10 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
-import { scopeForPrincipal } from "../../src/contexts/studio/application/ports/studio_store.js";
+import {
+  revisionPageLimit,
+  scopeForPrincipal,
+} from "../../src/contexts/studio/application/ports/studio_store.js";
 import { DrizzleStudioStore } from "../../src/contexts/studio/infrastructure/drizzle_studio_store.js";
 import { ProposalAcceptanceStorePart } from "../../src/contexts/studio/infrastructure/proposal_acceptance_store_part.js";
 import { AuthService } from "../../src/shared/application/auth_service.js";
@@ -91,7 +94,14 @@ describe("proposal acceptance transaction", () => {
       ).toThrow("simulated job binding failure");
 
       expect(
-        harness.store.findRevisions(harness.scope, harness.project.id, harness.document.id),
+        harness.store.findRevisionSummaries(
+          harness.scope,
+          harness.project.id,
+          harness.document.id,
+          {
+            limit: revisionPageLimit(100),
+          },
+        ).revisions,
       ).toHaveLength(1);
       expect(
         harness.store.findDocument(harness.scope, harness.project.id, harness.document.id)
@@ -171,7 +181,14 @@ describe("proposal acceptance transaction", () => {
         JSON.parse(first.resultJson).accepted_revision_id,
       );
       expect(
-        harness.store.findRevisions(harness.scope, harness.project.id, harness.document.id),
+        harness.store.findRevisionSummaries(
+          harness.scope,
+          harness.project.id,
+          harness.document.id,
+          {
+            limit: revisionPageLimit(100),
+          },
+        ).revisions,
       ).toHaveLength(2);
     } finally {
       secondConnection.raw.close();
@@ -204,7 +221,14 @@ describe("proposal acceptance transaction", () => {
 
       expect(JSON.parse(repaired.resultJson).accepted_revision_id).toBe(split.currentRevisionId);
       expect(
-        harness.store.findRevisions(harness.scope, harness.project.id, harness.document.id),
+        harness.store.findRevisionSummaries(
+          harness.scope,
+          harness.project.id,
+          harness.document.id,
+          {
+            limit: revisionPageLimit(100),
+          },
+        ).revisions,
       ).toHaveLength(2);
     } finally {
       harness.database.close();
@@ -237,7 +261,14 @@ describe("proposal acceptance transaction", () => {
         ).accepted_revision_id,
       ).toBeNull();
       expect(
-        harness.store.findRevisions(harness.scope, harness.project.id, harness.document.id),
+        harness.store.findRevisionSummaries(
+          harness.scope,
+          harness.project.id,
+          harness.document.id,
+          {
+            limit: revisionPageLimit(100),
+          },
+        ).revisions,
       ).toHaveLength(2);
     } finally {
       harness.database.close();

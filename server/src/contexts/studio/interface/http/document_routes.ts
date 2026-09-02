@@ -2,7 +2,9 @@ import type { TypeBoxTypeProvider } from "@fastify/type-provider-typebox";
 import type { FastifyPluginAsync } from "fastify";
 import { principalGuard, requirePrincipal } from "../../../../shared/interface/http/auth_guard.js";
 import { errorEnvelopeResponse } from "../../../../shared/interface/http/error_envelope.js";
+import { revisionPageLimit } from "../../application/ports/studio_store.js";
 import { requireServices, type StudioRoutesOptions } from "./project_routes.js";
+import { decodeRevisionCursor, encodeRevisionCursor } from "./revision_cursor.js";
 import { withStudioErrors } from "./studio_error_mapping.js";
 import {
   documentCreateSchema,
@@ -12,6 +14,7 @@ import {
   reorderSchema,
   restoreSchema,
   revisionIdParams,
+  revisionListQuerySchema,
 } from "./studio_request_schemas.js";
 import {
   documentConflictSchema,
@@ -201,24 +204,49 @@ export const documentRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fa
   app.get(
     "/api/projects/:projectId/documents/:documentId/revisions",
     {
-      preHandler: [guard],
+      // Authentication deliberately precedes schema/cursor validation so an
+      // anonymous malformed query cannot probe this scoped surface.
+      preValidation: [guard],
       schema: {
         params: documentIdParams,
+        querystring: revisionListQuerySchema,
         response: {
           200: revisionListResponseSchema,
           ...GUARD_RESPONSES,
           404: errorEnvelopeResponse,
+          422: errorEnvelopeResponse,
         },
       },
     },
-    async (request) =>
-      withStudioErrors(() => ({
-        revisions: requireServices(options).revisions.documentRevisions(
+    async (request) => {
+      const cursor =
+        request.query.cursor === undefined
+          ? undefined
+          : decodeRevisionCursor(
+              request.query.cursor,
+              request.params.projectId,
+              request.params.documentId,
+            );
+      return withStudioErrors(() => {
+        const page = requireServices(options).revisions.documentRevisions(
           requirePrincipal(request),
           request.params.projectId,
           request.params.documentId,
-        ),
-      })),
+          {
+            limit: revisionPageLimit(request.query.limit ?? 50),
+            ...(cursor === undefined ? {} : { cursor }),
+          },
+        );
+        return {
+          revisions: page.revisions,
+          next_cursor: encodeRevisionCursor(
+            request.params.projectId,
+            request.params.documentId,
+            page.nextCursor,
+          ),
+        };
+      });
+    },
   );
 
   app.post(

@@ -58,6 +58,53 @@ export interface RevisionRecord {
   createdAt: Date;
 }
 
+/** Lightweight immutable History item; body and metadata remain server authority. */
+export interface RevisionSummaryRecord {
+  id: string;
+  documentId: string;
+  parentRevisionId: string | null;
+  revisionNumber: number;
+  source: string;
+  wordCount: number;
+  createdAt: Date;
+}
+
+/** The validated row budget of one bounded document revision page. */
+export type RevisionPageLimit = number & { readonly __revisionPageLimit: unique symbol };
+
+export const MIN_REVISION_PAGE_LIMIT = 1;
+export const MAX_REVISION_PAGE_LIMIT = 100;
+
+/** Validate and narrow a revision-page budget before persistence. */
+export function revisionPageLimit(value: number): RevisionPageLimit {
+  if (
+    !Number.isInteger(value) ||
+    value < MIN_REVISION_PAGE_LIMIT ||
+    value > MAX_REVISION_PAGE_LIMIT
+  ) {
+    throw new RangeError(
+      `Revision page limit must be an integer from ${MIN_REVISION_PAGE_LIMIT} through ${MAX_REVISION_PAGE_LIMIT}.`,
+    );
+  }
+  return value as RevisionPageLimit;
+}
+
+/** Persistence-neutral exclusive position in `(revision_number DESC, id DESC)` order. */
+export interface RevisionPageCursor {
+  readonly revisionNumber: number;
+  readonly id: string;
+}
+
+export interface RevisionPageInput {
+  readonly limit: RevisionPageLimit;
+  readonly cursor?: RevisionPageCursor | undefined;
+}
+
+export interface RevisionSummaryPage {
+  readonly revisions: RevisionSummaryRecord[];
+  readonly nextCursor: RevisionPageCursor | null;
+}
+
 /** A document together with its current revision, the list/save/read shape. */
 export interface DocumentWithCurrent extends DocumentRecord {
   currentRevision: RevisionRecord | null;
@@ -230,7 +277,12 @@ export interface StudioStore
     volumeId?: string | null,
   ): number;
 
-  findRevisions(scope: ProjectScope, projectId: string, documentId: string): RevisionRecord[];
+  findRevisionSummaries(
+    scope: ProjectScope,
+    projectId: string,
+    documentId: string,
+    input: RevisionPageInput,
+  ): RevisionSummaryPage;
   findRevision(
     scope: ProjectScope,
     projectId: string,

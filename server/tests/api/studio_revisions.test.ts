@@ -1,4 +1,6 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+
+import { DrizzleStudioStore } from "../../src/contexts/studio/infrastructure/drizzle_studio_store.js";
 
 import {
   buildStudioApp,
@@ -8,6 +10,7 @@ import {
   monotonicClock,
   ownerJar,
   type RevisionPayload,
+  seedDocument,
   seedProject,
 } from "./studio_helpers.js";
 
@@ -47,15 +50,14 @@ describe("revision chain", () => {
 
       const revisions = await listRevisions(app, jar, project.id, document.id);
       expect(revisions).toHaveLength(2);
-      const first = revisions[0];
-      if (first === undefined) throw new Error("expected first revision");
-      const second = revisions[1];
-      if (second === undefined) throw new Error("expected second revision");
-      expect(first.id).toBe(baseId);
-      expect(first.content_markdown).toBe("# Chapter 1\n\n");
-      expect(second.parent_revision_id).toBe(baseId);
-      expect(second.revision_number).toBe(2);
-      expect(second.source).toBe("author");
+      const newest = revisions[0];
+      if (newest === undefined) throw new Error("expected newest revision");
+      const parent = revisions[1];
+      if (parent === undefined) throw new Error("expected parent revision");
+      expect(parent.id).toBe(baseId);
+      expect(newest.parent_revision_id).toBe(baseId);
+      expect(newest.revision_number).toBe(2);
+      expect(newest.source).toBe("author");
     } finally {
       await app.close();
     }
@@ -90,14 +92,14 @@ describe("revision chain", () => {
       const revisions = await listRevisions(app, jar, project.id, document.id);
       expect(revisions).toHaveLength(2);
       expect(revisions.map((revision: RevisionPayload) => revision.revision_number)).toEqual([
-        1, 2,
+        2, 1,
       ]);
     } finally {
       await app.close();
     }
   });
 
-  it("keeps revision numbers monotonic across sequential saves and a restore", async () => {
+  it("restores historic A exactly against current B while keeping summary-only history", async () => {
     const { app } = await buildStudioApp(monotonicClock());
     try {
       const jar = await ownerJar(app);
@@ -106,37 +108,58 @@ describe("revision chain", () => {
       const document = projectView.documents[0];
       if (document === undefined) throw new Error("expected seeded document");
 
-      let baseId: string = document.current_revision_id;
-      for (const content of ["two", "three", "four", "five"]) {
-        const saved = await putDocument(app, jar, project.id, document.id, {
-          content_markdown: content,
-          base_revision_id: baseId,
-        });
-        expect(saved.statusCode, saved.body).toBe(200);
-        baseId = saved.json().current_revision_id;
-      }
+      const baseId: string = document.current_revision_id;
+      const historic = await putDocument(app, jar, project.id, document.id, {
+        content_markdown: "historic A",
+        base_revision_id: baseId,
+        metadata: { marker: "A" },
+      });
+      expect(historic.statusCode, historic.body).toBe(200);
+      const historicId = historic.json().current_revision_id as string;
+      const current = await putDocument(app, jar, project.id, document.id, {
+        content_markdown: "current B",
+        base_revision_id: historicId,
+        metadata: { marker: "B" },
+      });
+      expect(current.statusCode, current.body).toBe(200);
+      const currentId = current.json().current_revision_id as string;
 
+      const before = await listRevisions(app, jar, project.id, document.id);
+      const historicSummary = before.find((revision) => revision.id === historicId);
+      expect(historicSummary).toBeDefined();
+      expect(historicSummary).not.toHaveProperty("content_markdown");
+      expect(historicSummary).not.toHaveProperty("metadata");
+
+      const exactRevisionRead = vi.spyOn(DrizzleStudioStore.prototype, "findRevision");
       const restore = await call(
         app,
         jar,
         "POST",
-        `/api/projects/${project.id}/documents/${document.id}/revisions/${baseId}/restore`,
-        { base_revision_id: baseId },
+        `/api/projects/${project.id}/documents/${document.id}/revisions/${historicId}/restore`,
+        { base_revision_id: currentId },
       );
       expect(restore.statusCode, restore.body).toBe(200);
       const restored = restore.json();
       expect(restored.revision_source).toBe("restore");
+      expect(restored.content_markdown).toBe("historic A");
+      expect(restored.metadata).toEqual({ marker: "A", restored_from: historicId });
+      expect(exactRevisionRead).toHaveBeenCalledTimes(1);
+      expect(exactRevisionRead).toHaveBeenCalledWith(
+        expect.objectContaining({ ownerId: expect.any(String) }),
+        project.id,
+        document.id,
+        historicId,
+      );
+      exactRevisionRead.mockRestore();
 
       const revisions = await listRevisions(app, jar, project.id, document.id);
-      expect(revisions).toHaveLength(6);
-      expect(revisions.map((revision) => revision.revision_number)).toEqual([1, 2, 3, 4, 5, 6]);
-      const last = revisions[5];
-      if (last === undefined) throw new Error("expected last revision");
-      expect(last.parent_revision_id).toBe(baseId);
-      expect(last.source).toBe("restore");
-      expect(last.content_markdown).toBe("five");
-      expect(last.metadata.restored_from).toBe(baseId);
+      expect(revisions.map((revision) => revision.revision_number)).toEqual([4, 3, 2, 1]);
+      const newest = revisions[0];
+      if (newest === undefined) throw new Error("expected restored revision");
+      expect(newest.parent_revision_id).toBe(currentId);
+      expect(newest.source).toBe("restore");
     } finally {
+      vi.restoreAllMocks();
       await app.close();
     }
   });
@@ -163,9 +186,57 @@ describe("revision chain", () => {
 
       const revisions = await listRevisions(app, jar, project.id, document.id);
       expect(revisions).toHaveLength(2);
-      const secondRevision = revisions[1];
+      const secondRevision = revisions[0];
       if (secondRevision === undefined) throw new Error("expected second revision");
       expect(secondRevision.source).toBe("author");
+    } finally {
+      await app.close();
+    }
+  });
+
+  it("keeps restore conflicts and cross-document revision ids closed without new revisions", async () => {
+    const { app } = await buildStudioApp(monotonicClock());
+    try {
+      const jar = await ownerJar(app);
+      const project = await seedProject(app, jar, "Restore guards");
+      const document = (await getProject(app, jar, project.id)).documents[0];
+      if (document === undefined) throw new Error("expected seeded document");
+      const staleBase = document.current_revision_id;
+      const saved = await putDocument(app, jar, project.id, document.id, {
+        content_markdown: "current",
+        base_revision_id: staleBase,
+      });
+      expect(saved.statusCode, saved.body).toBe(200);
+      const currentId = saved.json().current_revision_id as string;
+      const beforeConflict = await listRevisions(app, jar, project.id, document.id);
+
+      const conflict = await call(
+        app,
+        jar,
+        "POST",
+        `/api/projects/${project.id}/documents/${document.id}/revisions/${staleBase}/restore`,
+        { base_revision_id: staleBase },
+      );
+      expect(conflict.statusCode, conflict.body).toBe(409);
+      expect(conflict.json().error.details.current_revision_id).toBe(currentId);
+      expect(await listRevisions(app, jar, project.id, document.id)).toEqual(beforeConflict);
+
+      const other = await seedDocument(app, jar, project.id, {
+        kind: "note",
+        title: "Other",
+        content_markdown: "other",
+      });
+      const otherRevisionId = (await listRevisions(app, jar, project.id, other.id))[0]?.id;
+      if (otherRevisionId === undefined) throw new Error("expected other revision");
+      const crossDocument = await call(
+        app,
+        jar,
+        "POST",
+        `/api/projects/${project.id}/documents/${document.id}/revisions/${otherRevisionId}/restore`,
+        { base_revision_id: currentId },
+      );
+      expect(crossDocument.statusCode, crossDocument.body).toBe(404);
+      expect(await listRevisions(app, jar, project.id, document.id)).toEqual(beforeConflict);
     } finally {
       await app.close();
     }
