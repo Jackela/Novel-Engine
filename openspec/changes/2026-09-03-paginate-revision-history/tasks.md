@@ -61,7 +61,9 @@
 - [ ] 4.3 Replace every successful autosave/accept/restore whole-history reload
       with one cursorless first-page refresh that prepends/de-duplicates new
       summaries while preserving the already loaded contiguous tail and its
-      continuation cursor; prove repeated saves never traverse older pages.
+      continuation cursor when pages overlap; replace the cache from the fresh
+      cursor when a non-terminal page exposes an unknown gap, and prove repeated
+      saves never traverse older pages.
 - [ ] 4.4 Bound the module-global cache and request-version map to eight owners
       with inactive LRU eviction, active-owner protection, fresh reload after
       eviction, and cleanup on owner transition/unmount.

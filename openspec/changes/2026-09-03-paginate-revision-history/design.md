@@ -117,6 +117,11 @@ existing tail and continuation cursor remain authoritative: this prevents a
 new first-page cursor from re-reading or skipping the old page boundary. An
 empty owner adopts the response cursor. A terminal loaded history remains
 terminal after new rows are prepended because all older rows were already held.
+If a non-terminal refreshed first page has no identity overlap with a non-empty
+cache, more than one page may have appeared between observations. The client
+must not splice across that unknown gap: it discards the old acceleration
+cache, adopts the refreshed page and its cursor, and rebuilds a contiguous tail
+only through explicit older-page requests.
 
 A first-page refresh failure preserves committed summaries and the continuation
 cursor while surfacing the existing revision error. An older-page failure does
