@@ -55,6 +55,36 @@ export class ExportArtifactWriteError extends Error {
   }
 }
 
+export type ImportCapacityResource =
+  | "story_bytes"
+  | "chapter_bytes"
+  | "workspace_bytes"
+  | "chapter_count"
+  | "directory_entries";
+
+/** A legacy workspace exceeded one fixed inspection budget before decoding. */
+export class ImportCapacityExceededError extends Error {
+  readonly resource: ImportCapacityResource;
+  readonly limit: number;
+  readonly observed: number;
+
+  constructor(resource: ImportCapacityResource, limit: number, observed: number) {
+    if (
+      !Number.isSafeInteger(limit) ||
+      limit < 0 ||
+      !Number.isSafeInteger(observed) ||
+      observed < 0
+    ) {
+      throw new RangeError("Import capacity values must be non-negative safe integers.");
+    }
+    super("Legacy import capacity exceeded.");
+    this.name = "ImportCapacityExceededError";
+    this.resource = resource;
+    this.limit = limit;
+    this.observed = observed;
+  }
+}
+
 /** A document with the same (project, kind, title) identity already exists. */
 export class DuplicateDocumentError extends Error {
   readonly kind: string;

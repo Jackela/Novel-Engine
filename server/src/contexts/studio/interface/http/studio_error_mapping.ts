@@ -9,6 +9,7 @@ import {
 import {
   DuplicateDocumentError,
   DuplicateVolumeError,
+  ImportCapacityExceededError,
   NotFoundError,
   OperationCapacityExceededError,
   OperationInFlightError,
@@ -86,6 +87,18 @@ function toAppError(error: unknown): unknown {
         retry_after_seconds: error.retryAfterSeconds,
       },
       responseHeaders: { "retry-after": String(error.retryAfterSeconds) },
+    });
+  }
+  if (error instanceof ImportCapacityExceededError) {
+    return new AppError({
+      statusCode: ERROR_HTTP_STATUS[ERROR_CODES.IMPORT_CAPACITY_EXCEEDED],
+      code: ERROR_CODES.IMPORT_CAPACITY_EXCEEDED,
+      message: error.message,
+      details: {
+        resource: error.resource,
+        limit: error.limit,
+        observed: error.observed,
+      },
     });
   }
   if (error instanceof InvalidOperationError) {

@@ -1,7 +1,8 @@
 import { mkdtemp } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { afterAll, describe, expect, it } from "vitest";
+import { afterAll, describe, expect, it, vi } from "vitest";
+import { ImportService } from "../../src/contexts/studio/application/import_service.js";
 import { createStudioServices } from "../../src/contexts/studio/application/studio_services.js";
 import { DrizzleStudioStore } from "../../src/contexts/studio/infrastructure/drizzle_studio_store.js";
 import { FilesystemExportArtifactGateway } from "../../src/contexts/studio/infrastructure/export_artifact_files.js";
@@ -33,14 +34,15 @@ async function buildServices() {
     store: new DrizzleAuthStore(database.db),
     sessionSecret: "unit-test-session-secret",
   });
-  const services = createStudioServices(new DrizzleStudioStore({ database: database.db }), {
+  const store = new DrizzleStudioStore({ database: database.db });
+  const services = createStudioServices(store, {
     providerFactory: capturingFactory({}).factory,
     legacyWorkspaceReader: new FsLegacyWorkspaceReader(),
     artifactStore: new ExportStorePart(database.db),
     artifactFiles: new FilesystemExportArtifactGateway(directory),
     projectArtifactCleaner: new FilesystemProjectArtifactCleaner(directory),
   });
-  return { auth, services };
+  return { auth, services, store };
 }
 
 async function ownerPrincipal(auth: AuthService): Promise<Principal> {
@@ -71,12 +73,44 @@ describe("legacy import service", () => {
     const owner = await ownerPrincipal(auth);
     const source = legacySource();
 
-    const first = services.imports.importLegacyWorkspace(owner, source);
-    const second = services.imports.importLegacyWorkspace(owner, source);
+    const first = await services.imports.importLegacyWorkspace(owner, source);
+    const second = await services.imports.importLegacyWorkspace(owner, source);
 
-    expect(second.id).toBe(first.id);
+    expect(second.project_id).toBe(first.project_id);
     expect(second.import_hash).toBe(first.import_hash);
+    expect(first.created).toBe(true);
+    expect(second.created).toBe(false);
+    expect(second.chapter_count).toBe(2);
     expect(services.projects.listProjects(owner)).toHaveLength(1);
+  });
+
+  it("finishes the filesystem read before the first store access", async () => {
+    const { auth, store } = await buildServices();
+    const owner = await ownerPrincipal(auth);
+    const source = legacySource();
+    let releaseRead: (() => void) | undefined;
+    const blocked = new Promise<void>((resolve) => {
+      releaseRead = resolve;
+    });
+    let reachedRead = false;
+    const service = new ImportService(
+      store,
+      new FsLegacyWorkspaceReader({
+        async afterFileOpen(path) {
+          if (reachedRead || !path.endsWith("story.yaml")) return;
+          reachedRead = true;
+          await blocked;
+        },
+      }),
+    );
+    const storeAccess = vi.spyOn(store, "findProjectByImportHash");
+
+    const operation = service.importLegacyWorkspace(owner, source);
+    await vi.waitFor(() => expect(reachedRead).toBe(true));
+    expect(storeAccess).not.toHaveBeenCalled();
+    releaseRead?.();
+    await operation;
+    expect(storeAccess).toHaveBeenCalledOnce();
   });
 
   it("titles chapters Chapter 1..N by filename order with no additional documents", async () => {
@@ -84,8 +118,8 @@ describe("legacy import service", () => {
     const owner = await ownerPrincipal(auth);
     const source = legacySource();
 
-    const project = services.imports.importLegacyWorkspace(owner, source);
-    const detail = services.projects.projectDetail(owner, project.id as string);
+    const project = await services.imports.importLegacyWorkspace(owner, source);
+    const detail = services.projects.projectDetail(owner, project.project_id);
 
     expect(
       (detail.payload.documents as Record<string, unknown>[]).map((document) => document.title),
@@ -104,15 +138,15 @@ describe("legacy import service", () => {
     const owner = await ownerPrincipal(auth);
     const source = legacySource();
 
-    const project = services.imports.importLegacyWorkspace(owner, source);
-    const volumes = services.volumes.listVolumes(owner, project.id as string);
+    const project = await services.imports.importLegacyWorkspace(owner, source);
+    const volumes = services.volumes.listVolumes(owner, project.project_id);
     expect(volumes).toHaveLength(1);
     const only = volumes[0] as Record<string, unknown>;
     expect(only).toMatchObject({ title: "Default Volume", position: 1 });
 
     // Every imported document is a chapter and every chapter lands in the
     // default volume — nothing stays unplaced.
-    const detail = services.projects.projectDetail(owner, project.id as string);
+    const detail = services.projects.projectDetail(owner, project.project_id);
     expect(detail.documents.length).toBeGreaterThan(0);
     for (const document of detail.documents) {
       expect(document.kind).toBe("chapter");
@@ -125,7 +159,7 @@ describe("legacy import service", () => {
     const owner = await ownerPrincipal(auth);
     const source = join(tmpdir(), `no-story-${Date.now()}-${Math.random()}`);
 
-    expect(() => services.imports.importLegacyWorkspace(owner, source)).toThrowError(
+    await expect(services.imports.importLegacyWorkspace(owner, source)).rejects.toThrowError(
       new InvalidOperationError("Legacy workspace must contain story.yaml."),
     );
   });
@@ -136,8 +170,8 @@ describe("legacy import service", () => {
     const source = legacySource();
     const before = directoryFingerprint(source);
 
-    services.imports.importLegacyWorkspace(owner, source);
-    services.imports.importLegacyWorkspace(owner, source);
+    await services.imports.importLegacyWorkspace(owner, source);
+    await services.imports.importLegacyWorkspace(owner, source);
 
     expect(directoryFingerprint(source)).toBe(before);
   });

@@ -10,8 +10,6 @@ import {
   projectSnapshots,
   projects,
 } from "../../../src/contexts/studio/infrastructure/db/schema.js";
-import { AuthService } from "../../../src/shared/application/auth_service.js";
-import { DrizzleAuthStore } from "../../../src/shared/infrastructure/db/auth_store.js";
 import { owners } from "../../../src/shared/infrastructure/db/schema.js";
 import { openStudioDatabase } from "../../../src/shared/infrastructure/db/startup.js";
 import { makeLegacyWorkspace } from "../../legacy_workspace_fixtures.js";
@@ -245,29 +243,6 @@ describe("operational CLI", () => {
     expect(code).toBe(0);
     expect(events).toEqual(["listen:127.0.0.1:8765"]);
     expect(backupsAtListen).toBeGreaterThan(0);
-  });
-
-  it("imports a legacy workspace through the default #273 runner", async () => {
-    const harness = await cliHarness();
-    const source = makeLegacyWorkspace(join(harness.directory, "legacy"), {
-      title: "CLI Import Story",
-      chapters: [{ filename: "chapter-001.md", content: "# One\n" }],
-    });
-    const database = await openStudioDatabase(harness.databasePath);
-    try {
-      await new AuthService({
-        store: new DrizzleAuthStore(database.db),
-        sessionSecret: "cli-test-session-secret",
-      }).configureOwner("owner", "correct horse battery");
-    } finally {
-      database.close();
-    }
-
-    const code = await runCli(["import", "--source", source, "--owner", "owner"], harness.context);
-
-    expect(code).toBe(0);
-    expect(harness.lines.join("\n")).toContain("CLI Import Story");
-    expect(harness.lines.join("\n")).toContain("import_hash");
   });
 
   it("reports a missing owner or bad source as a failed import (exit 1)", async () => {

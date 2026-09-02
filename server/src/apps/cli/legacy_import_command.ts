@@ -1,5 +1,6 @@
 import { randomBytes } from "node:crypto";
 import { textProviderFactory } from "../../contexts/ai/infrastructure/providers/text_provider_factory.js";
+import type { LegacyImportResult } from "../../contexts/studio/application/import_service.js";
 import { createStudioServices } from "../../contexts/studio/application/studio_services.js";
 import { DrizzleStudioStore } from "../../contexts/studio/infrastructure/drizzle_studio_store.js";
 import { FilesystemExportArtifactGateway } from "../../contexts/studio/infrastructure/export_artifact_files.js";
@@ -24,12 +25,12 @@ export interface LegacyImportCommandInput {
  * The `novel-engine import` command body — the programmatic entry the CLI
  * dispatcher (#272) registers. It owns a short-lived runtime (database
  * lifecycle included), runs as the owner principal without HTTP
- * authentication, and returns the imported project payload for the
- * dispatcher to print. The legacy source directory is never modified.
+ * authentication, and returns a bounded import summary for the dispatcher to
+ * print. The legacy source directory is never modified.
  */
 export async function runLegacyImportCommand(
   input: LegacyImportCommandInput,
-): Promise<Record<string, unknown>> {
+): Promise<LegacyImportResult> {
   const database = await openReconciledStudioDatabase(input.databasePath);
   try {
     const authService = new AuthService({
@@ -50,7 +51,7 @@ export async function runLegacyImportCommand(
       }),
       projectArtifactCleaner: new FilesystemProjectArtifactCleaner(database.dataDirectory),
     });
-    return services.imports.importLegacyWorkspace(principal, input.source);
+    return await services.imports.importLegacyWorkspace(principal, input.source);
   } finally {
     database.close();
   }

@@ -75,7 +75,7 @@ export interface paths {
                         "application/json": components["schemas"]["ErrorEnvelope"];
                     };
                 };
-                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                /** @description Request validation, invalid legacy structure, or import capacity rejection. IMPORT_CAPACITY_EXCEEDED carries only resource, limit, and observed details. */
                 422: {
                     headers: {
                         [name: string]: unknown;

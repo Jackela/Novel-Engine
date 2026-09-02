@@ -9,7 +9,7 @@ import {
   makeLegacyWorkspace,
 } from "../legacy_workspace_fixtures.js";
 import { TEST_SESSION_SECRET } from "./auth_helpers.js";
-import { buildStudioApp, call, monotonicClock, ownerJar } from "./studio_helpers.js";
+import { buildStudioApp, call, getProject, monotonicClock, ownerJar } from "./studio_helpers.js";
 
 const CHAPTERS: LegacyChapterInput[] = [
   { filename: "chapter-001.md", content: "# One\n\nThe lamp on the pier.\n" },
@@ -79,33 +79,37 @@ describe("legacy import surface", () => {
     await app.close();
     const before = directoryFingerprint(source);
 
-    const project = await runLegacyImportCommand({
+    const imported = await runLegacyImportCommand({
       databasePath: join(directory, "novel-engine.sqlite3"),
       source,
       owner: "owner",
     });
 
-    expect(project.title).toBe("Imported Story");
-    expect(project.description).toBe("A precise migration.");
-    expect(project.settings).toEqual({ provider: "mock" });
-    expect(project.import_hash).toMatch(/^[0-9a-f]{64}$/);
-    const documents = project.documents as Record<string, unknown>[];
-    expect(documents).toHaveLength(CHAPTERS.length);
-    for (const [index, chapter] of CHAPTERS.entries()) {
-      const document = documents[index] as Record<string, unknown>;
-      expect(document.kind).toBe("chapter");
-      expect(document.title).toBe(`Chapter ${index + 1}`);
-      expect(document.position).toBe(index + 1);
-      expect(document.content_markdown).toBe(chapter.content);
-      expect(document.metadata).toEqual({ legacy_filename: chapter.filename });
-      expect(document.current_revision_id).toBeTruthy();
-      expect(document.revision_source).toBe("author");
-    }
+    expect(imported).toEqual({
+      project_id: expect.any(String),
+      title: "Imported Story",
+      description: "A precise migration.",
+      import_hash: expect.stringMatching(/^[0-9a-f]{64}$/),
+      chapter_count: CHAPTERS.length,
+      created: true,
+    });
     expect(directoryFingerprint(source)).toBe(before);
 
     const reopened = await reopenApp(directory);
     try {
       const jar = await ownerJar(reopened);
+      const project = await getProject(reopened, jar, imported.project_id);
+      expect(project.documents).toHaveLength(CHAPTERS.length);
+      for (const [index, chapter] of CHAPTERS.entries()) {
+        const document = project.documents[index];
+        expect(document?.kind).toBe("chapter");
+        expect(document?.title).toBe(`Chapter ${index + 1}`);
+        expect(document?.position).toBe(index + 1);
+        expect(document?.content_markdown).toBe(chapter.content);
+        expect(document?.metadata).toEqual({ legacy_filename: chapter.filename });
+        expect(document?.current_revision_id).toBeTruthy();
+        expect(document?.revision_source).toBe("author");
+      }
       const list = await call(reopened, jar, "GET", "/api/projects");
       expect(list.statusCode, list.body).toBe(200);
       expect(list.json().projects).toHaveLength(1);
@@ -136,7 +140,9 @@ describe("legacy import surface", () => {
       owner: "owner",
     });
 
-    expect(second.id).toBe(first.id);
+    expect(first.created).toBe(true);
+    expect(second.created).toBe(false);
+    expect(second.project_id).toBe(first.project_id);
     expect(second.import_hash).toBe(first.import_hash);
     expect(directoryFingerprint(source)).toBe(before);
 
