@@ -1,9 +1,10 @@
+import { ERROR_CODES } from "../../../shared/domain/error_codes.js";
 import { GenerationCapacityExceededError } from "../domain/exceptions.js";
 import { GENERATION_PROMPT_BYTE_LIMIT } from "../domain/generation_capacity_policy.js";
 import { dumpJson, safeLoadJson } from "./payloads.js";
 import type { JobRecord, MarkJobOutcomeInput } from "./ports/studio_store.js";
 
-const CAPACITY_ERROR_CODE = "GENERATION_CAPACITY_EXCEEDED";
+const CAPACITY_ERROR_CODE = ERROR_CODES.GENERATION_CAPACITY_EXCEEDED;
 const CAPACITY_ERROR_KEY = "capacity_error";
 const CAPACITY_MESSAGE = "Generation capacity exceeded.";
 

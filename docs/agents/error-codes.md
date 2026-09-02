@@ -7,11 +7,12 @@ Every API failure renders through the unified error envelope:
 ```
 
 `details` is optional and code-specific. The catalog below is the agent-facing
-view of the SSOT in
-`server/src/shared/interface/http/error_envelope.ts` (`ERROR_CODES` +
-`ERROR_HTTP_STATUS`); the OpenAPI document declares the same shape as the
-shared `ErrorEnvelope` component schema. Keep the three in lockstep — never
-restate a code as a bare literal.
+view of the code SSOT in `server/src/shared/domain/error_codes.ts`
+(`ERROR_CODES`) and its HTTP status mapping in
+`server/src/shared/interface/http/error_envelope.ts` (`ERROR_HTTP_STATUS`); the
+OpenAPI document declares the same shape as the shared `ErrorEnvelope`
+component schema. Keep them in lockstep — never restate a code as a bare
+literal.
 
 ## Catalog
 

@@ -1,39 +1,13 @@
 import type { FastifyError, FastifyInstance, FastifyReply } from "fastify";
 
+import { ERROR_CODES, type ErrorCode } from "../../domain/error_codes.js";
 import { InvalidOperationError } from "../../domain/exceptions.js";
+
+export type { ErrorCode };
+export { ERROR_CODES };
 
 /** Optional machine-readable payload carried inside the unified error envelope. */
 export type ErrorEnvelopeDetails = Record<string, unknown>;
-
-/**
- * The stable error-code catalog (SSOT): every SCREAMING_SNAKE code the
- * unified envelope can emit. Throw sites, schema enums, the OpenAPI
- * `ErrorEnvelope` component, and `docs/agents/error-codes.md` all derive
- * from these constants — never restate a code as a bare literal.
- */
-export const ERROR_CODES = {
-  UNAUTHORIZED: "UNAUTHORIZED",
-  FORBIDDEN: "FORBIDDEN",
-  CSRF_TOKEN_MISSING: "CSRF_TOKEN_MISSING",
-  CSRF_TOKEN_INVALID: "CSRF_TOKEN_INVALID",
-  RATE_LIMIT_EXCEEDED: "RATE_LIMIT_EXCEEDED",
-  NOT_FOUND: "NOT_FOUND",
-  INVALID_OPERATION: "INVALID_OPERATION",
-  EXPORT_CAPACITY_EXCEEDED: "EXPORT_CAPACITY_EXCEEDED",
-  GENERATION_CAPACITY_EXCEEDED: "GENERATION_CAPACITY_EXCEEDED",
-  IMPORT_CAPACITY_EXCEEDED: "IMPORT_CAPACITY_EXCEEDED",
-  VALIDATION_ERROR: "VALIDATION_ERROR",
-  REVISION_CONFLICT: "REVISION_CONFLICT",
-  VOLUME_CONFLICT: "VOLUME_CONFLICT",
-  SNAPSHOT_CONFLICT: "SNAPSHOT_CONFLICT",
-  DOCUMENT_CONFLICT: "DOCUMENT_CONFLICT",
-  OPERATION_IN_FLIGHT: "OPERATION_IN_FLIGHT",
-  OPERATION_CAPACITY_EXCEEDED: "OPERATION_CAPACITY_EXCEEDED",
-  SERVICE_UNAVAILABLE: "SERVICE_UNAVAILABLE",
-  INTERNAL_ERROR: "INTERNAL_ERROR",
-} as const;
-
-export type ErrorCode = (typeof ERROR_CODES)[keyof typeof ERROR_CODES];
 
 /** HTTP status the envelope renders for each catalog code. */
 export const ERROR_HTTP_STATUS = {

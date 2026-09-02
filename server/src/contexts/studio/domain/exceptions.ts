@@ -1,3 +1,4 @@
+import { ERROR_CODES } from "../../../shared/domain/error_codes.js";
 import {
   GENERATION_CAPACITY_RESOURCES,
   type GenerationCapacityResource,
@@ -116,7 +117,7 @@ const GENERATION_CAPACITY_RESOURCE_SET: ReadonlySet<string> = new Set(
 
 /** A complete Provider prompt exceeded the fixed application-owned byte budget. */
 export class GenerationCapacityExceededError extends Error {
-  readonly code = "GENERATION_CAPACITY_EXCEEDED";
+  readonly code = ERROR_CODES.GENERATION_CAPACITY_EXCEEDED;
   readonly resource: GenerationCapacityResource;
   readonly limit: number;
   readonly observed: number;
