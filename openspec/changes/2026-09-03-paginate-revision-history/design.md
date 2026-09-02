@@ -107,10 +107,17 @@ Each cached owner stores a newest-first summary list, nullable continuation
 cursor, and request ownership. Initial document activation reads the first page.
 Only an explicit `Load older revisions` action sends `next_cursor` and appends
 unique rows by id. A duplicate request for the same owner and cursor coalesces;
-other overlapping intents do not.
+other overlapping intents do not. If an older-page action occurs while a
+first-page request owns the route, it is either visibly disabled before
+activation or queued to use the cursor committed by that request; it must not
+resolve as a silent no-op.
 
 After autosave, proposal acceptance, or restore creates a known revision, the
 existing bounded first-page endpoint is refreshed; no cursor chain is walked.
+The refresh carries the revision id created by that mutation. Requests may
+coalesce only when they require the same created revision; a later mutation
+supersedes an older refresh or schedules a trailing first-page read, so an
+earlier response cannot satisfy causally newer history.
 On success its new summaries are prepended/de-duplicated against already loaded
 immutable summaries. If an owner already held a contiguous loaded tail, its
 existing tail and continuation cursor remain authoritative: this prevents a
@@ -133,13 +140,19 @@ current lifecycle epoch, abort, and stale-response semantics.
 
 ## Bounded cross-owner cache and accessible traversal
 
-The module-global cache and request-version registry share an eight-owner LRU
-bound keyed by `(projectId, documentId)`. Reading or successfully publishing an
-owner makes it most recent. Inserting a ninth owner evicts the least-recently
-used inactive owner and deletes its request-version entry; the active owner is
-never evicted. Eviction affects only browser acceleration—a later visit performs
-a fresh first-page read. In-flight ownership stays hook-local and is aborted on
-owner transition/unmount, so eviction cannot revive a stale request.
+The module-global cache and request registry use an eight-owner LRU acceleration
+budget keyed by `(projectId, documentId)`. Reading or successfully publishing
+an owner makes it most recent. Inserting a ninth owner evicts the least-recently
+used inactive owner and all of its request bookkeeping; an active owner is
+never evicted. If more than eight owners are simultaneously active, the cache
+may temporarily grow only to that active working-set size, retains no avoidable
+inactive entry, and converges to at most eight as owners deactivate. Eviction
+affects only browser acceleration—a later visit performs a fresh first-page
+read. In-flight ownership stays hook-local and is aborted after the last
+subscriber for an owner unmounts, so eviction cannot revive a stale request.
+Coalesced requests notify every still-mounted subscriber; an initiating
+subscriber unmount cannot suppress success or failure delivery to a surviving
+consumer.
 
 The History panel shows a native button named `Load older revisions` only when
 `next_cursor` is non-null. It exposes a busy state and disables duplicate
