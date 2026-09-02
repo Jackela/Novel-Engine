@@ -203,6 +203,18 @@ describe("proposal retry base revision fidelity", () => {
       );
       const source = original.json<JobPayload>();
 
+      const capture = vi.spyOn(DrizzleStudioStore.prototype, "readProposalContext");
+      const legacyReads = [
+        vi.spyOn(DrizzleStudioStore.prototype, "findDocument"),
+        vi.spyOn(DrizzleStudioStore.prototype, "findDocuments"),
+        vi.spyOn(DrizzleStudioStore.prototype, "findVolumes"),
+      ];
+      for (const legacyRead of legacyReads) {
+        legacyRead.mockImplementation(() => {
+          throw new Error("proposal retry performed a legacy context read");
+        });
+      }
+
       const response = await retry(
         app,
         owner,
@@ -216,6 +228,8 @@ describe("proposal retry base revision fidelity", () => {
         request: { base_revision_id: baseA },
         result: { base_revision_id: baseA, accepted_revision_id: null },
       });
+      expect(capture).toHaveBeenCalledTimes(1);
+      for (const legacyRead of legacyReads) expect(legacyRead).not.toHaveBeenCalled();
       expect(provider.tasks[1]?.metadata.base_revision_id).toBe(baseA);
       const usage = evidence(app).usage;
       expect(usage).toHaveLength(1);
@@ -224,6 +238,7 @@ describe("proposal retry base revision fidelity", () => {
         base_revision_id: baseA,
       });
     } finally {
+      vi.restoreAllMocks();
       await app.close();
     }
   });
