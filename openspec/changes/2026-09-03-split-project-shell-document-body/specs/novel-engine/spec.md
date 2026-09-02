@@ -112,8 +112,11 @@ body together only when their causal identity is current. Narrow Lore-status
 and beat-association responses MUST retain their existing payloads. A response
 whose captured project, Document, and field-specific intent epoch still match
 the active shell and latest intent MUST patch only its owned summary field:
-`lore_status` from the closed response value or `beat_ref` from the resolved
-beat title/null. A response that fails any identity or epoch check MUST be
+`lore_status` from the closed authoritative response value or `beat_ref` from
+the successful command's normalized requested value (`null` or its trimmed
+non-empty title). A resolved beat response is confirmation/display only and
+MUST NOT replace stored-reference authority when concurrent outline change
+makes that view null. A response that fails any identity or epoch check MUST be
 ignored. Reverse-order same-revision responses MUST NOT overwrite a newer
 requested value. Summary-only reorder MUST NOT roll the active body back.
 
@@ -205,6 +208,14 @@ expectation.
 - **AND** the older response is ignored and cannot replace the newer field value
 - **AND** neither narrow payload is treated as a complete Document
 
+#### Scenario: Concurrent outline rename does not erase the stored beat reference
+
+- **GIVEN** the latest beat command successfully stores the normalized requested title `Storm`
+- **AND** a concurrent outline rename makes the response resolve `beat` as null
+- **WHEN** the response passes project, Document, and intent-epoch validation
+- **THEN** the shell summary patches `beat_ref` to `Storm` from the successful command
+- **AND** the null display resolution does not rewrite the stored reference to null
+
 #### Scenario: Editor failure leaves navigation recoverable
 
 - **GIVEN** the project shell loaded but the selected current Document failed to load
@@ -272,6 +283,79 @@ recovery states.
 - **WHEN** the author navigates to Export and then uses Back
 - **THEN** Export alone is activated while its route is selected
 - **AND** Back restores Review without making Export the visible state
+
+### Requirement: Project-scoped Studio resource lifecycle
+
+The complete Studio workbench state MUST be owned by the current route
+`projectId`. When that identity changes, data and pending state from the prior
+project MUST become non-interactive immediately. Shell, active Document, Jobs,
+Usage, search, Drafts, revisions, proposals, whole-book progress, Reviews,
+Exports, settings, and errors MUST reset or remain keyed to their originating
+project and resource owner. A late response from an earlier project, Document,
+revision expectation, lifecycle, or field-specific mutation intent MUST NOT
+overwrite the active Document, surface, error, revision baseline, Lore status,
+or beat association.
+
+Transports that support cancellation MUST be aborted when their last owner
+releases them. Exact project/Document/expected-revision/lifecycle reads MUST
+coalesce for all subscribers, so one subscriber leaving MUST NOT abort a request
+still owned by another. When a non-cancellable mutation has already committed,
+the Studio MUST reconcile that result into the originating project/Document
+identity (or refresh it from the server) without applying it to the active
+Document. Returning to that identity MUST use the committed revision or a newer
+server revision as its baseline.
+
+A deliberate Document switch MUST discard an edited local Draft that has not
+been accepted, including an unresolved conflict Draft; it MUST NOT persist that
+Draft by inactive Document. Accepted server content MAY be recovered from the
+current-Document resource but MUST NOT be described as Draft survival. A
+conflicted Draft remains available only while its Document stays active or
+until the author chooses an explicit conflict action.
+
+#### Scenario: Switching projects hides the previous aggregate immediately
+
+- **GIVEN** project A is visible and project B starts loading
+- **WHEN** the route project identity changes from A to B
+- **THEN** project A and its actions are no longer rendered
+- **AND** only project B may replace the loading state or publish a load error
+
+#### Scenario: Late document completion is discarded
+
+- **GIVEN** a save, restore, search, proposal, body, Lore-status, or beat request belongs to an earlier project, Document, revision, or intent
+- **WHEN** it completes after the active ownership changed
+- **THEN** its server result does not replace the active identity's Draft, accepted body, revision baseline, field value, result list, or error state
+- **AND** a stale shell or body response does not replace current resource state
+
+#### Scenario: A committed inactive-document mutation is reconciled
+
+- **GIVEN** a save, restore, or proposal acceptance for Document A commits after the author selects Document B
+- **WHEN** the author later returns to Document A
+- **THEN** Document B was never overwritten by A's completion
+- **AND** Document A reflects the committed server revision or a newer refreshed revision
+- **AND** the next save for A uses that revision as its base
+
+#### Scenario: An unpersisted draft does not survive document navigation
+
+- **GIVEN** the author edits Document A and selects Document B before the save debounce elapses
+- **WHEN** the author returns to Document A
+- **THEN** A's unpersisted local Draft is absent rather than restored from inactive client state
+- **AND** A loads its last accepted current revision or a newer committed revision
+- **AND** B never displays or persists A's Draft
+
+#### Scenario: An old export owner cannot trigger a download
+
+- **GIVEN** an Export for project A is waiting for its artifact or download
+- **WHEN** the route switches to project B or the workbench unmounts
+- **THEN** every cancellable remaining request without another subscriber is aborted
+- **AND** no catalog, error, pending state, object URL, or synthetic download from A is published into B
+
+#### Scenario: A stale restore baseline remains recoverable
+
+- **GIVEN** a revision restore uses a base revision that changed while its Document remains active
+- **WHEN** the server rejects the restore with HTTP 409
+- **THEN** the Studio retains the active local Draft and marks it conflicted
+- **AND** refreshes the latest revision baseline without silently overwriting local text
+- **AND** a subsequent explicit restore retry uses that refreshed base revision
 
 ## MODIFIED Requirements
 
@@ -383,83 +467,6 @@ author has not moved focus elsewhere.
 - **AND** Export is not requested
 - **AND** Review success clears only the Review error
 
+## REMOVED Requirements
+
 ### Requirement: Project-scoped Studio lifecycle
-
-The complete Studio workbench state MUST be owned by the current route
-`projectId`. When that identity changes, data and pending state from the prior
-project MUST become non-interactive immediately. Shell, active Document, Jobs,
-Usage, search, Drafts, revisions, proposals, whole-book progress, Reviews,
-Exports, settings, and errors MUST reset or remain keyed to their originating
-project and resource owner. A late response from an earlier project, Document,
-revision expectation, lifecycle, or field-specific mutation intent MUST NOT
-overwrite the active Document, surface, error, revision baseline, Lore status,
-or beat association.
-
-Transports that support cancellation MUST be aborted when their last owner
-releases them. Exact project/Document/expected-revision/lifecycle reads MUST
-coalesce for all subscribers, so one subscriber leaving MUST NOT abort a request
-still owned by another. When a non-cancellable mutation has already committed,
-the Studio MUST reconcile that result into the originating project/Document
-identity (or refresh it from the server) without applying it to the active
-Document. Returning to that identity MUST use the committed revision or a newer
-server revision as its baseline.
-
-A deliberate Document switch MUST discard an edited local Draft that has not
-been accepted, including an unresolved conflict Draft; it MUST NOT persist that
-Draft by inactive Document. Accepted server content MAY be recovered from the
-current-Document resource but MUST NOT be described as Draft survival. A
-conflicted Draft remains available only while its Document stays active or
-until the author chooses an explicit conflict action.
-
-#### Scenario: Switching projects hides the previous aggregate immediately
-
-- **GIVEN** project A is visible and project B starts loading
-- **WHEN** the route project identity changes from A to B
-- **THEN** project A and its actions are no longer rendered
-- **AND** only project B may replace the loading state or publish a load error
-
-#### Scenario: Late document completion is discarded
-
-- **GIVEN** a save, restore, search, proposal, body, Lore-status, or beat request belongs to an earlier project, Document, revision, or intent
-- **WHEN** it completes after the active ownership changed
-- **THEN** its server result does not replace the active identity's Draft, accepted body, revision baseline, field value, result list, or error state
-- **AND** a stale shell or body response does not replace current resource state
-
-#### Scenario: A committed inactive-document mutation is reconciled
-
-- **GIVEN** a save, restore, or proposal acceptance for Document A commits after the author selects Document B
-- **WHEN** the author later returns to Document A
-- **THEN** Document B was never overwritten by A's completion
-- **AND** Document A reflects the committed server revision or a newer refreshed revision
-- **AND** the next save for A uses that revision as its base
-
-#### Scenario: An unpersisted draft does not survive document navigation
-
-- **GIVEN** the author edits Document A and selects Document B before the save debounce elapses
-- **WHEN** the author returns to Document A
-- **THEN** A's unpersisted local Draft is absent rather than restored from inactive client state
-- **AND** A loads its last accepted current revision or a newer committed revision
-- **AND** B never displays or persists A's Draft
-
-#### Scenario: An unpersisted draft survives document navigation
-
-- **GIVEN** a Draft for Document A was still unpersisted when navigation away began
-- **BUT** its already-started save commits before the author returns to A
-- **WHEN** the author returns to Document A
-- **THEN** the client does not restore the discarded local Draft
-- **AND** the same text is present only as the server-accepted current revision
-
-#### Scenario: An old export owner cannot trigger a download
-
-- **GIVEN** an Export for project A is waiting for its artifact or download
-- **WHEN** the route switches to project B or the workbench unmounts
-- **THEN** every cancellable remaining request without another subscriber is aborted
-- **AND** no catalog, error, pending state, object URL, or synthetic download from A is published into B
-
-#### Scenario: A stale restore baseline remains recoverable
-
-- **GIVEN** a revision restore uses a base revision that changed while its Document remains active
-- **WHEN** the server rejects the restore with HTTP 409
-- **THEN** the Studio retains the active local Draft and marks it conflicted
-- **AND** refreshes the latest revision baseline without silently overwriting local text
-- **AND** a subsequent explicit restore retry uses that refreshed base revision

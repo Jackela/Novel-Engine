@@ -73,8 +73,8 @@ unsaved Draft.
 - No document-body page cache, offline Draft recovery, local-storage Drafts,
   background prefetch, automatic traversal, or speculative body loading.
 - No change to save/restore/proposal response bodies, conflict resolution,
-  immutable revisions, snapshot authority, volume semantics, or full-text
-  search.
+  Beat/Lore narrow response bodies, immutable revisions, snapshot authority,
+  volume semantics, or full-text search.
 
 ## Validation
 

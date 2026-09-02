@@ -86,10 +86,13 @@ Complete-Document write responses update shell and accepted body only under
 current causal revision ownership. Lore-status and beat-association responses
 retain their narrow payloads. A latest response validates captured project and
 Document identity plus field-specific intent epoch, then must patch only the
-owned `lore_status` or `beat_ref` summary field from its response. A stale
-response is ignored. This prevents an older same-revision response from
-reversing a newer intent without pretending the narrow response is a full
-Document.
+owned summary field. `lore_status` comes from its authoritative closed response;
+`beat_ref` comes from the successful command's normalized requested title/null.
+The resolved beat response is display confirmation, not stored-reference
+authority, because a concurrent outline rename can make it null after the
+reference committed. A stale response is ignored. This prevents an older same-
+revision response from reversing a newer intent without pretending the narrow
+response is a full Document.
 
 The editor's Draft is separate component-local state. The 1.5-second debounce
 starts a save attempt; it is not a durability guarantee. A conflict retains the

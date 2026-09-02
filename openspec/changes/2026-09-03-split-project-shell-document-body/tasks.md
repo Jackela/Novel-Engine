@@ -57,9 +57,11 @@
 - [ ] 3.4 Apply complete mutation responses causally to shell plus active body,
       require the latest narrow Lore-status/beat payload to patch only its owned
       summary field after captured project/Document/intent-epoch validation,
-      ignore stale narrow responses, apply reorder summaries without rolling
-      back a newer body, and prove reverse same-revision or older-revision
-      responses cannot overwrite a newer intent.
+      source `lore_status` from the response and normalized `beat_ref` from the
+      successful requested command rather than its independently resolved beat
+      display, ignore stale narrow responses, apply reorder summaries without
+      rolling back a newer body, and prove reverse same-revision, concurrent
+      outline rename, or older-revision responses cannot overwrite authority.
 - [ ] 3.5 Separate Draft from accepted cache state: keep the 1.5-second save
       trigger, retain a conflicted Draft while active, discard it on explicit
       switch/reload, and prevent late save/conflict results from crossing

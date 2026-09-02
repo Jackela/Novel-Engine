@@ -148,12 +148,16 @@ captures project, Document, field-specific intent epoch, and requested value.
 On success it first validates that the active shell still contains that exact
 captured project/Document identity and that its field-specific epoch remains
 latest. It then MUST patch only its owned summary field: `lore_status` from the
-closed response value, or `beat_ref` from the returned resolved beat title/null.
-A failed identity/epoch check is stale and MUST be ignored. Reverse-order same-
-revision responses therefore cannot replace a newer Lore-status or beat intent.
-A response for an older revision or mutation intent cannot overwrite a newer
-result. Reorder updates only shell positions and preserves the active accepted
-body when its identity remains unchanged.
+closed response value, or `beat_ref` from the successful command's normalized
+requested value (`null` or the trimmed non-empty title). The beat response is
+confirmation plus the independently resolved display view; it is not stored-
+reference authority and may already be `beat: null` if the outline heading was
+renamed between persistence and response resolution. A failed identity/epoch
+check is stale and MUST be ignored. Reverse-order same-revision responses
+therefore cannot replace a newer Lore-status or beat intent. A response for an
+older revision or mutation intent cannot overwrite a newer result. Reorder
+updates only shell positions and preserves the active accepted body when its
+identity remains unchanged.
 
 The authoring bootstrap first resolves the shell, chooses the route-compatible
 active document, and reads at most that one complete Document. It never follows
