@@ -1,10 +1,8 @@
-import { linkedChapterBeat } from "./beat_association_service.js";
 import { BoundedPromptWriter } from "./generation_capacity.js";
 import { iterateTriggeredLoreSections } from "./lore_injection.js";
 import type { LoreEntrySource } from "./lorebook.js";
 import { type OutlineBeat, splitOutlineBeats } from "./outline_beats.js";
 import type { ProposalContextSource } from "./ports/proposal_context_store.js";
-import type { DocumentWithCurrent, ProjectScope, StudioStore } from "./ports/studio_store.js";
 import { iterateResidentContextSections, residentMatchCorpus } from "./resident_context_render.js";
 import { formatAuthorInstruction, formatUntrustedManuscript } from "./sanitization.js";
 
@@ -43,17 +41,11 @@ export interface ResidentChapterSource {
   readonly contentMarkdown: string | null;
 }
 
-/** Volumes arrive in reading order (the StudioStore contract); index = rank. */
-export interface ResidentVolumeSource {
-  readonly id: string;
-}
-
 export interface ResidentContextSource {
   /** Full markdown of the project's authoritative outline document, else null. */
   readonly outlineMarkdown: string | null;
   /** The target's linked beat, resolved against the live outline (#313). */
   readonly linkedBeat: OutlineBeat | null;
-  readonly volumes: readonly ResidentVolumeSource[];
   readonly chapters: readonly ResidentChapterSource[];
   readonly targetDocumentId: string;
 }
@@ -131,30 +123,10 @@ export function chapterRecentText(markdown: string): string {
 }
 
 /**
- * The #312 reading order for chapters: owning-volume rank first, then
- * in-volume position; id breaks ties deterministically. Chapters whose
- * volume no longer resolves sort after all placed chapters.
- */
-function compareChapters(
-  ranks: Map<string, number>,
-  left: ResidentChapterSource,
-  right: ResidentChapterSource,
-): number {
-  const leftRank =
-    left.volumeId === null
-      ? Number.POSITIVE_INFINITY
-      : (ranks.get(left.volumeId) ?? Number.POSITIVE_INFINITY);
-  const rightRank =
-    right.volumeId === null
-      ? Number.POSITIVE_INFINITY
-      : (ranks.get(right.volumeId) ?? Number.POSITIVE_INFINITY);
-  return leftRank - rightRank || left.position - right.position || left.id.localeCompare(right.id);
-}
-
-/**
  * Assemble the resident view. Prior story covers every chapter strictly
- * before the target in reading order (a non-chapter or unknown target reads
- * as positionless, so all chapters precede it). The tail rule is uniform:
+ * before the target in the captured canonical reading order (a non-chapter
+ * or unknown target reads as positionless, so all chapters precede it). The
+ * assembler never competes with the capture boundary's tie-breaks. The tail rule is uniform:
  * it always comes from the most recent story text OTHER than the target's
  * own manuscript — when drafting a next chapter that is the previous
  * chapter's ending; when continuing a chapter, that chapter's full current
@@ -162,10 +134,7 @@ function compareChapters(
  * repeating it would only duplicate what the model sees below.
  */
 export function assembleResidentContext(source: ResidentContextSource): ResidentContextView {
-  const ranks = new Map(source.volumes.map((volume, index) => [volume.id, index]));
-  const ordered = source.chapters
-    .filter((candidate) => candidate.kind === "chapter")
-    .sort((left, right) => compareChapters(ranks, left, right));
+  const ordered = source.chapters.filter((candidate) => candidate.kind === "chapter");
   const targetIndex = ordered.findIndex((candidate) => candidate.id === source.targetDocumentId);
   const priors = targetIndex >= 0 ? ordered.slice(0, targetIndex) : ordered;
 
@@ -196,36 +165,6 @@ export function assembleResidentContext(source: ResidentContextSource): Resident
   };
 }
 
-/**
- * Gather the pure assembler's inputs from the project's own documents — never
- * across projects. The first outline-kind document in the composite reading
- * order remains the recorded authority (#313), and the beat link resolves
- * through the same splitter contract.
- */
-export function collectResidentContextSource(
-  store: StudioStore,
-  scope: ProjectScope,
-  projectId: string,
-  document: DocumentWithCurrent,
-): ResidentContextSource {
-  const documents = store.findDocuments(scope, projectId);
-  const outline = documents.find((candidate) => candidate.kind === "outline");
-  return {
-    outlineMarkdown: outline?.currentRevision?.contentMarkdown ?? null,
-    linkedBeat: linkedChapterBeat(store, scope, projectId, document),
-    volumes: store.findVolumes(scope, projectId),
-    chapters: documents.map((candidate) => ({
-      id: candidate.id,
-      kind: candidate.kind,
-      title: candidate.title,
-      position: candidate.position,
-      volumeId: candidate.volumeId,
-      contentMarkdown: candidate.currentRevision?.contentMarkdown ?? null,
-    })),
-    targetDocumentId: document.id,
-  };
-}
-
 /** Project-captured resident projection; performs no persistence reads. */
 export function residentContextSourceFromProposalContext(
   context: ProposalContextSource,
@@ -240,7 +179,6 @@ export function residentContextSourceFromProposalContext(
   return {
     outlineMarkdown,
     linkedBeat,
-    volumes: context.volumes,
     chapters: context.documents.map((candidate) => ({
       id: candidate.id,
       kind: candidate.kind,

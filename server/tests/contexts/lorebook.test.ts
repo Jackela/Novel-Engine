@@ -189,7 +189,6 @@ describe("resident match corpus (#315 corpus equals the assembled resident view)
     const source: ResidentContextSource = {
       outlineMarkdown: "## The Storm\nSable watches the harbour.",
       linkedBeat: { title: "The Storm", content: "Rain floods the harbour." },
-      volumes: [{ id: "vol-a" }],
       chapters: [chapter({ id: "one", position: 1, contentMarkdown: "Ends beside Cadera." })],
       targetDocumentId: "target",
     };
@@ -252,7 +251,6 @@ describe("proposal prompt composition (#315 lore between resident context and ma
     return {
       outlineMarkdown: null,
       linkedBeat: null,
-      volumes: [],
       chapters: [],
       targetDocumentId: "target",
       ...overrides,

@@ -44,7 +44,6 @@ function source(
   return {
     outlineMarkdown: OUTLINE_MARKDOWN,
     linkedBeat: null,
-    volumes: [{ id: "vol-1" }],
     targetDocumentId: "target",
     ...overrides,
   };
@@ -106,17 +105,16 @@ describe("recent-chapter tail (#314 safe boundary)", () => {
 });
 
 describe("resident context assembly (#314 layer 1 of ADR-0004)", () => {
-  it("covers every prior chapter in volume order then in-volume order, with ordinals", () => {
-    // Input deliberately shuffled; the assembler owns the #312 reading order.
+  it("preserves captured volume and in-volume order, with ordinals", () => {
+    // The proposal-context capture owns the #312 reading order; assembly preserves it.
     const view = assembleResidentContext(
       source({
-        volumes: [{ id: "vol-a" }, { id: "vol-b" }],
         chapters: [
+          chapter({ id: "alpha0", position: 1, volumeId: "vol-a", title: "First of A" }),
+          chapter({ id: "alpha1", position: 2, volumeId: "vol-a", title: "Second of A" }),
+          chapter({ id: "beta1", position: 1, volumeId: "vol-b", title: "First of B" }),
           chapter({ id: "beta2", position: 2, volumeId: "vol-b", title: "Second of B" }),
           chapter({ id: "target", position: 3, volumeId: "vol-b", contentMarkdown: "" }),
-          chapter({ id: "alpha1", position: 2, volumeId: "vol-a", title: "Second of A" }),
-          chapter({ id: "alpha0", position: 1, volumeId: "vol-a", title: "First of A" }),
-          chapter({ id: "beta1", position: 1, volumeId: "vol-b", title: "First of B" }),
         ],
       }),
     );

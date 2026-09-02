@@ -5,7 +5,6 @@ import {
   type LoreStatus,
 } from "../domain/kinds.js";
 import type { ProposalContextDocument } from "./ports/proposal_context_store.js";
-import type { ProjectScope, StudioStore } from "./ports/studio_store.js";
 
 /**
  * Keyword-triggered lorebook (#315, ADR-0004 layer 2): character and world
@@ -211,19 +210,6 @@ export function loreEntrySummary(entry: LoreEntrySource): string {
   const spaceAt = sliced.lastIndexOf(" ");
   const kept = spaceAt > LOREBOOK_SUMMARY_CHARACTERS / 2 ? sliced.slice(0, spaceAt) : sliced;
   return `${kept.trimEnd()}…`;
-}
-
-/**
- * Gather lore entries from the project's own character/world documents in the
- * store's composite reading order — the same order the resident assembler and
- * every project listing use, which pins injection order deterministically.
- */
-export function collectLoreEntries(
-  store: StudioStore,
-  scope: ProjectScope,
-  projectId: string,
-): LoreEntrySource[] {
-  return loreEntriesFromDocuments(store.findDocuments(scope, projectId));
 }
 
 /** Project-captured lore projection; performs no persistence reads. */

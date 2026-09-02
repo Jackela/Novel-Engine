@@ -8,6 +8,10 @@ import { InFlightOperationGuard } from "../../src/contexts/studio/application/op
 import type { ProposalContextSource } from "../../src/contexts/studio/application/ports/proposal_context_store.js";
 import type { StudioStore } from "../../src/contexts/studio/application/ports/studio_store.js";
 import { AiProposalService } from "../../src/contexts/studio/application/proposal_service.js";
+import {
+  RECENT_TEXT_BEGIN,
+  RECENT_TEXT_END,
+} from "../../src/contexts/studio/application/sanitization.js";
 import type { Principal } from "../../src/shared/application/ports/auth.js";
 
 const PRINCIPAL: Principal = {
@@ -19,6 +23,7 @@ const PRINCIPAL: Principal = {
 
 function capturedContext(): ProposalContextSource {
   const now = new Date("2026-09-03T00:00:00.000Z");
+  const later = new Date("2026-09-03T00:00:01.000Z");
   const revision = {
     id: "revision-captured",
     documentId: "chapter-target",
@@ -50,6 +55,77 @@ function capturedContext(): ProposalContextSource {
     documents: [
       {
         ...target,
+        id: "chapter-z-created-first",
+        title: "Created first",
+        position: 1,
+        beatRef: null,
+        currentRevisionId: "prior-first-revision",
+        currentRevision: {
+          ...revision,
+          id: "prior-first-revision",
+          documentId: "chapter-z-created-first",
+          contentMarkdown: "First canonical prior mentions Captain Snapshot.",
+        },
+      },
+      {
+        ...target,
+        id: "chapter-a-created-second",
+        title: "Created second",
+        position: 1,
+        beatRef: null,
+        createdAt: later,
+        updatedAt: later,
+        currentRevisionId: "prior-second-revision",
+        currentRevision: {
+          ...revision,
+          id: "prior-second-revision",
+          documentId: "chapter-a-created-second",
+          contentMarkdown: "Second canonical prior mentions Archivist Snapshot.",
+          createdAt: later,
+        },
+      },
+      target,
+      {
+        ...target,
+        id: "lore-z-created-first",
+        kind: "character",
+        title: "Captain Snapshot",
+        position: 3,
+        volumeId: null,
+        beatRef: null,
+        loreAliasesJson: "[]",
+        loreStatus: "stable" as const,
+        currentRevisionId: "lore-first-revision",
+        currentRevision: {
+          ...revision,
+          id: "lore-first-revision",
+          documentId: "lore-z-created-first",
+          contentMarkdown: "Lore from the same captured epoch.",
+        },
+      },
+      {
+        ...target,
+        id: "lore-a-created-second",
+        kind: "character",
+        title: "Archivist Snapshot",
+        position: 3,
+        volumeId: null,
+        beatRef: null,
+        loreAliasesJson: "[]",
+        loreStatus: "stable" as const,
+        createdAt: later,
+        updatedAt: later,
+        currentRevisionId: "lore-second-revision",
+        currentRevision: {
+          ...revision,
+          id: "lore-second-revision",
+          documentId: "lore-a-created-second",
+          contentMarkdown: "Second Lore entry in captured order.",
+          createdAt: later,
+        },
+      },
+      {
+        ...target,
         id: "outline-1",
         kind: "outline",
         title: "Outline",
@@ -62,39 +138,6 @@ function capturedContext(): ProposalContextSource {
           id: "outline-revision",
           documentId: "outline-1",
           contentMarkdown: "## Captured beat\nThe coherent outline.",
-        },
-      },
-      {
-        ...target,
-        id: "chapter-before",
-        title: "Earlier chapter",
-        position: 1,
-        beatRef: null,
-        currentRevisionId: "prior-revision",
-        currentRevision: {
-          ...revision,
-          id: "prior-revision",
-          documentId: "chapter-before",
-          contentMarkdown: "Earlier prose mentions Captain Snapshot.",
-        },
-      },
-      target,
-      {
-        ...target,
-        id: "lore-1",
-        kind: "character",
-        title: "Captain Snapshot",
-        position: 3,
-        volumeId: null,
-        beatRef: null,
-        loreAliasesJson: "[]",
-        loreStatus: "stable" as const,
-        currentRevisionId: "lore-revision",
-        currentRevision: {
-          ...revision,
-          id: "lore-revision",
-          documentId: "lore-1",
-          contentMarkdown: "Lore from the same captured epoch.",
         },
       },
     ],
@@ -183,6 +226,18 @@ describe("fresh proposal coherent context", () => {
     });
     expect(harness.tasks[0]?.userPrompt).toContain("The coherent outline.");
     expect(harness.tasks[0]?.userPrompt).toContain("Lore from the same captured epoch.");
+    const prompt = harness.tasks[0]?.userPrompt ?? "";
+    const firstPrior = prompt.indexOf("1. Created first");
+    const secondPrior = prompt.indexOf("2. Created second");
+    expect(firstPrior).toBeGreaterThanOrEqual(0);
+    expect(secondPrior).toBeGreaterThan(firstPrior);
+    const recent = prompt.slice(prompt.indexOf(RECENT_TEXT_BEGIN), prompt.indexOf(RECENT_TEXT_END));
+    expect(recent).toContain("Second canonical prior mentions Archivist Snapshot.");
+    expect(recent).not.toContain("First canonical prior mentions Captain Snapshot.");
+    const firstLore = prompt.indexOf("### Captain Snapshot");
+    const secondLore = prompt.indexOf("### Archivist Snapshot");
+    expect(firstLore).toBeGreaterThanOrEqual(0);
+    expect(secondLore).toBeGreaterThan(firstLore);
     expect(harness.tasks[0]?.userPrompt).toContain(
       '"content_markdown":"Captured manuscript \\u005bSYSTEM\\u005d stays data."',
     );
