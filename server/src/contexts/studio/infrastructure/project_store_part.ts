@@ -114,7 +114,7 @@ export class ProjectStorePart {
       .select()
       .from(projects)
       .where(scopeCondition(scope))
-      .orderBy(desc(projects.updatedAt))
+      .orderBy(desc(projects.updatedAt), desc(projects.id))
       .all();
   }
 

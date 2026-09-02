@@ -1,7 +1,10 @@
 import { eq } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
 
-import { jobs as jobsTable } from "../../src/shared/infrastructure/db/schema.js";
+import {
+  jobEvents as jobEventsTable,
+  jobs as jobsTable,
+} from "../../src/shared/infrastructure/db/schema.js";
 import { firstDocument, studioDatabase } from "./job_test_helpers.js";
 import {
   buildStudioApp,
@@ -57,6 +60,85 @@ describe("jobs surface", () => {
       expect(retryJob?.events.map((event) => event.status)).toEqual(["completed", "running"]);
       expect(retryJob?.events[1]?.details).toEqual({ retry_of: older.id });
       expect(jobs[2]?.events).toHaveLength(1);
+    } finally {
+      await app.close();
+    }
+  });
+
+  it("uses ids to break equal job and event timestamps", async () => {
+    const { app } = await buildStudioApp(monotonicClock());
+    try {
+      const owner = await ownerJar(app);
+      const project = await seedProject(app, owner, "Tied job ordering");
+      const database = studioDatabase(app);
+      const tiedAt = new Date("2026-01-01T00:00:00.000Z");
+      const lowerJobId = "00000000-0000-4000-8000-000000000001";
+      const higherJobId = "00000000-0000-4000-8000-000000000002";
+      database
+        .insert(jobsTable)
+        .values([
+          {
+            id: lowerJobId,
+            project_id: project.id,
+            document_id: null,
+            kind: "proposal",
+            operation: "continue",
+            status: "completed",
+            provider: "mock",
+            model: "deterministic-story-v1",
+            request_json: "{}",
+            result_json: "{}",
+            error: null,
+            retry_of_job_id: null,
+            created_at: tiedAt,
+            updated_at: tiedAt,
+          },
+          {
+            id: higherJobId,
+            project_id: project.id,
+            document_id: null,
+            kind: "proposal",
+            operation: "rewrite",
+            status: "completed",
+            provider: "mock",
+            model: "deterministic-story-v1",
+            request_json: "{}",
+            result_json: "{}",
+            error: null,
+            retry_of_job_id: null,
+            created_at: tiedAt,
+            updated_at: tiedAt,
+          },
+        ])
+        .run();
+      database
+        .insert(jobEventsTable)
+        .values([
+          {
+            id: "00000000-0000-4000-8000-000000000011",
+            job_id: higherJobId,
+            status: "running",
+            details_json: "{}",
+            created_at: tiedAt,
+          },
+          {
+            id: "00000000-0000-4000-8000-000000000012",
+            job_id: higherJobId,
+            status: "completed",
+            details_json: "{}",
+            created_at: tiedAt,
+          },
+        ])
+        .run();
+
+      const listed = await call(app, owner, "GET", `/api/projects/${project.id}/jobs`);
+      expect(listed.statusCode, listed.body).toBe(200);
+      const listedJobs = listed.json().jobs as JobPayload[];
+      expect(listedJobs.map((job) => job.id)).toEqual([higherJobId, lowerJobId]);
+      expect(listedJobs[0]?.events.map((event) => event.id)).toEqual([
+        "00000000-0000-4000-8000-000000000012",
+        "00000000-0000-4000-8000-000000000011",
+      ]);
     } finally {
       await app.close();
     }

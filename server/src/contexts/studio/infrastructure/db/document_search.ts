@@ -58,7 +58,7 @@ export function matchDocumentIndex(
         snippet(document_search, 3, '', '', ' … ', 16) AS excerpt
         FROM document_search
         WHERE project_id = ${projectId} AND document_search MATCH ${matchQuery}
-        ORDER BY rank
+        ORDER BY rank, document_id ASC
         LIMIT ${MATCH_RESULT_LIMIT}`);
   return rows.map((row) => ({
     documentId: row.document_id,
