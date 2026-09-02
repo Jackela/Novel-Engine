@@ -16,6 +16,16 @@ interface StudioHistoryPanelProps {
   onLoadOlderRevisions?: () => void | Promise<void>;
 }
 
+function isDisabledControl(element: Element): boolean {
+  return (
+    (element instanceof HTMLButtonElement ||
+      element instanceof HTMLInputElement ||
+      element instanceof HTMLSelectElement ||
+      element instanceof HTMLTextAreaElement) &&
+    element.disabled
+  );
+}
+
 export function StudioHistoryPanel({
   revisions,
   loadedRevisionId,
@@ -32,10 +42,25 @@ export function StudioHistoryPanel({
   const headingRef = useRef<HTMLHeadingElement>(null);
   const restoreButtonRefs = useRef(new Map<string, HTMLButtonElement>());
   const loadOlderButtonRef = useRef<HTMLButtonElement>(null);
+  const keyboardLoadTriggerRef = useRef<HTMLButtonElement | null>(null);
   const keyboardLoadPendingRef = useRef(false);
 
   useEffect(() => {
     if (isBusy || !keyboardLoadPendingRef.current) return;
+    const activeElement = document.activeElement;
+    const trigger = keyboardLoadTriggerRef.current;
+    const focusWasLost =
+      activeElement === null ||
+      activeElement === document.body ||
+      activeElement === document.documentElement ||
+      activeElement === trigger ||
+      !activeElement.isConnected ||
+      isDisabledControl(activeElement);
+    if (!focusWasLost) {
+      keyboardLoadPendingRef.current = false;
+      keyboardLoadTriggerRef.current = null;
+      return;
+    }
     if (hasOlderRevisions) {
       const loadButton = loadOlderButtonRef.current;
       if (!loadButton?.isConnected || loadButton.disabled) return;
@@ -46,6 +71,7 @@ export function StudioHistoryPanel({
       heading.focus();
     }
     keyboardLoadPendingRef.current = false;
+    keyboardLoadTriggerRef.current = null;
   }, [hasOlderRevisions, historyInitialized, isBusy]);
 
   const fallbackFor = (revisionId: string) => {
@@ -109,7 +135,9 @@ export function StudioHistoryPanel({
           className="ui-command studio-inspector__load-older"
           disabled={isBusy}
           onClick={(event) => {
-            keyboardLoadPendingRef.current = event.detail === 0;
+            const isKeyboardInvocation = event.detail === 0;
+            keyboardLoadPendingRef.current = isKeyboardInvocation;
+            keyboardLoadTriggerRef.current = isKeyboardInvocation ? event.currentTarget : null;
             void onLoadOlderRevisions();
           }}
           ref={loadOlderButtonRef}

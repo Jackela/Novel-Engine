@@ -104,14 +104,14 @@ describe("StudioHistoryPanel", () => {
     const focusSink = document.createElement("button");
     document.body.append(focusSink);
     focusSink.focus();
-    expect(document.activeElement).not.toBe(button);
+    focusSink.remove();
+    expect(document.activeElement).toBe(document.body);
     act(() => {
       isLoadingOlder = false;
       root.render(content());
     });
 
     expect(document.activeElement).toBe(button);
-    focusSink.remove();
     const elsewhere = document.createElement("button");
     document.body.append(elsewhere);
     elsewhere.focus();
@@ -121,6 +121,76 @@ describe("StudioHistoryPanel", () => {
     });
     expect(document.activeElement).toBe(elsewhere);
     elsewhere.remove();
+  });
+
+  it("preserves connected focus when keyboard loading fails", () => {
+    let isLoadingOlder = false;
+    const content = () => (
+      <>
+        <button type="button">Elsewhere</button>
+        <StudioHistoryPanel
+          revisions={revisions}
+          loadedRevisionId="revision-current"
+          onRestoreRevision={vi.fn()}
+          hasOlderRevisions
+          isLoadingOlder={isLoadingOlder}
+          historyInitialized
+          onLoadOlderRevisions={vi.fn()}
+        />
+      </>
+    );
+    const { container, root } = harness.mount(content());
+    const loadButton = getByRole(container, "button", { name: "Load older revisions" });
+    const elsewhere = getByRole(container, "button", { name: "Elsewhere" });
+    loadButton.focus();
+    act(() => {
+      loadButton.click();
+      isLoadingOlder = true;
+      root.render(content());
+    });
+    elsewhere.focus();
+    act(() => {
+      isLoadingOlder = false;
+      root.render(content());
+    });
+
+    expect(document.activeElement).toBe(elsewhere);
+  });
+
+  it("preserves connected focus when keyboard loading reaches the terminal page", () => {
+    let hasOlderRevisions = true;
+    let isLoadingOlder = false;
+    const content = () => (
+      <>
+        <button type="button">Elsewhere</button>
+        <StudioHistoryPanel
+          revisions={revisions}
+          loadedRevisionId="revision-current"
+          onRestoreRevision={vi.fn()}
+          hasOlderRevisions={hasOlderRevisions}
+          isLoadingOlder={isLoadingOlder}
+          historyInitialized
+          onLoadOlderRevisions={vi.fn()}
+        />
+      </>
+    );
+    const { container, root } = harness.mount(content());
+    const loadButton = getByRole(container, "button", { name: "Load older revisions" });
+    const elsewhere = getByRole(container, "button", { name: "Elsewhere" });
+    loadButton.focus();
+    act(() => {
+      loadButton.click();
+      isLoadingOlder = true;
+      root.render(content());
+    });
+    elsewhere.focus();
+    act(() => {
+      hasOlderRevisions = false;
+      isLoadingOlder = false;
+      root.render(content());
+    });
+
+    expect(document.activeElement).toBe(elsewhere);
   });
 
   it("does not steal focus after a pointer loads the terminal page", async () => {

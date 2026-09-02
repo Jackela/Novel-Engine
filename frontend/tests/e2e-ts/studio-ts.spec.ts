@@ -1,5 +1,7 @@
 import { expect, type Page, type Route, test } from "@playwright/test";
 
+import type { RevisionPage } from "../../src/app/types/studio";
+
 /**
  * #274 acceptance: the studio UI served by the TS backend itself. The
  * playwright.ts.config.ts webServer boots the emitted CLI (`serve`) which
@@ -18,16 +20,6 @@ async function createProject(page: Page, title: string) {
   await page.getByLabel("Title").fill(title);
   await page.getByRole("button", { name: /create project/i }).click();
   await expect(page).toHaveURL(/\/projects\/[^/]+\/manuscript/);
-}
-
-interface RevisionSummary {
-  id: string;
-  revision_number: number;
-}
-
-interface RevisionPage {
-  revisions: RevisionSummary[];
-  next_cursor: string | null;
 }
 
 test("owner setup, editing, AI proposal accept, search, and deep links", async ({ page }) => {
