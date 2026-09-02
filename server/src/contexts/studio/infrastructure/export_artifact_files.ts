@@ -2,17 +2,15 @@ import { createHash } from "node:crypto";
 import { constants } from "node:fs";
 import { lstat, mkdir, open, realpath } from "node:fs/promises";
 import { isAbsolute, relative, resolve, sep } from "node:path";
-import { Document, HeadingLevel, Packer, Paragraph } from "docx";
 import { exportArtifactNames } from "../application/export_artifact_identity.js";
 import type {
-  ArtifactChapter,
   ArtifactFileEvidence,
   ArtifactReadRequest,
   ArtifactWriteRequest,
   ExportArtifactGateway,
 } from "../application/export_artifact_service.js";
 import { ExportArtifactWriteError, NotFoundError } from "../domain/exceptions.js";
-import { epubBytes, plainText, xmlSafeText } from "./epub_xml.js";
+import { assertArtifactByteLength, serializeBoundedArtifact } from "./bounded_export_rendering.js";
 import { errorCode, syncDirectory } from "./export_artifact_fs_support.js";
 import { publishArtifact as publishDurableArtifact } from "./export_artifact_publication.js";
 import type { ExportPublicationCleanupJournal } from "./export_publication_cleanup_journal.js";
@@ -24,6 +22,8 @@ export interface FilesystemExportArtifactGatewayOptions {
   readonly newId?: (() => string) | undefined;
   /** Deterministic shared-staging race seam used only by filesystem tests. */
   readonly afterStagingReady?: (() => Promise<void>) | undefined;
+  /** Deterministic staged-descriptor mutation seam used only by capacity tests. */
+  readonly afterStageWrite?: ((stage: string) => Promise<void>) | undefined;
   /** Deterministic race seam used only by filesystem rollback tests. */
   readonly afterRollbackQuarantine?:
     | ((quarantine: string, target: string) => Promise<void>)
@@ -42,7 +42,8 @@ export class FilesystemExportArtifactGateway implements ExportArtifactGateway {
     reportCleanupFailure?: (failure: unknown) => void,
   ): Promise<ArtifactFileEvidence> {
     const names = exportArtifactNames(request.projectId, request.artifactId, request.format);
-    const contents = await serializeArtifact(request);
+    const contents = await serializeBoundedArtifact(request);
+    assertArtifactByteLength(request.format, contents.length);
     try {
       const directory = await artifactDirectory(this.dataDirectory, request.projectId, true);
       const target = resolve(directory, names.filename);
@@ -57,6 +58,7 @@ export class FilesystemExportArtifactGateway implements ExportArtifactGateway {
         reportCleanupFailure,
         newId: this.options.newId,
         afterStagingReady: this.options.afterStagingReady,
+        afterStageWrite: this.options.afterStageWrite,
         afterRollbackQuarantine: this.options.afterRollbackQuarantine,
         cleanupJournal: this.options.cleanupJournal,
       });
@@ -168,37 +170,4 @@ const KNOWN_WRITE_ERROR_CODES = new Set([
 function isKnownWriteFailure(error: unknown): boolean {
   const code = errorCode(error);
   return code !== undefined && KNOWN_WRITE_ERROR_CODES.has(code);
-}
-
-async function serializeArtifact(request: ArtifactWriteRequest): Promise<Buffer> {
-  if (request.format === "markdown")
-    return Buffer.from(markdownText(request.projectTitle, request.chapters), "utf8");
-  return request.format === "docx"
-    ? docxBytes(request.projectTitle, request.chapters)
-    : epubBytes(request.projectTitle, request.artifactId, request.chapters);
-}
-
-function markdownText(title: string, chapters: readonly ArtifactChapter[]): string {
-  return `${[`# ${title}`, ...chapters.map((chapter) => chapter.contentMarkdown.trim())]
-    .join("\n\n")
-    .trim()}\n`;
-}
-
-async function docxBytes(title: string, chapters: readonly ArtifactChapter[]): Promise<Buffer> {
-  // The docx library escapes markup itself but does not strip characters that
-  // are invalid in XML 1.0; user-saved titles and prose must not corrupt
-  // word/document.xml (the EPUB path gets the same treatment via escapeXml).
-  const children: Paragraph[] = [
-    new Paragraph({ text: xmlSafeText(title), heading: HeadingLevel.TITLE }),
-  ];
-  for (const chapter of chapters) {
-    children.push(
-      new Paragraph({ text: xmlSafeText(chapter.title), heading: HeadingLevel.HEADING_1 }),
-    );
-    for (const paragraph of plainText(chapter.contentMarkdown).split(/\n\s*\n/)) {
-      const text = xmlSafeText(paragraph.trim());
-      if (text !== "") children.push(new Paragraph({ text }));
-    }
-  }
-  return Packer.toBuffer(new Document({ sections: [{ children }] }));
 }

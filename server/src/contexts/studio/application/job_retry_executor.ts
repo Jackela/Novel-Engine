@@ -72,6 +72,41 @@ export class JobRetryExecutor {
     reportCleanupFailure: (failure: unknown) => void,
   ): Promise<Record<string, unknown>> {
     const scope = scopeForPrincipal(principal);
+    const replay = this.store.findJobRetry(scope, projectId, jobId, requestKey);
+    if (replay !== null) {
+      return this.claimAndExecute(
+        principal,
+        scope,
+        projectId,
+        jobId,
+        requestKey,
+        reportCleanupFailure,
+      );
+    }
+    const source = this.store.findJob(scope, projectId, jobId);
+    if (source.kind === "export") {
+      return this.artifacts.withRendererPermit(projectId, () =>
+        this.claimAndExecute(principal, scope, projectId, jobId, requestKey, reportCleanupFailure),
+      );
+    }
+    return this.claimAndExecute(
+      principal,
+      scope,
+      projectId,
+      jobId,
+      requestKey,
+      reportCleanupFailure,
+    );
+  }
+
+  private async claimAndExecute(
+    principal: Principal,
+    scope: ProjectScope,
+    projectId: string,
+    jobId: string,
+    requestKey: string,
+    reportCleanupFailure: (failure: unknown) => void,
+  ): Promise<Record<string, unknown>> {
     const claim = this.store.claimJobRetry(scope, {
       projectId,
       sourceJobId: jobId,

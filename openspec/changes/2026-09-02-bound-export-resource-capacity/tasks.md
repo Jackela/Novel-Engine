@@ -16,17 +16,17 @@
 
 ## 2. Renderer and publication limits
 
-- [ ] 2.1 Add exact 67,108,864-byte and plus-one renderer tests for Markdown,
+- [x] 2.1 Add exact 67,108,864-byte and plus-one renderer tests for Markdown,
       DOCX, and EPUB using bounded sinks/test seams, proving no truncation or
       stage/manifest/final/database evidence on refusal.
-- [ ] 2.2 Add one app-local, opaque-token renderer permit with limit one;
+- [x] 2.2 Add one app-local, opaque-token renderer permit with limit one;
       acquire it before source capture and keyed-retry reservation, hold it
       through landing/acknowledgement/rollback and Buffer release, and prove
       generation-safe exact-once release on every exit.
-- [ ] 2.3 Replace unbounded joined/ZIP/document output accumulation with bounded
+- [x] 2.3 Replace unbounded joined/ZIP/document output accumulation with bounded
       serialization that stops at the first byte above the artifact limit while
       preserving byte-exact accepted Markdown, DOCX, and EPUB contracts.
-- [ ] 2.4 Enforce descriptor size and artifact limit before publication, retain
+- [x] 2.4 Enforce descriptor size and artifact limit before publication, retain
       identity-aware compensation, and prove all database/file evidence remains
       all-or-nothing after boundary and injected landing failures.
 

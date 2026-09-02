@@ -5,6 +5,7 @@ import { dirname, isAbsolute, relative, resolve, sep } from "node:path";
 
 import type { ArtifactFileEvidence } from "../application/export_artifact_service.js";
 import type { ExportArtifactFormat } from "../application/ports/export_store.js";
+import { EXPORT_CAPACITY_LIMITS, ExportCapacityExceededError } from "../domain/exceptions.js";
 import {
   cleanupOwnedFile,
   cleanupPublicationSidecars,
@@ -47,6 +48,8 @@ export interface ArtifactPublicationInput {
   readonly newId?: (() => string) | undefined;
   /** Deterministic shared-staging race seam used only by filesystem tests. */
   readonly afterStagingReady?: (() => Promise<void>) | undefined;
+  /** Deterministic staged-descriptor mutation seam used only by capacity tests. */
+  readonly afterStageWrite?: ((stage: string) => Promise<void>) | undefined;
   /** Deterministic race seam used only by filesystem rollback tests. */
   readonly afterRollbackQuarantine?:
     | ((quarantine: string, target: string) => Promise<void>)
@@ -62,6 +65,7 @@ export interface ArtifactPublicationInput {
 export async function publishArtifact(
   input: ArtifactPublicationInput,
 ): Promise<ArtifactFileEvidence> {
+  assertArtifactDescriptorSize(input.contents.length, input.contents.length);
   const nextId = input.newId ?? randomUUID;
   const publicationId = safeId(nextId());
   const stagingDirectory = await durableStagingDirectory(input.projectDirectory);
@@ -78,9 +82,14 @@ export async function publishArtifact(
   let record: ExportPublicationManifest | undefined;
   let cleanupIntentRecorded = false;
   try {
-    const writtenIdentity = await writeDurableFile(stage, input.contents, (identity) => {
-      stageIdentity = identity;
-    });
+    const writtenIdentity = await writeDurableFile(
+      stage,
+      input.contents,
+      (identity) => {
+        stageIdentity = identity;
+      },
+      input.afterStageWrite,
+    );
     const checksumSha256 = createHash("sha256").update(input.contents).digest("hex");
     const publicationRecord: ExportPublicationManifest = {
       version: EXPORT_PUBLICATION_VERSION,
@@ -203,6 +212,7 @@ async function writeDurableFile(
   path: string,
   contents: Buffer,
   onCreated?: (identity: FileIdentity) => void,
+  afterWrite?: (path: string) => Promise<void>,
 ): Promise<FileIdentity> {
   const handle = await open(path, constants.O_WRONLY | constants.O_CREAT | constants.O_EXCL);
   try {
@@ -210,11 +220,23 @@ async function writeDurableFile(
     const identity = { dev: details.dev, ino: details.ino };
     onCreated?.(identity);
     await handle.writeFile(contents);
+    await afterWrite?.(path);
+    const written = await handle.stat();
+    if (!written.isFile()) throw new Error("Export stage is not a regular file.");
+    assertArtifactDescriptorSize(written.size, contents.length);
     await handle.sync();
     return identity;
   } finally {
     await handle.close();
   }
+}
+
+function assertArtifactDescriptorSize(observed: number, expected: number): void {
+  const limit = EXPORT_CAPACITY_LIMITS.artifact_bytes;
+  if (observed > limit) {
+    throw new ExportCapacityExceededError("artifact_bytes", limit, observed);
+  }
+  if (observed !== expected) throw new Error("Export stage size changed during publication.");
 }
 
 async function writeDurableManifest(

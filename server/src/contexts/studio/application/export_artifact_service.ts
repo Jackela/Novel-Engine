@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 
 import type { Principal } from "../../../shared/application/ports/auth.js";
 import { InvalidOperationError } from "../../../shared/domain/exceptions.js";
+import { ExportRendererGuard } from "./export_renderer_guard.js";
 import type {
   ExportArtifactFormat,
   ExportArtifactRecord,
@@ -59,6 +60,7 @@ export interface ExportArtifactGateway {
 export interface SnapshotArtifactServiceOptions {
   readonly now?: (() => Date) | undefined;
   readonly newId?: (() => string) | undefined;
+  readonly rendererGuard?: ExportRendererGuard | undefined;
 }
 
 export interface ArtifactOutcomeOptions {
@@ -78,6 +80,7 @@ interface PreparedPublication {
 export class SnapshotArtifactService {
   private readonly now: () => Date;
   private readonly newId: () => string;
+  private readonly rendererGuard: ExportRendererGuard;
 
   constructor(
     private readonly exportStore: ExportOutcomeStore,
@@ -86,6 +89,7 @@ export class SnapshotArtifactService {
   ) {
     this.now = options.now ?? (() => new Date());
     this.newId = options.newId ?? randomUUID;
+    this.rendererGuard = options.rendererGuard ?? new ExportRendererGuard();
   }
 
   async recordCompletedExportJob(
@@ -93,6 +97,17 @@ export class SnapshotArtifactService {
     projectId: string,
     format: ExportArtifactFormat,
     options: ArtifactOutcomeOptions = {},
+  ): Promise<ExportCompletionRecord> {
+    return this.withRendererPermit(projectId, () =>
+      this.recordCompletedExportJobWithPermit(principal, projectId, format, options),
+    );
+  }
+
+  private async recordCompletedExportJobWithPermit(
+    principal: Principal,
+    projectId: string,
+    format: ExportArtifactFormat,
+    options: ArtifactOutcomeOptions,
   ): Promise<ExportCompletionRecord> {
     const scope = scopeForPrincipal(principal);
     const publication = await this.preparePublication(
@@ -106,6 +121,15 @@ export class SnapshotArtifactService {
       (input) => this.exportStore.recordCompletedExportJob(scope, input),
       options.reportCleanupFailure,
     );
+  }
+
+  async withRendererPermit<T>(projectId: string, work: () => Promise<T>): Promise<T> {
+    const permit = this.rendererGuard.acquire(projectId);
+    try {
+      return await work();
+    } finally {
+      permit.release();
+    }
   }
 
   async completeExportRetryJob(

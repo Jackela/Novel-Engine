@@ -9,7 +9,10 @@ import {
   EXPORT_CAPACITY_LIMITS,
   ExportCapacityExceededError,
 } from "../../src/contexts/studio/domain/exceptions.js";
-import { buildBoundedCurrentDocumentCountQuery } from "../../src/contexts/studio/infrastructure/db/export_source_capacity.js";
+import {
+  buildBoundedCurrentDocumentCountQuery,
+  buildBoundedSnapshotDocumentCountQuery,
+} from "../../src/contexts/studio/infrastructure/db/export_source_capacity.js";
 import { DrizzleStudioStore } from "../../src/contexts/studio/infrastructure/drizzle_studio_store.js";
 import { ExportStorePart } from "../../src/contexts/studio/infrastructure/export_store_part.js";
 import { AuthService } from "../../src/shared/application/auth_service.js";
@@ -54,6 +57,23 @@ describe("export source capacity", () => {
         "source_documents",
         EXPORT_CAPACITY_LIMITS.source_documents,
       );
+
+      seedOversizedSnapshot(harness.database.raw, harness.projectId, harness.seeded.documents[0]);
+      const snapshotEvidence = harness.database.db.transaction((tx) => {
+        const query = buildBoundedSnapshotDocumentCountQuery(
+          tx,
+          harness.projectId,
+          "bounded-snapshot",
+        );
+        return { compiled: query.toSQL(), result: query.get() };
+      });
+      expect(snapshotEvidence.compiled.sql).toContain("limit ?");
+      expect(snapshotEvidence.compiled.params).toContain(
+        EXPORT_CAPACITY_LIMITS.source_documents + 1,
+      );
+      expect(snapshotEvidence.result).toEqual({
+        value: EXPORT_CAPACITY_LIMITS.source_documents + 1,
+      });
     } finally {
       harness.database.close();
     }
@@ -186,6 +206,55 @@ function insertInvalidNextDocument(
        VALUES ('d65537', ?, 'note', 'N65537', 65537, '[]', 'draft', NULL, ?, ?)`,
     )
     .run(projectId, now.getTime(), now.getTime());
+}
+
+function seedOversizedSnapshot(
+  database: import("better-sqlite3").Database,
+  projectId: string,
+  seed: { id: string; currentRevision: { id: string } | null } | undefined,
+): void {
+  if (seed?.currentRevision === null || seed === undefined) {
+    throw new Error("Expected the seed revision for snapshot capacity.");
+  }
+  const seedRevision = seed.currentRevision;
+  database.transaction(() => {
+    database
+      .prepare(
+        `INSERT INTO document_revisions
+           (id, document_id, revision_number, content_markdown, metadata_json, source, created_at)
+         VALUES ('r65537', 'd65537', 1, '', '{}', 'author', ?)`,
+      )
+      .run(now.getTime());
+    database
+      .prepare("UPDATE documents SET current_revision_id = 'r65537' WHERE id = 'd65537'")
+      .run();
+    database
+      .prepare(
+        "INSERT INTO project_snapshots (id, project_id, reason, created_at) VALUES ('bounded-snapshot', ?, 'export', ?)",
+      )
+      .run(projectId, now.getTime());
+    database
+      .prepare(
+        `INSERT INTO snapshot_documents
+           (id, snapshot_id, document_id, revision_id, document_kind, document_title,
+            revision_metadata_json, position)
+         VALUES ('snapshot-seed', 'bounded-snapshot', ?, ?, 'chapter', 'Seed', '{}', 1)`,
+      )
+      .run(seed.id, seedRevision.id);
+    database
+      .prepare(
+        `WITH RECURSIVE sequence(value) AS (
+           SELECT 2 UNION ALL SELECT value + 1 FROM sequence WHERE value < 65537
+         )
+         INSERT INTO snapshot_documents
+           (id, snapshot_id, document_id, revision_id, document_kind, document_title,
+            revision_metadata_json, position)
+         SELECT printf('s%05d', value), 'bounded-snapshot', printf('d%05d', value),
+                printf('r%05d', value), 'note', printf('N%05d', value), '{}', value
+         FROM sequence`,
+      )
+      .run();
+  })();
 }
 
 function expectCapacityFailure(

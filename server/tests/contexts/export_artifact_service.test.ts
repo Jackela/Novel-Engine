@@ -177,11 +177,10 @@ describe("SnapshotArtifactService", () => {
       now: () => new Date("2026-08-25T00:00:00.000Z"),
       newId: () => `artifact-${++sequence}`,
     });
-    const completions = await Promise.all(
-      (["markdown", "docx", "epub"] as const).map((format) =>
-        service.recordCompletedExportJob(principal, "project-1", format),
-      ),
-    );
+    const completions = [];
+    for (const format of ["markdown", "docx", "epub"] as const) {
+      completions.push(await service.recordCompletedExportJob(principal, "project-1", format));
+    }
     const records = completions.map((completion) => completion.artifact);
     expect(
       gateway.writes.every(
