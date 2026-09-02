@@ -26,8 +26,9 @@
       generated SQL/metadata without hand editing either.
 - [ ] 2.3 Make the sole revision insertion helper persist the exact non-negative
       count atomically for project seeds, imports, saves, proposal acceptance,
-      and restores; make payloads consume stored authority and reject invalid
-      stored counts.
+      and restores; make all revision projections consume stored authority and
+      reject null, negative, non-integer, or unsafe counts through one typed
+      internal invariant error without adding a public error code.
 - [ ] 2.4 Add a context-owned pre-serve reconciler that backfills null rows in
       restart-safe batches of at most 256 after backup/migration, proves partial
       progress resumes, verifies no null remains, and fails before export

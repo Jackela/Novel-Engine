@@ -75,7 +75,10 @@ transaction. Committed batches are restart-safe progress; a crash resumes from
 remaining null rows. The server fails before traffic if reading, counting, or
 updating fails, and verifies no null remains before export reconciliation and
 job recovery. Fresh writes never create null. Application/store boundaries
-reject a null or negative count rather than publishing false evidence.
+reject a null, negative, non-integer, or unsafe count through a dedicated
+internal `RevisionWordCountInvariantError` rather than publishing false
+evidence. That invariant error is not mapped to a public product error; HTTP
+retains the generic 500 boundary while logs and startup keep the typed cause.
 
 This one-time upgrade may read every historic body, but memory is bounded by one
 batch and future list/autosave reads never select bodies. Backup authority,

@@ -118,7 +118,11 @@ Every document and revision-summary response MUST report that retained count
 without changing the underlying body, and an upgrade MUST populate exact counts
 for all earlier revisions before the server accepts traffic. Interrupted upgrade
 work MUST resume without corrupting revisions or publishing placeholder counts;
-an unrecoverable count migration failure MUST fail startup.
+an unrecoverable count migration failure MUST fail startup. Every full Document,
+full Revision, and RevisionSummary projection MUST reject a null, negative,
+non-integer, or unsafe stored count with the same typed internal invariant
+failure. That failure MUST NOT expose storage details through a new public error
+code or envelope.
 
 #### Scenario: New revisions retain their exact count
 
