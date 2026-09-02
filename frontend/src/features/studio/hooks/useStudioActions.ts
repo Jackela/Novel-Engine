@@ -39,6 +39,7 @@ const ACTION_KEYS = ["runReview", "updateSettings", "retryJob"] as const;
 type ActionKey = (typeof ACTION_KEYS)[number];
 
 const DEFINITIVE_RETRY_REJECTIONS = new Set([401, 403, 404, 422]);
+const PROPOSAL_ACTIONS_UNGATED = () => false;
 
 interface StudioActionsOwner {
   readonly projectId: string;
@@ -56,7 +57,7 @@ export function useStudioActions({
   setActiveId,
   settingsForm,
   loadJobs,
-  isProposalActionGated = () => false,
+  isProposalActionGated = PROPOSAL_ACTIONS_UNGATED,
 }: UseStudioActionsOptions) {
   const { pending, begin, finish } = usePendingAction<ActionKey>(ACTION_KEYS);
   const [retryingJobId, setRetryingJobId] = useState<string | null>(null);

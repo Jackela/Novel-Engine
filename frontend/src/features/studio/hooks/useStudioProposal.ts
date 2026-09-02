@@ -11,11 +11,13 @@ import type { ProposalAuditControl } from "./useStudioJobs";
 
 interface DocumentProposal {
   readonly ownerKey: string;
+  readonly auditEpoch: number;
   readonly job: StudioJob;
 }
 
 interface StreamingProposal {
   readonly ownerKey: string;
+  readonly auditEpoch: number;
   readonly requestEpoch: number;
   readonly text: string;
 }
@@ -71,8 +73,15 @@ export function useStudioProposal(
   const ownerKey = `${projectId}\u0000${activeDocumentId ?? ""}`;
   const ownerKeyRef = useRef(ownerKey);
   const projectIdRef = useRef<string | null>(projectId);
-  const proposal = proposalState?.ownerKey === ownerKey ? proposalState.job : null;
-  const streamingText = streaming?.ownerKey === ownerKey ? streaming.text : null;
+  const currentAuditEpoch = proposalAudit.epoch();
+  const proposal =
+    proposalState?.ownerKey === ownerKey && proposalState.auditEpoch === currentAuditEpoch
+      ? proposalState.job
+      : null;
+  const streamingText =
+    streaming?.ownerKey === ownerKey && streaming.auditEpoch === currentAuditEpoch
+      ? streaming.text
+      : null;
   const proposalOutcomeUnknown = proposalAudit.status !== "idle";
   const proposalActionsGated = proposalAudit.isGated();
   const unknownAttemptOperation =
@@ -113,22 +122,21 @@ export function useStudioProposal(
     };
   }, [projectId]);
 
-  useEffect(() => {
-    if (proposalAudit.status === "idle") return;
-    setProposalState(null);
-    setStreaming(null);
-  }, [proposalAudit.status]);
-
   const setProposal = useCallback<Dispatch<SetStateAction<StudioJob | null>>>(
     (nextProposal) => {
       setProposalState((current) => {
-        const currentProposal = current?.ownerKey === ownerKey ? current.job : null;
+        const currentProposal =
+          current?.ownerKey === ownerKey && current.auditEpoch === currentAuditEpoch
+            ? current.job
+            : null;
         const next =
           typeof nextProposal === "function" ? nextProposal(currentProposal) : nextProposal;
-        return next && activeDocumentId ? { ownerKey, job: next } : null;
+        return next && activeDocumentId
+          ? { ownerKey, auditEpoch: currentAuditEpoch, job: next }
+          : null;
       });
     },
-    [activeDocumentId, ownerKey],
+    [activeDocumentId, currentAuditEpoch, ownerKey],
   );
 
   const runProposal = useCallback(
@@ -144,7 +152,7 @@ export function useStudioProposal(
       requestEpochRef.current = requestEpoch;
       const request = { ownerKey, requestEpoch, controller };
       streamRequestRef.current = request;
-      setStreaming({ ownerKey, requestEpoch, text: "" });
+      setStreaming({ ownerKey, auditEpoch, requestEpoch, text: "" });
       try {
         const nextProposal = await streamProposal({
           projectId,
@@ -162,7 +170,9 @@ export function useStudioProposal(
               return;
             }
             setStreaming((current) =>
-              current?.ownerKey === ownerKey && current.requestEpoch === requestEpoch
+              current?.ownerKey === ownerKey &&
+              current.auditEpoch === auditEpoch &&
+              current.requestEpoch === requestEpoch
                 ? { ...current, text: current.text + text }
                 : current,
             );
@@ -175,12 +185,14 @@ export function useStudioProposal(
         ) {
           return;
         }
-        setProposalState({ ownerKey, job: nextProposal });
+        setProposalState({ ownerKey, auditEpoch, job: nextProposal });
       } catch (reason) {
         if (reason instanceof ProposalOutcomeUnknownError && projectIdRef.current === projectId) {
           setProposalState(null);
           setStreaming((current) =>
-            current?.ownerKey === ownerKey && current.requestEpoch === requestEpoch
+            current?.ownerKey === ownerKey &&
+            current.auditEpoch === auditEpoch &&
+            current.requestEpoch === requestEpoch
               ? null
               : current,
           );
@@ -197,7 +209,9 @@ export function useStudioProposal(
         if (streamRequestRef.current === request) streamRequestRef.current = null;
         if (isCurrentRequest(ownerKey, requestEpoch)) {
           setStreaming((current) =>
-            current?.ownerKey === ownerKey && current.requestEpoch === requestEpoch
+            current?.ownerKey === ownerKey &&
+            current.auditEpoch === auditEpoch &&
+            current.requestEpoch === requestEpoch
               ? null
               : current,
           );

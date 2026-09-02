@@ -117,6 +117,55 @@ function rejectable<T>() {
 }
 
 describe("useStudioProposal unknown outcome audit", () => {
+  it("does not revive a proposal from before a completed audit epoch", async () => {
+    vi.mocked(api.jobs).mockResolvedValue({ jobs: [], next_cursor: null });
+    const view = renderUnknownHarness();
+
+    act(() => view.result().proposal.setProposal(job({ id: "pre-audit-proposal" })));
+    expect(view.result().proposal.proposal?.id).toBe("pre-audit-proposal");
+
+    await act(async () => {
+      await view.result().jobs.auditProposalOutcome();
+    });
+    expect(view.result().proposal.proposal).toBeNull();
+
+    act(() => view.result().jobs.clearProposalAudit());
+    expect(view.result().proposal.proposal).toBeNull();
+  });
+
+  it("keeps pre-audit streaming state hidden through audit, clear, and late settlement", async () => {
+    const streams = deferredStreams();
+    const jobsAudit = rejectable<{ jobs: StudioJobSummary[]; next_cursor: string | null }>();
+    vi.mocked(api.jobs).mockReturnValue(jobsAudit.promise);
+    const view = renderUnknownHarness();
+    let running: Promise<void> = Promise.resolve();
+    let auditing: Promise<boolean> = Promise.resolve(false);
+
+    act(() => {
+      running = view.result().proposal.runProposal("continue");
+    });
+    act(() => streams.requests[0]?.onDelta("pre-audit partial"));
+    expect(view.result().proposal.streamingText).toBe("pre-audit partial");
+
+    act(() => {
+      auditing = view.result().jobs.auditProposalOutcome();
+    });
+    expect(view.result().jobs.proposalAuditStatus).toBe("auditing");
+    expect(view.result().proposal.streamingText).toBeNull();
+
+    await act(async () => {
+      jobsAudit.resolve({ jobs: [], next_cursor: null });
+      await auditing;
+    });
+    act(() => view.result().jobs.clearProposalAudit());
+    streams.requests[0]?.onDelta(" ignored");
+    streams.pending[0]?.resolve(job({ id: "late-pre-audit-terminal" }));
+    await act(async () => running);
+
+    expect(view.result().proposal.streamingText).toBeNull();
+    expect(view.result().proposal.proposal).toBeNull();
+  });
+
   it("discards partial text, gates proposal actions, and offers audit-only retry until audit succeeds", async () => {
     const streams = deferredStreams();
     const firstAudit = rejectable<{ jobs: StudioJobSummary[]; next_cursor: string | null }>();
