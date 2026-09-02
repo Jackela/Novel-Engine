@@ -17,6 +17,13 @@ cross-project, or cross-document tokens return the same 422 `VALIDATION_ERROR`
 with `cursor` identified as invalid. They do not enter persistence or reveal
 whether the embedded identity exists.
 
+Authentication precedes both schema and semantic cursor validation on this
+route. An anonymous request therefore remains 401 even when its query is
+malformed. After authentication, every invalid cursor is rejected as 422 before
+the scoped document lookup; an authenticated request with a valid cursor still
+uses the ordinary scoped 404 boundary for a missing or foreign document. This
+ordering keeps query-shape differences from becoming an authentication oracle.
+
 Application and persistence ports carry a typed cursor position rather than its
 wire encoding. The token is a position marker, not a snapshot, authorization
 grant, or stable public serialization.
