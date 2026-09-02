@@ -38,6 +38,19 @@ P0-P3 finding. Agent review is supporting evidence, not a release gate.
 | `pnpm --dir server type-check && pnpm --dir server lint && pnpm --dir server arch && pnpm --dir server build` | Passed; 315 files passed Biome and 183 modules / 764 dependencies had no architecture violation. |
 | `pnpm spec:validate` | Passed in strict mode for both active changes and the canonical specification, 3 of 3 items. |
 
+## Archive verification
+
+The first `pnpm --dir server gates` attempt after the uncommitted OpenSpec
+directory move stopped in `gate:hygiene`: the gate enumerated a deleted active
+change path and then tried to read its absent `design.md`, producing `ENOENT`.
+This was a dirty-tree archive-tooling limitation, not a product assertion
+failure. After archive commit
+`22e53511ecb610ee8fe779add87010b02186ccb6`, the same server gates passed and
+strict OpenSpec passed for the canonical specification alone, with no active
+changes. Residual risk: the hygiene gate cannot currently provide pre-commit
+feedback for a rename/deletion worktree. Owner: repository tooling. Closure:
+teach the gate to ignore deleted paths or otherwise validate the index view.
+
 ## External and human gates
 
 - Frontend validation: **not applicable** to this change's local-full surface
