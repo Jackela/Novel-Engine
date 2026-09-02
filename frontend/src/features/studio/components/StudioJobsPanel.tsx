@@ -12,6 +12,7 @@ interface StudioJobsPanelProps {
   isLoading?: boolean;
   loadingInitiator?: JobsLoadInitiator | null;
   retryingJobId?: string | null;
+  retryGated?: boolean;
 }
 
 export function StudioJobsPanel({
@@ -21,8 +22,9 @@ export function StudioJobsPanel({
   isLoading = false,
   loadingInitiator = null,
   retryingJobId = null,
+  retryGated = false,
 }: StudioJobsPanelProps) {
-  const isBusy = isLoading || retryingJobId !== null;
+  const isBusy = isLoading || retryingJobId !== null || retryGated;
   const refreshIsInitiator = isLoading && loadingInitiator === "refresh";
   const runWithFocusRestoration = useCommandFocusRestoration(isBusy);
   const refreshButtonRef = useRef<HTMLButtonElement>(null);

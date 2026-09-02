@@ -20,6 +20,7 @@ interface UseStudioActionsOptions {
   setActiveId: Dispatch<SetStateAction<string | null>>;
   settingsForm: { title: string; description: string; provider: string };
   loadJobs: (initiator?: JobsLoadInitiator) => Promise<void>;
+  isProposalActionGated?: () => boolean;
 }
 
 export interface StudioActionErrorPublishers {
@@ -52,6 +53,7 @@ export function useStudioActions({
   setActiveId,
   settingsForm,
   loadJobs,
+  isProposalActionGated = () => false,
 }: UseStudioActionsOptions) {
   const { pending, begin, finish } = usePendingAction<ActionKey>(ACTION_KEYS);
   const [retryingJobId, setRetryingJobId] = useState<string | null>(null);
@@ -187,6 +189,7 @@ export function useStudioActions({
 
   const retryJob = useCallback(
     async (jobId: string) => {
+      if (isProposalActionGated()) return;
       const owner = currentOwner();
       if (!owner || !begin("retryJob")) return;
       setRetryingJobId(jobId);
@@ -202,7 +205,16 @@ export function useStudioActions({
         finishForOwner(owner, "retryJob");
       }
     },
-    [begin, currentOwner, finishForOwner, isCurrentOwner, loadJobs, projectId, publishError],
+    [
+      begin,
+      currentOwner,
+      finishForOwner,
+      isProposalActionGated,
+      isCurrentOwner,
+      loadJobs,
+      projectId,
+      publishError,
+    ],
   );
 
   return {

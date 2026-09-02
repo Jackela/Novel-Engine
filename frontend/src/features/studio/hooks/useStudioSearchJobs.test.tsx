@@ -212,6 +212,51 @@ describe("Studio query hooks", () => {
     expect(harness.result().jobs.loadingInitiator).toBeNull();
   });
 
+  it("starts a new non-coalesced proposal audit after cancelling an earlier jobs read", async () => {
+    const earlier = deferred<{ jobs: ReturnType<typeof job>[] }>();
+    const audit = deferred<{ jobs: ReturnType<typeof job>[] }>();
+    vi.mocked(api.jobs).mockReturnValueOnce(earlier.promise).mockReturnValueOnce(audit.promise);
+    const harness = renderQueryHooks();
+    let earlierLoad: Promise<void> = Promise.resolve();
+    let audited: Promise<boolean> = Promise.resolve(false);
+
+    act(() => {
+      earlierLoad = harness.result().jobs.loadJobs("refresh");
+      audited = harness.result().jobs.auditProposalOutcome();
+    });
+
+    expect(api.jobs).toHaveBeenCalledTimes(2);
+    expect(vi.mocked(api.jobs).mock.calls[0]?.[1]?.signal?.aborted).toBe(true);
+    expect(harness.result().jobs.proposalAuditStatus).toBe("auditing");
+
+    await act(async () => {
+      earlier.resolve({ jobs: [] });
+      audit.resolve({ jobs: [jobFixture] });
+      await earlierLoad;
+      await expect(audited).resolves.toBe(true);
+    });
+
+    expect(harness.result().jobs.jobs).toEqual([jobFixture]);
+    expect(harness.result().jobs.proposalAuditStatus).toBe("audit_succeeded");
+  });
+
+  it("keeps an unknown proposal gated when its non-coalesced audit read fails", async () => {
+    vi.mocked(api.jobs).mockRejectedValue(new Error("audit unavailable"));
+    const harness = renderQueryHooks();
+    let audited: Promise<boolean> = Promise.resolve(true);
+
+    act(() => {
+      audited = harness.result().jobs.auditProposalOutcome();
+    });
+
+    await act(async () => {
+      await expect(audited).resolves.toBe(false);
+    });
+
+    expect(harness.result().jobs.proposalAuditStatus).toBe("audit_failed");
+    expect(harness.result().error).toBeNull();
+  });
+
   it("clears a stale error when a later jobs refresh succeeds", async () => {
     // Given
     vi.mocked(api.jobs).mockResolvedValue({ jobs: [jobFixture] });

@@ -3,7 +3,11 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { job } from "@/test/factories";
 
 import { HttpError } from "./api";
-import { ProposalStreamParser, streamProposal } from "./proposalStream";
+import {
+  ProposalOutcomeUnknownError,
+  ProposalStreamParser,
+  streamProposal,
+} from "./proposalStream";
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -70,12 +74,35 @@ describe("ProposalStreamParser", () => {
     expect(frames).toEqual([{ type: "delta", text: "C" }]);
   });
 
-  it("ignores frames with an unknown type", () => {
+  it("rejects frames with an unknown type before a terminal outcome", () => {
     const parser = new ProposalStreamParser();
-    const frames = parser.append(
-      'data: {"type":"tick","at":1}\n\ndata: {"type":"delta","text":"D"}\n\n',
+    expect(() =>
+      parser.append('data: {"type":"tick","at":1}\n\ndata: {"type":"done","job":{}}\n\n'),
+    ).toThrow(/unknown type/);
+  });
+
+  it("stops parsing a chunk after its first complete terminal frame", () => {
+    const parser = new ProposalStreamParser();
+    expect(
+      parser.append(
+        'data: {"type":"error","error":{"code":"PROVIDER_FAILED","message":"failed"}}\n\ndata: {"type":"tick"}\n\n',
+      ),
+    ).toEqual([{ type: "error", error: { code: "PROVIDER_FAILED", message: "failed" } }]);
+  });
+
+  it.each([": ping\n\n", "event: proposal\n\n"])(
+    "rejects a complete SSE event without a data field",
+    (event) => {
+      const parser = new ProposalStreamParser();
+      expect(() => parser.append(event)).toThrow(/missing data/);
+    },
+  );
+
+  it("allows comment and event fields when the event also carries a valid data frame", () => {
+    const parser = new ProposalStreamParser();
+    expect(parser.append(': ping\nevent: proposal\ndata: {"type":"delta","text":"D"}\n\n')).toEqual(
+      [{ type: "delta", text: "D" }],
     );
-    expect(frames).toEqual([{ type: "delta", text: "D" }]);
   });
 
   it.each([
@@ -150,6 +177,30 @@ describe("streamProposal", () => {
       code: "PROVIDER_FAILED",
     });
     await expect(failure).resolves.toBeInstanceOf(HttpError);
+    await expect(failure).resolves.not.toBeInstanceOf(ProposalOutcomeUnknownError);
+  });
+
+  it("keeps a parsed terminal error known when malformed data follows in the same chunk", async () => {
+    const encoder = new TextEncoder();
+    stubFetch(
+      new Response(
+        new ReadableStream<Uint8Array>({
+          start(controller) {
+            controller.enqueue(
+              encoder.encode(
+                'data: {"type":"error","error":{"code":"PROVIDER_FAILED","message":"failed"}}\n\ndata: {"type":"tick"}\n\n',
+              ),
+            );
+            controller.close();
+          },
+        }),
+        { status: 200, headers: { "Content-Type": "text/event-stream" } },
+      ),
+    );
+
+    const failure = streamProposal(baseRequest()).catch((reason: unknown) => reason);
+    await expect(failure).resolves.toBeInstanceOf(HttpError);
+    await expect(failure).resolves.not.toBeInstanceOf(ProposalOutcomeUnknownError);
   });
 
   it("reads the envelope error returned before the stream starts", async () => {
@@ -169,24 +220,71 @@ describe("streamProposal", () => {
     const error = (await failure) as HttpError;
     expect(error.status).toBe(422);
     expect(error.message).toBe("nope");
+    expect(error).not.toBeInstanceOf(ProposalOutcomeUnknownError);
   });
 
-  it("rejects when the stream ends without a terminal frame", async () => {
+  it("classifies a malformed pre-stream error response as outcome unknown", async () => {
+    stubFetch(
+      new Response("upstream proxy failed", {
+        status: 502,
+        headers: { "Content-Type": "text/plain" },
+      }),
+    );
+
+    await expect(streamProposal(baseRequest())).rejects.toBeInstanceOf(ProposalOutcomeUnknownError);
+  });
+
+  it("classifies premature EOF before a terminal frame as outcome unknown", async () => {
     stubFetch(sseResponse([JSON.stringify({ type: "delta", text: "partial" })]));
-    await expect(streamProposal(baseRequest())).rejects.toThrow(/ended without a result/);
+    const failure = streamProposal(baseRequest()).catch((reason: unknown) => reason);
+
+    await expect(failure).resolves.toBeInstanceOf(ProposalOutcomeUnknownError);
+    await expect(failure).resolves.toMatchObject({
+      message: expect.stringMatching(/outcome is unknown/i),
+    });
   });
 
-  it("translates an aborted stream into a cancellation error", async () => {
+  it("classifies cancellation before a terminal frame as outcome unknown", async () => {
     stubFetch(new DOMException("The operation was aborted.", "AbortError"));
-    await expect(streamProposal(baseRequest())).rejects.toThrow("Request cancelled.");
+    await expect(streamProposal(baseRequest())).rejects.toBeInstanceOf(ProposalOutcomeUnknownError);
   });
 
-  it("uses the injected product name when the stream cannot reach the server", async () => {
+  it("classifies a network failure before a terminal frame as outcome unknown", async () => {
     stubFetch(new TypeError("network unavailable"));
 
-    await expect(streamProposal(baseRequest())).rejects.toThrow(
-      "Test Engine is unavailable. Check the local service and retry.",
+    const failure = streamProposal(baseRequest()).catch((reason: unknown) => reason);
+    await expect(failure).resolves.toBeInstanceOf(ProposalOutcomeUnknownError);
+    await expect(failure).resolves.toMatchObject({
+      cause: expect.objectContaining({
+        message: "Test Engine is unavailable. Check the local service and retry.",
+      }),
+    });
+  });
+
+  it("classifies malformed stream protocol before a terminal frame as outcome unknown", async () => {
+    stubFetch(sseResponse(['{"type":"delta"}']));
+
+    await expect(streamProposal(baseRequest())).rejects.toBeInstanceOf(ProposalOutcomeUnknownError);
+  });
+
+  it.each([
+    ["done", '{"type":"done","job":'],
+    ["error", '{"type":"error","error":{"code":"PROVIDER_FAILED"'],
+  ])("classifies loss of a partial %s frame as outcome unknown", async (_type, partialFrame) => {
+    const encoder = new TextEncoder();
+    stubFetch(
+      new Response(
+        new ReadableStream<Uint8Array>({
+          start(controller) {
+            controller.enqueue(encoder.encode(`data: ${partialFrame}`));
+            controller.close();
+          },
+        }),
+        { status: 200, headers: { "Content-Type": "text/event-stream" } },
+      ),
     );
+
+    await expect(streamProposal(baseRequest())).rejects.toBeInstanceOf(ProposalOutcomeUnknownError);
   });
 
   it("forwards the caller signal to fetch", async () => {
@@ -199,7 +297,7 @@ describe("streamProposal", () => {
       ...baseRequest(),
       signal: controller.signal,
     }).catch((reason: unknown) => reason);
-    await expect(failure).resolves.toBeInstanceOf(HttpError);
+    await expect(failure).resolves.toBeInstanceOf(ProposalOutcomeUnknownError);
     expect(fetchMock.mock.calls[0]?.[1]?.signal).toBe(controller.signal);
   });
 });

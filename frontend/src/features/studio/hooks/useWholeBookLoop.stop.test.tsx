@@ -29,9 +29,10 @@ vi.mock("@/app/api", async (importOriginal) => {
   };
 });
 
-vi.mock("@/app/proposalStream", () => ({
-  streamProposal: vi.fn(),
-}));
+vi.mock("@/app/proposalStream", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/app/proposalStream")>();
+  return { ...actual, streamProposal: vi.fn<typeof actual.streamProposal>() };
+});
 
 describe("useWholeBookLoop interruption", () => {
   it("abandons an in-flight draft once stopped and never starts the next chapter", async () => {

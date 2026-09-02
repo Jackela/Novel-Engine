@@ -3,6 +3,8 @@ import { type Dispatch, type SetStateAction, useRef, useState } from "react";
 
 import type { StudioJob } from "@/app/types/studio";
 import { useCommandFocusRestoration } from "../hooks/useCommandFocusRestoration";
+import type { ProposalAuditStatus } from "../hooks/useStudioJobs";
+import { ProposalOutcomeAuditNotice } from "./ProposalOutcomeAuditNotice";
 
 interface StudioCopilotPanelProps {
   instruction: string;
@@ -17,8 +19,12 @@ interface StudioCopilotPanelProps {
   isAcceptingProposal?: boolean;
   /** #308: markdown received so far while the proposal stream is running. */
   streamingText?: string | null;
-  /** #308: aborts the running stream; nothing is persisted. */
+  /** #308: stops this client from observing the running stream. */
   onStopProposal?: () => void | Promise<void>;
+  proposalOutcomeUnknown?: boolean;
+  proposalAuditStatus?: ProposalAuditStatus;
+  unknownAttemptOperation?: "continue" | "rewrite";
+  onRetryProposalAudit?: () => void | Promise<void>;
 }
 
 export function StudioCopilotPanel({
@@ -32,12 +38,20 @@ export function StudioCopilotPanel({
   isAcceptingProposal = false,
   streamingText = null,
   onStopProposal,
+  proposalOutcomeUnknown = false,
+  proposalAuditStatus = "idle",
+  unknownAttemptOperation = "continue",
+  onRetryProposalAudit,
 }: StudioCopilotPanelProps) {
   const pendingProposalOperationRef = useRef<"continue" | "rewrite" | null>(null);
   const [pendingProposalOperation, setPendingProposalOperation] = useState<
     "continue" | "rewrite" | null
   >(null);
-  const isBusy = isRunningProposal || isAcceptingProposal || pendingProposalOperation !== null;
+  const isBusy =
+    isRunningProposal ||
+    isAcceptingProposal ||
+    pendingProposalOperation !== null ||
+    proposalAuditStatus === "auditing";
   const isStreaming = streamingText !== null;
   const runWithFocusRestoration = useCommandFocusRestoration(isBusy);
   const instructionRef = useRef<HTMLTextAreaElement>(null);
@@ -47,16 +61,23 @@ export function StudioCopilotPanel({
     if (isBusy || pendingProposalOperationRef.current !== null) return;
     pendingProposalOperationRef.current = operation;
     setPendingProposalOperation(operation);
-    void runWithFocusRestoration(target, async () => {
-      try {
-        await onRunProposal(operation);
-      } finally {
-        if (pendingProposalOperationRef.current === operation) {
-          pendingProposalOperationRef.current = null;
+    void runWithFocusRestoration(
+      target,
+      async () => {
+        try {
+          await onRunProposal(operation);
+        } finally {
+          if (pendingProposalOperationRef.current === operation) {
+            pendingProposalOperationRef.current = null;
+          }
+          setPendingProposalOperation((current) => (current === operation ? null : current));
         }
-        setPendingProposalOperation((current) => (current === operation ? null : current));
-      }
-    });
+      },
+      () =>
+        operation === "rewrite"
+          ? (instructionRef.current ?? continueButtonRef.current)
+          : (continueButtonRef.current ?? instructionRef.current),
+    );
   };
 
   return (
@@ -65,38 +86,46 @@ export function StudioCopilotPanel({
       <p>Copilot never changes the manuscript until you accept a proposal.</p>
       <textarea
         aria-label="Proposal instruction"
-        disabled={isBusy}
+        disabled={isBusy || (proposalOutcomeUnknown && proposalAuditStatus !== "audit_succeeded")}
         onChange={(event) => setInstruction(event.target.value)}
         placeholder="Describe the change or direction..."
         ref={instructionRef}
         rows={5}
         value={instruction}
       />
-      <div className="studio-inspector__actions">
-        <button
-          aria-busy={pendingProposalOperation === "rewrite" || undefined}
-          className="ui-command"
-          disabled={isBusy}
-          onClick={(event) => {
-            runProposalCommand("rewrite", event.currentTarget);
-          }}
-          type="button"
-        >
-          <Sparkles /> {pendingProposalOperation === "rewrite" ? "Rewriting…" : "Rewrite"}
-        </button>
-        <button
-          aria-busy={pendingProposalOperation === "continue" || undefined}
-          className="ui-command"
-          disabled={isBusy}
-          onClick={(event) => {
-            runProposalCommand("continue", event.currentTarget);
-          }}
-          ref={continueButtonRef}
-          type="button"
-        >
-          {pendingProposalOperation === "continue" ? "Generating…" : "Continue"}
-        </button>
-      </div>
+      {proposalOutcomeUnknown ? (
+        <ProposalOutcomeAuditNotice
+          onGenerateAnother={(target) => runProposalCommand(unknownAttemptOperation, target)}
+          onRetry={onRetryProposalAudit}
+          status={proposalAuditStatus}
+        />
+      ) : (
+        <div className="studio-inspector__actions">
+          <button
+            aria-busy={pendingProposalOperation === "rewrite" || undefined}
+            className="ui-command"
+            disabled={isBusy}
+            onClick={(event) => {
+              runProposalCommand("rewrite", event.currentTarget);
+            }}
+            type="button"
+          >
+            <Sparkles /> {pendingProposalOperation === "rewrite" ? "Rewriting…" : "Rewrite"}
+          </button>
+          <button
+            aria-busy={pendingProposalOperation === "continue" || undefined}
+            className="ui-command"
+            disabled={isBusy}
+            onClick={(event) => {
+              runProposalCommand("continue", event.currentTarget);
+            }}
+            ref={continueButtonRef}
+            type="button"
+          >
+            {pendingProposalOperation === "continue" ? "Generating…" : "Continue"}
+          </button>
+        </div>
+      )}
       {isStreaming ? (
         <section aria-busy="true" className="studio-inspector__proposal">
           <header>

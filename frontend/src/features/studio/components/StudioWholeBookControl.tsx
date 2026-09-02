@@ -1,7 +1,9 @@
 import { Sparkles } from "lucide-react";
 import { useCallback, useLayoutEffect, useRef } from "react";
 
+import type { ProposalAuditStatus } from "../hooks/useStudioJobs";
 import type { WholeBookPhase } from "../hooks/useWholeBookLoop";
+import { ProposalOutcomeAuditNotice } from "./ProposalOutcomeAuditNotice";
 
 type WholeBookCommand = () => void | Promise<void>;
 
@@ -12,6 +14,9 @@ interface StudioWholeBookControlProps {
   remaining: number;
   onStart: WholeBookCommand;
   onStop: WholeBookCommand;
+  proposalOutcomeUnknown?: boolean;
+  proposalAuditStatus?: ProposalAuditStatus;
+  onRetryProposalAudit?: WholeBookCommand;
 }
 
 function chaptersLabel(count: number): string {
@@ -110,16 +115,15 @@ function useWholeBookFocusReturn(isBusy: boolean, canStart: boolean) {
   return { outcomeFallbackRef, startButtonRef, runCommand };
 }
 
-/**
- * Manuscript-surface control for the whole-book generation loop (#318).
- * Shows progress ("chapter k / n") plus a visible stop control while the
- * loop runs, and reports what a stop or failure preserved afterwards.
- */
+/** Whole-book progress, stop, preserved-work, and unknown-outcome controls (#318). */
 export function StudioWholeBookControl({
   phase,
   remaining,
   onStart,
   onStop,
+  proposalOutcomeUnknown = false,
+  proposalAuditStatus = "idle",
+  onRetryProposalAudit,
 }: StudioWholeBookControlProps) {
   const isBusy = phase.kind === "running";
   const canStart = remaining > 0;
@@ -138,7 +142,13 @@ export function StudioWholeBookControl({
       <p className="whole-book__hint">
         Drafts and auto-accepts every chapter still missing an AI revision, in reading order.
       </p>
-      {isBusy ? (
+      {proposalOutcomeUnknown ? (
+        <ProposalOutcomeAuditNotice
+          onGenerateAnother={() => runCommand(onStart)}
+          onRetry={onRetryProposalAudit ? () => runCommand(onRetryProposalAudit) : undefined}
+          status={proposalAuditStatus}
+        />
+      ) : isBusy ? (
         <>
           <p className="whole-book__status" role="status">
             Generating chapter {phase.current} of {phase.total}…

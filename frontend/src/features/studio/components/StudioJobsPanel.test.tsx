@@ -18,6 +18,24 @@ const jobs = [
 ];
 
 describe("StudioJobsPanel", () => {
+  it("disables job retry without claiming a retry is running while proposal audit gates actions", () => {
+    const onRetryJob = vi.fn();
+    const mounted = harness.mount(
+      <StudioJobsPanel jobs={jobs} onLoadJobs={vi.fn()} onRetryJob={onRetryJob} retryGated />,
+    );
+
+    const retries = mounted.container.querySelectorAll<HTMLButtonElement>(
+      'button[aria-label^="Retry "]',
+    );
+    expect(retries).toHaveLength(2);
+    for (const retry of retries) {
+      expect(retry).toBeDisabled();
+      expect(retry).not.toHaveAttribute("aria-busy", "true");
+    }
+    expect(mounted.container.querySelector('[aria-label^="Retrying "]')).toBeNull();
+    expect(onRetryJob).not.toHaveBeenCalled();
+  });
+
   it("announces only Retry as busy while its jobs refresh settles", () => {
     const mounted = harness.mount(
       <StudioJobsPanel

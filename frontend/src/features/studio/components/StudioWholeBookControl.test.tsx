@@ -70,6 +70,62 @@ describe("StudioWholeBookControl (#318)", () => {
     expect(failure.textContent).toContain("Provider exploded.");
   });
 
+  it("offers only audit refresh retry while an unknown whole-book outcome stays gated", () => {
+    const onRetryProposalAudit = vi.fn();
+    const mounted = harness.mount(
+      <StudioWholeBookControl
+        onRetryProposalAudit={onRetryProposalAudit}
+        onStart={vi.fn()}
+        onStop={vi.fn()}
+        phase={{
+          kind: "outcome_unknown",
+          generated: 1,
+          interruptedChapterTitle: "Chapter Two",
+        }}
+        proposalAuditStatus="audit_failed"
+        proposalOutcomeUnknown
+        remaining={2}
+      />,
+    );
+
+    expect(getByRole(mounted.container, "alert").textContent).toContain(
+      "proposal outcome is unknown",
+    );
+    expect(mounted.container.querySelectorAll("button")).toHaveLength(1);
+    act(() => {
+      getByRole(mounted.container, "button", { name: "Retry audit refresh" }).click();
+    });
+    expect(onRetryProposalAudit).toHaveBeenCalledOnce();
+  });
+
+  it("requires an explicit Generate another proposal action after audit success", () => {
+    const onStart = vi.fn();
+    const mounted = harness.mount(
+      <StudioWholeBookControl
+        onStart={onStart}
+        onStop={vi.fn()}
+        phase={{
+          kind: "outcome_unknown",
+          generated: 0,
+          interruptedChapterTitle: "Chapter One",
+        }}
+        proposalAuditStatus="audit_succeeded"
+        proposalOutcomeUnknown
+        remaining={2}
+      />,
+    );
+
+    expect(getByRole(mounted.container, "alert").textContent).toContain(
+      "may already have been saved",
+    );
+    const generateAnother = getByRole(mounted.container, "button", {
+      name: "Generate another proposal",
+    });
+    expect(queryByRole(mounted.container, "button", { name: /Generate whole book/i })).toBeNull();
+    act(() => generateAnother.click());
+    expect(onStart).toHaveBeenCalledOnce();
+  });
+
   it("returns orphaned focus to the start command after a failed run settles", async () => {
     const command = deferred<void>();
     const onStart = vi.fn(() => command.promise);

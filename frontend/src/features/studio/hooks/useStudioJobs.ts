@@ -13,7 +13,24 @@ interface JobsState {
   readonly loadingInitiator: JobsLoadInitiator | null;
 }
 
-export type JobsLoadInitiator = "auto" | "refresh" | "retry";
+export type JobsLoadInitiator = "auto" | "refresh" | "retry" | "audit";
+
+export type ProposalAuditStatus = "idle" | "auditing" | "audit_failed" | "audit_succeeded";
+
+export interface ProposalAuditControl {
+  readonly status: ProposalAuditStatus;
+  readonly audit: () => Promise<boolean>;
+  readonly clear: () => void;
+  /** Monotonic project-lifecycle marker; clearing UI state never rewinds it. */
+  readonly epoch: () => number;
+  /** Synchronous admission check, including the render before React publishes state. */
+  readonly isGated: () => boolean;
+}
+
+interface ProposalAuditState {
+  readonly projectId: string;
+  readonly status: ProposalAuditStatus;
+}
 
 interface ActiveJobsRequest {
   readonly projectId: string;
@@ -34,6 +51,12 @@ export function useStudioJobs(
     isLoading: false,
     loadingInitiator: null,
   }));
+  const [proposalAuditState, setProposalAuditState] = useState<ProposalAuditState>(() => ({
+    projectId,
+    status: "idle",
+  }));
+  const proposalAuditStateRef = useRef(proposalAuditState);
+  const proposalAuditEpochRef = useRef(0);
 
   useEffect(() => {
     activeProjectIdRef.current = projectId;
@@ -44,6 +67,14 @@ export function useStudioJobs(
       if (controllerRef.current?.projectId === projectId) {
         controllerRef.current.controller.abort();
         controllerRef.current = null;
+      }
+      if (
+        proposalAuditStateRef.current.projectId === projectId &&
+        proposalAuditStateRef.current.status === "auditing"
+      ) {
+        const retryable = { projectId, status: "audit_failed" } as const;
+        proposalAuditStateRef.current = retryable;
+        setProposalAuditState(retryable);
       }
       requestEpochRef.current += 1;
     };
@@ -110,6 +141,97 @@ export function useStudioJobs(
   const jobs = stateIsCurrent ? state.jobs : [];
   const isLoading = stateIsCurrent ? state.isLoading : false;
   const loadingInitiator = stateIsCurrent ? state.loadingInitiator : null;
+  const proposalAuditStatus =
+    proposalAuditState.projectId === projectId ? proposalAuditState.status : "idle";
 
-  return { jobs, loadJobs, isLoading, loadingInitiator };
+  const publishProposalAuditStatus = useCallback(
+    (status: ProposalAuditStatus): void => {
+      const next = { projectId, status };
+      proposalAuditStateRef.current = next;
+      setProposalAuditState(next);
+    },
+    [projectId],
+  );
+
+  const auditProposalOutcome = useCallback(async (): Promise<boolean> => {
+    if (activeProjectIdRef.current !== projectId) return false;
+    proposalAuditEpochRef.current += 1;
+    controllerRef.current?.controller.abort();
+
+    const controller = new AbortController();
+    const requestEpoch = ++requestEpochRef.current;
+    publishProposalAuditStatus("auditing");
+    setState((current) => ({
+      projectId,
+      jobs: current.projectId === projectId ? current.jobs : [],
+      isLoading: true,
+      loadingInitiator: "audit",
+    }));
+
+    const request: ActiveJobsRequest = {
+      projectId,
+      controller,
+      promise: Promise.resolve(),
+    };
+    const isCurrentRequest = () =>
+      !controller.signal.aborted &&
+      requestEpochRef.current === requestEpoch &&
+      activeProjectIdRef.current === projectId;
+
+    const auditPromise = (async (): Promise<boolean> => {
+      try {
+        const response = await api.jobs(projectId, { signal: controller.signal });
+        if (!isCurrentRequest()) return false;
+        setState({
+          projectId,
+          jobs: response.jobs,
+          isLoading: false,
+          loadingInitiator: null,
+        });
+        publishProposalAuditStatus("audit_succeeded");
+        setError(null);
+        return true;
+      } catch {
+        if (!isCurrentRequest()) return false;
+        setState((current) => ({
+          projectId,
+          jobs: current.projectId === projectId ? current.jobs : [],
+          isLoading: false,
+          loadingInitiator: null,
+        }));
+        publishProposalAuditStatus("audit_failed");
+        return false;
+      } finally {
+        if (controllerRef.current === request) controllerRef.current = null;
+      }
+    })();
+    request.promise = auditPromise.then(() => undefined);
+    controllerRef.current = request;
+    return auditPromise;
+  }, [projectId, publishProposalAuditStatus, setError]);
+
+  const clearProposalAudit = useCallback(() => {
+    if (activeProjectIdRef.current !== projectId) return;
+    publishProposalAuditStatus("idle");
+  }, [projectId, publishProposalAuditStatus]);
+  const proposalAuditEpoch = useCallback(() => proposalAuditEpochRef.current, []);
+  const isProposalAuditGated = useCallback(() => {
+    const current = proposalAuditStateRef.current;
+    return (
+      current.projectId === projectId &&
+      (current.status === "auditing" || current.status === "audit_failed")
+    );
+  }, [projectId]);
+
+  return {
+    jobs,
+    loadJobs,
+    isLoading,
+    loadingInitiator,
+    proposalAuditStatus,
+    auditProposalOutcome,
+    clearProposalAudit,
+    proposalAuditEpoch,
+    isProposalAuditGated,
+  };
 }

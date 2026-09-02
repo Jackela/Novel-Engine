@@ -9,7 +9,7 @@ import type {
   StudioExport,
   StudioJob,
 } from "@/app/types/studio";
-import type { JobsLoadInitiator } from "./hooks/useStudioJobs";
+import type { JobsLoadInitiator, ProposalAuditStatus } from "./hooks/useStudioJobs";
 
 export interface SettingsFormState {
   title: string;
@@ -28,6 +28,7 @@ export interface InspectorPendingState {
     loadingInitiator?: JobsLoadInitiator | null;
     retrying: boolean;
     retryingJobId?: string | null;
+    retryGated?: boolean;
   };
   settings: boolean;
   history?: {
@@ -45,6 +46,10 @@ export interface InspectorCopilotModel {
   onAcceptProposal: () => void | Promise<void>;
   /** #308: aborts the running proposal stream. */
   onStopProposal?: () => void;
+  proposalOutcomeUnknown?: boolean;
+  proposalAuditStatus?: ProposalAuditStatus;
+  unknownAttemptOperation?: "continue" | "rewrite";
+  onRetryProposalAudit?: () => void | Promise<void>;
   setInstruction: Dispatch<SetStateAction<string>>;
   setProposal: Dispatch<SetStateAction<StudioJob | null>>;
 }

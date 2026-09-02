@@ -174,4 +174,102 @@ describe("StudioCopilotPanel", () => {
     expect(onStopProposal).toHaveBeenCalledOnce();
     expect(document.activeElement).toBe(continueButton);
   });
+
+  it("offers only audit refresh retry while an unknown outcome audit has failed", () => {
+    const onRunProposal = vi.fn();
+    const onRetryProposalAudit = vi.fn();
+    const mounted = harness.mount(
+      <StudioCopilotPanel
+        instruction="Continue the scene."
+        onAcceptProposal={vi.fn()}
+        onRetryProposalAudit={onRetryProposalAudit}
+        onRunProposal={onRunProposal}
+        proposal={null}
+        proposalAuditStatus="audit_failed"
+        proposalOutcomeUnknown
+        setInstruction={vi.fn()}
+        setProposal={vi.fn()}
+      />,
+    );
+
+    expect(getByRole(mounted.container, "alert").textContent).toContain(
+      "proposal outcome is unknown",
+    );
+    expect(getByRole(mounted.container, "button", { name: "Retry audit refresh" })).toBeEnabled();
+    expect(mounted.container.querySelectorAll("button")).toHaveLength(1);
+
+    act(() => {
+      getByRole(mounted.container, "button", { name: "Retry audit refresh" }).click();
+    });
+    expect(onRetryProposalAudit).toHaveBeenCalledOnce();
+    expect(onRunProposal).not.toHaveBeenCalled();
+  });
+
+  it("keeps the outcome unknown after audit success and names the explicit new attempt", () => {
+    const onRunProposal = vi.fn();
+    const mounted = harness.mount(
+      <StudioCopilotPanel
+        instruction="Continue the scene."
+        onAcceptProposal={vi.fn()}
+        onRunProposal={onRunProposal}
+        proposal={null}
+        proposalAuditStatus="audit_succeeded"
+        proposalOutcomeUnknown
+        setInstruction={vi.fn()}
+        setProposal={vi.fn()}
+        unknownAttemptOperation="rewrite"
+      />,
+    );
+
+    const warning = getByRole(mounted.container, "alert");
+    expect(warning.textContent).toContain("may already have been saved");
+    expect(warning.textContent).toContain("cannot confirm which job");
+    const generateAnother = getByRole(mounted.container, "button", {
+      name: "Generate another proposal",
+    });
+    expect(mounted.container.querySelectorAll("button")).toHaveLength(1);
+
+    act(() => generateAnother.click());
+    expect(onRunProposal).toHaveBeenCalledWith("rewrite");
+  });
+
+  it("restores focus after Generate another proposal is removed for the new attempt", async () => {
+    const completion = deferred<void>();
+    const props = {
+      instruction: "Rewrite the scene.",
+      onAcceptProposal: vi.fn(),
+      onRunProposal: vi.fn(() => completion.promise),
+      proposal: null,
+      setInstruction: vi.fn(),
+      setProposal: vi.fn(),
+    };
+    const mounted = harness.mount(
+      <StudioCopilotPanel
+        {...props}
+        proposalAuditStatus="audit_succeeded"
+        proposalOutcomeUnknown
+        unknownAttemptOperation="rewrite"
+      />,
+    );
+    const generateAnother = getByRole(mounted.container, "button", {
+      name: "Generate another proposal",
+    });
+    const instruction = getByRole(mounted.container, "textbox", {
+      name: "Proposal instruction",
+    });
+
+    generateAnother.focus();
+    act(() => {
+      generateAnother.click();
+      mounted.root.render(<StudioCopilotPanel {...props} isRunningProposal />);
+    });
+    expect(document.activeElement).toBe(document.body);
+
+    await act(async () => {
+      completion.resolve(undefined);
+      await completion.promise;
+      mounted.root.render(<StudioCopilotPanel {...props} isRunningProposal={false} />);
+    });
+    expect(document.activeElement).toBe(instruction);
+  });
 });

@@ -4,6 +4,7 @@ import type { NavigateFunction } from "react-router-dom";
 
 import type { StudioPageView } from "../StudioPageView";
 import { type StudioRouteState, studioInspectorPath } from "../studioRouteState";
+import { buildProposalAuditView } from "./proposalAuditView";
 import { buildLoreStatusModel, buildStudioNavigatorProps } from "./studioPageModelView";
 import { useActiveDocument } from "./useActiveDocument";
 import { useDocumentDraft } from "./useDocumentDraft";
@@ -11,13 +12,11 @@ import { useExportDownload } from "./useExportDownload";
 import { combineErrorMessages, useOwnerKeyedErrors } from "./useOwnerKeyedErrors";
 import { useScopedRevisionRestore } from "./useScopedRevisionRestore";
 import { useStudioActions } from "./useStudioActions";
+import { useStudioGeneration } from "./useStudioGeneration";
 import { useStudioInspectorState } from "./useStudioInspectorState";
-import { useStudioJobs } from "./useStudioJobs";
 import { useStudioProject } from "./useStudioProject";
-import { useStudioProposal } from "./useStudioProposal";
 import { useStudioProviders } from "./useStudioProviders";
 import { useStudioSearch } from "./useStudioSearch";
-import { useWholeBookLoop } from "./useWholeBookLoop";
 import { wholeBookPlan } from "./wholeBookPlan";
 
 type StudioViewProps = ComponentProps<typeof StudioPageView>;
@@ -88,12 +87,25 @@ export function useStudioPageModel(
     documentErrors.publishers.revision,
     documentErrors.publishers.restore,
   );
+  const generation = useStudioGeneration({
+    projectId,
+    activeDocument,
+    project,
+    setProject,
+    setProposalError: documentErrors.publishers.proposal,
+    setJobsError: projectErrors.publishers.jobs,
+    captureAcceptance,
+  });
   const {
     jobs,
     loadJobs,
     isLoading: isLoadingJobs,
     loadingInitiator: jobsLoadingInitiator,
-  } = useStudioJobs(projectId, projectErrors.publishers.jobs);
+    proposalAudit,
+    proposalAuditGated,
+    copilot,
+    wholeBookLoop,
+  } = generation;
   const onSelectInspector = useCallback(
     (nextInspector: Parameters<typeof studioInspectorPath>[2]) => {
       if (nextInspector === routeInspector) return;
@@ -111,39 +123,10 @@ export function useStudioPageModel(
     `${projectId}\u0000${activeDocument?.id ?? ""}`,
     restoreRevision,
   );
-  const {
-    proposal,
-    setProposal,
-    instruction,
-    setInstruction,
-    runProposal,
-    stopProposal,
-    streamingText,
-    acceptProposal,
-    isRunningProposal,
-    isAcceptingProposal,
-  } = useStudioProposal(
-    projectId,
-    activeDocument,
-    project,
-    setProject,
-    documentErrors.publishers.proposal,
-    loadJobs,
-    captureAcceptance,
-  );
   const { search, setSearch, isSearching, searchResults, runSearch } = useStudioSearch(
     projectId,
     projectErrors.publishers.search,
   );
-  // #318 whole-book loop: reuses the copilot accept refresh path so the
-  // editor cache resets whenever the loop accepts the active document.
-  const wholeBookLoop = useWholeBookLoop({
-    projectId,
-    provider: String(project?.settings.provider ?? "mock"),
-    setProject,
-    loadJobs,
-    captureAcceptedDocument: captureAcceptance,
-  });
   const providers = useStudioProviders();
   const { exportProject, retryExport, exportingFormat, retryingFormat, failedFormat, exportError } =
     useExportDownload(project, projectId, setExports);
@@ -173,6 +156,7 @@ export function useStudioPageModel(
     setActiveId,
     settingsForm,
     loadJobs,
+    isProposalActionGated: proposalAudit.isGated,
   });
 
   if (!project) return { project, viewProps: null, loadError, isLoading, retryLoad };
@@ -180,14 +164,15 @@ export function useStudioPageModel(
   const latestReview = reviews[0] ?? null;
   const inspectorPending = {
     proposal: {
-      running: isRunningProposal,
-      accepting: isAcceptingProposal,
+      running: copilot.isRunningProposal,
+      accepting: copilot.isAcceptingProposal,
     },
     review: isRunningReview,
     jobs: {
       loading: isLoadingJobs,
       loadingInitiator: jobsLoadingInitiator,
       retrying: isRetryingJob,
+      retryGated: proposalAuditGated,
       retryingJobId,
     },
     settings: isUpdatingSettings,
@@ -224,6 +209,11 @@ export function useStudioPageModel(
             remaining: wholeBookPlan(project).length,
             onStart: () => wholeBookLoop.start(wholeBookPlan(project)),
             onStop: () => wholeBookLoop.stop(),
+            ...buildProposalAuditView(
+              wholeBookLoop.proposalOutcomeUnknown,
+              wholeBookLoop.proposalAuditStatus,
+              wholeBookLoop.retryProposalAudit,
+            ),
           },
         },
         navigate,
@@ -249,14 +239,20 @@ export function useStudioPageModel(
         // props corridor through StudioPageView -> Inspector -> Panels.
         model: {
           copilot: {
-            instruction,
-            proposal,
-            streamingText,
-            onRunProposal: runProposal,
-            onAcceptProposal: acceptProposal,
-            onStopProposal: () => stopProposal(),
-            setInstruction,
-            setProposal,
+            instruction: copilot.instruction,
+            proposal: copilot.proposal,
+            streamingText: copilot.streamingText,
+            onRunProposal: copilot.runProposal,
+            onAcceptProposal: copilot.acceptProposal,
+            onStopProposal: () => copilot.stopProposal(),
+            ...buildProposalAuditView(
+              copilot.proposalOutcomeUnknown,
+              copilot.proposalAuditStatus,
+              copilot.retryProposalAudit,
+            ),
+            unknownAttemptOperation: copilot.unknownAttemptOperation,
+            setInstruction: copilot.setInstruction,
+            setProposal: copilot.setProposal,
           },
           export: {
             exports,

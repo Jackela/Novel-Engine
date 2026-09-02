@@ -1,12 +1,13 @@
 import type { Dispatch, SetStateAction } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { streamProposal } from "@/app/proposalStream";
+import { ProposalOutcomeUnknownError, streamProposal } from "@/app/proposalStream";
 import type { Project, StudioDocument, StudioJob } from "@/app/types/studio";
 
 import { acceptProposalAndRefresh } from "./acceptProposalAndRefresh";
 import { toErrorMessage } from "./toErrorMessage";
 import { usePendingAction } from "./usePendingAction";
+import type { ProposalAuditControl } from "./useStudioJobs";
 
 interface DocumentProposal {
   readonly ownerKey: string;
@@ -29,6 +30,19 @@ interface AcceptRequest extends ProposalRequest {
   readonly projectId: string;
 }
 
+interface UnknownProposalAttempt {
+  readonly projectId: string;
+  readonly operation: "continue" | "rewrite";
+}
+
+const INACTIVE_PROPOSAL_AUDIT: ProposalAuditControl = {
+  status: "idle",
+  audit: async () => false,
+  clear: () => undefined,
+  epoch: () => 0,
+  isGated: () => false,
+};
+
 const PROPOSAL_KEYS = ["proposal", "accept"] as const;
 
 type ProposalKey = (typeof PROPOSAL_KEYS)[number];
@@ -41,6 +55,7 @@ export function useStudioProposal(
   setError: Dispatch<SetStateAction<string | null>>,
   loadJobs: () => void,
   captureAcceptedDocument: (documentId: string) => ((document: StudioDocument) => void) | undefined,
+  proposalAudit: ProposalAuditControl = INACTIVE_PROPOSAL_AUDIT,
 ) {
   const [proposalState, setProposalState] = useState<DocumentProposal | null>(null);
   const [instruction, setInstruction] = useState("");
@@ -48,6 +63,7 @@ export function useStudioProposal(
   // #308: the in-flight streamed markdown lands in the proposal preview only;
   // the manuscript is touched by acceptProposal, never by the stream itself.
   const [streaming, setStreaming] = useState<StreamingProposal | null>(null);
+  const [unknownAttempt, setUnknownAttempt] = useState<UnknownProposalAttempt | null>(null);
   const streamRequestRef = useRef<ProposalRequest | null>(null);
   const acceptRequestRef = useRef<AcceptRequest | null>(null);
   const requestEpochRef = useRef(0);
@@ -57,6 +73,10 @@ export function useStudioProposal(
   const projectIdRef = useRef<string | null>(projectId);
   const proposal = proposalState?.ownerKey === ownerKey ? proposalState.job : null;
   const streamingText = streaming?.ownerKey === ownerKey ? streaming.text : null;
+  const proposalOutcomeUnknown = proposalAudit.status !== "idle";
+  const proposalActionsGated = proposalAudit.isGated();
+  const unknownAttemptOperation =
+    unknownAttempt?.projectId === projectId ? unknownAttempt.operation : "continue";
 
   const isCurrentRequest = useCallback(
     (requestOwnerKey: string, requestEpoch: number) =>
@@ -93,6 +113,12 @@ export function useStudioProposal(
     };
   }, [projectId]);
 
+  useEffect(() => {
+    if (proposalAudit.status === "idle") return;
+    setProposalState(null);
+    setStreaming(null);
+  }, [proposalAudit.status]);
+
   const setProposal = useCallback<Dispatch<SetStateAction<StudioJob | null>>>(
     (nextProposal) => {
       setProposalState((current) => {
@@ -107,7 +133,11 @@ export function useStudioProposal(
 
   const runProposal = useCallback(
     async (operation: "continue" | "rewrite") => {
-      if (!activeDocument || !project || !begin("proposal")) return;
+      if (proposalAudit.isGated() || !activeDocument || !project || !begin("proposal")) return;
+      const auditEpoch = proposalAudit.epoch();
+      proposalAudit.clear();
+      setUnknownAttempt(null);
+      setProposalState(null);
       setError(null);
       const controller = new AbortController();
       const requestEpoch = requestEpochRef.current + 1;
@@ -124,7 +154,13 @@ export function useStudioProposal(
           provider: String(project.settings.provider ?? "mock"),
           signal: controller.signal,
           onDelta: (text) => {
-            if (!isCurrentRequest(ownerKey, requestEpoch) || controller.signal.aborted) return;
+            if (
+              proposalAudit.epoch() !== auditEpoch ||
+              !isCurrentRequest(ownerKey, requestEpoch) ||
+              controller.signal.aborted
+            ) {
+              return;
+            }
             setStreaming((current) =>
               current?.ownerKey === ownerKey && current.requestEpoch === requestEpoch
                 ? { ...current, text: current.text + text }
@@ -132,10 +168,29 @@ export function useStudioProposal(
             );
           },
         });
-        if (!isCurrentRequest(ownerKey, requestEpoch) || controller.signal.aborted) return;
+        if (
+          proposalAudit.epoch() !== auditEpoch ||
+          !isCurrentRequest(ownerKey, requestEpoch) ||
+          controller.signal.aborted
+        ) {
+          return;
+        }
         setProposalState({ ownerKey, job: nextProposal });
       } catch (reason) {
-        if (isCurrentRequest(ownerKey, requestEpoch) && !controller.signal.aborted) {
+        if (reason instanceof ProposalOutcomeUnknownError && projectIdRef.current === projectId) {
+          setProposalState(null);
+          setStreaming((current) =>
+            current?.ownerKey === ownerKey && current.requestEpoch === requestEpoch
+              ? null
+              : current,
+          );
+          setUnknownAttempt({ projectId, operation });
+          if (streamRequestRef.current === request) streamRequestRef.current = null;
+          finish("proposal");
+          await proposalAudit.audit();
+        } else if (proposalAudit.epoch() !== auditEpoch) {
+          return;
+        } else if (isCurrentRequest(ownerKey, requestEpoch) && !controller.signal.aborted) {
           setError(toErrorMessage(reason, "Unable to create proposal."));
         }
       } finally {
@@ -159,6 +214,7 @@ export function useStudioProposal(
       ownerKey,
       project,
       projectId,
+      proposalAudit,
       setError,
     ],
   );
@@ -167,8 +223,21 @@ export function useStudioProposal(
     streamRequestRef.current?.controller.abort();
   }, []);
 
+  const retryProposalAudit = useCallback(async (): Promise<boolean> => {
+    if (proposalAudit.status !== "audit_failed") return false;
+    return proposalAudit.audit();
+  }, [proposalAudit]);
+
   const acceptProposal = useCallback(async () => {
-    if (!proposal || !activeDocument || acceptRequestRef.current || !begin("accept")) return;
+    if (
+      proposalAudit.isGated() ||
+      !proposal ||
+      !activeDocument ||
+      acceptRequestRef.current ||
+      !begin("accept")
+    ) {
+      return;
+    }
     const onAccepted = captureAcceptedDocument(activeDocument.id);
     setError(null);
     const requestEpoch = requestEpochRef.current + 1;
@@ -212,6 +281,7 @@ export function useStudioProposal(
     ownerKey,
     projectId,
     proposal,
+    proposalAudit,
     isCurrentRequest,
     setError,
     setProject,
@@ -229,5 +299,10 @@ export function useStudioProposal(
     pending,
     isRunningProposal: pending.proposal,
     isAcceptingProposal: pending.accept,
+    proposalOutcomeUnknown,
+    proposalAuditStatus: proposalAudit.status,
+    proposalActionsGated,
+    unknownAttemptOperation,
+    retryProposalAudit,
   };
 }

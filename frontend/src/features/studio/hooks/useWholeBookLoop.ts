@@ -1,11 +1,12 @@
 import type { Dispatch, SetStateAction } from "react";
 import { useCallback, useLayoutEffect, useRef, useState } from "react";
 
-import { streamProposal } from "@/app/proposalStream";
+import { ProposalOutcomeUnknownError, streamProposal } from "@/app/proposalStream";
 import type { Project, StudioDocument } from "@/app/types/studio";
 
 import { AcceptedProposalRefreshError, acceptProposalAndRefresh } from "./acceptProposalAndRefresh";
 import { toErrorMessage } from "./toErrorMessage";
+import type { ProposalAuditControl } from "./useStudioJobs";
 import type { WholeBookChapter } from "./wholeBookPlan";
 
 /**
@@ -31,6 +32,11 @@ export type WholeBookPhase =
       readonly generated: number;
       readonly failedChapterTitle: string;
       readonly message: string;
+    }
+  | {
+      readonly kind: "outcome_unknown";
+      readonly generated: number;
+      readonly interruptedChapterTitle: string;
     };
 
 interface UseWholeBookLoopArgs {
@@ -38,15 +44,25 @@ interface UseWholeBookLoopArgs {
   readonly provider: string;
   readonly setProject: Dispatch<SetStateAction<Project | null>>;
   readonly loadJobs: () => void;
+  readonly proposalAudit?: ProposalAuditControl;
   /** Captures the draft version an acceptance may replace before its request starts. */
   readonly captureAcceptedDocument?: (
     documentId: string,
   ) => ((document: StudioDocument) => void) | undefined;
 }
 
+const INACTIVE_PROPOSAL_AUDIT: ProposalAuditControl = {
+  status: "idle",
+  audit: async () => false,
+  clear: () => undefined,
+  epoch: () => 0,
+  isGated: () => false,
+};
+
 interface WholeBookRun {
   readonly projectId: string;
   readonly epoch: number;
+  readonly auditEpoch: number;
   stopped: boolean;
   proposalController: AbortController | null;
   refreshController: AbortController | null;
@@ -67,17 +83,18 @@ interface CommittedChapters {
  * The frontend-driven whole-book generation loop (#318): over the existing
  * streaming endpoint it drafts a `generate` proposal per planned chapter,
  * auto-accepts it, and refreshes project/jobs state exactly like the manual
- * copilot accept flow. Stop aborts the current proposal before it can persist a
- * job or usage event. An acceptance that already started remains atomic and is
- * counted if it completes; no later proposal starts. Because the plan is
- * recomputed from persisted documents at every start, resume begins at the
- * first chapter whose current revision is not `ai-accepted`.
+ * copilot accept flow. Stop ends client observation and prevents automatic
+ * acceptance or continuation; an unobserved terminal outcome enters the shared
+ * jobs-audit gate. An acceptance that already started remains atomic and is
+ * counted if it completes. Resume recomputes the persisted plan from the first
+ * chapter whose current revision is not `ai-accepted`.
  */
 export function useWholeBookLoop({
   projectId,
   provider,
   setProject,
   loadJobs,
+  proposalAudit = INACTIVE_PROPOSAL_AUDIT,
   captureAcceptedDocument,
 }: UseWholeBookLoopArgs) {
   const [projectPhase, setProjectPhase] = useState<ProjectPhase>({
@@ -98,6 +115,8 @@ export function useWholeBookLoop({
     projectPhase.epoch === runEpochRef.current
       ? projectPhase.value
       : { kind: "idle" };
+  const proposalOutcomeUnknown = proposalAudit.status !== "idle";
+  const proposalActionsGated = proposalAudit.isGated();
 
   const isCurrentRun = useCallback(
     (run: WholeBookRun) =>
@@ -147,13 +166,17 @@ export function useWholeBookLoop({
       if (ownerProjectRef.current !== projectId || committedChapters.projectId !== projectId) {
         return Promise.resolve();
       }
+      if (proposalAudit.isGated()) return Promise.resolve();
       const activeRun = activeRunRef.current;
       if (activeRun && isCurrentRun(activeRun)) return Promise.resolve();
+      const auditEpoch = proposalAudit.epoch();
+      proposalAudit.clear();
       const epoch = runEpochRef.current + 1;
       runEpochRef.current = epoch;
       const currentRun: WholeBookRun = {
         projectId,
         epoch,
+        auditEpoch,
         stopped: false,
         proposalController: null,
         refreshController: null,
@@ -169,7 +192,14 @@ export function useWholeBookLoop({
         let failingTitle = remainingPlan[0]?.title ?? "";
         try {
           for (let index = 0; index < remainingPlan.length; index += 1) {
-            if (!isCurrentRun(currentRun) || currentRun.stopped) break;
+            if (
+              !isCurrentRun(currentRun) ||
+              currentRun.stopped ||
+              proposalAudit.epoch() !== currentRun.auditEpoch
+            ) {
+              if (proposalAudit.epoch() !== currentRun.auditEpoch) currentRun.stopped = true;
+              break;
+            }
             const chapter = remainingPlan[index];
             failingTitle = chapter.title;
             publishPhase(currentRun, {
@@ -197,7 +227,14 @@ export function useWholeBookLoop({
             if (currentRun.proposalController === proposalController) {
               currentRun.proposalController = null;
             }
-            if (!isCurrentRun(currentRun) || currentRun.stopped) break;
+            if (
+              !isCurrentRun(currentRun) ||
+              currentRun.stopped ||
+              proposalAudit.epoch() !== currentRun.auditEpoch
+            ) {
+              if (proposalAudit.epoch() !== currentRun.auditEpoch) currentRun.stopped = true;
+              break;
+            }
             const refreshController = new AbortController();
             currentRun.refreshController = refreshController;
             // Acceptance must finish before the next chapter can be drafted.
@@ -220,6 +257,7 @@ export function useWholeBookLoop({
               currentRun.refreshController = null;
             }
             if (!isCurrentRun(currentRun)) return;
+            if (proposalAudit.epoch() !== currentRun.auditEpoch) currentRun.stopped = true;
           }
           if (!isCurrentRun(currentRun)) return;
           publishPhase(currentRun, {
@@ -229,6 +267,17 @@ export function useWholeBookLoop({
           });
         } catch (reason) {
           if (!isCurrentRun(currentRun)) return;
+          if (reason instanceof ProposalOutcomeUnknownError) {
+            currentRun.proposalController = null;
+            publishPhase(currentRun, {
+              kind: "outcome_unknown",
+              generated,
+              interruptedChapterTitle: failingTitle,
+            });
+            if (activeRunRef.current === currentRun) activeRunRef.current = null;
+            await proposalAudit.audit();
+            return;
+          }
           // A stopped proposal/accept request is expected noise. Once acceptance
           // committed, however, a failed aggregate refresh must remain visible
           // because the local workbench needs an explicit reload to synchronize.
@@ -257,10 +306,24 @@ export function useWholeBookLoop({
       loadJobs,
       projectId,
       provider,
+      proposalAudit,
       publishPhase,
       setProject,
     ],
   );
 
-  return { phase, start, stop };
+  const retryProposalAudit = useCallback(async (): Promise<boolean> => {
+    if (proposalAudit.status !== "audit_failed") return false;
+    return proposalAudit.audit();
+  }, [proposalAudit]);
+
+  return {
+    phase,
+    start,
+    stop,
+    proposalOutcomeUnknown,
+    proposalAuditStatus: proposalAudit.status,
+    proposalActionsGated,
+    retryProposalAudit,
+  };
 }

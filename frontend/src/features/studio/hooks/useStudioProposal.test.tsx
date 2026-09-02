@@ -199,7 +199,7 @@ describe("useStudioProposal", () => {
     expect(harness.result().error).toBeNull();
   });
 
-  it("stops a running stream without persisting anything or raising an error", async () => {
+  it("stops client preview without publishing a stale terminal error", async () => {
     // Given
     const harness = renderProposalHook();
     const deferred = deferredStream();

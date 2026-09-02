@@ -67,6 +67,10 @@ export function StudioInspectorPanels({
           isAcceptingProposal={pending.proposal.accepting}
           streamingText={model.copilot.streamingText}
           onStopProposal={model.copilot.onStopProposal}
+          proposalOutcomeUnknown={model.copilot.proposalOutcomeUnknown}
+          proposalAuditStatus={model.copilot.proposalAuditStatus}
+          unknownAttemptOperation={model.copilot.unknownAttemptOperation}
+          onRetryProposalAudit={model.copilot.onRetryProposalAudit}
         />
       </div>
       <div
@@ -122,6 +126,7 @@ export function StudioInspectorPanels({
           onRetryJob={model.jobs.onRetryJob}
           isLoading={pending.jobs.loading}
           loadingInitiator={pending.jobs.loadingInitiator}
+          retryGated={pending.jobs.retryGated}
           retryingJobId={
             pending.jobs.retryingJobId ??
             (pending.jobs.retrying
