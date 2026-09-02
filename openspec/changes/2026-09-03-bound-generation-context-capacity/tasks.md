@@ -45,10 +45,10 @@
 
 ## 5. Integrated evidence
 
-- [ ] 5.1 Run resident/Lore/provider/pipeline/retry/whole-book tests, server
+- [x] 5.1 Run resident/Lore/provider/pipeline/retry/whole-book tests, server
       type-check/lint/arch/size/full tests, frontend type/unit/build, Playwright,
       API-types drift, and strict OpenSpec.
-- [ ] 5.2 Record fixed-SHA evidence and all skips. Keep coherent proposal-context
+- [x] 5.2 Record fixed-SHA evidence and all skips. Keep coherent proposal-context
       transactions, retry base-revision semantics, and project/catalog
       pagination as named later changes.
 - [ ] 5.3 Keep the change active until required CI is green, then merge it into
