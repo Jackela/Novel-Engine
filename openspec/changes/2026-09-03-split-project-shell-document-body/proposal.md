@@ -22,9 +22,9 @@ unsaved Draft.
 
 - Replace project detail and project creation responses with a strict project
   shell containing project fields, volume rows, and lightweight document
-  summaries. Summaries keep the current revision identity and word count needed
-  for navigation and causal reads but exclude Markdown, revision metadata, and
-  revision source.
+  summaries. Summaries keep the current revision identity, exact word count,
+  and closed revision source needed for causal reads and resumable whole-book
+  planning, but exclude Markdown and revision metadata JSON.
 - Add an explicit owner-scoped
   `GET /api/projects/:projectId/documents/:documentId` resource for one complete
   current Document, with authentication before scoped lookup and the same 404
@@ -57,9 +57,10 @@ unsaved Draft.
   application read ports, OpenAPI baseline, generated frontend types, API
   parsers, project bootstrap, active-document state, Inspector data ownership,
   tests, and ADR documentation.
-- The contract is intentionally breaking for clients that read a document body,
-  metadata, or revision source from project detail or reorder responses. Such
-  clients must follow a summary to the scoped current-document resource.
+- The contract is intentionally breaking for clients that read a document body
+  or metadata object from project detail or reorder responses. Revision source
+  remains a required lightweight scalar. Clients needing body or metadata must
+  follow a summary to the scoped current-document resource.
 - No database migration, new index, dependency, environment variable, write
   semantic, autosave interval, revision rule, Review payload, or Export payload
   is required.
@@ -75,6 +76,9 @@ unsaved Draft.
 - No change to save/restore/proposal response bodies, conflict resolution,
   Beat/Lore narrow response bodies, immutable revisions, snapshot authority,
   volume semantics, or full-text search.
+- No project Settings PATCH surface. Its existing absence is an adjacent
+  product gap owned by a separate change, not a reason to expand this shell
+  contract.
 
 ## Validation
 

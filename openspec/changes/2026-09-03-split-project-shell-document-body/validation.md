@@ -16,10 +16,13 @@ anonymous request therefore reached the generic route 404, and reorder returned
 complete Documents. The implementation now gives the shell, current Document,
 and editor Draft distinct authority.
 
-`GET /api/projects/:projectId` uses one `readProjectShell` application/store
+At fixed implementation SHA `012afb99`, `GET /api/projects/:projectId` used one `readProjectShell` application/store
 seam. Its real SQLite projection executes a scoped project read, one ordered
 document-summary query, and one ordered volume query. The summary query selects
-no Markdown, metadata JSON, or revision source. Project creation serializes its
+no Markdown, metadata JSON, or revision source. That source exclusion is
+historical evidence, not the current contract: the later whole-book integration
+finding requires the lightweight closed revision source and reopens the affected
+summary tests and implementation. Project creation at the fixed SHA serializes its
 seed through the same exact summary builder. Whole-set reorder retains its
 full-set validation and one transaction, then projects only ordered summaries.
 
@@ -36,7 +39,17 @@ three statements independent of project size; current Document uses one, below
 the two-statement ceiling. An anonymous syntactically valid current-Document
 read emits no SQL. Query plans use the project/document/current-revision keys,
 do not scan revision history, and require no temporary sort. Reorder tracing
-contains no body, metadata, or revision-source hydration.
+contains no body, metadata, or revision-source hydration at that fixed SHA.
+
+## Contract amendment after the fixed point
+
+Whole-book resume plans directly from ordered document summaries and must skip
+chapters whose current revision source is `ai-accepted`. The active contract now
+requires the closed `revision_source` scalar on every summary while continuing
+to exclude body and metadata JSON. This is workflow state, not body hydration.
+Exact-shape, query projection, reorder, OpenAPI/type, and whole-book planning
+tasks have been reopened and require new fixed-SHA evidence. No current pass is
+claimed from the superseded `012afb99` projection.
 
 | Validation surface | Result |
 |---|---|
@@ -57,7 +70,8 @@ all 1,251 tests.
 
 ## Current boundary
 
-Tasks 1 and 2 are locally evidenced on the implementation SHA. Frontend state,
-lazy Inspector ownership, browser workflows, independent fixed-SHA reviews,
-and required CI remain open. This change stays active and unarchived; local
-tests and generated artifacts are not release approval.
+Only the unaffected current-Document read/scope evidence remains applicable
+from the server implementation SHA. Summary source projection and its dependent
+server/frontend tasks, lazy Inspector ownership, browser workflows, independent
+fixed-SHA reviews, and required CI remain open. This change stays active and
+unarchived; local tests and generated artifacts are not release approval.

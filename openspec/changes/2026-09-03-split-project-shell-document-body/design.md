@@ -27,15 +27,20 @@ exactly:
 - `beat_ref`
 - `lore_status`
 - `current_revision_id`
+- `revision_source`
 - `word_count`
 - `created_at`
 - `updated_at`
 
-It omits `content_markdown`, `metadata`, and `revision_source`; those fields are
-absent, not nullable. `current_revision_id` is retained as the causal identity
-of the accepted body, and `word_count` remains a cheap navigation/editor size
-signal backed by the persisted revision count. Volume fields and project scalar
-fields keep their existing meanings and closed schemas.
+It omits `content_markdown` and `metadata`; those fields are absent, not
+nullable. `current_revision_id` is retained as the causal identity of the
+accepted body, `revision_source` is the required closed
+`author | ai-accepted | restore` workflow state, and `word_count` remains a
+cheap navigation/editor size signal backed by the persisted revision count.
+The whole-book planner needs source to resume from the first chapter that is not
+currently `ai-accepted`; removing it would require loading every chapter body
+merely to recover a scalar stored beside the pointer. Volume fields and project
+scalar fields keep their existing meanings and closed schemas.
 
 `PUT /api/projects/:projectId/documents/reorder` returns the same document
 summary projection after committing the whole-set order. Create and save
@@ -81,7 +86,8 @@ charged to the Studio projection:
   resolution and the one complete current-revision projection.
 
 The shell projection reads no `content_markdown` or revision `metadata_json`
-column. The current-Document projection selects one body's complete fields and
+column, but deliberately selects the current revision's closed source scalar.
+The current-Document projection selects one body's complete fields and
 never hydrates sibling documents. Public-route tracing must attribute every
 statement to `auth` or the named Studio projection, assert the fixed auth cost
 separately, and prove the combined request equals the sum of those buckets.
@@ -220,9 +226,14 @@ histories.
 
 The server and bundled frontend migrate atomically with the deliberate OpenAPI
 baseline and generated types. External clients that used project detail or
-reorder as a body collection must perform the explicit scoped document read.
+reorder as a body/metadata collection must perform the explicit scoped document
+read; clients using the required revision source keep that lightweight field.
 There is no compatibility flag or `include=body` escape hatch because either
 would preserve the unbounded default and duplicate response contracts.
+
+The project Settings UI currently has no matching PATCH surface. Adding one is
+an adjacent product change with its own authorization, validation, persistence,
+and error contract; it is not folded into this payload split.
 
 No schema migration is required. The change stays active until full local
 validation, TypeScript-backend Playwright workflows, independent fixed-SHA

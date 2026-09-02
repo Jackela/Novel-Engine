@@ -6,8 +6,9 @@ status: accepted
 
 Project open is split into a bounded structural shell and one explicit current
 Document. `GET /api/projects/:projectId` and project creation return project
-fields, ordered volumes, and document summaries; they do not return Markdown,
-revision metadata, or revision source for every document. A new owner-scoped
+fields, ordered volumes, and document summaries; they do not return Markdown or
+revision metadata JSON for every document. Summaries retain the closed current
+revision source required for resumable whole-book planning. A new owner-scoped
 `GET /api/projects/:projectId/documents/:documentId` returns the existing full
 Document projection for exactly one current revision.
 
@@ -39,10 +40,13 @@ authorization or historical body authority.
 ### Shell is structural authority
 
 The shell owns project scalars, volume structure, document identity/placement,
-current revision id, and exact current word count. Document summaries omit
-`content_markdown`, `metadata`, and `revision_source`. Whole-project reorder
-returns those summaries. The server uses a dedicated summary projection; it
-does not hydrate full Documents and then drop fields during serialization.
+current revision id, closed revision source, and exact current word count.
+Document summaries omit `content_markdown` and `metadata`. Whole-project reorder
+returns those summaries. `revision_source` is lightweight workflow state, not
+body hydration: the whole-book planner uses it to skip current `ai-accepted`
+chapters when resuming while retaining `author` and `restore` chapters. The
+server uses a dedicated summary projection; it does not hydrate full Documents
+and then drop fields during serialization.
 
 ### Current Document is an explicit scoped resource
 
@@ -58,7 +62,8 @@ projection: a valid session has a fixed two-statement authentication cost
 projections have their own at-most-three and at-most-two statement budgets.
 Every traced statement must belong to one of those buckets; body/metadata
 exclusion is asserted on the real shell projection rather than inferred from
-the serialized response.
+the serialized response, and the projection explicitly includes the closed
+source scalar.
 
 ### One active accepted body, separate from the Draft
 
@@ -126,11 +131,14 @@ recovery surfaces.
 - A changing Document cannot trigger an unbounded shell/body retry loop, and an
   initiating subscriber cannot suppress another consumer's result by unmounting.
 - External clients needing a body follow a document summary to the scoped
-  current-document resource; no `include=body` compatibility mode exists.
+  current-document resource; clients still receive the required revision
+  source, and no `include=body` compatibility mode exists.
 - No database migration, second backend, Python compatibility surface,
   background prefetch, offline Draft store, or inactive body cache is added.
 - Review pagination/N+1, Export pagination, and project-catalog pagination stay
   explicitly deferred and must not be described as solved by lazy loading.
+- The absent project Settings PATCH surface remains a separate adjacent change;
+  this payload split adds no settings mutation contract.
 
 ## Alternatives rejected
 

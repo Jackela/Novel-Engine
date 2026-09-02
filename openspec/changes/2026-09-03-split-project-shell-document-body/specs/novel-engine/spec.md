@@ -7,10 +7,13 @@ strict project shell containing the existing project scalar fields plus
 required ordered `documents` and `volumes`. Each document summary MUST contain
 only `id`, `project_id`, `kind`, `title`, `position`, nullable `volume_id`,
 nullable `beat_ref`, nullable closed `lore_status`, `current_revision_id`, exact
+closed server-assigned `revision_source` (`author`, `ai-accepted`, or `restore`),
 non-negative `word_count`, `created_at`, and `updated_at`. It MUST NOT contain
-`content_markdown`, `metadata`, or `revision_source`; omitted fields MUST NOT be
-published as null. Project creation MUST identify its seeded document through
-the same summary contract.
+`content_markdown` or `metadata`; omitted fields MUST NOT be published as null.
+The source scalar is required workflow state: whole-book resume MUST use it to
+skip a chapter whose current revision is `ai-accepted` without fetching that
+chapter's body. Project creation MUST identify its seeded document through the
+same summary contract.
 
 `GET /api/projects/:projectId/documents/:documentId` MUST return the existing
 strict complete current Document for exactly one project-scoped document,
@@ -23,16 +26,16 @@ the same 404 code, message, and envelope without disclosing which scope failed.
 
 Successful `PUT /api/projects/:projectId/documents/reorder` MUST return the same
 ordered document-summary shape and MUST NOT return any document body, metadata,
-or revision source. Its existing full-set validation and atomic position rules
-remain unchanged.
+or other revision payload. Its existing full-set validation and atomic position
+rules remain unchanged.
 
 #### Scenario: Project open returns navigation without manuscript bodies
 
 - **GIVEN** a project contains many Documents with large current Markdown and metadata
 - **WHEN** its project detail is requested
 - **THEN** the response contains the project scalars, ordered volumes, and ordered document summaries
-- **AND** no summary contains `content_markdown`, `metadata`, or `revision_source`
-- **AND** every summary carries the current revision id and exact word count
+- **AND** no summary contains `content_markdown` or `metadata`
+- **AND** every summary carries the current revision id, closed revision source, and exact word count
 
 #### Scenario: Project creation returns a bounded seed shell
 
@@ -68,7 +71,16 @@ remain unchanged.
 - **GIVEN** a project contains Documents A, B, and C with complete bodies
 - **WHEN** the Owner reorders them as C, A, B
 - **THEN** the response contains C, A, and B in their committed positions as summaries
-- **AND** no body, metadata object, or revision source is returned
+- **AND** every summary retains its required closed revision source
+- **AND** no body or metadata object is returned
+
+#### Scenario: Whole-book resume plans from summary source
+
+- **GIVEN** ordered chapter summaries currently contain `author`, `ai-accepted`, and `restore` revision sources
+- **WHEN** the author resumes whole-book generation
+- **THEN** the planner skips the `ai-accepted` chapter
+- **AND** retains the `author` and `restore` chapters in reading order
+- **AND** no chapter body is requested solely to determine that plan
 
 ### Requirement: Causally owned active Document loading
 

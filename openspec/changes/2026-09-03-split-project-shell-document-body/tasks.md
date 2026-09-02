@@ -2,43 +2,50 @@
 
 ## 1. Contract-first project resource coverage
 
-- [x] 1.1 Add failing payload/store/API tests for the exact strict project
+- [ ] 1.1 Add failing payload/store/API tests for the exact strict project
       shell, exact document-summary fields, required ordered volumes and
-      documents, and the absence—not nullability—of `content_markdown`,
-      `metadata`, and `revision_source` from detail and creation responses.
+      documents, required closed `revision_source`, and the absence—not
+      nullability—of `content_markdown` and `metadata` from detail and creation
+      responses.
 - [x] 1.2 Add failing current-document GET tests for exact complete fidelity,
       one selected body only, valid-shape unauthenticated 401 before lookup,
       and identical code/message/body 404 responses for missing,
       cross-project, and out-of-scope documents.
-- [x] 1.3 Add public-route execution-trace and query-plan failures with separate
+- [ ] 1.3 Add public-route execution-trace and query-plan failures with separate
       auth, shell-projection, and current-Document-projection buckets: prove a
       valid session has the fixed two-statement auth cost, shell reads no body/
-      metadata columns in at most three projection statements, current Document
+      metadata columns but selects closed revision source in at most three
+      projection statements, current Document
       reads at most one body in at most two projection statements, the combined
       trace is fully attributed, budgets stay independent of project size, and
       indexed scope/current-revision access avoids history scans.
-- [x] 1.4 Add failing reorder coverage proving validation and atomic whole-set
+- [ ] 1.4 Add failing reorder coverage proving validation and atomic whole-set
       positions are unchanged while its response contains summaries only and
-      performs no response-time body/metadata hydration.
+      performs no response-time body/metadata hydration while retaining the
+      required revision source.
+- [ ] 1.5 Add a whole-book resume failure proving summary
+      `revision_source` skips currently `ai-accepted` chapters, retains
+      `author`/`restore` chapters in reading order, and requests no sibling body
+      merely to construct the plan.
 
 ## 2. Server shell and current-document seams
 
-- [x] 2.1 Introduce strict `DocumentSummary` and `ProjectShell` payload schemas,
+- [ ] 2.1 Introduce strict `DocumentSummary` and `ProjectShell` payload schemas,
       builders, records, and store/application ports separate from complete
-      `DocumentWithCurrent`; keep persisted current-revision identity and exact
-      word count as summary authority.
-- [x] 2.2 Replace project detail and creation materialization with the bounded
+      `DocumentWithCurrent`; keep persisted current-revision identity, closed
+      source, and exact word count as summary authority.
+- [ ] 2.2 Replace project detail and creation materialization with the bounded
       ordered shell projection, preserving scalar settings/import fields,
       volume semantics, owner scope, and stable list ordering.
 - [x] 2.3 Add the authenticated scoped current-document application read and
       GET route at the existing document path; keep historical revision bodies
       private and normalize all scoped misses to the same existing 404.
-- [x] 2.4 Make reorder return ordered summaries without changing whole-set
+- [ ] 2.4 Make reorder return ordered summaries without changing whole-set
       request validation, mutation atomicity, revision identity, or position
       rules.
-- [x] 2.5 Deliberately regenerate the OpenAPI baseline and frontend types; prove
+- [ ] 2.5 Deliberately regenerate the OpenAPI baseline and frontend types; prove
       strict shell/current-document/reorder shapes, body exclusion, auth/error
-      responses, and zero schema/migration drift.
+      responses, required revision-source enum, and zero schema/migration drift.
 
 ## 3. Causally owned frontend project state
 
@@ -93,7 +100,8 @@
 
 - [ ] 5.1 Run project create/open, section fallback, document create/save/
       restore/accept/delete, lore/beat/volume placement, reorder, search,
-      conflict, reverse same-revision partial responses, body-revision churn,
+      conflict, whole-book stop/resume source planning, reverse same-revision
+      partial responses, body-revision churn,
       mismatch-time project/Document removal, subscriber fanout/released-owner
       suppression/last-release abort, resource-specific 401/404 recovery,
       discard-versus-late-commit Draft navigation, shell/current-document
@@ -108,5 +116,5 @@
       repeat until each fixed-SHA review is clean.
 - [ ] 5.4 Keep the change active until required CI is green, then merge it into
       the canonical specification and archive it. Keep Review pagination/N+1,
-      Export pagination, and project-catalog pagination as separately owned
-      later changes.
+      Export pagination, project-catalog pagination, and the missing project
+      Settings PATCH surface as separately owned later changes.
