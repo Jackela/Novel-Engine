@@ -34,9 +34,10 @@ import {
 } from "./proposal_landing.js";
 import {
   admitTextProvider,
+  proposalRevisionFromContext,
   proposalStepForOperation,
-  resolveProposalRevision,
 } from "./proposal_pipeline.js";
+import { proposalRetryStaleBaseOutcome } from "./proposal_retry_base_outcome.js";
 import type { ReviewService } from "./review_service.js";
 
 export interface JobRetryExecutorOptions {
@@ -202,23 +203,20 @@ export class JobRetryExecutor {
       throw new InvalidOperationError("Original AI job is missing its request context.");
     }
     const providerName = admitTextProvider(retry.provider);
-    const { document, revision } = resolveProposalRevision(
-      this.store,
-      scope,
-      retry.projectId,
-      retry.documentId,
-    );
+    const context = this.store.readProposalContext(scope, retry.projectId, retry.documentId);
+    const { revision } = proposalRevisionFromContext(context);
+    if (revision.id !== baseRevisionId) {
+      const outcome = proposalRetryStaleBaseOutcome(baseRevisionId, revision.id, this.now());
+      const failed = this.store.markJobOutcome(scope, retry.projectId, retry.id, outcome);
+      return jobPayload(failed);
+    }
     let provider: TextGenerationProvider | undefined;
     try {
       const task = buildProposalTask(
         step,
         retry.operation,
         instruction,
-        this.store,
-        scope,
-        retry.projectId,
-        document,
-        revision,
+        context,
         this.loreBudgetCharacters,
       );
       provider = this.providerFactory(providerName);
@@ -236,7 +234,7 @@ export class JobRetryExecutor {
             model: result.model,
             resultJson: dumpJson({
               proposal_markdown: outcome.proposal,
-              base_revision_id: revision.id,
+              base_revision_id: baseRevisionId,
               accepted_revision_id: null,
             }),
             error: null,
@@ -250,7 +248,7 @@ export class JobRetryExecutor {
             completionTokens: resolvedTokenCount(result.completionTokens, outcome.proposal),
             requestEvidenceJson: dumpJson({
               operation: retry.operation,
-              base_revision_id: revision.id,
+              base_revision_id: baseRevisionId,
             }),
           },
         }),
