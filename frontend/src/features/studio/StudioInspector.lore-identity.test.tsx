@@ -37,6 +37,7 @@ function inspectorModel(loreStatus: InspectorLoreStatusModel): StudioInspectorMo
       historyInitialized: true,
       hasOlderRevisions: false,
       isLoadingOlder: false,
+      isLoadingHistory: false,
       onLoadOlderRevisions: vi.fn(),
       onRestoreRevision: vi.fn(),
     },

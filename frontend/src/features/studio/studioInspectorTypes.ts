@@ -76,6 +76,7 @@ export interface InspectorHistoryModel {
   historyInitialized: boolean;
   hasOlderRevisions: boolean;
   isLoadingOlder: boolean;
+  isLoadingHistory: boolean;
   onLoadOlderRevisions: () => void | Promise<void>;
   onRestoreRevision: (revisionId: string) => void | Promise<void>;
 }

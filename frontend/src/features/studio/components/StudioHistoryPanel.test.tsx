@@ -50,6 +50,7 @@ describe("StudioHistoryPanel", () => {
         onRestoreRevision={vi.fn()}
         hasOlderRevisions={hasOlderRevisions}
         isLoadingOlder={isLoadingOlder}
+        isLoadingHistory={isLoadingOlder}
         historyInitialized
         onLoadOlderRevisions={() => load.promise}
       />
@@ -144,6 +145,24 @@ describe("StudioHistoryPanel", () => {
     });
 
     expect(document.activeElement).toBe(elsewhere);
+  });
+
+  it("visibly disables older traversal while a first-page refresh owns History", () => {
+    const container = harness.mount(
+      <StudioHistoryPanel
+        revisions={revisions}
+        loadedRevisionId="revision-current"
+        onRestoreRevision={vi.fn()}
+        hasOlderRevisions
+        historyInitialized
+        isLoadingHistory
+        onLoadOlderRevisions={vi.fn()}
+      />,
+    ).container;
+
+    const button = getByRole(container, "button", { name: "Refreshing revision history…" });
+    expect(button).toBeDisabled();
+    expect(button).toHaveAttribute("aria-busy", "true");
   });
 
   it("locks every restore action while one revision is restoring", () => {

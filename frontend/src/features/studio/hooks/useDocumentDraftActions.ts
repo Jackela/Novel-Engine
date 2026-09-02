@@ -41,7 +41,10 @@ interface UseDocumentDraftActionsArgs {
     editVersion: number,
   ) => Promise<StudioDocument | null>;
   readonly reconcileCommittedDocument: ReconcileCommittedDocument;
-  readonly refreshDocumentRevisions: (documentId: string) => Promise<void>;
+  readonly refreshDocumentRevisions: (
+    documentId: string,
+    expectedRevisionId: string,
+  ) => Promise<void>;
   readonly setCurrentSaveState: (nextSaveState: SaveState) => void;
   readonly setProject: Dispatch<SetStateAction<Project | null>>;
   readonly setError: Dispatch<SetStateAction<string | null>>;
@@ -160,7 +163,7 @@ export function useDocumentDraftActions({
       const latestDocument = await refreshLatestDocument(activeDocument.id);
       if (!latestDocument || !isCurrentOwner(owner)) return;
       applyDocument(latestDocument, "idle", true);
-      void refreshDocumentRevisions(latestDocument.id);
+      void refreshDocumentRevisions(latestDocument.id, latestDocument.current_revision_id);
       setError(null);
     } catch (reason) {
       if (isCurrentOwner(owner)) {
@@ -253,7 +256,7 @@ export function useDocumentDraftActions({
           successState: "idle",
         });
         if (outcome !== null) {
-          await refreshDocumentRevisions(activeDocument.id);
+          await refreshDocumentRevisions(activeDocument.id, restored.current_revision_id);
           if (outcome !== "conflict") setRestoreError(null);
         }
       } catch (reason) {

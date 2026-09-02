@@ -53,6 +53,23 @@ function renderMutableOwner(initialDocumentId: string) {
   };
 }
 
+function renderFixedOwner(documentId: string) {
+  let result: ReturnType<typeof useRevisionCache> | undefined;
+  const onError = vi.fn();
+  function Wrapper(): null {
+    result = useRevisionCache("project-1", documentId, onError);
+    return null;
+  }
+  const { container } = harness.mount(<Wrapper />);
+  return {
+    result: () => {
+      if (!result) throw new Error("Expected revision cache result.");
+      return result;
+    },
+    dispose: () => harness.unmount(container),
+  };
+}
+
 describe("useRevisionCache owner LRU", () => {
   it("evicts the least-recent inactive owner after eight cached owners", async () => {
     vi.mocked(api.revisions).mockImplementation((_projectId, documentId) =>
@@ -127,6 +144,34 @@ describe("useRevisionCache owner LRU", () => {
       await flushEffects();
     }
 
+    expect(revisionCacheStatsForTests()).toEqual({ cachedOwners: 8, requestingOwners: 0 });
+  });
+
+  it("retains a nine-owner active working set then converges after unmount", async () => {
+    vi.mocked(api.revisions).mockImplementation((_projectId, documentId) =>
+      Promise.resolve(resolvedPage(documentId)),
+    );
+    const owners = Array.from({ length: 9 }, (_, index) =>
+      renderFixedOwner(`document-active-${index + 1}`),
+    );
+    await flushEffects();
+    expect(revisionCacheStatsForTests().cachedOwners).toBe(9);
+
+    owners[0]?.dispose();
+    expect(revisionCacheStatsForTests().cachedOwners).toBe(8);
+    expect(owners[1]?.result().revisions).toHaveLength(1);
+  });
+
+  it("protects nine active requests and aborts them as the working set unmounts", () => {
+    vi.mocked(api.revisions).mockReturnValue(new Promise(() => undefined));
+    const owners = Array.from({ length: 9 }, (_, index) =>
+      renderFixedOwner(`document-pending-${index + 1}`),
+    );
+    expect(revisionCacheStatsForTests()).toEqual({ cachedOwners: 9, requestingOwners: 9 });
+
+    owners[0]?.dispose();
+    expect(revisionCacheStatsForTests()).toEqual({ cachedOwners: 8, requestingOwners: 8 });
+    for (const owner of owners.slice(1)) owner.dispose();
     expect(revisionCacheStatsForTests()).toEqual({ cachedOwners: 8, requestingOwners: 0 });
   });
 });

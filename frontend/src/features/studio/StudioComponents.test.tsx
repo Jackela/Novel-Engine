@@ -34,6 +34,7 @@ function buildInspectorModel(): StudioInspectorModel {
       historyInitialized: true,
       hasOlderRevisions: false,
       isLoadingOlder: false,
+      isLoadingHistory: false,
       onLoadOlderRevisions: vi.fn(),
       onRestoreRevision: vi.fn(),
     },

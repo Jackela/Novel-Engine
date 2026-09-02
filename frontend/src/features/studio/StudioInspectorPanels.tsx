@@ -115,6 +115,7 @@ export function StudioInspectorPanels({
           historyInitialized={model.history.historyInitialized}
           hasOlderRevisions={model.history.hasOlderRevisions}
           isLoadingOlder={model.history.isLoadingOlder}
+          isLoadingHistory={model.history.isLoadingHistory}
           onLoadOlderRevisions={model.history.onLoadOlderRevisions}
         />
       </div>

@@ -93,7 +93,7 @@ describe("useRevisionCache pagination", () => {
     const cache = renderCache();
     await flushEffects();
     await act(async () => cache.result().loadOlderRevisions());
-    await act(async () => cache.result().refreshDocumentRevisions("document-1"));
+    await act(async () => cache.result().refreshDocumentRevisions("document-1", revisionFour.id));
 
     expect(cache.result().revisions.map((item) => item.id)).toEqual([
       revisionFour.id,
@@ -112,7 +112,7 @@ describe("useRevisionCache pagination", () => {
       .mockResolvedValueOnce({ revisions: [], next_cursor: null });
     const cache = renderCache();
     await flushEffects();
-    await act(async () => cache.result().refreshDocumentRevisions("document-1"));
+    await act(async () => cache.result().refreshDocumentRevisions("document-1", fresh.id));
     expect(cache.result().revisions).toEqual([fresh]);
     await act(async () => cache.result().loadOlderRevisions());
     expect(vi.mocked(api.revisions).mock.calls[2]?.[2]).toEqual(
@@ -128,7 +128,7 @@ describe("useRevisionCache pagination", () => {
       .mockResolvedValueOnce({ revisions: [refreshed], next_cursor: null });
     const cache = renderCache();
     const activationInit = vi.mocked(api.revisions).mock.calls[0]?.[2];
-    await act(async () => cache.result().refreshDocumentRevisions("document-1"));
+    await act(async () => cache.result().refreshDocumentRevisions("document-1", refreshed.id));
     expect(activationInit?.signal?.aborted).toBe(true);
 
     await act(async () => {
@@ -165,5 +165,152 @@ describe("useRevisionCache pagination", () => {
 
     expect(cache.result().historyInitialized).toBe(false);
     expect(cache.result().hasOlderRevisions).toBe(false);
+  });
+
+  it("does not let an older mutation refresh satisfy a newer created revision", async () => {
+    const firstRefresh = deferred<RevisionPage>();
+    const secondRefresh = deferred<RevisionPage>();
+    const firstCreated = revision("revision-created-1", { revision_number: 4 });
+    const secondCreated = revision("revision-created-2", { revision_number: 5 });
+    vi.mocked(api.revisions)
+      .mockResolvedValueOnce({ revisions: [newest], next_cursor: null })
+      .mockReturnValueOnce(firstRefresh.promise)
+      .mockReturnValueOnce(secondRefresh.promise);
+    const cache = renderCache();
+    await flushEffects();
+
+    const first = cache.result().refreshDocumentRevisions("document-1", firstCreated.id);
+    const firstInit = vi.mocked(api.revisions).mock.calls[1]?.[2];
+    const second = cache.result().refreshDocumentRevisions("document-1", secondCreated.id);
+    expect(firstInit?.signal?.aborted).toBe(true);
+    expect(api.revisions).toHaveBeenCalledTimes(3);
+
+    await act(async () => {
+      firstRefresh.resolve({ revisions: [firstCreated, newest], next_cursor: null });
+      secondRefresh.resolve({
+        revisions: [secondCreated, firstCreated, newest],
+        next_cursor: null,
+      });
+      await first;
+      await second;
+    });
+    expect(cache.result().revisions[0]?.id).toBe(secondCreated.id);
+  });
+
+  it("coalesces refreshes for the same expected created revision", async () => {
+    const refresh = deferred<RevisionPage>();
+    const created = revision("revision-created", { revision_number: 4 });
+    vi.mocked(api.revisions)
+      .mockResolvedValueOnce({ revisions: [newest], next_cursor: null })
+      .mockReturnValueOnce(refresh.promise);
+    const cache = renderCache();
+    await flushEffects();
+
+    let first!: Promise<void>;
+    let duplicate!: Promise<void>;
+    act(() => {
+      first = cache.result().refreshDocumentRevisions("document-1", created.id);
+      duplicate = cache.result().refreshDocumentRevisions("document-1", created.id);
+    });
+    expect(duplicate).toBe(first);
+    expect(api.revisions).toHaveBeenCalledTimes(2);
+
+    await act(async () => {
+      refresh.resolve({ revisions: [created, newest], next_cursor: null });
+      await first;
+    });
+  });
+
+  it("uses the expected revision only as a causal key when it is outside the first page", async () => {
+    const pageHead = revision("revision-page-head", { revision_number: 100 });
+    vi.mocked(api.revisions)
+      .mockResolvedValueOnce({ revisions: [newest], next_cursor: null })
+      .mockResolvedValueOnce({ revisions: [pageHead], next_cursor: "next-page" });
+    const cache = renderCache();
+    await flushEffects();
+
+    await act(async () =>
+      cache.result().refreshDocumentRevisions("document-1", "revision-created-outside-page"),
+    );
+
+    expect(cache.result().revisions).toEqual([pageHead]);
+    expect(cache.result().hasOlderRevisions).toBe(true);
+    expect(cache.onError).not.toHaveBeenCalled();
+  });
+
+  it("queues an older action behind refresh and replays the committed cursor", async () => {
+    const refresh = deferred<RevisionPage>();
+    const created = revision("revision-created", { revision_number: 4 });
+    vi.mocked(api.revisions)
+      .mockResolvedValueOnce({ revisions: [newest], next_cursor: "older-cursor" })
+      .mockReturnValueOnce(refresh.promise)
+      .mockResolvedValueOnce({
+        revisions: [revision("revision-older", { revision_number: 2 })],
+        next_cursor: null,
+      });
+    const cache = renderCache();
+    await flushEffects();
+
+    let refreshing!: Promise<void>;
+    let older!: Promise<void>;
+    act(() => {
+      refreshing = cache.result().refreshDocumentRevisions("document-1", created.id);
+      older = cache.result().loadOlderRevisions();
+    });
+    expect(cache.result().isLoadingOlder).toBe(true);
+    expect(api.revisions).toHaveBeenCalledTimes(2);
+
+    await act(async () => {
+      refresh.resolve({ revisions: [created, newest], next_cursor: "fresh-cursor" });
+      await refreshing;
+      await older;
+    });
+
+    expect(vi.mocked(api.revisions).mock.calls[2]?.[2]).toEqual(
+      expect.objectContaining({ cursor: "older-cursor" }),
+    );
+    expect(cache.result().hasOlderRevisions).toBe(false);
+  });
+
+  it("keeps the original older promise pending when refresh supersedes and replays it", async () => {
+    const interruptedOlder = deferred<RevisionPage>();
+    const refresh = deferred<RevisionPage>();
+    const replayedOlder = deferred<RevisionPage>();
+    const created = revision("revision-created", { revision_number: 4 });
+    vi.mocked(api.revisions)
+      .mockResolvedValueOnce({ revisions: [newest], next_cursor: "older-cursor" })
+      .mockReturnValueOnce(interruptedOlder.promise)
+      .mockReturnValueOnce(refresh.promise)
+      .mockReturnValueOnce(replayedOlder.promise);
+    const cache = renderCache();
+    await flushEffects();
+
+    const older = cache.result().loadOlderRevisions();
+    let olderSettled = false;
+    void older.then(() => {
+      olderSettled = true;
+    });
+    const refreshing = cache.result().refreshDocumentRevisions("document-1", created.id);
+
+    await act(async () => {
+      interruptedOlder.resolve({ revisions: [], next_cursor: null });
+      await interruptedOlder.promise;
+    });
+    expect(olderSettled).toBe(false);
+
+    await act(async () => {
+      refresh.resolve({ revisions: [created, newest], next_cursor: "fresh-cursor" });
+      await refreshing;
+    });
+    expect(vi.mocked(api.revisions).mock.calls[3]?.[2]).toEqual(
+      expect.objectContaining({ cursor: "older-cursor" }),
+    );
+    expect(olderSettled).toBe(false);
+
+    await act(async () => {
+      replayedOlder.resolve({ revisions: [revision("revision-older")], next_cursor: null });
+      await older;
+    });
+    expect(olderSettled).toBe(true);
   });
 });

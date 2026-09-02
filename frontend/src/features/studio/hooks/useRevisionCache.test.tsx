@@ -130,7 +130,7 @@ describe("useRevisionCache", () => {
     const firstInit = vi.mocked(api.revisions).mock.calls[0]?.[2];
 
     await act(async () => {
-      await cache.result().hook.refreshDocumentRevisions("document-1");
+      await cache.result().hook.refreshDocumentRevisions("document-1", revisionOne.id);
     });
     rejectFirst?.(new DOMException("cancelled", "AbortError"));
     await flushEffects();
@@ -167,7 +167,7 @@ describe("useRevisionCache", () => {
     const cache = renderCache();
 
     let settled = false;
-    const refresh = cache.result().hook.refreshDocumentRevisions("document-1");
+    const refresh = cache.result().hook.refreshDocumentRevisions("document-1", revisionOne.id);
     refresh.then(() => {
       settled = true;
     });

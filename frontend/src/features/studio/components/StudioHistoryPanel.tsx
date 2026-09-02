@@ -12,6 +12,7 @@ interface StudioHistoryPanelProps {
   historyInitialized?: boolean;
   hasOlderRevisions?: boolean;
   isLoadingOlder?: boolean;
+  isLoadingHistory?: boolean;
   onLoadOlderRevisions?: () => void | Promise<void>;
 }
 
@@ -23,9 +24,10 @@ export function StudioHistoryPanel({
   historyInitialized = false,
   hasOlderRevisions = false,
   isLoadingOlder = false,
+  isLoadingHistory = false,
   onLoadOlderRevisions,
 }: StudioHistoryPanelProps) {
-  const isBusy = restoringRevisionId !== null || isLoadingOlder;
+  const isBusy = restoringRevisionId !== null || isLoadingHistory;
   const runWithFocusRestoration = useCommandFocusRestoration(isBusy);
   const headingRef = useRef<HTMLHeadingElement>(null);
   const restoreButtonRefs = useRef(new Map<string, HTMLButtonElement>());
@@ -101,7 +103,7 @@ export function StudioHistoryPanel({
       </div>
       {(hasOlderRevisions || isLoadingOlder) && onLoadOlderRevisions ? (
         <button
-          aria-busy={isLoadingOlder || undefined}
+          aria-busy={isLoadingHistory || undefined}
           className="ui-command studio-inspector__load-older"
           disabled={isBusy}
           onClick={(event) => {
@@ -110,9 +112,17 @@ export function StudioHistoryPanel({
           }}
           type="button"
         >
-          {isLoadingOlder ? "Loading older revisions…" : "Load older revisions"}
+          {isLoadingOlder
+            ? "Loading older revisions…"
+            : isLoadingHistory
+              ? "Refreshing revision history…"
+              : "Load older revisions"}
         </button>
-      ) : historyInitialized && !isLoadingOlder ? (
+      ) : isLoadingHistory ? (
+        <p className="studio-inspector__history-status" role="status">
+          Refreshing revision history…
+        </p>
+      ) : historyInitialized ? (
         <p className="studio-inspector__history-status" role="status">
           All revisions loaded
         </p>

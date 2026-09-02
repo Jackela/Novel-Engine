@@ -93,6 +93,7 @@ export function useDocumentDraft(
     historyInitialized,
     hasOlderRevisions,
     isLoadingOlder,
+    isLoadingHistory,
     refreshDocumentRevisions,
     loadOlderRevisions,
   } = useRevisionCache(
@@ -242,7 +243,7 @@ export function useDocumentDraft(
         titleDraft: title,
       });
       if (outcome !== null) {
-        void refreshDocumentRevisions(document.id);
+        void refreshDocumentRevisions(document.id, saved.current_revision_id);
         if (outcome !== "conflict") setError(null);
       }
       return saved;
@@ -323,6 +324,7 @@ export function useDocumentDraft(
     historyInitialized,
     hasOlderRevisions,
     isLoadingOlder,
+    isLoadingHistory,
     loadOlderRevisions,
     captureAcceptance,
     restoreRevision,

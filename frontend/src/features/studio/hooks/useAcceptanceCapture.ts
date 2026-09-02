@@ -16,14 +16,14 @@ export function useAcceptanceCapture(
   ownerRef: MutableRefObject<DocumentDraftOwner | null>,
   draftRef: MutableRefObject<DraftSnapshot>,
   reconcile: ReconcileCommittedDocument,
-  refreshRevisions: (documentId: string) => Promise<void>,
+  refreshRevisions: (documentId: string, expectedRevisionId: string) => Promise<void>,
   setError: Dispatch<SetStateAction<string | null>>,
 ): (documentId: string) => ((document: StudioDocument) => void) | undefined {
   return useCallback(
     (documentId: string) =>
       ownerRef.current === owner && owner.documentId === documentId
         ? captureCommittedDraftReconciler(draftRef.current, reconcile, (document, outcome) => {
-            void refreshRevisions(document.id);
+            void refreshRevisions(document.id, document.current_revision_id);
             if (outcome !== "conflict") setError(null);
           })
         : undefined,
