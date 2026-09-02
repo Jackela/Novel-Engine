@@ -7,6 +7,7 @@ import {
   anonymousCall,
   buildStudioApp,
   call,
+  listRevisions,
   ownerJar,
   seedDocument,
   seedProject,
@@ -246,6 +247,11 @@ describe("revision pagination HTTP contract", () => {
       expect(revisionNumbers).toHaveLength(101);
       expect(new Set(revisionNumbers).size).toBe(101);
       expect(revisionNumbers).toEqual(Array.from({ length: 101 }, (_, index) => 101 - index));
+
+      const completeHelperHistory = await listRevisions(app, owner, project.id, document.id);
+      expect(completeHelperHistory.map((revision) => revision.revision_number)).toEqual(
+        Array.from({ length: 101 }, (_, index) => 101 - index),
+      );
     } finally {
       await app.close();
     }

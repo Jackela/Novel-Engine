@@ -173,22 +173,7 @@ export async function listDocuments(
 ): Promise<DocumentPayload[]> {
   return (await getProject(app, jar, projectId)).documents;
 }
-
-export async function listRevisions(
-  app: FastifyInstance,
-  jar: CookieJar,
-  projectId: string,
-  documentId: string,
-): Promise<RevisionPayload[]> {
-  const response = await call(
-    app,
-    jar,
-    "GET",
-    `/api/projects/${projectId}/documents/${documentId}/revisions`,
-  );
-  expect(response.statusCode, response.body).toBe(200);
-  return response.json().revisions;
-}
+export { listRevisions } from "./revision_history_test_helper.js";
 
 export interface JobEventPayload {
   id: string;

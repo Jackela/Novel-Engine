@@ -1,27 +1,12 @@
-import { TextDecoder } from "node:util";
 import {
-  AppError,
-  ERROR_CODES,
-  ERROR_HTTP_STATUS,
-} from "../../../../shared/interface/http/error_envelope.js";
+  decodeCanonicalCursor,
+  encodeCanonicalCursor,
+  invalidCursor,
+} from "../../../../shared/interface/http/canonical_cursor.js";
 import type { RevisionPageCursor } from "../../application/ports/studio_store.js";
 
 const CURSOR_VERSION = 1;
-const CURSOR_PATTERN = /^[A-Za-z0-9_-]+$/;
-const CURSOR_MAX_LENGTH = 1024;
 const REVISION_ID_MAX_LENGTH = 128;
-const utf8Decoder = new TextDecoder("utf-8", { fatal: true });
-
-function invalidCursor(): never {
-  throw new AppError({
-    statusCode: ERROR_HTTP_STATUS[ERROR_CODES.VALIDATION_ERROR],
-    code: ERROR_CODES.VALIDATION_ERROR,
-    message: "Request validation failed.",
-    details: {
-      errors: [{ field: "cursor", message: "value is invalid", type: "invalid" }],
-    },
-  });
-}
 
 function isCursorTuple(value: unknown): value is [1, string, string, number, string] {
   if (!Array.isArray(value) || value.length !== 5) return false;
@@ -44,25 +29,11 @@ export function decodeRevisionCursor(
   routeProjectId: string,
   routeDocumentId: string,
 ): RevisionPageCursor {
-  if (token.length < 1 || token.length > CURSOR_MAX_LENGTH || !CURSOR_PATTERN.test(token)) {
-    return invalidCursor();
-  }
-  let decoded: unknown;
-  try {
-    const bytes = Buffer.from(token, "base64url");
-    if (bytes.toString("base64url") !== token) return invalidCursor();
-    decoded = JSON.parse(utf8Decoder.decode(bytes));
-  } catch {
-    return invalidCursor();
-  }
+  const decoded = decodeCanonicalCursor(token);
   if (!isCursorTuple(decoded) || decoded[1] !== routeProjectId || decoded[2] !== routeDocumentId) {
     return invalidCursor();
   }
-  const position = { revisionNumber: decoded[3], id: decoded[4] };
-  if (encodeRevisionCursor(routeProjectId, routeDocumentId, position) !== token) {
-    return invalidCursor();
-  }
-  return position;
+  return { revisionNumber: decoded[3], id: decoded[4] };
 }
 
 /** Encode a trusted application position into the versioned wire token. */
@@ -80,14 +51,11 @@ export function encodeRevisionCursor(
   ) {
     throw new Error("Cannot encode an invalid revision cursor position.");
   }
-  return Buffer.from(
-    JSON.stringify([
-      CURSOR_VERSION,
-      routeProjectId,
-      routeDocumentId,
-      position.revisionNumber,
-      position.id,
-    ]),
-    "utf8",
-  ).toString("base64url");
+  return encodeCanonicalCursor([
+    CURSOR_VERSION,
+    routeProjectId,
+    routeDocumentId,
+    position.revisionNumber,
+    position.id,
+  ]);
 }

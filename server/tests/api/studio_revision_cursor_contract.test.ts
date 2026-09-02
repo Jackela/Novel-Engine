@@ -9,7 +9,7 @@ describe("revision pagination cursor contract", () => {
   it("round-trips only canonical project-and-document-bound cursor positions", () => {
     const position = { revisionNumber: 27, id: "revision-a" };
     const token = encodeRevisionCursor("project-a", "document-a", position);
-    expect(token).not.toBeNull();
+    expect(token).toBe("WzEsInByb2plY3QtYSIsImRvY3VtZW50LWEiLDI3LCJyZXZpc2lvbi1hIl0");
     expect(decodeRevisionCursor(token ?? "", "project-a", "document-a")).toEqual(position);
 
     const encoded = (json: string) => Buffer.from(json, "utf8").toString("base64url");

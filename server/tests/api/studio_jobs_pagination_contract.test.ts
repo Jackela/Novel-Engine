@@ -77,7 +77,7 @@ describe("jobs pagination HTTP contract", () => {
 
   it("round-trips only canonical project-bound cursor positions", () => {
     const token = encodeJobCursor("project-a", { createdAtMs: 1_725_000_000_123, id: "job-a" });
-    expect(token).not.toBeNull();
+    expect(token).toBe("WzEsInByb2plY3QtYSIsMTcyNTAwMDAwMDEyMywiam9iLWEiXQ");
     expect(decodeJobCursor(token ?? "", "project-a")).toEqual({
       createdAtMs: 1_725_000_000_123,
       id: "job-a",
