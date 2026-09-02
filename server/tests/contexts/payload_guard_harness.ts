@@ -38,6 +38,7 @@ export function revisionFixture(): RevisionRecord {
     contentMarkdown: "# Chapter One\n\nThe harbour wakes.",
     metadataJson: JSON.stringify({ pov: "Ada" }),
     source: "author",
+    wordCount: 5,
     createdAt: NOW,
   };
 }

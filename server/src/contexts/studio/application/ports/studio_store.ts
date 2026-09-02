@@ -53,6 +53,8 @@ export interface RevisionRecord {
   contentMarkdown: string;
   metadataJson: string;
   source: string;
+  /** Nullable only while startup reconciliation upgrades an earlier database. */
+  wordCount: number | null;
   createdAt: Date;
 }
 

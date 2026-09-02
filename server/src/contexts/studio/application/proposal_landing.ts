@@ -5,9 +5,10 @@ import {
   type TextGenerationTask,
   type TextProviderName,
 } from "../../../contexts/ai/application/ports/text_generation.js";
+import { revisionWordCount } from "../domain/revision_word_count.js";
 import { BoundedPromptWriter } from "./generation_capacity.js";
 import { loreEntriesFromDocuments } from "./lorebook.js";
-import { dumpJson, wordCount } from "./payloads.js";
+import { dumpJson } from "./payloads.js";
 import type { ProposalContextSource } from "./ports/proposal_context_store.js";
 import type { JobRecord, ProjectScope, StudioStore } from "./ports/studio_store.js";
 import {
@@ -173,7 +174,7 @@ export function validatedProposalOrThrow(result: {
 
 /** Invalid or absent provider usage falls back to the shared exact word count. */
 export function resolvedTokenCount(reported: number | null, text: string): number {
-  return isSafeUsageToken(reported) ? reported : wordCount(text);
+  return isSafeUsageToken(reported) ? reported : revisionWordCount(text);
 }
 
 /** Fields every proposal job row shares before its terminal status is known. */

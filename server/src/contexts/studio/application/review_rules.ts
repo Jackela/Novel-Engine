@@ -1,4 +1,4 @@
-import { wordCount } from "./payloads.js";
+import { revisionWordCount } from "../domain/revision_word_count.js";
 import type { EditorialIssueInput, ReviewSourceDocument } from "./ports/studio_store.js";
 
 /**
@@ -94,7 +94,7 @@ export function chapterWordCounts(
     .map((document) => ({
       id: document.documentId,
       title: document.title,
-      words: wordCount(document.contentMarkdown),
+      words: revisionWordCount(document.contentMarkdown),
       empty: document.contentMarkdown.trim() === "",
     }));
 }

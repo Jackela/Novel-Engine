@@ -100,6 +100,7 @@ export const documentRevisions = sqliteTable(
     contentMarkdown: text("content_markdown").notNull().default(""),
     metadataJson: text("metadata_json").notNull().default("{}"),
     source: text("source").notNull().default("author"),
+    wordCount: integer("word_count"),
     createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
   },
   (table) => [

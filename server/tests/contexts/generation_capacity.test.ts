@@ -27,6 +27,7 @@ function proposalFixture(contentMarkdown: string): {
     contentMarkdown,
     metadataJson: "{}",
     source: "author",
+    wordCount: 0,
     createdAt: now,
   };
   const document: DocumentWithCurrent = {

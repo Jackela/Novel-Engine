@@ -1,5 +1,6 @@
 import { InvalidOperationError } from "../../../shared/domain/exceptions.js";
 import type { DocumentKind, LoreStatus, RevisionSource } from "../domain/kinds.js";
+import { assertStoredRevisionWordCount } from "../domain/revision_word_count.js";
 import { asLoreStatus, isLoreEntryKind } from "./lorebook.js";
 import type { ChapterBeatPayload } from "./payload_schemas/beat.js";
 import type { DocumentPayload, MatchResultPayload } from "./payload_schemas/document.js";
@@ -34,10 +35,7 @@ import type { EditorialAssessment } from "./review_service.js";
  * schema are one shape by construction (#433, #440).
  */
 
-/** Mirror of the Python authority's \b[\w'-]+\b word counter (UNICODE-aware). */
-export function wordCount(markdown: string): number {
-  return markdown.match(/[\p{L}\p{N}_'-]+/gu)?.length ?? 0;
-}
+export { revisionWordCount as wordCount } from "../domain/revision_word_count.js";
 
 /** Parse stored JSON defensively: unreadable payloads collapse to `{}`. */
 export function safeLoadJson(value: string): Record<string, unknown> {
@@ -116,7 +114,7 @@ export function documentPayload(document: DocumentWithCurrent): DocumentPayload 
     content_markdown: revision.contentMarkdown,
     metadata: safeLoadJson(revision.metadataJson),
     revision_source: revision.source as RevisionSource,
-    word_count: wordCount(revision.contentMarkdown),
+    word_count: assertStoredRevisionWordCount(revision.wordCount),
     created_at: iso(document.createdAt),
     updated_at: iso(document.updatedAt),
   };
@@ -152,7 +150,7 @@ export function revisionPayload(revision: RevisionRecord): RevisionPayload {
     content_markdown: revision.contentMarkdown,
     metadata: safeLoadJson(revision.metadataJson),
     source: revision.source as RevisionSource,
-    word_count: wordCount(revision.contentMarkdown),
+    word_count: assertStoredRevisionWordCount(revision.wordCount),
     created_at: iso(revision.createdAt),
   };
 }

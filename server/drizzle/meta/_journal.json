@@ -134,6 +134,13 @@
       "when": 1788362169093,
       "tag": "0018_enforce-safe-usage-tokens",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "6",
+      "when": 1788377784428,
+      "tag": "0019_persist-revision-word-count",
+      "breakpoints": true
     }
   ]
 }

@@ -4,6 +4,7 @@ import { and, asc, eq } from "drizzle-orm";
 import type { StudioSqliteDatabase } from "../../../../shared/infrastructure/db/connection.js";
 import type { DocumentWithCurrent, ProjectScope } from "../../application/ports/studio_store.js";
 import { NotFoundError } from "../../domain/exceptions.js";
+import { revisionWordCount } from "../../domain/revision_word_count.js";
 import { documentRevisions, documents, projects, volumes } from "./schema.js";
 
 export type ProjectRow = typeof projects.$inferSelect;
@@ -190,6 +191,7 @@ export function insertRevision(
     contentMarkdown: input.contentMarkdown,
     metadataJson: input.metadataJson,
     source: input.source,
+    wordCount: revisionWordCount(input.contentMarkdown),
     createdAt: input.now,
   };
   tx.insert(documentRevisions).values(revision).run();

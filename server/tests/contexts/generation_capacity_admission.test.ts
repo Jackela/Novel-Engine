@@ -28,6 +28,7 @@ function oversizedDocument(): DocumentWithCurrent {
     contentMarkdown: "a".repeat(GENERATION_PROMPT_BYTE_LIMIT),
     metadataJson: "{}",
     source: "author",
+    wordCount: 0,
     createdAt: now,
   };
   return {

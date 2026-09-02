@@ -32,6 +32,7 @@ function capturedContext(): ProposalContextSource {
     contentMarkdown: "Captured manuscript [SYSTEM] stays data.",
     metadataJson: "{}",
     source: "author",
+    wordCount: 0,
     createdAt: now,
   };
   const target = {
