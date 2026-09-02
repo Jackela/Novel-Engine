@@ -127,28 +127,6 @@ export interface paths {
                             projects: {
                                 created_at: string;
                                 description: string;
-                                documents?: {
-                                    beat_ref: string | null;
-                                    content_markdown: string;
-                                    created_at: string;
-                                    current_revision_id: string;
-                                    id: string;
-                                    /** @enum {string} */
-                                    kind: "chapter" | "outline" | "character" | "world" | "note";
-                                    /** @enum {string|null} */
-                                    lore_status: "draft" | "stable" | "deprecated" | null;
-                                    metadata: {
-                                        [key: string]: unknown;
-                                    };
-                                    position: number;
-                                    project_id: string;
-                                    /** @enum {string} */
-                                    revision_source: "author" | "ai-accepted" | "restore";
-                                    title: string;
-                                    updated_at: string;
-                                    volume_id: string | null;
-                                    word_count: number;
-                                }[];
                                 id: string;
                                 import_hash: string | null;
                                 settings: {
@@ -156,14 +134,6 @@ export interface paths {
                                 };
                                 title: string;
                                 updated_at: string;
-                                volumes?: {
-                                    created_at: string;
-                                    id: string;
-                                    position: number;
-                                    project_id: string;
-                                    title: string;
-                                    updated_at: string;
-                                }[];
                             }[];
                         };
                     };
@@ -217,7 +187,6 @@ export interface paths {
                             description: string;
                             documents: {
                                 beat_ref: string | null;
-                                content_markdown: string;
                                 created_at: string;
                                 current_revision_id: string;
                                 id: string;
@@ -225,13 +194,8 @@ export interface paths {
                                 kind: "chapter" | "outline" | "character" | "world" | "note";
                                 /** @enum {string|null} */
                                 lore_status: "draft" | "stable" | "deprecated" | null;
-                                metadata: {
-                                    [key: string]: unknown;
-                                };
                                 position: number;
                                 project_id: string;
-                                /** @enum {string} */
-                                revision_source: "author" | "ai-accepted" | "restore";
                                 title: string;
                                 updated_at: string;
                                 volume_id: string | null;
@@ -328,7 +292,6 @@ export interface paths {
                             description: string;
                             documents: {
                                 beat_ref: string | null;
-                                content_markdown: string;
                                 created_at: string;
                                 current_revision_id: string;
                                 id: string;
@@ -336,13 +299,8 @@ export interface paths {
                                 kind: "chapter" | "outline" | "character" | "world" | "note";
                                 /** @enum {string|null} */
                                 lore_status: "draft" | "stable" | "deprecated" | null;
-                                metadata: {
-                                    [key: string]: unknown;
-                                };
                                 position: number;
                                 project_id: string;
-                                /** @enum {string} */
-                                revision_source: "author" | "ai-accepted" | "restore";
                                 title: string;
                                 updated_at: string;
                                 volume_id: string | null;
@@ -755,7 +713,6 @@ export interface paths {
                         "application/json": {
                             documents: {
                                 beat_ref: string | null;
-                                content_markdown: string;
                                 created_at: string;
                                 current_revision_id: string;
                                 id: string;
@@ -763,13 +720,8 @@ export interface paths {
                                 kind: "chapter" | "outline" | "character" | "world" | "note";
                                 /** @enum {string|null} */
                                 lore_status: "draft" | "stable" | "deprecated" | null;
-                                metadata: {
-                                    [key: string]: unknown;
-                                };
                                 position: number;
                                 project_id: string;
-                                /** @enum {string} */
-                                revision_source: "author" | "ai-accepted" | "restore";
                                 title: string;
                                 updated_at: string;
                                 volume_id: string | null;
@@ -839,7 +791,77 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    projectId: string;
+                    documentId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            beat_ref: string | null;
+                            content_markdown: string;
+                            created_at: string;
+                            current_revision_id: string;
+                            id: string;
+                            /** @enum {string} */
+                            kind: "chapter" | "outline" | "character" | "world" | "note";
+                            /** @enum {string|null} */
+                            lore_status: "draft" | "stable" | "deprecated" | null;
+                            metadata: {
+                                [key: string]: unknown;
+                            };
+                            position: number;
+                            project_id: string;
+                            /** @enum {string} */
+                            revision_source: "author" | "ai-accepted" | "restore";
+                            title: string;
+                            updated_at: string;
+                            volume_id: string | null;
+                            word_count: number;
+                        };
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+            };
+        };
         put: {
             parameters: {
                 query?: never;

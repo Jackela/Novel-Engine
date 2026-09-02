@@ -1,5 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import { openReconciledStudioDatabase } from "../../contexts/studio/infrastructure/reconciled_studio_database.js";
+import type { StudioQueryLogger } from "../../shared/infrastructure/db/connection.js";
 import type { StudioDatabase } from "../../shared/infrastructure/db/startup.js";
 
 /** Persistence handles bound to a configured data directory. */
@@ -12,8 +13,10 @@ export interface PersistenceHandles {
 export async function openPersistence(
   app: FastifyInstance,
   databasePath: string,
+  queryLogger?: StudioQueryLogger,
 ): Promise<PersistenceHandles> {
   const db = await openReconciledStudioDatabase(databasePath, {
+    queryLogger,
     onReconciled: (report) => {
       app.log.info(
         { export_publication_recovery: true, ...report },

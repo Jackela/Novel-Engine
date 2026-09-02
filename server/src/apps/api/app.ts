@@ -22,7 +22,10 @@ import type { HealthProbe } from "../../shared/application/ports/health.js";
 import { DEFAULT_CORS_ORIGINS } from "../../shared/domain/cors_contract.js";
 import { assertStartupGuards } from "../../shared/infrastructure/config/server_config.js";
 import { DrizzleAuthStore } from "../../shared/infrastructure/db/auth_store.js";
-import type { StudioSqliteDatabase } from "../../shared/infrastructure/db/connection.js";
+import type {
+  StudioQueryLogger,
+  StudioSqliteDatabase,
+} from "../../shared/infrastructure/db/connection.js";
 import { sqliteHealthProbe } from "../../shared/infrastructure/db/sqlite_health_probe.js";
 import type { StudioDatabase } from "../../shared/infrastructure/db/startup.js";
 import { clientIdentity } from "../../shared/infrastructure/rate_limit/client_identity.js";
@@ -77,6 +80,8 @@ export interface AppOptions extends OperationCapacityAppOptions {
    * database-free (walking skeleton).
    */
   databasePath?: string | undefined;
+  /** Optional SQL statement observer for integration evidence and diagnostics. */
+  databaseQueryLogger?: StudioQueryLogger | undefined;
   /**
    * HMAC key for session token digests. Unset outside the production guards:
    * a fresh random value per start deliberately invalidates all sessions at
@@ -162,7 +167,9 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
     // single check (audit hard-10: the former `studioDb === undefined ||
     // dataDirectory === undefined` clause was unreachable).
     const persistence =
-      databasePath === undefined ? undefined : await openPersistence(app, databasePath);
+      databasePath === undefined
+        ? undefined
+        : await openPersistence(app, databasePath, options.databaseQueryLogger);
     if (persistence !== undefined) {
       app.decorate("studioDb", persistence.db);
     }

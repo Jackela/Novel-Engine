@@ -2,7 +2,11 @@ import { randomUUID } from "node:crypto";
 import { asc, desc, eq } from "drizzle-orm";
 import { InvalidOperationError } from "../../../shared/domain/exceptions.js";
 import type { StudioSqliteDatabase } from "../../../shared/infrastructure/db/connection.js";
-import type { DocumentWithCurrent, ProjectScope } from "../application/ports/studio_store.js";
+import type {
+  DocumentSummaryRecord,
+  DocumentWithCurrent,
+  ProjectScope,
+} from "../application/ports/studio_store.js";
 import type {
   AddVolumeInput,
   AlterVolumeInput,
@@ -13,7 +17,7 @@ import type {
 import { DuplicateVolumeError, NotFoundError } from "../domain/exceptions.js";
 import { documents, projects, volumes } from "./db/schema.js";
 import {
-  documentsWithCurrent,
+  documentSummaries,
   documentWithCurrent,
   isUniqueViolation,
   scopedDocument,
@@ -192,7 +196,7 @@ export class VolumeStorePart implements StudioVolumeStore {
     projectId: string,
     documentIds: string[],
     now: Date,
-  ): DocumentWithCurrent[] {
+  ): DocumentSummaryRecord[] {
     return this.db.transaction((tx) => {
       const project = scopedProject(tx, scope, projectId);
       const rows = tx
@@ -201,7 +205,7 @@ export class VolumeStorePart implements StudioVolumeStore {
         .where(eq(documents.projectId, project.id))
         .all();
       projectOrderOntoVolumes(tx, rows, documentIds, project.id, now);
-      return documentsWithCurrent(tx, project.id);
+      return documentSummaries(tx, project.id);
     });
   }
 }

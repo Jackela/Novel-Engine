@@ -17,8 +17,8 @@ import {
 import {
   matchListResponseSchema,
   operationInFlightSchema,
-  projectDetailResponseSchema,
   projectListResponseSchema,
+  projectShellResponseSchema,
 } from "./studio_schemas.js";
 
 export interface StudioRoutesOptions {
@@ -70,7 +70,7 @@ export const projectRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fas
       schema: {
         body: projectCreateSchema,
         response: {
-          201: projectDetailResponseSchema,
+          201: projectShellResponseSchema,
           401: errorEnvelopeResponse,
           403: errorEnvelopeResponse,
           422: errorEnvelopeResponse,
@@ -97,7 +97,7 @@ export const projectRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fas
       schema: {
         params: projectIdParams,
         response: {
-          200: projectDetailResponseSchema,
+          200: projectShellResponseSchema,
           401: errorEnvelopeResponse,
           404: errorEnvelopeResponse,
           503: errorEnvelopeResponse,
@@ -107,7 +107,7 @@ export const projectRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fas
     async (request) =>
       withStudioErrors(
         () =>
-          requireServices(options).projects.projectDetail(
+          requireServices(options).projects.projectShell(
             requirePrincipal(request),
             request.params.projectId,
           ).payload,

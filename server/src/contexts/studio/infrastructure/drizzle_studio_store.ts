@@ -10,6 +10,7 @@ import type {
   ClaimJobRetryInput,
   CompleteJobWithUsageInput,
   DocumentMatchRecord,
+  DocumentSummaryRecord,
   DocumentWithCurrent,
   EditorialAssessmentRecord,
   EvaluatedReview,
@@ -104,6 +105,14 @@ export class DrizzleStudioStore extends ProjectStorePart implements StudioStore 
     return this.documentStore.findDocument(scope, projectId, documentId);
   }
 
+  readCurrentDocument(
+    scope: ProjectScope,
+    projectId: string,
+    documentId: string,
+  ): DocumentWithCurrent {
+    return this.documentStore.readCurrentDocument(scope, projectId, documentId);
+  }
+
   readProposalContext(
     scope: ProjectScope,
     projectId: string,
@@ -165,7 +174,7 @@ export class DrizzleStudioStore extends ProjectStorePart implements StudioStore 
     projectId: string,
     documentIds: string[],
     now: Date,
-  ): DocumentWithCurrent[] {
+  ): DocumentSummaryRecord[] {
     // The reorder projection is a reading-order behavior owned by the
     // volume part (ADR-0005); it mutates only document positions.
     return this.volumeStore.renumberDocuments(scope, projectId, documentIds, now);

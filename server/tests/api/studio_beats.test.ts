@@ -15,6 +15,7 @@ import {
   type CookieJar,
   call,
   type DocumentPayload,
+  getDocument,
   listDocuments,
   ownerJar,
   seedDocument,
@@ -78,7 +79,11 @@ async function seedChapterWithOutline(
   });
   const chapter = project.documents[0];
   if (chapter === undefined) throw new Error("expected seeded document");
-  return { projectId: project.id, chapter: chapter as DocumentPayload, outline };
+  return {
+    projectId: project.id,
+    chapter: await getDocument(app, jar, project.id, chapter.id),
+    outline,
+  };
 }
 
 describe("chapter beat association (#313)", () => {

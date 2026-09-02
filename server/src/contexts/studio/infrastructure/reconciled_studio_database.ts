@@ -1,3 +1,4 @@
+import type { StudioQueryLogger } from "../../../shared/infrastructure/db/connection.js";
 import {
   openStudioDatabase,
   type StudioDatabase,
@@ -12,6 +13,7 @@ export interface ReconciledStudioDatabaseOptions {
   readonly onReconciled?:
     | ((report: ExportPublicationRecoveryReport) => Promise<void> | void)
     | undefined;
+  readonly queryLogger?: StudioQueryLogger | undefined;
 }
 
 /** Production/maintenance opener: migrations, data reconciliation, then job recovery. */
@@ -20,6 +22,7 @@ export function openReconciledStudioDatabase(
   options: ReconciledStudioDatabaseOptions = {},
 ): Promise<StudioDatabase> {
   return openStudioDatabase(databasePath, {
+    queryLogger: options.queryLogger,
     beforeJobRecovery: async (database, dataDirectory) => {
       reconcileRevisionWordCounts(database);
       const report = await reconcileExportPublications(database, dataDirectory);

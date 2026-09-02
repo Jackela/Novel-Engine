@@ -2,10 +2,13 @@ import type { Principal } from "../../../../shared/application/ports/auth.js";
 import type { StudioBeatStore } from "./beat_store.js";
 import type { StudioJobLedgerStore } from "./job_ledger_store.js";
 import type { StudioLoreStore } from "./lore_store.js";
+import type { DocumentSummaryRecord, ProjectShellRecord } from "./project_shell_records.js";
 import type { ProposalAcceptanceStore } from "./proposal_acceptance_store.js";
 import type { ProposalContextStore } from "./proposal_context_store.js";
 import type { ReviewOutcomeStore } from "./review_outcome_store.js";
 import type { StudioVolumeStore } from "./volume_store.js";
+
+export type { DocumentSummaryRecord, ProjectShellRecord } from "./project_shell_records.js";
 
 /** Persistence-neutral row shapes handed to the application layer. */
 export interface ProjectRecord {
@@ -238,6 +241,7 @@ export interface StudioStore
   };
   findProjects(scope: ProjectScope): ProjectRecord[];
   findProject(scope: ProjectScope, projectId: string): ProjectRecord;
+  readProjectShell(scope: ProjectScope, projectId: string): ProjectShellRecord;
   /** Existing project of this principal carrying the given import hash, if any. */
   findProjectByImportHash(scope: ProjectScope, importHash: string): ProjectRecord | null;
   /**
@@ -255,6 +259,11 @@ export interface StudioStore
 
   findDocuments(scope: ProjectScope, projectId: string): DocumentWithCurrent[];
   findDocument(scope: ProjectScope, projectId: string, documentId: string): DocumentWithCurrent;
+  readCurrentDocument(
+    scope: ProjectScope,
+    projectId: string,
+    documentId: string,
+  ): DocumentWithCurrent;
   addDocument(scope: ProjectScope, projectId: string, input: AddDocumentInput): DocumentWithCurrent;
   advanceDocument(
     scope: ProjectScope,
@@ -268,7 +277,7 @@ export interface StudioStore
     projectId: string,
     documentIds: string[],
     now: Date,
-  ): DocumentWithCurrent[];
+  ): DocumentSummaryRecord[];
   /** Tail position for a kind; chapters position within their target volume. */
   nextPosition(
     scope: ProjectScope,

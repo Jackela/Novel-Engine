@@ -119,16 +119,21 @@ describe("legacy import service", () => {
     const source = legacySource();
 
     const project = await services.imports.importLegacyWorkspace(owner, source);
-    const detail = services.projects.projectDetail(owner, project.project_id);
+    const detail = services.projects.projectShell(owner, project.project_id);
 
     expect(
       (detail.payload.documents as Record<string, unknown>[]).map((document) => document.title),
     ).toEqual(["Chapter 1", "Chapter 2"]);
-    const first = detail.documents[0];
-    const second = detail.documents[1];
-    expect(first?.currentRevision?.contentMarkdown).toBe("# First\n");
-    expect(second?.currentRevision?.contentMarkdown).toBe("# Second\n");
-    expect(JSON.parse(first?.currentRevision?.metadataJson ?? "{}")).toEqual({
+    const firstSummary = detail.documents[0];
+    const secondSummary = detail.documents[1];
+    if (firstSummary === undefined || secondSummary === undefined) {
+      throw new Error("Expected both imported summaries.");
+    }
+    const first = services.documents.currentDocument(owner, project.project_id, firstSummary.id);
+    const second = services.documents.currentDocument(owner, project.project_id, secondSummary.id);
+    expect(first.content_markdown).toBe("# First\n");
+    expect(second.content_markdown).toBe("# Second\n");
+    expect(first.metadata).toEqual({
       legacy_filename: "chapter-001.md",
     });
   });
@@ -146,7 +151,7 @@ describe("legacy import service", () => {
 
     // Every imported document is a chapter and every chapter lands in the
     // default volume — nothing stays unplaced.
-    const detail = services.projects.projectDetail(owner, project.project_id);
+    const detail = services.projects.projectShell(owner, project.project_id);
     expect(detail.documents.length).toBeGreaterThan(0);
     for (const document of detail.documents) {
       expect(document.kind).toBe("chapter");

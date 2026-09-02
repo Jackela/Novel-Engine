@@ -11,6 +11,15 @@ export interface StudioConnection {
   readonly db: StudioSqliteDatabase;
 }
 
+/** Optional statement observer used by bounded-query integration evidence. */
+export interface StudioQueryLogger {
+  logQuery(query: string, params: unknown[]): void;
+}
+
+export interface OpenConnectionOptions {
+  readonly queryLogger?: StudioQueryLogger | undefined;
+}
+
 /** Carries the still-open handle when initialization cleanup itself fails. */
 export class StudioConnectionInitializationCleanupError extends AggregateError {
   constructor(
@@ -33,13 +42,22 @@ export class StudioConnectionInitializationCleanupError extends AggregateError {
  * recovery evidence only after a commit, so that commit must survive power
  * loss rather than relying on a later WAL checkpoint.
  */
-export function openConnection(databasePath: string): StudioConnection {
+export function openConnection(
+  databasePath: string,
+  options: OpenConnectionOptions = {},
+): StudioConnection {
   const raw = new Database(databasePath);
   try {
     raw.pragma("journal_mode = WAL");
     raw.pragma("foreign_keys = ON");
     raw.pragma("synchronous = FULL");
-    return { raw, db: drizzle(raw, { schema }) };
+    return {
+      raw,
+      db: drizzle(raw, {
+        schema,
+        ...(options.queryLogger === undefined ? {} : { logger: options.queryLogger }),
+      }),
+    };
   } catch (error) {
     try {
       raw.close();

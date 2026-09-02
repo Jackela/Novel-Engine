@@ -9,7 +9,14 @@ import {
   makeLegacyWorkspace,
 } from "../legacy_workspace_fixtures.js";
 import { TEST_SESSION_SECRET } from "./auth_helpers.js";
-import { buildStudioApp, call, getProject, monotonicClock, ownerJar } from "./studio_helpers.js";
+import {
+  buildStudioApp,
+  call,
+  getDocument,
+  getProject,
+  monotonicClock,
+  ownerJar,
+} from "./studio_helpers.js";
 
 const CHAPTERS: LegacyChapterInput[] = [
   { filename: "chapter-001.md", content: "# One\n\nThe lamp on the pier.\n" },
@@ -101,14 +108,16 @@ describe("legacy import surface", () => {
       const project = await getProject(reopened, jar, imported.project_id);
       expect(project.documents).toHaveLength(CHAPTERS.length);
       for (const [index, chapter] of CHAPTERS.entries()) {
-        const document = project.documents[index];
-        expect(document?.kind).toBe("chapter");
-        expect(document?.title).toBe(`Chapter ${index + 1}`);
-        expect(document?.position).toBe(index + 1);
-        expect(document?.content_markdown).toBe(chapter.content);
-        expect(document?.metadata).toEqual({ legacy_filename: chapter.filename });
-        expect(document?.current_revision_id).toBeTruthy();
-        expect(document?.revision_source).toBe("author");
+        const summary = project.documents[index];
+        if (summary === undefined) throw new Error("expected imported document summary");
+        const document = await getDocument(reopened, jar, project.id, summary.id);
+        expect(summary.kind).toBe("chapter");
+        expect(summary.title).toBe(`Chapter ${index + 1}`);
+        expect(summary.position).toBe(index + 1);
+        expect(document.content_markdown).toBe(chapter.content);
+        expect(document.metadata).toEqual({ legacy_filename: chapter.filename });
+        expect(document.current_revision_id).toBe(summary.current_revision_id);
+        expect(document.revision_source).toBe("author");
       }
       const list = await call(reopened, jar, "GET", "/api/projects");
       expect(list.statusCode, list.body).toBe(200);

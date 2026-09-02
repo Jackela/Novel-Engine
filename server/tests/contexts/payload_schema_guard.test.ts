@@ -13,12 +13,13 @@
 import { describe, expect, it } from "vitest";
 import {
   documentPayloadSchema,
+  documentSummaryPayloadSchema,
   matchResultPayloadSchema,
 } from "../../src/contexts/studio/application/payload_schemas/document.js";
 import { jobPayloadSchema } from "../../src/contexts/studio/application/payload_schemas/job.js";
 import {
-  projectDetailPayloadSchema,
   projectPayloadSchema,
+  projectShellPayloadSchema,
 } from "../../src/contexts/studio/application/payload_schemas/project.js";
 import { revisionPayloadSchema } from "../../src/contexts/studio/application/payload_schemas/revision.js";
 import { volumePayloadSchema } from "../../src/contexts/studio/application/payload_schemas/volume.js";
@@ -31,8 +32,13 @@ import {
   volumePayload,
 } from "../../src/contexts/studio/application/payloads.js";
 import {
+  documentSummaryPayload,
+  projectShellPayload,
+} from "../../src/contexts/studio/application/project_shell_payloads.js";
+import {
   assertConforms,
   documentFixture,
+  documentSummaryFixture,
   firstRequired,
   jobFixture,
   matchFixture,
@@ -55,9 +61,15 @@ const CASES: Array<{
     schema: projectPayloadSchema as unknown as SchemaNode,
   },
   {
-    name: "projectPayload (detail form) -> projectDetailPayloadSchema",
-    build: () => projectPayload(projectFixture(), [documentFixture()], [volumeFixture()]),
-    schema: projectDetailPayloadSchema as unknown as SchemaNode,
+    name: "projectShellPayload -> projectShellPayloadSchema",
+    build: () =>
+      projectShellPayload(projectFixture(), [documentSummaryFixture()], [volumeFixture()]),
+    schema: projectShellPayloadSchema as unknown as SchemaNode,
+  },
+  {
+    name: "documentSummaryPayload -> documentSummaryPayloadSchema",
+    build: () => documentSummaryPayload(documentSummaryFixture()),
+    schema: documentSummaryPayloadSchema as unknown as SchemaNode,
   },
   {
     name: "documentPayload (in volume) -> documentPayloadSchema",

@@ -1,7 +1,7 @@
 import { Type } from "@fastify/type-provider-typebox";
 import { ERROR_CODES } from "../../../../shared/interface/http/error_envelope.js";
 import {
-  documentPayloadSchema,
+  documentSummaryPayloadSchema,
   matchResultPayloadSchema,
 } from "../../application/payload_schemas/document.js";
 import { projectPayloadSchema } from "../../application/payload_schemas/project.js";
@@ -21,13 +21,13 @@ export {
   matchResultPayloadSchema as matchResultSchema,
 } from "../../application/payload_schemas/document.js";
 export {
-  projectDetailPayloadSchema as projectDetailResponseSchema,
   projectPayloadSchema as projectResponseSchema,
+  projectShellPayloadSchema as projectShellResponseSchema,
 } from "../../application/payload_schemas/project.js";
 export { revisionPayloadSchema as revisionResponseSchema } from "../../application/payload_schemas/revision.js";
 
 export const documentListResponseSchema = Type.Object(
-  { documents: Type.Array(documentPayloadSchema) },
+  { documents: Type.Array(documentSummaryPayloadSchema) },
   { additionalProperties: false },
 );
 

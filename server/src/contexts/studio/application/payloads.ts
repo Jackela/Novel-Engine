@@ -70,12 +70,8 @@ export interface ProjectPayloadInput {
   updatedAt: Date;
 }
 
-export function projectPayload(
-  project: ProjectPayloadInput,
-  documents?: DocumentWithCurrent[],
-  volumes?: VolumeRecord[],
-): ProjectPayload {
-  const payload: ProjectPayload = {
+export function projectPayload(project: ProjectPayloadInput): ProjectPayload {
+  return {
     id: project.id,
     title: project.title,
     description: project.description,
@@ -84,13 +80,6 @@ export function projectPayload(
     created_at: iso(project.createdAt),
     updated_at: iso(project.updatedAt),
   };
-  if (documents !== undefined) {
-    payload.documents = documents.map((document) => documentPayload(document));
-  }
-  if (volumes !== undefined) {
-    payload.volumes = volumes.map((volume) => volumePayload(volume));
-  }
-  return payload;
 }
 
 export function documentPayload(document: DocumentWithCurrent): DocumentPayload {

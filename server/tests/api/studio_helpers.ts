@@ -32,7 +32,7 @@ export function monotonicClock(): () => Date {
 
 /** Extra buildApp overrides used by the workflow tests (provider seams). */
 export interface StudioAppOverrides
-  extends Pick<AppOptions, "operationCapacity" | "projectArtifactCleaner"> {
+  extends Pick<AppOptions, "databaseQueryLogger" | "operationCapacity" | "projectArtifactCleaner"> {
   textProviderFactory?: NonNullable<Parameters<typeof buildApp>[0]>["textProviderFactory"];
   exportStoreFactory?: AppOptions["exportStoreFactory"];
   exportArtifactGateway?: AppOptions["exportArtifactGateway"];
@@ -114,7 +114,7 @@ export async function seedProject(
   return response.json();
 }
 
-export interface DocumentPayload {
+export interface DocumentSummaryPayload {
   id: string;
   project_id: string;
   kind: string;
@@ -126,12 +126,15 @@ export interface DocumentPayload {
   /** Lore lifecycle status (#444); null for non-lore kinds. */
   lore_status?: string | null;
   current_revision_id: string;
-  content_markdown: string;
-  metadata: Record<string, unknown>;
-  revision_source: string;
   word_count: number;
   created_at: string;
   updated_at: string;
+}
+
+export interface DocumentPayload extends DocumentSummaryPayload {
+  content_markdown: string;
+  metadata: Record<string, unknown>;
+  revision_source: string;
 }
 
 export interface RevisionPayload {
@@ -160,7 +163,7 @@ export async function getProject(
   app: FastifyInstance,
   jar: CookieJar,
   projectId: string,
-): Promise<{ id: string; documents: DocumentPayload[] }> {
+): Promise<{ id: string; documents: DocumentSummaryPayload[] }> {
   const response = await call(app, jar, "GET", `/api/projects/${projectId}`);
   expect(response.statusCode, response.body).toBe(200);
   return response.json();
@@ -170,8 +173,25 @@ export async function listDocuments(
   app: FastifyInstance,
   jar: CookieJar,
   projectId: string,
-): Promise<DocumentPayload[]> {
+): Promise<DocumentSummaryPayload[]> {
   return (await getProject(app, jar, projectId)).documents;
+}
+
+/** Read one complete accepted current Document from the scoped resource. */
+export async function getDocument(
+  app: FastifyInstance,
+  jar: CookieJar,
+  projectId: string,
+  documentId: string,
+): Promise<DocumentPayload> {
+  const response = await call(
+    app,
+    jar,
+    "GET",
+    `/api/projects/${projectId}/documents/${documentId}`,
+  );
+  expect(response.statusCode, response.body).toBe(200);
+  return response.json();
 }
 export { listRevisions } from "./revision_history_test_helper.js";
 

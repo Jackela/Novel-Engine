@@ -200,98 +200,6 @@
                           "description": {
                             "type": "string"
                           },
-                          "documents": {
-                            "items": {
-                              "additionalProperties": false,
-                              "properties": {
-                                "beat_ref": {
-                                  "nullable": true,
-                                  "type": "string"
-                                },
-                                "content_markdown": {
-                                  "type": "string"
-                                },
-                                "created_at": {
-                                  "type": "string"
-                                },
-                                "current_revision_id": {
-                                  "type": "string"
-                                },
-                                "id": {
-                                  "type": "string"
-                                },
-                                "kind": {
-                                  "enum": [
-                                    "chapter",
-                                    "outline",
-                                    "character",
-                                    "world",
-                                    "note"
-                                  ],
-                                  "type": "string"
-                                },
-                                "lore_status": {
-                                  "enum": [
-                                    "draft",
-                                    "stable",
-                                    "deprecated"
-                                  ],
-                                  "nullable": true,
-                                  "type": "string"
-                                },
-                                "metadata": {
-                                  "additionalProperties": true,
-                                  "type": "object"
-                                },
-                                "position": {
-                                  "type": "integer"
-                                },
-                                "project_id": {
-                                  "type": "string"
-                                },
-                                "revision_source": {
-                                  "enum": [
-                                    "author",
-                                    "ai-accepted",
-                                    "restore"
-                                  ],
-                                  "type": "string"
-                                },
-                                "title": {
-                                  "type": "string"
-                                },
-                                "updated_at": {
-                                  "type": "string"
-                                },
-                                "volume_id": {
-                                  "nullable": true,
-                                  "type": "string"
-                                },
-                                "word_count": {
-                                  "type": "integer"
-                                }
-                              },
-                              "required": [
-                                "id",
-                                "project_id",
-                                "kind",
-                                "title",
-                                "position",
-                                "volume_id",
-                                "beat_ref",
-                                "lore_status",
-                                "current_revision_id",
-                                "content_markdown",
-                                "metadata",
-                                "revision_source",
-                                "word_count",
-                                "created_at",
-                                "updated_at"
-                              ],
-                              "type": "object"
-                            },
-                            "type": "array"
-                          },
                           "id": {
                             "type": "string"
                           },
@@ -308,41 +216,6 @@
                           },
                           "updated_at": {
                             "type": "string"
-                          },
-                          "volumes": {
-                            "items": {
-                              "additionalProperties": false,
-                              "properties": {
-                                "created_at": {
-                                  "type": "string"
-                                },
-                                "id": {
-                                  "type": "string"
-                                },
-                                "position": {
-                                  "type": "integer"
-                                },
-                                "project_id": {
-                                  "type": "string"
-                                },
-                                "title": {
-                                  "type": "string"
-                                },
-                                "updated_at": {
-                                  "type": "string"
-                                }
-                              },
-                              "required": [
-                                "id",
-                                "project_id",
-                                "title",
-                                "position",
-                                "created_at",
-                                "updated_at"
-                              ],
-                              "type": "object"
-                            },
-                            "type": "array"
                           }
                         },
                         "required": [
@@ -438,9 +311,6 @@
                             "nullable": true,
                             "type": "string"
                           },
-                          "content_markdown": {
-                            "type": "string"
-                          },
                           "created_at": {
                             "type": "string"
                           },
@@ -469,22 +339,10 @@
                             "nullable": true,
                             "type": "string"
                           },
-                          "metadata": {
-                            "additionalProperties": true,
-                            "type": "object"
-                          },
                           "position": {
                             "type": "integer"
                           },
                           "project_id": {
-                            "type": "string"
-                          },
-                          "revision_source": {
-                            "enum": [
-                              "author",
-                              "ai-accepted",
-                              "restore"
-                            ],
                             "type": "string"
                           },
                           "title": {
@@ -498,6 +356,7 @@
                             "type": "string"
                           },
                           "word_count": {
+                            "minimum": 0,
                             "type": "integer"
                           }
                         },
@@ -511,9 +370,6 @@
                           "beat_ref",
                           "lore_status",
                           "current_revision_id",
-                          "content_markdown",
-                          "metadata",
-                          "revision_source",
                           "word_count",
                           "created_at",
                           "updated_at"
@@ -782,9 +638,6 @@
                             "nullable": true,
                             "type": "string"
                           },
-                          "content_markdown": {
-                            "type": "string"
-                          },
                           "created_at": {
                             "type": "string"
                           },
@@ -813,22 +666,10 @@
                             "nullable": true,
                             "type": "string"
                           },
-                          "metadata": {
-                            "additionalProperties": true,
-                            "type": "object"
-                          },
                           "position": {
                             "type": "integer"
                           },
                           "project_id": {
-                            "type": "string"
-                          },
-                          "revision_source": {
-                            "enum": [
-                              "author",
-                              "ai-accepted",
-                              "restore"
-                            ],
                             "type": "string"
                           },
                           "title": {
@@ -842,6 +683,7 @@
                             "type": "string"
                           },
                           "word_count": {
+                            "minimum": 0,
                             "type": "integer"
                           }
                         },
@@ -855,9 +697,6 @@
                           "beat_ref",
                           "lore_status",
                           "current_revision_id",
-                          "content_markdown",
-                          "metadata",
-                          "revision_source",
                           "word_count",
                           "created_at",
                           "updated_at"
@@ -1441,9 +1280,6 @@
                             "nullable": true,
                             "type": "string"
                           },
-                          "content_markdown": {
-                            "type": "string"
-                          },
                           "created_at": {
                             "type": "string"
                           },
@@ -1472,22 +1308,10 @@
                             "nullable": true,
                             "type": "string"
                           },
-                          "metadata": {
-                            "additionalProperties": true,
-                            "type": "object"
-                          },
                           "position": {
                             "type": "integer"
                           },
                           "project_id": {
-                            "type": "string"
-                          },
-                          "revision_source": {
-                            "enum": [
-                              "author",
-                              "ai-accepted",
-                              "restore"
-                            ],
                             "type": "string"
                           },
                           "title": {
@@ -1501,6 +1325,7 @@
                             "type": "string"
                           },
                           "word_count": {
+                            "minimum": 0,
                             "type": "integer"
                           }
                         },
@@ -1514,9 +1339,6 @@
                           "beat_ref",
                           "lore_status",
                           "current_revision_id",
-                          "content_markdown",
-                          "metadata",
-                          "revision_source",
                           "word_count",
                           "created_at",
                           "updated_at"
@@ -1679,6 +1501,154 @@
               }
             },
             "description": "Default Response"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          }
+        }
+      },
+      "get": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "documentId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "beat_ref": {
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "content_markdown": {
+                      "type": "string"
+                    },
+                    "created_at": {
+                      "type": "string"
+                    },
+                    "current_revision_id": {
+                      "type": "string"
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "kind": {
+                      "enum": [
+                        "chapter",
+                        "outline",
+                        "character",
+                        "world",
+                        "note"
+                      ],
+                      "type": "string"
+                    },
+                    "lore_status": {
+                      "enum": [
+                        "draft",
+                        "stable",
+                        "deprecated"
+                      ],
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "metadata": {
+                      "additionalProperties": true,
+                      "type": "object"
+                    },
+                    "position": {
+                      "type": "integer"
+                    },
+                    "project_id": {
+                      "type": "string"
+                    },
+                    "revision_source": {
+                      "enum": [
+                        "author",
+                        "ai-accepted",
+                        "restore"
+                      ],
+                      "type": "string"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "updated_at": {
+                      "type": "string"
+                    },
+                    "volume_id": {
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "word_count": {
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "project_id",
+                    "kind",
+                    "title",
+                    "position",
+                    "volume_id",
+                    "beat_ref",
+                    "lore_status",
+                    "current_revision_id",
+                    "content_markdown",
+                    "metadata",
+                    "revision_source",
+                    "word_count",
+                    "created_at",
+                    "updated_at"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
           },
           "503": {
             "content": {

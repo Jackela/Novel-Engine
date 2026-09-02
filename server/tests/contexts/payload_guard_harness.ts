@@ -19,6 +19,7 @@
 import { Ajv, type ValidateFunction } from "ajv";
 import type {
   DocumentMatchRecord,
+  DocumentSummaryRecord,
   DocumentWithCurrent,
   JobRecord,
   RevisionRecord,
@@ -58,6 +59,24 @@ export function documentFixture(): DocumentWithCurrent {
     createdAt: NOW,
     updatedAt: NOW,
     currentRevision: revisionFixture(),
+  };
+}
+
+export function documentSummaryFixture(): DocumentSummaryRecord {
+  const document = documentFixture();
+  return {
+    id: document.id,
+    projectId: document.projectId,
+    kind: document.kind,
+    title: document.title,
+    position: document.position,
+    volumeId: document.volumeId,
+    beatRef: document.beatRef,
+    loreStatus: document.loreStatus,
+    currentRevisionId: "rev-1",
+    wordCount: 5,
+    createdAt: document.createdAt,
+    updatedAt: document.updatedAt,
   };
 }
 

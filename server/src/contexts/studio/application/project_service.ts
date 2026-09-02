@@ -4,10 +4,11 @@ import { InFlightOperationGuard } from "./operation_in_flight.js";
 import { dumpJson, projectPayload } from "./payloads.js";
 import type { ProjectArtifactCleaner } from "./ports/project_artifact_cleaner.js";
 import {
-  type DocumentWithCurrent,
+  type DocumentSummaryRecord,
   type StudioStore,
   scopeForPrincipal,
 } from "./ports/studio_store.js";
+import { projectShellPayload, summarizeDocument } from "./project_shell_payloads.js";
 
 /** The adjudicated new-project seed (mirrors the Python authority). */
 const SEED_DOCUMENT_TITLE = "Chapter 1";
@@ -63,9 +64,9 @@ export class ProjectService {
     });
     // The seeded default volume arrives from the creation transaction's own
     // structure; reading it back keeps this service persistence-neutral.
-    return projectPayload(
+    return projectShellPayload(
       created.project,
-      created.documents,
+      created.documents.map(summarizeDocument),
       this.store.findVolumes(scope, created.project.id),
     );
   }
@@ -77,16 +78,17 @@ export class ProjectService {
       .map((project) => projectPayload(project));
   }
 
-  /** Project detail including its reading-order documents and volumes. */
-  projectDetail(
+  /** Bounded structural shell in canonical document and volume order. */
+  projectShell(
     principal: Principal,
     projectId: string,
-  ): { payload: Record<string, unknown>; documents: DocumentWithCurrent[] } {
+  ): { payload: Record<string, unknown>; documents: DocumentSummaryRecord[] } {
     const scope = scopeForPrincipal(principal);
-    const project = this.store.findProject(scope, projectId);
-    const documents = this.store.findDocuments(scope, projectId);
-    const payload = projectPayload(project, documents, this.store.findVolumes(scope, projectId));
-    return { payload, documents };
+    const shell = this.store.readProjectShell(scope, projectId);
+    return {
+      payload: projectShellPayload(shell.project, shell.documents, shell.volumes),
+      documents: shell.documents,
+    };
   }
 
   /** Delete database authority, then converge its secondary export tree. */

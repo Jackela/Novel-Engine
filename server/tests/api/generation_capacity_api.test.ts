@@ -15,7 +15,7 @@ import {
   buildStudioApp,
   type CookieJar,
   call,
-  type DocumentPayload,
+  type DocumentSummaryPayload,
   getProject,
   ownerJar,
   seedDocument,
@@ -60,9 +60,14 @@ function observedProviderFactory(): {
 async function seedOversizedGenerationContext(
   app: Parameters<typeof studioDatabase>[0],
   owner: CookieJar,
-): Promise<{ projectId: string; target: DocumentPayload; outline: DocumentPayload }> {
+): Promise<{
+  projectId: string;
+  target: DocumentSummaryPayload;
+  outline: DocumentSummaryPayload;
+}> {
   const project = await seedProject(app, owner, "Generation capacity");
-  const target = (await getProject(app, owner, project.id)).documents[0] as DocumentPayload;
+  const target = (await getProject(app, owner, project.id)).documents[0];
+  if (target === undefined) throw new Error("expected seeded document");
   const outline = await seedDocument(app, owner, project.id, {
     kind: "outline",
     title: "Outline",

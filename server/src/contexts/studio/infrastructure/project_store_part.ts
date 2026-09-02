@@ -13,11 +13,13 @@ import { DEFAULT_LORE_STATUS } from "../domain/kinds.js";
 import { clearProjectDocumentIndex, refreshDocumentIndex } from "./db/document_search.js";
 import { documents, projects } from "./db/schema.js";
 import {
+  documentSummaries,
   documentsWithCurrent,
   insertRevision,
   type ProjectRow,
   scopeCondition,
   scopedProject,
+  volumesInOrder,
 } from "./db/studio_query_helpers.js";
 import { DEFAULT_VOLUME_TITLE, insertVolume } from "./volume_store_part.js";
 
@@ -120,6 +122,17 @@ export class ProjectStorePart {
 
   findProject(scope: ProjectScope, projectId: string): ProjectRow {
     return this.db.transaction((tx) => scopedProject(tx, scope, projectId));
+  }
+
+  readProjectShell(scope: ProjectScope, projectId: string) {
+    return this.db.transaction((tx) => {
+      const project = scopedProject(tx, scope, projectId);
+      return {
+        project,
+        documents: documentSummaries(tx, project.id),
+        volumes: volumesInOrder(tx, project.id),
+      };
+    });
   }
 
   /** The principal-scoped idempotency probe: at most one row per (scope, hash). */

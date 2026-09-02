@@ -39,8 +39,11 @@ describe("projects surface", () => {
       expect(seed.kind).toBe("chapter");
       expect(seed.title).toBe("Chapter 1");
       expect(seed.position).toBe(1);
-      expect(seed.content_markdown).toBe("# Chapter 1\n\n");
       expect(seed.current_revision_id).toBeTruthy();
+      expect(seed.word_count).toBe(2);
+      expect(seed).not.toHaveProperty("content_markdown");
+      expect(seed).not.toHaveProperty("metadata");
+      expect(seed).not.toHaveProperty("revision_source");
 
       const revisions = await call(
         app,

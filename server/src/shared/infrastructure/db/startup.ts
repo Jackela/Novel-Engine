@@ -10,6 +10,7 @@ import { backupDatabaseFile } from "./backup.js";
 import {
   openConnection,
   StudioConnectionInitializationCleanupError,
+  type StudioQueryLogger,
   type StudioSqliteDatabase,
 } from "./connection.js";
 import { acquireDataDirectoryLock, type DataDirectoryLock } from "./data_directory_lock.js";
@@ -41,6 +42,8 @@ export interface OpenStudioDatabaseOptions {
   readonly beforeJobRecovery?:
     | ((database: StudioSqliteDatabase, dataDirectory: string) => Promise<void> | void)
     | undefined;
+  /** Optional statement observer; persistence behavior remains unchanged. */
+  readonly queryLogger?: StudioQueryLogger | undefined;
 }
 
 /**
@@ -68,7 +71,7 @@ export async function openStudioDatabase(
     }
     await backupDatabaseFile(databasePath);
 
-    connection = openConnection(databasePath);
+    connection = openConnection(databasePath, { queryLogger: options.queryLogger });
     const { db } = connection;
     migrate(db, { migrationsFolder: locateMigrationsFolder() });
     await options.beforeJobRecovery?.(db, dataDirectory);

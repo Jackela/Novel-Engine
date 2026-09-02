@@ -29,6 +29,7 @@ import {
   insertRevision,
   isUniqueViolation,
   type RevisionRow,
+  scopedCurrentDocument,
   scopedDocument,
   scopedProject,
 } from "./db/studio_query_helpers.js";
@@ -57,6 +58,14 @@ export class DocumentStorePart {
       scopedProject(tx, scope, projectId);
       return documentWithCurrent(tx, projectId, documentId);
     });
+  }
+
+  readCurrentDocument(
+    scope: ProjectScope,
+    projectId: string,
+    documentId: string,
+  ): DocumentWithCurrent {
+    return this.db.transaction((tx) => scopedCurrentDocument(tx, scope, projectId, documentId));
   }
 
   addDocument(scope: ProjectScope, projectId: string, input: AddDocumentInput) {

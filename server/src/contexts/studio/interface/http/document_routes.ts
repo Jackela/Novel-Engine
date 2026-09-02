@@ -122,6 +122,30 @@ export const documentRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fa
       })),
   );
 
+  app.get(
+    "/api/projects/:projectId/documents/:documentId",
+    {
+      // The principal is established before any scoped Studio read.
+      preValidation: [guard],
+      schema: {
+        params: documentIdParams,
+        response: {
+          200: documentResponseSchema,
+          ...GUARD_RESPONSES,
+          404: errorEnvelopeResponse,
+        },
+      },
+    },
+    async (request) =>
+      withStudioErrors(() =>
+        requireServices(options).documents.currentDocument(
+          requirePrincipal(request),
+          request.params.projectId,
+          request.params.documentId,
+        ),
+      ),
+  );
+
   app.put(
     "/api/projects/:projectId/documents/:documentId",
     {
