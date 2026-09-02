@@ -1,8 +1,32 @@
+import { EventEmitter } from "node:events";
 import { Agent, request as httpRequest } from "node:http";
 import type { Socket } from "node:net";
 
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+import type { ProposalStreamFrame } from "../../src/contexts/studio/application/proposal_streaming.js";
+import { writeProposalStreamResponse } from "../../src/contexts/studio/interface/http/proposal_stream_response.js";
 import { authHeaders, buildStudioApp, ownerJar, seedProject } from "./studio_helpers.js";
+
+class LifecycleResponse extends EventEmitter {
+  writableFinished = false;
+
+  writeHead(): this {
+    return this;
+  }
+
+  write(): boolean {
+    return false;
+  }
+
+  end(): this {
+    this.writableFinished = true;
+    return this;
+  }
+
+  destroy(): this {
+    return this;
+  }
+}
 
 function postJson(
   address: string,
@@ -41,6 +65,43 @@ function postJson(
 }
 
 describe("proposal stream resource lifecycle", () => {
+  it("keeps connection listeners until generator cleanup finishes", async () => {
+    const response = new LifecycleResponse();
+    const socket = new EventEmitter();
+    let finishCleanup = (): void => {};
+    async function* scriptedFrames(): AsyncGenerator<ProposalStreamFrame, void, void> {
+      try {
+        yield { type: "delta", text: "pending" };
+      } finally {
+        await new Promise<void>((resolve) => {
+          finishCleanup = resolve;
+        });
+      }
+    }
+    const frames = scriptedFrames();
+    const returnSpy = vi.spyOn(frames, "return");
+    const writing = writeProposalStreamResponse({
+      response,
+      socket,
+      frames,
+      disconnect: new AbortController(),
+      hijack: () => {},
+    });
+    await vi.waitFor(() => expect(response.listenerCount("drain")).toBe(1));
+
+    response.emit("close");
+    await vi.waitFor(() => expect(returnSpy).toHaveBeenCalledTimes(1));
+    expect(response.listenerCount("error")).toBe(1);
+    expect(response.listenerCount("close")).toBe(1);
+    expect(socket.listenerCount("close")).toBe(1);
+
+    finishCleanup();
+    await writing;
+    expect(response.listenerCount("error")).toBe(0);
+    expect(response.listenerCount("close")).toBe(0);
+    expect(socket.listenerCount("close")).toBe(0);
+  });
+
   it("detaches disconnect listeners after each completed keep-alive request", async () => {
     const { app } = await buildStudioApp();
     const sockets: Socket[] = [];

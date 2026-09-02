@@ -1,11 +1,11 @@
 import type { TypeBoxTypeProvider } from "@fastify/type-provider-typebox";
-import type { FastifyPluginAsync, FastifyReply } from "fastify";
+import type { FastifyPluginAsync } from "fastify";
 import { principalGuard, requirePrincipal } from "../../../../shared/interface/http/auth_guard.js";
 import { errorEnvelopeResponse } from "../../../../shared/interface/http/error_envelope.js";
-import type { ProposalStreamFrame } from "../../application/proposal_streaming.js";
 import { jobResponseSchema } from "./job_schemas.js";
 import type { JsonResponseSchema } from "./json_response_schema.js";
 import { requireServices, type StudioRoutesOptions } from "./project_routes.js";
+import { writeProposalStreamResponse } from "./proposal_stream_response.js";
 import { withAsyncStudioErrors, withStudioErrors } from "./studio_error_mapping.js";
 import { documentIdParams, jobIdParams, proposalCreateSchema } from "./studio_request_schemas.js";
 import { operationInFlightSchema } from "./studio_schemas.js";
@@ -31,43 +31,6 @@ const PROPOSAL_ERROR_RESPONSES = {
   422: errorEnvelopeResponse,
   503: errorEnvelopeResponse,
 } as const;
-
-/** One SSE event: a single JSON frame per `data:` field, blank-line ended. */
-function sseFrame(frame: ProposalStreamFrame): string {
-  return `data: ${JSON.stringify(frame)}\n\n`;
-}
-
-/** SSE response headers: disable proxy buffering so deltas arrive immediately. */
-const SSE_HEADERS = {
-  "content-type": "text/event-stream; charset=utf-8",
-  "cache-control": "no-cache",
-  connection: "keep-alive",
-  "x-accel-buffering": "no",
-} as const;
-
-/**
- * Drive the proposal stream: validation (and every envelope error) resolves
- * before the first frame, then the reply is hijacked and frames are written
- * as they arrive. The disconnect signal aborts the upstream generator; a
- * provider failure arrives as the stream's error frame.
- */
-async function writeProposalStream(
-  reply: FastifyReply,
-  frames: AsyncGenerator<ProposalStreamFrame, void, void>,
-  disconnect: AbortController,
-): Promise<void> {
-  let current = await withAsyncStudioErrors(() => frames.next());
-  reply.hijack();
-  reply.raw.writeHead(200, SSE_HEADERS);
-  const write = (frame: ProposalStreamFrame): void => {
-    if (!disconnect.signal.aborted) reply.raw.write(sseFrame(frame));
-  };
-  while (!current.done) {
-    write(current.value);
-    current = await frames.next();
-  }
-  reply.raw.end();
-}
 
 /**
  * The AI proposal surface: synchronous generation that records a proposal on
@@ -155,35 +118,14 @@ export const proposalRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fa
         reportCleanupFailure,
         disconnect.signal,
       );
-      const abort = (): void => disconnect.abort();
-      const socket = request.raw.socket;
-      socket?.on("close", abort);
-      reply.raw.on("close", abort);
-      reply.raw.on("error", abort);
-      let streamFailure: unknown;
-      try {
-        await writeProposalStream(reply, frames, disconnect);
-      } catch (error) {
-        streamFailure = error;
-      }
-      disconnect.abort();
-      socket?.off("close", abort);
-      reply.raw.off("close", abort);
-      reply.raw.off("error", abort);
-      let cleanupFailure: unknown;
-      try {
-        await frames.return();
-      } catch (error) {
-        cleanupFailure = error;
-      }
-      if (streamFailure !== undefined && cleanupFailure !== undefined) {
-        throw new AggregateError(
-          [streamFailure, cleanupFailure],
-          "Proposal stream and generator cleanup both failed.",
-        );
-      }
-      if (streamFailure !== undefined) throw streamFailure;
-      if (cleanupFailure !== undefined) throw cleanupFailure;
+      await writeProposalStreamResponse({
+        response: reply.raw,
+        socket: request.raw.socket,
+        frames,
+        disconnect,
+        hijack: () => reply.hijack(),
+        pullFirst: () => withAsyncStudioErrors(() => frames.next()),
+      });
     },
   );
 
