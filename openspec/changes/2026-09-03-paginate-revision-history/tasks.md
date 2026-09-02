@@ -17,19 +17,19 @@
 
 ## 2. Exact persisted revision word counts
 
-- [ ] 2.1 Move the existing Unicode-aware word counter to a pure Studio domain
+- [x] 2.1 Move the existing Unicode-aware word counter to a pure Studio domain
       utility and pin ASCII, Chinese, punctuation, apostrophe, hyphen, numeric,
       empty, and unpaired-surrogate behavior without changing current results.
-- [ ] 2.2 Add nullable `word_count` to the Drizzle revision schema and generate
+- [x] 2.2 Add nullable `word_count` to the Drizzle revision schema and generate
       the migration only through
       `pnpm --dir server db:generate --name persist-revision-word-count`; review
       generated SQL/metadata without hand editing either.
-- [ ] 2.3 Make the sole revision insertion helper persist the exact non-negative
+- [x] 2.3 Make the sole revision insertion helper persist the exact non-negative
       count atomically for project seeds, imports, saves, proposal acceptance,
       and restores; make all revision projections consume stored authority and
       reject null, negative, non-integer, or unsafe counts through one typed
       internal invariant error without adding a public error code.
-- [ ] 2.4 Add a context-owned pre-serve reconciler that backfills null rows in
+- [x] 2.4 Add a context-owned pre-serve reconciler that backfills null rows in
       restart-safe batches of at most 256 after backup/migration, proves partial
       progress resumes, verifies no null remains, and fails before export
       reconciliation/job recovery/traffic on any error.

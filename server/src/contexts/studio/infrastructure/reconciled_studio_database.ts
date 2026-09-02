@@ -14,7 +14,7 @@ export interface ReconciledStudioDatabaseOptions {
     | undefined;
 }
 
-/** Production/maintenance opener: migrations, export reconciliation, then job recovery. */
+/** Production/maintenance opener: migrations, data reconciliation, then job recovery. */
 export function openReconciledStudioDatabase(
   databasePath: string,
   options: ReconciledStudioDatabaseOptions = {},
