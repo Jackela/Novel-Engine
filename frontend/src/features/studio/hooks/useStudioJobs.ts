@@ -2,13 +2,13 @@ import type { Dispatch, SetStateAction } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { api } from "@/app/api";
-import type { StudioJob } from "@/app/types/studio";
+import type { StudioJobSummary } from "@/app/types/studio";
 
 import { toErrorMessage } from "./toErrorMessage";
 
 interface JobsState {
   readonly projectId: string;
-  readonly jobs: StudioJob[];
+  readonly jobs: StudioJobSummary[];
   readonly nextCursor: string | null;
   readonly isLoading: boolean;
   readonly loadingInitiator: JobsLoadInitiator | null;
@@ -52,7 +52,10 @@ function emptyJobsState(projectId: string): JobsState {
   };
 }
 
-function appendUniqueJobs(current: readonly StudioJob[], older: readonly StudioJob[]): StudioJob[] {
+function appendUniqueJobs(
+  current: readonly StudioJobSummary[],
+  older: readonly StudioJobSummary[],
+): StudioJobSummary[] {
   const known = new Set(current.map((job) => job.id));
   const uniqueOlder = older.filter((job) => {
     if (known.has(job.id)) return false;

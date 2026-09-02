@@ -1,7 +1,7 @@
 import { act } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { job } from "@/test/factories";
+import { jobSummary } from "@/test/factories";
 import { createMountHarness, deferred } from "@/test/harness";
 
 import { StudioJobsPanel } from "./StudioJobsPanel";
@@ -13,11 +13,33 @@ afterEach(() => {
 });
 
 const jobs = [
-  job({ id: "job-rewrite", operation: "rewrite", status: "failed", error: "Failed" }),
-  job({ id: "job-continue", operation: "continue", status: "interrupted", error: "Stopped" }),
+  jobSummary({ id: "job-rewrite", operation: "rewrite", status: "failed", error: "Failed" }),
+  jobSummary({
+    id: "job-continue",
+    operation: "continue",
+    status: "interrupted",
+    error: "Stopped",
+  }),
 ];
 
 describe("StudioJobsPanel", () => {
+  it("does not offer retry for terminal import jobs", () => {
+    const onRetryJob = vi.fn();
+    const mounted = harness.mount(
+      <StudioJobsPanel
+        jobs={[
+          jobSummary({ kind: "import", operation: "import", status: "failed" }),
+          jobSummary({ kind: "import", operation: "import", status: "interrupted" }),
+        ]}
+        onLoadJobs={vi.fn()}
+        onRetryJob={onRetryJob}
+      />,
+    );
+
+    expect(mounted.container.querySelector('[aria-label^="Retry "]')).toBeNull();
+    expect(onRetryJob).not.toHaveBeenCalled();
+  });
+
   it("disables job retry without claiming a retry is running while proposal audit gates actions", () => {
     const onRetryJob = vi.fn();
     const mounted = harness.mount(
@@ -142,7 +164,7 @@ describe("StudioJobsPanel", () => {
     act(() => {
       mounted.root.render(
         content(
-          [jobs[0], job({ id: "job-continue", operation: "continue", status: "completed" })],
+          [jobs[0], jobSummary({ id: "job-continue", operation: "continue", status: "completed" })],
           null,
         ),
       );

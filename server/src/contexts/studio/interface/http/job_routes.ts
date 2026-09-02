@@ -5,6 +5,7 @@ import { errorEnvelopeResponse } from "../../../../shared/interface/http/error_e
 import { jobPageLimit } from "../../application/ports/job_records.js";
 import { decodeJobCursor, encodeJobCursor } from "./job_cursor.js";
 import {
+  jobDetailParamsSchema,
   jobListQuerySchema,
   jobListResponseSchema,
   jobResponseSchema,
@@ -52,7 +53,7 @@ export const jobRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fastify
           ? undefined
           : decodeJobCursor(request.query.cursor, request.params.projectId);
       return withStudioErrors(() => {
-        const page = requireServices(options).jobHistory.collectProjectJobs(
+        const page = requireServices(options).jobHistory.collectProjectJobSummaries(
           requirePrincipal(request),
           request.params.projectId,
           {
@@ -66,6 +67,29 @@ export const jobRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fastify
         };
       });
     },
+  );
+
+  app.get(
+    "/api/projects/:projectId/jobs/:jobId",
+    {
+      preHandler: [guard],
+      schema: {
+        params: jobDetailParamsSchema,
+        response: {
+          200: jobResponseSchema,
+          ...JOB_READ_ERROR_RESPONSES,
+          422: errorEnvelopeResponse,
+        },
+      },
+    },
+    async (request) =>
+      withStudioErrors(() =>
+        requireServices(options).jobHistory.findProjectJob(
+          requirePrincipal(request),
+          request.params.projectId,
+          request.params.jobId,
+        ),
+      ),
   );
 
   app.post(

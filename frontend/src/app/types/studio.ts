@@ -37,6 +37,8 @@ export interface ProviderInfo {
   is_default: boolean;
 }
 export type StudioJobKind = "proposal" | "review" | "export";
+export type StudioJobSummaryKind = StudioJobKind | "import";
+export type StudioJobSummaryOperation = StudioJobOperation | "import";
 
 export interface Session {
   session_id: string;
@@ -166,6 +168,22 @@ export interface StudioJobEvent {
   status: StudioJobStatus;
   details: Record<string, unknown>;
   created_at: string;
+}
+
+/** Cheap project-history item; complete request/result/events live on Job detail. */
+export interface StudioJobSummary {
+  id: string;
+  project_id: string;
+  document_id: string | null;
+  kind: StudioJobSummaryKind;
+  operation: StudioJobSummaryOperation;
+  status: StudioJobStatus;
+  provider: string;
+  model: string;
+  error: string | null;
+  retry_of_job_id: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface StudioJob {

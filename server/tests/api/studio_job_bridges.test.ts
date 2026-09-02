@@ -192,9 +192,19 @@ describe("job retry chains", () => {
       expect(usage[0]?.completion_tokens).toBe(5);
 
       const listed = await call(app, owner, "GET", `/api/projects/${project.id}/jobs`);
-      const original = (listed.json().jobs as JobPayload[]).find((job) => job.id === failedJob.id);
+      const original = (listed.json().jobs as Array<Pick<JobPayload, "id" | "status">>).find(
+        (job) => job.id === failedJob.id,
+      );
       expect(original?.status).toBe("failed");
-      expect(original?.events.map((event) => event.status)).toEqual(["failed"]);
+      const originalDetail = await call(
+        app,
+        owner,
+        "GET",
+        `/api/projects/${project.id}/jobs/${failedJob.id}`,
+      );
+      expect(originalDetail.json<JobPayload>().events.map((event) => event.status)).toEqual([
+        "failed",
+      ]);
     } finally {
       await app.close();
     }
@@ -252,7 +262,7 @@ describe("job retry chains", () => {
       expect(retryJob.events.map((event) => event.status)).toEqual(["running", "failed"]);
 
       const listed = await call(app, owner, "GET", `/api/projects/${project.id}/jobs`);
-      const jobs = listed.json().jobs as JobPayload[];
+      const jobs = listed.json().jobs as Array<Pick<JobPayload, "id" | "status">>;
       expect(jobs.find((job) => job.id === "export-job-interrupted")?.status).toBe("interrupted");
       expect(jobs[0]?.id).toBe(retryJob.id);
     } finally {

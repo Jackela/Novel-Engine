@@ -208,9 +208,16 @@ describe("review job failure closure", () => {
       expect(retried.statusCode, retried.body).toBe(500);
       const listed = await call(app, owner, "GET", `/api/projects/${project.id}/jobs`);
       expect(listed.json().jobs).toMatchObject([
-        { status: "running", events: [{ status: "running" }] },
+        { status: "running" },
         { id: firstJob.id, status: "failed" },
       ]);
+      const runningDetail = await call(
+        app,
+        owner,
+        "GET",
+        `/api/projects/${project.id}/jobs/${listed.json().jobs[0].id}`,
+      );
+      expect(runningDetail.json<JobPayload>().events).toMatchObject([{ status: "running" }]);
       expectNoReviewEvidence(app);
       const removed = await call(
         app,

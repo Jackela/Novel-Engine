@@ -35,9 +35,14 @@ describe("Studio Provider cleanup capacity", () => {
 
       const landed = await call(app, owner, "GET", `/api/projects/${activeProject.id}/jobs`);
       expect(landed.statusCode, landed.body).toBe(200);
-      expect(landed.json().jobs).toMatchObject([
-        { kind: "proposal", status: "completed", events: [{ status: "completed" }] },
-      ]);
+      expect(landed.json().jobs).toMatchObject([{ kind: "proposal", status: "completed" }]);
+      const landedDetail = await call(
+        app,
+        owner,
+        "GET",
+        `/api/projects/${activeProject.id}/jobs/${landed.json().jobs[0].id}`,
+      );
+      expect(landedDetail.json().events).toMatchObject([{ status: "completed" }]);
       await expectApplicationCapacity(
         await proposalRequest(app, owner, waitingProject),
         waitingProject.id,
@@ -108,9 +113,14 @@ describe("Studio Provider cleanup capacity", () => {
         "GET",
         `/api/projects/${activeProject.id}/reviews`,
       );
-      expect(landedJobs.json().jobs).toMatchObject([
-        { kind: "review", status: "completed", events: [{ status: "completed" }] },
-      ]);
+      expect(landedJobs.json().jobs).toMatchObject([{ kind: "review", status: "completed" }]);
+      const landedDetail = await call(
+        app,
+        owner,
+        "GET",
+        `/api/projects/${activeProject.id}/jobs/${landedJobs.json().jobs[0].id}`,
+      );
+      expect(landedDetail.json().events).toMatchObject([{ status: "completed" }]);
       expect(landedReviews.json().reviews).toHaveLength(1);
 
       await proveExactlyOnePermitRecovered(app, owner, activeProject.id, waitingProject, provider);
@@ -160,10 +170,18 @@ describe("Studio Provider cleanup capacity", () => {
           kind: "proposal",
           status: "completed",
           retry_of_job_id: sourceJobId,
-          // The jobs listing presents each job's newest event first.
-          events: [{ status: "completed" }, { status: "running" }],
         },
         { id: sourceJobId, status: "failed" },
+      ]);
+      const landedDetail = await call(
+        app,
+        owner,
+        "GET",
+        `/api/projects/${activeProject.id}/jobs/${landed.json().jobs[0].id}`,
+      );
+      expect(landedDetail.json().events).toMatchObject([
+        { status: "running" },
+        { status: "completed" },
       ]);
       await expectApplicationCapacity(
         await proposalRequest(app, owner, waitingProject),

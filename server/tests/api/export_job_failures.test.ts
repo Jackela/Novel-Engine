@@ -238,9 +238,12 @@ describe("export job failure closure", () => {
       expect(response.body).not.toContain("unexpected retry renderer bug");
       const listed = await call(app, owner, "GET", `/api/projects/${projectId}/jobs`);
       expect(listed.json().jobs).toMatchObject([
-        { status: "running", events: [{ status: "running" }] },
+        { status: "running" },
         { id: "export-job-interrupted", status: "interrupted" },
       ]);
+      const detailUrl = `/api/projects/${projectId}/jobs/${listed.json().jobs[0].id}`;
+      const runningDetail = await call(app, owner, "GET", detailUrl);
+      expect(runningDetail.json<JobPayload>().events).toMatchObject([{ status: "running" }]);
       expectNoExportEvidence(app);
     } finally {
       await app.close();

@@ -62,14 +62,23 @@ describe("export retry atomicity", () => {
       expect(response.statusCode, response.body).toBe(500);
       expect(response.body).not.toContain("simulated retry completed-event failure");
       const listed = await call(app, owner, "GET", `/api/projects/${projectId}/jobs`);
-      expect(listed.json().jobs as JobPayload[]).toMatchObject([
+      const summaries = listed.json().jobs as Array<
+        Pick<JobPayload, "id" | "status" | "retry_of_job_id">
+      >;
+      expect(summaries).toMatchObject([
         {
           status: "running",
           retry_of_job_id: "interrupted-export",
-          events: [{ status: "running" }],
         },
         { id: "interrupted-export", status: "interrupted" },
       ]);
+      const runningDetail = await call(
+        app,
+        owner,
+        "GET",
+        `/api/projects/${projectId}/jobs/${String(summaries[0]?.id)}`,
+      );
+      expect(runningDetail.json<JobPayload>().events).toMatchObject([{ status: "running" }]);
       expect(database.select().from(projectSnapshots).all()).toEqual([]);
       expect(database.select().from(snapshotDocuments).all()).toEqual([]);
       expect(database.select().from(exportRecords).all()).toEqual([]);

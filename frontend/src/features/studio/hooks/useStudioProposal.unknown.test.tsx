@@ -7,7 +7,7 @@ import {
   type ProposalStreamRequest,
   streamProposal,
 } from "@/app/proposalStream";
-import type { Project, StudioDocument, StudioJob } from "@/app/types/studio";
+import type { Project, StudioDocument, StudioJob, StudioJobSummary } from "@/app/types/studio";
 import { chapter, job, projectWith } from "@/test/factories";
 import { createMountHarness } from "@/test/harness";
 
@@ -119,10 +119,10 @@ function rejectable<T>() {
 describe("useStudioProposal unknown outcome audit", () => {
   it("discards partial text, gates proposal actions, and offers audit-only retry until audit succeeds", async () => {
     const streams = deferredStreams();
-    const firstAudit = rejectable<{ jobs: StudioJob[]; next_cursor: string | null }>();
+    const firstAudit = rejectable<{ jobs: StudioJobSummary[]; next_cursor: string | null }>();
     vi.mocked(api.jobs)
       .mockReturnValueOnce(firstAudit.promise)
-      .mockResolvedValueOnce({ jobs: [], next_cursor: null });
+      .mockResolvedValueOnce({ jobs: [], next_cursor: "older-summary-page" });
     const view = renderUnknownHarness();
     let running: Promise<void> = Promise.resolve();
 
@@ -155,6 +155,8 @@ describe("useStudioProposal unknown outcome audit", () => {
     await act(async () => {
       await view.result().proposal.retryProposalAudit();
     });
+    expect(api.jobs).toHaveBeenCalledTimes(2);
+    expect(vi.mocked(api.jobs).mock.calls[1]?.[1]).not.toHaveProperty("cursor");
     expect(view.result().jobs.proposalAuditStatus).toBe("audit_succeeded");
     expect(view.result().proposal.proposalOutcomeUnknown).toBe(true);
 

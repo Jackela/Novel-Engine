@@ -117,9 +117,9 @@ describe("atomic completed-proposal landing (#392)", () => {
     ).toThrow("simulated ledger failure between the two writes");
 
     // The whole transaction rolled back: no job row, no usage event.
-    expect(store.collectProjectJobs(scope, projectId, { limit: jobPageLimit(50) }).jobs).toEqual(
-      [],
-    );
+    expect(
+      store.collectProjectJobSummaries(scope, projectId, { limit: jobPageLimit(50) }).jobs,
+    ).toEqual([]);
     const usage = store.aggregateProjectUsage(scope, projectId, new Date());
     expect(usage.requestCount).toBe(0);
   });
@@ -147,11 +147,9 @@ describe("atomic retry completion with usage (#392)", () => {
     expect(done.status).toBe("completed");
     expect(done.model).toBe("retry-model");
     expect(done.events.map((event) => event.status)).toEqual(["running", "completed"]);
-    expect(
-      store
-        .collectProjectJobs(scope, projectId, { limit: jobPageLimit(50) })
-        .jobs[0]?.events.map((event) => event.status),
-    ).toEqual(["completed", "running"]);
+    expect(store.findJob(scope, projectId, running.id).events.map((event) => event.status)).toEqual(
+      ["running", "completed"],
+    );
     const usage = store.aggregateProjectUsage(scope, projectId, new Date());
     expect(usage.requestCount).toBe(1);
   });

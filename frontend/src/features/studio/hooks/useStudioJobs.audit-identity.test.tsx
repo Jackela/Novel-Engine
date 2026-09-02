@@ -2,7 +2,7 @@ import { act, useState } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { api } from "@/app/api";
-import { job } from "@/test/factories";
+import { jobSummary } from "@/test/factories";
 import { createMountHarness, deferred } from "@/test/harness";
 
 import { useStudioJobs } from "./useStudioJobs";
@@ -25,12 +25,12 @@ afterEach(() => {
 describe("useStudioJobs proposal audit ownership", () => {
   it("returns an aborted project audit to retryable failure across an A to B to A cycle", async () => {
     const projectAAudit = deferred<{
-      jobs: ReturnType<typeof job>[];
+      jobs: ReturnType<typeof jobSummary>[];
       next_cursor: string | null;
     }>();
     vi.mocked(api.jobs)
       .mockReturnValueOnce(projectAAudit.promise)
-      .mockResolvedValueOnce({ jobs: [job()], next_cursor: null });
+      .mockResolvedValueOnce({ jobs: [jobSummary()], next_cursor: null });
     let projectId = "project-a";
     let jobs: ReturnType<typeof useStudioJobs> | undefined;
 

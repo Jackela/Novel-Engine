@@ -1,12 +1,12 @@
 import { RotateCcw } from "lucide-react";
 import { useRef } from "react";
 
-import type { StudioJob } from "@/app/types/studio";
+import type { StudioJobSummary } from "@/app/types/studio";
 import { useCommandFocusRestoration } from "../hooks/useCommandFocusRestoration";
 import type { JobsLoadInitiator } from "../hooks/useStudioJobs";
 
 interface StudioJobsPanelProps {
-  jobs: StudioJob[];
+  jobs: StudioJobSummary[];
   hasOlderJobs?: boolean;
   onLoadJobs: () => void | Promise<void>;
   onLoadOlderJobs?: () => void | Promise<void>;
@@ -68,7 +68,8 @@ export function StudioJobsPanel({
                 </small>
                 {job.error ? <small className="job-error">{job.error}</small> : null}
               </div>
-              {job.status === "failed" || job.status === "interrupted" ? (
+              {job.kind !== "import" &&
+              (job.status === "failed" || job.status === "interrupted") ? (
                 <button
                   aria-busy={retryingJobId === job.id}
                   aria-label={

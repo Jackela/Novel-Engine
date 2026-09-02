@@ -28,6 +28,22 @@ export interface JobRecord {
   events: JobEventRecord[];
 }
 
+/** Lightweight project-history item; complete audit bodies live on JobRecord. */
+export interface JobSummaryRecord {
+  id: string;
+  projectId: string;
+  documentId: string | null;
+  kind: string;
+  operation: string;
+  status: string;
+  provider: string;
+  model: string;
+  error: string | null;
+  retryOfJobId: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 /** The validated row budget of one bounded project-job history page. */
 export type JobPageLimit = number & { readonly __jobPageLimit: unique symbol };
 
@@ -58,8 +74,8 @@ export interface JobPageInput {
 }
 
 /** One bounded page and the exclusive position required to continue it. */
-export interface JobPage {
-  readonly jobs: JobRecord[];
+export interface JobSummaryPage {
+  readonly jobs: JobSummaryRecord[];
   readonly nextCursor: JobPageCursor | null;
 }
 

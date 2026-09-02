@@ -8,6 +8,7 @@ import type {
   Revision,
   StudioExport,
   StudioJob,
+  StudioJobSummary,
 } from "@/app/types/studio";
 import type { JobsLoadInitiator, ProposalAuditStatus } from "./hooks/useStudioJobs";
 
@@ -76,7 +77,7 @@ export interface InspectorHistoryModel {
 }
 
 export interface InspectorJobsModel {
-  jobs: StudioJob[];
+  jobs: StudioJobSummary[];
   hasOlderJobs: boolean;
   onLoadJobs: () => void | Promise<void>;
   onLoadOlderJobs: () => void | Promise<void>;

@@ -175,7 +175,7 @@ describe("ExportStorePart", () => {
         expect(() => harness.exportStore.recordCompletedExportJob(harness.scope, input)).toThrow();
         expect(harness.exportStore.listProjectArtifacts(harness.scope, projectId)).toEqual([]);
         expect(
-          harness.store.collectProjectJobs(harness.scope, projectId, {
+          harness.store.collectProjectJobSummaries(harness.scope, projectId, {
             limit: jobPageLimit(50),
           }).jobs,
         ).toEqual([]);

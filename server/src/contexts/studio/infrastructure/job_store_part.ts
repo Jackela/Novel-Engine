@@ -2,7 +2,11 @@ import { asc, count, eq, sum } from "drizzle-orm";
 
 import type { StudioSqliteDatabase } from "../../../shared/infrastructure/db/connection.js";
 import { jobEvents, jobs, usageEvents } from "../../../shared/infrastructure/db/schema.js";
-import { type JobPage, type JobPageInput, jobPageLimit } from "../application/ports/job_records.js";
+import {
+  type JobPageInput,
+  type JobSummaryPage,
+  jobPageLimit,
+} from "../application/ports/job_records.js";
 import type {
   AddJobInput,
   AddUsageEventInput,
@@ -21,7 +25,7 @@ import {
 } from "./db/job_writes.js";
 import { type ProjectRow, scopedProject, type Tx } from "./db/studio_query_helpers.js";
 import { dailyUsageBuckets } from "./db/usage_daily_buckets.js";
-import { buildJobEventsQuery, buildProjectJobsPageQuery } from "./job_page_queries.js";
+import { buildProjectJobSummariesQuery } from "./job_page_queries.js";
 
 type JobRow = typeof jobs.$inferSelect;
 type JobEventRow = typeof jobEvents.$inferSelect;
@@ -186,36 +190,26 @@ export class JobStorePart {
     });
   }
 
-  /**
-   * The audit-trail listing: jobs newest first, and within each job the
-   * events newest first (the OpenSpec listing contract).
-   */
-  collectProjectJobs(scope: ProjectScope, projectId: string, input: JobPageInput): JobPage {
+  /** The audit index: newest summaries first, with complete bodies read separately. */
+  collectProjectJobSummaries(
+    scope: ProjectScope,
+    projectId: string,
+    input: JobPageInput,
+  ): JobSummaryPage {
     const limit = jobPageLimit(input.limit);
     return this.db.transaction((tx) => {
       const project: ProjectRow = scopedProject(tx, scope, projectId);
-      const rows = buildProjectJobsPageQuery(tx, project.id, { ...input, limit }).all();
+      const rows = buildProjectJobSummariesQuery(tx, project.id, { ...input, limit }).all();
       const returnedRows = rows.slice(0, limit);
       if (returnedRows.length === 0) {
         return { jobs: [], nextCursor: null };
       }
-      const events = buildJobEventsQuery(
-        tx,
-        returnedRows.map((row) => row.id),
-      ).all();
-      const eventsByJob = new Map<string, JobEventRow[]>();
-      for (const event of events) {
-        const bucket = eventsByJob.get(event.job_id) ?? [];
-        bucket.push(event);
-        eventsByJob.set(event.job_id, bucket);
-      }
-      const pageJobs = returnedRows.map((row) => toJobRecord(row, eventsByJob.get(row.id) ?? []));
       const boundary = returnedRows.at(-1);
       const nextCursor =
         rows.length > limit && boundary !== undefined
-          ? { createdAtMs: boundary.created_at.getTime(), id: boundary.id }
+          ? { createdAtMs: boundary.createdAt.getTime(), id: boundary.id }
           : null;
-      return { jobs: pageJobs, nextCursor };
+      return { jobs: returnedRows, nextCursor };
     });
   }
 

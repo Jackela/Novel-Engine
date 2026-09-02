@@ -1,5 +1,5 @@
 import type { StudioSqliteDatabase } from "../../../shared/infrastructure/db/connection.js";
-import type { JobPage, JobPageInput } from "../application/ports/job_records.js";
+import type { JobPageInput, JobSummaryPage } from "../application/ports/job_records.js";
 import type { SetLoreAliasesInput, SetLoreStatusInput } from "../application/ports/lore_store.js";
 import type {
   AddDocumentInput,
@@ -207,8 +207,12 @@ export class DrizzleStudioStore extends ProjectStorePart implements StudioStore 
     return this.workflowJobs.findJob(scope, projectId, jobId);
   }
 
-  collectProjectJobs(scope: ProjectScope, projectId: string, input: JobPageInput): JobPage {
-    return this.workflowJobs.collectProjectJobs(scope, projectId, input);
+  collectProjectJobSummaries(
+    scope: ProjectScope,
+    projectId: string,
+    input: JobPageInput,
+  ): JobSummaryPage {
+    return this.workflowJobs.collectProjectJobSummaries(scope, projectId, input);
   }
 
   markJobOutcome(

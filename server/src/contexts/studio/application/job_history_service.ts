@@ -3,13 +3,14 @@ import type { Principal } from "../../../shared/application/ports/auth.js";
 import {
   ExportArtifactWriteError,
   ExportSourceInvalidatedError,
+  NotFoundError,
   ReviewSourceInvalidatedError,
 } from "../domain/exceptions.js";
 import type { SnapshotArtifactService } from "./export_artifact_service.js";
 import { JobRetryExecutor, type JobRetryExecutorOptions } from "./job_retry_executor.js";
 import type { InFlightOperationGuard } from "./operation_in_flight.js";
-import type { JobPayload } from "./payload_schemas/job.js";
-import { dumpJson, jobPayload } from "./payloads.js";
+import type { JobPayload, JobSummaryPayload } from "./payload_schemas/job.js";
+import { dumpJson, jobPayload, jobSummaryPayload } from "./payloads.js";
 import type { ExportArtifactFormat } from "./ports/export_store.js";
 import type { JobPageCursor, JobPageInput } from "./ports/job_records.js";
 import type {
@@ -34,7 +35,7 @@ export interface JobHistoryServiceOptions {
 }
 
 export interface JobHistoryPage {
-  readonly jobs: JobPayload[];
+  readonly jobs: JobSummaryPayload[];
   readonly nextCursor: JobPageCursor | null;
 }
 
@@ -70,10 +71,28 @@ export class JobHistoryService {
     this.now = options.now ?? (() => new Date());
   }
 
-  /** The audit listing: newest job first, each event stream newest first. */
-  collectProjectJobs(principal: Principal, projectId: string, input: JobPageInput): JobHistoryPage {
-    const page = this.store.collectProjectJobs(scopeForPrincipal(principal), projectId, input);
-    return { jobs: page.jobs.map((job) => jobPayload(job)), nextCursor: page.nextCursor };
+  /** The lightweight audit listing: newest summary first, with no nested bodies. */
+  collectProjectJobSummaries(
+    principal: Principal,
+    projectId: string,
+    input: JobPageInput,
+  ): JobHistoryPage {
+    const page = this.store.collectProjectJobSummaries(
+      scopeForPrincipal(principal),
+      projectId,
+      input,
+    );
+    return { jobs: page.jobs.map((job) => jobSummaryPayload(job)), nextCursor: page.nextCursor };
+  }
+
+  /** One complete scoped Job; all known misses share the stable Job identity. */
+  findProjectJob(principal: Principal, projectId: string, jobId: string): JobPayload {
+    try {
+      return jobPayload(this.store.findJob(scopeForPrincipal(principal), projectId, jobId));
+    } catch (error) {
+      if (!(error instanceof NotFoundError)) throw error;
+      throw new NotFoundError("Job not found.");
+    }
   }
 
   /** The usage-ledger aggregation for the project surface (#317, #384). */

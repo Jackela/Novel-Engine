@@ -160,9 +160,16 @@ describe("Provider failure diagnostics boundary", () => {
           expect.objectContaining({
             status: "failed",
             error,
-            events: [expect.objectContaining({ details: { error } })],
           }),
         ]);
+        const detail = await call(
+          app,
+          jar,
+          "GET",
+          `/api/projects/${project.id}/jobs/${listed.json().jobs[0].id}`,
+        );
+        expect(detail.statusCode, detail.body).toBe(200);
+        expect(detail.json().events).toEqual([expect.objectContaining({ details: { error } })]);
 
         expect(logs.length).toBeGreaterThan(0);
         expect(logs.some((line) => line.includes('"msg":"request completed"'))).toBe(true);
@@ -172,6 +179,7 @@ describe("Provider failure diagnostics boundary", () => {
           persistedJobs[0]?.error,
           persistedEvents[0]?.details_json,
           listed.body,
+          detail.body,
           logs.join("\n"),
         ].join("\n");
         for (const leaked of [apiKey, ...PROVIDER_FAILURE_CANARIES, "[REDACTED]"]) {

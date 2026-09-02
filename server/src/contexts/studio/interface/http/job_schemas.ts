@@ -1,5 +1,5 @@
 import { Type } from "@fastify/type-provider-typebox";
-import { jobListPayloadSchema } from "../../application/payload_schemas/job.js";
+import { jobSummaryPayloadSchema } from "../../application/payload_schemas/job.js";
 import type { JsonResponseSchema } from "./json_response_schema.js";
 
 /**
@@ -24,10 +24,15 @@ export const jobListQuerySchema = Type.Object(
   { additionalProperties: false },
 );
 
-/** The jobs audit listing: newest job first, each event newest first. */
+export const jobDetailParamsSchema = Type.Object({
+  projectId: Type.String({ minLength: 1, maxLength: 64 }),
+  jobId: Type.String({ minLength: 1, maxLength: 64 }),
+});
+
+/** The jobs audit listing: newest compact summary first. */
 export const jobListResponseSchema = Type.Object(
   {
-    jobs: Type.Array(jobListPayloadSchema),
+    jobs: Type.Array(jobSummaryPayloadSchema),
     next_cursor: Type.Unsafe<string | null>({ type: "string", nullable: true }),
   },
   { additionalProperties: false },

@@ -4,13 +4,20 @@ import { asLoreStatus, isLoreEntryKind } from "./lorebook.js";
 import type { ChapterBeatPayload } from "./payload_schemas/beat.js";
 import type { DocumentPayload, MatchResultPayload } from "./payload_schemas/document.js";
 import type { ExportArtifactPayload } from "./payload_schemas/export.js";
-import type { JobPayload } from "./payload_schemas/job.js";
+import {
+  JOB_SUMMARY_KINDS,
+  JOB_SUMMARY_OPERATIONS,
+  JOB_SUMMARY_STATUSES,
+  type JobPayload,
+  type JobSummaryPayload,
+} from "./payload_schemas/job.js";
 import type { LoreAliasPayload, LoreStatusPayload } from "./payload_schemas/lore.js";
 import type { ProjectPayload } from "./payload_schemas/project.js";
 import type { ReviewPayload, ReviewSeverity } from "./payload_schemas/review.js";
 import type { RevisionPayload } from "./payload_schemas/revision.js";
 import type { VolumePayload } from "./payload_schemas/volume.js";
 import type { ExportArtifactRecord } from "./ports/export_store.js";
+import type { JobSummaryRecord } from "./ports/job_records.js";
 import type {
   DocumentMatchRecord,
   DocumentWithCurrent,
@@ -172,6 +179,41 @@ export function jobPayload(job: JobRecord): JobPayload {
       details: safeLoadJson(event.detailsJson),
       created_at: iso(event.createdAt),
     })),
+  };
+}
+
+function isJobSummaryKind(value: string): value is JobSummaryPayload["kind"] {
+  return JOB_SUMMARY_KINDS.some((candidate) => candidate === value);
+}
+
+function isJobSummaryOperation(value: string): value is JobSummaryPayload["operation"] {
+  return JOB_SUMMARY_OPERATIONS.some((candidate) => candidate === value);
+}
+
+function isJobSummaryStatus(value: string): value is JobSummaryPayload["status"] {
+  return JOB_SUMMARY_STATUSES.some((candidate) => candidate === value);
+}
+
+/** Serialize one lightweight history row without touching stored JSON bodies. */
+export function jobSummaryPayload(job: JobSummaryRecord): JobSummaryPayload {
+  if (!isJobSummaryKind(job.kind)) throw new Error("Stored Job has an unsupported kind.");
+  if (!isJobSummaryOperation(job.operation)) {
+    throw new Error("Stored Job has an unsupported operation.");
+  }
+  if (!isJobSummaryStatus(job.status)) throw new Error("Stored Job has an unsupported status.");
+  return {
+    id: job.id,
+    project_id: job.projectId,
+    document_id: job.documentId,
+    kind: job.kind,
+    operation: job.operation,
+    status: job.status,
+    provider: job.provider,
+    model: job.model,
+    error: job.error,
+    retry_of_job_id: job.retryOfJobId,
+    created_at: iso(job.createdAt),
+    updated_at: iso(job.updatedAt),
   };
 }
 

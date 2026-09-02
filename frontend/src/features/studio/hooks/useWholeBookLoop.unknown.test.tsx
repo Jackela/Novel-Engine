@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { api } from "@/app/api";
 import { ProposalOutcomeUnknownError, streamProposal } from "@/app/proposalStream";
-import type { Project, StudioJob } from "@/app/types/studio";
+import type { Project, StudioJob, StudioJobSummary } from "@/app/types/studio";
 import { createMountHarness } from "@/test/harness";
 
 import { useStudioJobs } from "./useStudioJobs";
@@ -106,10 +106,10 @@ describe("useWholeBookLoop unknown outcome audit", () => {
     vi.mocked(streamProposal)
       .mockReturnValueOnce(firstStream.promise)
       .mockReturnValueOnce(secondStream.promise);
-    const firstAudit = rejectable<{ jobs: StudioJob[]; next_cursor: string | null }>();
+    const firstAudit = rejectable<{ jobs: StudioJobSummary[]; next_cursor: string | null }>();
     vi.mocked(api.jobs)
       .mockReturnValueOnce(firstAudit.promise)
-      .mockResolvedValueOnce({ jobs: [], next_cursor: null });
+      .mockResolvedValueOnce({ jobs: [], next_cursor: "older-summary-page" });
     const view = renderUnknownLoop();
     let run: Promise<void> = Promise.resolve();
 
@@ -142,6 +142,8 @@ describe("useWholeBookLoop unknown outcome audit", () => {
     await act(async () => {
       await view.result().loop.retryProposalAudit();
     });
+    expect(api.jobs).toHaveBeenCalledTimes(2);
+    expect(vi.mocked(api.jobs).mock.calls[1]?.[1]).not.toHaveProperty("cursor");
     expect(view.result().jobs.proposalAuditStatus).toBe("audit_succeeded");
     expect(view.result().loop.proposalOutcomeUnknown).toBe(true);
 

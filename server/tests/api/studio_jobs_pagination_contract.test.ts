@@ -16,6 +16,44 @@ import {
 } from "./studio_helpers.js";
 
 describe("jobs pagination HTTP contract", () => {
+  it("returns strict scalar summaries instead of complete jobs", async () => {
+    const { app } = await buildStudioApp();
+    try {
+      const owner = await ownerJar(app);
+      const project = await seedProject(app, owner, "Jobs summary contract");
+      const document = firstDocument(project);
+      await draftProposal(app, owner, project.id, document.id, {
+        operation: "continue",
+        instruction: "summary only",
+      });
+
+      const response = await call(app, owner, "GET", `/api/projects/${project.id}/jobs`);
+      expect(response.statusCode, response.body).toBe(200);
+      const [summary] = response.json().jobs as Array<Record<string, unknown>>;
+      expect(Object.keys(summary ?? {}).sort()).toEqual(
+        [
+          "created_at",
+          "document_id",
+          "error",
+          "id",
+          "kind",
+          "model",
+          "operation",
+          "project_id",
+          "provider",
+          "retry_of_job_id",
+          "status",
+          "updated_at",
+        ].sort(),
+      );
+      expect(summary).not.toHaveProperty("request");
+      expect(summary).not.toHaveProperty("result");
+      expect(summary).not.toHaveProperty("events");
+    } finally {
+      await app.close();
+    }
+  });
+
   it("rejects invalid limits through the validation envelope", async () => {
     const { app } = await buildStudioApp();
     try {
@@ -212,6 +250,44 @@ describe("jobs pagination HTTP contract", () => {
       expect(operation.responses["200"].content["application/json"].schema.required).toContain(
         "next_cursor",
       );
+      const summary =
+        operation.responses["200"].content["application/json"].schema.properties.jobs.items;
+      expect(Object.keys(summary.properties).sort()).toEqual(
+        [
+          "created_at",
+          "document_id",
+          "error",
+          "id",
+          "kind",
+          "model",
+          "operation",
+          "project_id",
+          "provider",
+          "retry_of_job_id",
+          "status",
+          "updated_at",
+        ].sort(),
+      );
+      expect(summary.required).toHaveLength(12);
+      expect(summary.additionalProperties).toBe(false);
+      expect(summary.properties.kind.enum).toEqual(["proposal", "review", "export", "import"]);
+      expect(summary.properties.operation.enum).toEqual([
+        "continue",
+        "rewrite",
+        "generate",
+        "review",
+        "export",
+        "import",
+      ]);
+      expect(summary.properties.status.enum).toEqual([
+        "pending",
+        "running",
+        "completed",
+        "failed",
+        "interrupted",
+      ]);
+      expect(summary.properties.created_at).toMatchObject({ type: "string", format: "date-time" });
+      expect(summary.properties.updated_at).toMatchObject({ type: "string", format: "date-time" });
     } finally {
       await app.close();
     }

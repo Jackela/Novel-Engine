@@ -2380,35 +2380,127 @@ export interface paths {
                     content: {
                         "application/json": {
                             jobs: {
+                                /** Format: date-time */
                                 created_at: string;
                                 document_id: string | null;
                                 error: string | null;
-                                /** @description Reverse-chronological event trail (newest first) on the jobs LIST endpoint. */
-                                events: {
-                                    created_at: string;
-                                    details: {
-                                        [key: string]: unknown;
-                                    };
-                                    id: string;
-                                    status: string;
-                                }[];
                                 id: string;
-                                kind: string;
+                                /** @enum {string} */
+                                kind: "proposal" | "review" | "export" | "import";
                                 model: string;
-                                operation: string;
+                                /** @enum {string} */
+                                operation: "continue" | "rewrite" | "generate" | "review" | "export" | "import";
                                 project_id: string;
                                 provider: string;
-                                request: {
-                                    [key: string]: unknown;
-                                };
-                                result: {
-                                    [key: string]: unknown;
-                                };
                                 retry_of_job_id: string | null;
-                                status: string;
+                                /** @enum {string} */
+                                status: "pending" | "running" | "completed" | "failed" | "interrupted";
+                                /** Format: date-time */
                                 updated_at: string;
                             }[];
                             next_cursor: string | null;
+                        };
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/projects/{projectId}/jobs/{jobId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    projectId: string;
+                    jobId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            created_at: string;
+                            document_id: string | null;
+                            error: string | null;
+                            /** @description Chronological trail (oldest first) on a single job payload; the jobs LIST endpoint is the spec-mandated newest-first surface. */
+                            events: {
+                                created_at: string;
+                                details: {
+                                    [key: string]: unknown;
+                                };
+                                id: string;
+                                status: string;
+                            }[];
+                            id: string;
+                            kind: string;
+                            model: string;
+                            operation: string;
+                            project_id: string;
+                            provider: string;
+                            request: {
+                                [key: string]: unknown;
+                            };
+                            result: {
+                                [key: string]: unknown;
+                            };
+                            retry_of_job_id: string | null;
+                            status: string;
+                            updated_at: string;
                         };
                     };
                 };

@@ -5,6 +5,7 @@ import type {
   StudioDocument,
   StudioExport,
   StudioJob,
+  StudioJobSummary,
   Volume,
 } from "@/app/types/studio";
 
@@ -128,6 +129,24 @@ export function job(overrides: Partial<StudioJob> = {}): StudioJob {
     error: null,
     retry_of_job_id: null,
     events: [],
+    created_at: FIXTURE_TIMESTAMP,
+    updated_at: FIXTURE_TIMESTAMP,
+    ...overrides,
+  };
+}
+
+export function jobSummary(overrides: Partial<StudioJobSummary> = {}): StudioJobSummary {
+  return {
+    id: "job-1",
+    project_id: "project-1",
+    document_id: "document-1",
+    kind: "proposal",
+    operation: "continue",
+    status: "completed",
+    provider: "mock",
+    model: "studio-copilot-v1",
+    error: null,
+    retry_of_job_id: null,
     created_at: FIXTURE_TIMESTAMP,
     updated_at: FIXTURE_TIMESTAMP,
     ...overrides,

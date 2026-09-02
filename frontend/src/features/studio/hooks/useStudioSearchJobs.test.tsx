@@ -3,7 +3,7 @@ import { act, useState } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { api } from "@/app/api";
-import { job } from "@/test/factories";
+import { jobSummary } from "@/test/factories";
 import { createMountHarness, deferred, flushEffects } from "@/test/harness";
 
 import { useStudioJobs } from "./useStudioJobs";
@@ -28,7 +28,7 @@ interface HarnessSnapshot {
   readonly setError: Dispatch<SetStateAction<string | null>>;
 }
 
-const jobFixture = job();
+const jobFixture = jobSummary();
 
 const harness = createMountHarness();
 

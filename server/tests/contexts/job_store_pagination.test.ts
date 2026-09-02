@@ -2,6 +2,7 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { eq } from "drizzle-orm";
+import { drizzle } from "drizzle-orm/better-sqlite3";
 import { describe, expect, it } from "vitest";
 
 import {
@@ -11,13 +12,11 @@ import {
 } from "../../src/contexts/studio/application/ports/job_records.js";
 import { scopeForPrincipal } from "../../src/contexts/studio/application/ports/studio_store.js";
 import { DrizzleStudioStore } from "../../src/contexts/studio/infrastructure/drizzle_studio_store.js";
-import {
-  buildJobEventsQuery,
-  buildProjectJobsPageQuery,
-} from "../../src/contexts/studio/infrastructure/job_page_queries.js";
+import { buildProjectJobSummariesQuery } from "../../src/contexts/studio/infrastructure/job_page_queries.js";
 import { JobStorePart } from "../../src/contexts/studio/infrastructure/job_store_part.js";
 import { AuthService } from "../../src/shared/application/auth_service.js";
 import { DrizzleAuthStore } from "../../src/shared/infrastructure/db/auth_store.js";
+import * as databaseSchema from "../../src/shared/infrastructure/db/schema.js";
 import { jobs as jobsTable } from "../../src/shared/infrastructure/db/schema.js";
 import { openStudioDatabase } from "../../src/shared/infrastructure/db/startup.js";
 
@@ -86,9 +85,25 @@ describe("project job keyset pages", () => {
       const middle = jobs.addJob(scope, completedJob(projectId, "middle", 2_000));
       const newest = jobs.addJob(scope, completedJob(projectId, "newest", 3_000));
 
-      const page = jobs.collectProjectJobs(scope, projectId, { limit: jobPageLimit(2) });
+      const page = jobs.collectProjectJobSummaries(scope, projectId, { limit: jobPageLimit(2) });
 
       expect(page.jobs.map((job) => job.id)).toEqual([newest.id, middle.id]);
+      expect(Object.keys(page.jobs[0] ?? {}).sort()).toEqual(
+        [
+          "createdAt",
+          "documentId",
+          "error",
+          "id",
+          "kind",
+          "model",
+          "operation",
+          "projectId",
+          "provider",
+          "retryOfJobId",
+          "status",
+          "updatedAt",
+        ].sort(),
+      );
       expect(page.nextCursor).toEqual({ createdAtMs: 2_000, id: middle.id });
       expect(page.jobs.map((job) => job.id)).not.toContain(oldest.id);
     } finally {
@@ -101,7 +116,7 @@ describe("project job keyset pages", () => {
     try {
       for (const invalid of [0, 101, 1.5, Number.NaN]) {
         expect(() =>
-          jobs.collectProjectJobs(scope, projectId, { limit: invalid as JobPageLimit }),
+          jobs.collectProjectJobSummaries(scope, projectId, { limit: invalid as JobPageLimit }),
         ).toThrow(RangeError);
       }
     } finally {
@@ -117,7 +132,7 @@ describe("project job keyset pages", () => {
         jobs.addJob(scope, completedJob(projectId, label, tied)),
       );
       const expected = [...tiedJobs].sort((left, right) => (left.id < right.id ? 1 : -1));
-      const first = jobs.collectProjectJobs(scope, projectId, { limit: jobPageLimit(2) });
+      const first = jobs.collectProjectJobSummaries(scope, projectId, { limit: jobPageLimit(2) });
       expect(first.jobs.map((job) => job.id)).toEqual(expected.slice(0, 2).map((job) => job.id));
       expect(first.nextCursor).not.toBeNull();
       const boundary = expected[1];
@@ -127,7 +142,7 @@ describe("project job keyset pages", () => {
 
       const newer = jobs.addJob(scope, completedJob(projectId, "newer", tied + 1));
       studio.db.delete(jobsTable).where(eq(jobsTable.id, boundary.id)).run();
-      const second = jobs.collectProjectJobs(scope, projectId, {
+      const second = jobs.collectProjectJobSummaries(scope, projectId, {
         limit: jobPageLimit(2),
         cursor: first.nextCursor,
       });
@@ -136,7 +151,7 @@ describe("project job keyset pages", () => {
       expect(second.nextCursor).toBeNull();
       expect(second.jobs.map((job) => job.id)).not.toContain(newer.id);
       expect(
-        jobs.collectProjectJobs(scope, projectId, { limit: jobPageLimit(1) }).jobs[0]?.id,
+        jobs.collectProjectJobSummaries(scope, projectId, { limit: jobPageLimit(1) }).jobs[0]?.id,
       ).toBe(newer.id);
     } finally {
       await cleanup();
@@ -157,42 +172,66 @@ describe("project job keyset pages", () => {
         }
       })();
 
-      const page = jobs.collectProjectJobs(scope, projectId, { limit: jobPageLimit(100) });
+      const page = jobs.collectProjectJobSummaries(scope, projectId, { limit: jobPageLimit(100) });
 
       expect(page.jobs).toHaveLength(100);
       expect(page.jobs[0]?.id).toBe("job-32766");
       expect(page.jobs[99]?.id).toBe("job-32667");
-      expect(page.jobs.every((job) => job.events.length === 0)).toBe(true);
       expect(page.nextCursor).toEqual({ createdAtMs: 32_667, id: "job-32667" });
     } finally {
       await cleanup();
     }
   });
 
-  it("uses tuple-range and event indexes without temporary ordering", async () => {
+  it("executes only the lightweight summary queries through the public store", async () => {
+    const { cleanup, jobs, projectId, scope, studio } = await openHarness();
+    try {
+      jobs.addJob(scope, {
+        ...completedJob(projectId, "large", 5_000),
+        requestJson: "{malformed-request",
+        resultJson: "{malformed-result",
+        eventDetailsJson: "{malformed-event",
+      });
+      const executedSql: string[] = [];
+      const tracedDatabase = drizzle(studio.raw, {
+        schema: databaseSchema,
+        logger: { logQuery: (query: string) => executedSql.push(query) },
+      });
+      const publicStore = new DrizzleStudioStore({ database: tracedDatabase });
+
+      const page = publicStore.collectProjectJobSummaries(scope, projectId, {
+        limit: jobPageLimit(50),
+      });
+
+      expect(page.jobs).toHaveLength(1);
+      expect(executedSql.some((query) => query.includes('from "jobs"'))).toBe(true);
+      expect(executedSql.every((query) => !query.includes("job_events"))).toBe(true);
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it("uses the tuple-range summary index without temporary ordering", async () => {
     const { cleanup, projectId, studio } = await openHarness();
     try {
       const queries = studio.db.transaction((tx) => ({
-        jobs: buildProjectJobsPageQuery(tx, projectId, {
+        jobs: buildProjectJobSummariesQuery(tx, projectId, {
           limit: jobPageLimit(100),
           cursor: { createdAtMs: 5_000, id: "boundary" },
         }).toSQL(),
-        events: buildJobEventsQuery(tx, ["job-a", "job-b"]).toSQL(),
       }));
       const jobPlan = studio.raw
         .prepare(`EXPLAIN QUERY PLAN ${queries.jobs.sql}`)
         .all(...queries.jobs.params) as Array<{ detail: string }>;
-      const eventPlan = studio.raw
-        .prepare(`EXPLAIN QUERY PLAN ${queries.events.sql}`)
-        .all(...queries.events.params) as Array<{ detail: string }>;
       const jobDetails = jobPlan.map((row) => row.detail).join("\n");
-      const eventDetails = eventPlan.map((row) => row.detail).join("\n");
 
       expect(jobDetails).toContain("idx_jobs_project_created_id");
       expect(jobDetails).toContain("(created_at,id)<(?,?)");
       expect(jobDetails).not.toContain("USE TEMP B-TREE");
-      expect(eventDetails).toContain("uq_job_events_job_sequence");
-      expect(eventDetails).not.toContain("USE TEMP B-TREE");
+      expect(queries.jobs.sql).not.toContain("request_json");
+      expect(queries.jobs.sql).not.toContain("result_json");
+      expect(queries.jobs.sql).not.toContain("started_at");
+      expect(queries.jobs.sql).not.toContain("finished_at");
     } finally {
       await cleanup();
     }

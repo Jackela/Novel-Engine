@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { api } from "@/app/api";
 import type { JobsPage } from "@/app/apiWorkflowContract";
-import { job } from "@/test/factories";
+import { jobSummary } from "@/test/factories";
 import { createMountHarness, deferred } from "@/test/harness";
 
 import { useStudioJobs } from "./useStudioJobs";
@@ -15,7 +15,7 @@ vi.mock("@/app/api", async (importOriginal) => {
 });
 
 const mountHarness = createMountHarness();
-const newest = job({ id: "job-newest" });
+const newest = jobSummary({ id: "job-newest" });
 
 afterEach(() => {
   mountHarness.cleanup();
@@ -72,7 +72,11 @@ describe("useStudioJobs pagination", () => {
 
     await act(async () => {
       olderPage.resolve({
-        jobs: [job({ id: newest.id }), job({ id: "job-older" }), job({ id: "job-older" })],
+        jobs: [
+          jobSummary({ id: newest.id }),
+          jobSummary({ id: "job-older" }),
+          jobSummary({ id: "job-older" }),
+        ],
         next_cursor: null,
       });
       await first;
@@ -99,7 +103,7 @@ describe("useStudioJobs pagination", () => {
     async (initiator) => {
       const olderPage = deferred<JobsPage>();
       const replacement = deferred<JobsPage>();
-      const replacementJob = job({ id: `job-${initiator}` });
+      const replacementJob = jobSummary({ id: `job-${initiator}` });
       vi.mocked(api.jobs)
         .mockResolvedValueOnce({ jobs: [newest], next_cursor: "cursor-2" })
         .mockReturnValueOnce(olderPage.promise)
@@ -117,7 +121,7 @@ describe("useStudioJobs pagination", () => {
       expect(vi.mocked(api.jobs).mock.calls[2]?.[1]).not.toHaveProperty("cursor");
       await act(async () => {
         replacement.resolve({ jobs: [replacementJob], next_cursor: null });
-        olderPage.resolve({ jobs: [job({ id: "stale-older" })], next_cursor: null });
+        olderPage.resolve({ jobs: [jobSummary({ id: "stale-older" })], next_cursor: null });
         await fresh;
         await older;
       });
@@ -158,7 +162,7 @@ describe("useStudioJobs pagination", () => {
     expect(vi.mocked(api.jobs).mock.calls[2]?.[1]).not.toHaveProperty("cursor");
     await act(async () => {
       await expect(audited).resolves.toBe(false);
-      olderPage.resolve({ jobs: [job({ id: "stale-older" })], next_cursor: null });
+      olderPage.resolve({ jobs: [jobSummary({ id: "stale-older" })], next_cursor: null });
       await older;
     });
     expect(view.result().jobs).toEqual([newest]);
@@ -171,7 +175,7 @@ describe("useStudioJobs pagination", () => {
     vi.mocked(api.jobs)
       .mockResolvedValueOnce({ jobs: [newest], next_cursor: "cursor-2" })
       .mockResolvedValueOnce({
-        jobs: [job({ id: "job-older" })],
+        jobs: [jobSummary({ id: "job-older" })],
         next_cursor: "cursor-3",
       })
       .mockRejectedValueOnce(new Error("older unavailable"));

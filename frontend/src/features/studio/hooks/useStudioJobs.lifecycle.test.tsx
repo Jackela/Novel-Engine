@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { api } from "@/app/api";
 import type { JobsPage } from "@/app/apiWorkflowContract";
-import { job } from "@/test/factories";
+import { jobSummary } from "@/test/factories";
 import { createMountHarness, deferred } from "@/test/harness";
 
 import { useStudioJobs } from "./useStudioJobs";
@@ -14,7 +14,7 @@ vi.mock("@/app/api", async (importOriginal) => {
 });
 
 const mountHarness = createMountHarness();
-const fixture = job();
+const fixture = jobSummary();
 
 afterEach(() => {
   mountHarness.cleanup();
@@ -131,7 +131,7 @@ describe("useStudioJobs lifecycle", () => {
 
   it("discards a previous project's reverse-order completion", async () => {
     const firstRequest = deferred<JobsPage>();
-    const secondJob = job({ id: "job-project-2", project_id: "project-2" });
+    const secondJob = jobSummary({ id: "job-project-2", project_id: "project-2" });
     vi.mocked(api.jobs)
       .mockReturnValueOnce(firstRequest.promise)
       .mockResolvedValueOnce({ jobs: [secondJob], next_cursor: null });
