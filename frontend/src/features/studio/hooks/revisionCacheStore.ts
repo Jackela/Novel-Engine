@@ -1,6 +1,15 @@
 import { api } from "@/app/api";
 import type { RevisionSummary } from "@/app/types/studio";
 
+import {
+  addRevisionSubscriber,
+  clearRevisionNotifications,
+  publishRevisionOutcome,
+  type RevisionErrorFamily,
+  type RevisionRequestOutcome,
+  removeRevisionSubscriber,
+  resetRevisionNotifications,
+} from "./revisionCacheNotifications";
 import { appendUnique, mergeFreshPage, type RevisionCacheEntry } from "./revisionCachePages";
 import type {
   ActiveRevisionRequest,
@@ -20,7 +29,6 @@ const cache = new Map<string, RevisionCacheEntry>();
 const requests = new Map<string, ActiveRevisionRequest>();
 const olderQueue = new Map<string, QueuedOlderRequest>();
 const activeOwners = new Map<string, number>();
-const subscribers = new Map<string, Map<symbol, RevisionSubscriber>>();
 const listeners = new Set<() => void>();
 let storeVersion = 0;
 let accessSequence = 0;
@@ -56,7 +64,7 @@ function prune(): void {
     cache.delete(oldest[0]);
     abortRequest(oldest[0]);
     finishOlderQueue(oldest[0]);
-    subscribers.delete(oldest[0]);
+    clearRevisionNotifications(oldest[0]);
   }
 }
 
@@ -110,15 +118,11 @@ export function activateRevisionOwner(
   subscriber: RevisionSubscriber,
 ): () => void {
   activeOwners.set(key, (activeOwners.get(key) ?? 0) + 1);
-  const ownerSubscribers = subscribers.get(key) ?? new Map<symbol, RevisionSubscriber>();
-  ownerSubscribers.set(token, subscriber);
-  subscribers.set(key, ownerSubscribers);
+  addRevisionSubscriber(key, token, subscriber);
   const entry = ensure(key);
   cache.set(key, { ...entry, lastAccess: ++accessSequence });
   return () => {
-    const current = subscribers.get(key);
-    current?.delete(token);
-    if (current?.size === 0) subscribers.delete(key);
+    removeRevisionSubscriber(key, token);
     const remaining = (activeOwners.get(key) ?? 1) - 1;
     if (remaining > 0) {
       activeOwners.set(key, remaining);
@@ -127,18 +131,9 @@ export function activateRevisionOwner(
     activeOwners.delete(key);
     abortRequest(key);
     finishOlderQueue(key);
+    clearRevisionNotifications(key);
     prune();
   };
-}
-
-function notifySuccess(key: string): void {
-  const snapshot = [...(subscribers.get(key)?.values() ?? [])];
-  for (const subscriber of snapshot) subscriber.onSuccess();
-}
-
-function notifyError(key: string, reason: unknown): void {
-  const snapshot = [...(subscribers.get(key)?.values() ?? [])];
-  for (const subscriber of snapshot) subscriber.onError(reason);
 }
 
 function drainOlder(key: string): void {
@@ -194,7 +189,7 @@ function beginRequest(
     activeOwners.has(key);
 
   request.promise = (async () => {
-    let outcome: { kind: "success" } | { kind: "error"; reason: unknown } | null = null;
+    let outcome: RevisionRequestOutcome | null = null;
     try {
       const page = await api.revisions(projectId, documentId, {
         limit: PAGE_LIMIT,
@@ -226,8 +221,8 @@ function beginRequest(
       if (requests.get(key) === request) {
         requests.delete(key);
         emit();
-        if (outcome?.kind === "success") notifySuccess(key);
-        else if (outcome?.kind === "error") notifyError(key, outcome.reason);
+        const family: RevisionErrorFamily = intent === "older" ? "older" : "first";
+        if (outcome) publishRevisionOutcome(key, family, outcome);
         if (intent === "older" && olderWaiter !== null && olderQueue.get(key) === olderWaiter) {
           finishOlderQueue(key);
         } else {
@@ -288,7 +283,7 @@ export function resetRevisionCacheStore(): void {
   olderQueue.clear();
   cache.clear();
   activeOwners.clear();
-  subscribers.clear();
+  resetRevisionNotifications();
   emit();
 }
 
