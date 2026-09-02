@@ -1,4 +1,5 @@
 import { linkedChapterBeat } from "./beat_association_service.js";
+import { BoundedPromptWriter } from "./generation_capacity.js";
 import { triggeredLoreSections } from "./lore_injection.js";
 import type { LoreEntrySource } from "./lorebook.js";
 import type { OutlineBeat } from "./outline_beats.js";
@@ -20,6 +21,7 @@ export { renderResidentContextSections, residentMatchCorpus } from "./resident_c
  * provider behavior.
  */
 export const PRIOR_STORY_DIGEST_WORD_LIMIT = 60;
+export const PRIOR_STORY_DIGEST_CODE_POINT_LIMIT = 512;
 export const RECENT_TEXT_CHARACTER_LIMIT = 1200;
 /** How far past the cut a line/space boundary may lie before the cut is hard. */
 export const RECENT_TEXT_BOUNDARY_WINDOW = 200;
@@ -89,10 +91,14 @@ function flattenProse(markdown: string): string {
 export function chapterDigest(markdown: string): string {
   const flat = flattenProse(markdown);
   const words = flat === "" ? [] : flat.split(" ");
-  if (words.length <= PRIOR_STORY_DIGEST_WORD_LIMIT) {
-    return flat;
-  }
-  return `${words.slice(0, PRIOR_STORY_DIGEST_WORD_LIMIT).join(" ")}…`;
+  const wordTruncated = words.length > PRIOR_STORY_DIGEST_WORD_LIMIT;
+  const wordBounded = wordTruncated
+    ? words.slice(0, PRIOR_STORY_DIGEST_WORD_LIMIT).join(" ")
+    : flat;
+  const codePoints = [...wordBounded];
+  const codePointTruncated = codePoints.length > PRIOR_STORY_DIGEST_CODE_POINT_LIMIT;
+  if (!wordTruncated && !codePointTruncated) return wordBounded;
+  return `${codePoints.slice(0, PRIOR_STORY_DIGEST_CODE_POINT_LIMIT - 1).join("")}…`;
 }
 
 /**
@@ -216,36 +222,37 @@ export function collectResidentContextSource(
 }
 
 /** The whole proposal user prompt: resident context, triggered lorebook, manuscript. */
-export function buildProposalUserPrompt(input: {
-  readonly operation: string;
-  readonly instruction: string;
-  readonly source: ResidentContextSource;
-  readonly manuscriptMarkdown: string;
-  /** Character/world entries (#315); matches render after the resident sections. */
-  readonly loreEntries?: readonly LoreEntrySource[];
-  /**
-   * Character budget of the lorebook section (#445); defaults to the
-   * adjudicated value. The single assembly point every proposal pipeline
-   * (synchronous draft, SSE stream, retry) shares.
-   */
-  readonly loreBudgetCharacters?: number | undefined;
-}): string {
-  const lines = [`Operation: ${input.operation}`, formatAuthorInstruction(input.instruction)];
+export function buildProposalUserPrompt(
+  input: {
+    readonly operation: string;
+    readonly instruction: string;
+    readonly source: ResidentContextSource;
+    readonly manuscriptMarkdown: string;
+    /** Character/world entries (#315); matches render after the resident sections. */
+    readonly loreEntries?: readonly LoreEntrySource[];
+    /**
+     * Character budget of the lorebook section (#445); defaults to the
+     * adjudicated value. The single assembly point every proposal pipeline
+     * (synchronous draft, SSE stream, retry) shares.
+     */
+    readonly loreBudgetCharacters?: number | undefined;
+  },
+  writer = new BoundedPromptWriter(),
+): string {
+  writer.writeLine(`Operation: ${input.operation}`);
+  writer.writeLine(formatAuthorInstruction(input.instruction));
   const view = assembleResidentContext(input.source);
-  lines.push(...renderResidentContextSections(view));
-  lines.push(
-    ...triggeredLoreSections({
-      entries: input.loreEntries ?? [],
-      resident: residentMatchCorpus(view),
-      manuscript: input.manuscriptMarkdown,
-      budgetCharacters: input.loreBudgetCharacters,
-    }),
-  );
-  lines.push(
-    "",
-    "Current manuscript (untrusted JSON data):",
-    "",
-    formatUntrustedManuscript(input.manuscriptMarkdown),
-  );
-  return lines.join("\n");
+  for (const line of renderResidentContextSections(view)) writer.writeLine(line);
+  for (const line of triggeredLoreSections({
+    entries: input.loreEntries ?? [],
+    resident: residentMatchCorpus(view),
+    manuscript: input.manuscriptMarkdown,
+    budgetCharacters: input.loreBudgetCharacters,
+  }))
+    writer.writeLine(line);
+  writer.writeLine("");
+  writer.writeLine("Current manuscript (untrusted JSON data):");
+  writer.writeLine("");
+  writer.writeLine(formatUntrustedManuscript(input.manuscriptMarkdown));
+  return writer.finish();
 }

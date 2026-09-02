@@ -129,6 +129,17 @@ async function* streamProposalFrames(
       now: deps.now(),
     });
     try {
+      const task = buildProposalTask(
+        step,
+        operation,
+        instruction,
+        deps.store,
+        scope,
+        projectId,
+        document,
+        revision,
+        deps.loreBudgetCharacters,
+      );
       provider = deps.providerFactory(providerName);
       const stream = provider.generateStructuredStreaming?.bind(provider);
       if (stream === undefined) {
@@ -139,25 +150,12 @@ async function* streamProposalFrames(
       const accumulated: string[] = [];
       const codePoints = createProposalCodePointCounter();
       let reported: TextGenerationStreamOutcome | undefined;
-      for await (const delta of stream(
-        buildProposalTask(
-          step,
-          operation,
-          instruction,
-          deps.store,
-          scope,
-          projectId,
-          document,
-          revision,
-          deps.loreBudgetCharacters,
-        ),
-        {
-          signal: request.signal,
-          onOutcome: (value) => {
-            reported = value;
-          },
+      for await (const delta of stream(task, {
+        signal: request.signal,
+        onOutcome: (value) => {
+          reported = value;
         },
-      )) {
+      })) {
         includeProposalDelta(codePoints, delta);
         accumulated.push(delta);
         yield { type: "delta", text: delta };

@@ -5,6 +5,7 @@ import {
   type TextGenerationTask,
   type TextProviderName,
 } from "../../../contexts/ai/application/ports/text_generation.js";
+import { BoundedPromptWriter } from "./generation_capacity.js";
 import { collectLoreEntries } from "./lorebook.js";
 import { dumpJson, wordCount } from "./payloads.js";
 import type {
@@ -128,14 +129,17 @@ export function buildProposalTask(
   return {
     step,
     systemPrompt: SYSTEM_PROMPT,
-    userPrompt: buildProposalUserPrompt({
-      operation,
-      instruction,
-      source: collectResidentContextSource(store, scope, projectId, document),
-      manuscriptMarkdown: revision.contentMarkdown,
-      loreEntries: collectLoreEntries(store, scope, projectId),
-      loreBudgetCharacters,
-    }),
+    userPrompt: buildProposalUserPrompt(
+      {
+        operation,
+        instruction,
+        source: collectResidentContextSource(store, scope, projectId, document),
+        manuscriptMarkdown: revision.contentMarkdown,
+        loreEntries: collectLoreEntries(store, scope, projectId),
+        loreBudgetCharacters,
+      },
+      new BoundedPromptWriter(SYSTEM_PROMPT),
+    ),
     responseSchema: { chapter_markdown: { type: "string" } },
     metadata: {
       operation,

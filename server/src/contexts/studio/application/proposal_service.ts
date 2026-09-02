@@ -110,20 +110,19 @@ export class AiProposalService {
         now: this.now(),
       });
       try {
-        provider = this.providerFactory(providerName);
-        const result = await provider.generateStructured(
-          buildProposalTask(
-            step,
-            operation,
-            instruction,
-            this.store,
-            scope,
-            projectId,
-            document,
-            revision,
-            this.loreBudgetCharacters,
-          ),
+        const task = buildProposalTask(
+          step,
+          operation,
+          instruction,
+          this.store,
+          scope,
+          projectId,
+          document,
+          revision,
+          this.loreBudgetCharacters,
         );
+        provider = this.providerFactory(providerName);
+        const result = await provider.generateStructured(task);
         const { proposal } = validatedProposalOrThrow(result);
         return jobPayload(
           completedProposalJob(this.store, scope, seed, revision.id, {

@@ -100,6 +100,41 @@ export class ExportCapacityExceededError extends Error {
   }
 }
 
+export const GENERATION_CAPACITY_RESOURCES = Object.freeze(["prompt_bytes"] as const);
+export type GenerationCapacityResource = (typeof GENERATION_CAPACITY_RESOURCES)[number];
+
+const GENERATION_CAPACITY_RESOURCE_SET: ReadonlySet<string> = new Set(
+  GENERATION_CAPACITY_RESOURCES,
+);
+
+/** A complete Provider prompt exceeded the fixed application-owned byte budget. */
+export class GenerationCapacityExceededError extends Error {
+  readonly code = "GENERATION_CAPACITY_EXCEEDED";
+  readonly resource: GenerationCapacityResource;
+  readonly limit: number;
+  readonly observed: number;
+
+  constructor(resource: GenerationCapacityResource, limit: number, observed: number) {
+    if (
+      !GENERATION_CAPACITY_RESOURCE_SET.has(resource) ||
+      !Number.isSafeInteger(limit) ||
+      limit < 0 ||
+      limit >= Number.MAX_SAFE_INTEGER ||
+      !Number.isSafeInteger(observed) ||
+      observed <= limit
+    ) {
+      throw new RangeError(
+        "Generation capacity resource and values must identify a bounded safe-integer excess.",
+      );
+    }
+    super("Generation capacity exceeded.");
+    this.name = "GenerationCapacityExceededError";
+    this.resource = resource;
+    this.limit = limit;
+    this.observed = Math.min(observed, limit + 1);
+  }
+}
+
 export type ImportCapacityResource =
   | "story_bytes"
   | "chapter_bytes"
