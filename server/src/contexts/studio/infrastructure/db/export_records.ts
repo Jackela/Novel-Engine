@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { and, asc, desc, eq, inArray } from "drizzle-orm";
+import { and, asc, desc, eq } from "drizzle-orm";
 
 import { InvalidOperationError } from "../../../../shared/domain/exceptions.js";
 import {
@@ -14,7 +14,7 @@ import type {
   ExportSourceDocument,
   PreparedExportArtifact,
 } from "../../application/ports/export_store.js";
-import { ExportSourceInvalidatedError } from "../../domain/exceptions.js";
+import { assertCapturedExportSource } from "./export_source_revalidation.js";
 import {
   documentRevisions,
   documents,
@@ -182,37 +182,6 @@ export function loadProjectArtifact(
     .where(and(eq(exportArtifacts.id, artifactId), eq(exportArtifacts.projectId, projectId)))
     .get();
   return row === undefined ? undefined : toArtifactRecord(row);
-}
-
-function assertCapturedExportSource(
-  tx: Tx,
-  projectId: string,
-  source: readonly ExportSourceDocument[],
-): void {
-  if (source.length === 0) return;
-  const revisions = source.map((item) => item.revisionId);
-  const rows = tx
-    .select({
-      documentId: documents.id,
-      revisionId: documentRevisions.id,
-      contentMarkdown: documentRevisions.contentMarkdown,
-      metadataJson: documentRevisions.metadataJson,
-    })
-    .from(documents)
-    .innerJoin(documentRevisions, eq(documentRevisions.documentId, documents.id))
-    .where(and(eq(documents.projectId, projectId), inArray(documentRevisions.id, revisions)))
-    .all();
-  const available = new Map(rows.map((row) => [`${row.documentId}\u0000${row.revisionId}`, row]));
-  for (const document of source) {
-    const row = available.get(`${document.documentId}\u0000${document.revisionId}`);
-    if (row === undefined) throw new ExportSourceInvalidatedError();
-    if (
-      row.contentMarkdown !== document.contentMarkdown ||
-      row.metadataJson !== document.metadataJson
-    ) {
-      throw new Error("Persisted immutable export source changed after capture.");
-    }
-  }
 }
 
 function findExportSnapshot(tx: Tx, projectId: string, snapshotId: string) {
