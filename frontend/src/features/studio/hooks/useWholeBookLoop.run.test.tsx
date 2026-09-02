@@ -1,8 +1,9 @@
 import { act } from "react";
 import { describe, expect, it, vi } from "vitest";
-import { api } from "@/app/api";
+import { api, HttpError } from "@/app/api";
 import { streamProposal } from "@/app/proposalStream";
 import type { StudioJob } from "@/app/types/studio";
+import { chapter, projectWith } from "@/test/factories";
 import {
   baseProject,
   deferred,
@@ -86,6 +87,50 @@ describe("useWholeBookLoop run lifecycle (#318)", () => {
       message: "Provider exploded.",
     });
     expect(events.some((event) => event.startsWith("accept:"))).toBe(false);
+  });
+
+  it("stops after a generation-capacity refusal and preserves earlier accepted chapters", async () => {
+    const events: string[] = [];
+    const thirdChapter = chapter("three", {
+      title: "Chapter Three",
+      position: 2,
+    });
+    const threeChapterProject = projectWith([firstChapter, secondChapter, thirdChapter]);
+    traceApiCalls(events, threeChapterProject);
+    vi.mocked(streamProposal)
+      .mockImplementationOnce(async ({ documentId }) => {
+        events.push(`proposal:${documentId}`);
+        return proposalJobFor(documentId);
+      })
+      .mockImplementationOnce(async ({ documentId }) => {
+        events.push(`proposal:${documentId}`);
+        throw new HttpError(
+          "Generation capacity exceeded.",
+          422,
+          {
+            resource: "prompt_bytes",
+            limit: 8_388_608,
+            observed: 8_388_609,
+          },
+          "GENERATION_CAPACITY_EXCEEDED",
+        );
+      });
+    const harness = renderLoopHook(threeChapterProject);
+
+    await act(async () => {
+      await harness.result().hook.start(wholeBookPlan(threeChapterProject));
+    });
+
+    expect(events).toEqual(["proposal:one", "accept:job-one", "refresh", "proposal:two"]);
+    expect(vi.mocked(streamProposal)).toHaveBeenCalledTimes(2);
+    expect(vi.mocked(api.acceptProposal)).toHaveBeenCalledTimes(1);
+    expect(harness.result().accepted.map((document) => document.id)).toEqual(["one"]);
+    expect(harness.result().hook.phase).toEqual({
+      kind: "failed",
+      generated: 1,
+      failedChapterTitle: "Chapter Two",
+      message: "Generation capacity exceeded.",
+    });
   });
 
   it("stops after an accept failure and keeps earlier chapters intact", async () => {
