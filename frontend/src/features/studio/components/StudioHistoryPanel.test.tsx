@@ -78,7 +78,7 @@ describe("StudioHistoryPanel", () => {
     expect(container).toHaveTextContent("All revisions loaded");
   });
 
-  it("keeps the load-more command focused after an older-page failure", async () => {
+  it("restores keyboard focus after a disabled load-more command loses focus on failure", async () => {
     const onLoadOlderRevisions = vi.fn().mockResolvedValue(undefined);
     let hasOlderRevisions = true;
     let isLoadingOlder = false;
@@ -101,12 +101,17 @@ describe("StudioHistoryPanel", () => {
       isLoadingOlder = true;
       root.render(content());
     });
+    const focusSink = document.createElement("button");
+    document.body.append(focusSink);
+    focusSink.focus();
+    expect(document.activeElement).not.toBe(button);
     act(() => {
       isLoadingOlder = false;
       root.render(content());
     });
 
     expect(document.activeElement).toBe(button);
+    focusSink.remove();
     const elsewhere = document.createElement("button");
     document.body.append(elsewhere);
     elsewhere.focus();

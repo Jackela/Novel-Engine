@@ -27,24 +27,26 @@ export function StudioHistoryPanel({
   isLoadingHistory = false,
   onLoadOlderRevisions,
 }: StudioHistoryPanelProps) {
-  const isBusy = restoringRevisionId !== null || isLoadingHistory;
+  const isBusy = restoringRevisionId !== null || isLoadingHistory || isLoadingOlder;
   const runWithFocusRestoration = useCommandFocusRestoration(isBusy);
   const headingRef = useRef<HTMLHeadingElement>(null);
   const restoreButtonRefs = useRef(new Map<string, HTMLButtonElement>());
+  const loadOlderButtonRef = useRef<HTMLButtonElement>(null);
   const keyboardLoadPendingRef = useRef(false);
 
   useEffect(() => {
-    if (isLoadingOlder) return;
-    if (
-      keyboardLoadPendingRef.current &&
-      historyInitialized &&
-      !hasOlderRevisions &&
-      headingRef.current?.isConnected
-    ) {
-      headingRef.current.focus();
+    if (isBusy || !keyboardLoadPendingRef.current) return;
+    if (hasOlderRevisions) {
+      const loadButton = loadOlderButtonRef.current;
+      if (!loadButton?.isConnected || loadButton.disabled) return;
+      loadButton.focus();
+    } else {
+      const heading = headingRef.current;
+      if (!historyInitialized || !heading?.isConnected) return;
+      heading.focus();
     }
     keyboardLoadPendingRef.current = false;
-  }, [hasOlderRevisions, historyInitialized, isLoadingOlder]);
+  }, [hasOlderRevisions, historyInitialized, isBusy]);
 
   const fallbackFor = (revisionId: string) => {
     for (const [candidateId, button] of restoreButtonRefs.current) {
@@ -110,6 +112,7 @@ export function StudioHistoryPanel({
             keyboardLoadPendingRef.current = event.detail === 0;
             void onLoadOlderRevisions();
           }}
+          ref={loadOlderButtonRef}
           type="button"
         >
           {isLoadingOlder
