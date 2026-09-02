@@ -7,7 +7,9 @@ import type { JobsLoadInitiator } from "../hooks/useStudioJobs";
 
 interface StudioJobsPanelProps {
   jobs: StudioJob[];
+  hasOlderJobs?: boolean;
   onLoadJobs: () => void | Promise<void>;
+  onLoadOlderJobs?: () => void | Promise<void>;
   onRetryJob: (jobId: string) => void | Promise<void>;
   isLoading?: boolean;
   loadingInitiator?: JobsLoadInitiator | null;
@@ -17,7 +19,9 @@ interface StudioJobsPanelProps {
 
 export function StudioJobsPanel({
   jobs,
+  hasOlderJobs = false,
   onLoadJobs,
+  onLoadOlderJobs = () => undefined,
   onRetryJob,
   isLoading = false,
   loadingInitiator = null,
@@ -26,6 +30,7 @@ export function StudioJobsPanel({
 }: StudioJobsPanelProps) {
   const isBusy = isLoading || retryingJobId !== null || retryGated;
   const refreshIsInitiator = isLoading && loadingInitiator === "refresh";
+  const olderIsInitiator = isLoading && loadingInitiator === "load_older";
   const runWithFocusRestoration = useCommandFocusRestoration(isBusy);
   const refreshButtonRef = useRef<HTMLButtonElement>(null);
 
@@ -92,6 +97,23 @@ export function StudioJobsPanel({
       ) : (
         <p className="studio-inspector__empty">No jobs yet.</p>
       )}
+      {hasOlderJobs ? (
+        <button
+          aria-busy={olderIsInitiator || undefined}
+          className="ui-command"
+          disabled={isBusy}
+          onClick={(event) => {
+            void runWithFocusRestoration(
+              event.currentTarget,
+              onLoadOlderJobs,
+              () => refreshButtonRef.current,
+            );
+          }}
+          type="button"
+        >
+          {olderIsInitiator ? "Loading older jobs" : "Load older jobs"}
+        </button>
+      ) : null}
     </div>
   );
 }

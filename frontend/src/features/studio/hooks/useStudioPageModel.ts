@@ -99,6 +99,8 @@ export function useStudioPageModel(
   const {
     jobs,
     loadJobs,
+    loadOlderJobs,
+    hasOlderJobs,
     isLoading: isLoadingJobs,
     loadingInitiator: jobsLoadingInitiator,
     proposalAudit,
@@ -274,7 +276,9 @@ export function useStudioPageModel(
           },
           jobs: {
             jobs,
+            hasOlderJobs,
             onLoadJobs: () => loadJobs("refresh"),
+            onLoadOlderJobs: loadOlderJobs,
             onRetryJob: retryJob,
           },
           usage: { projectId },

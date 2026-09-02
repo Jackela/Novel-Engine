@@ -103,6 +103,57 @@ describe("useStudioInspectorState", () => {
     expect(loadJobs).toHaveBeenCalledTimes(1);
   });
 
+  it("reloads a visible Jobs inspector once when project ownership changes", () => {
+    const firstLoad = vi.fn<() => Promise<void>>().mockResolvedValue(undefined);
+    const secondLoad = vi.fn<() => Promise<void>>().mockResolvedValue(undefined);
+    const onSelectInspector = vi.fn();
+    const hook = renderInspectorHook({
+      inspector: "jobs",
+      project: baseProject,
+      loadJobs: firstLoad,
+      onSelectInspector,
+    });
+    expect(firstLoad).toHaveBeenCalledTimes(1);
+
+    hook.rerender({
+      inspector: "jobs",
+      project: project({ id: "project-2" }),
+      loadJobs: secondLoad,
+      onSelectInspector,
+    });
+
+    expect(secondLoad).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps Jobs lazy when project ownership changes behind another inspector", () => {
+    const firstLoad = vi.fn<() => Promise<void>>().mockResolvedValue(undefined);
+    const secondLoad = vi.fn<() => Promise<void>>().mockResolvedValue(undefined);
+    const onSelectInspector = vi.fn();
+    const hook = renderInspectorHook({
+      inspector: "review",
+      project: baseProject,
+      loadJobs: firstLoad,
+      onSelectInspector,
+    });
+
+    hook.rerender({
+      inspector: "review",
+      project: project({ id: "project-2" }),
+      loadJobs: secondLoad,
+      onSelectInspector,
+    });
+    expect(firstLoad).not.toHaveBeenCalled();
+    expect(secondLoad).not.toHaveBeenCalled();
+
+    hook.rerender({
+      inspector: "jobs",
+      project: project({ id: "project-2" }),
+      loadJobs: secondLoad,
+      onSelectInspector,
+    });
+    expect(secondLoad).toHaveBeenCalledTimes(1);
+  });
+
   it("copies the selected project into settings form state", () => {
     const loadJobs = vi.fn<() => Promise<void>>().mockResolvedValue(undefined);
     const onSelectInspector = vi.fn();

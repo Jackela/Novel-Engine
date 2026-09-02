@@ -127,12 +127,18 @@ export function parseJob(value: unknown, label = "job"): StudioJob {
   };
 }
 
-export function parseJobs(value: unknown): { jobs: StudioJob[] } {
+export interface JobsPage {
+  readonly jobs: StudioJob[];
+  readonly next_cursor: string | null;
+}
+
+export function parseJobs(value: unknown): JobsPage {
   const item = objectValue(value, "jobs response");
   return {
     jobs: arrayField(item, "jobs", "jobs response", (entry, index) =>
       parseJob(entry, `jobs[${index}]`),
     ),
+    next_cursor: nullableStringField(item, "next_cursor", "jobs response"),
   };
 }
 

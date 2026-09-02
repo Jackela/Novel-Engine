@@ -24,10 +24,13 @@ afterEach(() => {
 
 describe("useStudioJobs proposal audit ownership", () => {
   it("returns an aborted project audit to retryable failure across an A to B to A cycle", async () => {
-    const projectAAudit = deferred<{ jobs: ReturnType<typeof job>[] }>();
+    const projectAAudit = deferred<{
+      jobs: ReturnType<typeof job>[];
+      next_cursor: string | null;
+    }>();
     vi.mocked(api.jobs)
       .mockReturnValueOnce(projectAAudit.promise)
-      .mockResolvedValueOnce({ jobs: [job()] });
+      .mockResolvedValueOnce({ jobs: [job()], next_cursor: null });
     let projectId = "project-a";
     let jobs: ReturnType<typeof useStudioJobs> | undefined;
 
@@ -56,7 +59,7 @@ describe("useStudioJobs proposal audit ownership", () => {
     expect(api.jobs).toHaveBeenCalledTimes(1);
 
     await act(async () => {
-      projectAAudit.resolve({ jobs: [] });
+      projectAAudit.resolve({ jobs: [], next_cursor: null });
       await expect(oldAudit).resolves.toBe(false);
     });
     expect(jobs?.proposalAuditStatus).toBe("audit_failed");

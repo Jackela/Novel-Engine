@@ -8,8 +8,10 @@ import {
 import type { SnapshotArtifactService } from "./export_artifact_service.js";
 import { JobRetryExecutor, type JobRetryExecutorOptions } from "./job_retry_executor.js";
 import type { InFlightOperationGuard } from "./operation_in_flight.js";
+import type { JobPayload } from "./payload_schemas/job.js";
 import { dumpJson, jobPayload } from "./payloads.js";
 import type { ExportArtifactFormat } from "./ports/export_store.js";
+import type { JobPageCursor, JobPageInput } from "./ports/job_records.js";
 import type {
   EvaluatedReview,
   ProjectScope,
@@ -29,6 +31,11 @@ export interface JobHistoryServiceOptions {
   readonly inFlight: InFlightOperationGuard;
   /** Lorebook injection budget (#445); undefined keeps the adjudicated default. */
   readonly loreBudgetCharacters?: JobRetryExecutorOptions["loreBudgetCharacters"];
+}
+
+export interface JobHistoryPage {
+  readonly jobs: JobPayload[];
+  readonly nextCursor: JobPageCursor | null;
 }
 
 /**
@@ -64,10 +71,9 @@ export class JobHistoryService {
   }
 
   /** The audit listing: newest job first, each event stream newest first. */
-  collectProjectJobs(principal: Principal, projectId: string): Array<Record<string, unknown>> {
-    return this.store
-      .collectProjectJobs(scopeForPrincipal(principal), projectId)
-      .map((job) => jobPayload(job));
+  collectProjectJobs(principal: Principal, projectId: string, input: JobPageInput): JobHistoryPage {
+    const page = this.store.collectProjectJobs(scopeForPrincipal(principal), projectId, input);
+    return { jobs: page.jobs.map((job) => jobPayload(job)), nextCursor: page.nextCursor };
   }
 
   /** The usage-ledger aggregation for the project surface (#317, #384). */

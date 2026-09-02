@@ -7,7 +7,7 @@ import { mergeProjectSettings } from "./projectState";
 import { toErrorMessage } from "./toErrorMessage";
 import { usePendingAction } from "./usePendingAction";
 import { useStudioDocumentActions } from "./useStudioDocumentActions";
-import type { JobsLoadInitiator } from "./useStudioJobs";
+import type { JobsFreshLoadInitiator } from "./useStudioJobs";
 import { useStudioLoreStatusActions } from "./useStudioLoreStatusActions";
 
 interface UseStudioActionsOptions {
@@ -19,7 +19,7 @@ interface UseStudioActionsOptions {
   errorPublishers?: Partial<StudioActionErrorPublishers>;
   setActiveId: Dispatch<SetStateAction<string | null>>;
   settingsForm: { title: string; description: string; provider: string };
-  loadJobs: (initiator?: JobsLoadInitiator) => Promise<void>;
+  loadJobs: (initiator?: JobsFreshLoadInitiator) => Promise<void>;
   isProposalActionGated?: () => boolean;
 }
 

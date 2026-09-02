@@ -2360,7 +2360,10 @@ export interface paths {
         };
         get: {
             parameters: {
-                query?: never;
+                query?: {
+                    limit?: number;
+                    cursor?: string;
+                };
                 header?: never;
                 path: {
                     projectId: string;
@@ -2380,7 +2383,7 @@ export interface paths {
                                 created_at: string;
                                 document_id: string | null;
                                 error: string | null;
-                                /** @description Chronological trail (oldest first) on a single job payload; the jobs LIST endpoint is the spec-mandated newest-first surface. */
+                                /** @description Reverse-chronological event trail (newest first) on the jobs LIST endpoint. */
                                 events: {
                                     created_at: string;
                                     details: {
@@ -2405,6 +2408,7 @@ export interface paths {
                                 status: string;
                                 updated_at: string;
                             }[];
+                            next_cursor: string | null;
                         };
                     };
                 };
@@ -2419,6 +2423,15 @@ export interface paths {
                 };
                 /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
                 404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                422: {
                     headers: {
                         [name: string]: unknown;
                     };

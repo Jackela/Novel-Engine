@@ -32,7 +32,13 @@ function inspectorModel(loreStatus: InspectorLoreStatusModel): StudioInspectorMo
     },
     review: { latestReview: null, onRunReview: vi.fn() },
     history: { revisions: [], loadedRevisionId: null, onRestoreRevision: vi.fn() },
-    jobs: { jobs: [], onLoadJobs: vi.fn(), onRetryJob: vi.fn() },
+    jobs: {
+      jobs: [],
+      hasOlderJobs: false,
+      onLoadJobs: vi.fn(),
+      onLoadOlderJobs: vi.fn(),
+      onRetryJob: vi.fn(),
+    },
     usage: { projectId: "project-1" },
     settings: {
       settingsForm: { title: "Novel", description: "", provider: "mock" },

@@ -106,8 +106,10 @@ describe("useWholeBookLoop unknown outcome audit", () => {
     vi.mocked(streamProposal)
       .mockReturnValueOnce(firstStream.promise)
       .mockReturnValueOnce(secondStream.promise);
-    const firstAudit = rejectable<{ jobs: StudioJob[] }>();
-    vi.mocked(api.jobs).mockReturnValueOnce(firstAudit.promise).mockResolvedValueOnce({ jobs: [] });
+    const firstAudit = rejectable<{ jobs: StudioJob[]; next_cursor: string | null }>();
+    vi.mocked(api.jobs)
+      .mockReturnValueOnce(firstAudit.promise)
+      .mockResolvedValueOnce({ jobs: [], next_cursor: null });
     const view = renderUnknownLoop();
     let run: Promise<void> = Promise.resolve();
 
@@ -169,7 +171,7 @@ describe("useWholeBookLoop unknown outcome audit", () => {
   it("never accepts an old run after a newer audit succeeds and its notice is cleared", async () => {
     const oldStream = rejectable<StudioJob>();
     vi.mocked(streamProposal).mockReturnValueOnce(oldStream.promise);
-    vi.mocked(api.jobs).mockResolvedValue({ jobs: [] });
+    vi.mocked(api.jobs).mockResolvedValue({ jobs: [], next_cursor: null });
     const view = renderUnknownLoop();
     let run: Promise<void> = Promise.resolve();
 

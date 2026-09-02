@@ -119,8 +119,10 @@ function rejectable<T>() {
 describe("useStudioProposal unknown outcome audit", () => {
   it("discards partial text, gates proposal actions, and offers audit-only retry until audit succeeds", async () => {
     const streams = deferredStreams();
-    const firstAudit = rejectable<{ jobs: StudioJob[] }>();
-    vi.mocked(api.jobs).mockReturnValueOnce(firstAudit.promise).mockResolvedValueOnce({ jobs: [] });
+    const firstAudit = rejectable<{ jobs: StudioJob[]; next_cursor: string | null }>();
+    vi.mocked(api.jobs)
+      .mockReturnValueOnce(firstAudit.promise)
+      .mockResolvedValueOnce({ jobs: [], next_cursor: null });
     const view = renderUnknownHarness();
     let running: Promise<void> = Promise.resolve();
 
@@ -163,7 +165,7 @@ describe("useStudioProposal unknown outcome audit", () => {
 
   it("audits an interrupted document without publishing its stale state into another document", async () => {
     const streams = deferredStreams();
-    vi.mocked(api.jobs).mockResolvedValue({ jobs: [] });
+    vi.mocked(api.jobs).mockResolvedValue({ jobs: [], next_cursor: null });
     const view = renderUnknownHarness();
 
     act(() => void view.result().proposal.runProposal("rewrite"));
@@ -202,7 +204,7 @@ describe("useStudioProposal unknown outcome audit", () => {
 
   it("does not publish an old terminal result after a newer audit epoch is cleared", async () => {
     const streams = deferredStreams();
-    vi.mocked(api.jobs).mockResolvedValue({ jobs: [] });
+    vi.mocked(api.jobs).mockResolvedValue({ jobs: [], next_cursor: null });
     const view = renderUnknownHarness();
     let running: Promise<void> = Promise.resolve();
 

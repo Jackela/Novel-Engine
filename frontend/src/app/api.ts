@@ -29,6 +29,11 @@ import { localServiceUnavailable } from "@/app/networkError";
 import { createRequestAbortScope } from "@/app/requestAbortScope";
 import type { DocumentKind, ExportFormat, LoreStatus } from "@/app/types/studio";
 
+export interface JobsRequestOptions extends RequestInit {
+  readonly cursor?: string;
+  readonly limit?: number;
+}
+
 export class HttpError extends Error {
   constructor(
     message: string,
@@ -134,6 +139,14 @@ const putJson = <T>(path: string, value: unknown, parse: ResponseParser<T>) =>
   request(path, { method: "PUT", body: json(value) }, parse);
 const patchJson = <T>(path: string, value: unknown, parse: ResponseParser<T>) =>
   request(path, { method: "PATCH", body: json(value) }, parse);
+
+function jobsPath(projectId: string, options: JobsRequestOptions): string {
+  const query = new URLSearchParams();
+  if (options.limit !== undefined) query.set("limit", String(options.limit));
+  if (options.cursor !== undefined) query.set("cursor", options.cursor);
+  const encoded = query.toString();
+  return `/api/projects/${projectId}/jobs${encoded ? `?${encoded}` : ""}`;
+}
 
 async function downloadBlob(path: string, init?: RequestInit): Promise<Blob> {
   const abortScope = createRequestAbortScope(init?.signal);
@@ -289,8 +302,10 @@ export const api = {
     request(`/api/projects/${projectId}`, { method: "DELETE" }, parseVoid),
   deleteDocument: (projectId: string, documentId: string) =>
     request(`/api/projects/${projectId}/documents/${documentId}`, { method: "DELETE" }, parseVoid),
-  jobs: (projectId: string, init?: RequestInit) =>
-    request(`/api/projects/${projectId}/jobs`, init, parseJobs),
+  jobs: (projectId: string, options: JobsRequestOptions = {}) => {
+    const { cursor: _cursor, limit: _limit, ...init } = options;
+    return request(jobsPath(projectId, options), init, parseJobs);
+  },
   usage: (projectId: string, init?: RequestInit) =>
     request(`/api/projects/${projectId}/usage`, init, parseUsage),
   retryJob: (projectId: string, jobId: string) =>

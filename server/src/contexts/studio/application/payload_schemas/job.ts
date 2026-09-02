@@ -40,4 +40,15 @@ export const jobPayloadSchema = Type.Object(
   { additionalProperties: false },
 );
 
+/** The jobs LIST view keeps the established reverse-chronological event trail. */
+export const jobListPayloadSchema = Type.Object(
+  {
+    ...jobPayloadSchema.properties,
+    events: Type.Array(jobEventPayloadSchema, {
+      description: "Reverse-chronological event trail (newest first) on the jobs LIST endpoint.",
+    }),
+  },
+  { additionalProperties: false },
+);
+
 export type JobPayload = Static<typeof jobPayloadSchema>;

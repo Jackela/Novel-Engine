@@ -28,6 +28,41 @@ export interface JobRecord {
   events: JobEventRecord[];
 }
 
+/** The validated row budget of one bounded project-job history page. */
+export type JobPageLimit = number & { readonly __jobPageLimit: unique symbol };
+
+/** Inclusive application/store boundary for one page of job history. */
+export const MIN_JOB_PAGE_LIMIT = 1;
+export const MAX_JOB_PAGE_LIMIT = 100;
+
+/** Validate and narrow a transport/application number before it reaches persistence. */
+export function jobPageLimit(value: number): JobPageLimit {
+  if (!Number.isInteger(value) || value < MIN_JOB_PAGE_LIMIT || value > MAX_JOB_PAGE_LIMIT) {
+    throw new RangeError(
+      `Job page limit must be an integer from ${MIN_JOB_PAGE_LIMIT} through ${MAX_JOB_PAGE_LIMIT}.`,
+    );
+  }
+  return value as JobPageLimit;
+}
+
+/** Persistence-neutral exclusive position in `(created_at DESC, id DESC)` order. */
+export interface JobPageCursor {
+  readonly createdAtMs: number;
+  readonly id: string;
+}
+
+/** One typed keyset request; the first page omits its exclusive cursor. */
+export interface JobPageInput {
+  readonly limit: JobPageLimit;
+  readonly cursor?: JobPageCursor | undefined;
+}
+
+/** One bounded page and the exclusive position required to continue it. */
+export interface JobPage {
+  readonly jobs: JobRecord[];
+  readonly nextCursor: JobPageCursor | null;
+}
+
 export interface AddJobInput {
   projectId: string;
   documentId: string | null;

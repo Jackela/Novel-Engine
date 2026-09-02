@@ -150,4 +150,97 @@ describe("StudioJobsPanel", () => {
 
     expect(document.activeElement).toBe(refresh);
   });
+
+  it("names and marks only the older-page command busy", () => {
+    const mounted = harness.mount(
+      <StudioJobsPanel
+        jobs={jobs}
+        hasOlderJobs
+        onLoadJobs={vi.fn()}
+        onLoadOlderJobs={vi.fn()}
+        onRetryJob={vi.fn()}
+        isLoading
+        loadingInitiator="load_older"
+      />,
+    );
+    const loadOlder = mounted.container.querySelector<HTMLButtonElement>(
+      'button[aria-busy="true"]',
+    );
+
+    expect(loadOlder?.textContent).toBe("Loading older jobs");
+    expect(loadOlder).toBeDisabled();
+    expect(mounted.container.querySelectorAll('button[aria-busy="true"]')).toHaveLength(1);
+  });
+
+  it("moves terminal load-older focus to Refresh jobs", async () => {
+    const completion = deferred<void>();
+    const onLoadOlderJobs = vi.fn(() => completion.promise);
+    const content = (hasOlderJobs: boolean, isLoading: boolean) => (
+      <StudioJobsPanel
+        jobs={jobs}
+        hasOlderJobs={hasOlderJobs}
+        onLoadJobs={vi.fn()}
+        onLoadOlderJobs={onLoadOlderJobs}
+        onRetryJob={vi.fn()}
+        isLoading={isLoading}
+        loadingInitiator={isLoading ? "load_older" : null}
+      />
+    );
+    const mounted = harness.mount(content(true, false));
+    const loadOlder = mounted.container.querySelector<HTMLButtonElement>(
+      "button:not([aria-label])",
+    );
+    const refresh = mounted.container.querySelector<HTMLButtonElement>(
+      'button[aria-label="Refresh jobs"]',
+    );
+    if (!loadOlder || !refresh) throw new Error("Expected jobs pagination commands.");
+
+    loadOlder.focus();
+    act(() => {
+      loadOlder.click();
+      mounted.root.render(content(true, true));
+    });
+    await act(async () => {
+      completion.resolve(undefined);
+      mounted.root.render(content(false, false));
+      await completion.promise;
+    });
+
+    expect(document.activeElement).toBe(refresh);
+  });
+
+  it("keeps failed load-older focus on its retryable command", async () => {
+    const completion = deferred<void>();
+    const onLoadOlderJobs = vi.fn(() => completion.promise);
+    const content = (isLoading: boolean) => (
+      <StudioJobsPanel
+        jobs={jobs}
+        hasOlderJobs
+        onLoadJobs={vi.fn()}
+        onLoadOlderJobs={onLoadOlderJobs}
+        onRetryJob={vi.fn()}
+        isLoading={isLoading}
+        loadingInitiator={isLoading ? "load_older" : null}
+      />
+    );
+    const mounted = harness.mount(content(false));
+    const loadOlder = mounted.container.querySelector<HTMLButtonElement>(
+      "button:not([aria-label])",
+    );
+    if (!loadOlder) throw new Error("Expected load older command.");
+
+    loadOlder.focus();
+    act(() => {
+      loadOlder.click();
+      mounted.root.render(content(true));
+    });
+    await act(async () => {
+      completion.resolve(undefined);
+      mounted.root.render(content(false));
+      await completion.promise;
+    });
+
+    expect(document.activeElement).toBe(loadOlder);
+    expect(loadOlder).toBeEnabled();
+  });
 });

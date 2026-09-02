@@ -62,7 +62,7 @@ export const jobs = sqliteTable(
   },
   (table) => [
     index("idx_jobs_status").on(table.status),
-    index("idx_jobs_project_id").on(table.project_id),
+    index("idx_jobs_project_created_id").on(table.project_id, table.created_at, table.id),
   ],
 );
 

@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { parseExportJobResponse, parseReviewJobResponse } from "@/app/apiWorkflowContract";
+import {
+  parseExportJobResponse,
+  parseJobs,
+  parseReviewJobResponse,
+} from "@/app/apiWorkflowContract";
 
 const jobReview = {
   id: "job-1",
@@ -49,4 +53,21 @@ describe("workflow contract POST responses", () => {
     };
     expect(() => parseReviewJobResponse(retiredReview)).toThrow();
   });
+});
+
+describe("workflow contract jobs page", () => {
+  it("requires a nullable next cursor", () => {
+    expect(parseJobs({ jobs: [jobReview], next_cursor: "cursor-2" })).toEqual({
+      jobs: [parseReviewJobResponse(jobReview)],
+      next_cursor: "cursor-2",
+    });
+    expect(parseJobs({ jobs: [], next_cursor: null })).toEqual({ jobs: [], next_cursor: null });
+  });
+
+  it.each([{ jobs: [] }, { jobs: [], next_cursor: 4 }])(
+    "rejects a missing or invalid next cursor: %o",
+    (payload) => {
+      expect(() => parseJobs(payload)).toThrow("Invalid jobs response.next_cursor");
+    },
+  );
 });

@@ -4305,6 +4305,28 @@
       "get": {
         "parameters": [
           {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "maxLength": 1024,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9_-]+$",
+              "type": "string"
+            }
+          },
+          {
             "in": "path",
             "name": "projectId",
             "required": true,
@@ -4336,7 +4358,7 @@
                             "type": "string"
                           },
                           "events": {
-                            "description": "Chronological trail (oldest first) on a single job payload; the jobs LIST endpoint is the spec-mandated newest-first surface.",
+                            "description": "Reverse-chronological event trail (newest first) on the jobs LIST endpoint.",
                             "items": {
                               "additionalProperties": false,
                               "properties": {
@@ -4421,10 +4443,15 @@
                         "type": "object"
                       },
                       "type": "array"
+                    },
+                    "next_cursor": {
+                      "nullable": true,
+                      "type": "string"
                     }
                   },
                   "required": [
-                    "jobs"
+                    "jobs",
+                    "next_cursor"
                   ],
                   "type": "object"
                 }
@@ -4443,6 +4470,16 @@
             "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
           },
           "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "422": {
             "content": {
               "application/json": {
                 "schema": {

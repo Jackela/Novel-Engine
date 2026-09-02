@@ -77,7 +77,9 @@ export interface InspectorHistoryModel {
 
 export interface InspectorJobsModel {
   jobs: StudioJob[];
+  hasOlderJobs: boolean;
   onLoadJobs: () => void | Promise<void>;
+  onLoadOlderJobs: () => void | Promise<void>;
   onRetryJob: (jobId: string) => void | Promise<void>;
 }
 

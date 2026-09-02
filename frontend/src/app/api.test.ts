@@ -9,6 +9,29 @@ afterEach(() => {
 });
 
 describe("Studio API client", () => {
+  it("encodes bounded jobs query options without changing read transport semantics", async () => {
+    const controller = new AbortController();
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ jobs: [], next_cursor: "next" }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(
+      api.jobs("project-1", { limit: 25, cursor: "a/b+=", signal: controller.signal }),
+    ).resolves.toEqual({ jobs: [], next_cursor: "next" });
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/projects/project-1/jobs?limit=25&cursor=a%2Fb%2B%3D",
+      expect.objectContaining({ credentials: "include" }),
+    );
+    const init = fetchMock.mock.calls[0]?.[1] as RequestInit | undefined;
+    expect(init).not.toHaveProperty("limit");
+    expect(init).not.toHaveProperty("cursor");
+    expect(init?.signal).not.toBe(controller.signal);
+  });
+
   it("uses the project contract and includes cookies", async () => {
     const fetchMock = vi.fn().mockResolvedValue(
       new Response(JSON.stringify({ projects: [] }), {

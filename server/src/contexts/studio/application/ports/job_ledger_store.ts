@@ -2,6 +2,8 @@ import type {
   AddJobInput,
   AddUsageEventInput,
   CompleteJobWithUsageInput,
+  JobPage,
+  JobPageInput,
   JobRecord,
   MarkJobOutcomeInput,
   RecordCompletedProposalJobInput,
@@ -36,7 +38,7 @@ export interface StudioJobLedgerStore {
    * The jobs audit trail, newest job first and each job's events newest
    * first — the OpenSpec listing contract for the synchronous jobs model.
    */
-  collectProjectJobs(scope: ProjectScope, projectId: string): JobRecord[];
+  collectProjectJobs(scope: ProjectScope, projectId: string, input: JobPageInput): JobPage;
   /** Transition a persisted job and append its matching event atomically. */
   markJobOutcome(
     scope: ProjectScope,

@@ -298,7 +298,7 @@ describe("useStudioActions", () => {
       await Promise.resolve();
     });
 
-    expect(harness.loadJobs).toHaveBeenCalledTimes(1);
+    expect(harness.loadJobs).toHaveBeenCalledWith("retry");
     expect(harness.result().actions.retryingJobId).toBe("job-1");
 
     await act(async () => {

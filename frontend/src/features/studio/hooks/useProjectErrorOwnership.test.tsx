@@ -83,7 +83,7 @@ function renderProjectOperations() {
 describe("project operation error ownership", () => {
   it("does not let a jobs success clear a review failure", async () => {
     vi.mocked(api.createReview).mockRejectedValue(new Error("Review failed."));
-    vi.mocked(api.jobs).mockResolvedValue({ jobs: [] });
+    vi.mocked(api.jobs).mockResolvedValue({ jobs: [], next_cursor: null });
     const view = renderProjectOperations();
 
     await act(async () => view.result().actions.runReview());

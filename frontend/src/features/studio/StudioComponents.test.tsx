@@ -33,7 +33,13 @@ function buildInspectorModel(): StudioInspectorModel {
       loadedRevisionId: null,
       onRestoreRevision: vi.fn(),
     },
-    jobs: { jobs: [], onLoadJobs: vi.fn(), onRetryJob: vi.fn() },
+    jobs: {
+      jobs: [],
+      hasOlderJobs: false,
+      onLoadJobs: vi.fn(),
+      onLoadOlderJobs: vi.fn(),
+      onRetryJob: vi.fn(),
+    },
     usage: { projectId: "project-1" },
     settings: {
       settingsForm: { title: "", description: "", provider: "" },

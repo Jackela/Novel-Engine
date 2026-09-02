@@ -122,7 +122,9 @@ export function StudioInspectorPanels({
       >
         <StudioJobsPanel
           jobs={model.jobs.jobs}
+          hasOlderJobs={model.jobs.hasOlderJobs}
           onLoadJobs={model.jobs.onLoadJobs}
+          onLoadOlderJobs={model.jobs.onLoadOlderJobs}
           onRetryJob={model.jobs.onRetryJob}
           isLoading={pending.jobs.loading}
           loadingInitiator={pending.jobs.loadingInitiator}

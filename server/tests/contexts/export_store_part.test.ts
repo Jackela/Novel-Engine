@@ -12,6 +12,7 @@ import type {
   ExportSource,
   PreparedExportArtifact,
 } from "../../src/contexts/studio/application/ports/export_store.js";
+import { jobPageLimit } from "../../src/contexts/studio/application/ports/job_records.js";
 import {
   type ProjectScope,
   scopeForPrincipal,
@@ -173,7 +174,11 @@ describe("ExportStorePart", () => {
       for (const input of invalid) {
         expect(() => harness.exportStore.recordCompletedExportJob(harness.scope, input)).toThrow();
         expect(harness.exportStore.listProjectArtifacts(harness.scope, projectId)).toEqual([]);
-        expect(harness.store.collectProjectJobs(harness.scope, projectId)).toEqual([]);
+        expect(
+          harness.store.collectProjectJobs(harness.scope, projectId, {
+            limit: jobPageLimit(50),
+          }).jobs,
+        ).toEqual([]);
       }
       expect(harness.studio.db.select().from(projectSnapshots).all()).toEqual([]);
     } finally {

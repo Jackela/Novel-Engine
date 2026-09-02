@@ -268,7 +268,7 @@ describe("useStudioProposal", () => {
     expect(harness.result().project).toEqual(refreshedProject);
     expect(harness.result().accepted).toEqual(acceptedDocument);
     expect(harness.result().hook.proposal).toBeNull();
-    expect(harness.loadJobs).toHaveBeenCalledTimes(1);
+    expect(harness.loadJobs).toHaveBeenCalledWith();
   });
 
   it("reports a committed acceptance truthfully when the aggregate refresh fails", async () => {
