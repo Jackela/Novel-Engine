@@ -21,6 +21,7 @@ import {
   scopedVolume,
   type Tx,
   type VolumeRow,
+  volumesInOrder,
 } from "./db/studio_query_helpers.js";
 import { projectOrderOntoVolumes } from "./db/volume_projection.js";
 
@@ -40,7 +41,7 @@ export class VolumeStorePart implements StudioVolumeStore {
   findVolumes(scope: ProjectScope, projectId: string): VolumeRecord[] {
     return this.db.transaction((tx) => {
       const project = scopedProject(tx, scope, projectId);
-      return volumeRowsInOrder(tx, project.id);
+      return volumesInOrder(tx, project.id);
     });
   }
 
@@ -94,7 +95,7 @@ export class VolumeStorePart implements StudioVolumeStore {
     this.db.transaction((tx) => {
       const project = scopedProject(tx, scope, projectId);
       const doomed = scopedVolume(tx, scope, projectId, volumeId);
-      const ordered = volumeRowsInOrder(tx, project.id);
+      const ordered = volumesInOrder(tx, project.id);
       if (ordered.length <= 1) {
         throw new InvalidOperationError(
           "A project must keep at least one volume; create another before deleting this one.",
@@ -156,7 +157,7 @@ export class VolumeStorePart implements StudioVolumeStore {
   ): VolumeRecord[] {
     return this.db.transaction((tx) => {
       scopedProject(tx, scope, projectId);
-      const existing = volumeRowsInOrder(tx, projectId);
+      const existing = volumesInOrder(tx, projectId);
       const byId = new Map(existing.map((volume) => [volume.id, volume]));
       const unique = new Set(volumeIds);
       if (
@@ -173,7 +174,7 @@ export class VolumeStorePart implements StudioVolumeStore {
           .run();
       }
       touchProject(tx, projectId, now);
-      const updated = volumeRowsInOrder(tx, projectId);
+      const updated = volumesInOrder(tx, projectId);
       return volumeIds.map((id, orderIndex) => {
         const volume = updated.find((candidate) => candidate.id === id);
         if (volume === undefined) {
@@ -203,16 +204,6 @@ export class VolumeStorePart implements StudioVolumeStore {
       return documentsWithCurrent(tx, project.id);
     });
   }
-}
-
-/** Volumes of one project already in reading order. */
-function volumeRowsInOrder(tx: Tx, projectId: string): VolumeRow[] {
-  return tx
-    .select()
-    .from(volumes)
-    .where(eq(volumes.projectId, projectId))
-    .orderBy(asc(volumes.position), asc(volumes.createdAt), asc(volumes.id))
-    .all() as VolumeRow[];
 }
 
 function nextVolumePosition(tx: Tx, projectId: string): number {
@@ -264,7 +255,7 @@ function touchProject(tx: Tx, projectId: string, now: Date): void {
 
 /** Close position gaps left by a removal so order stays dense and stable. */
 function renumberVolumesAfterRemoval(tx: Tx, projectId: string): void {
-  const ordered = volumeRowsInOrder(tx, projectId);
+  const ordered = volumesInOrder(tx, projectId);
   for (const [index, volume] of ordered.entries()) {
     if (volume.position !== index + 1) {
       tx.update(volumes)

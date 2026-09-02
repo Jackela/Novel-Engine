@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { and, eq } from "drizzle-orm";
+import { and, asc, eq } from "drizzle-orm";
 
 import type { StudioSqliteDatabase } from "../../../../shared/infrastructure/db/connection.js";
 import type { DocumentWithCurrent, ProjectScope } from "../../application/ports/studio_store.js";
@@ -136,6 +136,16 @@ export function documentsWithCurrent(tx: Tx, projectId: string): DocumentWithCur
     }))
     .sort(compareReadingOrder)
     .map(({ volumePosition: _volumePosition, ...record }) => record);
+}
+
+/** Volumes of one project in their canonical reading order. */
+export function volumesInOrder(tx: Tx, projectId: string): VolumeRow[] {
+  return tx
+    .select()
+    .from(volumes)
+    .where(eq(volumes.projectId, projectId))
+    .orderBy(asc(volumes.position), asc(volumes.createdAt), asc(volumes.id))
+    .all() as VolumeRow[];
 }
 
 /** One project document with only its own current revision. */

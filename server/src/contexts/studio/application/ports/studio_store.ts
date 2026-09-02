@@ -3,6 +3,7 @@ import type { StudioBeatStore } from "./beat_store.js";
 import type { StudioJobLedgerStore } from "./job_ledger_store.js";
 import type { StudioLoreStore } from "./lore_store.js";
 import type { ProposalAcceptanceStore } from "./proposal_acceptance_store.js";
+import type { ProposalContextStore } from "./proposal_context_store.js";
 import type { ReviewOutcomeStore } from "./review_outcome_store.js";
 import type { StudioVolumeStore } from "./volume_store.js";
 
@@ -175,6 +176,7 @@ export interface StudioStore
   extends StudioVolumeStore,
     StudioBeatStore,
     StudioLoreStore,
+    ProposalContextStore,
     ProposalAcceptanceStore,
     ReviewOutcomeStore,
     StudioJobLedgerStore {

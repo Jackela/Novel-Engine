@@ -1,6 +1,7 @@
 import type { StudioSqliteDatabase } from "../../../shared/infrastructure/db/connection.js";
 import type { JobPageInput, JobSummaryPage } from "../application/ports/job_records.js";
 import type { SetLoreAliasesInput, SetLoreStatusInput } from "../application/ports/lore_store.js";
+import type { ProposalContextSource } from "../application/ports/proposal_context_store.js";
 import type {
   AddDocumentInput,
   AddJobInput,
@@ -32,6 +33,7 @@ import { JobStorePart } from "./job_store_part.js";
 import { LoreStorePart } from "./lore_store_part.js";
 import { ProjectStorePart } from "./project_store_part.js";
 import { ProposalAcceptanceStorePart } from "./proposal_acceptance_store_part.js";
+import { ProposalContextStorePart } from "./proposal_context_store_part.js";
 import { ReviewStorePart } from "./review_store_part.js";
 import { VolumeStorePart } from "./volume_store_part.js";
 
@@ -48,6 +50,7 @@ export class DrizzleStudioStore extends ProjectStorePart implements StudioStore 
   private readonly volumeStore: VolumeStorePart;
   private readonly editorialReviews: ReviewStorePart;
   private readonly proposalAcceptance: ProposalAcceptanceStorePart;
+  private readonly proposalContext: ProposalContextStorePart;
   private readonly workflowJobs: JobStorePart;
   private readonly loreKeys: LoreStorePart;
 
@@ -57,6 +60,7 @@ export class DrizzleStudioStore extends ProjectStorePart implements StudioStore 
     this.volumeStore = new VolumeStorePart(options.database);
     this.editorialReviews = new ReviewStorePart(options.database);
     this.proposalAcceptance = new ProposalAcceptanceStorePart(options.database);
+    this.proposalContext = new ProposalContextStorePart(options.database);
     this.workflowJobs = new JobStorePart(options.database);
     this.loreKeys = new LoreStorePart(options.database);
   }
@@ -96,6 +100,14 @@ export class DrizzleStudioStore extends ProjectStorePart implements StudioStore 
 
   findDocument(scope: ProjectScope, projectId: string, documentId: string): DocumentWithCurrent {
     return this.documentStore.findDocument(scope, projectId, documentId);
+  }
+
+  readProposalContext(
+    scope: ProjectScope,
+    projectId: string,
+    documentId: string,
+  ): ProposalContextSource {
+    return this.proposalContext.readProposalContext(scope, projectId, documentId);
   }
 
   addDocument(
