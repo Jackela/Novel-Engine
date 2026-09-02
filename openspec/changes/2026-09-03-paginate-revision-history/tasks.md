@@ -51,26 +51,26 @@
 
 ## 4. Bounded frontend history traversal
 
-- [ ] 4.1 Replace the full `Revision` list parser/type with summary-page parsing,
+- [x] 4.1 Replace the full `Revision` list parser/type with summary-page parsing,
       bounded query encoding, and strict required `next_cursor`; preserve shared
       credentials, error envelope, and abort behavior.
-- [ ] 4.2 Refactor revision state to own summaries plus continuation cursor:
+- [x] 4.2 Refactor revision state to own summaries plus continuation cursor:
       first page initializes, Load older appends uniquely, same-owner/same-cursor
       requests coalesce for all mounted subscribers, other intents cannot become
       silent no-ops, failures preserve committed state, and lifecycle/request
       versions reject stale project/document responses.
-- [ ] 4.3 Replace every successful autosave/accept/restore whole-history reload
+- [x] 4.3 Replace every successful autosave/accept/restore whole-history reload
       with one cursorless first-page refresh that prepends/de-duplicates new
       summaries while preserving the already loaded contiguous tail and its
       continuation cursor when pages overlap; replace the cache from the fresh
       cursor when a non-terminal page exposes an unknown gap, and prove repeated
       saves never traverse older pages or let an older refresh satisfy a newer
       created revision.
-- [ ] 4.4 Bound inactive acceleration to an eight-owner LRU, retain only an
+- [x] 4.4 Bound inactive acceleration to an eight-owner LRU, retain only an
       unavoidable larger active working set, notify all surviving coalesced
       subscribers, reload after eviction, and converge/clean up on owner
       transition or final unmount.
-- [ ] 4.5 Add the accessible `Load older revisions` control with distinct busy,
+- [x] 4.5 Add the accessible `Load older revisions` control with distinct busy,
       failure, and terminal states; retain focus for retry and move terminal
       keyboard focus to the History heading.
 

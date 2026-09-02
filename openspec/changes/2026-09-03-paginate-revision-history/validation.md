@@ -6,7 +6,10 @@
 - Persisted-count implementation SHA: `ea5fb6810eae32da30c24e538bda8c9fb5ab10ac`
 - Server pagination implementation SHA: `71a9aad3c12cd4eef3a91b14b66d5f4c3f7f25b3`
 - Server review-repair SHA: `c69e56589b93fed95645407d2bf94d53335303d2`
-- Final local candidate SHA: pending completion of the bounded API and frontend.
+- Frontend pagination implementation SHA: `7f8178217d1b7567dd6ce5412fe9129e8419f7ba`
+- Frontend concurrency repair SHA: `ae4fd1feb009f6283649081759921413b3083fc8`
+- Frontend error-ownership repair SHA: `e221ea4fe7555ba90598b13f96d18138156cb963`
+- Final local candidate SHA: pending integrated browser and full-suite validation.
 - Environment: Darwin arm64, Node.js 24.19.0, pnpm 11.6.0
 
 ## Persisted revision word-count evidence
@@ -81,9 +84,41 @@ route-specific tuple validation, pinned Job and Revision wire tokens, and made
 the test helper traverse to a null cursor with 101-row coverage. Follow-up
 review found both issues closed with no P0-P3 finding.
 
+## Bounded frontend history evidence
+
+The frontend API now parses only the required revision-summary page, sends a
+bounded first page of 50, and requires an explicit nullable continuation
+cursor. History state is scoped by project and document, coalesces the same
+request for every mounted subscriber, rejects stale ownership, appends older
+pages without duplicates, and replaces rather than bridges a fresh-page gap.
+Autosave, proposal acceptance, and restore refresh only the cursorless first
+page and use the created revision id as causal ownership; none traverses older
+pages.
+
+Inactive acceleration is limited to eight owners when the active working set
+fits that bound, temporarily retains only an unavoidable larger active set,
+and converges after owner transitions or final unmount. Eviction aborts owned
+requests, settles queued older work, removes subscribers, and clears per-owner
+notification state. First-page and older-page failures are tracked
+independently, so recovery of one intent cannot clear the other intent's still
+unresolved error.
+
+The History panel exposes a native `Load older revisions` button with distinct
+loading, retry, and terminal states. Keyboard retry retains button focus; after
+the terminal page, focus moves to the `Revision history` heading.
+
+| Validation surface | Result |
+|---|---|
+| Frontend unit suite | Passed: 71 files and 408 tests on the final error-ownership repair. |
+| Frontend lint, format, type-check, build, identity, and generated API drift | Passed. |
+| React static diagnostics | Passed: score 100 with zero diagnostics. |
+| Independent fixed-SHA Standards review | Clean: no P0-P3 finding; 4 focused files and 27 tests passed. |
+| Independent fixed-SHA Spec/UX review | Clean: no P0-P3 finding; 10 related files and 79 tests passed; tasks 4.1 through 4.5 accepted. |
+| Real Playwright History workflow | Pending task 5.2 integrated validation. |
+
 ## Current release boundary
 
-Tasks 4 and 5 remain open. Required GitHub checks were not run because
-this task did not push or open a pull request. The change remains active and
-unarchived until the bounded API/frontend implementation and final validation
-are complete and required CI is green on the integration SHA.
+Task 5 remains open. Required GitHub checks were not run because this task did
+not push or open a pull request. The change remains active and unarchived until
+the integrated browser/full-suite validation is complete and required CI is
+green on the integration SHA.
