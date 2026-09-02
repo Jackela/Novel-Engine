@@ -1337,6 +1337,14 @@ retired and MUST be ignored. Defaults without configuration: the SQLite
 store at `data/novel-engine.sqlite3`, host `0.0.0.0:8000`, and the
 authentication rate limit of five per minute.
 
+An absent `.env.local` file (`ENOENT`) MUST be treated as no file
+configuration. The selected path MUST resolve to a regular file; a directory or
+other non-regular target MUST stop loading with a stable configuration error.
+Every actual metadata or file-read failure other than `ENOENT` MUST be rethrown
+unchanged, and configuration loading MUST stop. A parser exception MUST
+likewise be rethrown unchanged, and configuration loading MUST stop. Process
+variables MUST NOT turn any of these failures into the absent-file case.
+
 The fully resolved `DB_URL` path, including its basename, MUST be the one
 database-file authority for API startup, import, backup, doctor, schema checks,
 migration, reconciliation, and serving. Every downstream layer MUST preserve
@@ -1366,6 +1374,35 @@ system MUST NOT choose, move, merge, or silently fall back to either file.
 - **WHEN** the server starts from the workspace root
 - **THEN** the declared value applies without shell exports
 
+#### Scenario: Missing environment file is optional
+
+- **GIVEN** the selected `.env.local` path does not exist
+- **WHEN** configuration loads
+- **THEN** defaults and process variables are resolved without a file
+
+#### Scenario: Unreadable environment file fails loudly
+
+- **GIVEN** metadata lookup or reading the selected `.env.local` path fails for
+  any reason other than `ENOENT`
+- **WHEN** configuration loads, even with process variables present
+- **THEN** the same metadata or read failure is rethrown unchanged
+- **AND** configuration defaults and process overrides are not returned
+
+#### Scenario: Non-regular environment target fails consistently
+
+- **GIVEN** the selected `.env.local` path resolves to a directory or another
+  non-regular target
+- **WHEN** configuration loads on any supported platform
+- **THEN** loading stops with a stable configuration error that identifies the path
+- **AND** process variables do not turn the target into an absent-file case
+
+#### Scenario: Environment parser failure stays visible
+
+- **GIVEN** the selected `.env.local` file is read but the environment parser raises
+- **WHEN** configuration loads, even with process variables present
+- **THEN** the same parser exception is rethrown unchanged
+- **AND** the failure is not treated as an absent environment file
+
 #### Scenario: Custom SQLite basename remains one authority
 
 - **GIVEN** `DB_URL` names `data/author.sqlite3`
@@ -1383,30 +1420,74 @@ system MUST NOT choose, move, merge, or silently fall back to either file.
 - **AND** no database is selected, moved, merged, or repaired implicitly
 
 ### Requirement: CLI operational surface
+
 The CLI MUST provide four commands. Every command MUST establish the configured
 database authority and pass the legacy-sibling ambiguity gate before database
 backup, migration, reconciliation, import, or inspection. After that gate
 passes, `serve` MUST back up the SQLite store before applying pending
-migrations, then start the API. `import` MUST take an explicit source path and
-owner, run as the owner principal without HTTP authentication, and print the
-imported project. `backup` MUST write a backup and print its path. `doctor` MUST
-report the version, database path, integrity check, journal mode, foreign-key
-enforcement, and owner status, exiting non-zero unless the integrity check
-passes and foreign keys are enabled.
+migrations, then start the API. Once listening, the first `SIGINT` or `SIGTERM`
+MUST initiate one controlled shutdown. The command MUST await application
+resource release, later shutdown signals MUST NOT start a second shutdown
+cycle, and the command MUST leave none of its own signal subscriptions on a
+terminal path. Controlled shutdown MUST already be available when the listener
+becomes reachable. A successful signal shutdown MUST return `130` for `SIGINT`
+or `143` for `SIGTERM`; a resource-release failure MUST remain visible and
+return `1` instead.
+
+`import` MUST take an explicit source path and owner, run as the owner principal
+without HTTP authentication, and print the imported project. `backup` MUST
+write a backup and print its path. `doctor` MUST report the version, database
+path, integrity check, journal mode, foreign-key enforcement, and owner status,
+exiting non-zero unless the integrity check passes and foreign keys are enabled.
 
 #### Scenario: Serve backs up before migrating
+
 - **GIVEN** the database authority and ambiguity gate passes for a database with
   pending migrations
 - **WHEN** `serve` runs
 - **THEN** a backup is written beneath the backups directory before migrations apply
 
+#### Scenario: SIGINT closes serve once
+
+- **GIVEN** `serve` is listening and owns an open application
+- **WHEN** `SIGINT` is the first shutdown signal
+- **THEN** application resources are released before the command returns
+- **AND** later shutdown signals do not start another shutdown cycle
+- **AND** no CLI-owned signal subscription remains
+- **AND** the command returns exit code 130
+
+#### Scenario: SIGTERM closes serve once
+
+- **GIVEN** `serve` is listening and owns an open application
+- **WHEN** `SIGTERM` is the first shutdown signal
+- **THEN** application resources are released before the command returns
+- **AND** no CLI-owned signal subscription remains
+- **AND** the command returns exit code 143
+
+#### Scenario: Listening has no unowned signal window
+
+- **GIVEN** `serve` is transitioning from startup to a reachable listener
+- **WHEN** a shutdown signal arrives at that boundary
+- **THEN** the signal is captured by the same controlled shutdown lifecycle
+- **AND** application resources are released before the command returns
+
+#### Scenario: Signal resource-release failure remains visible
+
+- **GIVEN** a shutdown signal owns the serve lifecycle
+- **WHEN** application resource release fails
+- **THEN** the resource-release failure is reported through the CLI error channel
+- **AND** no CLI-owned signal subscription remains
+- **AND** the command returns exit code 1 rather than the signal code
+
 #### Scenario: CLI import binds to an owner
+
 - **GIVEN** a legacy workspace directory
 - **WHEN** `import` runs with the explicit source path and owner name
 - **THEN** the project is imported scoped to that owner without HTTP authentication
 - **AND** the imported project is printed
 
 #### Scenario: Doctor fails on corruption
+
 - **GIVEN** a corrupted database
 - **WHEN** `doctor` runs
 - **THEN** the integrity check reports the corruption
