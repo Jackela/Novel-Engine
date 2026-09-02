@@ -51,6 +51,49 @@ Exact-shape, query projection, reorder, OpenAPI/type, and whole-book planning
 tasks have been reopened and require new fixed-SHA evidence. No current pass is
 claimed from the superseded `012afb99` projection.
 
+## Revised server evidence
+
+- Contract amendment SHA: `bbb48c3a404a32a0dfb96dbe5b826a8876877645`
+- Current-revision pointer integrity SHA:
+  `1f8657122b363a1dd3a2cb5dfd2d92856327972e`
+- Revised server shell implementation SHA:
+  `0a4ec30d649d0c4fcca8ba5cfdecd7d405aa3dfd`
+
+The amended contract-first run failed 6 of 8 assertions across the API shell,
+Store shell, and public-route query suites: creation, detail, and reorder lacked
+the required source scalar, and the shell query did not select it. The revised
+implementation projects only the current Revision's validated closed
+`author | ai-accepted | restore` source together with revision identity and
+exact word count. It still selects neither `content_markdown` nor
+`metadata_json`. Creation, detail, and reorder share the same strict schema and
+payload builder; the generated OpenAPI contract requires the source enum and
+forbids extra fields on all three surfaces.
+
+The security repair binds both new revision joins by revision id and owning
+Document id. A forged authorized Document pointer to a different Owner's
+Revision initially made both Store/API regressions fail by returning the
+foreign body and false word count. The repaired current-Document resource now
+returns the same scoped `NOT_FOUND` boundary, while the shell fails closed with
+an opaque `INTERNAL_ERROR`; neither response contains the foreign body,
+metadata sentinel, or count. Query budgets remain two fixed auth statements,
+three shell projection statements, and at most two current-Document projection
+statements, with indexed access and no revision-history scan.
+
+The OpenAPI drift gate failed 1 of 1 before the deliberate baseline refresh.
+After regeneration, the final focused run passed 7 files and 58 tests. The
+first full server run passed 197 of 198 files and 1,254 of 1,255 tests; its only
+failure was a superseded project-create assertion that still prohibited the
+now-required source. After that assertion was updated, the second full run
+passed 198 files and all 1,255 tests in 396.28 seconds.
+
+| Revised validation surface | Result |
+|---|---|
+| Server lint and type-check | Passed: Biome checked 426 files; TypeScript reported no error. |
+| Server architecture and build | Passed: 222 modules / 927 dependencies; production TypeScript build passed. |
+| Server gates | Passed: SSOT, hygiene, 599-file size gate, migration channel, 19 llms-txt targets, and OpenAPI snapshot. |
+| Generated frontend API types | Deliberately regenerated; drift check and frontend type-check passed. |
+| Strict OpenSpec | Passed: 19 of 19 changes/specifications. |
+
 | Validation surface | Result |
 |---|---|
 | Contract-first red | Expected failure: 1 file, 4 of 4 tests failed against the aggregate contract. |
@@ -107,10 +150,9 @@ separation and the complete mutation-reconciliation matrix also remain tasks
 
 ## Current boundary
 
-Only the unaffected current-Document read/scope evidence remains applicable
-from the earlier server implementation SHA; summary source projection still
-requires a new fixed server SHA. Frontend tasks 3.1 and 3.3 have current local
-evidence above. Lazy Inspector ownership, mutation/Draft separation, the full
-browser matrix, independent fixed-SHA reviews, and required CI remain open.
-This change stays active and unarchived; local tests and generated artifacts
-are not release approval.
+Contract tasks 1.1–1.4 and server tasks 2.1–2.5 are evidenced on the revised
+fixed SHAs. Whole-book planning task 1.5 remains owned by its frontend evidence;
+frontend tasks 3.1 and 3.3 have current local evidence above. Lazy Inspector
+ownership, mutation/Draft separation, the full browser matrix, independent
+fixed-SHA reviews, and required CI remain open. This change stays active and
+unarchived; local tests and generated artifacts are not release approval.

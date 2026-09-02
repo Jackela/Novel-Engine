@@ -2,7 +2,7 @@
 
 ## 1. Contract-first project resource coverage
 
-- [ ] 1.1 Add failing payload/store/API tests for the exact strict project
+- [x] 1.1 Add failing payload/store/API tests for the exact strict project
       shell, exact document-summary fields, required ordered volumes and
       documents, required closed `revision_source`, and the absence—not
       nullability—of `content_markdown` and `metadata` from detail and creation
@@ -11,7 +11,7 @@
       one selected body only, valid-shape unauthenticated 401 before lookup,
       and identical code/message/body 404 responses for missing,
       cross-project, and out-of-scope documents.
-- [ ] 1.3 Add public-route execution-trace and query-plan failures with separate
+- [x] 1.3 Add public-route execution-trace and query-plan failures with separate
       auth, shell-projection, and current-Document-projection buckets: prove a
       valid session has the fixed two-statement auth cost, shell reads no body/
       metadata columns but selects closed revision source in at most three
@@ -19,7 +19,7 @@
       reads at most one body in at most two projection statements, the combined
       trace is fully attributed, budgets stay independent of project size, and
       indexed scope/current-revision access avoids history scans.
-- [ ] 1.4 Add failing reorder coverage proving validation and atomic whole-set
+- [x] 1.4 Add failing reorder coverage proving validation and atomic whole-set
       positions are unchanged while its response contains summaries only and
       performs no response-time body/metadata hydration while retaining the
       required revision source.
@@ -30,20 +30,20 @@
 
 ## 2. Server shell and current-document seams
 
-- [ ] 2.1 Introduce strict `DocumentSummary` and `ProjectShell` payload schemas,
+- [x] 2.1 Introduce strict `DocumentSummary` and `ProjectShell` payload schemas,
       builders, records, and store/application ports separate from complete
       `DocumentWithCurrent`; keep persisted current-revision identity, closed
       source, and exact word count as summary authority.
-- [ ] 2.2 Replace project detail and creation materialization with the bounded
+- [x] 2.2 Replace project detail and creation materialization with the bounded
       ordered shell projection, preserving scalar settings/import fields,
       volume semantics, owner scope, and stable list ordering.
 - [x] 2.3 Add the authenticated scoped current-document application read and
       GET route at the existing document path; keep historical revision bodies
       private and normalize all scoped misses to the same existing 404.
-- [ ] 2.4 Make reorder return ordered summaries without changing whole-set
+- [x] 2.4 Make reorder return ordered summaries without changing whole-set
       request validation, mutation atomicity, revision identity, or position
       rules.
-- [ ] 2.5 Deliberately regenerate the OpenAPI baseline and frontend types; prove
+- [x] 2.5 Deliberately regenerate the OpenAPI baseline and frontend types; prove
       strict shell/current-document/reorder shapes, body exclusion, auth/error
       responses, required revision-source enum, and zero schema/migration drift.
 
