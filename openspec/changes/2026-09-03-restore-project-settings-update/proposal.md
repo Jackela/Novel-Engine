@@ -4,9 +4,11 @@
 
 The Studio exposes a Project settings form and its frontend client already
 attempts `PATCH /api/projects/:projectId`, but the TypeScript backend has no
-matching route. Saving a title, description, or provider therefore reaches a
-404 instead of persisting the edit. This is a confirmed compatibility gap: the
-surface appears complete, yet reload returns the old project state.
+matching body-bearing route. The inbound request policy therefore rejects the
+save as 422 `VALIDATION_ERROR` with an `undeclared_body` detail instead of
+persisting the title, description, or provider. This is a confirmed
+compatibility gap: the surface appears complete, yet reload returns the old
+project state.
 
 The repair needs its own contract because it is a write boundary, not another
 exception to the bounded Project shell. A settings mutation must be scoped to
@@ -18,17 +20,20 @@ document structure or bodies.
 
 - Add CSRF-protected `PATCH /api/projects/:projectId` for an authenticated Owner.
 - Accept a strict top-level object with optional `title`, `description`, and
-  `settings`, requiring at least one of them. Trim and validate title and
+  `settings`, requiring at least one of them. Inspect original top-level keys
+  before AJV can remove additional properties, then trim and validate title and
   description under the same constraints as project creation; reject unknown
   top-level fields and non-object settings.
 - Preserve every omitted project field. An included `settings` object replaces
   the complete stored settings object; callers that want to retain other keys
   must include them, matching the current frontend's merge-before-send behavior.
-- Commit the selected scalar changes and one new `updated_at` atomically through
-  an Owner-scoped store operation, then return the strict scalar Project payload
-  with no `documents`, `volumes`, revision data, or bodies.
-- Merge the returned scalars into the current frontend Project shell without
-  replacing structural arrays or the active Document. Give the settings request
+- Commit the selected scalar changes and a strictly later `updated_at`
+  atomically through an Owner-scoped store operation, even under same-millisecond
+  or backwards clocks, then return the strict scalar Project payload with no
+  `documents`, `volumes`, revision data, or bodies.
+- Verify the returned Project identity and merge only mutable returned scalars
+  into the current frontend Project shell without replacing identity, immutable
+  scalars, structural arrays, or the active Document. Give the settings request
   project/intent ownership, explicit pending and failure state, stale-response
   rejection, and accessible focus recovery.
 - Regenerate the deliberate OpenAPI baseline and frontend types, then verify
@@ -61,14 +66,14 @@ document structure or bodies.
 
 - Contract-first real API/store tests for each field alone and together,
   preservation of omitted fields, complete settings replacement, trimming,
-  request bounds, empty/unknown/invalid bodies, updated timestamp, exact scalar
-  response shape, and atomic failure.
+  request bounds, empty/unknown/mixed/invalid bodies, same-millisecond and
+  backwards-clock timestamps, exact scalar response shape, and atomic failure.
 - Authorization tests proving unauthenticated and CSRF-invalid requests do not
   mutate, and missing/cross-Owner projects share one 404 envelope after the
   write guards pass.
-- Frontend tests for scalar-only parsing/merge, pending and duplicate-submit
-  behavior, project/intent stale responses, independent error recovery, and
-  focus that respects deliberate user movement.
+- Frontend tests for response-id verification and mutable-scalar-only merge,
+  pending and duplicate-submit behavior, project/intent stale responses,
+  independent error recovery, and focus that respects deliberate user movement.
 - OpenAPI/generated-type drift plus a TypeScript-backend Playwright workflow
   that saves title, description, and provider and observes all three after page
   reload.

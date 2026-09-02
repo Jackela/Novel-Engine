@@ -5,19 +5,27 @@
 The API MUST expose CSRF-protected
 `PATCH /api/projects/:projectId` to an authenticated Owner. Its strict request
 body MUST allow only optional `title`, `description`, and `settings` fields and
-MUST require at least one field. An included title MUST be a string of at most
-240 characters and MUST remain non-empty after trimming. An included description
-MUST be a string of at most 10,000 characters and MUST be trimmed before
-persistence. Included settings MUST be a non-array JSON object. Unknown fields,
-an empty object, invalid types, or violated bounds MUST return the existing 422
-`VALIDATION_ERROR` envelope and MUST NOT mutate the Project.
+MUST require at least one original supported field. Because AJV may remove
+additional properties, the route MUST inspect the parsed request body's original
+own top-level keys before AJV normalization. Authentication and CSRF MUST run
+first in the route's ordered `preValidation` chain; the next hook MUST reject
+unknown-only and allowed-plus-unknown objects and MUST evaluate at-least-one
+against the original supported keys. An included title MUST be a string of at
+most 240 characters and MUST remain non-empty after trimming. An included
+description MUST be a string of at most 10,000 characters and MUST be trimmed
+before persistence. Included settings MUST be a non-array JSON object. Unknown
+fields, an empty object, invalid types, or violated bounds MUST return the
+existing 422 `VALIDATION_ERROR` envelope and MUST NOT enter the update service
+or mutate the Project.
 
 Every omitted field MUST retain its current stored value. An included settings
 object MUST replace the complete stored settings object; it MUST NOT be merged
 recursively. All included normalized fields and exactly one new `updated_at`
-MUST commit as one atomic Project update. A successful accepted PATCH MUST
-advance `updated_at` even when a normalized included value equals the stored
-value.
+MUST commit as one atomic Project update. The new timestamp MUST equal
+`max(stored updated_at + 1 millisecond, supplied now)` or an equivalent atomic
+calculation, so every successful accepted PATCH advances `updated_at` strictly
+even when the value is unchanged, the clock stays in one millisecond, or the
+clock moves backwards.
 
 Success MUST return only the strict scalar Project payload: `id`, `title`,
 `description`, `settings`, nullable `import_hash`, `created_at`, and
@@ -51,6 +59,20 @@ opaque 500 `INTERNAL_ERROR` envelope; unavailable persistence MUST return 503
 - **THEN** the response is 422 `VALIDATION_ERROR`
 - **AND** no Project field or timestamp changes
 
+#### Scenario: AJV cannot hide a mixed unknown field
+
+- **GIVEN** an authenticated Owner with a valid CSRF pair
+- **WHEN** the original PATCH body contains a supported field plus an unknown top-level field
+- **THEN** the raw-key `preValidation` check returns 422 `VALIDATION_ERROR` before AJV removes the unknown field
+- **AND** the service and Project update store are not entered
+
+#### Scenario: Unknown-only input does not satisfy at-least-one
+
+- **GIVEN** an authenticated Owner with a valid CSRF pair
+- **WHEN** the original PATCH body contains only unknown top-level fields
+- **THEN** the response is 422 `VALIDATION_ERROR`
+- **AND** no removed property is mistaken for a supported update
+
 #### Scenario: Blank normalized title is rejected
 
 - **GIVEN** an authenticated Owner with a valid CSRF pair
@@ -80,6 +102,13 @@ opaque 500 `INTERNAL_ERROR` envelope; unavailable persistence MUST return 503
 - **THEN** the response is 503 `SERVICE_UNAVAILABLE` or opaque 500 `INTERNAL_ERROR` as applicable
 - **AND** no selected field or `updated_at` changes
 
+#### Scenario: Updated time is strictly monotonic across clock anomalies
+
+- **GIVEN** an Owner Project has a stored `updated_at`
+- **WHEN** accepted PATCH commands receive the same-millisecond or backwards supplied clock
+- **THEN** each committed `updated_at` is at least one millisecond later than its immediately stored predecessor
+- **AND** the updated-descending Project catalog observes the new timestamp deterministically
+
 #### Scenario: Successful response is not a Project shell
 
 - **GIVEN** a Project with many Documents and volumes
@@ -90,9 +119,13 @@ opaque 500 `INTERNAL_ERROR` envelope; unavailable persistence MUST return 503
 ### Requirement: Recoverable Project settings save
 
 The Studio MUST submit Project settings through the scoped PATCH and parse the
-strict scalar Project response. On success it MUST merge only returned Project
-scalars into the matching current Project shell, preserving its document
-summaries, volumes, active accepted Document, Draft, and other Inspector state.
+strict scalar Project response. Before any merge it MUST require the response
+`id` to equal both the captured route Project id and current shell id. A mismatch
+MUST be a local contract error and MUST NOT merge any response field. For a
+matching current intent, it MUST merge only returned `title`, `description`,
+`settings`, and `updated_at`; it MUST NOT overwrite `id`, `import_hash`, or
+`created_at` from the response. The merge MUST preserve document summaries,
+volumes, active accepted Document, Draft, and other Inspector state.
 The title, description, and selected provider MUST be observable from persisted
 Project settings after a full page reload.
 
@@ -114,8 +147,16 @@ not deliberately move focus elsewhere.
 
 - **GIVEN** the current Project shell contains document summaries and volumes and its editor holds the active Document
 - **WHEN** a settings PATCH succeeds for that same Project and current intent
-- **THEN** returned title, description, settings, and timestamps merge into the shell
+- **THEN** returned title, description, settings, and `updated_at` merge into the shell
+- **AND** shell id, import hash, and creation timestamp remain locally authoritative
 - **AND** document summaries, volumes, active Document, Draft, and other Inspector state are unchanged
+
+#### Scenario: Wrong response identity is rejected
+
+- **GIVEN** a current settings request captured Project A and Project A remains current
+- **WHEN** the parsed scalar response carries a different Project id
+- **THEN** the Settings surface reports a local contract error
+- **AND** no scalar, form, success, or shell field is merged
 
 #### Scenario: Late settings response cannot cross Projects
 
