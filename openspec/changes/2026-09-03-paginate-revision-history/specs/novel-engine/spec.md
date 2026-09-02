@@ -32,8 +32,13 @@ summaries only after an explicit accessible author action. Older-page failure
 MUST preserve visible summaries and the saved cursor for retry. Project,
 document, abort, and request ownership MUST prevent stale responses from
 publishing into another owner. The shared cross-owner revision cache MUST retain
-at most eight project/document owners and MUST evict the least-recently-used
-inactive owner without evicting the active owner.
+at most eight project/document owners while its active working set is no larger
+than eight, and MUST evict the least-recently-used inactive owner without
+evicting an active owner. If more than eight owners are simultaneously active,
+it MAY temporarily retain only that unavoidable active working set and MUST
+converge to at most eight as owners deactivate. Coalesced requests MUST notify
+every still-mounted subscriber, and an initiating subscriber's unmount MUST NOT
+suppress the outcome for a surviving subscriber.
 
 #### Scenario: Default history is a bounded newest-first summary
 
@@ -110,6 +115,13 @@ inactive owner without evicting the active owner.
 - **AND** the active owner remains available
 - **AND** revisiting an evicted owner starts a fresh first-page read
 
+#### Scenario: Active working set converges to the cache budget
+
+- **GIVEN** more than eight project/document owners are simultaneously active
+- **WHEN** inactive owners exist or active owners deactivate
+- **THEN** inactive owners are evicted before any active owner
+- **AND** the retained owner count converges to at most eight when the active set permits it
+
 ### Requirement: Exact immutable revision word counts
 
 Every accepted revision MUST retain the exact non-negative word count of its
@@ -151,8 +163,13 @@ After autosave, proposal acceptance, or restore creates a revision, the Studio
 MUST refresh at most the cursorless first summary page and MUST NOT traverse the
 complete history. The successful first page MUST prepend and de-duplicate new
 summaries while preserving any contiguous older summaries and their continuation
-cursor. A failed refresh MUST preserve committed history state and expose the
-existing revision error.
+cursor. A non-terminal first page with no identity overlap MUST replace rather
+than splice across an unknown cache gap. Refresh ownership MUST distinguish the
+revision created by each mutation so an older response cannot satisfy a newer
+mutation. A failed refresh MUST preserve committed history state and expose the
+existing revision error. A successful older-page request MUST NOT clear that
+first-page error; only a successful request of the same history intent may
+clear the corresponding error.
 
 Restoring a listed revision MUST resolve that exact scoped revision's complete
 body and metadata on the server, MUST create a new revision with source
@@ -172,6 +189,13 @@ the summary, cache, or cursor as content authority.
 - **GIVEN** a history refresh is in flight for one project/document owner
 - **WHEN** the author changes document or a newer refresh takes ownership
 - **THEN** the stale response cannot publish summaries or cursor state
+
+#### Scenario: Older success does not hide a refresh failure
+
+- **GIVEN** a first-page refresh fails while an older-page action is queued
+- **WHEN** the older-page request later succeeds
+- **THEN** its summaries may append to the retained contiguous tail
+- **BUT** the failed first-page revision error remains visible until a first-page request succeeds
 
 #### Scenario: Summary-only restore remains exact
 
