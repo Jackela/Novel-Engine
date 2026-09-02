@@ -16,16 +16,6 @@ interface StudioHistoryPanelProps {
   onLoadOlderRevisions?: () => void | Promise<void>;
 }
 
-function isDisabledControl(element: Element): boolean {
-  return (
-    (element instanceof HTMLButtonElement ||
-      element instanceof HTMLInputElement ||
-      element instanceof HTMLSelectElement ||
-      element instanceof HTMLTextAreaElement) &&
-    element.disabled
-  );
-}
-
 export function StudioHistoryPanel({
   revisions,
   loadedRevisionId,
@@ -54,8 +44,7 @@ export function StudioHistoryPanel({
       activeElement === document.body ||
       activeElement === document.documentElement ||
       activeElement === trigger ||
-      !activeElement.isConnected ||
-      isDisabledControl(activeElement);
+      !activeElement.isConnected;
     if (!focusWasLost) {
       keyboardLoadPendingRef.current = false;
       keyboardLoadTriggerRef.current = null;

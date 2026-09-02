@@ -123,7 +123,7 @@ describe("StudioHistoryPanel", () => {
     elsewhere.remove();
   });
 
-  it("preserves connected focus when keyboard loading fails", () => {
+  it("preserves a different connected disabled control when keyboard loading fails", () => {
     let isLoadingOlder = false;
     const content = () => (
       <>
@@ -142,6 +142,7 @@ describe("StudioHistoryPanel", () => {
     const { container, root } = harness.mount(content());
     const loadButton = getByRole(container, "button", { name: "Load older revisions" });
     const elsewhere = getByRole(container, "button", { name: "Elsewhere" });
+    if (!(elsewhere instanceof HTMLButtonElement)) throw new Error("Expected a button.");
     loadButton.focus();
     act(() => {
       loadButton.click();
@@ -149,6 +150,8 @@ describe("StudioHistoryPanel", () => {
       root.render(content());
     });
     elsewhere.focus();
+    elsewhere.disabled = true;
+    expect(document.activeElement).toBe(elsewhere);
     act(() => {
       isLoadingOlder = false;
       root.render(content());
@@ -157,7 +160,7 @@ describe("StudioHistoryPanel", () => {
     expect(document.activeElement).toBe(elsewhere);
   });
 
-  it("preserves connected focus when keyboard loading reaches the terminal page", () => {
+  it("preserves a different connected disabled control at the terminal page", () => {
     let hasOlderRevisions = true;
     let isLoadingOlder = false;
     const content = () => (
@@ -177,6 +180,7 @@ describe("StudioHistoryPanel", () => {
     const { container, root } = harness.mount(content());
     const loadButton = getByRole(container, "button", { name: "Load older revisions" });
     const elsewhere = getByRole(container, "button", { name: "Elsewhere" });
+    if (!(elsewhere instanceof HTMLButtonElement)) throw new Error("Expected a button.");
     loadButton.focus();
     act(() => {
       loadButton.click();
@@ -184,6 +188,8 @@ describe("StudioHistoryPanel", () => {
       root.render(content());
     });
     elsewhere.focus();
+    elsewhere.disabled = true;
+    expect(document.activeElement).toBe(elsewhere);
     act(() => {
       hasOlderRevisions = false;
       isLoadingOlder = false;
