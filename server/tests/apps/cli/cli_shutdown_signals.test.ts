@@ -7,47 +7,8 @@ import { describe, expect, it, vi } from "vitest";
 
 import { buildApp } from "../../../src/apps/api/app.js";
 import { runCli, type ServeRunner } from "../../../src/apps/cli/main.js";
-import type {
-  ShutdownSignal,
-  ShutdownSignalHandler,
-  ShutdownSignalSource,
-} from "../../../src/apps/cli/shutdown_signals.js";
 import { openStudioDatabase } from "../../../src/shared/infrastructure/db/startup.js";
-
-class FakeSignalSource implements ShutdownSignalSource {
-  readonly events: string[] = [];
-  readonly added: Array<{ signal: ShutdownSignal; handler: ShutdownSignalHandler }> = [];
-  readonly removed: Array<{ signal: ShutdownSignal; handler: ShutdownSignalHandler }> = [];
-  readonly listeners = new Map<ShutdownSignal, Set<ShutdownSignalHandler>>();
-
-  constructor(private readonly failRegistrationWith?: Error) {}
-
-  add(signal: ShutdownSignal, handler: ShutdownSignalHandler): void {
-    this.events.push(`add:${signal}`);
-    if (signal === "SIGTERM" && this.failRegistrationWith !== undefined) {
-      throw this.failRegistrationWith;
-    }
-    this.added.push({ signal, handler });
-    const handlers = this.listeners.get(signal) ?? new Set<ShutdownSignalHandler>();
-    handlers.add(handler);
-    this.listeners.set(signal, handlers);
-  }
-
-  remove(signal: ShutdownSignal, handler: ShutdownSignalHandler): void {
-    this.events.push(`remove:${signal}`);
-    this.removed.push({ signal, handler });
-    this.listeners.get(signal)?.delete(handler);
-  }
-
-  emit(signal: ShutdownSignal): void {
-    this.events.push(`emit:${signal}`);
-    for (const handler of this.listeners.get(signal) ?? []) handler();
-  }
-
-  listenerCount(signal: ShutdownSignal): number {
-    return this.listeners.get(signal)?.size ?? 0;
-  }
-}
+import { FakeShutdownSignalSource } from "./shutdown_signal_fixtures.js";
 
 async function shutdownHarness() {
   const directory = await mkdtemp(join(tmpdir(), "novel-engine-cli-shutdown-"));
@@ -85,7 +46,7 @@ describe("CLI-owned serve shutdown", () => {
     "closes exactly once and returns $expectedCode for $signal",
     async ({ signal, expectedCode }) => {
       const harness = await shutdownHarness();
-      const source = new FakeSignalSource();
+      const source = new FakeShutdownSignalSource();
       let closeCalls = 0;
       const serve: ServeRunner = {
         owner: "cli-owned",
@@ -119,7 +80,7 @@ describe("CLI-owned serve shutdown", () => {
 
   it("captures a shutdown signal that arrives while listener startup is still settling", async () => {
     const harness = await shutdownHarness();
-    const source = new FakeSignalSource();
+    const source = new FakeShutdownSignalSource();
     let releaseStartup: (() => void) | undefined;
     const startup = new Promise<void>((resolve) => {
       releaseStartup = resolve;
@@ -146,7 +107,7 @@ describe("CLI-owned serve shutdown", () => {
 
   it("keeps later signals latched while the one application close is in progress", async () => {
     const harness = await shutdownHarness();
-    const source = new FakeSignalSource();
+    const source = new FakeShutdownSignalSource();
     let closeCalls = 0;
     let announceClose: (() => void) | undefined;
     let releaseClose: (() => void) | undefined;
@@ -195,7 +156,7 @@ describe("CLI-owned serve shutdown", () => {
 
   it("keeps handlers during delayed cleanup after listener startup fails", async () => {
     const harness = await shutdownHarness();
-    const source = new FakeSignalSource();
+    const source = new FakeShutdownSignalSource();
     const listenFailure = new Error("simulated listen failure");
     let closeCalls = 0;
     let announceClose: (() => void) | undefined;
@@ -249,7 +210,7 @@ describe("CLI-owned serve shutdown", () => {
   it("closes the built app and never calls the runner when signal registration fails", async () => {
     const harness = await shutdownHarness();
     const registrationFailure = new Error("simulated signal registration failure");
-    const source = new FakeSignalSource(registrationFailure);
+    const source = new FakeShutdownSignalSource(registrationFailure);
     const run = vi.fn(async () => undefined);
 
     const code = await runCli(["serve", "--port", "8765"], {
@@ -271,7 +232,7 @@ describe("CLI-owned serve shutdown", () => {
     const harness = await shutdownHarness();
     const registrationFailure = new Error("simulated signal registration failure");
     const cleanupFailure = new Error("simulated registration cleanup failure");
-    const source = new FakeSignalSource(registrationFailure);
+    const source = new FakeShutdownSignalSource(registrationFailure);
 
     const code = await runCli(["serve", "--port", "8765"], {
       ...harness.context,
@@ -297,7 +258,7 @@ describe("CLI-owned serve shutdown", () => {
 
   it("removes handlers and reports a signal-owned close failure once", async () => {
     const harness = await shutdownHarness();
-    const source = new FakeSignalSource();
+    const source = new FakeShutdownSignalSource();
     const cleanupFailure = new Error("simulated signal cleanup failure");
     let closeCalls = 0;
 
