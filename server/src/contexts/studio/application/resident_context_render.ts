@@ -37,42 +37,36 @@ export function residentMatchCorpus(view: ResidentContextView): string {
  * sanitizeResidentProse so no project-derived value can forge a bracketed
  * marker. The linked beat stays inside the outline's reference-data block.
  */
-export function renderResidentContextSections(view: ResidentContextView): string[] {
-  const sections: string[] = [];
+export function* iterateResidentContextSections(view: ResidentContextView): Generator<string> {
   if (view.outline !== null) {
-    sections.push(
-      "",
-      "OUTLINE (the writer's recorded plan):",
-      PROJECT_OUTLINE_BEGIN,
-      sanitizeResidentProse(view.outline.markdown),
-    );
+    yield "";
+    yield "OUTLINE (the writer's recorded plan):";
+    yield PROJECT_OUTLINE_BEGIN;
+    yield sanitizeResidentProse(view.outline.markdown);
     if (view.outline.linkedBeat !== null) {
-      sections.push(
-        `Current beat: "${sanitizeResidentProse(view.outline.linkedBeat.title)}" — this chapter fulfills this outline section.`,
-      );
+      yield `Current beat: "${sanitizeResidentProse(view.outline.linkedBeat.title)}" — this chapter fulfills this outline section.`;
     }
-    sections.push(PROJECT_OUTLINE_END);
+    yield PROJECT_OUTLINE_END;
   }
   if (view.priorStory.length > 0) {
-    sections.push(
-      "",
-      "PRIOR STORY (rolling summary of every earlier chapter, in reading order):",
-      PRIOR_STORY_BEGIN,
-      ...view.priorStory.map(
-        (entry) =>
-          `${entry.ordinal}. ${sanitizeResidentProse(entry.title)} — ${sanitizeResidentProse(entry.digest)}`,
-      ),
-      PRIOR_STORY_END,
-    );
+    yield "";
+    yield "PRIOR STORY (rolling summary of every earlier chapter, in reading order):";
+    yield PRIOR_STORY_BEGIN;
+    for (const entry of view.priorStory) {
+      yield `${entry.ordinal}. ${sanitizeResidentProse(entry.title)} — ${sanitizeResidentProse(entry.digest)}`;
+    }
+    yield PRIOR_STORY_END;
   }
   if (view.recentText !== null) {
-    sections.push(
-      "",
-      "RECENT TEXT (closing passage of the most recent earlier chapter):",
-      RECENT_TEXT_BEGIN,
-      sanitizeResidentProse(view.recentText),
-      RECENT_TEXT_END,
-    );
+    yield "";
+    yield "RECENT TEXT (closing passage of the most recent earlier chapter):";
+    yield RECENT_TEXT_BEGIN;
+    yield sanitizeResidentProse(view.recentText);
+    yield RECENT_TEXT_END;
   }
-  return sections;
+}
+
+/** Compatibility materializer for callers that own an array-shaped boundary. */
+export function renderResidentContextSections(view: ResidentContextView): string[] {
+  return [...iterateResidentContextSections(view)];
 }

@@ -1,7 +1,7 @@
 import { GenerationCapacityExceededError } from "../domain/exceptions.js";
+import { GENERATION_PROMPT_BYTE_LIMIT } from "../domain/generation_capacity_policy.js";
 
-/** Fixed complete Provider-prompt budget; callers cannot override it. */
-export const GENERATION_PROMPT_BYTE_LIMIT = 8_388_608;
+export { GENERATION_PROMPT_BYTE_LIMIT } from "../domain/generation_capacity_policy.js";
 
 /**
  * Incremental prompt materializer. Reserved text is counted but not included

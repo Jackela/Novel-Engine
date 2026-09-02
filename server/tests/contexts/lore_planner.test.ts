@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  planLoreInjections,
+  iterateTriggeredLoreSections,
+  type LorePlanningInstrumentation,
   triggeredLoreSections,
 } from "../../src/contexts/studio/application/lore_injection.js";
 import type { LoreEntrySource, LoreMatch } from "../../src/contexts/studio/application/lorebook.js";
@@ -30,14 +31,68 @@ function matchedEntriesWithObservedSources(count: number): {
 }
 
 describe("linear lore injection planning", () => {
-  it("snapshots every matched source once while planning M and 2M entries", () => {
+  it("constructs each summary/full representation once and renders one final pass for M and 2M", () => {
     for (const count of [12, 24]) {
       const observed = matchedEntriesWithObservedSources(count);
-      const plan = planLoreInjections(observed.matches, 20_000);
+      const calls = { summary: 0, full: 0, finalPass: 0, lines: 0 };
+      const instrumentation: LorePlanningInstrumentation = {
+        onRepresentationPrepared: (mode) => {
+          calls[mode] += 1;
+        },
+        onFinalRenderPass: () => {
+          calls.finalPass += 1;
+        },
+        onLineRendered: () => {
+          calls.lines += 1;
+        },
+      };
+      const lines = [
+        ...iterateTriggeredLoreSections({
+          entries: observed.matches.map((match) => match.entry),
+          resident: observed.matches.map((match) => match.entry.title).join(" "),
+          manuscript: "",
+          budgetCharacters: 20_000,
+          instrumentation,
+        }),
+      ];
 
-      expect(plan).toHaveLength(count);
-      expect(observed.reads).toEqual({ content: count, title: count });
+      expect(lines.length).toBeGreaterThan(count);
+      expect(calls).toEqual({
+        summary: count,
+        full: count,
+        finalPass: 1,
+        lines: lines.length,
+      });
     }
+  });
+
+  it("does not render later final-section lines after a consumer stops", () => {
+    const rendered: string[] = [];
+    const instrumentation: LorePlanningInstrumentation = {
+      onRepresentationPrepared: () => undefined,
+      onFinalRenderPass: () => undefined,
+      onLineRendered: (line) => rendered.push(line),
+    };
+    const iterator = iterateTriggeredLoreSections({
+      entries: [
+        {
+          title: "Mara",
+          loreAliasesJson: "[]",
+          status: "stable",
+          contentMarkdown: "Mara keeps the archive.",
+        },
+      ],
+      resident: "Mara",
+      manuscript: "",
+      budgetCharacters: 10_000,
+      instrumentation,
+    });
+
+    expect(iterator.next().value).toBe("");
+    expect(iterator.next().value).toContain("LOREBOOK");
+    iterator.return(undefined);
+
+    expect(rendered).toHaveLength(2);
   });
 
   it("promotes at the exact rendered budget and keeps the summary one character below it", () => {

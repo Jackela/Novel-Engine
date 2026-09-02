@@ -1173,8 +1173,10 @@ export interface paths {
                                 /** @enum {string} */
                                 code: "GENERATION_CAPACITY_EXCEEDED";
                                 details: {
-                                    limit: number;
-                                    observed: number;
+                                    /** @enum {integer} */
+                                    limit: 8388608;
+                                    /** @enum {integer} */
+                                    observed: 8388609;
                                     /** @enum {string} */
                                     resource: "prompt_bytes";
                                 };
@@ -1349,8 +1351,10 @@ export interface paths {
                                 /** @enum {string} */
                                 code: "GENERATION_CAPACITY_EXCEEDED";
                                 details: {
-                                    limit: number;
-                                    observed: number;
+                                    /** @enum {integer} */
+                                    limit: 8388608;
+                                    /** @enum {integer} */
+                                    observed: 8388609;
                                     /** @enum {string} */
                                     resource: "prompt_bytes";
                                 };
@@ -2830,8 +2834,10 @@ export interface paths {
                                 /** @enum {string} */
                                 code: "GENERATION_CAPACITY_EXCEEDED";
                                 details: {
-                                    limit: number;
-                                    observed: number;
+                                    /** @enum {integer} */
+                                    limit: 8388608;
+                                    /** @enum {integer} */
+                                    observed: 8388609;
                                     /** @enum {string} */
                                     resource: "prompt_bytes";
                                 };

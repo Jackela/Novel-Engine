@@ -28,6 +28,13 @@ export interface PlannedLoreInjection {
   readonly mode: LoreInjectionMode;
 }
 
+/** Deterministic work counters used to prove the planner's linear contract. */
+export interface LorePlanningInstrumentation {
+  readonly onRepresentationPrepared: (mode: LoreInjectionMode) => void;
+  readonly onFinalRenderPass: () => void;
+  readonly onLineRendered: (line: string) => void;
+}
+
 const LOREBOOK_SECTION_HEADER =
   "LOREBOOK (reference entries triggered by their keys occurring above):";
 
@@ -56,7 +63,10 @@ function fragmentLines(heading: string, body: string): readonly [string, "", str
   return [heading, "", body, ""];
 }
 
-function prepareLoreInjection(match: LoreMatch): PreparedLoreInjection {
+function prepareLoreInjection(
+  match: LoreMatch,
+  instrumentation?: LorePlanningInstrumentation,
+): PreparedLoreInjection {
   // Snapshot source access before deriving both representations. Apart from
   // making getter-backed inputs deterministic, this prevents repeated body
   // scans while evaluating later promotions.
@@ -72,7 +82,9 @@ function prepareLoreInjection(match: LoreMatch): PreparedLoreInjection {
   );
   const fullBody = escapePromptData(contentMarkdown?.trim() ?? "");
   const summaryLines = fragmentLines(headingLine(title, "summary"), summaryBody);
+  instrumentation?.onRepresentationPrepared("summary");
   const fullLines = fragmentLines(headingLine(title, "full"), fullBody);
+  instrumentation?.onRepresentationPrepared("full");
   return {
     entry: match.entry,
     rank: match.rank,
@@ -99,8 +111,9 @@ function summaryFloorLength(entries: readonly PreparedLoreInjection[]): number {
 function prepareLorePlan(
   matched: readonly LoreMatch[],
   budgetCharacters: number,
+  instrumentation?: LorePlanningInstrumentation,
 ): PreparedLorePlan {
-  const entries = matched.map(prepareLoreInjection);
+  const entries = matched.map((match) => prepareLoreInjection(match, instrumentation));
   const modes: LoreInjectionMode[] = entries.map(() => "summary");
   let renderedLength = summaryFloorLength(entries);
 
@@ -130,26 +143,36 @@ function prepareLorePlan(
 export function planLoreInjections(
   matched: readonly LoreMatch[],
   budgetCharacters: number,
+  instrumentation?: LorePlanningInstrumentation,
 ): PlannedLoreInjection[] {
-  const prepared = prepareLorePlan(matched, budgetCharacters);
+  const prepared = prepareLorePlan(matched, budgetCharacters, instrumentation);
   return prepared.entries.map((entry, index) => ({
     entry: entry.entry,
     mode: prepared.modes[index] ?? "summary",
   }));
 }
 
-function preparedInjectionLines(prepared: PreparedLorePlan): string[] {
+function* iteratePreparedInjectionLines(
+  prepared: PreparedLorePlan,
+  instrumentation?: LorePlanningInstrumentation,
+): Generator<string> {
   if (prepared.entries.length === 0) {
-    return [];
+    return;
   }
-  const sections: string[] = ["", LOREBOOK_SECTION_HEADER, LOREBOOK_BEGIN];
+  instrumentation?.onFinalRenderPass();
+  const emit = function* (lines: Iterable<string>): Generator<string> {
+    for (const line of lines) {
+      instrumentation?.onLineRendered(line);
+      yield line;
+    }
+  };
+  yield* emit(["", LOREBOOK_SECTION_HEADER, LOREBOOK_BEGIN]);
   for (let index = 0; index < prepared.entries.length; index += 1) {
     const entry = prepared.entries[index];
     if (entry === undefined) continue;
-    sections.push(...(prepared.modes[index] === "full" ? entry.fullLines : entry.summaryLines));
+    yield* emit(prepared.modes[index] === "full" ? entry.fullLines : entry.summaryLines);
   }
-  sections.push(LOREBOOK_END);
-  return sections;
+  yield* emit([LOREBOOK_END]);
 }
 
 function fullInjectionLines(entries: readonly LoreEntrySource[]): string[] {
@@ -175,18 +198,36 @@ export function renderLoreSection(matched: readonly LoreEntrySource[]): string[]
 }
 
 /** Match then plan then render in one step; an empty result renders nothing. */
+export function* iterateTriggeredLoreSections(
+  input: {
+    entries: readonly LoreEntrySource[];
+    /** Character budget of the rendered section; defaults to the #445 value. */
+    budgetCharacters?: number | undefined;
+    instrumentation?: LorePlanningInstrumentation | undefined;
+  } & LoreMatchCorpora,
+): Generator<string> {
+  const matched = matchLoreEntriesWithRank(input.entries, {
+    resident: input.resident,
+    manuscript: input.manuscript,
+  });
+  yield* iteratePreparedInjectionLines(
+    prepareLorePlan(
+      matched,
+      input.budgetCharacters ?? DEFAULT_LOREBOOK_BUDGET_CHARACTERS,
+      input.instrumentation,
+    ),
+    input.instrumentation,
+  );
+}
+
+/** Compatibility materializer for callers that own an array-shaped boundary. */
 export function triggeredLoreSections(
   input: {
     entries: readonly LoreEntrySource[];
     /** Character budget of the rendered section; defaults to the #445 value. */
     budgetCharacters?: number | undefined;
+    instrumentation?: LorePlanningInstrumentation | undefined;
   } & LoreMatchCorpora,
 ): string[] {
-  const matched = matchLoreEntriesWithRank(input.entries, {
-    resident: input.resident,
-    manuscript: input.manuscript,
-  });
-  return preparedInjectionLines(
-    prepareLorePlan(matched, input.budgetCharacters ?? DEFAULT_LOREBOOK_BUDGET_CHARACTERS),
-  );
+  return [...iterateTriggeredLoreSections(input)];
 }

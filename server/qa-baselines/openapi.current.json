@@ -2243,13 +2243,15 @@
                               "additionalProperties": false,
                               "properties": {
                                 "limit": {
-                                  "maximum": 9007199254740991,
-                                  "minimum": 0,
+                                  "enum": [
+                                    8388608
+                                  ],
                                   "type": "integer"
                                 },
                                 "observed": {
-                                  "maximum": 9007199254740991,
-                                  "minimum": 1,
+                                  "enum": [
+                                    8388609
+                                  ],
                                   "type": "integer"
                                 },
                                 "resource": {
@@ -2683,13 +2685,15 @@
                               "additionalProperties": false,
                               "properties": {
                                 "limit": {
-                                  "maximum": 9007199254740991,
-                                  "minimum": 0,
+                                  "enum": [
+                                    8388608
+                                  ],
                                   "type": "integer"
                                 },
                                 "observed": {
-                                  "maximum": 9007199254740991,
-                                  "minimum": 1,
+                                  "enum": [
+                                    8388609
+                                  ],
                                   "type": "integer"
                                 },
                                 "resource": {
@@ -5608,13 +5612,15 @@
                               "additionalProperties": false,
                               "properties": {
                                 "limit": {
-                                  "maximum": 9007199254740991,
-                                  "minimum": 0,
+                                  "enum": [
+                                    8388608
+                                  ],
                                   "type": "integer"
                                 },
                                 "observed": {
-                                  "maximum": 9007199254740991,
-                                  "minimum": 1,
+                                  "enum": [
+                                    8388609
+                                  ],
                                   "type": "integer"
                                 },
                                 "resource": {

@@ -1,14 +1,15 @@
 import { ERROR_CODES } from "../../../../shared/interface/http/error_envelope.js";
+import { EXPORT_CAPACITY_RESOURCES } from "../../domain/exceptions.js";
 import {
-  EXPORT_CAPACITY_RESOURCES,
   GENERATION_CAPACITY_RESOURCES,
-} from "../../domain/exceptions.js";
+  GENERATION_PROMPT_BYTE_LIMIT,
+} from "../../domain/generation_capacity_policy.js";
+import { exportCapacityEnvelope } from "./export_capacity_schemas.js";
+import type { JsonResponseSchema } from "./json_response_schema.js";
 import {
-  exportCapacityEnvelope,
   invalidOperationEnvelope,
   validationErrorEnvelope,
-} from "./export_capacity_schemas.js";
-import type { JsonResponseSchema } from "./json_response_schema.js";
+} from "./unprocessable_entity_schemas.js";
 
 const generationCapacityEnvelope = {
   type: "object",
@@ -25,8 +26,8 @@ const generationCapacityEnvelope = {
           additionalProperties: false,
           properties: {
             resource: { type: "string", enum: [...GENERATION_CAPACITY_RESOURCES] },
-            limit: { type: "integer", minimum: 0, maximum: Number.MAX_SAFE_INTEGER },
-            observed: { type: "integer", minimum: 1, maximum: Number.MAX_SAFE_INTEGER },
+            limit: { type: "integer", enum: [GENERATION_PROMPT_BYTE_LIMIT] },
+            observed: { type: "integer", enum: [GENERATION_PROMPT_BYTE_LIMIT + 1] },
           },
           required: ["resource", "limit", "observed"],
         },

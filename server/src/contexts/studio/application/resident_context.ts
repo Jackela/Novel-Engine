@@ -1,15 +1,19 @@
 import { linkedChapterBeat } from "./beat_association_service.js";
 import { BoundedPromptWriter } from "./generation_capacity.js";
-import { triggeredLoreSections } from "./lore_injection.js";
+import { iterateTriggeredLoreSections } from "./lore_injection.js";
 import type { LoreEntrySource } from "./lorebook.js";
 import type { OutlineBeat } from "./outline_beats.js";
 import type { DocumentWithCurrent, ProjectScope, StudioStore } from "./ports/studio_store.js";
-import { renderResidentContextSections, residentMatchCorpus } from "./resident_context_render.js";
+import { iterateResidentContextSections, residentMatchCorpus } from "./resident_context_render.js";
 import { formatAuthorInstruction, formatUntrustedManuscript } from "./sanitization.js";
 
 // The rendering half lives in resident_context_render.ts; re-exported here so
 // the module's public API (ADR-0004 layer 1 consumers) stays unchanged.
-export { renderResidentContextSections, residentMatchCorpus } from "./resident_context_render.js";
+export {
+  iterateResidentContextSections,
+  renderResidentContextSections,
+  residentMatchCorpus,
+} from "./resident_context_render.js";
 
 /**
  * Resident context (#314, ADR-0004 layer 1): every proposal generation assembles,
@@ -242,8 +246,8 @@ export function buildProposalUserPrompt(
   writer.writeLine(`Operation: ${input.operation}`);
   writer.writeLine(formatAuthorInstruction(input.instruction));
   const view = assembleResidentContext(input.source);
-  for (const line of renderResidentContextSections(view)) writer.writeLine(line);
-  for (const line of triggeredLoreSections({
+  for (const line of iterateResidentContextSections(view)) writer.writeLine(line);
+  for (const line of iterateTriggeredLoreSections({
     entries: input.loreEntries ?? [],
     resident: residentMatchCorpus(view),
     manuscript: input.manuscriptMarkdown,

@@ -1,3 +1,8 @@
+import {
+  GENERATION_CAPACITY_RESOURCES,
+  type GenerationCapacityResource,
+} from "./generation_capacity_policy.js";
+
 /**
  * A resource is not visible to the active principal: unknown ids and
  * cross-principal lookups are indistinguishable by design.
@@ -100,8 +105,10 @@ export class ExportCapacityExceededError extends Error {
   }
 }
 
-export const GENERATION_CAPACITY_RESOURCES = Object.freeze(["prompt_bytes"] as const);
-export type GenerationCapacityResource = (typeof GENERATION_CAPACITY_RESOURCES)[number];
+export {
+  GENERATION_CAPACITY_RESOURCES,
+  type GenerationCapacityResource,
+} from "./generation_capacity_policy.js";
 
 const GENERATION_CAPACITY_RESOURCE_SET: ReadonlySet<string> = new Set(
   GENERATION_CAPACITY_RESOURCES,

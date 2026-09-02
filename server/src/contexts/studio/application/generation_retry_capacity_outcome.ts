@@ -1,4 +1,5 @@
 import { GenerationCapacityExceededError } from "../domain/exceptions.js";
+import { GENERATION_PROMPT_BYTE_LIMIT } from "../domain/generation_capacity_policy.js";
 import { dumpJson, safeLoadJson } from "./payloads.js";
 import type { JobRecord, MarkJobOutcomeInput } from "./ports/studio_store.js";
 
@@ -96,13 +97,8 @@ function isCapacityEvidence(value: unknown): value is GenerationCapacityEvidence
   return (
     value.code === CAPACITY_ERROR_CODE &&
     value.resource === "prompt_bytes" &&
-    typeof value.limit === "number" &&
-    Number.isSafeInteger(value.limit) &&
-    value.limit >= 0 &&
-    value.limit < Number.MAX_SAFE_INTEGER &&
-    typeof value.observed === "number" &&
-    Number.isSafeInteger(value.observed) &&
-    value.observed === value.limit + 1
+    value.limit === GENERATION_PROMPT_BYTE_LIMIT &&
+    value.observed === GENERATION_PROMPT_BYTE_LIMIT + 1
   );
 }
 
