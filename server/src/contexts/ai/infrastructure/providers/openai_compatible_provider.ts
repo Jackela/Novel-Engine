@@ -8,7 +8,6 @@ import {
 } from "../../application/ports/text_generation.js";
 import { coercePayloadToSchema } from "./dashscope_payload.js";
 import {
-  classifyTransportRejection,
   DEFAULT_PROVIDER_RETRY_POLICY,
   DEFAULT_PROVIDER_TIMEOUT_SECONDS,
   discardHttpFailureResponse,
@@ -32,6 +31,10 @@ import {
   structuredPayload,
   supportedStep,
 } from "./provider_json.js";
+import {
+  dispatchProviderResponse,
+  startProviderResponseDeadline,
+} from "./provider_response_lifecycle.js";
 import { streamProviderTextDeltas } from "./streaming_generation.js";
 
 const DEFAULT_API_BASE = "https://api.openai.com/v1";
@@ -188,7 +191,7 @@ export class OpenAICompatibleTextProvider implements TextGenerationProvider {
         }),
         signal: options?.signal,
         context: `OpenAI-compatible generation failed for step '${step}'`,
-        timeoutSeconds: this.timeoutSeconds,
+        timeoutSeconds: effectiveTimeoutSeconds(this.timeoutSeconds, step),
         model: this.model,
         firstByteTimeoutMs: this.firstByteTimeoutMs,
         idleTimeoutMs: this.idleTimeoutMs,
@@ -207,31 +210,30 @@ export class OpenAICompatibleTextProvider implements TextGenerationProvider {
     url: string,
   ): Promise<TextGenerationResult> {
     const body = JSON.stringify(chatCompletionPayload(this.model, task));
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), timeoutSeconds * 1_000);
+    const deadline = startProviderResponseDeadline(context, timeoutSeconds);
     try {
-      let response: Response | undefined;
-      try {
-        response = await this.dispatch(url, {
+      const response = await dispatchProviderResponse(
+        (target, init) => this.dispatch(target, init ?? {}),
+        url,
+        {
           method: "POST",
           headers: {
             Authorization: `Bearer ${this.apiKey}`,
             "Content-Type": "application/json",
           },
           body,
-          signal: controller.signal,
-        });
-      } catch (error) {
-        throw classifyTransportRejection(error, context, timeoutSeconds);
-      }
+        },
+        context,
+        deadline,
+      );
       if (!isResponseLike(response)) {
         throw new ProviderTransportError(`${context}: transport returned no response`);
       }
       if (!response.ok) {
-        throw await discardHttpFailureResponse(context, response);
+        throw await discardHttpFailureResponse(context, response, deadline.interrupt);
       }
 
-      const data = await responseJsonObject(response, context);
+      const data = await responseJsonObject(response, context, deadline);
       const contentText = responseContentText(data);
       const content = coercePayloadToSchema(
         structuredPayload(contentText, task.responseSchema, context),
@@ -248,7 +250,7 @@ export class OpenAICompatibleTextProvider implements TextGenerationProvider {
         completionTokens,
       };
     } finally {
-      clearTimeout(timeout);
+      deadline.finish();
     }
   }
 

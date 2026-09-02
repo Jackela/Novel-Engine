@@ -14,7 +14,6 @@ import {
   resolveDashscopeTransport,
 } from "./dashscope_protocol.js";
 import {
-  classifyTransportRejection,
   DEFAULT_PROVIDER_RETRY_POLICY,
   DEFAULT_PROVIDER_TIMEOUT_SECONDS,
   discardHttpFailureResponse,
@@ -34,6 +33,10 @@ import {
   structuredPayload,
   supportedStep,
 } from "./provider_json.js";
+import {
+  dispatchProviderResponse,
+  startProviderResponseDeadline,
+} from "./provider_response_lifecycle.js";
 import { streamProviderTextDeltas } from "./streaming_generation.js";
 
 const DEFAULT_TRANSPORT_MODE: DashscopeTransportMode = "multimodal_generation";
@@ -140,7 +143,7 @@ export class DashScopeTextProvider implements TextGenerationProvider {
         body: JSON.stringify(streamingPayload(this.protocol.buildRequestPayload(this.model, task))),
         signal: options?.signal,
         context: `DashScope generation failed for step '${step}'`,
-        timeoutSeconds: this.timeoutSeconds,
+        timeoutSeconds: effectiveTimeoutSeconds(this.timeoutSeconds, step),
         model: this.model,
         firstByteTimeoutMs: this.firstByteTimeoutMs,
         idleTimeoutMs: this.idleTimeoutMs,
@@ -159,31 +162,30 @@ export class DashScopeTextProvider implements TextGenerationProvider {
     url: string,
   ): Promise<TextGenerationResult> {
     const body = JSON.stringify(this.protocol.buildRequestPayload(this.model, task));
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), timeoutSeconds * 1_000);
+    const deadline = startProviderResponseDeadline(context, timeoutSeconds);
     try {
-      let response: Response | undefined;
-      try {
-        response = await this.dispatch(url, {
+      const response = await dispatchProviderResponse(
+        (target, init) => this.dispatch(target, init ?? {}),
+        url,
+        {
           method: "POST",
           headers: {
             Authorization: `Bearer ${this.apiKey}`,
             "Content-Type": "application/json",
           },
           body,
-          signal: controller.signal,
-        });
-      } catch (error) {
-        throw classifyTransportRejection(error, context, timeoutSeconds);
-      }
+        },
+        context,
+        deadline,
+      );
       if (!isResponseLike(response)) {
         throw new ProviderTransportError(`${context}: transport returned no response`);
       }
       if (!response.ok) {
-        throw await discardHttpFailureResponse(context, response);
+        throw await discardHttpFailureResponse(context, response, deadline.interrupt);
       }
 
-      const data = await responseJsonObject(response, context);
+      const data = await responseJsonObject(response, context, deadline);
       const contentText = this.protocol.extractResponseText(data);
       const [promptTokens, completionTokens] = extractDashscopeUsageTokens(data);
       const parsed = structuredPayload(contentText, task.responseSchema, context);
@@ -198,7 +200,7 @@ export class DashScopeTextProvider implements TextGenerationProvider {
         completionTokens,
       };
     } finally {
-      clearTimeout(timeout);
+      deadline.finish();
     }
   }
 

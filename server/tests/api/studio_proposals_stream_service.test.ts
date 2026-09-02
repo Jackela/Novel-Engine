@@ -3,6 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
+import type { TextGenerationProviderFactory } from "../../src/contexts/ai/application/ports/text_generation.js";
 import { textProviderFactory } from "../../src/contexts/ai/infrastructure/providers/text_provider_factory.js";
 import { InFlightOperationGuard } from "../../src/contexts/studio/application/operation_in_flight.js";
 import type { StudioStore } from "../../src/contexts/studio/application/ports/studio_store.js";
@@ -33,7 +34,9 @@ interface ServiceHarness {
  * response, so a mid-stream disconnect can only be exercised against the
  * service generator itself.
  */
-async function openProposalStreamHarness(): Promise<ServiceHarness> {
+async function openProposalStreamHarness(
+  providerFactory: TextGenerationProviderFactory = textProviderFactory({}, {}),
+): Promise<ServiceHarness> {
   const directory = await mkdtemp(join(tmpdir(), "novel-engine-proposal-stream-"));
   const studio = await openStudioDatabase(join(directory, DATABASE_FILENAME));
   const now = (): Date => new Date();
@@ -48,7 +51,7 @@ async function openProposalStreamHarness(): Promise<ServiceHarness> {
   });
   await auth.configureOwner("streamer", "long-test-password");
   return {
-    proposals: new AiProposalService(store, textProviderFactory({}, {}), inFlight, now),
+    proposals: new AiProposalService(store, providerFactory, inFlight, now),
     projects: new ProjectService(store, now, { inFlight }),
     principal: (await auth.createOwnerSession("streamer", "long-test-password")).principal,
     db: studio.db,
@@ -146,4 +149,45 @@ describe("proposal stream service (#308 abort semantics)", () => {
     }
   });
 
+  it("keeps a programming failure visible when provider cleanup aborts the request", async () => {
+    const controller = new AbortController();
+    const programmingError = new RangeError("stream extractor defect");
+    const providerFactory: TextGenerationProviderFactory = () => ({
+      generateStructured: async () => {
+        throw new Error("the synchronous path must not run");
+      },
+      async *generateStructuredStreaming() {
+        try {
+          yield await Promise.reject<string>(programmingError);
+        } finally {
+          controller.abort();
+        }
+      },
+    });
+    const harness = await openProposalStreamHarness(providerFactory);
+    try {
+      const project = harness.projects.newProject(harness.principal, {
+        title: "Programming failure",
+      }) as { id: string; documents: Array<{ id: string }> };
+      const document = project.documents[0];
+      if (document === undefined) throw new Error("fixture must seed a document");
+      const stream = harness.proposals.draftProposalStream(
+        harness.principal,
+        project.id,
+        document.id,
+        { operation: "continue", instruction: "", provider: "mock" },
+        () => {},
+        controller.signal,
+      );
+
+      await expect(stream.next()).rejects.toBe(programmingError);
+      expect(harness.db.select().from(jobs).all()).toHaveLength(0);
+      expect(harness.db.select().from(usageEvents).all()).toHaveLength(0);
+      await expect(
+        harness.projects.removeProject(harness.principal, project.id),
+      ).resolves.toBeUndefined();
+    } finally {
+      await harness.cleanup();
+    }
+  });
 });

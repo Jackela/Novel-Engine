@@ -240,6 +240,7 @@ export class DeterministicStoryProvider implements TextGenerationProvider {
       }
     }
     if (pending !== "") yield pending;
+    if (options?.signal?.aborted === true) return;
     options?.onOutcome?.({ model: this.model, promptTokens: null, completionTokens: null });
   }
 }

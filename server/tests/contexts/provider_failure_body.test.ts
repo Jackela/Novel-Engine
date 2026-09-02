@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { TextGenerationTask } from "../../src/contexts/ai/application/ports/text_generation.js";
 import { DashScopeTextProvider } from "../../src/contexts/ai/infrastructure/providers/dashscope_provider.js";
@@ -80,6 +80,10 @@ function expectSafeFailure(failure: unknown, label: string, apiKey: string): voi
   }
 }
 
+afterEach(() => {
+  vi.useRealTimers();
+});
+
 describe("Provider HTTP failure-body boundary", () => {
   it.each(CASES)(
     "does not read a $provider synchronous failure body",
@@ -113,7 +117,7 @@ describe("Provider HTTP failure-body boundary", () => {
     },
   );
 
-  it("does not misclassify an unexpected cancellation failure as retryable HTTP status", async () => {
+  it("keeps HTTP status authoritative when failure-body cancellation rejects", async () => {
     const sentinel = new Error("response cancellation sentinel");
     const response = new Response(
       new ReadableStream<Uint8Array>({
@@ -126,11 +130,55 @@ describe("Provider HTTP failure-body boundary", () => {
     const transport = vi.fn(async () => response);
     const generation = new DashScopeTextProvider({
       apiKey: fixtureApiKey("dashscope", "cancel-sentinel"),
-      retry: { maxAttempts: 3, delayMs: 0, sleep: async () => {} },
+      retry: { maxAttempts: 1, delayMs: 0, sleep: async () => {} },
       transport,
     }).generateStructured(chapterTask());
 
-    await expect(generation).rejects.toBe(sentinel);
+    await expect(generation).rejects.toMatchObject({
+      name: "ProviderTransportError",
+      status: 503,
+      message: "DashScope generation failed for step 'chapter_draft': provider returned HTTP 503.",
+    });
     expect(transport).toHaveBeenCalledTimes(1);
   });
+
+  it.each(["synchronous", "streaming"] as const)(
+    "bounds a hung $mode failure-body cancellation without replacing HTTP status",
+    async (mode) => {
+      vi.useFakeTimers();
+      let markCleanupStarted: (() => void) | undefined;
+      const cleanupStarted = new Promise<void>((resolve) => {
+        markCleanupStarted = resolve;
+      });
+      const response = new Response(
+        new ReadableStream<Uint8Array>({
+          cancel() {
+            markCleanupStarted?.();
+            return new Promise<void>(() => undefined);
+          },
+        }),
+        { status: 401 },
+      );
+      const transport = vi.fn(async () => response);
+      const provider = new DashScopeTextProvider({
+        apiKey: fixtureApiKey("dashscope", `hung-${mode}-failure-body`),
+        retry: { maxAttempts: 1, delayMs: 0, sleep: async () => {} },
+        transport,
+      });
+      const operation =
+        mode === "synchronous"
+          ? provider.generateStructured(chapterTask())
+          : collect(provider.generateStructuredStreaming(chapterTask()));
+      const settled = expect(operation).rejects.toMatchObject({
+        name: "ProviderTransportError",
+        status: 401,
+      });
+
+      await cleanupStarted;
+      await vi.advanceTimersByTimeAsync(1_000);
+
+      await settled;
+      expect(transport).toHaveBeenCalledTimes(1);
+    },
+  );
 });

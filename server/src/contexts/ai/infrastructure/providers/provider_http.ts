@@ -5,6 +5,7 @@ import {
 
 const RETRYABLE_HTTP_STATUSES = new Set([429, 500, 502, 503, 504]);
 const MAX_PROVIDER_ATTEMPTS = 3;
+const PROVIDER_CLEANUP_GRACE_MS = 1_000;
 
 /** Chapter generation calls must outlive the enclosing request timeout. */
 export const GENERATION_TIMEOUT_FLOOR_SECONDS = 180;
@@ -29,10 +30,6 @@ export function isResponseLike(value: unknown): value is Response {
     typeof value.text === "function" &&
     typeof value.json === "function"
   );
-}
-
-export function readableResponse(response: Response): Response {
-  return typeof response.clone === "function" ? response.clone() : response;
 }
 
 /** Trim the configured key; the provider label keeps each error message verbatim. */
@@ -159,16 +156,52 @@ export function httpStatusFailure(context: string, status: number): ProviderTran
   return new ProviderTransportError(`${context}: provider returned HTTP ${status}.`, { status });
 }
 
-/** Cancel an untrusted failure stream without consuming it or exposing cleanup details. */
+/** Await cleanup without allowing rejection or a hostile thenable to replace request truth. */
+export async function settleProviderCleanup(start: () => Promise<unknown>): Promise<void> {
+  let cleanup: Promise<unknown>;
+  try {
+    cleanup = Promise.resolve(start());
+  } catch {
+    return;
+  }
+  void cleanup.catch(() => undefined);
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const graceElapsed = new Promise<void>((resolve) => {
+    timer = setTimeout(resolve, PROVIDER_CLEANUP_GRACE_MS);
+  });
+  try {
+    await Promise.race([cleanup.catch(() => undefined), graceElapsed]);
+  } finally {
+    if (timer !== undefined) clearTimeout(timer);
+  }
+}
+
+/** Cancel one response body within the shared bounded cleanup grace. */
+export function cancelProviderResponseBody(
+  body: ReadableStream<Uint8Array> | null | undefined,
+): Promise<void> {
+  return body === null || body === undefined
+    ? Promise.resolve()
+    : settleProviderCleanup(() => body.cancel());
+}
+
+export type ProviderFailureRegistrar = (failure: ProviderTransportError) => ProviderTransportError;
+
+/** Register HTTP status first, then cancel its untrusted body without consuming it. */
 export async function discardHttpFailureResponse(
   context: string,
   response: Response,
+  registerFailure: ProviderFailureRegistrar = (failure) => failure,
 ): Promise<ProviderTransportError> {
-  const failure = httpStatusFailure(context, response.status);
-  const body = response.body;
-  if (body === null || body === undefined) return failure;
-  await body.cancel();
-  return failure;
+  let authoritative: unknown;
+  try {
+    authoritative = registerFailure(httpStatusFailure(context, response.status));
+  } catch (error) {
+    authoritative = error;
+  }
+  await cancelProviderResponseBody(response.body);
+  if (authoritative instanceof ProviderTransportError) return authoritative;
+  throw authoritative;
 }
 
 /** Normalize a response that failed JSON-object parsing. */

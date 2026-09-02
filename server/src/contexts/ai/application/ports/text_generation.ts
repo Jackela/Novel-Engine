@@ -31,6 +31,14 @@ export class TextGenerationProviderError extends Error {
   }
 }
 
+/** Internal control-flow signal for an application-owned stream cancellation. */
+export class TextGenerationCancelledError extends Error {
+  constructor() {
+    super("Text generation was cancelled.");
+    this.name = "TextGenerationCancelledError";
+  }
+}
+
 /** Structured generation task handed to provider adapters. */
 export interface TextGenerationTask {
   readonly step: string;

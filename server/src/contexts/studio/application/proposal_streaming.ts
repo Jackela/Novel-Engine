@@ -1,4 +1,5 @@
 import {
+  TextGenerationCancelledError,
   type TextGenerationProvider,
   TextGenerationProviderError,
   type TextGenerationProviderFactory,
@@ -14,8 +15,10 @@ import { scopeForPrincipal } from "./ports/studio_store.js";
 import {
   buildProposalTask,
   completedProposalJob,
+  createProposalCodePointCounter,
   disposeProvider,
   failedProposalJob,
+  includeProposalDelta,
   type ProviderCleanupFailureReporter,
   validatedProposalOrThrow,
 } from "./proposal_landing.js";
@@ -107,7 +110,8 @@ export async function* streamProposal(
           `Provider '${providerName}' does not support streaming generation.`,
         );
       }
-      let accumulated = "";
+      const accumulated: string[] = [];
+      const codePoints = createProposalCodePointCounter();
       let reported: TextGenerationStreamOutcome | undefined;
       for await (const delta of stream(
         buildProposalTask(
@@ -128,12 +132,13 @@ export async function* streamProposal(
           },
         },
       )) {
-        accumulated += delta;
+        includeProposalDelta(codePoints, delta);
+        accumulated.push(delta);
         yield { type: "delta", text: delta };
       }
       if (request.signal?.aborted === true) return;
       const { proposal } = validatedProposalOrThrow({
-        content: { chapter_markdown: accumulated },
+        content: { chapter_markdown: accumulated.join("") },
       });
       yield {
         type: "done",
@@ -149,7 +154,7 @@ export async function* streamProposal(
         ),
       };
     } catch (error) {
-      if (request.signal?.aborted === true) return;
+      if (error instanceof TextGenerationCancelledError) return;
       if (!(error instanceof TextGenerationProviderError)) {
         throw error;
       }

@@ -1,6 +1,5 @@
 import type { TextGenerationStreamOptions } from "../../application/ports/text_generation.js";
 import {
-  classifyTransportRejection,
   discardHttpFailureResponse,
   isJsonObject,
   isResponseLike,
@@ -8,10 +7,18 @@ import {
   type ProviderTransport,
   ProviderTransportError,
 } from "./provider_http.js";
+import {
+  boundedProviderBodyChunks,
+  dispatchProviderResponse,
+  MAX_PROVIDER_STREAM_EVENT_BYTES,
+  type ProviderResponseDeadline,
+  startProviderResponseDeadline,
+  streamEventSizeFailure,
+} from "./provider_response_lifecycle.js";
 
 type JsonObject = Record<string, unknown>;
 
-const EVENT_BOUNDARY = /\r?\n\r?\n/u;
+const MAX_BOUNDARY_PREFIX_BYTES = 3;
 
 /** Ceiling on silence before the upstream sends its first stream byte. */
 export const DEFAULT_STREAM_FIRST_BYTE_TIMEOUT_MS = 30_000;
@@ -24,6 +31,28 @@ function dataFieldValue(line: string): string {
   return value.startsWith(" ") ? value.slice(1) : value;
 }
 
+function nextEventBoundary(
+  buffer: string,
+  fromIndex: number,
+): { readonly index: number; readonly length: number } | undefined {
+  let firstLf = buffer.indexOf("\n", fromIndex);
+  while (firstLf >= 0) {
+    const secondStart = firstLf + 1;
+    const secondLength =
+      buffer[secondStart] === "\n"
+        ? 1
+        : buffer[secondStart] === "\r" && buffer[secondStart + 1] === "\n"
+          ? 2
+          : 0;
+    if (secondLength > 0) {
+      const firstStart = buffer[firstLf - 1] === "\r" ? firstLf - 1 : firstLf;
+      return { index: firstStart, length: firstLf + 1 + secondLength - firstStart };
+    }
+    firstLf = buffer.indexOf("\n", firstLf + 1);
+  }
+  return undefined;
+}
+
 /**
  * Parse an SSE body into `data:` payload strings: multi-line data fields join
  * with newlines, comments and other SSE fields are ignored, and a final
@@ -31,22 +60,49 @@ function dataFieldValue(line: string): string {
  */
 export async function* sseDataPayloads(
   body: ReadableStream<Uint8Array>,
+  options?: {
+    readonly context: string;
+    readonly deadline?: ProviderResponseDeadline | undefined;
+  },
 ): AsyncGenerator<string, void, void> {
   const decoder = new TextDecoder();
+  const encoder = new TextEncoder();
+  const context = options?.context ?? "Provider stream";
+  const deadline = options?.deadline;
   let buffer = "";
-  for await (const chunk of body) {
+  let bufferedBytes = 0;
+  let boundaryScanIndex = 0;
+  const assertEventSize = (rawEvent: string): void => {
+    if (encoder.encode(rawEvent).byteLength <= MAX_PROVIDER_STREAM_EVENT_BYTES) return;
+    const failure = streamEventSizeFailure(context);
+    throw deadline?.interrupt(failure) ?? failure;
+  };
+  for await (const chunk of boundedProviderBodyChunks(body, context, deadline)) {
     buffer += decoder.decode(chunk, { stream: true });
-    let boundary = EVENT_BOUNDARY.exec(buffer);
-    while (boundary !== null) {
-      const rawEvent = buffer.slice(0, boundary.index);
-      buffer = buffer.slice(boundary.index + boundary[0].length);
+    bufferedBytes += chunk.byteLength;
+    let consumedCharacters = 0;
+    let boundary = nextEventBoundary(buffer, boundaryScanIndex);
+    while (boundary !== undefined) {
+      const rawEvent = buffer.slice(consumedCharacters, boundary.index);
+      assertEventSize(rawEvent);
       const payload = dataPayload(rawEvent);
       if (payload !== undefined) yield payload;
-      boundary = EVENT_BOUNDARY.exec(buffer);
+      consumedCharacters = boundary.index + boundary.length;
+      boundary = nextEventBoundary(buffer, consumedCharacters);
+    }
+    if (consumedCharacters > 0) {
+      buffer = buffer.slice(consumedCharacters);
+      bufferedBytes = encoder.encode(buffer).byteLength;
+    }
+    boundaryScanIndex = Math.max(0, buffer.length - MAX_BOUNDARY_PREFIX_BYTES);
+    if (bufferedBytes > MAX_PROVIDER_STREAM_EVENT_BYTES + MAX_BOUNDARY_PREFIX_BYTES) {
+      const failure = streamEventSizeFailure(context);
+      throw deadline?.interrupt(failure) ?? failure;
     }
   }
   buffer += decoder.decode();
   if (buffer.trim() !== "") {
+    assertEventSize(buffer);
     const payload = dataPayload(buffer);
     if (payload !== undefined) yield payload;
   }
@@ -95,12 +151,6 @@ function idleTimeoutMs(request: StreamingTextRequest): number {
   return request.idleTimeoutMs ?? DEFAULT_STREAM_IDLE_TIMEOUT_MS;
 }
 
-function dispatchSignal(request: StreamingTextRequest, guard: AbortController): AbortSignal {
-  return request.signal === undefined
-    ? guard.signal
-    : AbortSignal.any([request.signal, guard.signal]);
-}
-
 /** Which silence budget fired, so operators can tell the two apart. */
 type SilencePhase = "first-byte" | "idle";
 
@@ -131,17 +181,19 @@ async function nextFrameWithin(
   budgetMs: number,
   phase: SilencePhase,
   request: StreamingTextRequest,
-  guard: AbortController,
+  deadline: ProviderResponseDeadline,
 ): Promise<IteratorResult<string>> {
   let timer: ReturnType<typeof setTimeout> | undefined;
   const elapsed = new Promise<never>((_, reject) => {
     timer = setTimeout(() => {
-      guard.abort();
-      reject(silenceTimeoutFailure(request.context, budgetMs, phase));
+      reject(deadline.interrupt(silenceTimeoutFailure(request.context, budgetMs, phase)));
     }, budgetMs);
   });
   try {
-    return await Promise.race([pending, elapsed]);
+    deadline.assertActive();
+    const result = await Promise.race([pending, elapsed, deadline.interrupted]);
+    deadline.assertActive();
+    return result;
   } catch (error) {
     pending.catch(() => undefined); // the raced read rejects only through teardown
     throw error;
@@ -164,53 +216,65 @@ export async function* streamProviderTextDeltas(
   extractUsage: (chunk: JsonObject) => readonly [number | null, number | null],
   options?: TextGenerationStreamOptions,
 ): AsyncGenerator<string, void, void> {
-  let response: Response | undefined;
-  const guard = new AbortController();
+  const deadline = startProviderResponseDeadline(
+    request.context,
+    request.timeoutSeconds,
+    request.signal,
+  );
   try {
-    response = await transport(request.url, {
-      method: "POST",
-      headers: request.headers,
-      body: request.body,
-      signal: dispatchSignal(request, guard),
-    });
-  } catch (error) {
-    throw classifyTransportRejection(error, request.context, request.timeoutSeconds);
-  }
-  if (!isResponseLike(response)) {
-    throw new ProviderTransportError(`${request.context}: transport returned no response`);
-  }
-  if (!response.ok) {
-    throw await discardHttpFailureResponse(request.context, response);
-  }
-  const body = response.body;
-  if (body === null) {
-    throw new ProviderTransportError(`${request.context}: transport returned no stream body`);
-  }
-  let promptTokens: number | null = null;
-  let completionTokens: number | null = null;
-  const frames = sseDataPayloads(body);
-  const iterator = frames[Symbol.asyncIterator]();
-  let receivedFrame = false;
-  try {
-    while (true) {
-      const budget = receivedFrame ? idleTimeoutMs(request) : firstByteTimeoutMs(request);
-      const phase: SilencePhase = receivedFrame ? "idle" : "first-byte";
-      const step = await nextFrameWithin(iterator.next(), budget, phase, request, guard);
-      if (step.done === true) break;
-      receivedFrame = true;
-      const payload = step.value;
-      if (payload.trim() === "[DONE]") break;
-      const data = streamChunkObject(payload, request.context);
-      const [prompt, completion] = extractUsage(data);
-      if (prompt !== null) promptTokens = prompt;
-      if (completion !== null) completionTokens = completion;
-      const delta = extractDelta(data);
-      if (delta !== undefined) yield delta;
+    const response = await dispatchProviderResponse(
+      transport,
+      request.url,
+      {
+        method: "POST",
+        headers: request.headers,
+        body: request.body,
+      },
+      request.context,
+      deadline,
+    );
+    if (!isResponseLike(response)) {
+      throw new ProviderTransportError(`${request.context}: transport returned no response`);
     }
+    if (!response.ok) {
+      throw await discardHttpFailureResponse(request.context, response, deadline.interrupt);
+    }
+    const body = response.body;
+    if (body === null) {
+      throw new ProviderTransportError(`${request.context}: transport returned no stream body`);
+    }
+    let promptTokens: number | null = null;
+    let completionTokens: number | null = null;
+    const frames = sseDataPayloads(body, { context: request.context, deadline });
+    const iterator = frames[Symbol.asyncIterator]();
+    let receivedFrame = false;
+    try {
+      while (true) {
+        const budget = receivedFrame ? idleTimeoutMs(request) : firstByteTimeoutMs(request);
+        const phase: SilencePhase = receivedFrame ? "idle" : "first-byte";
+        deadline.assertActive();
+        const step = await nextFrameWithin(iterator.next(), budget, phase, request, deadline);
+        if (step.done === true) break;
+        receivedFrame = true;
+        const payload = step.value;
+        if (payload.trim() === "[DONE]") break;
+        const data = streamChunkObject(payload, request.context);
+        const [prompt, completion] = extractUsage(data);
+        if (prompt !== null) promptTokens = prompt;
+        if (completion !== null) completionTokens = completion;
+        const delta = extractDelta(data);
+        if (delta !== undefined) yield delta;
+      }
+    } finally {
+      try {
+        await iterator.return?.();
+      } catch {
+        // Iterator cleanup cannot replace the first provider/application failure.
+      }
+    }
+    deadline.assertActive();
+    options?.onOutcome?.({ model: request.model, promptTokens, completionTokens });
   } finally {
-    // Best-effort teardown: a stuck upstream read must never delay a timeout,
-    // and the dispatch guard still cancels the real transport.
-    void iterator.return?.().catch(() => undefined);
+    deadline.finish();
   }
-  options?.onOutcome?.({ model: request.model, promptTokens, completionTokens });
 }

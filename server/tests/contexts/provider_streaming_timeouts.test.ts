@@ -81,6 +81,73 @@ afterEach(() => {
 });
 
 describe("streamProviderTextDeltas internal timeouts (#342)", () => {
+  it("starts one absolute deadline before the transport returns a response", async () => {
+    vi.useFakeTimers();
+    let signal: AbortSignal | undefined;
+    const transport: ProviderTransport = (_url, init) => {
+      signal = init?.signal ?? undefined;
+      return new Promise<Response>(() => undefined);
+    };
+    const pending = consume(transport, streamRequest({ timeoutSeconds: 30 }));
+    const settled = expect(pending).rejects.toThrow(/timed out after 30s/);
+
+    await vi.advanceTimersByTimeAsync(29_999);
+    expect(signal?.aborted).toBe(false);
+    await vi.advanceTimersByTimeAsync(1);
+    expect(signal?.aborted).toBe(true);
+    await settled;
+  });
+
+  it("does not reset the absolute deadline while a stream keeps dripping frames", async () => {
+    vi.useFakeTimers();
+    const encoder = new TextEncoder();
+    const body = new ReadableStream<Uint8Array>({
+      start(controller) {
+        controller.enqueue(encoder.encode(`data: ${JSON.stringify({ content: "zero " })}\n\n`));
+        setTimeout(
+          () =>
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ content: "four " })}\n\n`)),
+          4_000,
+        );
+        setTimeout(
+          () =>
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ content: "eight" })}\n\n`)),
+          8_000,
+        );
+      },
+    });
+    const request = streamRequest({
+      timeoutSeconds: 10,
+      firstByteTimeoutMs: 2_000,
+      idleTimeoutMs: 5_000,
+    });
+    const pending = consume(sseTransport(body), request);
+    const settled = expect(pending).rejects.toThrow(/timed out after 10s/);
+
+    await vi.advanceTimersByTimeAsync(9_999);
+    await vi.advanceTimersByTimeAsync(1);
+    await settled;
+  });
+
+  it("does not release a buffered frame after the consumer pauses past the deadline", async () => {
+    vi.useFakeTimers();
+    const events = [JSON.stringify({ content: "before" }), JSON.stringify({ content: "after" })];
+    const stream = streamProviderTextDeltas(
+      streamRequest({
+        timeoutSeconds: 10,
+        firstByteTimeoutMs: 20_000,
+        idleTimeoutMs: 20_000,
+      }),
+      sseTransport(stallingStream(events)),
+      extractDelta,
+      extractUsage,
+    );
+
+    await expect(stream.next()).resolves.toMatchObject({ done: false, value: "before" });
+    await vi.advanceTimersByTimeAsync(10_000);
+    await expect(stream.next()).rejects.toThrow(/timed out after 10s/);
+  });
+
   it("aborts with a transport timeout when the first byte never arrives", async () => {
     vi.useFakeTimers();
     const request = streamRequest({ firstByteTimeoutMs: 5_000 });
