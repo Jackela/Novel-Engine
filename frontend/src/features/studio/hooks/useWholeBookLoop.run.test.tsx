@@ -89,7 +89,7 @@ describe("useWholeBookLoop run lifecycle (#318)", () => {
     expect(events.some((event) => event.startsWith("accept:"))).toBe(false);
   });
 
-  it("stops after a generation-capacity refusal and preserves earlier accepted chapters", async () => {
+  it("resumes after a generation-capacity refusal from the first unaccepted chapter", async () => {
     const events: string[] = [];
     const thirdChapter = chapter("three", {
       title: "Chapter Three",
@@ -130,6 +130,46 @@ describe("useWholeBookLoop run lifecycle (#318)", () => {
       generated: 1,
       failedChapterTitle: "Chapter Two",
       message: "Generation capacity exceeded.",
+    });
+
+    const reducedProject = projectWith([
+      firstChapter,
+      { ...secondChapter, content_markdown: "Shortened chapter context." },
+      thirdChapter,
+    ]);
+    harness.rerender(reducedProject);
+
+    await act(async () => {
+      await harness.result().hook.start(wholeBookPlan(reducedProject));
+    });
+
+    expect(events).toEqual([
+      "proposal:one",
+      "accept:job-one",
+      "refresh",
+      "proposal:two",
+      "proposal:two",
+      "accept:job-two",
+      "refresh",
+      "proposal:three",
+      "accept:job-three",
+      "refresh",
+    ]);
+    expect(vi.mocked(streamProposal).mock.calls.map(([request]) => request.documentId)).toEqual([
+      "one",
+      "two",
+      "two",
+      "three",
+    ]);
+    expect(harness.result().accepted.map((document) => document.id)).toEqual([
+      "one",
+      "two",
+      "three",
+    ]);
+    expect(harness.result().hook.phase).toEqual({
+      kind: "done",
+      generated: 2,
+      stoppedEarly: false,
     });
   });
 
