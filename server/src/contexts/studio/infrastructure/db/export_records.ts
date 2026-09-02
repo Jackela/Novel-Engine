@@ -14,6 +14,7 @@ import type {
   ExportSourceDocument,
   PreparedExportArtifact,
 } from "../../application/ports/export_store.js";
+import { isExportSnapshotWithinSourceCapacity } from "./export_source_capacity.js";
 import { assertCapturedExportSource } from "./export_source_revalidation.js";
 import {
   documentRevisions,
@@ -113,16 +114,19 @@ export function resolveExportSnapshot(tx: Tx, projectId: string, source: ExportS
   if (source.reuseSnapshotId !== null) {
     const candidate = findExportSnapshot(tx, projectId, source.reuseSnapshotId);
     if (candidate === undefined) throw new Error("Reusable export snapshot disappeared.");
-    if (
-      !sameExportSourceProjection(readExportSnapshotDocuments(tx, candidate.id), source.documents)
-    ) {
-      throw new Error("Reusable export snapshot projection changed after capture.");
+    if (isExportSnapshotWithinSourceCapacity(tx, projectId, candidate.id)) {
+      if (
+        !sameExportSourceProjection(readExportSnapshotDocuments(tx, candidate.id), source.documents)
+      ) {
+        throw new Error("Reusable export snapshot projection changed after capture.");
+      }
+      return candidate.id;
     }
-    return candidate.id;
   }
   const latest = findLatestExportSnapshot(tx, projectId);
   if (
     latest !== undefined &&
+    isExportSnapshotWithinSourceCapacity(tx, projectId, latest.id) &&
     sameExportSourceProjection(readExportSnapshotDocuments(tx, latest.id), source.documents)
   ) {
     return latest.id;

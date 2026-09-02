@@ -9,6 +9,7 @@ import {
 import {
   DuplicateDocumentError,
   DuplicateVolumeError,
+  ExportCapacityExceededError,
   ImportCapacityExceededError,
   NotFoundError,
   OperationCapacityExceededError,
@@ -93,6 +94,18 @@ function toAppError(error: unknown): unknown {
     return new AppError({
       statusCode: ERROR_HTTP_STATUS[ERROR_CODES.IMPORT_CAPACITY_EXCEEDED],
       code: ERROR_CODES.IMPORT_CAPACITY_EXCEEDED,
+      message: error.message,
+      details: {
+        resource: error.resource,
+        limit: error.limit,
+        observed: error.observed,
+      },
+    });
+  }
+  if (error instanceof ExportCapacityExceededError) {
+    return new AppError({
+      statusCode: ERROR_HTTP_STATUS[ERROR_CODES.EXPORT_CAPACITY_EXCEEDED],
+      code: ERROR_CODES.EXPORT_CAPACITY_EXCEEDED,
       message: error.message,
       details: {
         resource: error.resource,

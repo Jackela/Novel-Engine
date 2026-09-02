@@ -2,15 +2,15 @@
 
 ## 1. Boundary-first domain and source capture
 
-- [ ] 1.1 Add exact and plus-one production-store tests for 65,536 source
+- [x] 1.1 Add exact and plus-one production-store tests for 65,536 source
       documents and 16,777,216 raw UTF-8 source bytes, covering project title,
       all six variable document fields, multi-byte text, non-chapters, and
       bounded `observed` values.
-- [ ] 1.2 Add one immutable export-capacity policy and typed
+- [x] 1.2 Add one immutable export-capacity policy and typed
       `ExportCapacityExceededError` with closed resource names and safe integer
       validation; add the stable error code/message/details to the HTTP and
       agent error catalogs.
-- [ ] 1.3 Measure document count and byte totals in the same persistence read
+- [x] 1.3 Measure document count and byte totals in the same persistence read
       transaction before source rows materialize, then preserve complete
       ordering, snapshot reuse, and the existing grouped source revalidation.
 

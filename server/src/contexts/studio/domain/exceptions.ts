@@ -55,6 +55,49 @@ export class ExportArtifactWriteError extends Error {
   }
 }
 
+export const EXPORT_CAPACITY_RESOURCES = Object.freeze([
+  "source_documents",
+  "source_bytes",
+  "artifact_bytes",
+] as const);
+export type ExportCapacityResource = (typeof EXPORT_CAPACITY_RESOURCES)[number];
+
+/** Fixed inclusive export budgets; no request or environment override may relax them. */
+export const EXPORT_CAPACITY_LIMITS = Object.freeze({
+  source_documents: 65_536,
+  source_bytes: 16_777_216,
+  artifact_bytes: 67_108_864,
+} as const satisfies Readonly<Record<ExportCapacityResource, number>>);
+
+const EXPORT_CAPACITY_RESOURCE_SET: ReadonlySet<string> = new Set(EXPORT_CAPACITY_RESOURCES);
+
+/** A fresh export exceeded one permanent source or artifact budget. */
+export class ExportCapacityExceededError extends Error {
+  readonly resource: ExportCapacityResource;
+  readonly limit: number;
+  readonly observed: number;
+
+  constructor(resource: ExportCapacityResource, limit: number, observed: number) {
+    if (
+      !EXPORT_CAPACITY_RESOURCE_SET.has(resource) ||
+      !Number.isSafeInteger(limit) ||
+      limit < 0 ||
+      limit >= Number.MAX_SAFE_INTEGER ||
+      !Number.isSafeInteger(observed) ||
+      observed <= limit
+    ) {
+      throw new RangeError(
+        "Export capacity resource and values must identify a bounded safe-integer excess.",
+      );
+    }
+    super("Export capacity exceeded.");
+    this.name = "ExportCapacityExceededError";
+    this.resource = resource;
+    this.limit = limit;
+    this.observed = Math.min(observed, limit + 1);
+  }
+}
+
 export type ImportCapacityResource =
   | "story_bytes"
   | "chapter_bytes"

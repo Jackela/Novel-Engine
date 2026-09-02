@@ -22,6 +22,10 @@ import {
   readExportSnapshotDocuments,
   resolveExportSnapshot,
 } from "./db/export_records.js";
+import {
+  assertCurrentExportSourceCapacity,
+  isExportSnapshotWithinSourceCapacity,
+} from "./db/export_source_capacity.js";
 import { applyJobOutcome, insertJobAndEvent } from "./db/job_writes.js";
 import { scopedProject, type Tx } from "./db/studio_query_helpers.js";
 import { jobWithEvents } from "./job_store_part.js";
@@ -35,9 +39,10 @@ export class ExportStorePart implements ExportOutcomeStore {
   readExportSource(scope: ProjectScope, projectId: string, capturedAt: Date): ExportSource {
     return this.db.transaction((tx) => {
       const project = scopedProject(tx, scope, projectId);
+      assertCurrentExportSourceCapacity(tx, project.id);
       const current = readCurrentExportDocuments(tx, project.id);
       const latest = findLatestExportSnapshot(tx, project.id);
-      if (latest !== undefined) {
+      if (latest !== undefined && isExportSnapshotWithinSourceCapacity(tx, project.id, latest.id)) {
         const captured = readExportSnapshotDocuments(tx, latest.id);
         if (sameExportSourceProjection(current, captured)) {
           return {

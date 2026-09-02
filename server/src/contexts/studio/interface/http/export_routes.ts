@@ -40,6 +40,13 @@ const exportCreateSchema = Type.Object(
   },
   { additionalProperties: false },
 );
+const exportCreate422ResponseSchema: JsonResponseSchema = {
+  description:
+    "Invalid export precondition or permanent fresh-export capacity rejection. EXPORT_CAPACITY_EXCEEDED carries only source_documents, source_bytes, or artifact_bytes plus bounded limit and observed details.",
+  content: {
+    "application/json": { schema: errorEnvelopeResponse },
+  },
+} as const;
 const deliveryByFormat: Record<ExportArtifactFormat, { contentType: string }> = {
   markdown: { contentType: "text/markdown; charset=utf-8" },
   docx: {
@@ -74,8 +81,8 @@ export const exportRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fast
           201: jobResponseSchema,
           ...EXPORT_READ_ERROR_RESPONSES,
           403: errorEnvelopeResponse,
-          // A project with no chapter answers 422 INVALID_OPERATION.
-          422: errorEnvelopeResponse,
+          // No chapter answers INVALID_OPERATION; a permanent fresh limit has its own stable code.
+          422: exportCreate422ResponseSchema,
           409: operationInFlightSchema,
           503: operationCapacityResponseSchema,
         },

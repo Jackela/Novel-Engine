@@ -2225,7 +2225,7 @@ export interface paths {
                         };
                     };
                 };
-                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                /** @description Invalid export precondition or permanent fresh-export capacity rejection. EXPORT_CAPACITY_EXCEEDED carries only source_documents, source_bytes, or artifact_bytes plus bounded limit and observed details. */
                 422: {
                     headers: {
                         [name: string]: unknown;
