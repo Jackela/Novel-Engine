@@ -69,10 +69,10 @@
 
 - [x] 5.1 Run the 32,765/32,766/32,767 source-identity regressions together with
       source byte/count bounds to prove the earlier SQLite fix remains intact.
-- [ ] 5.2 Run fresh/retry/download API tests, render-format fixtures, publication
+- [x] 5.2 Run fresh/retry/download API tests, render-format fixtures, publication
       crash/rollback/recovery tests, server type-check/lint/arch/size/full tests,
       API-types drift, frontend type-check, and strict OpenSpec.
-- [ ] 5.3 Record fixed-baseline evidence and explicit skips; keep catalog and
+- [x] 5.3 Record fixed-baseline evidence and explicit skips; keep catalog and
       recovery enumeration pagination plus immediate per-group source-result
       disposal as named later changes, not hidden completion claims.
 - [ ] 5.4 Keep the change active until required CI is green, then merge its
