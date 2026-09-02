@@ -22,6 +22,7 @@ vi.mock("@/app/api", async (importOriginal) => {
       ...actual.api,
       jobs: vi.fn<typeof actual.api.jobs>(),
       acceptProposal: vi.fn<typeof actual.api.acceptProposal>(),
+      document: vi.fn<typeof actual.api.document>(),
       project: vi.fn<typeof actual.api.project>(),
     },
   };

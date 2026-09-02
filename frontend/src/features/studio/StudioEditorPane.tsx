@@ -16,10 +16,13 @@ interface StudioEditorPaneProps {
   saveState: SaveState;
   error?: string | null;
   isConflictActionPending?: boolean;
+  isLoadingDocument?: boolean;
+  documentLoadError?: string | null;
   onDraftChange: (value: string) => void;
   onTitleChange: (value: string) => void;
   onLoadLatest?: () => void | Promise<void>;
   onRetryOverwrite?: () => void | Promise<void>;
+  onRetryDocument?: () => void;
 }
 
 export function StudioEditorPane({
@@ -29,10 +32,13 @@ export function StudioEditorPane({
   saveState,
   error = null,
   isConflictActionPending = false,
+  isLoadingDocument = false,
+  documentLoadError = null,
   onDraftChange,
   onTitleChange,
   onLoadLatest,
   onRetryOverwrite,
+  onRetryDocument,
 }: StudioEditorPaneProps) {
   const titleRef = useRef<HTMLInputElement>(null);
   const pendingCommandRef = useRef<"loadLatest" | "retryOverwrite" | null>(null);
@@ -69,7 +75,7 @@ export function StudioEditorPane({
 
   return (
     <section
-      aria-busy={isConflictActionPending || saveState === "saving"}
+      aria-busy={isLoadingDocument || isConflictActionPending || saveState === "saving"}
       className="studio-editor"
     >
       {activeDocument ? (
@@ -142,6 +148,24 @@ export function StudioEditorPane({
             <MarkdownEditor value={draft} onChange={onDraftChange} />
           </Suspense>
         </>
+      ) : isLoadingDocument ? (
+        <div aria-live="polite" className="editor__empty" role="status">
+          <Loader2 aria-hidden="true" className="ui-spin" /> Loading document
+        </div>
+      ) : documentLoadError ? (
+        <div aria-live="assertive" className="editor__empty" role="alert">
+          <strong>Unable to open this document</strong>
+          <span>{documentLoadError}</span>
+          {onRetryDocument ? (
+            <button
+              className="ui-command ui-command--primary"
+              onClick={onRetryDocument}
+              type="button"
+            >
+              Retry document
+            </button>
+          ) : null}
+        </div>
       ) : (
         <div className="editor__empty">Create a document to begin writing.</div>
       )}

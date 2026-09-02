@@ -6,6 +6,7 @@ import type { Project, StudioDocument } from "@/app/types/studio";
 import { chapter, projectWith } from "@/test/factories";
 import { createMountHarness, deferred, flushMicrotasks } from "@/test/harness";
 
+import { summarizeDocument } from "./projectState";
 import { useDocumentDraft } from "./useDocumentDraft";
 
 vi.mock("@/app/api", async (importOriginal) => {
@@ -14,6 +15,7 @@ vi.mock("@/app/api", async (importOriginal) => {
     ...actual,
     api: {
       ...actual.api,
+      document: vi.fn<typeof actual.api.document>(),
       project: vi.fn<typeof actual.api.project>(),
       revisions: vi.fn<typeof actual.api.revisions>(),
       restoreRevision: vi.fn<typeof actual.api.restoreRevision>(),
@@ -45,6 +47,7 @@ const projectBDocument = {
   content_markdown: "Project B original",
 };
 const projectB = projectWith([projectBDocument], { id: "project-2", title: "Second novel" });
+const summaries = (...documents: StudioDocument[]) => documents.map(summarizeDocument);
 
 beforeEach(() => {
   vi.useFakeTimers();
@@ -144,7 +147,7 @@ describe("useDocumentDraft identity", () => {
 
     expect(draft.result().hook.draft).toBe(savedB.content_markdown);
     expect(draft.result().hook.loadedRevision.current).toBe(savedB.current_revision_id);
-    expect(draft.result().project?.documents).toEqual([savedB]);
+    expect(draft.result().project?.documents).toEqual([summarizeDocument(savedB)]);
     expect(draft.result().error).toBeNull();
   });
 
@@ -154,7 +157,7 @@ describe("useDocumentDraft identity", () => {
       current_revision_id: "revision-document-b-1",
       content_markdown: "Document B original",
     });
-    const project = projectWith([documentA, documentB]);
+    const project = projectWith(summaries(documentA, documentB));
     const savedB = {
       ...documentB,
       current_revision_id: "revision-document-b-2",
@@ -191,10 +194,9 @@ describe("useDocumentDraft identity", () => {
     expect(draft.result().hook.draft).toBe(savedB.content_markdown);
     expect(draft.result().hook.loadedRevision.current).toBe(savedB.current_revision_id);
     expect(draft.result().hook.saveState).toBe("saved");
-    expect(draft.result().project?.documents).toEqual([
-      { ...documentA, content_markdown: "Late document A edit" },
-      savedB,
-    ]);
+    expect(draft.result().project?.documents).toEqual(
+      summaries({ ...documentA, content_markdown: "Late document A edit" }, savedB),
+    );
   });
 
   it("discards a restore completion after the project identity changes", async () => {
@@ -238,7 +240,7 @@ describe("useDocumentDraft identity", () => {
     vi.mocked(api.restoreRevision)
       .mockRejectedValueOnce(new HttpError("Revision conflict", 409))
       .mockResolvedValueOnce(restoredDocument);
-    vi.mocked(api.project).mockResolvedValue(projectWith([latestDocument]));
+    vi.mocked(api.document).mockResolvedValue(latestDocument);
     const draft = renderDraft(documentA, projectA);
     await flushMicrotasks();
 
@@ -274,7 +276,7 @@ describe("useDocumentDraft identity", () => {
       current_revision_id: "revision-b-1",
       content_markdown: "Document B original",
     });
-    const project = projectWith([documentA, documentB]);
+    const project = projectWith(summaries(documentA, documentB));
     const latestA = {
       ...documentA,
       current_revision_id: "revision-a-2",
@@ -292,7 +294,7 @@ describe("useDocumentDraft identity", () => {
     vi.mocked(api.restoreRevision)
       .mockReturnValueOnce(firstRestore)
       .mockResolvedValueOnce(restoredA);
-    vi.mocked(api.project).mockResolvedValue({ ...project, documents: [latestA, documentB] });
+    vi.mocked(api.document).mockResolvedValue(latestA);
     const draft = renderDraft(documentA, project);
     await flushMicrotasks();
     act(() => draft.result().hook.setDraft("Unsaved local document A"));
@@ -309,7 +311,7 @@ describe("useDocumentDraft identity", () => {
 
     expect(draft.result().hook.draft).toBe(documentB.content_markdown);
     expect(draft.result().hook.loadedRevision.current).toBe(documentB.current_revision_id);
-    expect(draft.result().project?.documents).toEqual([latestA, documentB]);
+    expect(draft.result().project?.documents).toEqual(summaries(latestA, documentB));
 
     draft.rerender(latestA, draft.result().project ?? project);
     expect(draft.result().hook.draft).toBe("Unsaved local document A");

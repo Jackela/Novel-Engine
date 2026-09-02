@@ -49,13 +49,13 @@
 
 ## 3. Causally owned frontend project state
 
-- [ ] 3.1 Split strict frontend contract parsing/types into Project shell,
+- [x] 3.1 Split strict frontend contract parsing/types into Project shell,
       Document summary, and complete Document; reject legacy body-bearing shell
       rows and summary-shaped current-document responses.
 - [ ] 3.2 Refactor project bootstrap to publish the shell first and fetch at
       most the route-compatible active Document, with no sibling-body prefetch
       and readable independent shell/editor failure and Retry states.
-- [ ] 3.3 Implement the one-active-owner accepted-document state machine:
+- [x] 3.3 Implement the one-active-owner accepted-document state machine:
       validate project/document/current-revision identity, coalesce only equal
       `(project, document, expected revision, lifecycle)` tuples, reference-
       count subscribers, reject stale/aborted/late responses, notify every

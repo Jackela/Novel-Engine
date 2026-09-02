@@ -3,7 +3,7 @@ import {
   parseDocuments,
   parseLoreStatus,
   parseOwnerSetup,
-  parseProject,
+  parseProjectShell,
   parseProjects,
   parseProviders,
   parseRevisions,
@@ -180,9 +180,11 @@ export const api = {
   providers: () => request("/api/providers", undefined, parseProviders),
   projects: (init?: RequestInit) => request("/api/projects", init, parseProjects),
   project: (projectId: string, init?: RequestInit) =>
-    request(`/api/projects/${projectId}`, init, parseProject),
+    request(`/api/projects/${projectId}`, init, parseProjectShell),
   createProject: (title: string, description: string) =>
-    postJson("/api/projects", { title, description }, parseProject),
+    postJson("/api/projects", { title, description }, parseProjectShell),
+  document: (projectId: string, documentId: string, init?: RequestInit) =>
+    request(`/api/projects/${projectId}/documents/${documentId}`, init, parseStudioDocument),
   createDocument: (
     projectId: string,
     payload: {
@@ -289,7 +291,7 @@ export const api = {
       description?: string;
       settings?: Record<string, unknown>;
     },
-  ) => patchJson(`/api/projects/${projectId}`, payload, parseProject),
+  ) => patchJson(`/api/projects/${projectId}`, payload, parseProjectShell),
   deleteProject: (projectId: string) =>
     request(`/api/projects/${projectId}`, { method: "DELETE" }, parseVoid),
   deleteDocument: (projectId: string, documentId: string) =>

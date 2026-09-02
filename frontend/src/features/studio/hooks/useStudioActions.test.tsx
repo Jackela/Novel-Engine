@@ -6,7 +6,7 @@ import type { Project, Review } from "@/app/types/studio";
 import type { InspectorTab } from "@/features/studio/studioConstants";
 import { chapter, job, projectWith, review } from "@/test/factories";
 import { createMountHarness, deferred } from "@/test/harness";
-
+import { summarizeDocument } from "./projectState";
 import { useStudioActions } from "./useStudioActions";
 
 vi.mock("@/app/api", async (importOriginal) => {
@@ -39,7 +39,7 @@ const chapterOne = chapter("chapter-1", {
   title: "Chapter One",
   current_revision_id: "revision-1",
   content_markdown: "# Chapter 1\n\n",
-  revision_source: "manual",
+  revision_source: "author",
   word_count: 2,
 });
 const note = {
@@ -173,7 +173,11 @@ describe("useStudioActions", () => {
       title: "Chapter 2",
       content_markdown: "# Chapter 2\n\n",
     });
-    expect(harness.result().project?.documents).toEqual([chapterOne, note, created]);
+    expect(harness.result().project?.documents).toEqual([
+      chapterOne,
+      note,
+      summarizeDocument(created),
+    ]);
     expect(harness.result().activeId).toBe(created.id);
   });
 

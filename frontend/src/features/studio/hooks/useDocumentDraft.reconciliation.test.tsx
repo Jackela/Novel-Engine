@@ -6,6 +6,7 @@ import type { Project, StudioDocument } from "@/app/types/studio";
 import { chapter, projectWith } from "@/test/factories";
 import { createMountHarness, deferred, flushMicrotasks } from "@/test/harness";
 
+import { summarizeDocument } from "./projectState";
 import { useDocumentDraft } from "./useDocumentDraft";
 
 vi.mock("@/app/api", async (importOriginal) => {
@@ -40,7 +41,8 @@ const documentB = chapter("document-2", {
   current_revision_id: "revision-b-1",
   content_markdown: "Document B original",
 });
-const project = projectWith([documentA, documentB]);
+const project = projectWith([summarizeDocument(documentA), summarizeDocument(documentB)]);
+const summaries = (...documents: StudioDocument[]) => documents.map(summarizeDocument);
 
 beforeEach(() => {
   vi.useFakeTimers();
@@ -142,7 +144,7 @@ describe("useDocumentDraft committed reconciliation", () => {
 
     expect(draft.result().hook.draft).toBe(documentB.content_markdown);
     expect(draft.result().hook.loadedRevision.current).toBe(documentB.current_revision_id);
-    expect(draft.result().project?.documents).toEqual([committedA, documentB]);
+    expect(draft.result().project?.documents).toEqual(summaries(committedA, documentB));
 
     draft.rerender(committedA, draft.result().project ?? project);
 
@@ -177,7 +179,7 @@ describe("useDocumentDraft committed reconciliation", () => {
     expect(draft.result().hook.draft).toBe("Document A newer local edit");
     expect(draft.result().hook.loadedRevision.current).toBe(committedA.current_revision_id);
     expect(draft.result().hook.saveState).toBe("conflict");
-    expect(draft.result().project?.documents).toEqual([committedA, documentB]);
+    expect(draft.result().project?.documents).toEqual(summaries(committedA, documentB));
   });
 
   it("preserves an edit made after proposal acceptance starts", async () => {
@@ -185,7 +187,7 @@ describe("useDocumentDraft committed reconciliation", () => {
       ...documentA,
       current_revision_id: "revision-a-accepted",
       content_markdown: "AI accepted content",
-      revision_source: "ai-accepted",
+      revision_source: "ai-accepted" as const,
     };
     const draft = renderDraft();
     await flushMicrotasks();
@@ -199,7 +201,7 @@ describe("useDocumentDraft committed reconciliation", () => {
     expect(draft.result().hook.draft).toBe("Newer author edit");
     expect(draft.result().hook.loadedRevision.current).toBe(acceptedA.current_revision_id);
     expect(draft.result().hook.saveState).toBe("conflict");
-    expect(draft.result().project?.documents).toEqual([acceptedA, documentB]);
+    expect(draft.result().project?.documents).toEqual(summaries(acceptedA, documentB));
     expect(api.revisions).toHaveBeenCalledTimes(2);
     expect(vi.mocked(api.revisions).mock.calls[1]?.[2]).toEqual(
       expect.objectContaining({ limit: 50, signal: expect.any(AbortSignal) }),
@@ -222,7 +224,10 @@ describe("useDocumentDraft committed reconciliation", () => {
     await flushMicrotasks();
 
     draft.rerender(documentB);
-    draft.rerender(acceptedOnce, { ...project, documents: [acceptedOnce, documentB] });
+    draft.rerender(acceptedOnce, {
+      ...project,
+      documents: summaries(acceptedOnce, documentB),
+    });
     expect(draft.result().hook.draft).toBe(acceptedOnce.content_markdown);
     const reconcileAcceptance = draft.result().hook.captureAcceptance(documentA.id);
     if (!reconcileAcceptance) throw new Error("Expected an active-document reconciler.");
@@ -245,7 +250,10 @@ describe("useDocumentDraft committed reconciliation", () => {
       current_revision_id: "revision-a-accepted-2",
       content_markdown: "Second accepted content",
     };
-    const acceptedProject = { ...project, documents: [acceptedOnce, documentB] };
+    const acceptedProject = {
+      ...project,
+      documents: summaries(acceptedOnce, documentB),
+    };
     const draft = renderDraft();
     await flushMicrotasks();
 
@@ -260,7 +268,7 @@ describe("useDocumentDraft committed reconciliation", () => {
 
     expect(draft.result().hook.draft).toBe(documentB.content_markdown);
     expect(draft.result().hook.loadedRevision.current).toBe(documentB.current_revision_id);
-    expect(draft.result().project?.documents).toEqual([acceptedTwice, documentB]);
+    expect(draft.result().project?.documents).toEqual(summaries(acceptedTwice, documentB));
 
     draft.rerender(acceptedTwice, draft.result().project ?? acceptedProject);
 
@@ -294,7 +302,7 @@ describe("useDocumentDraft committed reconciliation", () => {
 
     expect(draft.result().hook.draft).toBe(documentB.content_markdown);
     expect(draft.result().hook.loadedRevision.current).toBe(documentB.current_revision_id);
-    expect(draft.result().project?.documents).toEqual([restoredA, documentB]);
+    expect(draft.result().project?.documents).toEqual(summaries(restoredA, documentB));
 
     draft.rerender(restoredA, draft.result().project ?? project);
 
@@ -331,6 +339,6 @@ describe("useDocumentDraft committed reconciliation", () => {
     expect(draft.result().hook.draft).toBe("Document A newer local edit");
     expect(draft.result().hook.loadedRevision.current).toBe(restoredA.current_revision_id);
     expect(draft.result().hook.saveState).toBe("conflict");
-    expect(draft.result().project?.documents).toEqual([restoredA, documentB]);
+    expect(draft.result().project?.documents).toEqual(summaries(restoredA, documentB));
   });
 });

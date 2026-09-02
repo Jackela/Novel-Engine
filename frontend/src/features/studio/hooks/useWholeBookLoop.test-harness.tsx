@@ -120,4 +120,11 @@ export function traceApiCalls(events: string[], refreshedProject: Project = base
     events.push("refresh");
     return refreshedProject;
   });
+  vi.mocked(api.document).mockImplementation(async (_projectId, documentId) => {
+    const document = refreshedProject.documents.find((candidate) => candidate.id === documentId);
+    if (!document || !("content_markdown" in document)) {
+      throw new Error("Expected a complete current-Document fixture.");
+    }
+    return document as StudioDocument;
+  });
 }

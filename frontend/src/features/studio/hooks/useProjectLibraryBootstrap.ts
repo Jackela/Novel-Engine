@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { api, HttpError } from "@/app/api";
-import type { Project } from "@/app/types/studio";
+import type { ProjectListItem } from "@/app/types/studio";
 
 import { toErrorMessage } from "./toErrorMessage";
 
 interface ProjectLibraryBootstrapState {
-  readonly projects: Project[];
+  readonly projects: ProjectListItem[];
   readonly error: string | null;
   readonly isLoading: boolean;
   readonly hasLoaded: boolean;

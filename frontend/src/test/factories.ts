@@ -1,4 +1,5 @@
 import type {
+  DocumentSummary,
   Project,
   Review,
   RevisionSummary,
@@ -26,6 +27,7 @@ export function chapter(id: string, overrides: Partial<StudioDocument> = {}): St
     title: `Titled ${id}`,
     position: 0,
     volume_id: "volume-1",
+    beat_ref: null,
     lore_status: null,
     current_revision_id: `revision-${id}`,
     content_markdown: "",
@@ -48,12 +50,13 @@ export function project(overrides: Partial<Project> = {}): Project {
     created_at: FIXTURE_TIMESTAMP,
     updated_at: FIXTURE_TIMESTAMP,
     documents: [],
+    volumes: [],
     ...overrides,
   };
 }
 
 export function projectWith(
-  documents: StudioDocument[],
+  documents: DocumentSummary[],
   overrides: Partial<Project> = {},
 ): Project {
   return project({ ...overrides, documents });

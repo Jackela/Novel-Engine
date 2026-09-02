@@ -1,14 +1,13 @@
-import type { ComponentProps } from "react";
 import { useCallback, useState } from "react";
 import type { NavigateFunction } from "react-router-dom";
 
-import type { StudioPageView } from "../StudioPageView";
 import { type StudioRouteState, studioInspectorPath } from "../studioRouteState";
 import { buildProposalAuditView } from "./proposalAuditView";
 import { buildLoreStatusModel, buildStudioNavigatorProps } from "./studioPageModelView";
 import { useActiveDocument } from "./useActiveDocument";
 import { useDocumentDraft } from "./useDocumentDraft";
 import { useExportDownload } from "./useExportDownload";
+import { usePageCurrentDocument } from "./usePageCurrentDocument";
 import { useScopedRevisionRestore } from "./useScopedRevisionRestore";
 import { useStudioActions } from "./useStudioActions";
 import { useStudioErrorChannels } from "./useStudioErrorChannels";
@@ -19,19 +18,9 @@ import { useStudioProviders } from "./useStudioProviders";
 import { useStudioSearch } from "./useStudioSearch";
 import { wholeBookPlan } from "./wholeBookPlan";
 
-type StudioViewProps = ComponentProps<typeof StudioPageView>;
+type Nav = NavigateFunction;
 
-export function useStudioPageModel(
-  projectId: string,
-  route: StudioRouteState,
-  navigate: NavigateFunction,
-): {
-  project: StudioViewProps["project"] | null;
-  viewProps: StudioViewProps | null;
-  loadError: string | null;
-  isLoading: boolean;
-  retryLoad: () => Promise<void>;
-} {
+export function useStudioPageModel(projectId: string, route: StudioRouteState, navigate: Nav) {
   const { inspector: routeInspector, section } = route;
   const [activeId, setActiveId] = useState<string | null>(null);
   const {
@@ -46,14 +35,23 @@ export function useStudioPageModel(
     loadError,
     isLoading,
     retryLoad,
+    lifecycle,
   } = useStudioProject(projectId);
-  const activeDocument = useActiveDocument(project, section, activeId);
+  const activeSummary = useActiveDocument(project, section, activeId);
+  const currentDocument = usePageCurrentDocument(
+    projectId,
+    activeSummary,
+    lifecycle,
+    setProject,
+    navigate,
+  );
+  const activeDocument = currentDocument.document;
   const { projectErrors, documentErrors, visibleError } = useStudioErrorChannels(
     projectId,
     activeDocument?.id ?? null,
     error,
   );
-  const visibleActiveId = activeDocument?.id ?? activeId;
+  const visibleActiveId = activeSummary?.id ?? activeId;
   const {
     draft,
     setDraft,
@@ -224,6 +222,9 @@ export function useStudioPageModel(
         onTitleChange: setTitleDraft,
         onLoadLatest: loadLatest,
         onRetryOverwrite: retryOverwrite,
+        isLoadingDocument: currentDocument.isLoading,
+        documentLoadError: currentDocument.error,
+        onRetryDocument: currentDocument.retry,
       },
       inspector: {
         error: visibleError,

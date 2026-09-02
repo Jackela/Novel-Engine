@@ -1,7 +1,7 @@
 import { ArrowDown, ArrowUp } from "lucide-react";
 import { useRef } from "react";
 
-import type { StudioDocument } from "@/app/types/studio";
+import type { DocumentSummary } from "@/app/types/studio";
 
 import { useCommandFocusRestoration } from "../hooks/useCommandFocusRestoration";
 import { StudioDocumentRow } from "./StudioDocumentRow";
@@ -12,7 +12,7 @@ export interface PendingDocumentMove {
 }
 
 interface StudioNavigatorDocumentRowsProps {
-  rows: StudioDocument[];
+  rows: DocumentSummary[];
   activeId: string | null;
   isMovingDocument: boolean;
   movingDocument: PendingDocumentMove | null;

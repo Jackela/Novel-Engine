@@ -84,8 +84,8 @@ describe("useStudioProject retry lifecycle", () => {
     });
 
     expect(api.project).toHaveBeenCalledTimes(2);
-    expect(api.reviews).toHaveBeenCalledTimes(2);
-    expect(api.exports).toHaveBeenCalledTimes(2);
+    expect(api.reviews).not.toHaveBeenCalled();
+    expect(api.exports).not.toHaveBeenCalled();
     expect(result().isLoading).toBe(true);
     expect(result().loadError).toBe("Service unavailable.");
 
@@ -97,6 +97,8 @@ describe("useStudioProject retry lifecycle", () => {
     expect(result().isLoading).toBe(false);
     expect(result().loadError).toBeNull();
     expect(result().project).toEqual(projectFixture);
+    expect(api.reviews).toHaveBeenCalledOnce();
+    expect(api.exports).toHaveBeenCalledOnce();
   });
 
   it("restarts the current owner load after the StrictMode cleanup boundary", async () => {

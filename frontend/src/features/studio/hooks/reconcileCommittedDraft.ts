@@ -14,6 +14,7 @@ import {
   reconcileOwnerCommit,
   type VisibleDraftState,
 } from "./documentDraftState";
+import { summarizeDocument } from "./projectState";
 
 interface ReconciliationOptions {
   readonly owner: DocumentDraftOwner;
@@ -50,8 +51,8 @@ export function reconcileCommittedDraft(
     options.mountedRef.current && current?.id === owner.projectId
       ? {
           ...current,
-          documents: current.documents?.map((candidate) =>
-            candidate.id === document.id ? document : candidate,
+          documents: current.documents.map((candidate) =>
+            candidate.id === document.id ? summarizeDocument(document) : candidate,
           ),
         }
       : current,

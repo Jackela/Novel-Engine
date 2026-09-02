@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import { api } from "@/app/api";
 import { streamProposal } from "@/app/proposalStream";
-import type { Project, StudioJob } from "@/app/types/studio";
+import type { Project, StudioDocument, StudioJob } from "@/app/types/studio";
 import {
   baseProject,
   deferred,
@@ -24,6 +24,7 @@ vi.mock("@/app/api", async (importOriginal) => {
       ...actual.api,
       proposal: vi.fn<typeof actual.api.proposal>(),
       acceptProposal: vi.fn<typeof actual.api.acceptProposal>(),
+      document: vi.fn<typeof actual.api.document>(),
       project: vi.fn<typeof actual.api.project>(),
     },
   };
@@ -162,6 +163,14 @@ describe("useWholeBookLoop interruption", () => {
     vi.mocked(api.project).mockImplementation(async (projectId) =>
       projectId === secondProject.id ? secondProject : baseProject,
     );
+    vi.mocked(api.document).mockImplementation(async (projectId, documentId) => {
+      const source = projectId === secondProject.id ? secondProject : baseProject;
+      const document = source.documents.find((candidate) => candidate.id === documentId);
+      if (!document || !("content_markdown" in document)) {
+        throw new Error("Expected a complete current-Document fixture.");
+      }
+      return document as StudioDocument;
+    });
     const harness = renderLoopHook(baseProject);
     let oldRun: Promise<void> = Promise.resolve();
     let currentRun: Promise<void> = Promise.resolve();

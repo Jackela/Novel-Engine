@@ -1,17 +1,25 @@
 import { LORE_STATUSES } from "@/app/loreStatus";
 import type {
-  DocumentKind,
   LoreStatus,
-  Project,
   ProviderInfo,
   RevisionPage,
   RevisionSummary,
   Session,
   SessionKind,
   SetupStatus,
-  StudioDocument,
-  Volume,
 } from "@/app/types/studio";
+
+export {
+  parseDocumentSummaries,
+  parseDocumentSummary,
+  parseDocuments,
+  parseProjectListItem,
+  parseProjectShell,
+  parseProjects,
+  parseStudioDocument,
+  parseVolume,
+  parseVolumes,
+} from "./projectShellContract";
 
 class ApiContractError extends Error {
   constructor(label: string) {
@@ -22,11 +30,32 @@ class ApiContractError extends Error {
 
 type JsonRecord = Record<string, unknown>;
 
-const documentKinds = ["chapter", "outline", "character", "world", "note"] as const;
 const sessionKinds = ["owner"] as const;
+const revisionSources = ["author", "ai-accepted", "restore"] as const;
 
 function fail(label: string): never {
   throw new ApiContractError(label);
+}
+
+export function exactKeys(source: JsonRecord, keys: readonly string[], label: string): void {
+  for (const key of keys) {
+    if (!Object.hasOwn(source, key)) fail(`${label}.${key}`);
+  }
+  const actual = Object.keys(source);
+  const allowedKeys = new Set(keys);
+  if (actual.length !== keys.length || actual.some((key) => !allowedKeys.has(key))) {
+    fail(`${label} keys`);
+  }
+}
+
+export function integerField(source: JsonRecord, key: string, parent: string): number {
+  const value = field(source, key, parent);
+  return typeof value === "number" && Number.isInteger(value) ? value : fail(`${parent}.${key}`);
+}
+
+export function nonnegativeIntegerField(source: JsonRecord, key: string, parent: string): number {
+  const value = integerField(source, key, parent);
+  return value >= 0 ? value : fail(`${parent}.${key}`);
 }
 
 export function objectValue(value: unknown, label: string): JsonRecord {
@@ -111,40 +140,6 @@ export function literalField<T extends readonly string[]>(
   return literalValue(field(source, key, parent), allowed, `${parent}.${key}`);
 }
 
-function parseDocument(value: unknown, label = "document"): StudioDocument {
-  const item = objectValue(value, label);
-  const volumeId = item.volume_id;
-  return {
-    id: stringField(item, "id", label),
-    project_id: stringField(item, "project_id", label),
-    kind: literalField(item, "kind", label, documentKinds) as DocumentKind,
-    title: stringField(item, "title", label),
-    position: numberField(item, "position", label),
-    current_revision_id: stringField(item, "current_revision_id", label),
-    content_markdown: stringField(item, "content_markdown", label),
-    metadata: recordField(item, "metadata", label),
-    revision_source: stringField(item, "revision_source", label),
-    word_count: numberField(item, "word_count", label),
-    created_at: stringField(item, "created_at", label),
-    updated_at: stringField(item, "updated_at", label),
-    // Volume links are always present on the TS contract; the optional parse
-    // keeps hand-built fixtures in tests friction-free.
-    ...(volumeId === undefined || volumeId === null
-      ? { volume_id: null }
-      : { volume_id: stringValue(volumeId, `${label}.volume_id`) }),
-    // beat_ref (#376) is a nullable outline beat title link; treat a missing
-    // field like null so hand-built fixtures stay friction-free.
-    ...(item.beat_ref === undefined || item.beat_ref === null
-      ? { beat_ref: null }
-      : { beat_ref: stringValue(item.beat_ref, `${label}.beat_ref`) }),
-    // lore_status (#444) is a required nullable lifecycle enum: non-lore
-    // kinds answer null, while a missing field is an API contract failure.
-    ...(item.lore_status === null
-      ? { lore_status: null }
-      : { lore_status: literalField(item, "lore_status", label, LORE_STATUSES) as LoreStatus }),
-  };
-}
-
 /** The lore lifecycle-status envelope (#444): one document's closed status. */
 export function parseLoreStatus(value: unknown): { lore_status: LoreStatus } {
   const item = objectValue(value, "lore status response");
@@ -166,67 +161,6 @@ export function parseAliases(value: unknown): { aliases: string[] } {
       stringValue(entry, `aliases[${index}]`),
     ),
   };
-}
-
-export function parseVolume(value: unknown, label = "volume"): Volume {
-  const item = objectValue(value, label);
-  return {
-    id: stringField(item, "id", label),
-    project_id: stringField(item, "project_id", label),
-    title: stringField(item, "title", label),
-    position: numberField(item, "position", label),
-    created_at: stringField(item, "created_at", label),
-    updated_at: stringField(item, "updated_at", label),
-  };
-}
-
-export function parseVolumes(value: unknown): { volumes: Volume[] } {
-  const item = objectValue(value, "volumes response");
-  return {
-    volumes: arrayField(item, "volumes", "volumes response", (entry, index) =>
-      parseVolume(entry, `volumes[${index}]`),
-    ),
-  };
-}
-
-export function parseProject(value: unknown, label = "project"): Project {
-  const item = objectValue(value, label);
-  const documents = item.documents;
-  const volumes = item.volumes;
-  return {
-    id: stringField(item, "id", label),
-    title: stringField(item, "title", label),
-    description: stringField(item, "description", label),
-    settings: recordField(item, "settings", label),
-    import_hash: nullableStringField(item, "import_hash", label),
-    created_at: stringField(item, "created_at", label),
-    updated_at: stringField(item, "updated_at", label),
-    ...(documents === undefined
-      ? {}
-      : {
-          documents: arrayValue(documents, `${label}.documents`, (entry, index) =>
-            parseDocument(entry, `${label}.documents[${index}]`),
-          ),
-        }),
-    ...(volumes === undefined
-      ? {}
-      : {
-          volumes: arrayValue(volumes, `${label}.volumes`, (entry, index) =>
-            parseVolume(entry, `${label}.volumes[${index}]`),
-          ),
-        }),
-  };
-}
-
-export function parseProjects(value: unknown): { projects: Project[] } {
-  const item = objectValue(value, "projects response");
-  return {
-    projects: arrayField(item, "projects", "projects response", parseProjectListItem),
-  };
-}
-
-function parseProjectListItem(value: unknown, index: number): Project {
-  return parseProject(value, `projects[${index}]`);
 }
 
 export function parseSetupStatus(value: unknown): SetupStatus {
@@ -277,21 +211,6 @@ export function parseProviders(value: unknown): { providers: ProviderInfo[] } {
     ),
   };
 }
-
-export const parseStudioDocument = parseDocument;
-
-export function parseDocuments(value: unknown): {
-  documents: StudioDocument[];
-} {
-  const item = objectValue(value, "documents response");
-  return {
-    documents: arrayField(item, "documents", "documents response", (entry, index) =>
-      parseDocument(entry, `documents[${index}]`),
-    ),
-  };
-}
-
-const revisionSources = ["author", "ai-accepted", "restore"] as const;
 
 function parseRevisionSummary(value: unknown, label: string): RevisionSummary {
   const item = objectValue(value, label);

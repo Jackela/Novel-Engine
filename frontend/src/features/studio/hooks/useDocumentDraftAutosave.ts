@@ -159,10 +159,7 @@ export async function loadLatestDocument(
   documentId: string,
   signal?: AbortSignal,
 ): Promise<StudioDocument> {
-  const project = await api.project(projectId, { signal });
-  const document = project.documents?.find((candidate) => candidate.id === documentId);
-  if (!document) throw new Error("The document is no longer available.");
-  return document;
+  return api.document(projectId, documentId, { signal });
 }
 
 export function saveDocumentDraft(

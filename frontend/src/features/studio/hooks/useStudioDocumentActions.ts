@@ -5,7 +5,7 @@ import { api } from "@/app/api";
 import type { DocumentKind, Project } from "@/app/types/studio";
 
 import { GROUPS } from "../studioConstants";
-import { mergeProjectDocumentOrder } from "./projectState";
+import { mergeProjectDocumentOrder, summarizeDocument } from "./projectState";
 import { toErrorMessage } from "./toErrorMessage";
 import { usePendingAction } from "./usePendingAction";
 
@@ -78,7 +78,7 @@ export function useStudioDocumentActions<Owner extends DocumentActionsOwner>({
       const owner = currentOwner();
       if (!owner || !project || !beginMutation("createDocument")) return;
       setCreatingState({ projectId: owner.projectId, kind });
-      const count = project.documents?.filter((document) => document.kind === kind).length ?? 0;
+      const count = project.documents.filter((document) => document.kind === kind).length;
       const label = GROUPS.find((group) => group.kind === kind)?.label ?? "Document";
       publishError(owner, "createDocument", null);
       try {
@@ -90,7 +90,7 @@ export function useStudioDocumentActions<Owner extends DocumentActionsOwner>({
         if (!isCurrentOwner(owner)) return;
         setProject((current) =>
           isCurrentOwner(owner) && current?.id === owner.projectId
-            ? { ...current, documents: [...(current.documents ?? []), document] }
+            ? { ...current, documents: [...current.documents, summarizeDocument(document)] }
             : current,
         );
         setActiveId((current) => (isCurrentOwner(owner) ? document.id : current));
@@ -120,7 +120,7 @@ export function useStudioDocumentActions<Owner extends DocumentActionsOwner>({
   const moveDocument = useCallback(
     async (documentId: string, direction: -1 | 1) => {
       const owner = currentOwner();
-      if (!owner || !project?.documents || !beginMutation("moveDocument")) return;
+      if (!owner || !project || !beginMutation("moveDocument")) return;
       const ordered = [...project.documents].sort((a, b) => a.position - b.position);
       const index = ordered.findIndex((document) => document.id === documentId);
       const target = index + direction;

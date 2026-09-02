@@ -100,7 +100,7 @@ describe("useStudioActions concurrent aggregate publication", () => {
       ...chapterOne,
       current_revision_id: "revision-2",
       content_markdown: "Newer committed chapter",
-      revision_source: "ai-accepted",
+      revision_source: "ai-accepted" as const,
     };
     view.replaceProject({ ...project, documents: [committedChapter, note] });
 
@@ -128,7 +128,7 @@ describe("useStudioActions concurrent aggregate publication", () => {
       ...chapterOne,
       current_revision_id: "revision-2",
       content_markdown: "Newer committed chapter",
-      revision_source: "ai-accepted",
+      revision_source: "ai-accepted" as const,
     };
     const newerProjectTimestamp = "2026-08-27T00:05:00Z";
     let saving: Promise<void> = Promise.resolve();

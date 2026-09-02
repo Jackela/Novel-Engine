@@ -37,6 +37,45 @@ const baseDocument = chapter("doc-1", {
 });
 
 describe("Studio editor pane", () => {
+  it("shows a named pending surface instead of an empty or stale Document", () => {
+    const container = render(
+      <StudioEditorPane
+        activeDocument={null}
+        draft=""
+        titleDraft=""
+        saveState="idle"
+        isLoadingDocument
+        onDraftChange={vi.fn()}
+        onTitleChange={vi.fn()}
+      />,
+    );
+
+    expect(getByRole(container, "status")).toHaveTextContent("Loading document");
+    expect(container).not.toHaveTextContent("Create a document");
+    expect(container.querySelector('textarea[aria-label="Markdown body"]')).toBeNull();
+  });
+
+  it("keeps a failed body local and exposes Retry without inventing editor content", () => {
+    const retry = vi.fn();
+    const container = render(
+      <StudioEditorPane
+        activeDocument={null}
+        draft=""
+        titleDraft=""
+        saveState="idle"
+        documentLoadError="Unable to load this document."
+        onDraftChange={vi.fn()}
+        onTitleChange={vi.fn()}
+        onRetryDocument={retry}
+      />,
+    );
+
+    expect(getByRole(container, "alert")).toHaveTextContent("Unable to load this document.");
+    act(() => getByRole(container, "button", { name: "Retry document" }).click());
+    expect(retry).toHaveBeenCalledTimes(1);
+    expect(container.querySelector('textarea[aria-label="Markdown body"]')).toBeNull();
+  });
+
   it("renders editor state and forwards title/body edits", async () => {
     const onTitleChange = vi.fn();
     const onDraftChange = vi.fn();

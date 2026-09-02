@@ -137,26 +137,11 @@ describe("useStudioProject", () => {
 
   it("replaces to the project library with no partial aggregate when the project is missing", async () => {
     // Given
-    const fixture = makeAggregate("project-1", "one");
-    let rejectExports: ((reason?: unknown) => void) | undefined;
-    const exportRequest = new Promise<{ exports: StudioExport[] }>((_resolve, reject) => {
-      rejectExports = reject;
-    });
-    vi.mocked(api.project).mockResolvedValue(fixture.project);
-    vi.mocked(api.reviews).mockResolvedValue({ reviews: [fixture.review] });
-    vi.mocked(api.exports).mockReturnValue(exportRequest);
+    vi.mocked(api.project).mockRejectedValue(new HttpError("Project not found.", 404));
 
     // When
     const harness = renderStudioProjectHook("project-1");
     await flushEffects();
-    await act(async () => {
-      if (rejectExports === undefined) {
-        throw new Error("Expected the exports request reject function.");
-      }
-      rejectExports(new HttpError("Project not found.", 404));
-      await exportRequest.catch(() => undefined);
-      await Promise.resolve();
-    });
 
     // Then
     expect(harness.result().pathname).toBe("/projects");
@@ -164,6 +149,8 @@ describe("useStudioProject", () => {
     expect(harness.result().hook.project).toBeNull();
     expect(harness.result().hook.reviews).toEqual([]);
     expect(harness.result().hook.exports).toEqual([]);
+    expect(api.reviews).not.toHaveBeenCalled();
+    expect(api.exports).not.toHaveBeenCalled();
   });
 
   it("publishes the new aggregate when the project id changes", async () => {
@@ -244,12 +231,16 @@ describe("useStudioProject", () => {
     vi.mocked(api.project)
       .mockReturnValueOnce(firstProject.promise)
       .mockResolvedValueOnce(second.project);
-    vi.mocked(api.reviews)
-      .mockReturnValueOnce(firstReviews.promise)
-      .mockResolvedValueOnce({ reviews: [second.review] });
-    vi.mocked(api.exports)
-      .mockReturnValueOnce(firstExports.promise)
-      .mockResolvedValueOnce({ exports: [second.studioExport] });
+    vi.mocked(api.reviews).mockImplementation((projectId) =>
+      projectId === first.project.id
+        ? firstReviews.promise
+        : Promise.resolve({ reviews: [second.review] }),
+    );
+    vi.mocked(api.exports).mockImplementation((projectId) =>
+      projectId === first.project.id
+        ? firstExports.promise
+        : Promise.resolve({ exports: [second.studioExport] }),
+    );
     const hook = renderStudioProjectHook("project-1");
     await flushEffects();
 

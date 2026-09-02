@@ -68,10 +68,49 @@ body from the new shell; the fixture was changed to follow the explicit current-
 Document resource, passed 9 of 9 in isolation, and the second full suite passed
 all 1,251 tests.
 
+## Frontend shell and one-active Document evidence
+
+Frontend contract parsing now treats project catalog rows, project shells,
+Document summaries, and complete current Documents as four exact shapes. Shell
+and reorder summary parsing reject body or metadata keys, current-Document
+parsing rejects summary-only responses, counts require nonnegative integers,
+and revision source is a required closed enum. The shared HTTP client reads the
+selected current Document only from the scoped Document endpoint.
+
+The editor owns at most one accepted body. An in-flight-only registry
+coalesces exact `(project, Document, expected revision, lifecycle)` tuples,
+fans the result out to surviving subscribers, suppresses released or obsolete
+owners, and aborts only when the final subscriber releases. Successful bodies
+are not retained globally. Pending and failed reads render no old or invented
+body, retain navigation, and provide local Retry. Revision mismatches perform
+one shell refresh and at most one replacement body read before a readable
+churn failure.
+
+The project shell is published before the existing Review and Export reads, so
+active-body hydration is no longer blocked by those histories. Review and
+Export are still fetched after shell publication in this wave; task 3.2 stays
+open until task 4.1 gives both panels independent lazy owners. Draft/cache
+separation and the complete mutation-reconciliation matrix also remain tasks
+3.4 and 3.5 rather than being claimed by compatibility changes in this wave.
+
+| Validation surface | Result |
+|---|---|
+| Contract/state-machine red tests | Expected failures observed before implementation: missing strict parsers/current endpoint and missing current-Document hook. |
+| Frontend unit suite | Passed: 76 files and 428 tests. |
+| Frontend lint, format, and type-check | Passed: Biome checked 199 files with no diagnostics; formatter checked 198 files; TypeScript reported no error. |
+| Repository file-size gate | Passed: 599 files checked; every code file is at or below 300 code lines. |
+| Frontend production build | Passed: Vite built 1,923 modules; build identity verified Novel Engine 0.6.0. |
+| API-types drift | Passed: generated types match the current OpenAPI snapshot. |
+| React Doctor | Passed: 186 files analyzed, score 100, zero diagnostics. |
+| TypeScript-backend Studio smoke | Passed: 3 Chromium workflows covering owner setup/edit/proposal/search/deep links, login/error envelopes, and bounded History retry. |
+| Strict OpenSpec | Passed: 19 items, zero failures. |
+
 ## Current boundary
 
 Only the unaffected current-Document read/scope evidence remains applicable
-from the server implementation SHA. Summary source projection and its dependent
-server/frontend tasks, lazy Inspector ownership, browser workflows, independent
-fixed-SHA reviews, and required CI remain open. This change stays active and
-unarchived; local tests and generated artifacts are not release approval.
+from the earlier server implementation SHA; summary source projection still
+requires a new fixed server SHA. Frontend tasks 3.1 and 3.3 have current local
+evidence above. Lazy Inspector ownership, mutation/Draft separation, the full
+browser matrix, independent fixed-SHA reviews, and required CI remain open.
+This change stays active and unarchived; local tests and generated artifacts
+are not release approval.

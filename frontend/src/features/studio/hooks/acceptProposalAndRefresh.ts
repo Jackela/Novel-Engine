@@ -59,8 +59,10 @@ export async function acceptProposalAndRefresh({
     throw new AcceptedProposalRefreshError(cause);
   }
   if (!isProjectCurrent()) return null;
-  const acceptedDocument =
-    refreshed.documents?.find((document) => document.id === documentId) ?? null;
+  const acceptedSummary = refreshed.documents.find((document) => document.id === documentId);
+  const acceptedDocument = acceptedSummary
+    ? await api.document(projectId, documentId, { signal })
+    : null;
   if (acceptedDocument) {
     setProject((current) =>
       isProjectCurrent() && current?.id === projectId

@@ -1,4 +1,4 @@
-import type { Project, StudioDocument } from "@/app/types/studio";
+import type { DocumentSummary, Project } from "@/app/types/studio";
 
 export interface WholeBookChapter {
   readonly id: string;
@@ -14,7 +14,7 @@ export interface WholeBookChapter {
  * are immutable, so every replaced current state stays restorable from
  * document history.
  */
-export function needsGeneration(document: StudioDocument): boolean {
+export function needsGeneration(document: DocumentSummary): boolean {
   return document.revision_source !== "ai-accepted";
 }
 
@@ -24,14 +24,12 @@ export function needsGeneration(document: StudioDocument): boolean {
  * volume exactly like the navigator's grouping, even though ADR-0005
  * guarantees every chapter is placed.
  */
-export function readingOrderChapters(project: Project): StudioDocument[] {
-  const chapters = (project.documents ?? []).filter((document) => document.kind === "chapter");
-  const volumes = [...(project.volumes ?? [])].sort(
-    (left, right) => left.position - right.position,
-  );
+export function readingOrderChapters(project: Project): DocumentSummary[] {
+  const chapters = project.documents.filter((document) => document.kind === "chapter");
+  const volumes = [...project.volumes].sort((left, right) => left.position - right.position);
   const volumeRank = new Map(volumes.map((volume, index) => [volume.id, index]));
   const fallbackRank = volumes.length > 0 ? (volumeRank.get(volumes[0].id) ?? 0) : 0;
-  const rankOf = (document: StudioDocument): number =>
+  const rankOf = (document: DocumentSummary): number =>
     document.volume_id ? (volumeRank.get(document.volume_id) ?? fallbackRank) : fallbackRank;
   // filter() above already produced a fresh array, so sorting it never
   // mutates the project payload's own list.

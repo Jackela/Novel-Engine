@@ -233,6 +233,8 @@ describe("Studio API client", () => {
           import_hash: null,
           created_at: "2026-06-25T00:00:00Z",
           updated_at: "2026-06-25T00:00:00Z",
+          documents: [],
+          volumes: [],
         }),
         {
           status: 201,
@@ -284,6 +286,8 @@ describe("Studio API client", () => {
           import_hash: null,
           created_at: "2026-06-25T00:00:00Z",
           updated_at: "2026-06-25T00:00:00Z",
+          documents: [],
+          volumes: [],
         }),
         {
           status: 201,

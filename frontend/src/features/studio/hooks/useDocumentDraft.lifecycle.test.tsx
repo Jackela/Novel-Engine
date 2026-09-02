@@ -6,6 +6,7 @@ import type { Project, StudioDocument } from "@/app/types/studio";
 import { chapter, projectWith } from "@/test/factories";
 import { createMountHarness, deferred, flushMicrotasks } from "@/test/harness";
 
+import { summarizeDocument } from "./projectState";
 import { useDocumentDraft } from "./useDocumentDraft";
 
 vi.mock("@/app/api", async (importOriginal) => {
@@ -14,6 +15,7 @@ vi.mock("@/app/api", async (importOriginal) => {
     ...actual,
     api: {
       ...actual.api,
+      document: vi.fn<typeof actual.api.document>(),
       project: vi.fn<typeof actual.api.project>(),
       revisions: vi.fn<typeof actual.api.revisions>(),
       restoreRevision: vi.fn<typeof actual.api.restoreRevision>(),
@@ -35,7 +37,7 @@ const documentB = chapter("document-2", {
   current_revision_id: "revision-b-1",
   content_markdown: "Document B original",
 });
-const project = projectWith([documentA, documentB]);
+const project = projectWith([summarizeDocument(documentA), summarizeDocument(documentB)]);
 
 beforeEach(() => {
   vi.useFakeTimers();
@@ -150,12 +152,12 @@ describe("useDocumentDraft lifecycle", () => {
       current_revision_id: "revision-b-2",
       content_markdown: "Document B committed edit",
     };
-    const staleARefresh = deferred<Project>();
+    const staleARefresh = deferred<StudioDocument>();
     let rejectSaveA!: (reason: unknown) => void;
     const saveA = new Promise<StudioDocument>((_resolve, reject) => {
       rejectSaveA = reject;
     });
-    vi.mocked(api.project).mockReturnValue(staleARefresh.promise);
+    vi.mocked(api.document).mockReturnValue(staleARefresh.promise);
     vi.mocked(api.saveDocument).mockReturnValueOnce(saveA).mockResolvedValueOnce(committedB);
     let activeDocument = documentA;
     let current: { readonly hook: DraftHook; readonly project: Project | null } | undefined;
@@ -190,7 +192,10 @@ describe("useDocumentDraft lifecycle", () => {
     await act(async () => {
       await vi.advanceTimersByTimeAsync(1500);
     });
-    expect(result().project?.documents).toEqual([documentA, committedB]);
+    expect(result().project?.documents).toEqual([
+      summarizeDocument(documentA),
+      summarizeDocument(committedB),
+    ]);
 
     await act(async () => {
       rejectSaveA(new HttpError("revision conflict", 409));
@@ -198,16 +203,19 @@ describe("useDocumentDraft lifecycle", () => {
       await Promise.resolve();
       await Promise.resolve();
     });
-    await vi.waitFor(() => expect(api.project).toHaveBeenCalledTimes(1));
+    await vi.waitFor(() => expect(api.document).toHaveBeenCalledTimes(1));
 
     await act(async () => {
-      staleARefresh.resolve({ ...project, documents: [latestA, documentB] });
+      staleARefresh.resolve(latestA);
       await staleARefresh.promise;
       await Promise.resolve();
       await Promise.resolve();
       await Promise.resolve();
     });
 
-    expect(result().project?.documents).toEqual([latestA, committedB]);
+    expect(result().project?.documents).toEqual([
+      summarizeDocument(latestA),
+      summarizeDocument(committedB),
+    ]);
   });
 });

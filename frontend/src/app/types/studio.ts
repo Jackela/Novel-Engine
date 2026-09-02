@@ -60,13 +60,13 @@ export interface StudioDocument {
   title: string;
   position: number;
   /** Owning volume of a chapter; non-chapter documents stay null (#312). */
-  volume_id?: string | null;
+  volume_id: string | null;
   /**
    * Soft link to the chapter's associated outline beat title (#376); null
    * when unlinked or dangling. This is a title link, not an ordinal — the
    * in-volume ordinal is `position`.
    */
-  beat_ref?: string | null;
+  beat_ref: string | null;
   /**
    * Lore lifecycle status (#444, ADR-0006): draft | stable | deprecated for
    * character/world documents; null for every other kind — the lifecycle
@@ -76,7 +76,7 @@ export interface StudioDocument {
   current_revision_id: string;
   content_markdown: string;
   metadata: Record<string, unknown>;
-  revision_source: string;
+  revision_source: RevisionSource;
   word_count: number;
   created_at: string;
   updated_at: string;
@@ -92,7 +92,8 @@ export interface Volume {
   updated_at: string;
 }
 
-export interface Project {
+/** Lightweight project-catalog row; it never owns Studio structure. */
+export interface ProjectListItem {
   id: string;
   title: string;
   description: string;
@@ -100,9 +101,33 @@ export interface Project {
   import_hash: string | null;
   created_at: string;
   updated_at: string;
-  documents?: StudioDocument[];
-  volumes?: Volume[];
 }
+
+/** Structural Document row carried by ProjectShell and reorder responses. */
+export interface DocumentSummary {
+  id: string;
+  project_id: string;
+  kind: DocumentKind;
+  title: string;
+  position: number;
+  volume_id: string | null;
+  beat_ref: string | null;
+  lore_status: LoreStatus | null;
+  current_revision_id: string;
+  revision_source: RevisionSource;
+  word_count: number;
+  created_at: string;
+  updated_at: string;
+}
+
+/** Navigation/settings authority. Accepted Markdown belongs to StudioDocument. */
+export interface ProjectShell extends ProjectListItem {
+  documents: DocumentSummary[];
+  volumes: Volume[];
+}
+
+/** Temporary compatibility name while remaining Studio hooks migrate by wave. */
+export type Project = ProjectShell;
 
 export type RevisionSource = "author" | "ai-accepted" | "restore";
 

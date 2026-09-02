@@ -1,7 +1,7 @@
 import { act } from "react";
 import { afterEach, describe, expect, it } from "vitest";
 
-import type { Project, StudioDocument } from "@/app/types/studio";
+import type { DocumentSummary, Project } from "@/app/types/studio";
 
 import { chapter, projectWith } from "@/test/factories";
 import { createMountHarness } from "@/test/harness";
@@ -24,7 +24,7 @@ const chapterOne = chapter("chapter-1", {
   title: "Chapter One",
   current_revision_id: "revision-1",
   content_markdown: "Chapter content",
-  revision_source: "manual",
+  revision_source: "author",
   word_count: 2,
 });
 const outline = {
@@ -44,11 +44,11 @@ const character = {
 const project = projectWith([chapterOne, outline, character]);
 
 function renderActiveDocument(initialArgs: HookArgs): {
-  readonly result: () => StudioDocument | null;
+  readonly result: () => DocumentSummary | null;
   readonly rerender: (args: HookArgs) => void;
 } {
   let args = initialArgs;
-  let current: StudioDocument | null = null;
+  let current: DocumentSummary | null = null;
 
   function Wrapper(): null {
     current = useActiveDocument(args.project, args.section, args.activeId);

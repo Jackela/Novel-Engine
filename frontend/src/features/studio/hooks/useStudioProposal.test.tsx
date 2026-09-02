@@ -8,7 +8,7 @@ import type { Project, StudioDocument, StudioJob } from "@/app/types/studio";
 import type { InspectorTab } from "@/features/studio/studioConstants";
 import { chapter, job, projectWith } from "@/test/factories";
 import { createMountHarness } from "@/test/harness";
-
+import { summarizeDocument } from "./projectState";
 import { useStudioProposal } from "./useStudioProposal";
 
 vi.mock("@/app/api", async (importOriginal) => {
@@ -19,6 +19,7 @@ vi.mock("@/app/api", async (importOriginal) => {
     api: {
       ...actual.api,
       acceptProposal: vi.fn<typeof actual.api.acceptProposal>(),
+      document: vi.fn<typeof actual.api.document>(),
       project: vi.fn<typeof actual.api.project>(),
     },
   };
@@ -49,7 +50,7 @@ const firstDocument = chapter("document-1", {
   title: "Chapter One",
   current_revision_id: "revision-1",
   content_markdown: "Original scene",
-  revision_source: "manual",
+  revision_source: "author",
   word_count: 2,
 });
 
@@ -254,6 +255,7 @@ describe("useStudioProposal", () => {
     };
     vi.mocked(api.acceptProposal).mockResolvedValue(proposalJob);
     vi.mocked(api.project).mockResolvedValue(refreshedProject);
+    vi.mocked(api.document).mockResolvedValue(acceptedDocument);
     const harness = renderProposalHook();
     act(() => {
       harness.result().hook.setProposal(proposalJob);
@@ -265,7 +267,10 @@ describe("useStudioProposal", () => {
     });
 
     // Then
-    expect(harness.result().project).toEqual(refreshedProject);
+    expect(harness.result().project).toEqual({
+      ...refreshedProject,
+      documents: [summarizeDocument(acceptedDocument), secondDocument],
+    });
     expect(harness.result().accepted).toEqual(acceptedDocument);
     expect(harness.result().hook.proposal).toBeNull();
     expect(harness.loadJobs).toHaveBeenCalledWith();

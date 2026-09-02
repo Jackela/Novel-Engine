@@ -46,6 +46,7 @@ function resolveStateAction<T>(current: T, action: SetStateAction<T>): T {
  */
 export function useStudioProject(projectId: string) {
   const navigate = useNavigate();
+  const [lifecycle] = useState(() => Symbol("studio lifecycle"));
   const activeProjectIdRef = useRef<string | null>(null);
   const requestEpochRef = useRef(0);
   const requestRef = useRef<ProjectLoadRequest | null>(null);
@@ -176,20 +177,34 @@ export function useStudioProject(projectId: string) {
       activeProjectIdRef.current === projectId;
 
     request.promise = (async () => {
+      let shellPublished = false;
       try {
-        const [nextProject, reviewResponse, exportResponse] = await Promise.all([
-          api.project(projectId, { signal: controller.signal }),
+        const nextProject = await api.project(projectId, { signal: controller.signal });
+        if (!isCurrentRequest()) return;
+        shellPublished = true;
+        setAggregate((current) => ({
+          projectId,
+          project: nextProject,
+          reviews: current.projectId === projectId ? current.reviews : [],
+          exports: current.projectId === projectId ? current.exports : [],
+        }));
+        setLoadErrorState({ projectId, value: null });
+        setLoadingState({ projectId, value: false });
+
+        const [reviewResponse, exportResponse] = await Promise.all([
           api.reviews(projectId, { signal: controller.signal }),
           api.exports(projectId, { signal: controller.signal }),
         ]);
         if (!isCurrentRequest()) return;
-        setAggregate({
-          projectId,
-          project: nextProject,
-          reviews: reviewResponse.reviews,
-          exports: exportResponse.exports,
-        });
-        setLoadErrorState({ projectId, value: null });
+        setAggregate((current) =>
+          current.projectId === projectId && current.project !== null
+            ? {
+                ...current,
+                reviews: reviewResponse.reviews,
+                exports: exportResponse.exports,
+              }
+            : current,
+        );
       } catch (reason) {
         if (!isCurrentRequest()) return;
         controller.abort();
@@ -197,14 +212,13 @@ export function useStudioProject(projectId: string) {
           navigate("/", { replace: true });
           return;
         }
-        if (reason instanceof HttpError && reason.status === 404) {
+        if (!shellPublished && reason instanceof HttpError && reason.status === 404) {
           navigate("/projects", { replace: true });
           return;
         }
-        setLoadErrorState({
-          projectId,
-          value: toErrorMessage(reason, DEFAULT_LOAD_ERROR),
-        });
+        const message = toErrorMessage(reason, DEFAULT_LOAD_ERROR);
+        if (shellPublished) setErrorState({ projectId, value: message });
+        else setLoadErrorState({ projectId, value: message });
       } finally {
         if (requestRef.current === request) {
           requestRef.current = null;
@@ -242,5 +256,6 @@ export function useStudioProject(projectId: string) {
     loadError,
     isLoading,
     retryLoad,
+    lifecycle,
   };
 }

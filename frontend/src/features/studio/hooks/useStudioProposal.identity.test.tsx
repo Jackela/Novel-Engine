@@ -6,7 +6,7 @@ import { type ProposalStreamRequest, streamProposal } from "@/app/proposalStream
 import type { Project, StudioDocument, StudioJob } from "@/app/types/studio";
 import { chapter, job, projectWith } from "@/test/factories";
 import { createMountHarness, deferred } from "@/test/harness";
-
+import { summarizeDocument } from "./projectState";
 import { useOwnerKeyedErrors } from "./useOwnerKeyedErrors";
 import { useStudioProposal } from "./useStudioProposal";
 
@@ -17,6 +17,7 @@ vi.mock("@/app/api", async (importOriginal) => {
     api: {
       ...actual.api,
       acceptProposal: vi.fn<typeof actual.api.acceptProposal>(),
+      document: vi.fn<typeof actual.api.document>(),
       project: vi.fn<typeof actual.api.project>(),
     },
   };
@@ -196,6 +197,7 @@ describe("useStudioProposal identity", () => {
     const acceptance = deferred<StudioJob>();
     vi.mocked(api.acceptProposal).mockReturnValue(acceptance.promise);
     vi.mocked(api.project).mockResolvedValue(project);
+    vi.mocked(api.document).mockResolvedValue(documentA);
     const view = renderProposal();
     act(() => view.result().hook.setProposal(proposalA));
     let first: Promise<void> = Promise.resolve();
@@ -241,12 +243,13 @@ describe("useStudioProposal identity", () => {
       ...project,
       documents: [acceptedA, documentB],
     };
+    vi.mocked(api.document).mockResolvedValue(acceptedA);
     await act(async () => {
       refresh.resolve(refreshedProject);
       await accepting;
     });
 
-    expect(view.result().project?.documents).toEqual([acceptedA, committedB]);
+    expect(view.result().project?.documents).toEqual([summarizeDocument(acceptedA), committedB]);
     expect(view.result().accepted).toEqual(acceptedA);
     expect(view.loadJobs).toHaveBeenCalledTimes(1);
     expect(view.result().error).toBeNull();
