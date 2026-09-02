@@ -74,7 +74,13 @@ retry never rewrites it to a later revision. After coherent capture:
   current.` Its proposal result remains empty with `base_revision_id: A` and
   `accepted_revision_id: null`. The failed event records only the fixed error,
   reason `base_revision_changed`, `base_revision_id: A`, and
-  `current_revision_id: B`.
+  `current_revision_id: B`. The retry Job retains the provider/model identity
+  inherited at claim time; the stale-base outcome does not fabricate a new
+  model value or clear the source identity.
+
+A target with no current revision is not an A/B mismatch. It retains the
+existing explicit `Document has no current revision.` failure and does not
+fabricate stale-base evidence without a captured revision B.
 
 The stale-base outcome is an execution result, so the retry endpoint returns
 the normal terminal Job response. It creates no proposal revision or usage

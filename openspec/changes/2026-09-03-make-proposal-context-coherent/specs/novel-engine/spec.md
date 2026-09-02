@@ -72,7 +72,10 @@ failed event MUST identify reason `base_revision_changed` and revisions A and
 B. The attempt MUST create no usage event, proposal, or revision. Same-key
 replay MUST return that stored failed Job without repeating context capture or
 creating evidence. A different key MUST remain a distinct attempt subject to
-the same base rule.
+the same base rule. The failed retry MUST retain the provider/model identity
+inherited by the retry claim. If the target has no current revision, the
+existing missing-current-revision failure MUST apply instead; the system MUST
+NOT invent a current revision or A/B mismatch evidence.
 
 #### Scenario: Unchanged retry base is used consistently
 
