@@ -4,10 +4,10 @@ import {
   BoundedPromptWriter,
   GENERATION_PROMPT_BYTE_LIMIT,
 } from "../../src/contexts/studio/application/generation_capacity.js";
+import type { ProposalContextSource } from "../../src/contexts/studio/application/ports/proposal_context_store.js";
 import type {
   DocumentWithCurrent,
   RevisionRecord,
-  StudioStore,
 } from "../../src/contexts/studio/application/ports/studio_store.js";
 import {
   buildProposalTask,
@@ -16,9 +16,7 @@ import {
 import { GenerationCapacityExceededError } from "../../src/contexts/studio/domain/exceptions.js";
 
 function proposalFixture(contentMarkdown: string): {
-  readonly document: DocumentWithCurrent;
-  readonly revision: RevisionRecord;
-  readonly store: StudioStore;
+  readonly context: ProposalContextSource;
 } {
   const now = new Date("2026-09-03T00:00:00.000Z");
   const revision: RevisionRecord = {
@@ -46,25 +44,19 @@ function proposalFixture(contentMarkdown: string): {
     updatedAt: now,
     currentRevision: revision,
   };
-  const store = {
-    findDocuments: () => [document],
-    findVolumes: () => [],
-  } as unknown as StudioStore;
-  return { document, revision, store };
+  return {
+    context: {
+      projectId: "project-1",
+      target: document,
+      documents: [document],
+      volumes: [],
+    },
+  };
 }
 
 function buildTask(contentMarkdown: string) {
   const fixture = proposalFixture(contentMarkdown);
-  return buildProposalTask(
-    "chapter_revision",
-    "continue",
-    "",
-    fixture.store,
-    { ownerId: "owner-1" },
-    "project-1",
-    fixture.document,
-    fixture.revision,
-  );
+  return buildProposalTask("chapter_revision", "continue", "", fixture.context);
 }
 
 describe("generation prompt capacity policy", () => {

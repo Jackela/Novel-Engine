@@ -2,7 +2,8 @@ import { linkedChapterBeat } from "./beat_association_service.js";
 import { BoundedPromptWriter } from "./generation_capacity.js";
 import { iterateTriggeredLoreSections } from "./lore_injection.js";
 import type { LoreEntrySource } from "./lorebook.js";
-import type { OutlineBeat } from "./outline_beats.js";
+import { type OutlineBeat, splitOutlineBeats } from "./outline_beats.js";
+import type { ProposalContextSource } from "./ports/proposal_context_store.js";
 import type { DocumentWithCurrent, ProjectScope, StudioStore } from "./ports/studio_store.js";
 import { iterateResidentContextSections, residentMatchCorpus } from "./resident_context_render.js";
 import { formatAuthorInstruction, formatUntrustedManuscript } from "./sanitization.js";
@@ -222,6 +223,33 @@ export function collectResidentContextSource(
       contentMarkdown: candidate.currentRevision?.contentMarkdown ?? null,
     })),
     targetDocumentId: document.id,
+  };
+}
+
+/** Project-captured resident projection; performs no persistence reads. */
+export function residentContextSourceFromProposalContext(
+  context: ProposalContextSource,
+): ResidentContextSource {
+  const outline = context.documents.find((candidate) => candidate.kind === "outline");
+  const outlineMarkdown = outline?.currentRevision?.contentMarkdown ?? null;
+  const reference = context.target.beatRef;
+  const linkedBeat =
+    reference === null || reference === "" || outlineMarkdown === null
+      ? null
+      : (splitOutlineBeats(outlineMarkdown).find((beat) => beat.title === reference) ?? null);
+  return {
+    outlineMarkdown,
+    linkedBeat,
+    volumes: context.volumes,
+    chapters: context.documents.map((candidate) => ({
+      id: candidate.id,
+      kind: candidate.kind,
+      title: candidate.title,
+      position: candidate.position,
+      volumeId: candidate.volumeId,
+      contentMarkdown: candidate.currentRevision?.contentMarkdown ?? null,
+    })),
+    targetDocumentId: context.target.id,
   };
 }
 

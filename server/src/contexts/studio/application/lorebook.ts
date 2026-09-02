@@ -4,6 +4,7 @@ import {
   isLoreStatus,
   type LoreStatus,
 } from "../domain/kinds.js";
+import type { ProposalContextDocument } from "./ports/proposal_context_store.js";
 import type { ProjectScope, StudioStore } from "./ports/studio_store.js";
 
 /**
@@ -222,8 +223,14 @@ export function collectLoreEntries(
   scope: ProjectScope,
   projectId: string,
 ): LoreEntrySource[] {
-  return store
-    .findDocuments(scope, projectId)
+  return loreEntriesFromDocuments(store.findDocuments(scope, projectId));
+}
+
+/** Project-captured lore projection; performs no persistence reads. */
+export function loreEntriesFromDocuments(
+  documents: readonly ProposalContextDocument[],
+): LoreEntrySource[] {
+  return documents
     .filter((document) => isLoreEntryKind(document.kind))
     .map((document) => ({
       title: document.title,

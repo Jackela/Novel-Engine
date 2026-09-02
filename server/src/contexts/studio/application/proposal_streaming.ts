@@ -25,7 +25,7 @@ import {
 import {
   admitProposalOperation,
   buildProposalSeed,
-  resolveProposalRevision,
+  proposalRevisionFromContext,
 } from "./proposal_pipeline.js";
 
 /**
@@ -113,15 +113,11 @@ async function* streamProposalFrames(
   ownPermit(deps.inFlight.acquire(inFlightTarget));
   let provider: TextGenerationProvider | undefined;
   try {
-    const { document, revision } = resolveProposalRevision(
-      deps.store,
-      scope,
-      projectId,
-      documentId,
-    );
+    const context = deps.store.readProposalContext(scope, projectId, documentId);
+    const { revision } = proposalRevisionFromContext(context);
     const seed = buildProposalSeed({
-      projectId,
-      documentId,
+      projectId: context.projectId,
+      documentId: context.target.id,
       operation,
       provider: providerName,
       instruction,
@@ -133,11 +129,7 @@ async function* streamProposalFrames(
         step,
         operation,
         instruction,
-        deps.store,
-        scope,
-        projectId,
-        document,
-        revision,
+        context,
         deps.loreBudgetCharacters,
       );
       provider = deps.providerFactory(providerName);

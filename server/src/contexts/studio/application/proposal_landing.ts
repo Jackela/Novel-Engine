@@ -6,16 +6,14 @@ import {
   type TextProviderName,
 } from "../../../contexts/ai/application/ports/text_generation.js";
 import { BoundedPromptWriter } from "./generation_capacity.js";
-import { collectLoreEntries } from "./lorebook.js";
+import { loreEntriesFromDocuments } from "./lorebook.js";
 import { dumpJson, wordCount } from "./payloads.js";
-import type {
-  DocumentWithCurrent,
-  JobRecord,
-  ProjectScope,
-  RevisionRecord,
-  StudioStore,
-} from "./ports/studio_store.js";
-import { buildProposalUserPrompt, collectResidentContextSource } from "./resident_context.js";
+import type { ProposalContextSource } from "./ports/proposal_context_store.js";
+import type { JobRecord, ProjectScope, StudioStore } from "./ports/studio_store.js";
+import {
+  buildProposalUserPrompt,
+  residentContextSourceFromProposalContext,
+} from "./resident_context.js";
 import { isProposalMarkdownProse, sanitizeProposalMarkdown } from "./sanitization.js";
 
 export {
@@ -118,14 +116,15 @@ export function buildProposalTask(
   step: ProviderStep,
   operation: string,
   instruction: string,
-  store: StudioStore,
-  scope: ProjectScope,
-  projectId: string,
-  document: DocumentWithCurrent,
-  revision: RevisionRecord,
+  context: ProposalContextSource,
   /** Lorebook character budget (#445); undefined keeps the adjudicated default. */
   loreBudgetCharacters?: number | undefined,
 ): TextGenerationTask {
+  const document = context.target;
+  const revision = document.currentRevision;
+  if (revision === null) {
+    throw new Error("Proposal task requires a captured current revision.");
+  }
   return {
     step,
     systemPrompt: SYSTEM_PROMPT,
@@ -133,9 +132,9 @@ export function buildProposalTask(
       {
         operation,
         instruction,
-        source: collectResidentContextSource(store, scope, projectId, document),
+        source: residentContextSourceFromProposalContext(context),
         manuscriptMarkdown: revision.contentMarkdown,
-        loreEntries: collectLoreEntries(store, scope, projectId),
+        loreEntries: loreEntriesFromDocuments(context.documents),
         loreBudgetCharacters,
       },
       new BoundedPromptWriter(SYSTEM_PROMPT),

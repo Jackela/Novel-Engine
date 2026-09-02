@@ -5,6 +5,7 @@ import {
 } from "../../../contexts/ai/application/ports/text_generation.js";
 import { InvalidOperationError } from "../../../shared/domain/exceptions.js";
 import { dumpJson } from "./payloads.js";
+import type { ProposalContextSource } from "./ports/proposal_context_store.js";
 import type {
   DocumentWithCurrent,
   ProjectScope,
@@ -37,6 +38,17 @@ export interface ValidatedProposalRequest {
 export interface ProposalRevisionTarget {
   readonly document: DocumentWithCurrent;
   readonly revision: RevisionRecord;
+}
+
+/** Resolves the exact target revision already paired inside a captured context. */
+export function proposalRevisionFromContext(
+  context: ProposalContextSource,
+): ProposalRevisionTarget {
+  const revision = context.target.currentRevision;
+  if (revision === null) {
+    throw new InvalidOperationError("Document has no current revision.");
+  }
+  return { document: context.target, revision };
 }
 
 /** Rejects unsupported providers before any work is performed. */

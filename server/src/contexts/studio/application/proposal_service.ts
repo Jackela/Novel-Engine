@@ -17,7 +17,7 @@ import {
 import {
   admitProposalOperation,
   buildProposalSeed,
-  resolveProposalRevision,
+  proposalRevisionFromContext,
 } from "./proposal_pipeline.js";
 
 export {
@@ -94,15 +94,11 @@ export class AiProposalService {
     let provider: TextGenerationProvider | undefined;
 
     try {
-      const { document, revision } = resolveProposalRevision(
-        this.store,
-        scope,
-        projectId,
-        documentId,
-      );
+      const context = this.store.readProposalContext(scope, projectId, documentId);
+      const { revision } = proposalRevisionFromContext(context);
       const seed = buildProposalSeed({
-        projectId,
-        documentId,
+        projectId: context.projectId,
+        documentId: context.target.id,
         operation,
         provider: providerName,
         instruction,
@@ -114,11 +110,7 @@ export class AiProposalService {
           step,
           operation,
           instruction,
-          this.store,
-          scope,
-          projectId,
-          document,
-          revision,
+          context,
           this.loreBudgetCharacters,
         );
         provider = this.providerFactory(providerName);

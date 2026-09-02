@@ -54,9 +54,21 @@ function admissionHarness(): {
 } {
   const document = oversizedDocument();
   const store = {
-    findDocument: () => document,
-    findDocuments: () => [document],
-    findVolumes: () => [],
+    readProposalContext: () => ({
+      projectId: document.projectId,
+      target: document,
+      documents: [document],
+      volumes: [],
+    }),
+    findDocument: () => {
+      throw new Error("fresh proposal must not use findDocument");
+    },
+    findDocuments: () => {
+      throw new Error("fresh proposal must not use findDocuments");
+    },
+    findVolumes: () => {
+      throw new Error("fresh proposal must not use findVolumes");
+    },
   } as unknown as StudioStore;
   let factoryCalls = 0;
   let generationCalls = 0;
