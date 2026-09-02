@@ -2,13 +2,16 @@
 
 ## Read boundary
 
-`mergedEnvironment` reads the optional file through one narrow filesystem
-boundary. It catches only to inspect the original error code: `ENOENT` yields
-no file values, while every other value is rethrown unchanged. The catch does
-not wrap, log, sanitize, or replace the error, so its code, path, cause, and
-stack remain available to the CLI's existing failure channel.
+`mergedEnvironment` resolves the optional file through one narrow filesystem
+boundary. A metadata check follows symbolic links and requires the final target
+to be a regular file; a directory or other non-regular target raises one stable
+configuration error before reading. Metadata and read operations share only an
+error-code boundary: `ENOENT` yields no file values, while every other actual
+filesystem error is rethrown unchanged. The catch does not wrap, log, sanitize,
+or replace those errors, so their code, path, cause, and stack remain available
+to the CLI's existing failure channel.
 
-The returned text is parsed after that catch boundary. A parser exception is
+Successfully read text is parsed after that catch boundary. A parser exception is
 therefore a programming/configuration failure rather than an absent-file case.
 Process variables are merged only after the file is either read and parsed or
 confirmed absent, preserving the existing case-insensitive override order.

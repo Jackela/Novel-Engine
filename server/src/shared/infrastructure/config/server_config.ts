@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { readFileSync, statSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 
 import { DEFAULT_CORS_ORIGINS } from "../../domain/cors_contract.js";
@@ -138,12 +138,11 @@ function mergedEnvironment(input: LoadServerConfigInput): Map<string, string> {
   const merged = new Map<string, string>();
   const envFile = input.envFile === undefined ? ENV_FILE_NAME : input.envFile;
   if (envFile !== null) {
-    try {
-      for (const [key, value] of Object.entries(parseEnvFile(readFileSync(envFile, "utf8")))) {
+    const contents = readOptionalEnvironmentFile(envFile);
+    if (contents !== undefined) {
+      for (const [key, value] of Object.entries(parseEnvFile(contents))) {
         merged.set(key.toLowerCase(), value);
       }
-    } catch {
-      // A missing or unreadable env file is the no-configuration case.
     }
   }
   const overrides = input.env ?? process.env;
@@ -153,6 +152,24 @@ function mergedEnvironment(input: LoadServerConfigInput): Map<string, string> {
     }
   }
   return merged;
+}
+
+function readOptionalEnvironmentFile(filePath: string): string | undefined {
+  try {
+    if (!statSync(filePath).isFile()) {
+      throw new ConfigurationError(`Environment file must be a regular file: ${filePath}`);
+    }
+    return readFileSync(filePath, "utf8");
+  } catch (error) {
+    if (isMissingFileError(error)) {
+      return undefined;
+    }
+    throw error;
+  }
+}
+
+function isMissingFileError(error: unknown): boolean {
+  return typeof error === "object" && error !== null && "code" in error && error.code === "ENOENT";
 }
 
 /** Case-insensitive lookup, mirroring the Python settings' behavior. */

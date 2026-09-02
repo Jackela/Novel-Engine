@@ -5,12 +5,15 @@
 - [ ] 1.1 Add failing tests proving a missing `.env.local` remains optional.
 - [ ] 1.2 Add failing tests proving the same non-`ENOENT` read or parser error
       object escapes even when process overrides are available.
+- [ ] 1.3 Add cross-platform tests proving non-regular targets fail with one
+      stable error while a symbolic link to a regular file remains valid.
 
 ## 2. Loader implementation
 
-- [ ] 2.1 Narrow the file-read catch to `ENOENT` and rethrow every other error
-      unchanged.
-- [ ] 2.2 Parse only successfully read text outside the filesystem catch and
+- [ ] 2.1 Narrow metadata/read handling to `ENOENT` and rethrow every other
+      actual filesystem error unchanged.
+- [ ] 2.2 Reject a resolved non-regular target before parsing.
+- [ ] 2.3 Parse only successfully read text outside the filesystem catch and
       preserve the existing process-override and default behavior.
 
 ## 3. Composition boundaries

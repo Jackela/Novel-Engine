@@ -11,10 +11,12 @@ store at `data/novel-engine.sqlite3`, host `0.0.0.0:8000`, and the
 authentication rate limit of five per minute.
 
 An absent `.env.local` file (`ENOENT`) MUST be treated as no file
-configuration. Every other file-read failure MUST be rethrown unchanged, and
-configuration loading MUST stop. A parser exception MUST likewise be rethrown
-unchanged, and configuration loading MUST stop. Process variables MUST NOT turn
-either failure into the absent-file case.
+configuration. The selected path MUST resolve to a regular file; a directory or
+other non-regular target MUST stop loading with a stable configuration error.
+Every actual metadata or file-read failure other than `ENOENT` MUST be rethrown
+unchanged, and configuration loading MUST stop. A parser exception MUST
+likewise be rethrown unchanged, and configuration loading MUST stop. Process
+variables MUST NOT turn any of these failures into the absent-file case.
 
 The fully resolved `DB_URL` path, including its basename, MUST be the one
 database-file authority for API startup, import, backup, doctor, schema checks,
@@ -53,11 +55,19 @@ system MUST NOT choose, move, merge, or silently fall back to either file.
 
 #### Scenario: Unreadable environment file fails loudly
 
-- **GIVEN** the selected `.env.local` path fails to read for any reason other
-  than `ENOENT`
+- **GIVEN** metadata lookup or reading the selected `.env.local` path fails for
+  any reason other than `ENOENT`
 - **WHEN** configuration loads, even with process variables present
-- **THEN** the same read failure is rethrown unchanged
+- **THEN** the same metadata or read failure is rethrown unchanged
 - **AND** configuration defaults and process overrides are not returned
+
+#### Scenario: Non-regular environment target fails consistently
+
+- **GIVEN** the selected `.env.local` path resolves to a directory or another
+  non-regular target
+- **WHEN** configuration loads on any supported platform
+- **THEN** loading stops with a stable configuration error that identifies the path
+- **AND** process variables do not turn the target into an absent-file case
 
 #### Scenario: Environment parser failure stays visible
 

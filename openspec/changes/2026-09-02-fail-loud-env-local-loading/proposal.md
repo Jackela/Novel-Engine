@@ -10,8 +10,11 @@ variables while hiding the failed configuration authority.
 ## What changes
 
 - Treat only `ENOENT` as the optional-file case.
-- Preserve every other filesystem error unchanged so startup fails before any
-  database, backup, migration, reconciliation, or listener side effect.
+- Require the selected path to resolve to a regular file and report a stable
+  configuration error for a directory or other non-regular target.
+- Preserve every actual metadata/read error other than `ENOENT` unchanged so
+  startup fails before any database, backup, migration, reconciliation, or
+  listener side effect.
 - Keep parsing outside the filesystem catch boundary so parser defects remain
   visible and process variables override only a successfully read file.
 
