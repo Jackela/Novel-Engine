@@ -4,6 +4,8 @@
 
 - Comparison SHA: `c474c6e3039590067795d4980300a640b873d905`
 - Persisted-count implementation SHA: `ea5fb6810eae32da30c24e538bda8c9fb5ab10ac`
+- Server pagination implementation SHA: `71a9aad3c12cd4eef3a91b14b66d5f4c3f7f25b3`
+- Server review-repair SHA: `c69e56589b93fed95645407d2bf94d53335303d2`
 - Final local candidate SHA: pending completion of the bounded API and frontend.
 - Environment: Darwin arm64, Node.js 24.19.0, pnpm 11.6.0
 
@@ -41,9 +43,47 @@ only P3 was a stale startup-order comment; the follow-up commit corrected it.
 The specification review found tasks 2.1 through 2.4 complete. Agent review is
 supporting evidence, not CI or release approval.
 
+## Bounded server history evidence
+
+The revision list now has one typed summary-page port and a projected SQLite
+keyset query ordered by `(revision_number DESC, id DESC)`. It independently
+validates 1 through 100, fetches at most `limit + 1`, and emits only the seven
+summary columns. SQL evidence shows the existing
+`uq_document_revision_number` index and no temporary sort; neither body nor
+metadata appears in the statement.
+
+Authenticated cursor validation covers malformed alphabet, padding, fatal
+UTF-8, truncation, non-canonical JSON, unknown version, invalid or unsafe
+revision number, empty or overlong id, and cross-project/document identity.
+Invalid and repeated query values return 422 before any Store call. The route
+authenticates before both schema and semantic validation, while a valid cursor
+against a missing or foreign document retains scoped 404. A deleted boundary
+row continues from its positional tuple and a concurrently inserted newer row
+does not enter the older traversal.
+
+Restore remains independent from list payloads: a historic summary id causes
+one scoped full-revision read, then creates a new restore revision whose body
+and metadata are exactly the historic values and whose parent is the current
+base. Stale bases create no revision and cross-document ids remain 404.
+
+| Validation surface | Result |
+|---|---|
+| Server pagination and related revision regressions | Passed: 9 files and 77 tests on the implementation; review repair passed 7 files and 37 tests. |
+| Server type-check, lint, architecture, build, and gates | Passed; final repair checked 219 modules / 907 dependencies and 571 size-gated files. |
+| OpenAPI and generated frontend type drift | Passed; the bounded query and summary-only response match generated artifacts. |
+| Frontend type-check | Passed after generated type refresh; handwritten History behavior remains intentionally pending. |
+
+Independent specification review found tasks 1.1 through 1.3 and 3.1 through
+3.4 complete. Standards review found two P3 maintainability risks: duplicated
+canonical cursor machinery and a test helper that silently returned only the
+first page. The repair extracted a shared interface-layer codec while keeping
+route-specific tuple validation, pinned Job and Revision wire tokens, and made
+the test helper traverse to a null cursor with 101-row coverage. Follow-up
+review found both issues closed with no P0-P3 finding.
+
 ## Current release boundary
 
-Tasks 1, 3, 4, and 5 remain open. Required GitHub checks were not run because
+Tasks 4 and 5 remain open. Required GitHub checks were not run because
 this task did not push or open a pull request. The change remains active and
 unarchived until the bounded API/frontend implementation and final validation
 are complete and required CI is green on the integration SHA.

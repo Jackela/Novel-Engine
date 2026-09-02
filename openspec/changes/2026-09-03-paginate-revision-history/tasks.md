@@ -2,15 +2,15 @@
 
 ## 1. Contract-first failing coverage
 
-- [ ] 1.1 Add store/API failures for newest-first default 50, limits 1 and 100,
+- [x] 1.1 Add store/API failures for newest-first default 50, limits 1 and 100,
       zero/over-maximum/fractional limits, nullable terminal cursor, complete
       traversal without duplicates/gaps, concurrent newer insertion, and a
       deleted boundary row.
-- [ ] 1.2 Add cursor failures for malformed, oversized, non-canonical,
+- [x] 1.2 Add cursor failures for malformed, oversized, non-canonical,
       truncated, unknown-version, unsafe revision number, overlong id,
       cross-project, and cross-document tokens; prove each returns 422
       `VALIDATION_ERROR`, does not enter the store, and preserves auth/404 scope.
-- [ ] 1.3 Add projection tests proving the list query and payload omit
+- [x] 1.3 Add projection tests proving the list query and payload omit
       `content_markdown` and `metadata`, return exact stored `word_count`, use at
       most `limit + 1` rows, and use the existing document/revision index without
       a temporary sort.
@@ -36,16 +36,16 @@
 
 ## 3. Bounded revision summary API
 
-- [ ] 3.1 Introduce typed `RevisionSummaryRecord`, validated 1..100 page input,
+- [x] 3.1 Introduce typed `RevisionSummaryRecord`, validated 1..100 page input,
       document-bound cursor, and page output ports; replace the unbounded store
       read with the scoped, projected, parameterized `limit + 1` keyset query.
-- [ ] 3.2 Add the strict query schema (`limit` default 50, cursor maximum 1024),
+- [x] 3.2 Add the strict query schema (`limit` default 50, cursor maximum 1024),
       canonical cursor codec, required `{ revisions, next_cursor }` response,
       and stable validation/error mapping without changing restore routes.
-- [ ] 3.3 Prove restore still performs one scoped exact full-revision read and
+- [x] 3.3 Prove restore still performs one scoped exact full-revision read and
       replays body/metadata into a new `restore` revision; list summaries and
       cursors must never become restore authority.
-- [ ] 3.4 Regenerate the deliberate OpenAPI baseline and frontend API types;
+- [x] 3.4 Regenerate the deliberate OpenAPI baseline and frontend API types;
       assert query bounds, 422 response, required nullable cursor, closed source
       enum, summary fields, and the absence of content/metadata.
 
