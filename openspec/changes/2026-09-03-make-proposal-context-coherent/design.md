@@ -5,7 +5,10 @@
 Add one focused application port operation, `readProposalContext`, returning an
 immutable `ProposalContextSource`. The value contains the scoped project id,
 the target document paired with its exact current revision, every project
-document paired with the revision current at capture, and the ordered volumes.
+document paired with the revision current at capture in the existing canonical
+composite reading order, and the ordered volumes. That document order remains
+volume position, document position, creation time, then id; it is captured once
+and is the sole tie-break order consumed by resident and Lore derivation.
 Document rows already carry the target beat reference, Lore aliases, and Lore
 lifecycle status; outline/beat resolution, prior-story ordering, Lore selection,
 matching, sanitization, and bounded rendering therefore remain pure
@@ -39,6 +42,8 @@ checkpoint, not timing, polling, or sleeps.
 Application tests also use a store whose legacy individual read methods fail if
 called. Synchronous, streaming, and retry paths must each call the single
 capture operation once and hand byte-identical task context to their Provider.
+Fixtures with equal-rank Lore matches across volumes pin the captured canonical
+document order so an unordered database result cannot silently change promotion.
 
 ## Entry-point ordering
 

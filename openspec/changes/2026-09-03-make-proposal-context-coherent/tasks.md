@@ -6,8 +6,8 @@
       checkpoint proving one capture contains wholly the pre-commit or
       post-commit document/revision, outline/beat, volume, and Lore state.
 - [ ] 1.2 Add the immutable proposal-context source port and one scoped Drizzle
-      read transaction; keep the transaction closed before prompt or Provider
-      work begins.
+      read transaction; preserve the canonical composite document reading order
+      and keep the transaction closed before prompt or Provider work begins.
 - [ ] 1.3 Derive target, resident context, linked beat, and Lore inputs purely
       from the captured value, with no later individual store reads.
 

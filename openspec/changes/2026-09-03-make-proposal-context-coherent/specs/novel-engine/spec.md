@@ -5,6 +5,10 @@
 Every synchronous, streaming, and retry proposal generation MUST derive its
 target document and current revision, outline and linked beat, prior chapters,
 ordered volumes, and Lore entry state from one coherent database read snapshot.
+Captured documents MUST retain the existing canonical composite reading order:
+volume position, document position, creation time, then id. Resident and Lore
+derivation MUST consume that captured order without an unordered reread or a
+second competing sort.
 The Provider task MUST represent one database state: a concurrent commit MAY be
 entirely included or excluded, but MUST NOT contribute only some context
 components. After capture, task assembly MUST NOT perform another database read
@@ -33,6 +37,16 @@ digest, Lore, and capacity semantics MUST remain unchanged.
 - **WHEN** generation runs synchronously, by stream, or as a proposal retry
 - **THEN** each path derives its Provider task from one proposal-context capture
 - **AND** no path rereads individual context components during task assembly
+
+#### Scenario: Captured reading order remains canonical
+
+- **GIVEN** documents and equal-rank Lore matches span multiple volumes and
+  positions
+- **WHEN** their proposal context is captured
+- **THEN** documents follow volume position, document position, creation time,
+  then id
+- **AND** resident and Lore ordering remains byte-identical to the existing
+  canonical composite order
 
 #### Scenario: Admission precedes Provider and stream work
 
