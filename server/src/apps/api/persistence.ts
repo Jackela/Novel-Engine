@@ -11,9 +11,9 @@ export interface PersistenceHandles {
 /** Open the content-authority database and immediately bind its lifetime to the app. */
 export async function openPersistence(
   app: FastifyInstance,
-  dataDirectory: string,
+  databasePath: string,
 ): Promise<PersistenceHandles> {
-  const db = await openReconciledStudioDatabase(dataDirectory, {
+  const db = await openReconciledStudioDatabase(databasePath, {
     onReconciled: (report) => {
       app.log.info(
         { export_publication_recovery: true, ...report },
@@ -36,5 +36,5 @@ export async function openPersistence(
     }
     throw error;
   }
-  return { dataDirectory, db };
+  return { dataDirectory: db.dataDirectory, db };
 }

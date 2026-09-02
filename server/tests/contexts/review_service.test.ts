@@ -48,7 +48,7 @@ interface Harness {
 
 async function openHarness(): Promise<Harness> {
   const directory = await mkdtemp(join(tmpdir(), "novel-engine-review-service-"));
-  const studio = await openStudioDatabase(directory);
+  const studio = await openStudioDatabase(join(directory, "novel-engine.sqlite3"));
   const clock = monotonicClock();
   const store: StudioStore = new DrizzleStudioStore({
     database: studio.db,

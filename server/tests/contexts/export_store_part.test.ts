@@ -45,7 +45,7 @@ function monotonicClock(): () => Date {
 
 async function openHarness() {
   const directory = await mkdtemp(join(tmpdir(), "novel-engine-export-store-"));
-  const studio = await openStudioDatabase(directory);
+  const studio = await openStudioDatabase(join(directory, "novel-engine.sqlite3"));
   const clock = monotonicClock();
   const store = new DrizzleStudioStore({ database: studio.db });
   const projects = new ProjectService(store, clock);

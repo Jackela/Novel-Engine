@@ -32,7 +32,7 @@ async function buildImportApp() {
 async function reopenApp(directory: string) {
   const app = await buildApp({
     logger: false,
-    dataDirectory: directory,
+    databasePath: join(directory, "novel-engine.sqlite3"),
     sessionSecret: TEST_SESSION_SECRET,
   });
   return app;
@@ -80,7 +80,7 @@ describe("legacy import surface", () => {
     const before = directoryFingerprint(source);
 
     const project = await runLegacyImportCommand({
-      dataDirectory: directory,
+      databasePath: join(directory, "novel-engine.sqlite3"),
       source,
       owner: "owner",
     });
@@ -126,12 +126,12 @@ describe("legacy import surface", () => {
     const before = directoryFingerprint(source);
 
     const first = await runLegacyImportCommand({
-      dataDirectory: directory,
+      databasePath: join(directory, "novel-engine.sqlite3"),
       source,
       owner: "owner",
     });
     const second = await runLegacyImportCommand({
-      dataDirectory: directory,
+      databasePath: join(directory, "novel-engine.sqlite3"),
       source,
       owner: "owner",
     });

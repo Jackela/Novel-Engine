@@ -145,7 +145,7 @@ describe("orphan export snapshot migration", () => {
       legacy.close();
     }
 
-    const upgraded = await openStudioDatabase(directory);
+    const upgraded = await openStudioDatabase(join(directory, DATABASE_FILENAME));
     try {
       expect(ids(upgraded.raw, "project_snapshots")).toEqual([
         "snapshot-export-completed",
@@ -168,7 +168,7 @@ describe("orphan export snapshot migration", () => {
       upgraded.close();
     }
 
-    const restarted = await openStudioDatabase(directory);
+    const restarted = await openStudioDatabase(join(directory, DATABASE_FILENAME));
     try {
       expect(ids(restarted.raw, "project_snapshots")).toEqual([
         "snapshot-export-completed",

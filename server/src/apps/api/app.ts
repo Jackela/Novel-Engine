@@ -26,6 +26,7 @@ import {
 } from "../../shared/infrastructure/config/server_config.js";
 import { DrizzleAuthStore } from "../../shared/infrastructure/db/auth_store.js";
 import type { StudioSqliteDatabase } from "../../shared/infrastructure/db/connection.js";
+import { sqliteHealthProbe } from "../../shared/infrastructure/db/sqlite_health_probe.js";
 import type { StudioDatabase } from "../../shared/infrastructure/db/startup.js";
 import { clientIdentity } from "../../shared/infrastructure/rate_limit/client_identity.js";
 import { TokenBucketRateLimiter } from "../../shared/infrastructure/rate_limit/token_bucket.js";
@@ -47,7 +48,7 @@ import { correlationIdFrom, REQUEST_ID_HEADER } from "./request_correlation.js";
 
 declare module "fastify" {
   interface FastifyInstance {
-    /** The content-authority handle, present once a data directory is configured. */
+    /** The content-authority handle, present once an exact database path is configured. */
     studioDb?: StudioDatabase;
   }
 }
@@ -58,12 +59,12 @@ export interface AppOptions {
   environment?: string | undefined;
   buildSha?: string | undefined;
   /**
-   * Directory holding novel-engine.sqlite3. When set, startup runs the
+   * Exact SQLite database path. When set, startup runs the
    * persistence pipeline (backup → migrations → export reconciliation →
    * job-state recovery) before serving; when absent the app stays
    * database-free (walking skeleton).
    */
-  dataDirectory?: string | undefined;
+  databasePath?: string | undefined;
   /**
    * HMAC key for session token digests. Unset outside the production guards:
    * a fresh random value per start deliberately invalidates all sessions at
@@ -132,8 +133,8 @@ const emptyHealthProbe: HealthProbe = async () => ({ components: [] });
 /**
  * Composition root of the TS server: correlation-id request logging, the
  * unified error envelope, health probes, /version metadata, the OpenAPI
- * document seam consumed by the snapshot gate, and — when a data directory
- * is configured — the persistence pipeline (backup → migrate → reconcile
+ * document seam consumed by the snapshot gate, and — when a database path is
+ * configured — the persistence pipeline (backup → migrate → reconcile
  * export publications → recover job state) that must complete before the app
  * serves traffic.
  */
@@ -155,16 +156,17 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
       reply.header("x-request-id", request.id);
     });
 
-    const dataDirectory = options.dataDirectory ?? options.config?.dataDirectory;
-    // The content-authority database exists exactly when a data directory is
+    const databasePath = options.databasePath ?? options.config?.databasePath;
+    // The content-authority database exists exactly when a database path is
     // configured, so the handles travel together and downstream guards need a
     // single check (audit hard-10: the former `studioDb === undefined ||
     // dataDirectory === undefined` clause was unreachable).
     const persistence =
-      dataDirectory === undefined ? undefined : await openPersistence(app, dataDirectory);
+      databasePath === undefined ? undefined : await openPersistence(app, databasePath);
     if (persistence !== undefined) {
       app.decorate("studioDb", persistence.db);
     }
+    const dataDirectory = persistence?.dataDirectory;
 
     const environment =
       options.environment ?? options.config?.environment ?? process.env.NODE_ENV ?? "development";
@@ -282,7 +284,11 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
           options.trustedProxies ?? options.config?.trustedProxies ?? [],
         ),
     });
-    await app.register(healthRoutes, { healthProbe: options.healthProbe ?? emptyHealthProbe });
+    await app.register(healthRoutes, {
+      healthProbe:
+        options.healthProbe ??
+        (persistence === undefined ? emptyHealthProbe : sqliteHealthProbe(persistence.db.raw)),
+    });
     await app.register(versionRoutes, { info: versionInfo });
     await app.register(providerCatalogRoutes, {
       authService,

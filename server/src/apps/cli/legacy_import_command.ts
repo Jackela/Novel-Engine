@@ -12,8 +12,8 @@ import { AuthService } from "../../shared/application/auth_service.js";
 import { DrizzleAuthStore } from "../../shared/infrastructure/db/auth_store.js";
 
 export interface LegacyImportCommandInput {
-  /** Data directory owner (backup → migrate → reconcile exports → recover jobs runs first). */
-  dataDirectory: string;
+  /** Exact database authority (backup → migrate → reconcile exports → recover jobs runs first). */
+  databasePath: string;
   /** Explicit legacy workspace path; the CLI is not confined to data/imports. */
   source: string;
   /** Owner username; omitted falls back to the installation's single owner. */
@@ -30,7 +30,7 @@ export interface LegacyImportCommandInput {
 export async function runLegacyImportCommand(
   input: LegacyImportCommandInput,
 ): Promise<Record<string, unknown>> {
-  const database = await openReconciledStudioDatabase(input.dataDirectory);
+  const database = await openReconciledStudioDatabase(input.databasePath);
   try {
     const authService = new AuthService({
       store: new DrizzleAuthStore(database.db),
@@ -45,10 +45,10 @@ export async function runLegacyImportCommand(
       // The import command never touches exports, but the service graph is
       // complete: the same store/gateway the API composition root wires.
       artifactStore: new ExportStorePart(database.db),
-      artifactFiles: new FilesystemExportArtifactGateway(input.dataDirectory, {
+      artifactFiles: new FilesystemExportArtifactGateway(database.dataDirectory, {
         cleanupJournal: new DatabaseExportPublicationCleanupJournal(database.db),
       }),
-      projectArtifactCleaner: new FilesystemProjectArtifactCleaner(input.dataDirectory),
+      projectArtifactCleaner: new FilesystemProjectArtifactCleaner(database.dataDirectory),
     });
     return services.imports.importLegacyWorkspace(principal, input.source);
   } finally {

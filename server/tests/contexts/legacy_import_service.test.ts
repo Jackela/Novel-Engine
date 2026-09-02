@@ -27,7 +27,7 @@ const opened: StudioDatabase[] = [];
  */
 async function buildServices() {
   const directory = await mkdtemp(join(tmpdir(), "novel-engine-import-"));
-  const database = await openStudioDatabase(directory);
+  const database = await openStudioDatabase(join(directory, "novel-engine.sqlite3"));
   opened.push(database);
   const auth = new AuthService({
     store: new DrizzleAuthStore(database.db),

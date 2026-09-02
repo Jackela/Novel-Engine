@@ -44,7 +44,7 @@ function clock(): () => Date {
 async function openHarness() {
   const directory = await mkdtemp(join(tmpdir(), "novel-engine-review-outcome-"));
   directories.push(directory);
-  const database = await openStudioDatabase(directory);
+  const database = await openStudioDatabase(join(directory, "novel-engine.sqlite3"));
   const now = clock();
   const store = new DrizzleStudioStore({ database: database.db });
   const auth = new AuthService({

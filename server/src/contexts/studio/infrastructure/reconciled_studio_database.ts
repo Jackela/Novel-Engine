@@ -15,11 +15,11 @@ export interface ReconciledStudioDatabaseOptions {
 
 /** Production/maintenance opener: migrations, export reconciliation, then job recovery. */
 export function openReconciledStudioDatabase(
-  dataDirectory: string,
+  databasePath: string,
   options: ReconciledStudioDatabaseOptions = {},
 ): Promise<StudioDatabase> {
-  return openStudioDatabase(dataDirectory, {
-    beforeJobRecovery: async (database) => {
+  return openStudioDatabase(databasePath, {
+    beforeJobRecovery: async (database, dataDirectory) => {
       const report = await reconcileExportPublications(database, dataDirectory);
       await options.onReconciled?.(report);
     },

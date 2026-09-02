@@ -13,6 +13,7 @@ import { DrizzleStudioStore } from "../../src/contexts/studio/infrastructure/dri
 import { AuthService } from "../../src/shared/application/auth_service.js";
 import type { Principal } from "../../src/shared/application/ports/auth.js";
 import { DrizzleAuthStore } from "../../src/shared/infrastructure/db/auth_store.js";
+import { DATABASE_FILENAME } from "../../src/shared/infrastructure/db/backup.js";
 import { jobs, usageEvents } from "../../src/shared/infrastructure/db/schema.js";
 import {
   openStudioDatabase,
@@ -34,7 +35,7 @@ interface ServiceHarness {
  */
 async function openProposalStreamHarness(): Promise<ServiceHarness> {
   const directory = await mkdtemp(join(tmpdir(), "novel-engine-proposal-stream-"));
-  const studio = await openStudioDatabase(directory);
+  const studio = await openStudioDatabase(join(directory, DATABASE_FILENAME));
   const now = (): Date => new Date();
   const store: StudioStore = new DrizzleStudioStore({
     database: studio.db,
@@ -144,4 +145,5 @@ describe("proposal stream service (#308 abort semantics)", () => {
       await harness.cleanup();
     }
   });
+
 });

@@ -53,7 +53,7 @@ export async function buildStudioApp(
   const directory = await mkdtemp(join(tmpdir(), "novel-engine-studio-"));
   const app = await buildApp({
     logger: false,
-    dataDirectory: directory,
+    databasePath: join(directory, "novel-engine.sqlite3"),
     sessionSecret: TEST_SESSION_SECRET,
     clock,
     ...overrides,

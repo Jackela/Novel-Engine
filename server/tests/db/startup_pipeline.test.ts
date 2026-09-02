@@ -14,6 +14,10 @@ async function makeDataDirectory(): Promise<string> {
   return mkdtemp(join(tmpdir(), "novel-engine-persistence-"));
 }
 
+function defaultDatabasePath(directory: string): string {
+  return join(directory, DATABASE_FILENAME);
+}
+
 function tableNames(database: Database.Database): string[] {
   const rows = database
     .prepare("SELECT name FROM sqlite_master WHERE type = 'table'")
@@ -35,11 +39,11 @@ describe("startup pipeline", () => {
 
   it("owns one data directory before backup or recovery work begins", async () => {
     const directory = await makeDataDirectory();
-    const first = await openStudioDatabase(directory);
+    const first = await openStudioDatabase(defaultDatabasePath(directory));
     let blockedHookRan = false;
     try {
       await expect(
-        openStudioDatabase(directory, {
+        openStudioDatabase(defaultDatabasePath(directory), {
           beforeJobRecovery: () => {
             blockedHookRan = true;
           },
@@ -52,7 +56,7 @@ describe("startup pipeline", () => {
     }
 
     let reopenedHookRan = false;
-    const reopened = await openStudioDatabase(directory, {
+    const reopened = await openStudioDatabase(defaultDatabasePath(directory), {
       beforeJobRecovery: () => {
         reopenedHookRan = true;
       },
@@ -68,14 +72,14 @@ describe("startup pipeline", () => {
     const directory = await makeDataDirectory();
 
     await expect(
-      openStudioDatabase(directory, {
+      openStudioDatabase(defaultDatabasePath(directory), {
         beforeJobRecovery: () => {
           throw new Error("simulated recovery failure");
         },
       }),
     ).rejects.toThrow("simulated recovery failure");
 
-    const reopened = await openStudioDatabase(directory);
+    const reopened = await openStudioDatabase(defaultDatabasePath(directory));
     reopened.close();
   });
 
@@ -103,7 +107,9 @@ describe("startup pipeline", () => {
 
     let failure: unknown;
     try {
-      failure = await openStudioDatabase(directory).catch((error: unknown) => error);
+      failure = await openStudioDatabase(defaultDatabasePath(directory)).catch(
+        (error: unknown) => error,
+      );
     } finally {
       Database.prototype.pragma = originalPragma;
       Database.prototype.close = originalClose;
@@ -121,7 +127,7 @@ describe("startup pipeline", () => {
 
   it("keeps ownership when the content database cannot close and retries in order", async () => {
     const directory = await makeDataDirectory();
-    const studio = await openStudioDatabase(directory);
+    const studio = await openStudioDatabase(defaultDatabasePath(directory));
     const closeContentDatabase = studio.raw.close.bind(studio.raw);
     let closeAttempts = 0;
     studio.raw.close = () => {
@@ -147,7 +153,7 @@ describe("startup pipeline", () => {
 
   it("retries ownership release without closing the content database twice", async () => {
     const directory = await makeDataDirectory();
-    const studio = await openStudioDatabase(directory);
+    const studio = await openStudioDatabase(defaultDatabasePath(directory));
     const closeContentDatabase = studio.raw.close.bind(studio.raw);
     let contentCloseAttempts = 0;
     studio.raw.close = () => {
@@ -184,7 +190,7 @@ describe("startup pipeline", () => {
   it("bootstraps a missing database cleanly without writing a backup", async () => {
     const directory = await makeDataDirectory();
 
-    const studio = await openStudioDatabase(directory);
+    const studio = await openStudioDatabase(defaultDatabasePath(directory));
     try {
       const tables = tableNames(studio.raw);
       expect(tables).toContain("sessions");
@@ -201,7 +207,7 @@ describe("startup pipeline", () => {
   it("enforces the adjudicated connection PRAGMAs", async () => {
     const directory = await makeDataDirectory();
 
-    const studio = await openStudioDatabase(directory);
+    const studio = await openStudioDatabase(defaultDatabasePath(directory));
     try {
       expect(studio.raw.pragma("journal_mode", { simple: true })).toBe("wal");
       expect(studio.raw.pragma("foreign_keys", { simple: true })).toBe(1);
@@ -220,7 +226,7 @@ describe("startup pipeline", () => {
     preRelease.prepare("INSERT INTO pre_rewrite_marker (id) VALUES (?)").run("kept-content");
     preRelease.close();
 
-    const studio = await openStudioDatabase(directory);
+    const studio = await openStudioDatabase(defaultDatabasePath(directory));
     try {
       expect(tableNames(studio.raw)).toContain("sessions");
     } finally {
@@ -251,7 +257,7 @@ describe("startup pipeline", () => {
     existing.exec("INSERT INTO sessions VALUES (7)");
     existing.close();
 
-    await expect(openStudioDatabase(directory)).rejects.toThrow();
+    await expect(openStudioDatabase(defaultDatabasePath(directory))).rejects.toThrow();
 
     const after = new Database(databasePath);
     try {
@@ -266,7 +272,7 @@ describe("startup pipeline", () => {
     const directory = await makeDataDirectory();
     await writeFile(join(directory, DATABASE_FILENAME), "");
 
-    const studio = await openStudioDatabase(directory);
+    const studio = await openStudioDatabase(defaultDatabasePath(directory));
     try {
       expect(tableNames(studio.raw)).toContain("sessions");
     } finally {
@@ -279,7 +285,7 @@ describe("startup pipeline", () => {
   it("creates the hand-written FTS5 placeholder virtual table", async () => {
     const directory = await makeDataDirectory();
 
-    const studio = await openStudioDatabase(directory);
+    const studio = await openStudioDatabase(defaultDatabasePath(directory));
     try {
       const ddl = studio.raw
         .prepare("SELECT sql FROM sqlite_master WHERE name = 'document_search'")

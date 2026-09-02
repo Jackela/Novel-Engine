@@ -14,7 +14,7 @@ import { ownerJar, seedProject } from "./studio_helpers.js";
 async function appAt(directory: string) {
   return buildApp({
     logger: false,
-    dataDirectory: directory,
+    databasePath: join(directory, "novel-engine.sqlite3"),
     sessionSecret: TEST_SESSION_SECRET,
   });
 }
@@ -26,7 +26,7 @@ describe("data-directory ownership", () => {
     await expect(
       buildApp({
         logger: false,
-        dataDirectory: directory,
+        databasePath: join(directory, "novel-engine.sqlite3"),
         sessionSecret: TEST_SESSION_SECRET,
         exportStoreFactory: () => {
           throw new Error("simulated service composition failure");

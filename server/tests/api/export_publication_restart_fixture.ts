@@ -33,7 +33,7 @@ afterEach(async () => {
 export async function appAt(directory: string, options: Partial<AppOptions> = {}) {
   const app = await buildApp({
     logger: false,
-    dataDirectory: directory,
+    databasePath: join(directory, "novel-engine.sqlite3"),
     sessionSecret: TEST_SESSION_SECRET,
     ...options,
   });

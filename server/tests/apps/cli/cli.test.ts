@@ -52,13 +52,13 @@ async function cliHarness(): Promise<CliHarness> {
 
 /** Leave a migrated, non-empty database behind so backup/serve have state. */
 async function seedDatabase(harness: CliHarness): Promise<void> {
-  const studio = await openStudioDatabase(harness.dataDirectory);
+  const studio = await openStudioDatabase(harness.databasePath);
   studio.close();
   expect(existsSync(harness.databasePath)).toBe(true);
 }
 
 async function seedMissingCommittedExport(harness: CliHarness): Promise<void> {
-  const studio = await openStudioDatabase(harness.dataDirectory);
+  const studio = await openStudioDatabase(harness.databasePath);
   const now = new Date("2026-08-31T18:00:00.000Z");
   try {
     studio.db
@@ -127,7 +127,7 @@ describe("operational CLI", () => {
 
   it("refuses backup while another process owns the data directory", async () => {
     const harness = await cliHarness();
-    const active = await openStudioDatabase(harness.dataDirectory);
+    const active = await openStudioDatabase(harness.databasePath);
     try {
       const blockedCode = await runCli(["backup"], harness.context);
 
@@ -211,7 +211,7 @@ describe("operational CLI", () => {
     expect(importCode).toBe(1);
     expect(harness.lines.join("\n")).toMatch(/missing/i);
 
-    const unchanged = await openStudioDatabase(harness.dataDirectory);
+    const unchanged = await openStudioDatabase(harness.databasePath);
     try {
       expect(unchanged.db.select().from(projects).all()).toHaveLength(1);
       expect(unchanged.db.select().from(exportArtifacts).all()).toHaveLength(1);
@@ -250,7 +250,7 @@ describe("operational CLI", () => {
       title: "CLI Import Story",
       chapters: [{ filename: "chapter-001.md", content: "# One\n" }],
     });
-    const database = await openStudioDatabase(harness.dataDirectory);
+    const database = await openStudioDatabase(harness.databasePath);
     try {
       await new AuthService({
         store: new DrizzleAuthStore(database.db),

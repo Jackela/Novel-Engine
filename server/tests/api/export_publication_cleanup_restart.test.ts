@@ -26,7 +26,7 @@ describe("export cleanup authority restart ordering", () => {
     const directory = await mkdtemp(join(tmpdir(), "novel-engine-cleanup-restart-"));
     const first = await buildApp({
       logger: false,
-      dataDirectory: directory,
+      databasePath: join(directory, "novel-engine.sqlite3"),
       sessionSecret: TEST_SESSION_SECRET,
     });
     openApps.push(first);
@@ -82,7 +82,11 @@ describe("export cleanup authority restart ordering", () => {
     await rename(manifest, quarantine);
 
     await expect(
-      buildApp({ logger: false, dataDirectory: directory, sessionSecret: TEST_SESSION_SECRET }),
+      buildApp({
+        logger: false,
+        databasePath: join(directory, "novel-engine.sqlite3"),
+        sessionSecret: TEST_SESSION_SECRET,
+      }),
     ).rejects.toThrow(/cleanup intent is missing/i);
 
     expect(existsSync(join(directory, evidence.relativePath))).toBe(true);

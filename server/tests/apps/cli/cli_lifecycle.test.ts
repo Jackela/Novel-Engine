@@ -18,9 +18,9 @@ async function lifecycleHarness() {
     env: { DB_URL: `sqlite:///${databasePath}`, APP_ENVIRONMENT: "testing" },
     writeLine: (line) => lines.push(line),
   };
-  const studio = await openStudioDatabase(dataDirectory);
+  const studio = await openStudioDatabase(databasePath);
   studio.close();
-  return { context, dataDirectory, lines };
+  return { context, databasePath, lines };
 }
 
 describe("CLI serve lifecycle", () => {
@@ -35,7 +35,7 @@ describe("CLI serve lifecycle", () => {
 
     expect(code).toBe(1);
     expect(harness.lines.join("\n")).toContain("simulated listen failure");
-    const reopened = await openStudioDatabase(harness.dataDirectory);
+    const reopened = await openStudioDatabase(harness.databasePath);
     reopened.close();
   });
 
@@ -62,7 +62,7 @@ describe("CLI serve lifecycle", () => {
       "simulated listen failure",
       "simulated cleanup failure",
     ]);
-    const reopened = await openStudioDatabase(harness.dataDirectory);
+    const reopened = await openStudioDatabase(harness.databasePath);
     reopened.close();
   });
 });

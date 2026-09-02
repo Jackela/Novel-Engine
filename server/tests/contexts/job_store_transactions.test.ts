@@ -54,7 +54,7 @@ function usageInput() {
 
 async function openHarness() {
   const directory = await mkdtemp(join(tmpdir(), "novel-engine-job-store-tx-"));
-  const studio = await openStudioDatabase(directory);
+  const studio = await openStudioDatabase(join(directory, "novel-engine.sqlite3"));
   const clock = monotonicClock();
   const store = new DrizzleStudioStore({ database: studio.db });
   // Projects reference the owners table, so the harness registers a real owner.

@@ -11,6 +11,10 @@ import {
 import { DrizzleAuthStore } from "../../shared/infrastructure/db/auth_store.js";
 import { backupDatabaseFile } from "../../shared/infrastructure/db/backup.js";
 import { acquireDataDirectoryLock } from "../../shared/infrastructure/db/data_directory_lock.js";
+import {
+  assertNoLegacyDatabaseSibling,
+  databaseDataDirectory,
+} from "../../shared/infrastructure/db/database_authority.js";
 import { readProductIdentity } from "../../shared/infrastructure/workspace_manifest.js";
 import { buildApp } from "../api/app.js";
 import { closeAppAndRethrow, closeResourceAndRethrow } from "../api/app_lifecycle.js";
@@ -152,9 +156,11 @@ async function backupCommand(context: CliContext, writeLine: WriteLine): Promise
   const config = configFor(context);
   const acquireOwnership = context.acquireDataDirectoryLock ?? acquireDataDirectoryLock;
   const runBackup = context.backupDatabaseFile ?? backupDatabaseFile;
-  const ownership = acquireOwnership(config.dataDirectory);
+  const dataDirectory = databaseDataDirectory(config.databasePath);
+  const ownership = acquireOwnership(dataDirectory);
   let target: string | null;
   try {
+    await assertNoLegacyDatabaseSibling(config.databasePath, dataDirectory);
     target = await runBackup(config.databasePath);
   } catch (error) {
     return closeResourceAndRethrow(
@@ -191,7 +197,7 @@ async function doctorCommand(context: CliContext, writeLine: WriteLine): Promise
     owner_configured: false,
   };
   try {
-    const studio = await openReconciledStudioDatabase(config.dataDirectory);
+    const studio = await openReconciledStudioDatabase(config.databasePath);
     try {
       report.quick_check = String(studio.raw.pragma("quick_check", { simple: true }));
       report.journal_mode = String(studio.raw.pragma("journal_mode", { simple: true }));
@@ -230,7 +236,7 @@ async function importCommand(
 const legacyImportRunner: ImportRunner = async (args, context) => {
   try {
     const imported = await runLegacyImportCommand({
-      dataDirectory: context.config.dataDirectory,
+      databasePath: context.config.databasePath,
       source: args.source,
       owner: args.owner,
     });

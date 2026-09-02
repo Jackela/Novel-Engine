@@ -38,7 +38,7 @@ export async function cleanupRecoveryHarnesses(): Promise<void> {
 
 export async function openRecoveryHarness(): Promise<RecoveryHarness> {
   const directory = await mkdtemp(join(tmpdir(), "novel-engine-export-recovery-"));
-  const studio = await openStudioDatabase(directory);
+  const studio = await openStudioDatabase(join(directory, "novel-engine.sqlite3"));
   const projectId = "project-main";
   const snapshotId = "snapshot-main";
   studio.db

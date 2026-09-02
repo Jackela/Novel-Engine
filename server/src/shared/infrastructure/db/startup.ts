@@ -6,13 +6,14 @@ import Database from "better-sqlite3";
 import { eq } from "drizzle-orm";
 import { migrate } from "drizzle-orm/better-sqlite3/migrator";
 
-import { backupDatabaseFile, DATABASE_FILENAME } from "./backup.js";
+import { backupDatabaseFile } from "./backup.js";
 import {
   openConnection,
   StudioConnectionInitializationCleanupError,
   type StudioSqliteDatabase,
 } from "./connection.js";
 import { acquireDataDirectoryLock, type DataDirectoryLock } from "./data_directory_lock.js";
+import { assertNoLegacyDatabaseSibling, databaseDataDirectory } from "./database_authority.js";
 import { jobEvents, jobs } from "./schema.js";
 
 const SEARCH_DEPTH = 8;
@@ -30,31 +31,33 @@ export interface StudioDatabase {
   readonly db: StudioSqliteDatabase;
   readonly raw: Database.Database;
   readonly databasePath: string;
+  readonly dataDirectory: string;
   close(): void;
 }
 
 export interface OpenStudioDatabaseOptions {
   /** Context-owned reconciliation after schema migration and before job recovery. */
   readonly beforeJobRecovery?:
-    | ((database: StudioSqliteDatabase) => Promise<void> | void)
+    | ((database: StudioSqliteDatabase, dataDirectory: string) => Promise<void> | void)
     | undefined;
 }
 
 /**
  * The startup pipeline of the content authority, in the adjudicated order:
- * exclusive data-directory ownership, online backup of any pre-existing
- * non-empty database, schema migrations, the optional context-owned
+ * exclusive data-directory ownership, legacy-authority ambiguity rejection,
+ * online backup of any pre-existing non-empty database, schema migrations, the optional context-owned
  * reconciliation hook, then job-state recovery — only afterwards may the
  * caller serve.
  */
 export async function openStudioDatabase(
-  directory: string,
+  databasePath: string,
   options: OpenStudioDatabaseOptions = {},
 ): Promise<StudioDatabase> {
-  const databasePath = join(directory, DATABASE_FILENAME);
-  const ownership = acquireDataDirectoryLock(directory);
+  const dataDirectory = databaseDataDirectory(databasePath);
+  const ownership = acquireDataDirectoryLock(dataDirectory);
   let connection: ReturnType<typeof openConnection> | undefined;
   try {
+    await assertNoLegacyDatabaseSibling(databasePath, dataDirectory);
     if (containsPythonSchema(databasePath)) {
       throw new Error(
         `Refusing to open ${databasePath}: the database contains a non-drizzle schema ` +
@@ -67,7 +70,7 @@ export async function openStudioDatabase(
     connection = openConnection(databasePath);
     const { db } = connection;
     migrate(db, { migrationsFolder: locateMigrationsFolder() });
-    await options.beforeJobRecovery?.(db);
+    await options.beforeJobRecovery?.(db, dataDirectory);
     recoverInterruptedJobs(db);
   } catch (error) {
     const failedRaw =
@@ -81,6 +84,7 @@ export async function openStudioDatabase(
     db,
     raw,
     databasePath,
+    dataDirectory,
     close: () => {
       if (!contentClosed) {
         raw.close();
