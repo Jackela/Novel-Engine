@@ -1,6 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { constants } from "node:fs";
-import { link, open, rename, unlink } from "node:fs/promises";
+import { link, rename, unlink } from "node:fs/promises";
 import { dirname } from "node:path";
 
 import {
@@ -9,6 +8,12 @@ import {
   type FileIdentity,
   syncDirectory,
 } from "./export_artifact_fs_support.js";
+import { matchesFileProof, readFileProof } from "./export_publication_file_evidence.js";
+
+export interface OwnedArtifactProof extends FileIdentity {
+  readonly sizeBytes: number;
+  readonly checksumSha256: string;
+}
 
 export type OwnedFinalRemoval = "missing" | "removed" | "replacement-restored";
 
@@ -20,25 +25,21 @@ export async function rollbackPublication(
   stage: string,
   manifest: string,
   stagingDirectory: string,
-  contents: Buffer,
-  dev: bigint,
-  ino: bigint,
+  proof: OwnedArtifactProof,
   manifestIdentity: FileIdentity | undefined,
   afterQuarantine?: (quarantine: string, target: string) => Promise<void>,
 ): Promise<void> {
-  const removal = await removeOwnedFinalViaQuarantine(target, contents, dev, ino, afterQuarantine);
+  const removal = await removeOwnedFinalViaQuarantine(target, proof, afterQuarantine);
   if (removal === "replacement-restored") throw new Error(REPLACEMENT_PRESERVED_ERROR);
   await cleanupPublicationSidecars(stage, manifest, stagingDirectory, {
-    stage: { dev, ino },
+    stage: { dev: proof.dev, ino: proof.ino },
     manifest: manifestIdentity,
   });
 }
 
 export async function removeOwnedFinalViaQuarantine(
   target: string,
-  contents: Buffer,
-  dev: bigint,
-  ino: bigint,
+  expected: OwnedArtifactProof,
   afterQuarantine?: (quarantine: string, target: string) => Promise<void>,
 ): Promise<OwnedFinalRemoval> {
   const quarantine = `${target}.rollback-${randomUUID()}`;
@@ -50,7 +51,7 @@ export async function removeOwnedFinalViaQuarantine(
   }
   await syncDirectory(dirname(target));
   await afterQuarantine?.(quarantine, target);
-  const owned = await isExpectedFile(quarantine, contents, dev, ino);
+  const owned = await isExpectedFile(quarantine, expected);
   if (owned) {
     await unlink(quarantine);
     await syncDirectory(dirname(target));
@@ -65,28 +66,14 @@ export async function removeOwnedFinalViaQuarantine(
   return "replacement-restored";
 }
 
-async function isExpectedFile(
-  path: string,
-  contents: Buffer,
-  dev: bigint,
-  ino: bigint,
-): Promise<boolean> {
-  let handle: Awaited<ReturnType<typeof open>>;
-  try {
-    handle = await open(path, constants.O_RDONLY | constants.O_NOFOLLOW);
-  } catch (error) {
-    if (isMissingOrReplacedTarget(error)) return false;
-    throw error;
-  }
-  try {
-    const details = await handle.stat({ bigint: true });
-    const actual = await handle.readFile();
-    return (
-      details.isFile() && details.dev === dev && details.ino === ino && actual.equals(contents)
-    );
-  } finally {
-    await handle.close();
-  }
+async function isExpectedFile(path: string, expected: OwnedArtifactProof): Promise<boolean> {
+  const proof = await readFileProof(path, { missingAllowed: true });
+  return (
+    proof !== null &&
+    proof.dev === expected.dev &&
+    proof.ino === expected.ino &&
+    matchesFileProof(proof, expected.sizeBytes, expected.checksumSha256)
+  );
 }
 
 function isMissingOrReplacedTarget(error: unknown): boolean {

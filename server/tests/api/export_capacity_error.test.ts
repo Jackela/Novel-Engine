@@ -41,11 +41,13 @@ describe("export capacity contract", () => {
       "source_documents",
       "source_bytes",
       "artifact_bytes",
+      "manifest_bytes",
     ]);
     expect(EXPORT_CAPACITY_LIMITS).toEqual({
       source_documents: 65_536,
       source_bytes: 16_777_216,
       artifact_bytes: 67_108_864,
+      manifest_bytes: 16_384,
     });
     expect(Object.isFrozen(EXPORT_CAPACITY_RESOURCES)).toBe(true);
     expect(Object.isFrozen(EXPORT_CAPACITY_LIMITS)).toBe(true);

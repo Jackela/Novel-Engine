@@ -65,16 +65,37 @@ export interface ArtifactPublicationInput {
 export async function publishArtifact(
   input: ArtifactPublicationInput,
 ): Promise<ArtifactFileEvidence> {
-  assertArtifactDescriptorSize(input.contents.length, input.contents.length);
+  const artifactSizeBytes = input.contents.length;
+  const checksumSha256 = createHash("sha256").update(input.contents).digest("hex");
+  assertArtifactDescriptorSize(artifactSizeBytes, artifactSizeBytes);
+  const cleanupJournal = input.cleanupJournal;
+  const afterRollbackQuarantine = input.afterRollbackQuarantine;
+  const target = input.target;
   const nextId = input.newId ?? randomUUID;
   const publicationId = safeId(nextId());
-  const stagingDirectory = await durableStagingDirectory(input.projectDirectory);
-  await input.afterStagingReady?.();
   const stageFile = `${input.artifactId}.${publicationId}.stage`;
   const manifestFile = `${input.artifactId}.${publicationId}.manifest.json`;
+  const publicationRecord: ExportPublicationManifest = {
+    version: EXPORT_PUBLICATION_VERSION,
+    publication_id: publicationId,
+    artifact_id: input.artifactId,
+    project_id: input.projectId,
+    format: input.format,
+    relative_path: input.relativePath,
+    stage_file: stageFile,
+    size_bytes: artifactSizeBytes,
+    checksum_sha256: checksumSha256,
+  };
+  const manifestContents = encodeManifest(publicationRecord);
+  const manifestTemporaryId = safeId(nextId());
+  const stagingDirectory = await durableStagingDirectory(input.projectDirectory);
+  await input.afterStagingReady?.();
   const stage = resolve(stagingDirectory, stageFile);
   const manifest = resolve(stagingDirectory, manifestFile);
-  const manifestTemporary = resolve(stagingDirectory, `.${manifestFile}.${safeId(nextId())}.tmp`);
+  const manifestTemporary = resolve(
+    stagingDirectory,
+    `.${manifestFile}.${manifestTemporaryId}.tmp`,
+  );
   let finalLinked = false;
   let stageIdentity: FileIdentity | undefined;
   let manifestIdentity: FileIdentity | undefined;
@@ -90,23 +111,11 @@ export async function publishArtifact(
       },
       input.afterStageWrite,
     );
-    const checksumSha256 = createHash("sha256").update(input.contents).digest("hex");
-    const publicationRecord: ExportPublicationManifest = {
-      version: EXPORT_PUBLICATION_VERSION,
-      publication_id: publicationId,
-      artifact_id: input.artifactId,
-      project_id: input.projectId,
-      format: input.format,
-      relative_path: input.relativePath,
-      stage_file: stageFile,
-      size_bytes: input.contents.length,
-      checksum_sha256: checksumSha256,
-    };
     record = publicationRecord;
     const linkedManifestIdentity = await writeDurableManifest(
       manifestTemporary,
       manifest,
-      publicationRecord,
+      manifestContents,
       (identity) => {
         manifestTemporaryIdentity = identity;
       },
@@ -119,8 +128,14 @@ export async function publishArtifact(
       stageIdentity: writtenIdentity,
       manifestIdentity: linkedManifestIdentity,
     };
-    if (input.cleanupJournal !== undefined) {
-      await input.cleanupJournal.begin(cleanupIntent);
+    const artifactProof = {
+      dev: writtenIdentity.dev,
+      ino: writtenIdentity.ino,
+      sizeBytes: publicationRecord.size_bytes,
+      checksumSha256,
+    };
+    if (cleanupJournal !== undefined) {
+      await cleanupJournal.begin(cleanupIntent);
       cleanupIntentRecorded = true;
     }
     await link(stage, input.target);
@@ -128,27 +143,25 @@ export async function publishArtifact(
     await syncDirectory(input.projectDirectory);
     return {
       relativePath: input.relativePath,
-      sizeBytes: input.contents.length,
+      sizeBytes: artifactSizeBytes,
       checksumSha256,
       acknowledge: () =>
-        cleanupWithIntent(input.cleanupJournal, cleanupIntent, () =>
+        cleanupWithIntent(cleanupJournal, cleanupIntent, () =>
           cleanupPublicationSidecars(stage, manifest, stagingDirectory, {
             stage: writtenIdentity,
             manifest: linkedManifestIdentity,
           }),
         ),
       rollback: () =>
-        cleanupWithIntent(input.cleanupJournal, cleanupIntent, () =>
+        cleanupWithIntent(cleanupJournal, cleanupIntent, () =>
           rollbackPublication(
-            input.target,
+            target,
             stage,
             manifest,
             stagingDirectory,
-            input.contents,
-            writtenIdentity.dev,
-            writtenIdentity.ino,
+            artifactProof,
             linkedManifestIdentity,
-            input.afterRollbackQuarantine,
+            afterRollbackQuarantine,
           ),
         ),
     };
@@ -160,16 +173,29 @@ export async function publishArtifact(
       manifest,
       manifestTemporary,
       stagingDirectory,
-      contents: input.contents,
+      artifactProof:
+        stageIdentity === undefined
+          ? {
+              dev: 0n,
+              ino: 0n,
+              sizeBytes: artifactSizeBytes,
+              checksumSha256,
+            }
+          : {
+              dev: stageIdentity.dev,
+              ino: stageIdentity.ino,
+              sizeBytes: artifactSizeBytes,
+              checksumSha256,
+            },
       finalLinked,
       stageIdentity,
       manifestIdentity,
       manifestTemporaryIdentity,
       record,
-      cleanupJournal: input.cleanupJournal,
+      cleanupJournal,
       cleanupIntentRecorded,
       reportCleanupFailure: input.reportCleanupFailure,
-      afterRollbackQuarantine: input.afterRollbackQuarantine,
+      afterRollbackQuarantine,
     });
     throw error;
   }
@@ -242,21 +268,26 @@ function assertArtifactDescriptorSize(observed: number, expected: number): void 
 async function writeDurableManifest(
   temporary: string,
   target: string,
-  manifest: ExportPublicationManifest,
+  contents: Buffer,
   onTemporaryCreated: (identity: FileIdentity) => void,
   onManifestLinked: (identity: FileIdentity) => void,
 ): Promise<FileIdentity> {
-  const identity = await writeDurableFile(
-    temporary,
-    Buffer.from(`${JSON.stringify(manifest)}\n`, "utf8"),
-    onTemporaryCreated,
-  );
+  const identity = await writeDurableFile(temporary, contents, onTemporaryCreated);
   await link(temporary, target);
   onManifestLinked(identity);
   await syncDirectory(dirname(target));
   await cleanupOwnedFile(temporary, identity);
   await syncDirectory(dirname(target));
   return identity;
+}
+
+function encodeManifest(manifest: ExportPublicationManifest): Buffer {
+  const contents = Buffer.from(`${JSON.stringify(manifest)}\n`, "utf8");
+  const limit = EXPORT_CAPACITY_LIMITS.manifest_bytes;
+  if (contents.length > limit) {
+    throw new ExportCapacityExceededError("manifest_bytes", limit, contents.length);
+  }
+  return contents;
 }
 
 function safeId(value: string): string {

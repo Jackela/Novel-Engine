@@ -2,6 +2,7 @@ import {
   exportArtifactNames,
   isExportArtifactFormat,
 } from "../application/export_artifact_identity.js";
+import { EXPORT_CAPACITY_LIMITS } from "../domain/exceptions.js";
 import type { FileIdentity } from "./export_artifact_fs_support.js";
 import {
   EXPORT_PUBLICATION_VERSION,
@@ -21,8 +22,15 @@ export async function readManifestEvidence(
   filename: string,
   projectId: string,
 ): Promise<ManifestEvidence> {
-  const proof = await readFileProof(path);
+  const proof = await readFileProof(path, {
+    collectContents: true,
+    capacity: {
+      resource: "manifest_bytes",
+      limit: EXPORT_CAPACITY_LIMITS.manifest_bytes,
+    },
+  });
   if (proof === null) throw new Error("Export publication manifest disappeared.");
+  if (!("contents" in proof)) throw new Error("Export publication manifest bytes are missing.");
   let value: unknown;
   try {
     value = JSON.parse(proof.contents.toString("utf8"));

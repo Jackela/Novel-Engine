@@ -108,7 +108,7 @@ export async function preflightManifestRecovery(
 }> {
   const finalPath = resolve(projectDirectory, manifestFilename(manifest));
   const stage = stagePath === undefined ? null : await readFileProof(stagePath);
-  const final = await readFileProof(finalPath, true);
+  const final = await readFileProof(finalPath, { missingAllowed: true });
   if (cleanupOwnership !== undefined) {
     if (manifestIdentity !== undefined) {
       assertIdentity(manifestIdentity, cleanupOwnership.manifest, "manifest");
@@ -161,8 +161,8 @@ export async function ownedPublicationIdentity(
   size: number,
   checksum: string,
 ): Promise<FileIdentity | undefined> {
-  const stage = await readFileProof(stagePath, true);
-  const candidate = await readFileProof(candidatePath, true);
+  const stage = await readFileProof(stagePath, { missingAllowed: true });
+  const candidate = await readFileProof(candidatePath, { missingAllowed: true });
   if (stage === null || candidate === null) return undefined;
   if (!matchesFileProof(stage, size, checksum) || !matchesFileProof(candidate, size, checksum))
     return undefined;
@@ -175,14 +175,14 @@ export async function matchingFileIdentity(
   firstPath: string,
   secondPath: string,
 ): Promise<FileIdentity | undefined> {
-  const first = await readFileProof(firstPath, true);
-  const second = await readFileProof(secondPath, true);
+  const first = await readFileProof(firstPath, { missingAllowed: true });
+  const second = await readFileProof(secondPath, { missingAllowed: true });
   if (first === null || second === null) return undefined;
   if (
     first.dev !== second.dev ||
     first.ino !== second.ino ||
     first.size !== second.size ||
-    !first.contents.equals(second.contents)
+    first.checksum !== second.checksum
   )
     return undefined;
   return { dev: first.dev, ino: first.ino };
@@ -198,7 +198,7 @@ export async function restoreOrVerifyFinal(
   if (stage === null) throw missingArtifact(artifact.id);
   assertFileProof(stage, artifact.sizeBytes, artifact.checksumSha256);
   const finalPath = resolve(projectDirectory, artifactFilename(artifact));
-  const final = await readFileProof(finalPath, true);
+  const final = await readFileProof(finalPath, { missingAllowed: true });
   if (final === null) {
     await link(stagePath, finalPath);
     await syncDirectory(projectDirectory);
@@ -210,7 +210,7 @@ export async function restoreOrVerifyFinal(
 }
 
 export async function requireEvidence(path: string, artifact: ArtifactRow): Promise<FileIdentity> {
-  const proof = await readFileProof(path, true);
+  const proof = await readFileProof(path, { missingAllowed: true });
   if (proof === null) throw missingArtifact(artifact.id);
   assertFileProof(proof, artifact.sizeBytes, artifact.checksumSha256);
   return { dev: proof.dev, ino: proof.ino };

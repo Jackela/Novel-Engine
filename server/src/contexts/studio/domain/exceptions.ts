@@ -59,6 +59,7 @@ export const EXPORT_CAPACITY_RESOURCES = Object.freeze([
   "source_documents",
   "source_bytes",
   "artifact_bytes",
+  "manifest_bytes",
 ] as const);
 export type ExportCapacityResource = (typeof EXPORT_CAPACITY_RESOURCES)[number];
 
@@ -67,6 +68,7 @@ export const EXPORT_CAPACITY_LIMITS = Object.freeze({
   source_documents: 65_536,
   source_bytes: 16_777_216,
   artifact_bytes: 67_108_864,
+  manifest_bytes: 16_384,
 } as const satisfies Readonly<Record<ExportCapacityResource, number>>);
 
 const EXPORT_CAPACITY_RESOURCE_SET: ReadonlySet<string> = new Set(EXPORT_CAPACITY_RESOURCES);

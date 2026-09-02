@@ -6,6 +6,7 @@ import {
 } from "./export_artifact_fs_support.js";
 import type { ExportPublicationManifest } from "./export_artifact_publication.js";
 import {
+  type OwnedArtifactProof,
   REPLACEMENT_PRESERVED_ERROR,
   removeOwnedFinalViaQuarantine,
 } from "./export_artifact_rollback.js";
@@ -21,7 +22,7 @@ interface FailedPublicationCleanup {
   readonly manifest: string;
   readonly manifestTemporary: string;
   readonly stagingDirectory: string;
-  readonly contents: Buffer;
+  readonly artifactProof: OwnedArtifactProof;
   readonly finalLinked: boolean;
   readonly stageIdentity: FileIdentity | undefined;
   readonly manifestIdentity: FileIdentity | undefined;
@@ -64,9 +65,7 @@ export async function cleanupFailedPublication(input: FailedPublicationCleanup):
     try {
       const removal = await removeOwnedFinalViaQuarantine(
         input.target,
-        input.contents,
-        input.stageIdentity.dev,
-        input.stageIdentity.ino,
+        input.artifactProof,
         input.afterRollbackQuarantine,
       );
       if (removal === "replacement-restored") {

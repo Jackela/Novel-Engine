@@ -32,16 +32,16 @@
 
 ## 3. Bounded artifact proof and recovery
 
-- [ ] 3.1 Add descriptor race tests for exact/plus-one and sparse artifacts,
+- [x] 3.1 Add descriptor race tests for exact/plus-one and sparse artifacts,
       growth, truncation, final-path replacement, short reads, and checksum
       mismatch; assert allocation never precedes regular-file and size checks.
-- [ ] 3.2 Implement one no-follow descriptor-owned read/hash primitive using a
+- [x] 3.2 Implement one no-follow descriptor-owned read/hash primitive using a
       maximum 65,536-byte chunk, exact-size delivery allocation, incremental
       SHA-256, and post-read growth/truncation/identity rejection.
-- [ ] 3.3 Migrate rollback, acknowledgement, and recovery proofs to retain only
+- [x] 3.3 Migrate rollback, acknowledgement, and recovery proofs to retain only
       identity/size/checksum, hash files sequentially, and avoid simultaneous
       stage/final/quarantine bodies.
-- [ ] 3.4 Add exact 16,384-byte and plus-one manifest tests before decode/parse;
+- [x] 3.4 Add exact 16,384-byte and plus-one manifest tests before decode/parse;
       prove oversized uncommitted evidence fails closed without unauthorized
       deletion and oversized committed legacy artifacts recover incrementally
       but remain undownloadable.
