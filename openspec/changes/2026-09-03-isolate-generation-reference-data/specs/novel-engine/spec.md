@@ -15,8 +15,10 @@ collision-free, reversible prompt-data encoding before interpolation. The
 encoding MUST cover its own escape character and reserved square brackets so a
 stored value cannot create an additional structural opener or closer and a
 reference decoder can recover the original value without silent deletion or
-rewriting. Synchronous, streaming, keyed-retry, and whole-book generation MUST
-share this authority and encoding contract.
+rewriting. The system prompt MUST declare the exact escape decoding rules so
+encoded backslashes and Markdown retain their source meaning. Synchronous,
+streaming, keyed-retry, and whole-book generation MUST share this authority and
+encoding contract.
 
 #### Scenario: Stored Lore cannot close its data section
 

@@ -12,7 +12,8 @@ means eligible canon, not executable instruction.
 The system prompt names the project outline and linked beat, prior-story
 summary, recent chapter tail, Lorebook, and target manuscript as reference-only
 blocks. Only delimiters emitted by the assembler structure the user message;
-escaped bracket sequences inside a block are literal source text.
+it declares the exact backslash and bracket decoding rules, and escaped
+sequences inside a block are literal source text.
 
 ## Collision-free codec
 
