@@ -13,8 +13,9 @@ SQLite handle is closed.
 
 - Pass the exact configured database path through every API and CLI persistence
   composition boundary; derive the data directory only from that path.
-- Fail before mutation when a custom path conflicts with a legacy default-name
-  sibling instead of selecting, moving, or merging either file implicitly.
+- Fail before mutation whenever a custom basename has a legacy default-name
+  sibling in the same directory, whether or not the configured file exists,
+  instead of selecting, moving, or merging either file implicitly.
 - Bind the default readiness probe to the same live SQLite handle used by the
   application while preserving liveness and database-free skeleton behavior.
 

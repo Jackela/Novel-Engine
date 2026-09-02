@@ -50,11 +50,12 @@ authentication rate limit of five per minute.
 
 The fully resolved `DB_URL` path, including its basename, MUST be the one
 database-file authority for API startup, import, backup, doctor, schema checks,
-migration, reconciliation, and serving. No downstream layer may replace that
-basename with a default. If a non-default configured basename conflicts with a
-legacy default-name sibling, every API or maintenance start MUST fail before
-backup, migration, reconciliation, import, or traffic; the system MUST NOT
-choose, move, merge, or silently fall back to either file.
+migration, reconciliation, and serving. Every downstream layer MUST preserve
+that basename and MUST NOT replace it with a default. If `DB_URL` uses a
+non-default basename and the default-name sibling exists in the same directory,
+whether or not the configured file also exists, every API or maintenance start
+MUST fail before backup, migration, reconciliation, import, or traffic; the
+system MUST NOT choose, move, merge, or silently fall back to either file.
 
 #### Scenario: Retired CORS alias names have no effect
 
@@ -85,8 +86,43 @@ choose, move, merge, or silently fall back to either file.
 
 #### Scenario: Legacy split-brain fails before mutation
 
-- **GIVEN** a custom configured database path conflicts with a legacy
-  default-name sibling in the same directory
+- **GIVEN** `DB_URL` uses a non-default basename and the default-name sibling
+  exists in the same directory, whether or not the configured file also exists
 - **WHEN** an API or maintenance command starts
 - **THEN** startup fails before backup, migration, reconciliation, import, or traffic
+- **AND** the failure identifies both the configured path and default sibling
 - **AND** no database is selected, moved, merged, or repaired implicitly
+
+### Requirement: CLI operational surface
+
+The CLI MUST provide four commands. Every command MUST establish the configured
+database authority and pass the legacy-sibling ambiguity gate before database
+backup, migration, reconciliation, import, or inspection. After that gate
+passes, `serve` MUST back up the SQLite store before applying pending
+migrations, then start the API. `import` MUST take an explicit source path and
+owner, run as the owner principal without HTTP authentication, and print the
+imported project. `backup` MUST write a backup and print its path. `doctor` MUST
+report the version, database path, integrity check, journal mode, foreign-key
+enforcement, and owner status, exiting non-zero unless the integrity check
+passes and foreign keys are enabled.
+
+#### Scenario: Serve backs up before migrating
+
+- **GIVEN** the database authority and ambiguity gate passes for a database with
+  pending migrations
+- **WHEN** `serve` runs
+- **THEN** a backup is written beneath the backups directory before migrations apply
+
+#### Scenario: CLI import binds to an owner
+
+- **GIVEN** a legacy workspace directory
+- **WHEN** `import` runs with the explicit source path and owner name
+- **THEN** the project is imported scoped to that owner without HTTP authentication
+- **AND** the imported project is printed
+
+#### Scenario: Doctor fails on corruption
+
+- **GIVEN** a corrupted database
+- **WHEN** `doctor` runs
+- **THEN** the integrity check reports the corruption
+- **AND** the exit code is non-zero

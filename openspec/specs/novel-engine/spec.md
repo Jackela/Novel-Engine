@@ -156,20 +156,42 @@ surface MUST NOT exist.
 - **THEN** the response is 404 under the unified error envelope
 
 ### Requirement: Health and version surface
+
 The API MUST expose a database-aware health check, liveness and readiness
 probes (`/health/ready` failing with 503 when not ready), and a version
 endpoint reporting the product version, the runtime identifier and version,
-the environment, and the build SHA.
+the environment, and the build SHA. When application persistence exists, the
+default readiness probe MUST execute a read-only check through the same live
+SQLite handle used by requests. An injected probe MAY replace it explicitly.
+The database-free walking skeleton MAY remain ready with no components, and
+liveness MUST remain independent of dependency state.
 
 #### Scenario: Readiness reflects the database
+
 - **GIVEN** the SQLite database is unreachable
 - **WHEN** `/health/ready` is requested
 - **THEN** the response is 503
 
 #### Scenario: Version reports the runtime
+
 - **GIVEN** the server runs on Node
 - **WHEN** `/version` is requested
 - **THEN** the payload reports the product version and a `runtime` field with the Node version
+
+#### Scenario: Default readiness uses the live SQLite handle
+
+- **GIVEN** the application opened its configured SQLite database and no probe
+  override was injected
+- **WHEN** `/health/ready` is requested
+- **THEN** the default probe performs a read-only check through that same handle
+- **AND** the response is 200 only while the check is healthy
+
+#### Scenario: Closed database is not ready but remains live
+
+- **GIVEN** the process remains alive but its SQLite handle is closed or unusable
+- **WHEN** liveness and readiness are requested
+- **THEN** `/health/ready` responds 503 with a stable database failure
+- **AND** `/health/live` remains 200
 
 ### Requirement: Request validation constraints
 The API MUST enforce the adjudicated request constraints: titles 1–240
@@ -613,15 +635,17 @@ otherwise.
 ### Requirement: Provider transient failure handling
 For synchronous structured generation calls, both HTTP providers MUST share
 one retry policy with an identical retryable set: HTTP 429, 500, 502, 503,
-504, transport timeout, and malformed JSON responses are retried up to the
-configured limit (default three total attempts, with one-second spacing
-between attempts); every other error fails immediately without retry. Retry
-decisions MUST read structured error fields (status code, timeout,
-retryability), never substring matches on human-readable message text, and
-both HTTP providers MUST share the same retry module. Synchronous generation
-steps (`chapter_draft`, `chapter_revision`) MUST be granted a timeout floor of
-180 seconds, and the enclosing server request timeout MUST NOT be shorter
-than that floor.
+504, transport timeout (including an absolute response deadline), and malformed
+JSON responses are retried up to the configured limit (default three total
+attempts, with one-second spacing between attempts); every other error fails
+immediately without retry. Retry decisions MUST read structured error fields
+(status code, timeout, retryability), never substring matches on
+human-readable message text, and both HTTP providers MUST share the same retry
+module. A retryable per-attempt deadline failure MUST NOT record the normal
+failed proposal outcome until the attempt budget is exhausted. Synchronous
+generation steps (`chapter_draft`, `chapter_revision`) MUST be granted a
+timeout floor of 180 seconds, and the enclosing server request timeout MUST
+NOT be shorter than that floor.
 
 #### Scenario: Transient error is retried
 - **GIVEN** the provider answers 429 once and then succeeds
@@ -651,14 +675,15 @@ response body MUST be treated as untrusted diagnostics. The adapter MUST
 cancel and discard that body without consuming its contents. The system MUST
 NOT copy body-derived text into application error messages, persisted job
 errors or event details, API payloads, SSE frames, author-visible text, or
-application logs. It MUST instead expose a stable server-authored Provider
-failure after successful disposal, derived only from trusted local context
-and the normalized failure class or numeric HTTP status. If response
-cancellation itself raises an unexpected local error, that error MUST remain
-visible, MUST NOT be reclassified or retried from the upstream HTTP status,
-and MUST NOT gain any body-derived diagnostic text. Discarding the body MUST
-NOT remove the structured status used by the Provider transient failure
-handling Requirement.
+application logs. It MUST instead register a stable server-authored Provider
+failure before body cleanup, derived only from trusted local context and the
+normalized failure class or numeric HTTP status. Once registered, that status
+failure MUST remain authoritative if response cancellation rejects or exceeds
+the fixed one-second cleanup grace. An unexpected local error raised while
+constructing or registering the status failure MUST remain visible, MUST NOT be
+reclassified or retried from the upstream HTTP status, and MUST NOT gain
+body-derived diagnostic text. Discarding the body MUST NOT remove the
+structured status used by the Provider transient failure handling Requirement.
 
 #### Scenario: Persistent synchronous failure stays inside the boundary
 - **GIVEN** either HTTP Provider returns 503 with a body containing a unique sensitive marker on every attempt
@@ -1303,6 +1328,7 @@ expand to exactly those development ports.
 - **AND** an origin at any other port is not
 
 ### Requirement: Environment configuration surface
+
 Configuration MUST be read from the `.env.local` file (not `.env`) plus the
 process environment, using the single prefix family `APP_`, `DB_`, `API_`,
 `SECURITY_`, `LLM_`, `LOG_`, `MONITORING_`, and `HEALTH_`. CORS origins MUST
@@ -1311,35 +1337,66 @@ retired and MUST be ignored. Defaults without configuration: the SQLite
 store at `data/novel-engine.sqlite3`, host `0.0.0.0:8000`, and the
 authentication rate limit of five per minute.
 
+The fully resolved `DB_URL` path, including its basename, MUST be the one
+database-file authority for API startup, import, backup, doctor, schema checks,
+migration, reconciliation, and serving. Every downstream layer MUST preserve
+that basename and MUST NOT replace it with a default. If `DB_URL` uses a
+non-default basename and the default-name sibling exists in the same directory,
+whether or not the configured file also exists, every API or maintenance start
+MUST fail before backup, migration, reconciliation, import, or traffic; the
+system MUST NOT choose, move, merge, or silently fall back to either file.
+
 #### Scenario: Retired CORS alias names have no effect
+
 - **GIVEN** `CORS_ORIGINS` or `CORS_ALLOWED_ORIGINS` is set in the environment
 - **WHEN** settings load
 - **THEN** the value is ignored
 - **AND** `SECURITY_CORS_ORIGINS` remains the only recognized name
 
 #### Scenario: Defaults apply without configuration
+
 - **GIVEN** no environment configuration is provided
 - **WHEN** the server starts
 - **THEN** the database resolves to `data/novel-engine.sqlite3` on SQLite
 - **AND** the server binds `0.0.0.0:8000` with the five-per-minute authentication limit
 
 #### Scenario: The environment file is `.env.local`
+
 - **GIVEN** `.env.local` declares a setting such as the application environment
 - **WHEN** the server starts from the workspace root
 - **THEN** the declared value applies without shell exports
 
+#### Scenario: Custom SQLite basename remains one authority
+
+- **GIVEN** `DB_URL` names `data/author.sqlite3`
+- **WHEN** serve, import, doctor, and backup operate on the installation
+- **THEN** every operation addresses `data/author.sqlite3`
+- **AND** `data/novel-engine.sqlite3` is not created or inspected as a substitute
+
+#### Scenario: Legacy split-brain fails before mutation
+
+- **GIVEN** `DB_URL` uses a non-default basename and the default-name sibling
+  exists in the same directory, whether or not the configured file also exists
+- **WHEN** an API or maintenance command starts
+- **THEN** startup fails before backup, migration, reconciliation, import, or traffic
+- **AND** the failure identifies both the configured path and default sibling
+- **AND** no database is selected, moved, merged, or repaired implicitly
+
 ### Requirement: CLI operational surface
-The CLI MUST provide four commands. `serve` MUST back up the SQLite store
-before applying pending migrations, then start the API. `import` MUST take
-an explicit source path and owner, run as the owner principal without HTTP
-authentication, and print the imported project. `backup` MUST write a backup
-and print its path. `doctor` MUST report the version, database path,
-integrity check, journal mode, foreign-key enforcement, and owner status,
-exiting non-zero unless the integrity check passes and foreign keys are
-enabled.
+The CLI MUST provide four commands. Every command MUST establish the configured
+database authority and pass the legacy-sibling ambiguity gate before database
+backup, migration, reconciliation, import, or inspection. After that gate
+passes, `serve` MUST back up the SQLite store before applying pending
+migrations, then start the API. `import` MUST take an explicit source path and
+owner, run as the owner principal without HTTP authentication, and print the
+imported project. `backup` MUST write a backup and print its path. `doctor` MUST
+report the version, database path, integrity check, journal mode, foreign-key
+enforcement, and owner status, exiting non-zero unless the integrity check
+passes and foreign keys are enabled.
 
 #### Scenario: Serve backs up before migrating
-- **GIVEN** a database with pending migrations
+- **GIVEN** the database authority and ambiguity gate passes for a database with
+  pending migrations
 - **WHEN** `serve` runs
 - **THEN** a backup is written beneath the backups directory before migrations apply
 
@@ -2008,3 +2065,116 @@ replace the current list nor navigate.
 - **WHEN** the library unmounts
 - **THEN** the cancellable request is aborted
 - **AND** its later completion cannot publish state or navigate
+
+### Requirement: Bounded provider response lifecycle
+
+Every HTTP provider response MUST have one absolute deadline that starts before
+transport dispatch and covers connection establishment, response headers, and
+complete body consumption. Chapter draft and revision streams MUST receive the
+same effective timeout floor of 180 seconds as synchronous generation. The
+existing first-event and between-event silence budgets MUST remain additional
+ceilings and MUST NOT reset or extend the absolute deadline.
+
+An external abort MUST participate explicitly in dispatch, response-body, and
+stream-iteration waits, including when an injected transport or body ignores
+its signal. A pre-aborted request MUST NOT dispatch. The first timeout,
+cancellation, size, or transport cause MUST remain authoritative while reader
+and iterator cleanup is awaited without replacing that cause.
+
+The server MUST consume at most 8 MiB from one synchronous JSON response or one
+complete SSE response, at most 1 MiB from one SSE event, and at most 1,000,000
+Unicode code points of proposal markdown. A limit breach, deadline, or known
+body-read transport failure MUST become a stable server-authored Provider
+failure without upstream diagnostics. A retryable synchronous deadline MUST
+enter the existing Provider transient failure policy, and the normal failed
+proposal outcome MUST be recorded only if that attempt budget is exhausted. A
+started stream MUST end with the normal error frame. The system MUST NOT report
+usage, persist partial proposal text, retry a stream whose deltas may have
+escaped, or reclassify extractor and application programming errors. All
+response-body, reader, and iterator cleanup MUST settle or yield to the
+authoritative failure within a fixed one-second cleanup grace.
+
+#### Scenario: Absolute deadline covers response setup and body
+
+- **GIVEN** an HTTP provider stalls before returning headers or keeps sending
+  frames within the silence budget without completing
+- **WHEN** the effective provider deadline elapses
+- **THEN** the transport is aborted with the stable provider timeout
+- **AND** the deadline has not reset after any response byte or frame
+
+#### Scenario: External cancellation wins an uncooperative wait
+
+- **GIVEN** a request is already aborted or its external signal aborts while
+  an injected transport or response body ignores that signal
+- **WHEN** dispatch, body consumption, or stream iteration is waiting
+- **THEN** the wait stops without waiting for the provider deadline
+- **AND** a pre-aborted request performs no transport dispatch
+- **AND** no stream outcome is reported after cancellation, including after
+  the final delta or while iterator cleanup is running
+- **AND** reader and iterator cleanup cannot replace the cancellation cause
+
+#### Scenario: Failure response cleanup preserves HTTP status
+
+- **GIVEN** a non-success provider response whose body cancellation rejects or
+  never settles
+- **WHEN** synchronous or streaming generation rejects the response
+- **THEN** the HTTP status failure remains authoritative
+- **AND** body cleanup waits for at most one second
+
+#### Scenario: A response arriving after interruption is discarded
+
+- **GIVEN** an injected transport ignores cancellation and resolves a response
+  only after an external abort or absolute deadline has won dispatch
+- **WHEN** that late response becomes available
+- **THEN** its body is cancelled within the one-second cleanup grace
+- **AND** it cannot replace the authoritative interruption cause
+
+#### Scenario: Chapter stream receives the generation floor
+
+- **GIVEN** a chapter draft or revision stream and a configured timeout below
+  180 seconds
+- **WHEN** the HTTP provider request is dispatched
+- **THEN** its absolute deadline is at least 180 seconds
+- **AND** its configured silence budgets remain independent ceilings that cannot
+  extend the absolute deadline
+
+#### Scenario: Mid-body transport failure lands normally
+
+- **GIVEN** a successful HTTP response whose body fails while being read
+- **WHEN** the failure is a known fetch transport rejection
+- **THEN** it becomes a sanitized Provider failure
+- **AND** the proposal records a failed job and no usage event
+- **AND** a started proposal stream ends with its normal error frame
+
+#### Scenario: Synchronous response exceeds its byte budget
+
+- **GIVEN** a successful HTTP provider response whose JSON body exceeds 8 MiB
+- **WHEN** structured generation consumes the body
+- **THEN** generation fails immediately with a stable size-limit failure
+- **AND** the original response is consumed at most once
+
+#### Scenario: Stream event or total body exceeds its byte budget
+
+- **GIVEN** an HTTP provider stream whose single event exceeds 1 MiB or whose
+  total response exceeds 8 MiB
+- **WHEN** the shared SSE parser reaches the applicable boundary
+- **THEN** the upstream transport is aborted with a stable size-limit failure
+- **AND** no usage outcome or completed proposal is recorded
+
+#### Scenario: Mixed SSE newline boundaries preserve event bytes
+
+- **GIVEN** an SSE stream separates events with any combination matched by
+  `\r?\n\r?\n`, including a separator split across body chunks
+- **WHEN** the shared parser measures and emits an event
+- **THEN** the complete separator is excluded from the event byte count
+- **AND** an event of exactly 1 MiB is accepted while one byte more is rejected
+
+#### Scenario: Proposal markdown exceeds its semantic budget
+
+- **GIVEN** any provider returns more than 1,000,000 Unicode code points of
+  proposal markdown synchronously or across streamed deltas
+- **WHEN** the proposal application boundary receives that output
+- **THEN** the proposal fails before oversized text is persisted
+- **AND** a stream emits no further delta after the limit would be crossed
+- **AND** one astral character counts once even when its surrogate pair is
+  split across consecutive deltas

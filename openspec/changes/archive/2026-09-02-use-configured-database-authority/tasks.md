@@ -8,5 +8,5 @@
       migrate callers without retaining a downstream filename reconstruction.
 - [x] 4. Implement and wire the default live SQLite readiness probe with open,
       closed, injected-probe, liveness, and skeleton coverage.
-- [ ] 5. Run focused/full validation, browser workflows, strict OpenSpec,
+- [x] 5. Run focused/full validation, browser workflows, strict OpenSpec,
       independent closure review, and record fixed-SHA evidence.

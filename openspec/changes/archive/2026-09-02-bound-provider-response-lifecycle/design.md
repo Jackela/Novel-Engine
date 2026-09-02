@@ -8,15 +8,17 @@ timer and the application-owned external abort signal both participate in
 dispatch, response-body, and frame waits even when an injected transport or
 body ignores its signal. Chapter draft and revision streams receive the same
 effective 180-second floor as synchronous generation. Existing first-event and
-between-event silence budgets remain additional, shorter failure detectors;
-none can reset or extend the absolute deadline.
+between-event silence budgets remain independent failure detectors; even when
+configured longer, none can reset or extend the absolute deadline.
 
 External cancellation remains distinguishable through an application-layer
 control-flow error and records no job. A deadline instead becomes the existing
-sanitized provider timeout and therefore lands a failed job plus an SSE error
-frame. Iterator and body-reader cleanup is awaited within a fixed cleanup
-grace; a failing or uncooperative cleanup cannot replace the first transport or
-cancellation cause or hang the request indefinitely.
+sanitized provider timeout. Synchronous generation passes that retryable cause
+through the established attempt policy and records failure only after
+exhaustion; a started stream does not retry and lands the failed job plus SSE
+error frame. Iterator and body-reader cleanup is awaited within a fixed
+one-second grace; a failing or uncooperative cleanup cannot replace the first
+transport or cancellation cause or hang the request indefinitely.
 
 A non-success HTTP status is registered as the first failure before its body is
 cancelled, so cancellation rejection or delay cannot turn a known status into a

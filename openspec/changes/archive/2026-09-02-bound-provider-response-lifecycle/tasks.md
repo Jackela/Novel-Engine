@@ -7,5 +7,5 @@
       code-point proposal limits.
 - [x] 3. Implement the shared deadline, narrow failure normalization, bounded
       response reader, and proposal-size guard without changing public shapes.
-- [ ] 4. Run focused and full server validation, browser workflows, strict
+- [x] 4. Run focused and full server validation, browser workflows, strict
       OpenSpec, independent closure review, and record fixed-SHA evidence.
