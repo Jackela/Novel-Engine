@@ -14,6 +14,7 @@ import {
 } from "./connection.js";
 import { acquireDataDirectoryLock, type DataDirectoryLock } from "./data_directory_lock.js";
 import { assertNoLegacyDatabaseSibling, databaseDataDirectory } from "./database_authority.js";
+import { nextJobEventSequence } from "./job_event_sequence.js";
 import { jobEvents, jobs } from "./schema.js";
 
 const SEARCH_DEPTH = 8;
@@ -154,6 +155,7 @@ function recoverInterruptedJobs(db: StudioSqliteDatabase): number {
           job_id: jobId,
           status: "interrupted",
           details_json: RESTART_EVENT_DETAILS,
+          sequence: nextJobEventSequence(tx, jobId),
           created_at: now,
         })
         .run();

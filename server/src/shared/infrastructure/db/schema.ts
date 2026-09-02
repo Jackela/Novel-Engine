@@ -1,4 +1,4 @@
-import { index, integer, real, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { index, integer, real, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 
 /**
  * The first schema of the TS rewrite (#264): the sessions table with its
@@ -75,9 +75,10 @@ export const jobEvents = sqliteTable(
       .references(() => jobs.id, { onDelete: "cascade" }),
     status: text("status").notNull(),
     details_json: text("details_json").notNull().default("{}"),
+    sequence: integer("sequence").notNull().default(1),
     created_at: integer("created_at", { mode: "timestamp_ms" }).notNull(),
   },
-  (table) => [index("idx_job_events_job_id").on(table.job_id)],
+  (table) => [uniqueIndex("uq_job_events_job_sequence").on(table.job_id, table.sequence)],
 );
 
 /**

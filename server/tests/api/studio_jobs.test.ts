@@ -65,7 +65,7 @@ describe("jobs surface", () => {
     }
   });
 
-  it("uses ids to break equal job and event timestamps", async () => {
+  it("uses a job id tie-breaker and causal event sequence for equal timestamps", async () => {
     const { app } = await buildStudioApp(monotonicClock());
     try {
       const owner = await ownerJar(app);
@@ -115,17 +115,19 @@ describe("jobs surface", () => {
         .insert(jobEventsTable)
         .values([
           {
-            id: "00000000-0000-4000-8000-000000000011",
+            id: "00000000-0000-4000-8000-000000000012",
             job_id: higherJobId,
             status: "running",
             details_json: "{}",
+            sequence: 1,
             created_at: tiedAt,
           },
           {
-            id: "00000000-0000-4000-8000-000000000012",
+            id: "00000000-0000-4000-8000-000000000011",
             job_id: higherJobId,
             status: "completed",
             details_json: "{}",
+            sequence: 2,
             created_at: tiedAt,
           },
         ])
@@ -136,8 +138,8 @@ describe("jobs surface", () => {
       const listedJobs = listed.json().jobs as JobPayload[];
       expect(listedJobs.map((job) => job.id)).toEqual([higherJobId, lowerJobId]);
       expect(listedJobs[0]?.events.map((event) => event.id)).toEqual([
-        "00000000-0000-4000-8000-000000000012",
         "00000000-0000-4000-8000-000000000011",
+        "00000000-0000-4000-8000-000000000012",
       ]);
     } finally {
       await app.close();

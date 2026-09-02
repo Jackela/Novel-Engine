@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { eq } from "drizzle-orm";
 
+import { nextJobEventSequence } from "../../../../shared/infrastructure/db/job_event_sequence.js";
 import { jobEvents, jobs, usageEvents } from "../../../../shared/infrastructure/db/schema.js";
 import type {
   AddJobInput,
@@ -46,6 +47,7 @@ export function insertJobAndEvent(
       job_id: job.id,
       status: input.status,
       details_json: input.eventDetailsJson,
+      sequence: 1,
       created_at: input.now,
     })
     .run();
@@ -95,6 +97,7 @@ export function applyJobOutcome(
       job_id: jobId,
       status: input.status,
       details_json: input.eventDetailsJson,
+      sequence: nextJobEventSequence(tx, jobId),
       created_at: input.now,
     })
     .run();

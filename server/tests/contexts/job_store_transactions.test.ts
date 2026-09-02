@@ -123,8 +123,9 @@ describe("atomic completed-proposal landing (#392)", () => {
 describe("atomic retry completion with usage (#392)", () => {
   it("commits the outcome transition and its usage event together", async () => {
     const { scope, clock, store, projectId } = await openHarness();
+    const tiedAt = clock();
     const running = store.addJob(scope, {
-      ...completedJobInput(projectId, clock()),
+      ...completedJobInput(projectId, tiedAt),
       status: "running",
     });
     const done = store.markJobOutcomeWithUsage(scope, projectId, running.id, {
@@ -134,12 +135,16 @@ describe("atomic retry completion with usage (#392)", () => {
         resultJson: "{}",
         error: null,
         eventDetailsJson: "{}",
-        now: clock(),
+        now: tiedAt,
       },
       usage: usageInput(),
     });
     expect(done.status).toBe("completed");
     expect(done.model).toBe("retry-model");
+    expect(done.events.map((event) => event.status)).toEqual(["running", "completed"]);
+    expect(
+      store.collectProjectJobs(scope, projectId)[0]?.events.map((event) => event.status),
+    ).toEqual(["completed", "running"]);
     const usage = store.aggregateProjectUsage(scope, projectId, new Date());
     expect(usage.requestCount).toBe(1);
   });

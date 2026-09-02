@@ -59,7 +59,7 @@ export function jobWithEvents(tx: Tx, jobId: string): JobRecord {
     .select()
     .from(jobEvents)
     .where(eq(jobEvents.job_id, jobId))
-    .orderBy(asc(jobEvents.created_at), asc(jobEvents.id))
+    .orderBy(asc(jobEvents.sequence))
     .all();
   return toJobRecord(job, events);
 }
@@ -209,7 +209,7 @@ export class JobStorePart {
             rows.map((row) => row.id),
           ),
         )
-        .orderBy(desc(jobEvents.created_at), desc(jobEvents.id))
+        .orderBy(desc(jobEvents.sequence))
         .all();
       const eventsByJob = new Map<string, JobEventRow[]>();
       for (const event of events) {
