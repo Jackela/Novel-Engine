@@ -79,8 +79,9 @@ export, retry, and artifact-download routes. It is a definitive product result,
 not an operational outage.
 
 A fresh export capacity failure returns 422 and persists no Job or export
-evidence. A keyed retry may discover a source or artifact limit only after its
-durable running reservation. In that case one transaction changes that exact
+evidence. A keyed retry may discover a source, artifact, or generated-manifest
+limit only after its durable running reservation. In that case one transaction
+changes that exact
 retry Job to `failed`, appends one failed event, and stores the structured
 capacity resource, limit, and bounded observed value needed for HTTP replay.
 The first response is 422. Replaying the same owner/project/source/key returns
@@ -89,9 +90,10 @@ adding events, or creating export evidence. This export-capacity exception is
 more specific than the general terminal-retry 200 replay rule. A different key
 is an explicit new attempt and may succeed after the project is reduced.
 
-Renderer or download reservation refusal occurs before a retry reservation and
-remains the existing transient 503. It creates no failed Job or event, so the
-same key can be replayed later. Unexpected renderer defects, allocation
+Renderer refusal occurs before a retry reservation and remains the existing
+transient 503. It creates no failed Job or event, so the same key can be
+replayed later. Download reservation is an independent read-only HTTP lifecycle
+and never creates or settles a Job. Unexpected renderer defects, allocation
 failures, and database/programming errors remain opaque 500 failures and are
 not fabricated as capacity outcomes.
 

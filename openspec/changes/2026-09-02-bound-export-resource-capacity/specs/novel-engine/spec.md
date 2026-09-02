@@ -82,16 +82,19 @@ response. Unexpected allocation, renderer, filesystem, database, or programming
 failures MUST NOT be normalized as this capacity error.
 
 A fresh export capacity failure MUST create no Job or export evidence. When a
-keyed export retry discovers a permanent source or artifact limit after its
-running Job was reserved, it MUST atomically settle that Job as `failed`, append
+keyed export retry discovers a permanent source, artifact, or generated-manifest
+limit after its running Job was reserved, it MUST atomically settle that Job as
+`failed`, append
 exactly one failed event, and retain the structured capacity result required for
 replay. The first request and every later replay of the same
 owner/project/source/`Idempotency-Key` MUST return the identical 422 envelope;
 replay MUST NOT execute work or add evidence. This specific definitive outcome
 MUST override the general terminal-retry 200 replay rule. A different key MUST
 remain an explicit new attempt. Transient renderer or download admission MUST
-retain the existing 503 response, MUST occur before retry reservation, and MUST
-allow the unresolved same key to be replayed later.
+retain the existing 503 response. Renderer admission MUST occur before retry
+reservation and MUST allow the unresolved same key to be replayed later;
+download admission is an independent read-only lifecycle and MUST NOT create or
+settle any Job.
 
 The export source limit is intentionally independent of the 67,108,864-byte
 legacy-import workspace limit. Import MUST continue accepting a conforming
@@ -119,9 +122,9 @@ fail closed until that project's counted source is within policy.
 - **THEN** the new key may create and execute a distinct retry Job under existing admission rules
 - **AND** it is not replayed as the earlier capacity outcome
 
-#### Scenario: Transient admission remains replayable
+#### Scenario: Transient renderer admission remains replayable
 
-- **GIVEN** an export retry cannot acquire renderer or download-byte admission
+- **GIVEN** an export retry cannot acquire renderer admission
 - **WHEN** the author replays the same unresolved key after capacity is released
 - **THEN** the earlier refusal remains the existing 503 rather than a terminal failed Job
 - **AND** the replay may reserve and execute one retry attempt
