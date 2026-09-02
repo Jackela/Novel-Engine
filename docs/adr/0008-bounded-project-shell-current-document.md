@@ -67,21 +67,28 @@ project surface and reuses it only when project, document, and current revision
 identities match the shell. Equal project/document/expected-revision/lifecycle
 reads coalesce behind one reference-counted request, notify every surviving
 subscriber, and abort only after the last subscriber releases ownership.
+Release suppresses delivery only to the released subscriber or obsolete owner;
+it cannot suppress a shared outcome for survivors.
 Owner/revision epochs and abort prevent late reads or older mutation results
 from publishing. Inactive bodies are not cached.
 
 Because a revision can advance between shell and body reads, an unexpected body
-revision is never rendered directly. The client refreshes shell once, accepts
-the response only if that pointer now matches, or performs one replacement body
-read for the refreshed pointer. A second mismatch stops automatic work and
-shows explicit Retry while retaining the latest shell. Each automatic mismatch
-cycle is therefore bounded to one shell refresh and one replacement body read.
+revision is never rendered directly. The client refreshes shell once. A missing
+project navigates to the library; a removed Document selects a fallback or the
+no-Document state and never triggers a replacement read for that identity. If
+the Document remains, the client accepts the response only if the refreshed
+pointer now matches, or performs one replacement body read for the refreshed
+pointer. A second mismatch stops automatic work and shows explicit Retry while
+retaining the latest shell. Each automatic mismatch cycle is therefore bounded
+to one shell refresh and at most one replacement body read.
 
 Complete-Document write responses update shell and accepted body only under
 current causal revision ownership. Lore-status and beat-association responses
-retain their narrow payloads and are gated by project, Document, field-specific
-intent epoch, and requested value. This prevents an older same-revision response
-from reversing a newer intent without pretending the narrow response is a full
+retain their narrow payloads. A latest response validates captured project and
+Document identity plus field-specific intent epoch, then must patch only the
+owned `lore_status` or `beat_ref` summary field from its response. A stale
+response is ignored. This prevents an older same-revision response from
+reversing a newer intent without pretending the narrow response is a full
 Document.
 
 The editor's Draft is separate component-local state. The 1.5-second debounce

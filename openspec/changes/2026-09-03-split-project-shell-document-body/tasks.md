@@ -52,20 +52,23 @@
       validate project/document/current-revision identity, coalesce only equal
       `(project, document, expected revision, lifecycle)` tuples, reference-
       count subscribers, reject stale/aborted/late responses, notify every
-      survivor, and abort/clear shared bookkeeping only after the last owner
-      releases it.
+      survivor while suppressing only the released subscriber/obsolete owner,
+      and abort/clear shared bookkeeping only after the last owner releases it.
 - [ ] 3.4 Apply complete mutation responses causally to shell plus active body,
-      gate narrow Lore-status/beat payloads by owner and field-specific intent
-      epoch, apply reorder summaries without rolling back a newer body, and
-      prove reverse same-revision or older-revision responses cannot overwrite
-      a newer intent.
+      require the latest narrow Lore-status/beat payload to patch only its owned
+      summary field after captured project/Document/intent-epoch validation,
+      ignore stale narrow responses, apply reorder summaries without rolling
+      back a newer body, and prove reverse same-revision or older-revision
+      responses cannot overwrite a newer intent.
 - [ ] 3.5 Separate Draft from accepted cache state: keep the 1.5-second save
       trigger, retain a conflicted Draft while active, discard it on explicit
       switch/reload, and prevent late save/conflict results from crossing
       project or document ownership.
 - [ ] 3.6 Add the bounded current-read convergence loop: on an unexpected
       response revision, render nothing stale, refresh shell once, accept only
-      a matching response or issue one replacement body read, then stop with a
+      a matching response; navigate to the library when the project vanished,
+      select fallback/no-Document when the Document vanished without another
+      read for it, otherwise issue one replacement body read, then stop with a
       readable Retry state if revision churn causes a second mismatch.
 
 ## 4. Lazy Inspector ownership
@@ -89,9 +92,10 @@
 - [ ] 5.1 Run project create/open, section fallback, document create/save/
       restore/accept/delete, lore/beat/volume placement, reorder, search,
       conflict, reverse same-revision partial responses, body-revision churn,
-      subscriber fanout/last-release abort, resource-specific 401/404 recovery,
-      shell/current-document authorization, query-budget buckets, and OpenAPI/
-      type-drift regressions.
+      mismatch-time project/Document removal, subscriber fanout/released-owner
+      suppression/last-release abort, resource-specific 401/404 recovery,
+      discard-versus-late-commit Draft navigation, shell/current-document
+      authorization, query-budget buckets, and OpenAPI/type-drift regressions.
 - [ ] 5.2 Run server type-check/lint/arch/size/full tests, frontend
       lint/format/type/unit/build, React diagnostics, strict OpenSpec, and
       TypeScript-backend Playwright project-open/switch/reorder/Review/Export/

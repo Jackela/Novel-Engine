@@ -85,29 +85,37 @@ revision, and lifecycle. Requests with exactly equal project, document,
 expected revision, and lifecycle MUST coalesce behind one reference-counted
 read and MUST publish their outcome to every still-mounted subscriber. One
 subscriber leaving MUST NOT abort a read still owned by another; the last
-subscriber release MUST abort it when cancellable and clear its bookkeeping. A
+subscriber release MUST abort it when cancellable and clear its bookkeeping.
+Release MUST suppress delivery only to that released subscriber or obsolete
+owner; every surviving subscriber MUST still receive the shared outcome. A
 project/document switch, newer expected revision, abort, or unmount MUST prevent
-a late response from publishing into current state. The Studio MUST retain no
-inactive complete-document body after selection changes.
+a late response from publishing only into the obsolete ownership. The Studio
+MUST retain no inactive complete-document body after selection changes.
 
 A current-Document response whose `current_revision_id` differs from its
 expected shell pointer MUST NOT be rendered as current. The Studio MUST refresh
-the shell once. It MAY accept the response only if the refreshed summary now
-points to that response revision; otherwise it MUST issue at most one
-replacement current-Document read owned by the refreshed pointer. If the
-replacement also differs because revisions continue changing, automatic reads
-MUST stop, the latest shell MUST remain available, and the editor MUST show a
-readable changed-again failure with explicit Retry. One automatic mismatch
-cycle MUST therefore contain no more than one shell refresh and one replacement
-body read.
+the shell once. If that refresh returns project 404, the route MUST replace to
+the project library. If the project exists but the Document is absent, the
+Studio MUST select the route-compatible fallback or no-Document state and MUST
+NOT issue a replacement read for the vanished Document. It MAY accept the
+response only if the refreshed summary for the same Document now points to that
+response revision. Only when that summary still exists with a different pointer
+MUST it issue at most one replacement current-Document read owned by the
+refreshed pointer. If the replacement also differs because revisions continue
+changing, automatic reads MUST stop, the latest shell MUST remain available,
+and the editor MUST show a readable changed-again failure with explicit Retry.
+One automatic mismatch cycle MUST therefore contain no more than one shell
+refresh and at most one replacement body read.
 
 Successful complete-Document mutation responses MUST advance shell and active
 body together only when their causal identity is current. Narrow Lore-status
-and beat-association responses MUST retain their existing payloads and MAY
-update only their owned field while their project, document, and field-specific
-intent epoch are still current. Reverse-order same-revision responses MUST NOT
-overwrite a newer requested value. Summary-only reorder MUST NOT roll the active
-body back.
+and beat-association responses MUST retain their existing payloads. A response
+whose captured project, Document, and field-specific intent epoch still match
+the active shell and latest intent MUST patch only its owned summary field:
+`lore_status` from the closed response value or `beat_ref` from the resolved
+beat title/null. A response that fails any identity or epoch check MUST be
+ignored. Reverse-order same-revision responses MUST NOT overwrite a newer
+requested value. Summary-only reorder MUST NOT roll the active body back.
 
 HTTP 401 from any project resource MUST replace to Entry. A shell 404 MUST
 replace to the project library. A current-Document 404 MUST first refresh the
@@ -150,6 +158,14 @@ expectation.
 - **AND** the Studio refreshes the shell once
 - **AND** R2 is accepted only if the refreshed summary points to R2
 
+#### Scenario: A raced response cannot revive a removed Document
+
+- **GIVEN** a body request for D returns an unexpected revision
+- **WHEN** the required shell refresh shows the project or D no longer exists
+- **THEN** a missing project replaces to the project library
+- **AND** a missing D selects the route-compatible fallback or no-Document state
+- **AND** no replacement current-Document read is sent for D
+
 #### Scenario: Revision churn stops automatic retry
 
 - **GIVEN** an unexpected body revision caused one shell refresh and one replacement current-Document read
@@ -164,6 +180,7 @@ expectation.
 - **THEN** exactly one request serves both consumers
 - **AND** either outcome is delivered to every still-mounted subscriber
 - **AND** one consumer leaving does not abort the surviving consumer's request
+- **AND** the released consumer alone receives no later delivery
 
 #### Scenario: Late body cannot cross selection
 
@@ -184,7 +201,8 @@ expectation.
 
 - **GIVEN** two Lore-status or beat-association writes for the same Document and current revision request different values
 - **WHEN** the newer intent succeeds before the older response arrives
-- **THEN** the older response cannot replace the newer field value
+- **THEN** the newer response patches only its owned `lore_status` or `beat_ref` summary field after identity validation
+- **AND** the older response is ignored and cannot replace the newer field value
 - **AND** neither narrow payload is treated as a complete Document
 
 #### Scenario: Editor failure leaves navigation recoverable
@@ -415,13 +433,21 @@ until the author chooses an explicit conflict action.
 - **AND** Document A reflects the committed server revision or a newer refreshed revision
 - **AND** the next save for A uses that revision as its base
 
-#### Scenario: An unpersisted draft survives document navigation
+#### Scenario: An unpersisted draft does not survive document navigation
 
 - **GIVEN** the author edits Document A and selects Document B before the save debounce elapses
 - **WHEN** the author returns to Document A
 - **THEN** A's unpersisted local Draft is absent rather than restored from inactive client state
 - **AND** A loads its last accepted current revision or a newer committed revision
 - **AND** B never displays or persists A's Draft
+
+#### Scenario: An unpersisted draft survives document navigation
+
+- **GIVEN** a Draft for Document A was still unpersisted when navigation away began
+- **BUT** its already-started save commits before the author returns to A
+- **WHEN** the author returns to Document A
+- **THEN** the client does not restore the discarded local Draft
+- **AND** the same text is present only as the server-accepted current revision
 
 #### Scenario: An old export owner cannot trigger a download
 

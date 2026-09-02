@@ -108,22 +108,28 @@ A missing body or any pointer mismatch starts the scoped GET. Requests with the
 exact same `(projectId, documentId, expectedRevisionId, lifecycleEpoch)` MUST
 coalesce. The shared request holds a reference count, publishes success or
 failure to every still-mounted subscriber, and is aborted only when its last
-subscriber leaves. Requests differing in any tuple member cannot coalesce. Each
-request captures that tuple; success publishes only while it still matches. A
-late response from a previous project, document, revision, or lifecycle is
-discarded.
+subscriber leaves. Releasing one subscriber suppresses delivery only to that
+released subscriber or its obsolete owner; every surviving subscriber still
+receives the shared outcome. Requests differing in any tuple member cannot
+coalesce. Each request captures that tuple; success publishes only to consumers
+for which it still matches. A late response from a previous project, document,
+revision, or lifecycle is discarded only for that obsolete ownership.
 
 The GET cannot promise that the revision stays unchanged between shell and body
 reads. If its response `current_revision_id` differs from the expected shell
 pointer, the client never renders that response blindly. It performs one fresh
-shell read. When the refreshed summary pointer equals the response revision,
-the response may publish under the refreshed owner. Otherwise the client issues
-one replacement current-Document read owned by the refreshed pointer. If that
-replacement also mismatches because the document keeps changing, automatic
-convergence stops: the latest shell remains visible and the editor shows a
-readable changed-again error with an explicit Retry. One mismatch cycle is thus
-bounded to one shell refresh and one replacement body read; Retry starts a new
-cycle rather than an unbounded loop.
+shell read. If the refreshed shell says the project no longer exists, the route
+replaces to the project library. If it says the Document no longer exists, the
+Studio selects the route-compatible fallback or no-Document state and performs
+no replacement read for the vanished identity. When the refreshed summary for
+that same Document equals the response revision, the response may publish under
+the refreshed owner. Only when that summary still exists with a different
+pointer does the client issue one replacement current-Document read owned by
+the refreshed pointer. If that replacement also mismatches because the
+Document keeps changing, automatic convergence stops: the latest shell remains
+visible and the editor shows a readable changed-again error with an explicit
+Retry. One mismatch cycle is thus bounded to one shell refresh and at most one
+replacement body read; Retry starts a new cycle rather than an unbounded loop.
 
 No inactive complete-document entries are retained by this state machine.
 Switching selection releases that subscriber, clears the accepted body from its
@@ -138,12 +144,16 @@ commands that return a complete Document may atomically update both the shell su
 and active accepted Document when their causal revision/owner identity is
 current. Lore-status and beat-association commands keep their existing narrow
 local payloads; they do not fabricate a complete Document. Each narrow command
-captures project, document, field-specific intent epoch, and requested value.
-Its response may update only its owned summary/field while that epoch is still
-latest. Reverse-order same-revision responses therefore cannot replace a newer
-Lore-status or beat intent. A response for an older revision or mutation intent
-cannot overwrite a newer result. Reorder updates only shell positions and
-preserves the active accepted body when its identity remains unchanged.
+captures project, Document, field-specific intent epoch, and requested value.
+On success it first validates that the active shell still contains that exact
+captured project/Document identity and that its field-specific epoch remains
+latest. It then MUST patch only its owned summary field: `lore_status` from the
+closed response value, or `beat_ref` from the returned resolved beat title/null.
+A failed identity/epoch check is stale and MUST be ignored. Reverse-order same-
+revision responses therefore cannot replace a newer Lore-status or beat intent.
+A response for an older revision or mutation intent cannot overwrite a newer
+result. Reorder updates only shell positions and preserves the active accepted
+body when its identity remains unchanged.
 
 The authoring bootstrap first resolves the shell, chooses the route-compatible
 active document, and reads at most that one complete Document. It never follows
