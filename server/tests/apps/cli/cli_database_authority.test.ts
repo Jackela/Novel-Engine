@@ -32,7 +32,7 @@ describe("configured database authority in the CLI", () => {
     const state = await harness();
     const serveCode = await runCli(["serve", "--port", "8765"], {
       ...state.context,
-      serve: async (app) => app.close(),
+      serve: { owner: "runner-owned", run: async (app) => app.close() },
     });
 
     expect(serveCode).toBe(0);
@@ -100,7 +100,7 @@ describe("configured database authority in the CLI", () => {
 
     const serveCode = await runCli(["serve", "--port", "8765"], {
       ...state.context,
-      serve: listen,
+      serve: { owner: "cli-owned", run: listen },
     });
     expect(serveCode).toBe(1);
     expect(listen).not.toHaveBeenCalled();

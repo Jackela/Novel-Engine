@@ -17,8 +17,13 @@ import {
 } from "../../shared/infrastructure/db/database_authority.js";
 import { readProductIdentity } from "../../shared/infrastructure/workspace_manifest.js";
 import { buildApp } from "../api/app.js";
-import { closeAppAndRethrow, closeResourceAndRethrow } from "../api/app_lifecycle.js";
+import { closeResourceAndRethrow } from "../api/app_lifecycle.js";
 import { runLegacyImportCommand } from "./legacy_import_command.js";
+import {
+  processShutdownSignalSource,
+  runCliOwnedServeLifecycle,
+  type ShutdownSignalSource,
+} from "./shutdown_signals.js";
 
 /**
  * The single emitted TS CLI root (#272): `serve`, `import`, `backup`, and
@@ -28,7 +33,12 @@ import { runLegacyImportCommand } from "./legacy_import_command.js";
 
 export type WriteLine = (line: string) => void;
 
-export type ServeRunner = (app: FastifyInstance, host: string, port: number) => Promise<void>;
+type ServeOperation = (app: FastifyInstance, host: string, port: number) => Promise<void>;
+
+/** The lifecycle owner is explicit before a serve operation is invoked. */
+export type ServeRunner =
+  | { readonly owner: "cli-owned"; readonly run: ServeOperation }
+  | { readonly owner: "runner-owned"; readonly run: ServeOperation };
 
 export interface ImportRunnerContext {
   readonly config: ServerConfig;
@@ -48,8 +58,12 @@ export interface CliContext {
   readonly envFile?: LoadServerConfigInput["envFile"];
   readonly workingDirectory?: LoadServerConfigInput["workingDirectory"];
   readonly writeLine?: WriteLine | undefined;
-  /** Injectable listener for tests; the default binds the built app. */
+  /** Injectable lifecycle for tests; the default is CLI-owned. */
   readonly serve?: ServeRunner | undefined;
+  /** Injectable signal event source; used only by CLI-owned serve lifecycles. */
+  readonly shutdownSignalSource?: ShutdownSignalSource | undefined;
+  /** Injectable composition boundary for lifecycle failure tests. */
+  readonly buildApplication?: typeof buildApp | undefined;
   readonly importRunner?: ImportRunner | undefined;
   /** Injectable backup boundary for lifecycle failure tests. */
   readonly backupDatabaseFile?: typeof backupDatabaseFile | undefined;
@@ -128,6 +142,8 @@ async function defaultServe(app: FastifyInstance, host: string, port: number): P
   await app.listen({ host, port });
 }
 
+const DEFAULT_SERVE_RUNNER: ServeRunner = { owner: "cli-owned", run: defaultServe };
+
 /** serve: backup → migrate → reconcile exports → recover jobs runs inside buildApp. */
 async function serveCommand(
   parsed: ParsedArguments,
@@ -142,14 +158,18 @@ async function serveCommand(
     writeLine(`Invalid port: ${rawPort ?? String(port)}`);
     return 2;
   }
-  const app = await buildApp({ logger: true, config });
-  const runServe = context.serve ?? defaultServe;
-  try {
-    await runServe(app, host, port);
-  } catch (error) {
-    return closeAppAndRethrow(app, error, "Server listen and cleanup both failed.");
+  const buildApplication = context.buildApplication ?? buildApp;
+  const app = await buildApplication({ logger: true, config });
+  const serve = context.serve ?? DEFAULT_SERVE_RUNNER;
+  if (serve.owner === "runner-owned") {
+    await serve.run(app, host, port);
+    return 0;
   }
-  return 0;
+  return runCliOwnedServeLifecycle({
+    source: context.shutdownSignalSource ?? processShutdownSignalSource,
+    listen: () => serve.run(app, host, port),
+    close: () => app.close(),
+  });
 }
 
 async function backupCommand(context: CliContext, writeLine: WriteLine): Promise<number> {

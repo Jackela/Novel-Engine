@@ -227,13 +227,16 @@ describe("operational CLI", () => {
     let backupsAtListen = -1;
     const context = {
       ...harness.context,
-      serve: async (app: { close(): Promise<void> }, host: string, port: number) => {
-        events.push(`listen:${host}:${port}`);
-        const backups = join(harness.dataDirectory, "backups");
-        backupsAtListen = existsSync(backups)
-          ? (await (await import("node:fs/promises")).readdir(backups)).length
-          : -1;
-        await app.close();
+      serve: {
+        owner: "runner-owned" as const,
+        run: async (app: { close(): Promise<void> }, host: string, port: number) => {
+          events.push(`listen:${host}:${port}`);
+          const backups = join(harness.dataDirectory, "backups");
+          backupsAtListen = existsSync(backups)
+            ? (await (await import("node:fs/promises")).readdir(backups)).length
+            : -1;
+          await app.close();
+        },
       },
     };
 

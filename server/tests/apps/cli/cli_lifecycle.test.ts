@@ -2,7 +2,7 @@ import { mkdir, mkdtemp } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { runCli } from "../../../src/apps/cli/main.js";
 import { openStudioDatabase } from "../../../src/shared/infrastructure/db/startup.js";
 
@@ -28,8 +28,11 @@ describe("CLI serve lifecycle", () => {
     const harness = await lifecycleHarness();
     const code = await runCli(["serve", "--port", "8765"], {
       ...harness.context,
-      serve: async () => {
-        throw new Error("simulated listen failure");
+      serve: {
+        owner: "cli-owned",
+        run: async () => {
+          throw new Error("simulated listen failure");
+        },
       },
     });
 
@@ -43,16 +46,19 @@ describe("CLI serve lifecycle", () => {
     const harness = await lifecycleHarness();
     const code = await runCli(["serve", "--port", "8765"], {
       ...harness.context,
-      serve: async (app) => {
-        const close = app.close.bind(app);
-        Object.defineProperty(app, "close", {
-          configurable: true,
-          value: async () => {
-            await close();
-            throw new Error("simulated cleanup failure");
-          },
-        });
-        throw new Error("simulated listen failure");
+      serve: {
+        owner: "cli-owned",
+        run: async (app) => {
+          const close = app.close.bind(app);
+          Object.defineProperty(app, "close", {
+            configurable: true,
+            value: async () => {
+              await close();
+              throw new Error("simulated cleanup failure");
+            },
+          });
+          throw new Error("simulated listen failure");
+        },
       },
     });
 
@@ -64,6 +70,42 @@ describe("CLI serve lifecycle", () => {
     ]);
     const reopened = await openStudioDatabase(harness.databasePath);
     reopened.close();
+  });
+
+  it.each([
+    { outcome: "fulfillment", runnerFailure: undefined },
+    { outcome: "rejection", runnerFailure: new Error("simulated runner-owned failure") },
+  ])("leaves a runner-owned $outcome entirely to that runner", async ({ runnerFailure }) => {
+    const harness = await lifecycleHarness();
+    const addSignal = vi.fn();
+    const removeSignal = vi.fn();
+    let closeCalls = 0;
+
+    const code = await runCli(["serve", "--port", "8765"], {
+      ...harness.context,
+      shutdownSignalSource: { add: addSignal, remove: removeSignal },
+      serve: {
+        owner: "runner-owned",
+        run: async (app) => {
+          const close = app.close.bind(app);
+          Object.defineProperty(app, "close", {
+            configurable: true,
+            value: async () => {
+              closeCalls += 1;
+              await close();
+            },
+          });
+          await app.close();
+          if (runnerFailure !== undefined) throw runnerFailure;
+        },
+      },
+    });
+
+    expect(code).toBe(runnerFailure === undefined ? 0 : 1);
+    expect(closeCalls).toBe(1);
+    expect(addSignal).not.toHaveBeenCalled();
+    expect(removeSignal).not.toHaveBeenCalled();
+    expect(harness.lines).toEqual(runnerFailure === undefined ? [] : [runnerFailure.message]);
   });
 });
 
