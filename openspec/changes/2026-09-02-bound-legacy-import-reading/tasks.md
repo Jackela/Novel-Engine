@@ -41,7 +41,7 @@
 
 - [x] 4.1 Run focused reader, application, web preview, CLI, idempotency,
       transaction, confinement, and database-authority regressions.
-- [ ] 4.2 Run server type-check, lint, architecture, size, full tests, relevant
+- [x] 4.2 Run server type-check, lint, architecture, size, full tests, relevant
       event-loop/raw HTTP checks, and strict OpenSpec; record fixed-SHA evidence
       plus every skipped external or human gate.
 - [ ] 4.3 Keep the change active until required CI is green, then merge the
