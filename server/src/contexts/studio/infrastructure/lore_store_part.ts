@@ -5,9 +5,8 @@ import type { StudioSqliteDatabase } from "../../../shared/infrastructure/db/con
 import { isLoreEntryKind } from "../application/lorebook.js";
 import type { SetLoreAliasesInput, SetLoreStatusInput } from "../application/ports/lore_store.js";
 import type { DocumentWithCurrent, ProjectScope } from "../application/ports/studio_store.js";
-import { NotFoundError } from "../domain/exceptions.js";
 import { documents, projects } from "./db/schema.js";
-import { documentsWithCurrent, scopedDocument, scopedProject } from "./db/studio_query_helpers.js";
+import { documentWithCurrent, scopedDocument, scopedProject } from "./db/studio_query_helpers.js";
 
 /**
  * The lorebook half of the Drizzle studio store (#315): document-level alias
@@ -41,13 +40,7 @@ export class LoreStorePart {
         .where(eq(documents.id, document.id))
         .run();
       tx.update(projects).set({ updatedAt: input.now }).where(eq(projects.id, project.id)).run();
-      const [updated] = documentsWithCurrent(tx, project.id).filter(
-        (candidate) => candidate.id === document.id,
-      );
-      if (updated === undefined) {
-        throw new NotFoundError("Document not found.");
-      }
-      return updated;
+      return documentWithCurrent(tx, project.id, document.id);
     });
   }
 
@@ -70,13 +63,7 @@ export class LoreStorePart {
         .where(eq(documents.id, document.id))
         .run();
       tx.update(projects).set({ updatedAt: input.now }).where(eq(projects.id, project.id)).run();
-      const [updated] = documentsWithCurrent(tx, project.id).filter(
-        (candidate) => candidate.id === document.id,
-      );
-      if (updated === undefined) {
-        throw new NotFoundError("Document not found.");
-      }
-      return updated;
+      return documentWithCurrent(tx, project.id, document.id);
     });
   }
 }

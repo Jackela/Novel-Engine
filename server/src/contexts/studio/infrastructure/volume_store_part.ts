@@ -14,6 +14,7 @@ import { DuplicateVolumeError, NotFoundError } from "../domain/exceptions.js";
 import { documents, projects, volumes } from "./db/schema.js";
 import {
   documentsWithCurrent,
+  documentWithCurrent,
   isUniqueViolation,
   scopedDocument,
   scopedProject,
@@ -143,13 +144,7 @@ export class VolumeStorePart implements StudioVolumeStore {
         .where(eq(documents.id, document.id))
         .run();
       touchProject(tx, projectId, input.now);
-      const [placed] = documentsWithCurrent(tx, projectId).filter(
-        (candidate) => candidate.id === document.id,
-      );
-      if (placed === undefined) {
-        throw new NotFoundError("Document not found.");
-      }
-      return placed;
+      return documentWithCurrent(tx, projectId, document.id);
     });
   }
 

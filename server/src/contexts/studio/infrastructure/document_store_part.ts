@@ -21,12 +21,12 @@ import {
 import { documentRevisions, documents, projects, snapshotDocuments } from "./db/schema.js";
 import {
   documentsWithCurrent,
+  documentWithCurrent,
   insertRevision,
   isUniqueViolation,
   type RevisionRow,
   scopedDocument,
   scopedProject,
-  type Tx,
 } from "./db/studio_query_helpers.js";
 
 /**
@@ -159,13 +159,7 @@ export class DocumentStorePart {
         .where(eq(documents.id, document.id))
         .run();
       tx.update(projects).set({ updatedAt: input.now }).where(eq(projects.id, project.id)).run();
-      const [updated] = documentsWithCurrent(tx, project.id).filter(
-        (candidate) => candidate.id === document.id,
-      );
-      if (updated === undefined) {
-        throw new NotFoundError("Document not found.");
-      }
-      return updated;
+      return documentWithCurrent(tx, project.id, document.id);
     });
   }
 
@@ -249,20 +243,4 @@ export class DocumentStorePart {
       return row.revision;
     });
   }
-}
-
-function documentWithCurrent(tx: Tx, projectId: string, documentId: string): DocumentWithCurrent {
-  const row = tx
-    .select({ document: documents, revision: documentRevisions })
-    .from(documents)
-    .leftJoin(documentRevisions, eq(documents.currentRevisionId, documentRevisions.id))
-    .where(and(eq(documents.id, documentId), eq(documents.projectId, projectId)))
-    .get();
-  if (row === undefined) {
-    throw new NotFoundError(
-      `No document '${documentId}' exists in project '${projectId}': the id does not exist ` +
-        `there, or the document belongs to a different project.`,
-    );
-  }
-  return { ...row.document, currentRevision: row.revision };
 }

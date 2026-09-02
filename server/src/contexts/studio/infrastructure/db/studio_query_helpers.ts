@@ -138,6 +138,27 @@ export function documentsWithCurrent(tx: Tx, projectId: string): DocumentWithCur
     .map(({ volumePosition: _volumePosition, ...record }) => record);
 }
 
+/** One project document with only its own current revision. */
+export function documentWithCurrent(
+  tx: Tx,
+  projectId: string,
+  documentId: string,
+): DocumentWithCurrent {
+  const row = tx
+    .select({ document: documents, revision: documentRevisions })
+    .from(documents)
+    .leftJoin(documentRevisions, eq(documents.currentRevisionId, documentRevisions.id))
+    .where(and(eq(documents.id, documentId), eq(documents.projectId, projectId)))
+    .get();
+  if (row === undefined) {
+    throw new NotFoundError(
+      `No document '${documentId}' exists in project '${projectId}': the id does not exist ` +
+        `there, or the document belongs to a different project.`,
+    );
+  }
+  return { ...row.document, currentRevision: row.revision };
+}
+
 /** Append one immutable revision row (the sole revision write path). */
 export function insertRevision(
   tx: Tx,
