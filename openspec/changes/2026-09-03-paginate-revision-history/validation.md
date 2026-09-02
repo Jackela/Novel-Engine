@@ -6,8 +6,8 @@
 - Persisted-count implementation SHA: `ea5fb6810eae32da30c24e538bda8c9fb5ab10ac`
 - Server pagination implementation SHA: `71a9aad3c12cd4eef3a91b14b66d5f4c3f7f25b3`
 - Server review-repair SHA: `c69e56589b93fed95645407d2bf94d53335303d2`
-- Frontend pagination implementation SHA: `7f8178217d1b7567dd6ce5412fe9129e8419f7ba`
-- Frontend concurrency repair SHA: `ae4fd1feb009f6283649081759921413b3083fc8`
+- Frontend pagination implementation SHA: `7f817821c4752a089345238a39ef914ee6456e4c`
+- Frontend concurrency repair SHA: `ae4fd1fe7224dc496cc98efdef225e62b22a414b`
 - Frontend error-ownership repair SHA: `e221ea4fe7555ba90598b13f96d18138156cb963`
 - Final local candidate SHA: pending integrated browser and full-suite validation.
 - Environment: Darwin arm64, Node.js 24.19.0, pnpm 11.6.0
