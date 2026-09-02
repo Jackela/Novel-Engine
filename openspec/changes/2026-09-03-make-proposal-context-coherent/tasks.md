@@ -35,10 +35,10 @@
 
 ## 4. Integrated evidence
 
-- [ ] 4.1 Run focused context/prompt/provider/pipeline/retry/SSE tests, server
+- [x] 4.1 Run focused context/prompt/provider/pipeline/retry/SSE tests, server
       type-check/lint/arch/size/full tests, frontend type/unit/build, Playwright,
       API-types drift, and strict OpenSpec validation.
-- [ ] 4.2 Record fixed-SHA evidence and all skips, explicitly naming project
+- [x] 4.2 Record fixed-SHA evidence and all skips, explicitly naming project
       detail decomposition and project/job/review/export pagination as later
       changes.
 - [ ] 4.3 Keep the change active until required CI is green, then merge it into
