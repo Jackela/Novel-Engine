@@ -34,8 +34,8 @@ export function residentMatchCorpus(view: ResidentContextView): string {
 
 /**
  * Render the resident sections in prompt order. Derived prose crosses through
- * sanitizeResidentProse so summary lines and tails can neither instruct nor
- * forge a bracketed marker; the outline itself stays writer-trusted (#313).
+ * sanitizeResidentProse so no project-derived value can forge a bracketed
+ * marker. The linked beat stays inside the outline's reference-data block.
  */
 export function renderResidentContextSections(view: ResidentContextView): string[] {
   const sections: string[] = [];
@@ -44,14 +44,14 @@ export function renderResidentContextSections(view: ResidentContextView): string
       "",
       "OUTLINE (the writer's recorded plan):",
       PROJECT_OUTLINE_BEGIN,
-      view.outline.markdown,
-      PROJECT_OUTLINE_END,
+      sanitizeResidentProse(view.outline.markdown),
     );
     if (view.outline.linkedBeat !== null) {
       sections.push(
-        `Current beat: "${view.outline.linkedBeat.title}" — this chapter fulfills this outline section.`,
+        `Current beat: "${sanitizeResidentProse(view.outline.linkedBeat.title)}" — this chapter fulfills this outline section.`,
       );
     }
+    sections.push(PROJECT_OUTLINE_END);
   }
   if (view.priorStory.length > 0) {
     sections.push(

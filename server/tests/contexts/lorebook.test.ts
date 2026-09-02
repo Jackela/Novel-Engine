@@ -206,7 +206,7 @@ describe("resident match corpus (#315 corpus equals the assembled resident view)
   });
 });
 
-describe("lorebook section rendering (#315 trusted-context layout)", () => {
+describe("lorebook section rendering (#315 reference-data layout)", () => {
   it("renders nothing when no entry matched", () => {
     expect(renderLoreSection([])).toEqual([]);
     expect(
@@ -232,7 +232,7 @@ describe("lorebook section rendering (#315 trusted-context layout)", () => {
     expect(rendered).toContain("Mara keeps");
     expect(rendered.indexOf("### Mara")).toBeLessThan(rendered.indexOf("### Sable"));
     expect(rendered).toContain("### Sable");
-    // The section carries its own trusted-context markers.
+    // The section carries its own reference-data markers.
     expect(sections[0]).toBe("");
     expect(sections.some((line) => line === LOREBOOK_BEGIN)).toBe(true);
     expect(sections.at(-1)).toBe(LOREBOOK_END);

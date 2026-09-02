@@ -1,6 +1,6 @@
 import type { LoreEntrySource, LoreMatch, LoreMatchRank } from "./lorebook.js";
 import { type LoreMatchCorpora, loreEntrySummary, matchLoreEntriesWithRank } from "./lorebook.js";
-import { LOREBOOK_BEGIN, LOREBOOK_END } from "./sanitization.js";
+import { escapePromptData, LOREBOOK_BEGIN, LOREBOOK_END } from "./sanitization.js";
 
 /**
  * Progressive disclosure under the lorebook injection budget (#445, ADR-0006):
@@ -77,12 +77,13 @@ export function planLoreInjections(
 function headingLine(entry: LoreEntrySource, mode: LoreInjectionMode): string {
   // Headings stay single-line so each `###` reliably opens exactly one entry;
   // the suffix marks entries whose body was withheld by the budget (#445).
-  const title = entry.title.replace(/\s+/g, " ").trim();
+  const title = escapePromptData(entry.title.replace(/\s+/g, " ").trim());
   return mode === "full" ? `### ${title}` : `### ${title} (summary only)`;
 }
 
 function bodyLine(entry: LoreEntrySource, mode: LoreInjectionMode): string {
-  return mode === "full" ? (entry.contentMarkdown?.trim() ?? "") : loreEntrySummary(entry);
+  const body = mode === "full" ? (entry.contentMarkdown?.trim() ?? "") : loreEntrySummary(entry);
+  return escapePromptData(body);
 }
 
 function injectionLines(planned: readonly PlannedLoreInjection[]): string[] {
@@ -108,7 +109,7 @@ function renderedSectionLength(planned: readonly PlannedLoreInjection[]): number
 
 /**
  * Full-text rendering of already-matched entries (the pre-budget layout,
- * retained for the no-budget callers): one trusted-context block per entry.
+ * retained for the no-budget callers): one reference-data block per entry.
  */
 export function renderLoreSection(matched: readonly LoreEntrySource[]): string[] {
   return injectionLines(matched.map((entry) => ({ entry, mode: "full" })));
