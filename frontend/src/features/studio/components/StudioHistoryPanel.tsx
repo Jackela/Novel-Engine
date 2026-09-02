@@ -1,14 +1,18 @@
 import { RotateCcw } from "lucide-react";
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 
-import type { Revision } from "@/app/types/studio";
+import type { RevisionSummary } from "@/app/types/studio";
 import { useCommandFocusRestoration } from "../hooks/useCommandFocusRestoration";
 
 interface StudioHistoryPanelProps {
-  revisions: Revision[];
+  revisions: RevisionSummary[];
   loadedRevisionId: string | null;
   onRestoreRevision: (revisionId: string) => void | Promise<void>;
   restoringRevisionId?: string | null;
+  historyInitialized?: boolean;
+  hasOlderRevisions?: boolean;
+  isLoadingOlder?: boolean;
+  onLoadOlderRevisions?: () => void | Promise<void>;
 }
 
 export function StudioHistoryPanel({
@@ -16,11 +20,29 @@ export function StudioHistoryPanel({
   loadedRevisionId,
   onRestoreRevision,
   restoringRevisionId = null,
+  historyInitialized = false,
+  hasOlderRevisions = false,
+  isLoadingOlder = false,
+  onLoadOlderRevisions,
 }: StudioHistoryPanelProps) {
-  const isBusy = restoringRevisionId !== null;
+  const isBusy = restoringRevisionId !== null || isLoadingOlder;
   const runWithFocusRestoration = useCommandFocusRestoration(isBusy);
   const headingRef = useRef<HTMLHeadingElement>(null);
   const restoreButtonRefs = useRef(new Map<string, HTMLButtonElement>());
+  const keyboardLoadPendingRef = useRef(false);
+
+  useEffect(() => {
+    if (isLoadingOlder) return;
+    if (
+      keyboardLoadPendingRef.current &&
+      historyInitialized &&
+      !hasOlderRevisions &&
+      headingRef.current?.isConnected
+    ) {
+      headingRef.current.focus();
+    }
+    keyboardLoadPendingRef.current = false;
+  }, [hasOlderRevisions, historyInitialized, isLoadingOlder]);
 
   const fallbackFor = (revisionId: string) => {
     for (const [candidateId, button] of restoreButtonRefs.current) {
@@ -77,6 +99,24 @@ export function StudioHistoryPanel({
           </article>
         ))}
       </div>
+      {(hasOlderRevisions || isLoadingOlder) && onLoadOlderRevisions ? (
+        <button
+          aria-busy={isLoadingOlder || undefined}
+          className="ui-command studio-inspector__load-older"
+          disabled={isBusy}
+          onClick={(event) => {
+            keyboardLoadPendingRef.current = event.detail === 0;
+            void onLoadOlderRevisions();
+          }}
+          type="button"
+        >
+          {isLoadingOlder ? "Loading older revisions…" : "Load older revisions"}
+        </button>
+      ) : historyInitialized && !isLoadingOlder ? (
+        <p className="studio-inspector__history-status" role="status">
+          All revisions loaded
+        </p>
+      ) : null}
     </div>
   );
 }

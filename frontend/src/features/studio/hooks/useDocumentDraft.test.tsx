@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { api, HttpError } from "@/app/api";
 import type { Project } from "@/app/types/studio";
 import { chapter, projectWith, revision } from "@/test/factories";
-import { createMountHarness, flushMicrotasks } from "@/test/harness";
+import { createMountHarness, deferred, flushMicrotasks } from "@/test/harness";
 
 import { useDocumentDraft } from "./useDocumentDraft";
 
@@ -47,7 +47,6 @@ const initialProject = projectWith([activeDocument], {
 
 const initialRevision = revision("revision-1", {
   document_id: activeDocument.id,
-  content_markdown: activeDocument.content_markdown,
   word_count: 2,
 });
 
@@ -62,7 +61,7 @@ const savedRevision = revision("revision-2", {
   document_id: activeDocument.id,
   parent_revision_id: initialRevision.id,
   revision_number: 2,
-  content_markdown: savedDocument.content_markdown,
+  word_count: 2,
 });
 
 const latestDocument = {
@@ -143,8 +142,11 @@ describe("useDocumentDraft", () => {
   it("autosaves an edited draft and exposes the saved project and refreshed revisions", async () => {
     // Given
     vi.mocked(api.revisions)
-      .mockResolvedValueOnce({ revisions: [initialRevision] })
-      .mockResolvedValueOnce({ revisions: [savedRevision, initialRevision] });
+      .mockResolvedValueOnce({ revisions: [initialRevision], next_cursor: "older-initial" })
+      .mockResolvedValueOnce({
+        revisions: [savedRevision, initialRevision],
+        next_cursor: "older-after-save",
+      });
     vi.mocked(api.saveDocument).mockResolvedValue(savedDocument);
     const hook = renderDocumentDraftHook();
     await flushMicrotasks();
@@ -166,12 +168,56 @@ describe("useDocumentDraft", () => {
     expect(hook.result().hook.saveState).toBe("saved");
     expect(hook.result().project?.documents).toEqual([savedDocument]);
     expect(hook.result().hook.revisions).toEqual([savedRevision, initialRevision]);
+    expect(api.revisions).toHaveBeenCalledTimes(2);
+    expect(vi.mocked(api.revisions).mock.calls[1]?.[2]).toEqual(
+      expect.objectContaining({ limit: 50, signal: expect.any(AbortSignal) }),
+    );
+    expect(vi.mocked(api.revisions).mock.calls[1]?.[2]).not.toHaveProperty("cursor");
+  });
+
+  it("keeps restore pending for exactly one cursorless first-page refresh", async () => {
+    const refresh = deferred<{
+      revisions: (typeof initialRevision)[];
+      next_cursor: string | null;
+    }>();
+    const restoredDocument = {
+      ...activeDocument,
+      current_revision_id: "revision-restored",
+      content_markdown: "Restored draft",
+    };
+    vi.mocked(api.revisions)
+      .mockResolvedValueOnce({ revisions: [initialRevision], next_cursor: "older-initial" })
+      .mockReturnValueOnce(refresh.promise);
+    vi.mocked(api.restoreRevision).mockResolvedValue(restoredDocument);
+    const hook = renderDocumentDraftHook();
+    await flushMicrotasks();
+
+    let settled = false;
+    const restore = hook.result().hook.restoreRevision("revision-old");
+    restore.then(() => {
+      settled = true;
+    });
+    await flushMicrotasks();
+    expect(settled).toBe(false);
+
+    await act(async () => {
+      refresh.resolve({ revisions: [savedRevision, initialRevision], next_cursor: "older-after" });
+      await restore;
+    });
+
+    expect(settled).toBe(true);
+    expect(api.revisions).toHaveBeenCalledTimes(2);
+    expect(vi.mocked(api.revisions).mock.calls[1]?.[2]).toEqual(
+      expect.objectContaining({ limit: 50, signal: expect.any(AbortSignal) }),
+    );
+    expect(vi.mocked(api.revisions).mock.calls[1]?.[2]).not.toHaveProperty("cursor");
   });
 
   it("reports a revision conflict when autosave receives an HTTP 409 response", async () => {
     // Given
     vi.mocked(api.revisions).mockResolvedValue({
       revisions: [initialRevision],
+      next_cursor: null,
     });
     vi.mocked(api.project).mockResolvedValue(latestProject);
     vi.mocked(api.saveDocument).mockRejectedValue(new HttpError("revision conflict", 409));
@@ -195,6 +241,7 @@ describe("useDocumentDraft", () => {
     // Given
     vi.mocked(api.revisions).mockResolvedValue({
       revisions: [initialRevision],
+      next_cursor: null,
     });
     vi.mocked(api.project).mockResolvedValue(latestProject);
     vi.mocked(api.saveDocument).mockRejectedValue(new HttpError("revision conflict", 409));
@@ -227,6 +274,7 @@ describe("useDocumentDraft", () => {
     // Given
     vi.mocked(api.revisions).mockResolvedValue({
       revisions: [initialRevision],
+      next_cursor: null,
     });
     vi.mocked(api.project).mockResolvedValue(latestProject);
     vi.mocked(api.saveDocument)

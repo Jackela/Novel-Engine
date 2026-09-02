@@ -5,7 +5,7 @@ import type {
   LoreStatus,
   ProviderInfo,
   Review,
-  Revision,
+  RevisionSummary,
   StudioExport,
   StudioJob,
   StudioJobSummary,
@@ -71,8 +71,12 @@ export interface InspectorReviewModel {
 }
 
 export interface InspectorHistoryModel {
-  revisions: Revision[];
+  revisions: RevisionSummary[];
   loadedRevisionId: string | null;
+  historyInitialized: boolean;
+  hasOlderRevisions: boolean;
+  isLoadingOlder: boolean;
+  onLoadOlderRevisions: () => void | Promise<void>;
   onRestoreRevision: (revisionId: string) => void | Promise<void>;
 }
 

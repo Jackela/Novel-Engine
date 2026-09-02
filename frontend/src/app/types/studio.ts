@@ -104,16 +104,22 @@ export interface Project {
   volumes?: Volume[];
 }
 
-export interface Revision {
+export type RevisionSource = "author" | "ai-accepted" | "restore";
+
+/** Lightweight immutable History item; revision bodies stay server authority. */
+export interface RevisionSummary {
   id: string;
   document_id: string;
   parent_revision_id: string | null;
   revision_number: number;
-  content_markdown: string;
-  metadata: Record<string, unknown>;
-  source: string;
+  source: RevisionSource;
   word_count: number;
   created_at: string;
+}
+
+export interface RevisionPage {
+  revisions: RevisionSummary[];
+  next_cursor: string | null;
 }
 
 export interface ReviewIssue {

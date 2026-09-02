@@ -28,6 +28,7 @@ import { type JobsRequestOptions, projectJobsRequest, retryJobRequest } from "@/
 import { localServiceUnavailable } from "@/app/networkError";
 import { createRequestAbortScope } from "@/app/requestAbortScope";
 import { clearRetryAttemptSession, parseAndRecordRetrySession } from "@/app/retryAttemptRegistry";
+import { documentRevisionsRequest, type RevisionRequestOptions } from "@/app/revisionApiRequest";
 import type { DocumentKind, ExportFormat, LoreStatus } from "@/app/types/studio";
 
 export class HttpError extends Error {
@@ -236,8 +237,8 @@ export const api = {
       metadata?: Record<string, unknown>;
     },
   ) => putJson(`/api/projects/${projectId}/documents/${documentId}`, payload, parseStudioDocument),
-  revisions: (projectId: string, documentId: string, init?: RequestInit) =>
-    request(`/api/projects/${projectId}/documents/${documentId}/revisions`, init, parseRevisions),
+  revisions: (projectId: string, documentId: string, options: RevisionRequestOptions = {}) =>
+    request(...documentRevisionsRequest(projectId, documentId, options), parseRevisions),
   restoreRevision: (
     projectId: string,
     documentId: string,

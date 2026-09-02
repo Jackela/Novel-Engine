@@ -31,6 +31,10 @@ function buildInspectorModel(): StudioInspectorModel {
     history: {
       revisions: [],
       loadedRevisionId: null,
+      historyInitialized: true,
+      hasOlderRevisions: false,
+      isLoadingOlder: false,
+      onLoadOlderRevisions: vi.fn(),
       onRestoreRevision: vi.fn(),
     },
     jobs: {

@@ -88,7 +88,14 @@ export function useDocumentDraft(
   const clearRevisionError = useCallback(() => {
     if (isCurrentOwner(owner)) setRevisionError(null);
   }, [isCurrentOwner, owner, setRevisionError]);
-  const { revisions, refreshDocumentRevisions } = useRevisionCache(
+  const {
+    revisions,
+    historyInitialized,
+    hasOlderRevisions,
+    isLoadingOlder,
+    refreshDocumentRevisions,
+    loadOlderRevisions,
+  } = useRevisionCache(
     projectId,
     activeDocument?.id ?? null,
     reportRevisionError,
@@ -313,6 +320,10 @@ export function useDocumentDraft(
     saveState,
     loadedRevision,
     revisions,
+    historyInitialized,
+    hasOlderRevisions,
+    isLoadingOlder,
+    loadOlderRevisions,
     captureAcceptance,
     restoreRevision,
     isConflictActionPending,

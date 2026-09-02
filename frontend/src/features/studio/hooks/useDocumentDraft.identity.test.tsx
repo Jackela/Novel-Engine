@@ -48,7 +48,7 @@ const projectB = projectWith([projectBDocument], { id: "project-2", title: "Seco
 
 beforeEach(() => {
   vi.useFakeTimers();
-  vi.mocked(api.revisions).mockResolvedValue({ revisions: [] });
+  vi.mocked(api.revisions).mockResolvedValue({ revisions: [], next_cursor: null });
 });
 
 afterEach(() => {

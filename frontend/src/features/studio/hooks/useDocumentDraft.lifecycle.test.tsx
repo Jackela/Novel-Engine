@@ -39,7 +39,7 @@ const project = projectWith([documentA, documentB]);
 
 beforeEach(() => {
   vi.useFakeTimers();
-  vi.mocked(api.revisions).mockResolvedValue({ revisions: [] });
+  vi.mocked(api.revisions).mockResolvedValue({ revisions: [], next_cursor: null });
 });
 
 afterEach(() => {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { parseStudioDocument } from "./apiContract";
+import { parseRevisions, parseStudioDocument } from "./apiContract";
 
 const documentPayload = {
   id: "document-1",
@@ -36,5 +36,30 @@ describe("Studio document contract", () => {
         lore_status: "stable",
       }).lore_status,
     ).toBe("stable");
+  });
+});
+
+describe("Revision summary page contract", () => {
+  const summary = {
+    id: "revision-2",
+    document_id: "document-1",
+    parent_revision_id: "revision-1",
+    revision_number: 2,
+    source: "author",
+    word_count: 17,
+    created_at: "2026-08-31T00:00:00Z",
+  };
+
+  it("accepts bounded History summaries without revision bodies or metadata", () => {
+    expect(parseRevisions({ revisions: [summary], next_cursor: "older" })).toEqual({
+      revisions: [summary],
+      next_cursor: "older",
+    });
+  });
+
+  it("requires the explicit nullable continuation cursor", () => {
+    expect(() => parseRevisions({ revisions: [summary] })).toThrow(
+      "Invalid revisions response.next_cursor",
+    );
   });
 });

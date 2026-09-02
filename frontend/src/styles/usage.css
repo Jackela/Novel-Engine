@@ -110,6 +110,16 @@
   font-size: 10px;
   font-weight: 700;
 }
+.studio-inspector__load-older {
+  width: 100%;
+  margin-top: 10px;
+}
+.studio-inspector__history-status {
+  margin-top: 10px;
+  color: #4f595a;
+  font-size: 11px;
+  text-align: center;
+}
 .studio-inspector__export-row {
   display: flex;
   align-items: center;

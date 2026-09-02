@@ -1,7 +1,7 @@
 import type {
   Project,
   Review,
-  Revision,
+  RevisionSummary,
   StudioDocument,
   StudioExport,
   StudioJob,
@@ -59,15 +59,13 @@ export function projectWith(
   return project({ ...overrides, documents });
 }
 
-export function revision(id: string, overrides: Partial<Revision> = {}): Revision {
+export function revision(id: string, overrides: Partial<RevisionSummary> = {}): RevisionSummary {
   return {
     id,
     document_id: "document-1",
     parent_revision_id: null,
     revision_number: 1,
-    content_markdown: "Draft",
-    metadata: {},
-    source: "manual",
+    source: "author",
     word_count: 1,
     created_at: FIXTURE_TIMESTAMP,
     ...overrides,

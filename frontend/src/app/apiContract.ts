@@ -4,7 +4,8 @@ import type {
   LoreStatus,
   Project,
   ProviderInfo,
-  Revision,
+  RevisionPage,
+  RevisionSummary,
   Session,
   SessionKind,
   SetupStatus,
@@ -290,27 +291,28 @@ export function parseDocuments(value: unknown): {
   };
 }
 
-function parseRevision(value: unknown, label: string): Revision {
+const revisionSources = ["author", "ai-accepted", "restore"] as const;
+
+function parseRevisionSummary(value: unknown, label: string): RevisionSummary {
   const item = objectValue(value, label);
   return {
     id: stringField(item, "id", label),
     document_id: stringField(item, "document_id", label),
     parent_revision_id: nullableStringField(item, "parent_revision_id", label),
     revision_number: numberField(item, "revision_number", label),
-    content_markdown: stringField(item, "content_markdown", label),
-    metadata: recordField(item, "metadata", label),
-    source: stringField(item, "source", label),
+    source: literalField(item, "source", label, revisionSources),
     word_count: numberField(item, "word_count", label),
     created_at: stringField(item, "created_at", label),
   };
 }
 
-export function parseRevisions(value: unknown): { revisions: Revision[] } {
+export function parseRevisions(value: unknown): RevisionPage {
   const item = objectValue(value, "revisions response");
   return {
     revisions: arrayField(item, "revisions", "revisions response", (entry, index) =>
-      parseRevision(entry, `revisions[${index}]`),
+      parseRevisionSummary(entry, `revisions[${index}]`),
     ),
+    next_cursor: nullableStringField(item, "next_cursor", "revisions response"),
   };
 }
 

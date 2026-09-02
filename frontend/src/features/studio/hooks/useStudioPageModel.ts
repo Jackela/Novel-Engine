@@ -74,6 +74,10 @@ export function useStudioPageModel(
     saveState,
     loadedRevision,
     revisions,
+    historyInitialized,
+    hasOlderRevisions,
+    isLoadingOlder,
+    loadOlderRevisions,
     captureAcceptance,
     restoreRevision,
     isConflictActionPending,
@@ -272,6 +276,10 @@ export function useStudioPageModel(
           history: {
             revisions,
             loadedRevisionId: loadedRevision.current,
+            historyInitialized,
+            hasOlderRevisions,
+            isLoadingOlder,
+            onLoadOlderRevisions: loadOlderRevisions,
             onRestoreRevision,
           },
           jobs: {

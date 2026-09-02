@@ -1,13 +1,12 @@
-import { act, StrictMode, useState } from "react";
+import { act, StrictMode } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { api } from "@/app/api";
-import type { Project, Revision } from "@/app/types/studio";
-import { chapter, projectWith, revision } from "@/test/factories";
+import type { RevisionPage } from "@/app/types/studio";
+import { revision } from "@/test/factories";
 import { createMountHarness, deferred, flushEffects } from "@/test/harness";
 
-import { useDocumentDraft } from "./useDocumentDraft";
-import { useRevisionCache } from "./useRevisionCache";
+import { resetRevisionCacheForTests, useRevisionCache } from "./useRevisionCache";
 
 vi.mock("@/app/api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/app/api")>();
@@ -16,40 +15,24 @@ vi.mock("@/app/api", async (importOriginal) => {
     api: {
       ...actual.api,
       revisions: vi.fn<typeof actual.api.revisions>(),
-      restoreRevision: vi.fn<typeof actual.api.restoreRevision>(),
     },
   };
 });
 
 type HookResult = ReturnType<typeof useRevisionCache>;
-type DraftHookResult = ReturnType<typeof useDocumentDraft>;
 
 const harness = createMountHarness();
 
 afterEach(() => {
   harness.cleanup();
+  resetRevisionCacheForTests();
   vi.resetAllMocks();
 });
 
 const revisionOne = revision("revision-1");
 const staleRevision = revision("revision-stale", {
-  content_markdown: "Stale draft",
+  source: "restore",
 });
-
-const activeDocument = chapter("document-1", {
-  title: "Chapter One",
-  current_revision_id: "revision-current",
-  content_markdown: "Draft",
-});
-
-const project = projectWith([activeDocument], { title: "Novel" });
-
-const restoredDocument = {
-  ...activeDocument,
-  current_revision_id: "revision-restored",
-  content_markdown: "Restored draft",
-  updated_at: "2026-08-27T00:01:00Z",
-};
 
 function renderCache(): {
   readonly result: () => { readonly hook: HookResult };
@@ -109,30 +92,6 @@ function renderStrictCache(): { readonly result: () => HookResult } {
   };
 }
 
-function renderDraft(): {
-  readonly result: () => { readonly hook: DraftHookResult };
-} {
-  let current: { readonly hook: DraftHookResult } | undefined;
-
-  function Wrapper(): null {
-    const [, setProject] = useState<Project | null>(project);
-    const [, setError] = useState<string | null>(null);
-    current = {
-      hook: useDocumentDraft(activeDocument, "project-1", setProject, setError),
-    };
-    return null;
-  }
-
-  harness.mount(<Wrapper />);
-
-  return {
-    result: () => {
-      if (current === undefined) throw new Error("Expected hook result after render.");
-      return current;
-    },
-  };
-}
-
 describe("useRevisionCache", () => {
   it("aborts requests on document change, project change, and unmount", async () => {
     vi.mocked(api.revisions).mockReturnValue(new Promise(() => {}));
@@ -158,15 +117,15 @@ describe("useRevisionCache", () => {
   });
 
   it("cancels an older same-owner refresh and ignores its aborted failure", async () => {
-    const firstRequest = deferred<{ revisions: Revision[] }>();
+    const firstRequest = deferred<RevisionPage>();
     let rejectFirst: ((reason: unknown) => void) | undefined;
-    const abortableFirst = new Promise<{ revisions: Revision[] }>((resolve, reject) => {
+    const abortableFirst = new Promise<RevisionPage>((resolve, reject) => {
       rejectFirst = reject;
       void firstRequest.promise.then(resolve);
     });
     vi.mocked(api.revisions)
       .mockReturnValueOnce(abortableFirst)
-      .mockResolvedValueOnce({ revisions: [revisionOne] });
+      .mockResolvedValueOnce({ revisions: [revisionOne], next_cursor: null });
     const cache = renderCache();
     const firstInit = vi.mocked(api.revisions).mock.calls[0]?.[2];
 
@@ -182,10 +141,10 @@ describe("useRevisionCache", () => {
   });
 
   it("restarts the owner load after StrictMode aborts the simulated mount", async () => {
-    const firstRequest = deferred<{ revisions: Revision[] }>();
+    const firstRequest = deferred<RevisionPage>();
     vi.mocked(api.revisions)
       .mockReturnValueOnce(firstRequest.promise)
-      .mockResolvedValueOnce({ revisions: [revisionOne] });
+      .mockResolvedValueOnce({ revisions: [revisionOne], next_cursor: null });
 
     const cache = renderStrictCache();
     await flushEffects();
@@ -197,9 +156,9 @@ describe("useRevisionCache", () => {
   });
 
   it("resolves refresh after the latest revision response updates the cache", async () => {
-    let resolveResponse: ((response: { revisions: Revision[] }) => void) | undefined;
+    let resolveResponse: ((response: RevisionPage) => void) | undefined;
     vi.mocked(api.revisions)
-      .mockResolvedValueOnce({ revisions: [] })
+      .mockResolvedValueOnce({ revisions: [], next_cursor: null })
       .mockReturnValueOnce(
         new Promise((resolve) => {
           resolveResponse = resolve;
@@ -219,7 +178,7 @@ describe("useRevisionCache", () => {
     expect(settled).toBe(false);
 
     await act(async () => {
-      resolveResponse?.({ revisions: [revisionOne] });
+      resolveResponse?.({ revisions: [revisionOne], next_cursor: null });
       await refresh;
       await Promise.resolve();
     });
@@ -229,8 +188,8 @@ describe("useRevisionCache", () => {
   });
 
   it("does not let an unmounted cache instance overwrite a newer response", async () => {
-    let resolveStale: ((response: { revisions: Revision[] }) => void) | undefined;
-    let resolveCurrent: ((response: { revisions: Revision[] }) => void) | undefined;
+    let resolveStale: ((response: RevisionPage) => void) | undefined;
+    let resolveCurrent: ((response: RevisionPage) => void) | undefined;
     vi.mocked(api.revisions)
       .mockReturnValueOnce(
         new Promise((resolve) => {
@@ -248,11 +207,11 @@ describe("useRevisionCache", () => {
     const currentCache = renderCache();
 
     await act(async () => {
-      resolveCurrent?.({ revisions: [revisionOne] });
+      resolveCurrent?.({ revisions: [revisionOne], next_cursor: null });
       await Promise.resolve();
     });
     await act(async () => {
-      resolveStale?.({ revisions: [staleRevision] });
+      resolveStale?.({ revisions: [staleRevision], next_cursor: null });
       await Promise.resolve();
     });
 
@@ -263,7 +222,7 @@ describe("useRevisionCache", () => {
     let rejectStale: ((reason: unknown) => void) | undefined;
     const projectTwoRevision = revision("project-2-revision", {
       document_id: "document-1",
-      content_markdown: "Project two draft",
+      source: "restore",
     });
     vi.mocked(api.revisions)
       .mockReturnValueOnce(
@@ -271,7 +230,7 @@ describe("useRevisionCache", () => {
           rejectStale = reject;
         }),
       )
-      .mockResolvedValueOnce({ revisions: [projectTwoRevision] });
+      .mockResolvedValueOnce({ revisions: [projectTwoRevision], next_cursor: null });
     const cache = renderCache();
 
     cache.rerender("project-2", "document-1");
@@ -288,43 +247,5 @@ describe("useRevisionCache", () => {
 
     expect(cache.onError).not.toHaveBeenCalled();
     expect(cache.result().hook.revisions).toEqual([projectTwoRevision]);
-  });
-
-  it("keeps restore pending until the revision refresh completes", async () => {
-    let resolveRefresh: ((response: { revisions: Revision[] }) => void) | undefined;
-    vi.mocked(api.revisions)
-      .mockResolvedValueOnce({ revisions: [] })
-      .mockReturnValueOnce(
-        new Promise((resolve) => {
-          resolveRefresh = resolve;
-        }),
-      );
-    vi.mocked(api.restoreRevision).mockResolvedValue(restoredDocument);
-    const draft = renderDraft();
-
-    let settled = false;
-    const restore = draft.result().hook.restoreRevision("revision-old");
-    restore.then(() => {
-      settled = true;
-    });
-
-    await act(async () => {
-      await Promise.resolve();
-    });
-    expect(api.restoreRevision).toHaveBeenCalledWith(
-      "project-1",
-      activeDocument.id,
-      "revision-old",
-      activeDocument.current_revision_id,
-    );
-    expect(settled).toBe(false);
-
-    await act(async () => {
-      resolveRefresh?.({ revisions: [revisionOne] });
-      await restore;
-      await Promise.resolve();
-    });
-
-    expect(settled).toBe(true);
   });
 });

@@ -31,7 +31,15 @@ function inspectorModel(loreStatus: InspectorLoreStatusModel): StudioInspectorMo
       errorForExport: null,
     },
     review: { latestReview: null, onRunReview: vi.fn() },
-    history: { revisions: [], loadedRevisionId: null, onRestoreRevision: vi.fn() },
+    history: {
+      revisions: [],
+      loadedRevisionId: null,
+      historyInitialized: true,
+      hasOlderRevisions: false,
+      isLoadingOlder: false,
+      onLoadOlderRevisions: vi.fn(),
+      onRestoreRevision: vi.fn(),
+    },
     jobs: {
       jobs: [],
       hasOlderJobs: false,

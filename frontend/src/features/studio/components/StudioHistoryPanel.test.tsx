@@ -1,3 +1,4 @@
+import { getByRole } from "@testing-library/dom";
 import { act } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -13,17 +14,15 @@ afterEach(() => {
 });
 
 const revisions = [
-  revision("revision-old", { content_markdown: "Old draft", word_count: 2 }),
+  revision("revision-old", { word_count: 2 }),
   revision("revision-other", {
     parent_revision_id: "revision-old",
     revision_number: 2,
-    content_markdown: "Other draft",
     word_count: 2,
   }),
   revision("revision-current", {
     parent_revision_id: "revision-other",
     revision_number: 3,
-    content_markdown: "Current draft",
     word_count: 2,
   }),
 ];
@@ -40,6 +39,113 @@ function renderHistory(restoringRevisionId: string | null): HTMLDivElement {
 }
 
 describe("StudioHistoryPanel", () => {
+  it("loads older revisions with native semantics and moves focus at the terminal page", async () => {
+    const load = deferred<void>();
+    let hasOlderRevisions = true;
+    let isLoadingOlder = false;
+    const content = () => (
+      <StudioHistoryPanel
+        revisions={revisions}
+        loadedRevisionId="revision-current"
+        onRestoreRevision={vi.fn()}
+        hasOlderRevisions={hasOlderRevisions}
+        isLoadingOlder={isLoadingOlder}
+        historyInitialized
+        onLoadOlderRevisions={() => load.promise}
+      />
+    );
+    const { container, root } = harness.mount(content());
+    const button = getByRole(container, "button", { name: "Load older revisions" });
+    const heading = getByRole(container, "heading", { name: "Revision history" });
+    button.focus();
+    act(() => {
+      button.click();
+      isLoadingOlder = true;
+      root.render(content());
+    });
+    expect(button).toHaveAttribute("aria-busy", "true");
+
+    await act(async () => {
+      hasOlderRevisions = false;
+      isLoadingOlder = false;
+      load.resolve(undefined);
+      await load.promise;
+      root.render(content());
+    });
+
+    expect(document.activeElement).toBe(heading);
+    expect(container).toHaveTextContent("All revisions loaded");
+  });
+
+  it("keeps the load-more command focused after an older-page failure", async () => {
+    const onLoadOlderRevisions = vi.fn().mockResolvedValue(undefined);
+    let hasOlderRevisions = true;
+    let isLoadingOlder = false;
+    const content = () => (
+      <StudioHistoryPanel
+        revisions={revisions}
+        loadedRevisionId="revision-current"
+        onRestoreRevision={vi.fn()}
+        hasOlderRevisions={hasOlderRevisions}
+        isLoadingOlder={isLoadingOlder}
+        historyInitialized
+        onLoadOlderRevisions={onLoadOlderRevisions}
+      />
+    );
+    const { container, root } = harness.mount(content());
+    const button = getByRole(container, "button", { name: "Load older revisions" });
+    button.focus();
+    act(() => {
+      button.click();
+      isLoadingOlder = true;
+      root.render(content());
+    });
+    act(() => {
+      isLoadingOlder = false;
+      root.render(content());
+    });
+
+    expect(document.activeElement).toBe(button);
+    const elsewhere = document.createElement("button");
+    document.body.append(elsewhere);
+    elsewhere.focus();
+    act(() => {
+      hasOlderRevisions = false;
+      root.render(content());
+    });
+    expect(document.activeElement).toBe(elsewhere);
+    elsewhere.remove();
+  });
+
+  it("does not steal focus after a pointer loads the terminal page", async () => {
+    const onLoadOlderRevisions = vi.fn().mockResolvedValue(undefined);
+    let hasOlderRevisions = true;
+    const content = () => (
+      <>
+        <button type="button">Elsewhere</button>
+        <StudioHistoryPanel
+          revisions={revisions}
+          loadedRevisionId="revision-current"
+          onRestoreRevision={vi.fn()}
+          hasOlderRevisions={hasOlderRevisions}
+          historyInitialized
+          onLoadOlderRevisions={onLoadOlderRevisions}
+        />
+      </>
+    );
+    const { container, root } = harness.mount(content());
+    const loadButton = getByRole(container, "button", { name: "Load older revisions" });
+    const elsewhere = getByRole(container, "button", { name: "Elsewhere" });
+    act(() => {
+      loadButton.dispatchEvent(new MouseEvent("click", { bubbles: true, detail: 1 }));
+      elsewhere.focus();
+      hasOlderRevisions = false;
+      root.render(content());
+    });
+
+    expect(document.activeElement).toBe(elsewhere);
+  });
+
   it("locks every restore action while one revision is restoring", () => {
     const container = renderHistory("revision-old");
     const restoreButtons = Array.from(
@@ -145,7 +251,7 @@ describe("StudioHistoryPanel", () => {
 
   it("moves orphaned restore focus to the History heading when no command remains", async () => {
     const command = deferred<void>();
-    const onlyRevision = revision("revision-only", { content_markdown: "Only draft" });
+    const onlyRevision = revision("revision-only");
     let restoringRevisionId: string | null = null;
     let loadedRevisionId = "new-current";
     const content = () => (

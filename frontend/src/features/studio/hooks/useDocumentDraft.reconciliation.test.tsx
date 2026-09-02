@@ -44,7 +44,7 @@ const project = projectWith([documentA, documentB]);
 
 beforeEach(() => {
   vi.useFakeTimers();
-  vi.mocked(api.revisions).mockResolvedValue({ revisions: [] });
+  vi.mocked(api.revisions).mockResolvedValue({ revisions: [], next_cursor: null });
 });
 
 afterEach(() => {
@@ -194,11 +194,17 @@ describe("useDocumentDraft committed reconciliation", () => {
 
     act(() => draft.result().hook.setDraft("Newer author edit"));
     act(() => reconcileAcceptance(acceptedA));
+    await flushMicrotasks();
 
     expect(draft.result().hook.draft).toBe("Newer author edit");
     expect(draft.result().hook.loadedRevision.current).toBe(acceptedA.current_revision_id);
     expect(draft.result().hook.saveState).toBe("conflict");
     expect(draft.result().project?.documents).toEqual([acceptedA, documentB]);
+    expect(api.revisions).toHaveBeenCalledTimes(2);
+    expect(vi.mocked(api.revisions).mock.calls[1]?.[2]).toEqual(
+      expect.objectContaining({ limit: 50, signal: expect.any(AbortSignal) }),
+    );
+    expect(vi.mocked(api.revisions).mock.calls[1]?.[2]).not.toHaveProperty("cursor");
   });
 
   it("uses a clean externally advanced baseline for the next acceptance", async () => {
