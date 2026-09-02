@@ -39,7 +39,7 @@
 
 - [x] 4.1 Run provider sync/stream, proposal accounting, streaming, retry,
       transaction, migration, usage-store, and usage-HTTP regressions.
-- [ ] 4.2 Run server type-check, lint, architecture, size, migration-channel,
+- [x] 4.2 Run server type-check, lint, architecture, size, migration-channel,
       OpenAPI, full tests, and strict OpenSpec; record fixed-SHA evidence and
       every skipped external or human gate.
 - [ ] 4.3 Keep the change active until required CI is green, then merge the
