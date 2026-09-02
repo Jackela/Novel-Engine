@@ -10,9 +10,24 @@ import {
   providerFailureIsRetryable,
   runWithRetryPolicy,
   timeoutFailure,
+  usageToken,
 } from "../../src/contexts/ai/infrastructure/providers/provider_http.js";
 
 const IMMEDIATE_SLEEP = async () => {};
+
+describe("provider usage token parsing", () => {
+  it.each([
+    { value: 0, expected: 0 },
+    { value: Number.MAX_SAFE_INTEGER, expected: Number.MAX_SAFE_INTEGER },
+    { value: Number.MAX_SAFE_INTEGER + 1, expected: null },
+    { value: 1e308, expected: null },
+    { value: Number.POSITIVE_INFINITY, expected: null },
+    { value: -1, expected: null },
+    { value: 1.5, expected: null },
+  ])("normalizes $value to $expected", ({ value, expected }) => {
+    expect(usageToken(value)).toBe(expected);
+  });
+});
 
 describe("retry decisions read structured fields only", () => {
   it("retries exactly the adjudicated HTTP status set", () => {

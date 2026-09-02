@@ -1,5 +1,13 @@
-import { isNotNull } from "drizzle-orm";
-import { index, integer, real, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
+import { isNotNull, sql } from "drizzle-orm";
+import {
+  check,
+  index,
+  integer,
+  real,
+  sqliteTable,
+  text,
+  uniqueIndex,
+} from "drizzle-orm/sqlite-core";
 
 /**
  * The first schema of the TS rewrite (#264): the sessions table with its
@@ -104,5 +112,15 @@ export const usageEvents = sqliteTable(
     estimated_cost: real("estimated_cost"),
     created_at: integer("created_at", { mode: "timestamp_ms" }).notNull(),
   },
-  (table) => [index("idx_usage_events_project_id").on(table.project_id)],
+  (table) => [
+    index("idx_usage_events_project_id").on(table.project_id),
+    check(
+      "ck_usage_events_prompt_tokens_safe",
+      sql`typeof(${table.prompt_tokens}) = 'integer' AND ${table.prompt_tokens} BETWEEN 0 AND 9007199254740991`,
+    ),
+    check(
+      "ck_usage_events_completion_tokens_safe",
+      sql`typeof(${table.completion_tokens}) = 'integer' AND ${table.completion_tokens} BETWEEN 0 AND 9007199254740991`,
+    ),
+  ],
 );

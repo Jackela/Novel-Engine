@@ -8,6 +8,7 @@ import type {
   AddUsageEventInput,
   MarkJobOutcomeInput,
 } from "../../application/ports/job_records.js";
+import { assertSafeUsageToken } from "./safe_usage_tokens.js";
 import type { Tx } from "./studio_query_helpers.js";
 
 /**
@@ -56,6 +57,8 @@ export function insertJobAndEvent(
 
 /** Insert one usage-ledger row. */
 export function writeUsageEvent(tx: Tx, input: AddUsageEventInput): void {
+  assertSafeUsageToken(input.promptTokens, "prompt");
+  assertSafeUsageToken(input.completionTokens, "completion");
   tx.insert(usageEvents)
     .values({
       id: randomUUID(),

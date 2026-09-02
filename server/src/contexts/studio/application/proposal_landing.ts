@@ -1,4 +1,5 @@
 import {
+  isSafeUsageToken,
   type ProviderStep,
   TextGenerationProviderError,
   type TextGenerationTask,
@@ -164,9 +165,9 @@ export function validatedProposalOrThrow(result: {
   return { proposal };
 }
 
-/** Reported provider tokens fall back to a shared word count when absent. */
+/** Invalid or absent provider usage falls back to the shared exact word count. */
 export function resolvedTokenCount(reported: number | null, text: string): number {
-  return reported ?? wordCount(text);
+  return isSafeUsageToken(reported) ? reported : wordCount(text);
 }
 
 /** Fields every proposal job row shares before its terminal status is known. */

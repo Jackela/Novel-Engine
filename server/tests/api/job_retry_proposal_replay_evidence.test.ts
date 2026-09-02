@@ -5,6 +5,7 @@ import {
   TextGenerationProviderError,
   type TextGenerationProviderFactory,
 } from "../../src/contexts/ai/application/ports/text_generation.js";
+import { wordCount } from "../../src/contexts/studio/application/payloads.js";
 import { jobEvents, jobs, usageEvents } from "../../src/shared/infrastructure/db/schema.js";
 import { firstDocument, studioDatabase } from "./job_test_helpers.js";
 import { validProposalProse } from "./proposal_test_helpers.js";
@@ -19,7 +20,13 @@ import {
 
 type RetryOutcome = "completed" | "failed";
 
-function proposalRetryFactory(outcome: RetryOutcome): {
+function proposalRetryFactory(
+  outcome: RetryOutcome,
+  usage: { promptTokens: number; completionTokens: number } = {
+    promptTokens: 7,
+    completionTokens: 11,
+  },
+): {
   readonly factory: TextGenerationProviderFactory;
   readonly factoryCalls: () => number;
   readonly generateCalls: () => number;
@@ -41,8 +48,8 @@ function proposalRetryFactory(outcome: RetryOutcome): {
             model: "proposal-replay-model",
             rawText: validProposalProse,
             content: { chapter_markdown: validProposalProse },
-            promptTokens: 7,
-            completionTokens: 11,
+            promptTokens: usage.promptTokens,
+            completionTokens: usage.completionTokens,
           };
         },
       };
@@ -62,6 +69,47 @@ function retryEvidence(app: FastifyInstance) {
 }
 
 describe("proposal retry terminal replay evidence", () => {
+  it("falls back when a successful retry reports unsafe token counts", async () => {
+    const provider = proposalRetryFactory("completed", {
+      promptTokens: Number.MAX_SAFE_INTEGER + 1,
+      completionTokens: Number.POSITIVE_INFINITY,
+    });
+    const { app } = await buildStudioApp(monotonicClock(), {
+      textProviderFactory: provider.factory,
+    });
+    try {
+      const owner = await ownerJar(app);
+      const project = await seedProject(app, owner, "unsafe retry counts");
+      const document = firstDocument(project);
+      const instruction = "fail before retry";
+      const original = await call(
+        app,
+        owner,
+        "POST",
+        `/api/projects/${project.id}/documents/${document.id}/ai-proposals`,
+        { operation: "continue", instruction },
+      );
+      const source = original.json<JobPayload>();
+      expect(source.status).toBe("failed");
+
+      const retried = await call(
+        app,
+        owner,
+        "POST",
+        `/api/projects/${project.id}/jobs/${source.id}/retry`,
+        undefined,
+        { "idempotency-key": "unsafe-proposal-retry-key-0001" },
+      );
+      expect(retried.statusCode, retried.body).toBe(200);
+      const usage = retryEvidence(app).usage[0];
+      if (usage === undefined) throw new Error("expected usage event");
+      expect(usage.prompt_tokens).toBe(wordCount(instruction));
+      expect(usage.completion_tokens).toBe(wordCount(validProposalProse));
+    } finally {
+      await app.close();
+    }
+  });
+
   it.each([
     {
       outcome: "completed",

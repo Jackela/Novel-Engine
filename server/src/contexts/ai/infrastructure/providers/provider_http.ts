@@ -1,4 +1,5 @@
 import {
+  isSafeUsageToken,
   type ProviderStep,
   TextGenerationProviderError,
 } from "../../application/ports/text_generation.js";
@@ -17,9 +18,9 @@ export function isJsonObject(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-/** Structural usage token read; malformed or negative values stay null. */
+/** Structural usage token read; inexact or malformed values stay null. */
 export function usageToken(value: unknown): number | null {
-  return typeof value === "number" && Number.isInteger(value) && value >= 0 ? value : null;
+  return isSafeUsageToken(value) ? value : null;
 }
 
 export function isResponseLike(value: unknown): value is Response {
