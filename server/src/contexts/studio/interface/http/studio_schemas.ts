@@ -115,6 +115,75 @@ export const operationInFlightSchema: JsonResponseSchema = {
   required: ["error"],
 } as const;
 
+const operationCapacityExceededEnvelope = {
+  type: "object",
+  additionalProperties: false,
+  properties: {
+    error: {
+      type: "object",
+      additionalProperties: false,
+      properties: {
+        code: { type: "string", enum: [ERROR_CODES.OPERATION_CAPACITY_EXCEEDED] },
+        message: {
+          type: "string",
+          enum: ["Studio operation capacity is exhausted."],
+        },
+        details: {
+          type: "object",
+          additionalProperties: false,
+          properties: {
+            scope: { type: "string", enum: ["project", "application"] },
+            limit: { type: "integer", minimum: 1 },
+            in_flight: { type: "integer", minimum: 0 },
+            project_id: { type: "string" },
+            retry_after_seconds: { type: "integer", minimum: 1 },
+          },
+          required: ["scope", "limit", "in_flight", "project_id", "retry_after_seconds"],
+        },
+      },
+      required: ["code", "message", "details"],
+    },
+  },
+  required: ["error"],
+} as const;
+
+const persistenceUnavailableEnvelope = {
+  type: "object",
+  additionalProperties: false,
+  properties: {
+    error: {
+      type: "object",
+      additionalProperties: false,
+      properties: {
+        code: { type: "string", enum: [ERROR_CODES.SERVICE_UNAVAILABLE] },
+        message: { type: "string" },
+        details: { type: "object", additionalProperties: true },
+      },
+      required: ["code", "message"],
+    },
+  },
+  required: ["error"],
+} as const;
+
+/** Capacity-aware 503 contract; Retry-After is absent for persistence outages. */
+export const operationCapacityResponseSchema: JsonResponseSchema = {
+  description: "Workflow capacity exhaustion or unavailable persistence.",
+  headers: {
+    "Retry-After": {
+      description: "Optional integer-seconds hint emitted only for workflow capacity exhaustion.",
+      type: "integer",
+      minimum: 1,
+    },
+  },
+  content: {
+    "application/json": {
+      schema: {
+        oneOf: [operationCapacityExceededEnvelope, persistenceUnavailableEnvelope],
+      },
+    },
+  },
+} as const;
+
 /** The fixed 409 envelope when an immutable snapshot references the document. */
 export const snapshotConflictSchema: JsonResponseSchema = {
   type: "object",

@@ -2,6 +2,7 @@ import { InvalidOperationError } from "../../../../shared/domain/exceptions.js";
 import {
   AppError,
   ERROR_CODES,
+  ERROR_HTTP_STATUS,
   INVALID_OPERATION_CODE,
   INVALID_OPERATION_STATUS_CODE,
 } from "../../../../shared/interface/http/error_envelope.js";
@@ -9,6 +10,7 @@ import {
   DuplicateDocumentError,
   DuplicateVolumeError,
   NotFoundError,
+  OperationCapacityExceededError,
   OperationInFlightError,
   RevisionConflictError,
   SnapshotConflict,
@@ -66,6 +68,21 @@ function toAppError(error: unknown): unknown {
         document_id: error.documentId,
         operation: error.operation,
       },
+    });
+  }
+  if (error instanceof OperationCapacityExceededError) {
+    return new AppError({
+      statusCode: ERROR_HTTP_STATUS[ERROR_CODES.OPERATION_CAPACITY_EXCEEDED],
+      code: ERROR_CODES.OPERATION_CAPACITY_EXCEEDED,
+      message: error.message,
+      details: {
+        scope: error.scope,
+        limit: error.limit,
+        in_flight: error.inFlight,
+        project_id: error.projectId,
+        retry_after_seconds: error.retryAfterSeconds,
+      },
+      responseHeaders: { "retry-after": String(error.retryAfterSeconds) },
     });
   }
   if (error instanceof InvalidOperationError) {

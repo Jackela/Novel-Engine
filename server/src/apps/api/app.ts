@@ -20,10 +20,7 @@ import { studioRoutes } from "../../contexts/studio/interface/http/studio_routes
 import { AuthService } from "../../shared/application/auth_service.js";
 import type { HealthProbe } from "../../shared/application/ports/health.js";
 import { DEFAULT_CORS_ORIGINS } from "../../shared/domain/cors_contract.js";
-import {
-  assertStartupGuards,
-  type ServerConfig,
-} from "../../shared/infrastructure/config/server_config.js";
+import { assertStartupGuards } from "../../shared/infrastructure/config/server_config.js";
 import { DrizzleAuthStore } from "../../shared/infrastructure/db/auth_store.js";
 import type { StudioSqliteDatabase } from "../../shared/infrastructure/db/connection.js";
 import { sqliteHealthProbe } from "../../shared/infrastructure/db/sqlite_health_probe.js";
@@ -42,11 +39,20 @@ import {
 import { type VersionInfo, versionRoutes } from "../../shared/interface/http/version_route.js";
 import { closeAppAndRethrow } from "./app_lifecycle.js";
 import {
+  CORS_ALLOWED_HEADERS,
+  CORS_ALLOWED_METHODS,
+  CORS_EXPOSED_HEADERS,
+} from "./cors_registration_policy.js";
+import {
   DEFAULT_HTTP_SERVER_POLICY,
   fastifyOptionsForHttpServerPolicy,
   type HttpServerPolicy,
   registerUndeclaredRequestBodyPolicy,
 } from "./http_server_policy.js";
+import {
+  type OperationCapacityAppOptions,
+  resolveOperationCapacity,
+} from "./operation_capacity_config.js";
 import { openPersistence } from "./persistence.js";
 import { loggerWithProductIdentity } from "./product_logger.js";
 import { buildProviderRuntime, type ProviderApiKeys } from "./provider_runtime.js";
@@ -59,7 +65,7 @@ declare module "fastify" {
   }
 }
 
-export interface AppOptions {
+export interface AppOptions extends OperationCapacityAppOptions {
   logger?: FastifyServerOptions["logger"];
   healthProbe?: HealthProbe | undefined;
   environment?: string | undefined;
@@ -100,11 +106,6 @@ export interface AppOptions {
   /** Credentials for the HTTP providers; absent keys leave them unconfigured. */
   providerApiKeys?: ProviderApiKeys | undefined;
   /**
-   * Resolved operational configuration (loadServerConfig). When present the
-   * production guards fail fast here and unset options fall back to it.
-   */
-  config?: ServerConfig | undefined;
-  /**
    * Directory holding the built SPA (frontend/dist by default, resolved
    * relative to the server package). When present the Studio shell is served
    * at the site root with an index.html fallback; when absent the app boots
@@ -119,18 +120,6 @@ export interface AppOptions {
   /** Injectable finite request-receipt thresholds for real-socket tests. */
   httpServerPolicy?: HttpServerPolicy | undefined;
 }
-
-const CORS_ALLOWED_HEADERS = [
-  "content-type",
-  "authorization",
-  "x-api-key",
-  "x-request-id",
-  "accept",
-  "origin",
-  "x-requested-with",
-  "x-csrf-token",
-];
-const CORS_ALLOWED_METHODS = ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"];
 
 const DEFAULT_AUTH_RATE_LIMIT_PER_MINUTE = 5;
 /** Rate-limit buckets expire with the minute window that fills them. */
@@ -152,6 +141,7 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
   if (options.config !== undefined) {
     assertStartupGuards(options.config);
   }
+  const operationCapacity = resolveOperationCapacity(options);
 
   const productIdentity = readProductIdentity();
   const app = Fastify({
@@ -221,6 +211,7 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
                 options.projectArtifactCleaner ??
                 new FilesystemProjectArtifactCleaner(persistence.dataDirectory),
               loreBudgetCharacters,
+              operationCapacity,
             },
           );
 
@@ -268,7 +259,7 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
       credentials: true,
       allowedHeaders: CORS_ALLOWED_HEADERS,
       methods: CORS_ALLOWED_METHODS,
-      exposedHeaders: ["x-request-id", "x-total-count"],
+      exposedHeaders: CORS_EXPOSED_HEADERS,
       maxAge: 600,
     });
     const perMinute =

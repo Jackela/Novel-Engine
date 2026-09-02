@@ -13,7 +13,7 @@ import { InFlightOperationGuard } from "../../src/contexts/studio/application/op
 import type { StudioStore } from "../../src/contexts/studio/application/ports/studio_store.js";
 import { ProjectService } from "../../src/contexts/studio/application/project_service.js";
 import { AiProposalService } from "../../src/contexts/studio/application/proposal_service.js";
-import type { ProposalStreamFrame } from "../../src/contexts/studio/application/proposal_streaming.js";
+import type { ProposalStreamSession } from "../../src/contexts/studio/application/proposal_streaming.js";
 import { documentRevisions } from "../../src/contexts/studio/infrastructure/db/schema.js";
 import { DrizzleStudioStore } from "../../src/contexts/studio/infrastructure/drizzle_studio_store.js";
 import {
@@ -29,6 +29,11 @@ import {
   openStudioDatabase,
   type StudioDatabase,
 } from "../../src/shared/infrastructure/db/startup.js";
+import {
+  BackpressureResponse,
+  collectProposalStream,
+  releaseProposalStreamSession,
+} from "./proposal_stream_session_helpers.js";
 
 interface ServiceHarness {
   proposals: AiProposalService;
@@ -36,35 +41,6 @@ interface ServiceHarness {
   principal: Principal;
   db: StudioDatabase["db"];
   cleanup: () => Promise<void>;
-}
-
-class BackpressureResponse extends EventEmitter {
-  readonly chunks: string[] = [];
-  destroyed = false;
-  writableFinished = false;
-
-  constructor(private readonly backpressureOn: (chunk: string) => boolean) {
-    super();
-  }
-
-  writeHead(): this {
-    return this;
-  }
-
-  write(chunk: string): boolean {
-    this.chunks.push(chunk);
-    return !this.backpressureOn(chunk);
-  }
-
-  end(): this {
-    this.writableFinished = true;
-    return this;
-  }
-
-  destroy(): this {
-    this.destroyed = true;
-    return this;
-  }
 }
 
 // Direct-service harness for abort paths that `app.inject` cannot expose
@@ -97,17 +73,6 @@ async function openProposalStreamHarness(
   };
 }
 
-// Collect every frame from a normally drained proposal stream.
-async function collectStream(
-  stream: AsyncGenerator<ProposalStreamFrame, void, void>,
-): Promise<ProposalStreamFrame[]> {
-  const frames: ProposalStreamFrame[] = [];
-  for await (const frame of stream) {
-    frames.push(frame);
-  }
-  return frames;
-}
-
 async function timeOutProposalResponse(
   harness: ServiceHarness,
   title: string,
@@ -122,7 +87,7 @@ async function timeOutProposalResponse(
   const revisionsBefore = harness.db.select().from(documentRevisions).all().length;
   const disconnect = new AbortController();
   const response = new BackpressureResponse(backpressureOn);
-  const frames = harness.proposals.draftProposalStream(
+  const session = harness.proposals.draftProposalStream(
     harness.principal,
     project.id,
     document.id,
@@ -134,10 +99,11 @@ async function timeOutProposalResponse(
     writeProposalStreamResponse({
       response,
       socket: new EventEmitter(),
-      frames,
+      frames: session.frames,
       disconnect,
       hijack: () => {},
       drainTimeoutMs: 5,
+      releaseCapacity: session.releaseCapacity,
     }),
   ).rejects.toBeInstanceOf(ProposalStreamDrainTimeoutError);
   return { response, revisionsBefore };
@@ -156,35 +122,42 @@ const failingStreamProviderFactory: TextGenerationProviderFactory = () => ({
 describe("proposal stream service (#308 abort semantics)", () => {
   it("releases project ownership when a partially consumed stream is returned", async () => {
     const harness = await openProposalStreamHarness();
+    let session: ProposalStreamSession | undefined;
     try {
       const project = harness.projects.newProject(harness.principal, {
         title: "Returned stream",
       }) as { id: string; documents: Array<{ id: string }> };
       const document = project.documents[0];
       if (document === undefined) throw new Error("fixture must seed a document");
-      const stream = harness.proposals.draftProposalStream(
+      session = harness.proposals.draftProposalStream(
         harness.principal,
         project.id,
         document.id,
         { operation: "continue", instruction: "", provider: "mock" },
         () => {},
       );
-      expect((await stream.next()).done).toBe(false);
+      expect((await session.frames.next()).done).toBe(false);
 
       await expect(harness.projects.removeProject(harness.principal, project.id)).rejects.toThrow(
         /continue operation is already running/i,
       );
-      await stream.return();
+      await session.frames.return();
+      await expect(harness.projects.removeProject(harness.principal, project.id)).rejects.toThrow(
+        /continue operation is already running/i,
+      );
+      session.releaseCapacity();
       await expect(
         harness.projects.removeProject(harness.principal, project.id),
       ).resolves.toBeUndefined();
     } finally {
+      await releaseProposalStreamSession(session);
       await harness.cleanup();
     }
   });
 
   it("aborts with nothing persisted and releases the in-flight guard", async () => {
     const harness = await openProposalStreamHarness();
+    let session: ProposalStreamSession | undefined;
     try {
       const project = harness.projects.newProject(harness.principal, {
         title: "Aborted stream",
@@ -193,7 +166,7 @@ describe("proposal stream service (#308 abort semantics)", () => {
       if (document === undefined) throw new Error("fixture must seed a document");
 
       const controller = new AbortController();
-      const stream = harness.proposals.draftProposalStream(
+      session = harness.proposals.draftProposalStream(
         harness.principal,
         project.id,
         document.id,
@@ -201,18 +174,19 @@ describe("proposal stream service (#308 abort semantics)", () => {
         () => {},
         controller.signal,
       );
-      const first = await stream.next();
+      const first = await session.frames.next();
       if (first.done || first.value.type !== "delta") {
         throw new Error("expected the stream to start with a delta");
       }
       controller.abort();
-      const second = await stream.next();
+      const second = await session.frames.next();
       expect(second.done).toBe(true);
       expect(harness.db.select().from(jobs).all()).toHaveLength(0);
       expect(harness.db.select().from(usageEvents).all()).toHaveLength(0);
+      session.releaseCapacity();
 
       // The in-flight guard was released: a fresh stream lands its job.
-      const retried = await collectStream(
+      const retried = await collectProposalStream(
         harness.proposals.draftProposalStream(
           harness.principal,
           project.id,
@@ -225,6 +199,7 @@ describe("proposal stream service (#308 abort semantics)", () => {
       expect(harness.db.select().from(jobs).all()).toHaveLength(1);
       expect(harness.db.select().from(usageEvents).all()).toHaveLength(1);
     } finally {
+      await releaseProposalStreamSession(session);
       await harness.cleanup();
     }
   });
@@ -245,13 +220,14 @@ describe("proposal stream service (#308 abort semantics)", () => {
       },
     });
     const harness = await openProposalStreamHarness(providerFactory);
+    let session: ProposalStreamSession | undefined;
     try {
       const project = harness.projects.newProject(harness.principal, {
         title: "Programming failure",
       }) as { id: string; documents: Array<{ id: string }> };
       const document = project.documents[0];
       if (document === undefined) throw new Error("fixture must seed a document");
-      const stream = harness.proposals.draftProposalStream(
+      session = harness.proposals.draftProposalStream(
         harness.principal,
         project.id,
         document.id,
@@ -260,13 +236,15 @@ describe("proposal stream service (#308 abort semantics)", () => {
         controller.signal,
       );
 
-      await expect(stream.next()).rejects.toBe(programmingError);
+      await expect(session.frames.next()).rejects.toBe(programmingError);
       expect(harness.db.select().from(jobs).all()).toHaveLength(0);
       expect(harness.db.select().from(usageEvents).all()).toHaveLength(0);
+      session.releaseCapacity();
       await expect(
         harness.projects.removeProject(harness.principal, project.id),
       ).resolves.toBeUndefined();
     } finally {
+      await releaseProposalStreamSession(session);
       await harness.cleanup();
     }
   });

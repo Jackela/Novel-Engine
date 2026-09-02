@@ -17,6 +17,10 @@ const DEFAULT_HOST = "0.0.0.0";
 const DEFAULT_PORT = 8000;
 const DEFAULT_RATE_LIMIT = "5/minute";
 const RATE_LIMIT_PATTERN = /^([1-9]\d{0,5})\/minute$/;
+const MIN_ACTIVE_WORKFLOWS = 1;
+const MAX_ACTIVE_WORKFLOWS = 1024;
+export const DEFAULT_MAX_ACTIVE_WORKFLOWS = 4;
+export const DEFAULT_MAX_ACTIVE_WORKFLOWS_PER_PROJECT = 2;
 
 // Assembled like the Python sentinel so no credential-shaped literal ships in source.
 export const DEFAULT_SECRET_KEY = ["change-me", "in-production", "32-char-long"].join("-");
@@ -43,7 +47,14 @@ export interface ServerConfig {
   readonly corsOrigins: string[];
   readonly trustedProxies: string[];
   readonly authRateLimitPerMinute: number;
+  readonly maxActiveWorkflows: number;
+  readonly maxActiveWorkflowsPerProject: number;
   readonly llm: LlmServerConfig;
+}
+
+export interface WorkflowCapacityConfig {
+  readonly applicationLimit: number;
+  readonly projectLimit: number;
 }
 
 export interface LoadServerConfigInput {
@@ -70,6 +81,20 @@ export function loadServerConfig(input: LoadServerConfigInput = {}): ServerConfi
   const workingDirectory = input.workingDirectory ?? process.cwd();
   const databasePath = resolve(workingDirectory, databaseUrl.slice("sqlite:///".length));
   const sessionSecret = secretFrom(stringFrom(env, "SECURITY_SECRET_KEY"));
+  const maxActiveWorkflows = boundedIntegerFrom(
+    env,
+    "API_MAX_ACTIVE_WORKFLOWS",
+    DEFAULT_MAX_ACTIVE_WORKFLOWS,
+  );
+  const maxActiveWorkflowsPerProject = boundedIntegerFrom(
+    env,
+    "API_MAX_ACTIVE_WORKFLOWS_PER_PROJECT",
+    DEFAULT_MAX_ACTIVE_WORKFLOWS_PER_PROJECT,
+  );
+  assertWorkflowCapacity({
+    applicationLimit: maxActiveWorkflows,
+    projectLimit: maxActiveWorkflowsPerProject,
+  });
 
   const config: ServerConfig = {
     environment,
@@ -82,6 +107,8 @@ export function loadServerConfig(input: LoadServerConfigInput = {}): ServerConfi
     corsOrigins: listFrom(env, "SECURITY_CORS_ORIGINS") ?? DEFAULT_CORS_ORIGINS,
     trustedProxies: listFrom(env, "SECURITY_TRUSTED_PROXIES") ?? [],
     authRateLimitPerMinute: rateLimitFrom(env),
+    maxActiveWorkflows,
+    maxActiveWorkflowsPerProject,
     llm: loadLlmServerConfig(env),
   };
   assertStartupGuards(config);
@@ -90,6 +117,10 @@ export function loadServerConfig(input: LoadServerConfigInput = {}): ServerConfi
 
 /** Re-assert the startup guards at the composition root (fail-fast seam). */
 export function assertStartupGuards(config: ServerConfig): void {
+  assertWorkflowCapacity({
+    applicationLimit: config.maxActiveWorkflows,
+    projectLimit: config.maxActiveWorkflowsPerProject,
+  });
   if (config.environment !== "production" && config.environment !== "staging") {
     return;
   }
@@ -113,6 +144,25 @@ export function assertStartupGuards(config: ServerConfig): void {
     )
   ) {
     throw new ConfigurationError("Production CORS origins cannot include localhost or 127.0.0.1");
+  }
+}
+
+/** Validate the structured composition-root seam before persistence opens. */
+export function assertWorkflowCapacity(capacity: WorkflowCapacityConfig): void {
+  assertCapacityValue("application", capacity.applicationLimit);
+  assertCapacityValue("project", capacity.projectLimit);
+  if (capacity.projectLimit > capacity.applicationLimit) {
+    throw new ConfigurationError(
+      "Workflow capacity project limit must not exceed the application limit",
+    );
+  }
+}
+
+function assertCapacityValue(name: string, value: number): void {
+  if (!Number.isInteger(value) || value < MIN_ACTIVE_WORKFLOWS || value > MAX_ACTIVE_WORKFLOWS) {
+    throw new ConfigurationError(
+      `Workflow capacity ${name} limit must be an integer between ${MIN_ACTIVE_WORKFLOWS} and ${MAX_ACTIVE_WORKFLOWS}`,
+    );
   }
 }
 
@@ -223,4 +273,16 @@ function rateLimitFrom(env: Map<string, string>): number {
     );
   }
   return Number(match[1]);
+}
+
+function boundedIntegerFrom(env: Map<string, string>, key: string, fallback: number): number {
+  const raw = stringFrom(env, key);
+  if (raw === undefined) return fallback;
+  const value = Number(raw);
+  if (!Number.isInteger(value) || value < MIN_ACTIVE_WORKFLOWS || value > MAX_ACTIVE_WORKFLOWS) {
+    throw new ConfigurationError(
+      `${key} must be an integer between ${MIN_ACTIVE_WORKFLOWS} and ${MAX_ACTIVE_WORKFLOWS} (got "${raw}")`,
+    );
+  }
+  return value;
 }

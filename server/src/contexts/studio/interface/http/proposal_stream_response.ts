@@ -43,6 +43,8 @@ export interface ProposalStreamResponseOptions {
   hijack: () => void;
   pullFirst?: () => Promise<IteratorResult<ProposalStreamFrame, void>>;
   drainTimeoutMs?: number;
+  /** Releases the app-local permit after every response and generator cleanup step. */
+  releaseCapacity?: (() => void) | undefined;
 }
 
 type Interruption = { kind: "cancelled" } | { kind: "failure"; error: unknown };
@@ -145,7 +147,7 @@ function continueOrThrow(monitor: ConnectionMonitor): boolean {
 export async function writeProposalStreamResponse(
   options: ProposalStreamResponseOptions,
 ): Promise<void> {
-  const { response, frames, hijack, pullFirst } = options;
+  const { response, frames, hijack, pullFirst, releaseCapacity } = options;
   const monitor = monitorConnection(options);
   let streamFailure: unknown;
   try {
@@ -184,6 +186,17 @@ export async function writeProposalStreamResponse(
     streamFailure = interruption.error;
   }
   monitor.dispose();
+  try {
+    releaseCapacity?.();
+  } catch (error) {
+    cleanupFailure =
+      cleanupFailure === undefined
+        ? error
+        : new AggregateError(
+            [cleanupFailure, error],
+            "Generator and capacity cleanup both failed.",
+          );
+  }
 
   if (streamFailure !== undefined && cleanupFailure !== undefined) {
     throw new AggregateError(

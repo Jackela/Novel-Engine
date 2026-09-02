@@ -5,7 +5,7 @@ import { type ExportArtifactGateway, SnapshotArtifactService } from "./export_ar
 import { ImportService } from "./import_service.js";
 import { JobHistoryService } from "./job_history_service.js";
 import { LoreAliasService } from "./lore_alias_service.js";
-import { InFlightOperationGuard } from "./operation_in_flight.js";
+import { InFlightOperationGuard, type OperationCapacityPolicy } from "./operation_in_flight.js";
 import type { ExportOutcomeStore } from "./ports/export_store.js";
 import type { LegacyWorkspaceReader } from "./ports/legacy_workspace_reader.js";
 import type { ProjectArtifactCleaner } from "./ports/project_artifact_cleaner.js";
@@ -47,6 +47,8 @@ export interface CreateStudioServicesOptions {
   legacyWorkspaceReader: LegacyWorkspaceReader;
   /** Lorebook injection budget (#445); undefined keeps the adjudicated default. */
   loreBudgetCharacters?: number | undefined;
+  /** App-local admission limits for expensive Studio workflows. */
+  operationCapacity?: OperationCapacityPolicy | undefined;
 }
 
 export function createStudioServices(
@@ -56,7 +58,7 @@ export function createStudioServices(
   const now = options.now ?? (() => new Date());
   // One guard per app instance: it serializes identical in-flight pipeline
   // operations (#305) across the proposal and export/retry surfaces.
-  const inFlight = new InFlightOperationGuard();
+  const inFlight = new InFlightOperationGuard(options.operationCapacity);
   const documents = new DocumentService(store, now);
   const reviewAssessments = new ReviewService(store, {
     now,

@@ -15,7 +15,7 @@ import type { JsonResponseSchema } from "./json_response_schema.js";
 import { requireServices, type StudioRoutesOptions } from "./project_routes.js";
 import { withAsyncStudioErrors, withStudioErrors } from "./studio_error_mapping.js";
 import { exportIdParams, projectIdParams } from "./studio_request_schemas.js";
-import { operationInFlightSchema } from "./studio_schemas.js";
+import { operationCapacityResponseSchema, operationInFlightSchema } from "./studio_schemas.js";
 
 /**
  * The export artifact response (#440) is the TypeBox payload SSOT from
@@ -77,6 +77,7 @@ export const exportRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fast
           // A project with no chapter answers 422 INVALID_OPERATION.
           422: errorEnvelopeResponse,
           409: operationInFlightSchema,
+          503: operationCapacityResponseSchema,
         },
       },
     },

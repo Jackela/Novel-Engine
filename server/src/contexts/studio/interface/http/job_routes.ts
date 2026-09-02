@@ -6,7 +6,7 @@ import { jobListResponseSchema, jobResponseSchema, usageResponseSchema } from ".
 import { requireServices, type StudioRoutesOptions } from "./project_routes.js";
 import { withAsyncStudioErrors, withStudioErrors } from "./studio_error_mapping.js";
 import { jobIdParams, projectIdParams } from "./studio_request_schemas.js";
-import { operationInFlightSchema } from "./studio_schemas.js";
+import { operationCapacityResponseSchema, operationInFlightSchema } from "./studio_schemas.js";
 
 /** Guard + scope failures shared by the project-scoped job reads. */
 const JOB_READ_ERROR_RESPONSES = {
@@ -55,6 +55,7 @@ export const jobRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fastify
           // Non-retryable terminal states answer 422 INVALID_OPERATION.
           422: errorEnvelopeResponse,
           409: operationInFlightSchema,
+          503: operationCapacityResponseSchema,
         },
       },
     },

@@ -99,7 +99,7 @@ export class ProjectService {
     // Authorize before consulting the process-local guard so another owner's
     // in-flight operation is never disclosed through a 409 response.
     this.store.findProject(scope, projectId);
-    this.inFlight.enterProjectExclusive(projectId, "project deletion");
+    const permit = this.inFlight.acquireProjectExclusive(projectId, "project deletion");
     try {
       this.store.dropProject(scope, projectId);
       if (this.artifactCleaner === undefined) return;
@@ -114,7 +114,7 @@ export class ProjectService {
         }
       }
     } finally {
-      this.inFlight.exitProjectExclusive(projectId);
+      permit.release();
     }
   }
 }

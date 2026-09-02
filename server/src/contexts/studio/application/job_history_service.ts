@@ -90,11 +90,11 @@ export class JobHistoryService {
       documentId: null,
       operation: "review",
     };
-    this.inFlight.enter(inFlightTarget);
+    const permit = this.inFlight.acquire(inFlightTarget);
     try {
       return await this.recordReviewJobInner(principal, scope, projectId, reportCleanupFailure);
     } finally {
-      this.inFlight.exit(inFlightTarget);
+      permit.release();
     }
   }
 
@@ -153,7 +153,7 @@ export class JobHistoryService {
       documentId: null,
       operation: `export (${format})`,
     };
-    this.inFlight.enter(inFlightTarget);
+    const permit = this.inFlight.acquire(inFlightTarget);
     try {
       try {
         const completed = await this.artifacts.recordCompletedExportJob(
@@ -193,7 +193,7 @@ export class JobHistoryService {
         );
       }
     } finally {
-      this.inFlight.exit(inFlightTarget);
+      permit.release();
     }
   }
 
@@ -211,7 +211,7 @@ export class JobHistoryService {
       documentId: null,
       operation: `retry (${jobId})`,
     };
-    this.inFlight.enter(inFlightTarget);
+    const permit = this.inFlight.acquire(inFlightTarget);
     try {
       return await this.retries.reexecuteProjectJob(
         principal,
@@ -220,7 +220,7 @@ export class JobHistoryService {
         reportCleanupFailure,
       );
     } finally {
-      this.inFlight.exit(inFlightTarget);
+      permit.release();
     }
   }
 }

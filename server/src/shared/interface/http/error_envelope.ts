@@ -25,6 +25,7 @@ export const ERROR_CODES = {
   SNAPSHOT_CONFLICT: "SNAPSHOT_CONFLICT",
   DOCUMENT_CONFLICT: "DOCUMENT_CONFLICT",
   OPERATION_IN_FLIGHT: "OPERATION_IN_FLIGHT",
+  OPERATION_CAPACITY_EXCEEDED: "OPERATION_CAPACITY_EXCEEDED",
   SERVICE_UNAVAILABLE: "SERVICE_UNAVAILABLE",
   INTERNAL_ERROR: "INTERNAL_ERROR",
 } as const;
@@ -46,6 +47,7 @@ export const ERROR_HTTP_STATUS = {
   SNAPSHOT_CONFLICT: 409,
   DOCUMENT_CONFLICT: 409,
   OPERATION_IN_FLIGHT: 409,
+  OPERATION_CAPACITY_EXCEEDED: 503,
   SERVICE_UNAVAILABLE: 503,
   INTERNAL_ERROR: 500,
 } as const satisfies Record<ErrorCode, number>;
@@ -59,6 +61,7 @@ export interface AppErrorOptions {
   code: string;
   message: string;
   details?: ErrorEnvelopeDetails;
+  responseHeaders?: Readonly<Partial<Record<"retry-after", string>>>;
 }
 
 /**
@@ -69,6 +72,7 @@ export class AppError extends Error {
   readonly statusCode: number;
   readonly code: string;
   readonly details: ErrorEnvelopeDetails | undefined;
+  readonly responseHeaders: Readonly<Partial<Record<"retry-after", string>>> | undefined;
 
   constructor(options: AppErrorOptions) {
     super(options.message);
@@ -76,6 +80,7 @@ export class AppError extends Error {
     this.statusCode = options.statusCode;
     this.code = options.code;
     this.details = options.details;
+    this.responseHeaders = options.responseHeaders;
   }
 }
 
@@ -166,6 +171,9 @@ export function registerErrorEnvelope(app: FastifyInstance): void {
   app.addSchema(errorEnvelopeSchema);
   app.setErrorHandler((error: unknown, request, reply) => {
     if (error instanceof AppError) {
+      if (error.responseHeaders?.["retry-after"] !== undefined) {
+        reply.header("retry-after", error.responseHeaders["retry-after"]);
+      }
       sendEnvelope(reply, error.statusCode, error.code, error.message, error.details);
       return;
     }

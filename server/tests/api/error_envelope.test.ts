@@ -81,6 +81,29 @@ describe("unified error envelope", () => {
     }
   });
 
+  it("emits a controlled Retry-After header from an AppError", async () => {
+    const app = await buildQuietApp();
+
+    try {
+      app.get("/test/capacity", async () => {
+        throw new AppError({
+          statusCode: 503,
+          code: "OPERATION_CAPACITY_EXCEEDED",
+          message: "Studio operation capacity is exhausted.",
+          responseHeaders: { "retry-after": "5" },
+        });
+      });
+
+      const response = await app.inject({ method: "GET", url: "/test/capacity" });
+
+      expect(response.statusCode).toBe(503);
+      expect(response.headers["retry-after"]).toBe("5");
+      expect(response.json().error.code).toBe("OPERATION_CAPACITY_EXCEEDED");
+    } finally {
+      await app.close();
+    }
+  });
+
   it("hides unhandled failures behind an opaque 500 with an error_id", async () => {
     const app = await buildQuietApp();
 

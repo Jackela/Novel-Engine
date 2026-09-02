@@ -1165,13 +1165,39 @@ export interface paths {
                         "application/json": components["schemas"]["ErrorEnvelope"];
                     };
                 };
-                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                /** @description Workflow capacity exhaustion or unavailable persistence. */
                 503: {
                     headers: {
+                        /** @description Optional integer-seconds hint emitted only for workflow capacity exhaustion. */
+                        "Retry-After"?: number;
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["ErrorEnvelope"];
+                        "application/json": {
+                            error: {
+                                /** @enum {string} */
+                                code: "OPERATION_CAPACITY_EXCEEDED";
+                                details: {
+                                    in_flight: number;
+                                    limit: number;
+                                    project_id: string;
+                                    retry_after_seconds: number;
+                                    /** @enum {string} */
+                                    scope: "project" | "application";
+                                };
+                                /** @enum {string} */
+                                message: "Studio operation capacity is exhausted.";
+                            };
+                        } | {
+                            error: {
+                                /** @enum {string} */
+                                code: "SERVICE_UNAVAILABLE";
+                                details?: {
+                                    [key: string]: unknown;
+                                };
+                                message: string;
+                            };
+                        };
                     };
                 };
             };
@@ -1282,13 +1308,39 @@ export interface paths {
                         "application/json": components["schemas"]["ErrorEnvelope"];
                     };
                 };
-                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                /** @description Workflow capacity exhaustion or unavailable persistence. */
                 503: {
                     headers: {
+                        /** @description Optional integer-seconds hint emitted only for workflow capacity exhaustion. */
+                        "Retry-After"?: number;
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["ErrorEnvelope"];
+                        "application/json": {
+                            error: {
+                                /** @enum {string} */
+                                code: "OPERATION_CAPACITY_EXCEEDED";
+                                details: {
+                                    in_flight: number;
+                                    limit: number;
+                                    project_id: string;
+                                    retry_after_seconds: number;
+                                    /** @enum {string} */
+                                    scope: "project" | "application";
+                                };
+                                /** @enum {string} */
+                                message: "Studio operation capacity is exhausted.";
+                            };
+                        } | {
+                            error: {
+                                /** @enum {string} */
+                                code: "SERVICE_UNAVAILABLE";
+                                details?: {
+                                    [key: string]: unknown;
+                                };
+                                message: string;
+                            };
+                        };
                     };
                 };
             };
@@ -2182,13 +2234,39 @@ export interface paths {
                         "application/json": components["schemas"]["ErrorEnvelope"];
                     };
                 };
-                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                /** @description Workflow capacity exhaustion or unavailable persistence. */
                 503: {
                     headers: {
+                        /** @description Optional integer-seconds hint emitted only for workflow capacity exhaustion. */
+                        "Retry-After"?: number;
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["ErrorEnvelope"];
+                        "application/json": {
+                            error: {
+                                /** @enum {string} */
+                                code: "OPERATION_CAPACITY_EXCEEDED";
+                                details: {
+                                    in_flight: number;
+                                    limit: number;
+                                    project_id: string;
+                                    retry_after_seconds: number;
+                                    /** @enum {string} */
+                                    scope: "project" | "application";
+                                };
+                                /** @enum {string} */
+                                message: "Studio operation capacity is exhausted.";
+                            };
+                        } | {
+                            error: {
+                                /** @enum {string} */
+                                code: "SERVICE_UNAVAILABLE";
+                                details?: {
+                                    [key: string]: unknown;
+                                };
+                                message: string;
+                            };
+                        };
                     };
                 };
             };
@@ -2481,13 +2559,39 @@ export interface paths {
                         "application/json": components["schemas"]["ErrorEnvelope"];
                     };
                 };
-                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                /** @description Workflow capacity exhaustion or unavailable persistence. */
                 503: {
                     headers: {
+                        /** @description Optional integer-seconds hint emitted only for workflow capacity exhaustion. */
+                        "Retry-After"?: number;
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["ErrorEnvelope"];
+                        "application/json": {
+                            error: {
+                                /** @enum {string} */
+                                code: "OPERATION_CAPACITY_EXCEEDED";
+                                details: {
+                                    in_flight: number;
+                                    limit: number;
+                                    project_id: string;
+                                    retry_after_seconds: number;
+                                    /** @enum {string} */
+                                    scope: "project" | "application";
+                                };
+                                /** @enum {string} */
+                                message: "Studio operation capacity is exhausted.";
+                            };
+                        } | {
+                            error: {
+                                /** @enum {string} */
+                                code: "SERVICE_UNAVAILABLE";
+                                details?: {
+                                    [key: string]: unknown;
+                                };
+                                message: string;
+                            };
+                        };
                     };
                 };
             };
@@ -2682,13 +2786,39 @@ export interface paths {
                         "application/json": components["schemas"]["ErrorEnvelope"];
                     };
                 };
-                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                /** @description Workflow capacity exhaustion or unavailable persistence. */
                 503: {
                     headers: {
+                        /** @description Optional integer-seconds hint emitted only for workflow capacity exhaustion. */
+                        "Retry-After"?: number;
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["ErrorEnvelope"];
+                        "application/json": {
+                            error: {
+                                /** @enum {string} */
+                                code: "OPERATION_CAPACITY_EXCEEDED";
+                                details: {
+                                    in_flight: number;
+                                    limit: number;
+                                    project_id: string;
+                                    retry_after_seconds: number;
+                                    /** @enum {string} */
+                                    scope: "project" | "application";
+                                };
+                                /** @enum {string} */
+                                message: "Studio operation capacity is exhausted.";
+                            };
+                        } | {
+                            error: {
+                                /** @enum {string} */
+                                code: "SERVICE_UNAVAILABLE";
+                                details?: {
+                                    [key: string]: unknown;
+                                };
+                                message: string;
+                            };
+                        };
                     };
                 };
             };

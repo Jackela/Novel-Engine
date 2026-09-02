@@ -8,7 +8,7 @@ import { requireServices, type StudioRoutesOptions } from "./project_routes.js";
 import { writeProposalStreamResponse } from "./proposal_stream_response.js";
 import { withAsyncStudioErrors, withStudioErrors } from "./studio_error_mapping.js";
 import { documentIdParams, jobIdParams, proposalCreateSchema } from "./studio_request_schemas.js";
-import { operationInFlightSchema } from "./studio_schemas.js";
+import { operationCapacityResponseSchema, operationInFlightSchema } from "./studio_schemas.js";
 
 /**
  * The stream endpoint hijacks the reply and writes raw SSE frames, so its
@@ -53,6 +53,7 @@ export const proposalRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fa
           200: jobResponseSchema,
           ...PROPOSAL_ERROR_RESPONSES,
           409: operationInFlightSchema,
+          503: operationCapacityResponseSchema,
         },
       },
     },
@@ -90,6 +91,7 @@ export const proposalRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fa
           200: proposalStreamResponseSchema,
           ...PROPOSAL_ERROR_RESPONSES,
           409: operationInFlightSchema,
+          503: operationCapacityResponseSchema,
         },
       },
     },
@@ -106,7 +108,7 @@ export const proposalRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fa
       // itself emits "close" as soon as the request message is fully read,
       // which would abort every stream before it starts.
       const disconnect = new AbortController();
-      const frames = requireServices(options).proposals.draftProposalStream(
+      const streamSession = requireServices(options).proposals.draftProposalStream(
         requirePrincipal(request),
         request.params.projectId,
         request.params.documentId,
@@ -121,10 +123,11 @@ export const proposalRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fa
       await writeProposalStreamResponse({
         response: reply.raw,
         socket: request.raw.socket,
-        frames,
+        frames: streamSession.frames,
         disconnect,
         hijack: () => reply.hijack(),
-        pullFirst: () => withAsyncStudioErrors(() => frames.next()),
+        pullFirst: () => withAsyncStudioErrors(() => streamSession.frames.next()),
+        releaseCapacity: streamSession.releaseCapacity,
       });
     },
   );

@@ -2208,11 +2208,120 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
+                  "oneOf": [
+                    {
+                      "additionalProperties": false,
+                      "properties": {
+                        "error": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "code": {
+                              "enum": [
+                                "OPERATION_CAPACITY_EXCEEDED"
+                              ],
+                              "type": "string"
+                            },
+                            "details": {
+                              "additionalProperties": false,
+                              "properties": {
+                                "in_flight": {
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "limit": {
+                                  "minimum": 1,
+                                  "type": "integer"
+                                },
+                                "project_id": {
+                                  "type": "string"
+                                },
+                                "retry_after_seconds": {
+                                  "minimum": 1,
+                                  "type": "integer"
+                                },
+                                "scope": {
+                                  "enum": [
+                                    "project",
+                                    "application"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "scope",
+                                "limit",
+                                "in_flight",
+                                "project_id",
+                                "retry_after_seconds"
+                              ],
+                              "type": "object"
+                            },
+                            "message": {
+                              "enum": [
+                                "Studio operation capacity is exhausted."
+                              ],
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "code",
+                            "message",
+                            "details"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "error"
+                      ],
+                      "type": "object"
+                    },
+                    {
+                      "additionalProperties": false,
+                      "properties": {
+                        "error": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "code": {
+                              "enum": [
+                                "SERVICE_UNAVAILABLE"
+                              ],
+                              "type": "string"
+                            },
+                            "details": {
+                              "additionalProperties": true,
+                              "type": "object"
+                            },
+                            "message": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "code",
+                            "message"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "error"
+                      ],
+                      "type": "object"
+                    }
+                  ]
                 }
               }
             },
-            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+            "description": "Workflow capacity exhaustion or unavailable persistence.",
+            "headers": {
+              "Retry-After": {
+                "description": "Optional integer-seconds hint emitted only for workflow capacity exhaustion.",
+                "schema": {
+                  "minimum": 1,
+                  "type": "integer"
+                }
+              }
+            }
           }
         }
       }
@@ -2387,11 +2496,120 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
+                  "oneOf": [
+                    {
+                      "additionalProperties": false,
+                      "properties": {
+                        "error": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "code": {
+                              "enum": [
+                                "OPERATION_CAPACITY_EXCEEDED"
+                              ],
+                              "type": "string"
+                            },
+                            "details": {
+                              "additionalProperties": false,
+                              "properties": {
+                                "in_flight": {
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "limit": {
+                                  "minimum": 1,
+                                  "type": "integer"
+                                },
+                                "project_id": {
+                                  "type": "string"
+                                },
+                                "retry_after_seconds": {
+                                  "minimum": 1,
+                                  "type": "integer"
+                                },
+                                "scope": {
+                                  "enum": [
+                                    "project",
+                                    "application"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "scope",
+                                "limit",
+                                "in_flight",
+                                "project_id",
+                                "retry_after_seconds"
+                              ],
+                              "type": "object"
+                            },
+                            "message": {
+                              "enum": [
+                                "Studio operation capacity is exhausted."
+                              ],
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "code",
+                            "message",
+                            "details"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "error"
+                      ],
+                      "type": "object"
+                    },
+                    {
+                      "additionalProperties": false,
+                      "properties": {
+                        "error": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "code": {
+                              "enum": [
+                                "SERVICE_UNAVAILABLE"
+                              ],
+                              "type": "string"
+                            },
+                            "details": {
+                              "additionalProperties": true,
+                              "type": "object"
+                            },
+                            "message": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "code",
+                            "message"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "error"
+                      ],
+                      "type": "object"
+                    }
+                  ]
                 }
               }
             },
-            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+            "description": "Workflow capacity exhaustion or unavailable persistence.",
+            "headers": {
+              "Retry-After": {
+                "description": "Optional integer-seconds hint emitted only for workflow capacity exhaustion.",
+                "schema": {
+                  "minimum": 1,
+                  "type": "integer"
+                }
+              }
+            }
           }
         }
       }
@@ -3846,11 +4064,120 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
+                  "oneOf": [
+                    {
+                      "additionalProperties": false,
+                      "properties": {
+                        "error": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "code": {
+                              "enum": [
+                                "OPERATION_CAPACITY_EXCEEDED"
+                              ],
+                              "type": "string"
+                            },
+                            "details": {
+                              "additionalProperties": false,
+                              "properties": {
+                                "in_flight": {
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "limit": {
+                                  "minimum": 1,
+                                  "type": "integer"
+                                },
+                                "project_id": {
+                                  "type": "string"
+                                },
+                                "retry_after_seconds": {
+                                  "minimum": 1,
+                                  "type": "integer"
+                                },
+                                "scope": {
+                                  "enum": [
+                                    "project",
+                                    "application"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "scope",
+                                "limit",
+                                "in_flight",
+                                "project_id",
+                                "retry_after_seconds"
+                              ],
+                              "type": "object"
+                            },
+                            "message": {
+                              "enum": [
+                                "Studio operation capacity is exhausted."
+                              ],
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "code",
+                            "message",
+                            "details"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "error"
+                      ],
+                      "type": "object"
+                    },
+                    {
+                      "additionalProperties": false,
+                      "properties": {
+                        "error": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "code": {
+                              "enum": [
+                                "SERVICE_UNAVAILABLE"
+                              ],
+                              "type": "string"
+                            },
+                            "details": {
+                              "additionalProperties": true,
+                              "type": "object"
+                            },
+                            "message": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "code",
+                            "message"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "error"
+                      ],
+                      "type": "object"
+                    }
+                  ]
                 }
               }
             },
-            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+            "description": "Workflow capacity exhaustion or unavailable persistence.",
+            "headers": {
+              "Retry-After": {
+                "description": "Optional integer-seconds hint emitted only for workflow capacity exhaustion.",
+                "schema": {
+                  "minimum": 1,
+                  "type": "integer"
+                }
+              }
+            }
           }
         }
       }
@@ -4366,11 +4693,120 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
+                  "oneOf": [
+                    {
+                      "additionalProperties": false,
+                      "properties": {
+                        "error": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "code": {
+                              "enum": [
+                                "OPERATION_CAPACITY_EXCEEDED"
+                              ],
+                              "type": "string"
+                            },
+                            "details": {
+                              "additionalProperties": false,
+                              "properties": {
+                                "in_flight": {
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "limit": {
+                                  "minimum": 1,
+                                  "type": "integer"
+                                },
+                                "project_id": {
+                                  "type": "string"
+                                },
+                                "retry_after_seconds": {
+                                  "minimum": 1,
+                                  "type": "integer"
+                                },
+                                "scope": {
+                                  "enum": [
+                                    "project",
+                                    "application"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "scope",
+                                "limit",
+                                "in_flight",
+                                "project_id",
+                                "retry_after_seconds"
+                              ],
+                              "type": "object"
+                            },
+                            "message": {
+                              "enum": [
+                                "Studio operation capacity is exhausted."
+                              ],
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "code",
+                            "message",
+                            "details"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "error"
+                      ],
+                      "type": "object"
+                    },
+                    {
+                      "additionalProperties": false,
+                      "properties": {
+                        "error": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "code": {
+                              "enum": [
+                                "SERVICE_UNAVAILABLE"
+                              ],
+                              "type": "string"
+                            },
+                            "details": {
+                              "additionalProperties": true,
+                              "type": "object"
+                            },
+                            "message": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "code",
+                            "message"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "error"
+                      ],
+                      "type": "object"
+                    }
+                  ]
                 }
               }
             },
-            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+            "description": "Workflow capacity exhaustion or unavailable persistence.",
+            "headers": {
+              "Retry-After": {
+                "description": "Optional integer-seconds hint emitted only for workflow capacity exhaustion.",
+                "schema": {
+                  "minimum": 1,
+                  "type": "integer"
+                }
+              }
+            }
           }
         }
       }
@@ -4741,11 +5177,120 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
+                  "oneOf": [
+                    {
+                      "additionalProperties": false,
+                      "properties": {
+                        "error": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "code": {
+                              "enum": [
+                                "OPERATION_CAPACITY_EXCEEDED"
+                              ],
+                              "type": "string"
+                            },
+                            "details": {
+                              "additionalProperties": false,
+                              "properties": {
+                                "in_flight": {
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "limit": {
+                                  "minimum": 1,
+                                  "type": "integer"
+                                },
+                                "project_id": {
+                                  "type": "string"
+                                },
+                                "retry_after_seconds": {
+                                  "minimum": 1,
+                                  "type": "integer"
+                                },
+                                "scope": {
+                                  "enum": [
+                                    "project",
+                                    "application"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "scope",
+                                "limit",
+                                "in_flight",
+                                "project_id",
+                                "retry_after_seconds"
+                              ],
+                              "type": "object"
+                            },
+                            "message": {
+                              "enum": [
+                                "Studio operation capacity is exhausted."
+                              ],
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "code",
+                            "message",
+                            "details"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "error"
+                      ],
+                      "type": "object"
+                    },
+                    {
+                      "additionalProperties": false,
+                      "properties": {
+                        "error": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "code": {
+                              "enum": [
+                                "SERVICE_UNAVAILABLE"
+                              ],
+                              "type": "string"
+                            },
+                            "details": {
+                              "additionalProperties": true,
+                              "type": "object"
+                            },
+                            "message": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "code",
+                            "message"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "error"
+                      ],
+                      "type": "object"
+                    }
+                  ]
                 }
               }
             },
-            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+            "description": "Workflow capacity exhaustion or unavailable persistence.",
+            "headers": {
+              "Retry-After": {
+                "description": "Optional integer-seconds hint emitted only for workflow capacity exhaustion.",
+                "schema": {
+                  "minimum": 1,
+                  "type": "integer"
+                }
+              }
+            }
           }
         }
       }

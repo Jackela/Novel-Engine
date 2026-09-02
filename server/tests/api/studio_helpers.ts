@@ -30,13 +30,9 @@ export function monotonicClock(): () => Date {
   };
 }
 
-export interface StudioTestApp {
-  app: FastifyInstance;
-  directory: string;
-}
-
 /** Extra buildApp overrides used by the workflow tests (provider seams). */
-export interface StudioAppOverrides extends Pick<AppOptions, "projectArtifactCleaner"> {
+export interface StudioAppOverrides
+  extends Pick<AppOptions, "operationCapacity" | "projectArtifactCleaner"> {
   textProviderFactory?: NonNullable<Parameters<typeof buildApp>[0]>["textProviderFactory"];
   exportStoreFactory?: AppOptions["exportStoreFactory"];
   exportArtifactGateway?: AppOptions["exportArtifactGateway"];
@@ -49,7 +45,7 @@ export interface StudioAppOverrides extends Pick<AppOptions, "projectArtifactCle
 export async function buildStudioApp(
   clock?: () => Date,
   overrides: StudioAppOverrides = {},
-): Promise<StudioTestApp> {
+): Promise<{ app: FastifyInstance; directory: string }> {
   const directory = await mkdtemp(join(tmpdir(), "novel-engine-studio-"));
   const app = await buildApp({
     logger: false,

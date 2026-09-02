@@ -29,7 +29,7 @@ export {
 
 import type { StudioStore } from "./ports/studio_store.js";
 import { scopeForPrincipal } from "./ports/studio_store.js";
-import type { ProposalStreamFrame } from "./proposal_streaming.js";
+import type { ProposalStreamSession } from "./proposal_streaming.js";
 import { streamProposal } from "./proposal_streaming.js";
 
 export interface ProposalDraftInput {
@@ -89,7 +89,7 @@ export class AiProposalService {
       documentId,
       operation,
     };
-    this.inFlight.enter(inFlightTarget);
+    const permit = this.inFlight.acquire(inFlightTarget);
 
     let provider: TextGenerationProvider | undefined;
 
@@ -147,7 +147,7 @@ export class AiProposalService {
           await disposeProvider(provider, reportCleanupFailure);
         }
       } finally {
-        this.inFlight.exit(inFlightTarget);
+        permit.release();
       }
     }
   }
@@ -166,7 +166,7 @@ export class AiProposalService {
     input: ProposalDraftInput,
     reportCleanupFailure: ProviderCleanupFailureReporter,
     signal?: AbortSignal,
-  ): AsyncGenerator<ProposalStreamFrame, void, void> {
+  ): ProposalStreamSession {
     return streamProposal(
       {
         store: this.store,

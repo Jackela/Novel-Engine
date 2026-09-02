@@ -114,3 +114,30 @@ export class OperationInFlightError extends Error {
     this.operation = operation;
   }
 }
+
+export type OperationCapacityScope = "project" | "application";
+
+/** An admitted expensive workflow would exceed one app-local capacity limit. */
+export class OperationCapacityExceededError extends Error {
+  readonly scope: OperationCapacityScope;
+  readonly limit: number;
+  readonly inFlight: number;
+  readonly projectId: string;
+  readonly retryAfterSeconds: number;
+
+  constructor(
+    scope: OperationCapacityScope,
+    limit: number,
+    inFlight: number,
+    projectId: string,
+    retryAfterSeconds = 5,
+  ) {
+    super("Studio operation capacity is exhausted.");
+    this.name = "OperationCapacityExceededError";
+    this.scope = scope;
+    this.limit = limit;
+    this.inFlight = inFlight;
+    this.projectId = projectId;
+    this.retryAfterSeconds = retryAfterSeconds;
+  }
+}
