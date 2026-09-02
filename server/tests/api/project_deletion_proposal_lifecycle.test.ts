@@ -99,7 +99,7 @@ describe("project deletion and proposal lifecycle", () => {
 
       for (const target of [
         { path: `/api/projects/${project.id}/reviews`, payload: {} },
-        { path: `/api/projects/${project.id}/jobs/missing/retry`, payload: {} },
+        { path: `/api/projects/${project.id}/jobs/missing/retry`, payload: undefined },
       ]) {
         const rejected = await call(app, owner, "POST", target.path, target.payload);
         expect(rejected.statusCode, rejected.body).toBe(409);

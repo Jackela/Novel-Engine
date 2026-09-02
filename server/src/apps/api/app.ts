@@ -41,6 +41,12 @@ import {
 } from "../../shared/interface/http/spa_serving.js";
 import { type VersionInfo, versionRoutes } from "../../shared/interface/http/version_route.js";
 import { closeAppAndRethrow } from "./app_lifecycle.js";
+import {
+  DEFAULT_HTTP_SERVER_POLICY,
+  fastifyOptionsForHttpServerPolicy,
+  type HttpServerPolicy,
+  registerUndeclaredRequestBodyPolicy,
+} from "./http_server_policy.js";
 import { openPersistence } from "./persistence.js";
 import { loggerWithProductIdentity } from "./product_logger.js";
 import { buildProviderRuntime, type ProviderApiKeys } from "./provider_runtime.js";
@@ -110,6 +116,8 @@ export interface AppOptions {
    * configured `LLM_LOREBOOK_BUDGET_CHARACTERS`, then the adjudicated default.
    */
   lorebookBudgetCharacters?: number | undefined;
+  /** Injectable finite request-receipt thresholds for real-socket tests. */
+  httpServerPolicy?: HttpServerPolicy | undefined;
 }
 
 const CORS_ALLOWED_HEADERS = [
@@ -147,6 +155,7 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
 
   const productIdentity = readProductIdentity();
   const app = Fastify({
+    ...fastifyOptionsForHttpServerPolicy(options.httpServerPolicy ?? DEFAULT_HTTP_SERVER_POLICY),
     logger: loggerWithProductIdentity(options.logger, productIdentity),
     genReqId: (request) => correlationIdFrom(request.headers[REQUEST_ID_HEADER]) ?? randomUUID(),
   }).withTypeProvider<TypeBoxTypeProvider>();
@@ -155,6 +164,7 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
     app.addHook("onRequest", async (request, reply) => {
       reply.header("x-request-id", request.id);
     });
+    registerUndeclaredRequestBodyPolicy(app);
 
     const databasePath = options.databasePath ?? options.config?.databasePath;
     // The content-authority database exists exactly when a database path is
