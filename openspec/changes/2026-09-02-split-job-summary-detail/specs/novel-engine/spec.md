@@ -233,7 +233,7 @@ and cursor immediately and MUST NOT restore them if the new-project read fails.
 ### Requirement: Project-scoped complete Job detail
 
 `GET /api/projects/:projectId/jobs/:jobId` MUST require an authenticated Owner
-and MUST validate each matched path id as a string from 1 through 128
+and MUST validate each matched path id as a string from 1 through 64
 characters.
 It MUST return the existing complete Job payload, including untruncated parsed
 request/result and all events in oldest-first order. It MUST NOT mutate the Job,
@@ -271,7 +271,7 @@ prefetching detail for every summary.
 
 #### Scenario: Detail validation precedes authentication
 
-- **GIVEN** a matched path id is empty or longer than 128 characters and no session is present
+- **GIVEN** a matched path id is empty or longer than 64 characters and no session is present
 - **WHEN** the detail route receives the request
 - **THEN** the response is 422 `VALIDATION_ERROR`
 - **AND** no Job or project lookup executes

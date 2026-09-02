@@ -54,7 +54,7 @@ substitute for execution tracing.
 ## Scoped detail path
 
 `GET /api/projects/:projectId/jobs/:jobId` authenticates the Owner, validates
-each matched path id as 1 through 128 characters, then calls a new
+each matched path id as 1 through 64 characters, then calls a new
 application read method over the existing `findJob` port. That store path first
 verifies the scoped project, then requires the job to belong to that project,
 and hydrates all events in their existing oldest-first order.
@@ -71,6 +71,11 @@ segment as an empty parameter, so `minLength: 1` makes that matched request a
 schema-first 422 rather than allowing authentication or lookup. Persistence
 unavailability retains 503. The route has no CSRF requirement because it is
 read-only.
+
+The 64-character application bound is deliberately below Fastify's live
+100-character router cap and above the generated UUID identifiers. A 65-byte
+test value therefore reaches TypeBox and proves the 422 contract without
+broadening global routing limits for unrelated endpoints.
 
 Detail is intentionally not byte-bounded or truncated. It is an explicit read
 of one durable audit object; truncating request, result, error, or event details
