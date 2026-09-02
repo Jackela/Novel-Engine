@@ -42,6 +42,63 @@ function renderCache() {
 }
 
 describe("useRevisionCache error intent ownership", () => {
+  it("restores a first-page error after a newer older-page error recovers", async () => {
+    const firstError = new Error("first page unavailable");
+    const olderError = new Error("older unavailable");
+    vi.mocked(api.revisions)
+      .mockResolvedValueOnce({ revisions: [initial], next_cursor: "older-cursor" })
+      .mockRejectedValueOnce(firstError)
+      .mockRejectedValueOnce(olderError)
+      .mockResolvedValueOnce({ revisions: [revision("revision-older")], next_cursor: null })
+      .mockResolvedValueOnce({ revisions: [revision("revision-recovered")], next_cursor: null });
+    const cache = renderCache();
+    await flushEffects();
+    cache.onError.mockClear();
+    cache.onSuccess.mockClear();
+
+    await act(async () =>
+      cache.result().refreshDocumentRevisions("document-1", "revision-created"),
+    );
+    await act(async () => cache.result().loadOlderRevisions());
+    await act(async () => cache.result().loadOlderRevisions());
+
+    expect(cache.onSuccess).not.toHaveBeenCalled();
+    expect(cache.onError).toHaveBeenLastCalledWith(firstError);
+
+    await act(async () =>
+      cache.result().refreshDocumentRevisions("document-1", "revision-recovered"),
+    );
+    expect(cache.onSuccess).toHaveBeenCalledTimes(1);
+  });
+
+  it("restores an older-page error after a newer first-page error recovers", async () => {
+    const firstError = new Error("first page unavailable");
+    const olderError = new Error("older unavailable");
+    const recovered = revision("revision-recovered");
+    vi.mocked(api.revisions)
+      .mockResolvedValueOnce({ revisions: [initial], next_cursor: "older-cursor" })
+      .mockRejectedValueOnce(olderError)
+      .mockRejectedValueOnce(firstError)
+      .mockResolvedValueOnce({ revisions: [recovered, initial], next_cursor: "fresh-cursor" })
+      .mockResolvedValueOnce({ revisions: [revision("revision-older")], next_cursor: null });
+    const cache = renderCache();
+    await flushEffects();
+    cache.onError.mockClear();
+    cache.onSuccess.mockClear();
+
+    await act(async () => cache.result().loadOlderRevisions());
+    await act(async () =>
+      cache.result().refreshDocumentRevisions("document-1", "revision-created"),
+    );
+    await act(async () => cache.result().refreshDocumentRevisions("document-1", recovered.id));
+
+    expect(cache.onSuccess).not.toHaveBeenCalled();
+    expect(cache.onError).toHaveBeenLastCalledWith(olderError);
+
+    await act(async () => cache.result().loadOlderRevisions());
+    expect(cache.onSuccess).toHaveBeenCalledTimes(1);
+  });
+
   it("keeps a first-page error visible after queued older succeeds until first-page recovery", async () => {
     let rejectRefresh!: (reason: unknown) => void;
     const refreshFailure = new Promise<RevisionPage>((_resolve, reject) => {
