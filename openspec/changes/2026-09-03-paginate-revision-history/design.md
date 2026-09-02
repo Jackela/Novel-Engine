@@ -156,9 +156,12 @@ consumer.
 
 The History panel shows a native button named `Load older revisions` only when
 `next_cursor` is non-null. It exposes a busy state and disables duplicate
-activation while retaining the already displayed history. On failure, focus
-stays on the retryable button. When a keyboard-triggered terminal page removes
-that control, focus moves to the stable History heading. Screen-reader-visible
+activation while retaining the already displayed history. For keyboard
+activation, the control owns focus restoration only when disabling or removing
+it leaves focus without a connected owner: failure restores the retryable
+button, while a terminal page moves focus to the stable History heading. If the
+author moves focus to another connected element while the request is pending,
+that newer choice wins and History does not steal focus. Screen-reader-visible
 status distinguishes loading from the end of history; no automatic infinite
 scroll is introduced.
 

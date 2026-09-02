@@ -71,8 +71,9 @@
       subscribers, reload after eviction, and converge/clean up on owner
       transition or final unmount.
 - [x] 4.5 Add the accessible `Load older revisions` control with distinct busy,
-      failure, and terminal states; retain focus for retry and move terminal
-      keyboard focus to the History heading.
+      failure, and terminal states; after browser-owned focus loss, restore the
+      retry button or move terminal focus to the History heading without
+      overriding a newer connected focus target chosen by the author.
 
 ## 5. Integrated evidence and release boundary
 

@@ -102,10 +102,19 @@ suppress the outcome for a surviving subscriber.
 #### Scenario: Terminal keyboard focus stays in History
 
 - **GIVEN** keyboard focus is on Load older revisions
+- **AND** disabling or removing that control leaves focus without a connected owner
 - **WHEN** the terminal page succeeds and removes that control
 - **THEN** focus moves to the stable History heading
 - **BUT WHEN** loading fails
-- **THEN** focus stays on the retryable Load older revisions control
+- **THEN** focus returns to the retryable Load older revisions control
+
+#### Scenario: A newer focus choice is not overridden
+
+- **GIVEN** the author activated Load older revisions with the keyboard
+- **AND** the author moves focus to another connected element while loading
+- **WHEN** the older-page request succeeds or fails
+- **THEN** the author-selected element retains focus
+- **AND** History does not move focus to its retry control or heading
 
 #### Scenario: Cross-owner cache is bounded
 
