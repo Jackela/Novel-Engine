@@ -81,18 +81,43 @@ mismatched accepted Document MUST be fetched through the scoped current-
 document endpoint and MUST NOT be rendered as empty content.
 
 Active-document requests MUST be owned by project, document, expected current
-revision, and lifecycle. Equal requests MAY coalesce but MUST publish their
-outcome to every still-mounted consumer. A project/document switch, newer
-expected revision, abort, or unmount MUST prevent a late response from
-publishing into current state. The Studio MUST retain no inactive complete-
-document body after selection changes. Successful complete-Document mutation
-responses MUST advance shell and active body together only when their causal
-identity is current; summary-only reorder MUST NOT roll the active body back.
+revision, and lifecycle. Requests with exactly equal project, document,
+expected revision, and lifecycle MUST coalesce behind one reference-counted
+read and MUST publish their outcome to every still-mounted subscriber. One
+subscriber leaving MUST NOT abort a read still owned by another; the last
+subscriber release MUST abort it when cancellable and clear its bookkeeping. A
+project/document switch, newer expected revision, abort, or unmount MUST prevent
+a late response from publishing into current state. The Studio MUST retain no
+inactive complete-document body after selection changes.
 
-A shell failure MUST expose a recoverable project-surface error. A current-
-document failure MUST preserve usable shell navigation and expose an editor-
-local readable error and Retry action. Retrying MUST target the shell's current
-revision, and a fresher shell pointer MUST supersede the failed expectation.
+A current-Document response whose `current_revision_id` differs from its
+expected shell pointer MUST NOT be rendered as current. The Studio MUST refresh
+the shell once. It MAY accept the response only if the refreshed summary now
+points to that response revision; otherwise it MUST issue at most one
+replacement current-Document read owned by the refreshed pointer. If the
+replacement also differs because revisions continue changing, automatic reads
+MUST stop, the latest shell MUST remain available, and the editor MUST show a
+readable changed-again failure with explicit Retry. One automatic mismatch
+cycle MUST therefore contain no more than one shell refresh and one replacement
+body read.
+
+Successful complete-Document mutation responses MUST advance shell and active
+body together only when their causal identity is current. Narrow Lore-status
+and beat-association responses MUST retain their existing payloads and MAY
+update only their owned field while their project, document, and field-specific
+intent epoch are still current. Reverse-order same-revision responses MUST NOT
+overwrite a newer requested value. Summary-only reorder MUST NOT roll the active
+body back.
+
+HTTP 401 from any project resource MUST replace to Entry. A shell 404 MUST
+replace to the project library. A current-Document 404 MUST first refresh the
+shell: a missing project replaces to the library; a removed Document selects
+the route-compatible fallback summary or the no-Document editor state; and a
+shell that still names the Document retains navigation while exposing a scoped
+inconsistency and Retry. Only network, timeout, contract, and server failures
+MUST stay on their local shell/editor recovery surface. Retrying MUST target the
+shell's current revision, and a fresher shell pointer MUST supersede the failed
+expectation.
 
 #### Scenario: Initial authoring load reads only the active body
 
@@ -117,6 +142,29 @@ revision, and a fresher shell pointer MUST supersede the failed expectation.
 - **THEN** R1 content is not rendered as current
 - **AND** the Studio requests D's current Document for R2 ownership
 
+#### Scenario: A raced current response converges through the shell
+
+- **GIVEN** a body request expects D at revision R1
+- **WHEN** it returns D at revision R2
+- **THEN** R2 is not rendered solely because it was the latest response
+- **AND** the Studio refreshes the shell once
+- **AND** R2 is accepted only if the refreshed summary points to R2
+
+#### Scenario: Revision churn stops automatic retry
+
+- **GIVEN** an unexpected body revision caused one shell refresh and one replacement current-Document read
+- **WHEN** that replacement also differs from its refreshed expected revision
+- **THEN** no further automatic shell or body read starts
+- **AND** the latest shell remains visible with a readable changed-again error and explicit Retry
+
+#### Scenario: Equal consumers share one owned read
+
+- **GIVEN** two mounted consumers request the same project, Document, expected revision, and lifecycle
+- **WHEN** the current Document is read
+- **THEN** exactly one request serves both consumers
+- **AND** either outcome is delivered to every still-mounted subscriber
+- **AND** one consumer leaving does not abort the surviving consumer's request
+
 #### Scenario: Late body cannot cross selection
 
 - **GIVEN** a current-document request for project P1 document D1 is in flight
@@ -132,12 +180,27 @@ revision, and a fresher shell pointer MUST supersede the failed expectation.
 - **THEN** the shell and active accepted Document remain at R2
 - **AND** reorder summaries cannot replace R2 with an older body
 
+#### Scenario: Reverse narrow responses preserve the newest intent
+
+- **GIVEN** two Lore-status or beat-association writes for the same Document and current revision request different values
+- **WHEN** the newer intent succeeds before the older response arrives
+- **THEN** the older response cannot replace the newer field value
+- **AND** neither narrow payload is treated as a complete Document
+
 #### Scenario: Editor failure leaves navigation recoverable
 
 - **GIVEN** the project shell loaded but the selected current Document failed to load
 - **WHEN** the failure is presented
 - **THEN** document navigation remains usable
 - **AND** the editor shows a readable failure with a Retry action instead of an empty Document
+
+#### Scenario: Missing current Document refreshes structural authority
+
+- **GIVEN** the shell selected D but its current-Document request returns 404
+- **WHEN** the Studio refreshes the shell
+- **THEN** a missing project replaces to the project library
+- **AND** a removed D selects the route-compatible fallback or no-Document state
+- **AND** a shell still naming D keeps navigation visible with a scoped Retry failure
 
 ### Requirement: Lazy and independent Review and Export hydration
 
@@ -155,6 +218,14 @@ clear or block the active Document or Export, and an Export failure MUST NOT
 clear or block the active Document or Review. Leaving a panel MUST prevent its
 late response from becoming the visible state. Returning to a failed panel MUST
 show a readable Retry action rather than an invented empty history.
+
+HTTP 401 from any of these resources MUST replace to Entry rather than remain a
+panel-local error. A shell 404 MUST replace to the project library. A Review or
+Export 404 MUST first refresh the shell so a missing project navigates to the
+library and a still-existing project classifies the impossible scoped miss as a
+panel-local contract failure.
+Only network, timeout, contract, and server failures remain local operational
+recovery states.
 
 #### Scenario: Authoring bootstrap does not prefetch histories
 
@@ -232,3 +303,137 @@ publish into a newly active Document.
 - **WHEN** the latest server Document is loaded as the conflict baseline
 - **THEN** the local Draft remains separately available for the explicit conflict actions
 - **AND** neither value silently overwrites the other
+
+### Requirement: Recoverable project loading
+
+Initial Studio loading MUST classify each resource failure without hiding it or
+collapsing independent reads into one aggregate. The project shell MUST load
+first; the route-compatible active current Document and the selected lazy
+Review or Export panel MAY then load under their own pending, error, lifecycle,
+and Retry owner. Retrying one failed resource MUST NOT restart, clear, or block
+another successful or pending resource.
+
+An HTTP 401 from shell, current Document, Review, or Export MUST replace to the
+entry route. A shell 404 MUST replace to the project library. A current-Document
+404 MUST refresh the shell once: a missing project replaces to the library, a
+removed active Document selects the route-compatible fallback (or the explicit
+no-Document editor state), and a shell that still names the Document retains
+navigation with a scoped contract inconsistency and Retry. A Review or Export
+404 MUST also refresh the shell before choosing library navigation or, when the
+project still exists, a panel-scoped contract failure. Network, timeout,
+contract, and server failures MUST retain
+the requested Studio URL and display a readable error with working Retry and
+Back to projects actions in the resource's own surface.
+
+Retry MUST expose pending state, prevent duplicate requests for that same
+resource owner, and retain its recovery surface until it succeeds or navigation
+classifies a 401/404. Retry success MUST clear only that owner's stale error and
+publish only the corresponding shell, current Document, Review, or Export
+state. It MUST move focus to that resource's stable Studio heading only when the
+author has not moved focus elsewhere.
+
+#### Scenario: Operational failure can be retried
+
+- **GIVEN** an initial shell, active-Document, Review, or Export request fails with a network or server error
+- **WHEN** the failure is displayed and the author activates that resource's Retry
+- **THEN** the requested Studio URL is retained
+- **AND** one replacement request starts only for the failed resource
+- **AND** Retry exposes pending state until that request settles
+- **AND** success replaces only that resource's error while preserving the other resource states
+
+#### Scenario: Authentication and absence navigate deliberately
+
+- **GIVEN** project loading returns HTTP 401 or a project-shell HTTP 404
+- **WHEN** the failure is classified
+- **THEN** 401 from any project resource replaces to the entry route
+- **AND** a shell 404 replaces to the project library
+- **AND** a current-Document, Review, or Export 404 refreshes shell authority before any local recovery
+
+#### Scenario: Active Document absence selects from the refreshed shell
+
+- **GIVEN** the selected current Document returns 404 while the project route remains active
+- **WHEN** the one shell refresh succeeds
+- **THEN** a removed Document is replaced by the route-compatible fallback or no-Document state
+- **AND** a still-listed Document retains shell navigation with a scoped Retry error
+- **AND** no empty Document is invented
+
+#### Scenario: Independent Retry does not rebuild an aggregate
+
+- **GIVEN** the shell and active Document succeeded while the selected Review request failed
+- **WHEN** the author retries Review
+- **THEN** neither shell nor current Document is requested again solely because of that Retry
+- **AND** Export is not requested
+- **AND** Review success clears only the Review error
+
+### Requirement: Project-scoped Studio lifecycle
+
+The complete Studio workbench state MUST be owned by the current route
+`projectId`. When that identity changes, data and pending state from the prior
+project MUST become non-interactive immediately. Shell, active Document, Jobs,
+Usage, search, Drafts, revisions, proposals, whole-book progress, Reviews,
+Exports, settings, and errors MUST reset or remain keyed to their originating
+project and resource owner. A late response from an earlier project, Document,
+revision expectation, lifecycle, or field-specific mutation intent MUST NOT
+overwrite the active Document, surface, error, revision baseline, Lore status,
+or beat association.
+
+Transports that support cancellation MUST be aborted when their last owner
+releases them. Exact project/Document/expected-revision/lifecycle reads MUST
+coalesce for all subscribers, so one subscriber leaving MUST NOT abort a request
+still owned by another. When a non-cancellable mutation has already committed,
+the Studio MUST reconcile that result into the originating project/Document
+identity (or refresh it from the server) without applying it to the active
+Document. Returning to that identity MUST use the committed revision or a newer
+server revision as its baseline.
+
+A deliberate Document switch MUST discard an edited local Draft that has not
+been accepted, including an unresolved conflict Draft; it MUST NOT persist that
+Draft by inactive Document. Accepted server content MAY be recovered from the
+current-Document resource but MUST NOT be described as Draft survival. A
+conflicted Draft remains available only while its Document stays active or
+until the author chooses an explicit conflict action.
+
+#### Scenario: Switching projects hides the previous aggregate immediately
+
+- **GIVEN** project A is visible and project B starts loading
+- **WHEN** the route project identity changes from A to B
+- **THEN** project A and its actions are no longer rendered
+- **AND** only project B may replace the loading state or publish a load error
+
+#### Scenario: Late document completion is discarded
+
+- **GIVEN** a save, restore, search, proposal, body, Lore-status, or beat request belongs to an earlier project, Document, revision, or intent
+- **WHEN** it completes after the active ownership changed
+- **THEN** its server result does not replace the active identity's Draft, accepted body, revision baseline, field value, result list, or error state
+- **AND** a stale shell or body response does not replace current resource state
+
+#### Scenario: A committed inactive-document mutation is reconciled
+
+- **GIVEN** a save, restore, or proposal acceptance for Document A commits after the author selects Document B
+- **WHEN** the author later returns to Document A
+- **THEN** Document B was never overwritten by A's completion
+- **AND** Document A reflects the committed server revision or a newer refreshed revision
+- **AND** the next save for A uses that revision as its base
+
+#### Scenario: An unpersisted draft survives document navigation
+
+- **GIVEN** the author edits Document A and selects Document B before the save debounce elapses
+- **WHEN** the author returns to Document A
+- **THEN** A's unpersisted local Draft is absent rather than restored from inactive client state
+- **AND** A loads its last accepted current revision or a newer committed revision
+- **AND** B never displays or persists A's Draft
+
+#### Scenario: An old export owner cannot trigger a download
+
+- **GIVEN** an Export for project A is waiting for its artifact or download
+- **WHEN** the route switches to project B or the workbench unmounts
+- **THEN** every cancellable remaining request without another subscriber is aborted
+- **AND** no catalog, error, pending state, object URL, or synthetic download from A is published into B
+
+#### Scenario: A stale restore baseline remains recoverable
+
+- **GIVEN** a revision restore uses a base revision that changed while its Document remains active
+- **WHEN** the server rejects the restore with HTTP 409
+- **THEN** the Studio retains the active local Draft and marks it conflicted
+- **AND** refreshes the latest revision baseline without silently overwriting local text
+- **AND** a subsequent explicit restore retry uses that refreshed base revision

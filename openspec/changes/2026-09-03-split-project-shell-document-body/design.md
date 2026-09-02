@@ -50,7 +50,8 @@ current projection, not an arbitrary revision-detail endpoint. Historical body
 authority remains private to the restore workflow and snapshots.
 
 The principal guard runs before project/document lookup. An unauthenticated
-request returns 401 without consulting project, document, or revision state.
+request returns 401 without consulting project, document, or revision state;
+the frontend treats that 401 as a global session loss and replaces to Entry.
 After authentication, the application performs one owner-and-project-scoped
 lookup: a missing document, a document belonging to another project, and a
 document outside the principal's scope produce the same existing 404 code,
@@ -66,21 +67,27 @@ door.
 
 The store exposes distinct `ProjectShell`, `DocumentSummary`, and complete
 `DocumentWithCurrent` read ports. A shell query must never reuse a mapper that
-requires current revision body or metadata. The production path reads no
-`content_markdown` or revision `metadata_json` column and performs at most three
-SQL statements independent of project document count: scoped project, ordered
-document summaries joined to their current revision scalar projection, and
-ordered volumes. It may use fewer statements, but tests pin the upper bound and
-column exclusion at the real store seam.
+requires current revision body or metadata. Query accounting is split into
+named trace buckets so authentication is neither omitted nor accidentally
+charged to the Studio projection:
 
-The current-document path performs at most two SQL statements independent of
-project size: scoped project/authorization if it is not folded into the next
-statement, then one project-and-document-scoped current-revision read. It
-selects one body's complete fields and never hydrates sibling documents.
-Execution tracing must prove both budgets through public application/API calls;
-copied SQL or mocks are not evidence. Query-plan evidence must show indexed
-project/document/current-revision access and no scan proportional to all
-revision history.
+- a successful authenticated public request has a fixed **auth** cost of two
+  statements in the production path: session lookup and last-seen update;
+- after the Principal exists, the **shell projection** performs at most three
+  statements independent of project document count: scoped project, ordered
+  document summaries joined to current revision scalar fields, and volumes;
+- after the Principal exists, the **current-Document projection** performs at
+  most two statements independent of project size: scoped project/document
+  resolution and the one complete current-revision projection.
+
+The shell projection reads no `content_markdown` or revision `metadata_json`
+column. The current-Document projection selects one body's complete fields and
+never hydrates sibling documents. Public-route tracing must attribute every
+statement to `auth` or the named Studio projection, assert the fixed auth cost
+separately, and prove the combined request equals the sum of those buckets.
+Execution tracing must use real store/application/API calls; copied SQL or mocks
+are not evidence. Query-plan evidence must show indexed project/document/
+current-revision access and no scan proportional to all revision history.
 
 Reorder still validates the full document-id set and updates the whole order,
 so its write work remains proportional to the number of documents. Its response
@@ -97,35 +104,59 @@ match the selected shell row:
 
 `(project_id, document_id, current_revision_id)`.
 
-A missing body or any pointer mismatch starts the scoped GET. Equal owner and
-expected-revision requests may coalesce and must notify every still-mounted
-subscriber. Requests for another owner or expected revision cannot coalesce.
-Each request captures project/document ownership, expected revision, and a
-monotonic lifecycle epoch; success publishes only if all still match. A late
-response from a previous project, document, or revision is discarded.
+A missing body or any pointer mismatch starts the scoped GET. Requests with the
+exact same `(projectId, documentId, expectedRevisionId, lifecycleEpoch)` MUST
+coalesce. The shared request holds a reference count, publishes success or
+failure to every still-mounted subscriber, and is aborted only when its last
+subscriber leaves. Requests differing in any tuple member cannot coalesce. Each
+request captures that tuple; success publishes only while it still matches. A
+late response from a previous project, document, revision, or lifecycle is
+discarded.
+
+The GET cannot promise that the revision stays unchanged between shell and body
+reads. If its response `current_revision_id` differs from the expected shell
+pointer, the client never renders that response blindly. It performs one fresh
+shell read. When the refreshed summary pointer equals the response revision,
+the response may publish under the refreshed owner. Otherwise the client issues
+one replacement current-Document read owned by the refreshed pointer. If that
+replacement also mismatches because the document keeps changing, automatic
+convergence stops: the latest shell remains visible and the editor shows a
+readable changed-again error with an explicit Retry. One mismatch cycle is thus
+bounded to one shell refresh and one replacement body read; Retry starts a new
+cycle rather than an unbounded loop.
 
 No inactive complete-document entries are retained by this state machine.
-Switching selection aborts the previous cancellable read, clears its accepted
-body from active state, and publishes a loading state for the next selection.
-The last subscriber's unmount aborts its request and removes request
-bookkeeping. This one-active-owner boundary is the memory budget; adding an LRU
-of inactive document bodies is explicitly outside this change.
+Switching selection releases that subscriber, clears the accepted body from its
+active state, and publishes a loading state for the next selection. A shared
+read continues for surviving subscribers; only the last subscriber's unmount or
+owner release aborts it and removes request bookkeeping. This one-active-owner
+boundary per mounted surface is the memory budget; adding an LRU of inactive
+document bodies is explicitly outside this change.
 
-Successful create, save, restore, lore-status, beat, placement, or accepted
-proposal commands already return a complete Document. Their returned project,
-document, and current revision identities may atomically update both the shell
-summary and active accepted Document. A response for an older base/current
-revision cannot overwrite a newer mutation result. Reorder updates only shell
-positions and preserves the active accepted body when its identity remains
-unchanged.
+Successful Document creation, save, restore, placement, and accepted-proposal
+commands that return a complete Document may atomically update both the shell summary
+and active accepted Document when their causal revision/owner identity is
+current. Lore-status and beat-association commands keep their existing narrow
+local payloads; they do not fabricate a complete Document. Each narrow command
+captures project, document, field-specific intent epoch, and requested value.
+Its response may update only its owned summary/field while that epoch is still
+latest. Reverse-order same-revision responses therefore cannot replace a newer
+Lore-status or beat intent. A response for an older revision or mutation intent
+cannot overwrite a newer result. Reorder updates only shell positions and
+preserves the active accepted body when its identity remains unchanged.
 
 The authoring bootstrap first resolves the shell, chooses the route-compatible
 active document, and reads at most that one complete Document. It never follows
-other summaries to prefetch sibling bodies. A shell failure owns the project
-surface error. A current-document failure leaves shell navigation available,
-shows a readable editor-local error and Retry action, and does not masquerade as
-an empty document. Retry retains the same expected revision unless a fresher
-shell changed it.
+other summaries to prefetch sibling bodies. Failure classification is
+resource-specific. Any authenticated resource's 401 is global session loss and
+replaces to Entry. A shell 404 replaces to the project library. A current-
+Document 404 first refreshes the shell: if the project is gone it replaces to
+the library; if the document disappeared it selects the route-compatible
+fallback summary (or the documented no-document editor state); if the refreshed
+shell still names the document, the editor shows a scoped inconsistency with
+Retry. Only network, timeout, contract, and server failures stay on their local
+shell/editor recovery surface. Retry retains the same expected revision unless
+a fresher shell changed it.
 
 ## Draft and conflict semantics
 
@@ -154,12 +185,16 @@ successful response for the mounted project, but it does not prefetch while
 never selected.
 
 Shell, current Document, Review, and Export each have independent pending,
-failure, abort, retry, and stale-response ownership. Review failure must not
-clear the editor, block Export, or appear as a project-shell error; Export
-failure follows the symmetric rule. Leaving a panel aborts a cancellable
-in-flight read or prevents its late response from becoming the visible state.
-Returning to a failed panel exposes its retry without manufacturing an empty
-history. Loading one selected panel never triggers the other.
+failure, abort, retry, and stale-response ownership. A 401 from any is global
+session loss. A shell 404 returns to the project library; a Review or Export 404
+refreshes shell ownership before choosing library navigation or, when the shell
+still exists, classifying the impossible scoped miss as a panel-local contract
+failure. Operational Review failure must not clear the editor, block
+Export, or appear as a project-shell error; Export failure follows the symmetric
+rule. Leaving a panel releases its read subscriber or prevents its late response
+from becoming visible. Returning to a failed panel exposes its retry without
+manufacturing an empty history. Loading one selected panel never triggers the
+other.
 
 The existing Review and Export list response shapes remain unchanged in this
 change. Their unbounded rows, Review issue hydration/N+1 behavior, and later

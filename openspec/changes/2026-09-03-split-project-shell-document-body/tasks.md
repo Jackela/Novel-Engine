@@ -10,11 +10,13 @@
       one selected body only, valid-shape unauthenticated 401 before lookup,
       and identical code/message/body 404 responses for missing,
       cross-project, and out-of-scope documents.
-- [ ] 1.3 Add execution-trace and query-plan failures proving shell reads no
-      body/metadata columns in at most three SQL statements, current Document
-      reads at most one body in at most two statements, both budgets stay
-      independent of project size, and indexed scope/current-revision access
-      avoids revision-history scans.
+- [ ] 1.3 Add public-route execution-trace and query-plan failures with separate
+      auth, shell-projection, and current-Document-projection buckets: prove a
+      valid session has the fixed two-statement auth cost, shell reads no body/
+      metadata columns in at most three projection statements, current Document
+      reads at most one body in at most two projection statements, the combined
+      trace is fully attributed, budgets stay independent of project size, and
+      indexed scope/current-revision access avoids history scans.
 - [ ] 1.4 Add failing reorder coverage proving validation and atomic whole-set
       positions are unchanged while its response contains summaries only and
       performs no response-time body/metadata hydration.
@@ -48,16 +50,23 @@
       and readable independent shell/editor failure and Retry states.
 - [ ] 3.3 Implement the one-active-owner accepted-document state machine:
       validate project/document/current-revision identity, coalesce only equal
-      expected revisions, reject stale/aborted/late responses, notify surviving
-      subscribers, and clear request/body bookkeeping on owner change or final
-      unmount.
+      `(project, document, expected revision, lifecycle)` tuples, reference-
+      count subscribers, reject stale/aborted/late responses, notify every
+      survivor, and abort/clear shared bookkeeping only after the last owner
+      releases it.
 - [ ] 3.4 Apply complete mutation responses causally to shell plus active body,
-      apply reorder summaries without rolling back a newer body, and prove an
-      older read or mutation can never overwrite a newer current revision.
+      gate narrow Lore-status/beat payloads by owner and field-specific intent
+      epoch, apply reorder summaries without rolling back a newer body, and
+      prove reverse same-revision or older-revision responses cannot overwrite
+      a newer intent.
 - [ ] 3.5 Separate Draft from accepted cache state: keep the 1.5-second save
       trigger, retain a conflicted Draft while active, discard it on explicit
       switch/reload, and prevent late save/conflict results from crossing
       project or document ownership.
+- [ ] 3.6 Add the bounded current-read convergence loop: on an unexpected
+      response revision, render nothing stale, refresh shell once, accept only
+      a matching response or issue one replacement body read, then stop with a
+      readable Retry state if revision churn causes a second mismatch.
 
 ## 4. Lazy Inspector ownership
 
@@ -67,7 +76,11 @@
 - [ ] 4.2 Give shell, active Document, Review, and Export independent pending,
       error, abort, stale-response, and Retry state so one failure preserves the
       other surfaces and no failure is rendered as an empty document/history.
-- [ ] 4.3 Preserve accessible Inspector selection, busy naming, retry focus,
+- [ ] 4.3 Route 401 from every project resource to Entry, shell 404 to the
+      project library, and current-Document 404 through one shell refresh to a
+      route-compatible fallback or scoped inconsistency; keep only operational
+      failures on local recovery surfaces.
+- [ ] 4.4 Preserve accessible Inspector selection, busy naming, retry focus,
       deliberate focus movement, and Stop visibility while panels hydrate
       lazily.
 
@@ -75,8 +88,10 @@
 
 - [ ] 5.1 Run project create/open, section fallback, document create/save/
       restore/accept/delete, lore/beat/volume placement, reorder, search,
-      conflict, shell/current-document authorization, query-budget, and
-      OpenAPI/type-drift regressions.
+      conflict, reverse same-revision partial responses, body-revision churn,
+      subscriber fanout/last-release abort, resource-specific 401/404 recovery,
+      shell/current-document authorization, query-budget buckets, and OpenAPI/
+      type-drift regressions.
 - [ ] 5.2 Run server type-check/lint/arch/size/full tests, frontend
       lint/format/type/unit/build, React diagnostics, strict OpenSpec, and
       TypeScript-backend Playwright project-open/switch/reorder/Review/Export/

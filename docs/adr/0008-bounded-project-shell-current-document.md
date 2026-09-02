@@ -52,12 +52,37 @@ document, and Owner scope are checked together and all missing/foreign cases
 share one 404 boundary. The route does not expose arbitrary immutable Revision
 bodies; restore and Snapshot workflows keep their existing internal authority.
 
+Public query evidence separates the production guard from the Studio
+projection: a valid session has a fixed two-statement authentication cost
+(session lookup plus last-seen update), while shell and current-Document
+projections have their own at-most-three and at-most-two statement budgets.
+Every traced statement must belong to one of those buckets; body/metadata
+exclusion is asserted on the real shell projection rather than inferred from
+the serialized response.
+
 ### One active accepted body, separate from the Draft
 
 The frontend retains at most one active complete Document per mounted Studio
 project surface and reuses it only when project, document, and current revision
-identities match the shell. Owner/revision epochs and abort prevent late reads
-or older mutation results from publishing. Inactive bodies are not cached.
+identities match the shell. Equal project/document/expected-revision/lifecycle
+reads coalesce behind one reference-counted request, notify every surviving
+subscriber, and abort only after the last subscriber releases ownership.
+Owner/revision epochs and abort prevent late reads or older mutation results
+from publishing. Inactive bodies are not cached.
+
+Because a revision can advance between shell and body reads, an unexpected body
+revision is never rendered directly. The client refreshes shell once, accepts
+the response only if that pointer now matches, or performs one replacement body
+read for the refreshed pointer. A second mismatch stops automatic work and
+shows explicit Retry while retaining the latest shell. Each automatic mismatch
+cycle is therefore bounded to one shell refresh and one replacement body read.
+
+Complete-Document write responses update shell and accepted body only under
+current causal revision ownership. Lore-status and beat-association responses
+retain their narrow payloads and are gated by project, Document, field-specific
+intent epoch, and requested value. This prevents an older same-revision response
+from reversing a newer intent without pretending the narrow response is a full
+Document.
 
 The editor's Draft is separate component-local state. The 1.5-second debounce
 starts a save attempt; it is not a durability guarantee. A conflict retains the
@@ -72,6 +97,13 @@ failure, retry, abort, and stale-response ownership. This removes unrelated
 bootstrap work but does not claim to solve the still-unbounded Review/Export
 list contracts; pagination and Review issue N+1 work require separate changes.
 
+Failure navigation remains global where identity is global: any project-
+resource 401 replaces to Entry, and shell 404 replaces to the project library.
+A current-Document 404 refreshes shell before selecting a fallback or showing a
+scoped inconsistency; Review/Export 404 likewise rechecks project existence.
+Only network, timeout, contract, and server failures remain on local resource
+recovery surfaces.
+
 ## Consequences
 
 - Project open selects only structural/scalar columns plus one chosen body,
@@ -81,6 +113,8 @@ list contracts; pagination and Review issue N+1 work require separate changes.
   atomically.
 - Navigation remains usable when one body or one Inspector history fails, and
   error recovery no longer clears unrelated surfaces.
+- A changing Document cannot trigger an unbounded shell/body retry loop, and an
+  initiating subscriber cannot suppress another consumer's result by unmounting.
 - External clients needing a body follow a document summary to the scoped
   current-document resource; no `include=body` compatibility mode exists.
 - No database migration, second backend, Python compatibility surface,

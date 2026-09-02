@@ -34,7 +34,8 @@ unsaved Draft.
 - Split frontend project state into a project-shell owner and a one-active-
   document owner. A cached accepted Document is usable only when its project,
   document, and current revision exactly match the shell pointer; request
-  ownership, abort, and mutation revision identity prevent stale publication.
+  ownership, shared-subscriber lifetime, bounded mismatch recovery, abort, and
+  mutation intent/revision identity prevent stale publication.
 - Bootstrap authoring with the shell and at most the selected current Document.
   Load review and export histories only when their route-backed Inspector panel
   is selected, with independent pending, failure, and retry state.
@@ -79,11 +80,13 @@ unsaved Draft.
 
 - Contract-first store/API coverage for exact shell and summary shapes,
   body/metadata exclusion, current-document fidelity and scope, reorder
-  projection, authentication-before-disclosure, and fixed query budgets.
+  projection, authentication-before-disclosure, and separately bucketed fixed
+  authentication and Studio-projection query budgets.
 - Frontend state tests for initial request bounds, summary-to-body selection,
-  cache revision mismatch, concurrent mutation/read ordering, project/document
-  switches, abort/unmount, coalesced consumers, independent error recovery, and
-  precise Draft/conflict behavior.
+  bounded shell/body convergence after a revision mismatch, concurrent full and
+  partial mutation/read ordering, project/document switches, reference-counted
+  abort/unmount, mandatory coalesced-consumer fanout, resource-specific
+  navigation/error recovery, and precise Draft/conflict behavior.
 - Playwright project-open, switching, reorder, Review, Export, failure/retry,
   keyboard, and Back/Forward workflows against the TypeScript backend.
 - OpenAPI/generated-type drift, server/frontend full gates, strict OpenSpec,
