@@ -33,6 +33,8 @@ describe("project-scoped job detail", () => {
         owner,
         "POST",
         `/api/projects/${project.id}/jobs/${original.id}/retry`,
+        undefined,
+        { "idempotency-key": "job-detail-retry-0001" },
       );
       expect(retried.statusCode, retried.body).toBe(200);
 

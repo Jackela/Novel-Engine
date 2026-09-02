@@ -8,7 +8,6 @@ import {
   parseProviders,
   parseRevisions,
   parseSearch,
-  parseSession,
   parseSetupStatus,
   parseStudioDocument,
   parseVoid,
@@ -25,14 +24,11 @@ import {
   parseUsage,
 } from "@/app/apiWorkflowContract";
 import { appConfig } from "@/app/config";
+import { type JobsRequestOptions, projectJobsRequest, retryJobRequest } from "@/app/jobApiRequest";
 import { localServiceUnavailable } from "@/app/networkError";
 import { createRequestAbortScope } from "@/app/requestAbortScope";
+import { clearRetryAttemptSession, parseAndRecordRetrySession } from "@/app/retryAttemptRegistry";
 import type { DocumentKind, ExportFormat, LoreStatus } from "@/app/types/studio";
-
-export interface JobsRequestOptions extends RequestInit {
-  readonly cursor?: string;
-  readonly limit?: number;
-}
 
 export class HttpError extends Error {
   constructor(
@@ -140,14 +136,6 @@ const putJson = <T>(path: string, value: unknown, parse: ResponseParser<T>) =>
 const patchJson = <T>(path: string, value: unknown, parse: ResponseParser<T>) =>
   request(path, { method: "PATCH", body: json(value) }, parse);
 
-function jobsPath(projectId: string, options: JobsRequestOptions): string {
-  const query = new URLSearchParams();
-  if (options.limit !== undefined) query.set("limit", String(options.limit));
-  if (options.cursor !== undefined) query.set("cursor", options.cursor);
-  const encoded = query.toString();
-  return `/api/projects/${projectId}/jobs${encoded ? `?${encoded}` : ""}`;
-}
-
 async function downloadBlob(path: string, init?: RequestInit): Promise<Blob> {
   const abortScope = createRequestAbortScope(init?.signal);
   try {
@@ -182,9 +170,12 @@ export const api = {
   setupOwner: (username: string, password: string) =>
     postJson("/api/setup", { username, password }, parseOwnerSetup),
   login: (username: string, password: string) =>
-    postJson("/api/session/login", { username, password }, parseSession),
-  session: (init?: RequestInit) => request("/api/session", init, parseSession),
-  logout: () => request("/api/session", { method: "DELETE" }, parseVoid),
+    postJson("/api/session/login", { username, password }, parseAndRecordRetrySession),
+  session: (init?: RequestInit) => request("/api/session", init, parseAndRecordRetrySession),
+  logout: () => {
+    clearRetryAttemptSession();
+    return request("/api/session", { method: "DELETE" }, parseVoid);
+  },
   providers: () => request("/api/providers", undefined, parseProviders),
   projects: (init?: RequestInit) => request("/api/projects", init, parseProjects),
   project: (projectId: string, init?: RequestInit) =>
@@ -303,12 +294,14 @@ export const api = {
   deleteDocument: (projectId: string, documentId: string) =>
     request(`/api/projects/${projectId}/documents/${documentId}`, { method: "DELETE" }, parseVoid),
   jobs: (projectId: string, options: JobsRequestOptions = {}) => {
-    const { cursor: _cursor, limit: _limit, ...init } = options;
-    return request(jobsPath(projectId, options), init, parseJobs);
+    const [path, init] = projectJobsRequest(projectId, options);
+    return request(path, init, parseJobs);
   },
   usage: (projectId: string, init?: RequestInit) =>
     request(`/api/projects/${projectId}/usage`, init, parseUsage),
-  retryJob: (projectId: string, jobId: string) =>
-    request(`/api/projects/${projectId}/jobs/${jobId}/retry`, { method: "POST" }, parseJob),
+  retryJob: (projectId: string, jobId: string, idempotencyKey: string) => {
+    const [path, init] = retryJobRequest(projectId, jobId, idempotencyKey);
+    return request(path, init, parseJob);
+  },
   download: (path: string, init?: RequestInit) => downloadBlob(path, init),
 };

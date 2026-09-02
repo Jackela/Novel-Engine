@@ -71,10 +71,12 @@ export interface DocumentMatchRecord {
 export type {
   AddJobInput,
   AddUsageEventInput,
+  ClaimJobRetryInput,
   CompletedProposalUsageInput,
   CompleteJobWithUsageInput,
   JobEventRecord,
   JobRecord,
+  JobRetryClaim,
   MarkJobOutcomeInput,
   RecordCompletedProposalJobInput,
 } from "./job_records.js";

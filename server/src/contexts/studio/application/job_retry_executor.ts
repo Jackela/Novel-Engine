@@ -29,11 +29,6 @@ import {
 } from "./proposal_pipeline.js";
 import type { ReviewService } from "./review_service.js";
 
-const RETRYABLE_STATUSES = new Set(["failed", "interrupted"]);
-
-const ONLY_FAILED_RETRIED = "Only failed or interrupted jobs may be retried.";
-const IMPORT_NOT_RETRIED = "Import jobs cannot be retried.";
-
 export interface JobRetryExecutorOptions {
   readonly now?: (() => Date) | undefined;
   readonly providerFactory: TextGenerationProviderFactory;
@@ -73,31 +68,18 @@ export class JobRetryExecutor {
     principal: Principal,
     projectId: string,
     jobId: string,
+    requestKey: string,
     reportCleanupFailure: (failure: unknown) => void,
   ): Promise<Record<string, unknown>> {
     const scope = scopeForPrincipal(principal);
-    const original = this.store.findJob(scope, projectId, jobId);
-    if (!RETRYABLE_STATUSES.has(original.status)) {
-      throw new InvalidOperationError(ONLY_FAILED_RETRIED);
-    }
-    if (original.kind === "import") {
-      throw new InvalidOperationError(IMPORT_NOT_RETRIED);
-    }
-    const retry = this.store.addJob(scope, {
-      projectId: original.projectId,
-      documentId: original.documentId,
-      kind: original.kind,
-      operation: original.operation,
-      status: "running",
-      provider: original.provider,
-      model: original.model,
-      requestJson: original.requestJson,
-      resultJson: dumpJson({}),
-      error: null,
-      retryOfJobId: original.id,
-      eventDetailsJson: dumpJson({ retry_of: original.id }),
+    const claim = this.store.claimJobRetry(scope, {
+      projectId,
+      sourceJobId: jobId,
+      requestKey,
       now: this.now(),
     });
+    if (!claim.created) return jobPayload(claim.job);
+    const retry = claim.job;
     try {
       if (retry.kind === "proposal") {
         return await this.reexecuteProposalJob(scope, retry, reportCleanupFailure);

@@ -29,6 +29,14 @@ export const jobDetailParamsSchema = Type.Object({
   jobId: Type.String({ minLength: 1, maxLength: 64 }),
 });
 
+export const jobRetryHeadersSchema = Type.Object({
+  "idempotency-key": Type.String({
+    minLength: 16,
+    maxLength: 128,
+    pattern: "^[A-Za-z0-9._~-]+$",
+  }),
+});
+
 /** The jobs audit listing: newest compact summary first. */
 export const jobListResponseSchema = Type.Object(
   {

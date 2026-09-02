@@ -52,11 +52,16 @@ export class InFlightOperationGuard {
     return JSON.stringify([target.projectId, target.documentId, target.operation]);
   }
 
-  acquire(target: InFlightTarget): InFlightOperationPermit {
-    const exclusiveOperation = this.projectExclusive.get(target.projectId);
+  /** Reject work while an irreversible project-wide transition owns the project. */
+  assertProjectNotExclusive(projectId: string): void {
+    const exclusiveOperation = this.projectExclusive.get(projectId);
     if (exclusiveOperation !== undefined) {
-      throw new OperationInFlightError(target.projectId, null, exclusiveOperation.operation);
+      throw new OperationInFlightError(projectId, null, exclusiveOperation.operation);
     }
+  }
+
+  acquire(target: InFlightTarget): InFlightOperationPermit {
+    this.assertProjectNotExclusive(target.projectId);
     const key = InFlightOperationGuard.keyFor(target);
     if (this.running.has(key)) {
       throw new OperationInFlightError(target.projectId, target.documentId, target.operation);

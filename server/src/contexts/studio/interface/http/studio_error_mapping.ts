@@ -68,6 +68,9 @@ function toAppError(error: unknown): unknown {
         document_id: error.documentId,
         operation: error.operation,
       },
+      ...(error.retryAfterSeconds === undefined
+        ? {}
+        : { responseHeaders: { "retry-after": String(error.retryAfterSeconds) } }),
     });
   }
   if (error instanceof OperationCapacityExceededError) {

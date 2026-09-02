@@ -317,6 +317,8 @@ describe("resident context assembly in proposal prompts (#314)", () => {
         jar,
         "POST",
         `/api/projects/${projectId}/jobs/${failed.json().id}/retry`,
+        undefined,
+        { "idempotency-key": "resident-prompt-retry-0001" },
       );
       expect(retry.statusCode, retry.body).toBe(200);
       expect(retry.json().status).toBe("completed");

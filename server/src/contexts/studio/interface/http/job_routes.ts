@@ -9,12 +9,16 @@ import {
   jobListQuerySchema,
   jobListResponseSchema,
   jobResponseSchema,
+  jobRetryHeadersSchema,
   usageResponseSchema,
 } from "./job_schemas.js";
 import { requireServices, type StudioRoutesOptions } from "./project_routes.js";
 import { withAsyncStudioErrors, withStudioErrors } from "./studio_error_mapping.js";
 import { jobIdParams, projectIdParams } from "./studio_request_schemas.js";
-import { operationCapacityResponseSchema, operationInFlightSchema } from "./studio_schemas.js";
+import {
+  keyedRetryInFlightResponseSchema,
+  operationCapacityResponseSchema,
+} from "./studio_schemas.js";
 
 /** Guard + scope failures shared by the project-scoped job reads. */
 const JOB_READ_ERROR_RESPONSES = {
@@ -98,13 +102,14 @@ export const jobRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fastify
       preHandler: [guard],
       schema: {
         params: jobIdParams,
+        headers: jobRetryHeadersSchema,
         response: {
           200: jobResponseSchema,
           ...JOB_READ_ERROR_RESPONSES,
           403: errorEnvelopeResponse,
           // Non-retryable terminal states answer 422 INVALID_OPERATION.
           422: errorEnvelopeResponse,
-          409: operationInFlightSchema,
+          409: keyedRetryInFlightResponseSchema,
           503: operationCapacityResponseSchema,
         },
       },
@@ -128,6 +133,7 @@ export const jobRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fastify
           requirePrincipal(request),
           request.params.projectId,
           request.params.jobId,
+          request.headers["idempotency-key"],
           reportCleanupFailure,
         ),
       );

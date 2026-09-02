@@ -115,6 +115,21 @@ export const operationInFlightSchema: JsonResponseSchema = {
   required: ["error"],
 } as const;
 
+/** The keyed retry conflict documents its fixed replay polling hint. */
+export const keyedRetryInFlightResponseSchema: JsonResponseSchema = {
+  description: "The retry attempt with this idempotency key is still running.",
+  headers: {
+    "Retry-After": {
+      description: "Wait one second before replaying this same retry attempt.",
+      type: "integer",
+      const: 1,
+    },
+  },
+  content: {
+    "application/json": { schema: operationInFlightSchema },
+  },
+} as const;
+
 const operationCapacityExceededEnvelope = {
   type: "object",
   additionalProperties: false,

@@ -1,9 +1,11 @@
 import type {
   AddJobInput,
   AddUsageEventInput,
+  ClaimJobRetryInput,
   CompleteJobWithUsageInput,
   JobPageInput,
   JobRecord,
+  JobRetryClaim,
   JobSummaryPage,
   MarkJobOutcomeInput,
   RecordCompletedProposalJobInput,
@@ -19,6 +21,15 @@ import type { ProjectScope } from "./studio_store.js";
  */
 export interface StudioJobLedgerStore {
   addJob(scope: ProjectScope, input: AddJobInput): JobRecord;
+  /** Read a previously reserved retry identity without admitting new work. */
+  findJobRetry(
+    scope: ProjectScope,
+    projectId: string,
+    sourceJobId: string,
+    requestKey: string,
+  ): JobRecord | null;
+  /** Reserve a retry and its first event atomically, or replay its terminal Job. */
+  claimJobRetry(scope: ProjectScope, input: ClaimJobRetryInput): JobRetryClaim;
   addUsageEvent(scope: ProjectScope, input: AddUsageEventInput): void;
   /** The atomic completed-proposal landing: job row plus usage event, or nothing. */
   recordCompletedProposalJob(

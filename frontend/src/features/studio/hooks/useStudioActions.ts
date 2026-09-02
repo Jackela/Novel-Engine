@@ -1,7 +1,8 @@
 import type { Dispatch, FormEvent, SetStateAction } from "react";
 import { useCallback, useLayoutEffect, useRef, useState } from "react";
 
-import { api } from "@/app/api";
+import { api, HttpError } from "@/app/api";
+import { clearRetryAttempt, getOrCreateRetryAttemptKey } from "@/app/retryAttemptRegistry";
 import type { Project, Review } from "@/app/types/studio";
 import { mergeProjectSettings } from "./projectState";
 import { toErrorMessage } from "./toErrorMessage";
@@ -36,6 +37,8 @@ type StudioActionErrorSource = keyof StudioActionErrorPublishers;
 const ACTION_KEYS = ["runReview", "updateSettings", "retryJob"] as const;
 
 type ActionKey = (typeof ACTION_KEYS)[number];
+
+const DEFINITIVE_RETRY_REJECTIONS = new Set([401, 403, 404, 422]);
 
 interface StudioActionsOwner {
   readonly projectId: string;
@@ -194,11 +197,21 @@ export function useStudioActions({
       if (!owner || !begin("retryJob")) return;
       setRetryingJobId(jobId);
       publishError(owner, "retryJob", null);
+      let idempotencyKey: string | null = null;
       try {
-        await api.retryJob(projectId, jobId);
+        idempotencyKey = getOrCreateRetryAttemptKey(projectId, jobId);
+        await api.retryJob(projectId, jobId, idempotencyKey);
+        clearRetryAttempt(projectId, jobId, idempotencyKey);
         if (!isCurrentOwner(owner)) return;
         await loadJobs("retry");
       } catch (reason) {
+        if (
+          idempotencyKey !== null &&
+          reason instanceof HttpError &&
+          DEFINITIVE_RETRY_REJECTIONS.has(reason.status)
+        ) {
+          clearRetryAttempt(projectId, jobId, idempotencyKey);
+        }
         publishError(owner, "retryJob", toErrorMessage(reason, "Unable to retry job."));
       } finally {
         if (isCurrentOwner(owner)) setRetryingJobId(null);

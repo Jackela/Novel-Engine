@@ -4677,6 +4677,17 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "in": "header",
+            "name": "idempotency-key",
+            "required": true,
+            "schema": {
+              "maxLength": 128,
+              "minLength": 16,
+              "pattern": "^[A-Za-z0-9._~-]+$",
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -4871,7 +4882,16 @@
                 }
               }
             },
-            "description": "Default Response"
+            "description": "The retry attempt with this idempotency key is still running.",
+            "headers": {
+              "Retry-After": {
+                "description": "Wait one second before replaying this same retry attempt.",
+                "schema": {
+                  "const": 1,
+                  "type": "integer"
+                }
+              }
+            }
           },
           "422": {
             "content": {

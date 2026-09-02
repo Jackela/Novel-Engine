@@ -101,7 +101,16 @@ describe("project deletion and proposal lifecycle", () => {
         { path: `/api/projects/${project.id}/reviews`, payload: {} },
         { path: `/api/projects/${project.id}/jobs/missing/retry`, payload: undefined },
       ]) {
-        const rejected = await call(app, owner, "POST", target.path, target.payload);
+        const rejected = await call(
+          app,
+          owner,
+          "POST",
+          target.path,
+          target.payload,
+          target.path.endsWith("/retry")
+            ? { "idempotency-key": "deleting-project-retry-0001" }
+            : undefined,
+        );
         expect(rejected.statusCode, rejected.body).toBe(409);
         expect(rejected.json().error).toMatchObject({
           code: "OPERATION_IN_FLIGHT",

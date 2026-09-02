@@ -104,6 +104,37 @@ export function forceJobStatus(app: FastifyInstance, jobId: string, status: stri
   database.update(jobsTable).set({ status }).where(eq(jobsTable.id, jobId)).run();
 }
 
+/** Seed the failed proposal Job used by retry-admission tests. */
+export function seedRetryableProposal(
+  app: FastifyInstance,
+  projectId: string,
+  documentId: string,
+): string {
+  const id = "capacity-api-retry-fixture";
+  const now = new Date("2026-09-02T08:00:00.000Z");
+  studioDatabase(app)
+    .insert(jobsTable)
+    .values({
+      id,
+      project_id: projectId,
+      document_id: documentId,
+      kind: "proposal",
+      operation: "continue",
+      status: "failed",
+      provider: "mock",
+      model: "fixture-model",
+      request_json: '{"instruction":"","provider":"mock"}',
+      result_json: "{}",
+      error: "fixture failure",
+      created_at: now,
+      updated_at: now,
+      started_at: now,
+      finished_at: now,
+    })
+    .run();
+  return id;
+}
+
 /** The live studio database behind an app built with a data directory. */
 export function studioDatabase(app: FastifyInstance) {
   const database = app.studioDb?.db;

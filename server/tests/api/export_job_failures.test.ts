@@ -13,6 +13,7 @@ import {
 import { ExportStorePart } from "../../src/contexts/studio/infrastructure/export_store_part.js";
 import { jobEvents, jobs } from "../../src/shared/infrastructure/db/schema.js";
 import { seedProjectWithChapter, studioDatabase } from "./job_test_helpers.js";
+import { retryJobRequest } from "./retry_test_helpers.js";
 import {
   buildStudioApp,
   call,
@@ -188,11 +189,11 @@ describe("export job failure closure", () => {
       const projectId = await seedProjectWithChapter(app, owner, "Known retry failure");
       seedInterruptedExport(app, projectId, clock());
 
-      const response = await call(
+      const response = await retryJobRequest(
         app,
         owner,
-        "POST",
         `/api/projects/${projectId}/jobs/export-job-interrupted/retry`,
+        "known-export-retry-failure-0001",
       );
 
       expect(response.statusCode, response.body).toBe(200);
@@ -226,11 +227,11 @@ describe("export job failure closure", () => {
       const projectId = await seedProjectWithChapter(app, owner, "Unexpected retry failure");
       seedInterruptedExport(app, projectId, clock());
 
-      const response = await call(
+      const response = await retryJobRequest(
         app,
         owner,
-        "POST",
         `/api/projects/${projectId}/jobs/export-job-interrupted/retry`,
+        "unexpected-export-retry-failure-0001",
       );
 
       expect(response.statusCode, response.body).toBe(500);
@@ -275,11 +276,11 @@ describe("export job failure closure", () => {
       expect(updated.statusCode, updated.body).toBe(200);
       const updatedRevisionId = updated.json().current_revision_id;
 
-      const response = await call(
+      const response = await retryJobRequest(
         app,
         owner,
-        "POST",
         `/api/projects/${projectId}/jobs/export-job-interrupted/retry`,
+        "updated-export-retry-source-0001",
       );
 
       expect(response.statusCode, response.body).toBe(200);

@@ -4,6 +4,7 @@ import {
   ExportArtifactWriteError,
   ExportSourceInvalidatedError,
   NotFoundError,
+  OperationInFlightError,
   ReviewSourceInvalidatedError,
 } from "../domain/exceptions.js";
 import type { SnapshotArtifactService } from "./export_artifact_service.js";
@@ -227,8 +228,31 @@ export class JobHistoryService {
     principal: Principal,
     projectId: string,
     jobId: string,
+    requestKey: string,
     reportCleanupFailure: (failure: unknown) => void,
   ): Promise<Record<string, unknown>> {
+    // Project deletion removes persistence before artifact cleanup completes;
+    // preserve its exclusive 409 boundary before any durable replay lookup.
+    this.inFlight.assertProjectNotExclusive(projectId);
+    const replay = this.store.findJobRetry(
+      scopeForPrincipal(principal),
+      projectId,
+      jobId,
+      requestKey,
+    );
+    if (replay !== null) {
+      if (replay.status === "running") {
+        throw new OperationInFlightError(projectId, null, `retry (${jobId})`, 1);
+      }
+      if (
+        replay.status !== "completed" &&
+        replay.status !== "failed" &&
+        replay.status !== "interrupted"
+      ) {
+        throw new Error(`Persisted retry Job has invalid status: ${replay.status}.`);
+      }
+      return jobPayload(replay);
+    }
     // #305: a retry runs real work after its running row is created, so a
     // double-fired retry of the same job is deduplicated like the pipelines.
     const inFlightTarget = {
@@ -242,6 +266,7 @@ export class JobHistoryService {
         principal,
         projectId,
         jobId,
+        requestKey,
         reportCleanupFailure,
       );
     } finally {

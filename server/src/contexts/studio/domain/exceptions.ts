@@ -101,8 +101,14 @@ export class OperationInFlightError extends Error {
   readonly projectId: string;
   readonly documentId: string | null;
   readonly operation: string;
+  readonly retryAfterSeconds: number | undefined;
 
-  constructor(projectId: string, documentId: string | null, operation: string) {
+  constructor(
+    projectId: string,
+    documentId: string | null,
+    operation: string,
+    retryAfterSeconds?: number,
+  ) {
     super(
       documentId === null
         ? `The ${operation} operation is already running for this project.`
@@ -112,6 +118,7 @@ export class OperationInFlightError extends Error {
     this.projectId = projectId;
     this.documentId = documentId;
     this.operation = operation;
+    this.retryAfterSeconds = retryAfterSeconds;
   }
 }
 

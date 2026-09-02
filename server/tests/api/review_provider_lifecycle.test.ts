@@ -63,6 +63,8 @@ describe("review provider lifecycle", () => {
         owner,
         "POST",
         `/api/projects/${project.id}/jobs/${firstJob.id}/retry`,
+        undefined,
+        { "idempotency-key": "review-provider-lifecycle-retry-0001" },
       );
       expect(retry.statusCode, retry.body).toBe(200);
       expect(retry.json<JobPayload>()).toMatchObject({

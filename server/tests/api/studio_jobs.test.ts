@@ -47,6 +47,8 @@ describe("jobs surface", () => {
         owner,
         "POST",
         `/api/projects/${project.id}/jobs/${older.id}/retry`,
+        undefined,
+        { "idempotency-key": "jobs-ordering-retry-0001" },
       );
       expect(retried.statusCode, retried.body).toBe(200);
       expect(retried.json().status).toBe("completed");
@@ -184,6 +186,8 @@ describe("jobs surface", () => {
         owner,
         "POST",
         `/api/projects/${project.id}/jobs/${completed.id}/retry`,
+        undefined,
+        { "idempotency-key": "completed-retry-gate-0001" },
       );
       expect(rejected.statusCode, rejected.body).toBe(422);
       expect(rejected.json().error.code).toBe("INVALID_OPERATION");
@@ -204,6 +208,8 @@ describe("jobs surface", () => {
         owner,
         "POST",
         `/api/projects/${project.id}/jobs/${imported.id}/retry`,
+        undefined,
+        { "idempotency-key": "import-retry-gate-000001" },
       );
       expect(importRejected.statusCode, importRejected.body).toBe(422);
       expect(importRejected.json().error.code).toBe("INVALID_OPERATION");

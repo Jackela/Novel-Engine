@@ -17,6 +17,7 @@ import {
   flakyProviderFactory,
   studioDatabase,
 } from "./job_test_helpers.js";
+import { retryJobRequest } from "./retry_test_helpers.js";
 import {
   buildStudioApp,
   call,
@@ -153,11 +154,11 @@ describe("review job failure closure", () => {
       const firstJob = first.json<JobPayload>();
       expect(firstJob.status).toBe("failed");
 
-      const retried = await call(
+      const retried = await retryJobRequest(
         app,
         owner,
-        "POST",
         `/api/projects/${project.id}/jobs/${firstJob.id}/retry`,
+        "known-review-retry-failure-0001",
       );
       expect(retried.statusCode, retried.body).toBe(200);
       expect(retried.json<JobPayload>()).toMatchObject({
@@ -199,11 +200,11 @@ describe("review job failure closure", () => {
       const firstJob = first.json<JobPayload>();
       expect(firstJob.status).toBe("failed");
 
-      const retried = await call(
+      const retried = await retryJobRequest(
         app,
         owner,
-        "POST",
         `/api/projects/${project.id}/jobs/${firstJob.id}/retry`,
+        "unexpected-review-retry-failure-0001",
       );
       expect(retried.statusCode, retried.body).toBe(500);
       const listed = await call(app, owner, "GET", `/api/projects/${project.id}/jobs`);
@@ -281,11 +282,11 @@ describe("review job failure closure", () => {
       const firstJob = first.json<JobPayload>();
       expect(firstJob).toMatchObject({ status: "failed", model: "" });
 
-      const pendingRetry = call(
+      const pendingRetry = retryJobRequest(
         app,
         owner,
-        "POST",
         `/api/projects/${project.id}/jobs/${firstJob.id}/retry`,
+        "deleted-review-source-retry-0001",
       );
       await deferred.started;
       const removed = await call(

@@ -57,6 +57,8 @@ describe("export retry atomicity", () => {
         owner,
         "POST",
         `/api/projects/${projectId}/jobs/interrupted-export/retry`,
+        undefined,
+        { "idempotency-key": "atomic-export-retry-0001" },
       );
 
       expect(response.statusCode, response.body).toBe(500);

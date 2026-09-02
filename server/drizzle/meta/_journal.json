@@ -120,6 +120,13 @@
       "when": 1788345447338,
       "tag": "0016_paginate-project-jobs",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "6",
+      "when": 1788353880653,
+      "tag": "0017_durable-retry-idempotency",
+      "breakpoints": true
     }
   ]
 }

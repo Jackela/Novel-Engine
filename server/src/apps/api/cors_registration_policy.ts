@@ -7,6 +7,7 @@ export const CORS_ALLOWED_HEADERS = [
   "origin",
   "x-requested-with",
   "x-csrf-token",
+  "idempotency-key",
 ];
 
 export const CORS_ALLOWED_METHODS = ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"];

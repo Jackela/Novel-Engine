@@ -73,6 +73,8 @@ describe("project deletion versus export retry", () => {
         owner,
         "POST",
         `/api/projects/${project.id}/jobs/interrupted-export-for-deletion/retry`,
+        undefined,
+        { "idempotency-key": "deletion-export-retry-0001" },
       );
       await deferred.started;
 

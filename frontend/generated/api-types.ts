@@ -2562,7 +2562,9 @@ export interface paths {
         post: {
             parameters: {
                 query?: never;
-                header?: never;
+                header: {
+                    "idempotency-key": string;
+                };
                 path: {
                     projectId: string;
                     jobId: string;
@@ -2635,9 +2637,11 @@ export interface paths {
                         "application/json": components["schemas"]["ErrorEnvelope"];
                     };
                 };
-                /** @description Default Response */
+                /** @description The retry attempt with this idempotency key is still running. */
                 409: {
                     headers: {
+                        /** @description Wait one second before replaying this same retry attempt. */
+                        "Retry-After"?: 1;
                         [name: string]: unknown;
                     };
                     content: {

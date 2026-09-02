@@ -250,6 +250,7 @@ describe("Studio expensive-workflow capacity", () => {
             principal,
             secondProject.id,
             retry.id,
+            `capacity-retry-${retry.id}`,
             () => undefined,
           ),
         ).rejects.toBeInstanceOf(OperationCapacityExceededError);

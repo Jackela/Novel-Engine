@@ -1,7 +1,7 @@
 import { asc, count, eq, sum } from "drizzle-orm";
-
+import { InvalidOperationError } from "../../../shared/domain/exceptions.js";
 import type { StudioSqliteDatabase } from "../../../shared/infrastructure/db/connection.js";
-import { jobEvents, jobs, usageEvents } from "../../../shared/infrastructure/db/schema.js";
+import { jobs, usageEvents } from "../../../shared/infrastructure/db/schema.js";
 import {
   type JobPageInput,
   type JobSummaryPage,
@@ -10,14 +10,22 @@ import {
 import type {
   AddJobInput,
   AddUsageEventInput,
+  ClaimJobRetryInput,
   CompleteJobWithUsageInput,
   JobRecord,
+  JobRetryClaim,
   MarkJobOutcomeInput,
   ProjectScope,
   ProjectUsageAggregate,
   RecordCompletedProposalJobInput,
 } from "../application/ports/studio_store.js";
-import { InvalidJobTransitionError, NotFoundError } from "../domain/exceptions.js";
+import {
+  InvalidJobTransitionError,
+  NotFoundError,
+  OperationInFlightError,
+} from "../domain/exceptions.js";
+import { jobWithEvents } from "./db/job_record_reads.js";
+import { findRetryJobByKey, insertRetryClaim } from "./db/job_retry_claim.js";
 import {
   applyJobOutcome,
   insertJobAndEvent,
@@ -27,49 +35,9 @@ import { type ProjectRow, scopedProject, type Tx } from "./db/studio_query_helpe
 import { dailyUsageBuckets } from "./db/usage_daily_buckets.js";
 import { buildProjectJobSummariesQuery } from "./job_page_queries.js";
 
+export { jobWithEvents };
+
 type JobRow = typeof jobs.$inferSelect;
-type JobEventRow = typeof jobEvents.$inferSelect;
-
-function toJobRecord(job: JobRow, events: JobEventRow[]): JobRecord {
-  return {
-    id: job.id,
-    projectId: job.project_id,
-    documentId: job.document_id,
-    kind: job.kind,
-    operation: job.operation,
-    status: job.status,
-    provider: job.provider,
-    model: job.model,
-    requestJson: job.request_json,
-    resultJson: job.result_json,
-    error: job.error,
-    retryOfJobId: job.retry_of_job_id,
-    createdAt: job.created_at,
-    updatedAt: job.updated_at,
-    events: events.map((event) => ({
-      id: event.id,
-      jobId: event.job_id,
-      status: event.status,
-      detailsJson: event.details_json,
-      createdAt: event.created_at,
-    })),
-  };
-}
-
-export function jobWithEvents(tx: Tx, jobId: string): JobRecord {
-  const job = tx.select().from(jobs).where(eq(jobs.id, jobId)).get();
-  if (job === undefined) {
-    throw new NotFoundError("Job not found.");
-  }
-  const events = tx
-    .select()
-    .from(jobEvents)
-    .where(eq(jobEvents.job_id, jobId))
-    .orderBy(asc(jobEvents.sequence))
-    .all();
-  return toJobRecord(job, events);
-}
-
 /**
  * The workflow half of the Drizzle studio store: proposal jobs with their
  * event trail and the usage accounting rows. Jobs reference projects by a
@@ -89,6 +57,45 @@ export class JobStorePart {
       const jobId = insertJobAndEvent(tx, input);
       return jobWithEvents(tx, jobId);
     });
+  }
+
+  findJobRetry(
+    scope: ProjectScope,
+    projectId: string,
+    sourceJobId: string,
+    requestKey: string,
+  ): JobRecord | null {
+    return this.db.transaction((tx) => {
+      scopedProject(tx, scope, projectId);
+      const retry = findRetryJobByKey(tx, projectId, sourceJobId, requestKey);
+      return retry === undefined ? null : jobWithEvents(tx, retry.id);
+    });
+  }
+
+  claimJobRetry(scope: ProjectScope, input: ClaimJobRetryInput): JobRetryClaim {
+    return this.db.transaction(
+      (tx) => {
+        scopedProject(tx, scope, input.projectId);
+        const existing = findRetryJobByKey(
+          tx,
+          input.projectId,
+          input.sourceJobId,
+          input.requestKey,
+        );
+        if (existing !== undefined) return this.replayRetryClaim(tx, existing);
+
+        const source = this.scopedJob(tx, input.projectId, input.sourceJobId);
+        this.assertRetryableSource(source);
+        const claimed = insertRetryClaim(tx, source, input.requestKey, input.now, (jobId) =>
+          this.beforeRetryClaimEventInsert(tx, jobId),
+        );
+        if (claimed.created) return { job: jobWithEvents(tx, claimed.jobId), created: true };
+        const winner = findRetryJobByKey(tx, input.projectId, input.sourceJobId, input.requestKey);
+        if (winner === undefined) throw new Error("Retry idempotency winner disappeared.");
+        return this.replayRetryClaim(tx, winner);
+      },
+      { behavior: "immediate" },
+    );
   }
 
   addUsageEvent(scope: ProjectScope, input: AddUsageEventInput): void {
@@ -261,5 +268,39 @@ export class JobStorePart {
    */
   protected writeUsageEvent(tx: Tx, input: AddUsageEventInput): void {
     writeUsageEventRow(tx, input);
+  }
+
+  /** Failure-injection seam proving the retry row and first event stay atomic. */
+  protected beforeRetryClaimEventInsert(_tx: Tx, _jobId: string): void {}
+
+  private replayRetryClaim(tx: Tx, retry: JobRow): JobRetryClaim {
+    if (retry.status === "running") {
+      throw new OperationInFlightError(
+        retry.project_id,
+        null,
+        `retry (${String(retry.retry_of_job_id)})`,
+        1,
+      );
+    }
+    if (
+      retry.status !== "completed" &&
+      retry.status !== "failed" &&
+      retry.status !== "interrupted"
+    ) {
+      throw new Error(`Persisted retry Job has invalid status: ${retry.status}.`);
+    }
+    return { job: jobWithEvents(tx, retry.id), created: false };
+  }
+
+  private assertRetryableSource(source: JobRow): void {
+    if (source.status !== "failed" && source.status !== "interrupted") {
+      throw new InvalidOperationError("Only failed or interrupted jobs may be retried.");
+    }
+    if (source.kind === "import") {
+      throw new InvalidOperationError("Import jobs cannot be retried.");
+    }
+    if (source.kind !== "proposal" && source.kind !== "review" && source.kind !== "export") {
+      throw new InvalidOperationError(`Unsupported job kind for retry: ${source.kind}`);
+    }
   }
 }

@@ -6,12 +6,14 @@ import type {
   AddJobInput,
   AddUsageEventInput,
   AdvanceDocumentInput,
+  ClaimJobRetryInput,
   CompleteJobWithUsageInput,
   DocumentMatchRecord,
   DocumentWithCurrent,
   EditorialAssessmentRecord,
   EvaluatedReview,
   JobRecord,
+  JobRetryClaim,
   MarkJobOutcomeInput,
   ProjectScope,
   ProjectUsageAggregate,
@@ -177,6 +179,19 @@ export class DrizzleStudioStore extends ProjectStorePart implements StudioStore 
 
   addJob(scope: ProjectScope, input: AddJobInput): JobRecord {
     return this.workflowJobs.addJob(scope, input);
+  }
+
+  findJobRetry(
+    scope: ProjectScope,
+    projectId: string,
+    sourceJobId: string,
+    requestKey: string,
+  ): JobRecord | null {
+    return this.workflowJobs.findJobRetry(scope, projectId, sourceJobId, requestKey);
+  }
+
+  claimJobRetry(scope: ProjectScope, input: ClaimJobRetryInput): JobRetryClaim {
+    return this.workflowJobs.claimJobRetry(scope, input);
   }
 
   addUsageEvent(scope: ProjectScope, input: AddUsageEventInput): void {

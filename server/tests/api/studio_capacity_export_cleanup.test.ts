@@ -256,6 +256,8 @@ describe("export capacity cleanup lifetime", () => {
         owner,
         "POST",
         `/api/projects/${firstProject.id}/jobs/capacity-interrupted-export/retry`,
+        undefined,
+        { "idempotency-key": "capacity-export-cleanup-retry-0001" },
       );
       await deferred.started;
 

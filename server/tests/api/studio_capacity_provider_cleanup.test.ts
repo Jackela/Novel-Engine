@@ -160,6 +160,8 @@ describe("Studio Provider cleanup capacity", () => {
         owner,
         "POST",
         `/api/projects/${activeProject.id}/jobs/${sourceJobId}/retry`,
+        undefined,
+        { "idempotency-key": "capacity-provider-cleanup-retry-0001" },
       );
       await provider.firstDisposeStarted;
 

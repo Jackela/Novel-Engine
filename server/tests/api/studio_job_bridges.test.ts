@@ -169,6 +169,8 @@ describe("job retry chains", () => {
         owner,
         "POST",
         `/api/projects/${project.id}/jobs/${failedJob.id}/retry`,
+        undefined,
+        { "idempotency-key": "proposal-job-bridge-retry-0001" },
       );
       expect(retry.statusCode, retry.body).toBe(200);
       const retryJob = retry.json() as JobPayload;
@@ -252,6 +254,8 @@ describe("job retry chains", () => {
         owner,
         "POST",
         `/api/projects/${project.id}/jobs/export-job-interrupted/retry`,
+        undefined,
+        { "idempotency-key": "export-job-bridge-retry-0001" },
       );
       expect(retry.statusCode, retry.body).toBe(200);
       const retryJob = retry.json() as JobPayload;
@@ -290,6 +294,8 @@ describe("job retry chains", () => {
         owner,
         "POST",
         `/api/projects/${projectId}/jobs/${reviewJob.id}/retry`,
+        undefined,
+        { "idempotency-key": "review-job-bridge-retry-0001" },
       );
       expect(retry.statusCode, retry.body).toBe(200);
       const retryJob = retry.json() as JobPayload;

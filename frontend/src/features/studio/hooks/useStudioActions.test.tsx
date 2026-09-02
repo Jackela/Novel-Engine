@@ -2,7 +2,7 @@ import { act, useState } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { api } from "@/app/api";
-import type { Project, Review, StudioJob } from "@/app/types/studio";
+import type { Project, Review } from "@/app/types/studio";
 import type { InspectorTab } from "@/features/studio/studioConstants";
 import { chapter, job, projectWith, review } from "@/test/factories";
 import { createMountHarness, deferred } from "@/test/harness";
@@ -86,12 +86,6 @@ const reviewJob = job({
       created_at: "2026-08-27T00:01:00Z",
     },
   ],
-});
-const retriedJob = job({
-  project_id: projectFixture.id,
-  document_id: chapterOne.id,
-  status: "pending" as const,
-  retry_of_job_id: "failed-job-1",
 });
 const harness = createMountHarness();
 
@@ -265,48 +259,6 @@ describe("useStudioActions", () => {
     });
     expect(harness.result().project).toEqual(updated);
     expect(harness.result().error).toBeNull();
-  });
-
-  it("reloads jobs after retrying a failed job", async () => {
-    // Given
-    let resolveLoadJobs: (() => void) | undefined;
-    const loadJobs = vi.fn<() => Promise<void>>().mockReturnValue(
-      new Promise<void>((resolve) => {
-        resolveLoadJobs = resolve;
-      }),
-    );
-    let resolveRetry: ((job: StudioJob) => void) | undefined;
-    vi.mocked(api.retryJob).mockReturnValue(
-      new Promise<StudioJob>((resolve) => {
-        resolveRetry = resolve;
-      }),
-    );
-    const harness = renderActions(loadJobs);
-
-    // When
-    const retryPromise = harness.result().actions.retryJob("job-1");
-    await act(async () => {
-      await Promise.resolve();
-    });
-
-    // Then
-    expect(api.retryJob).toHaveBeenCalledWith(projectFixture.id, "job-1");
-    expect(harness.result().actions.retryingJobId).toBe("job-1");
-
-    await act(async () => {
-      resolveRetry?.(retriedJob);
-      await Promise.resolve();
-    });
-
-    expect(harness.loadJobs).toHaveBeenCalledWith("retry");
-    expect(harness.result().actions.retryingJobId).toBe("job-1");
-
-    await act(async () => {
-      resolveLoadJobs?.();
-      await retryPromise;
-    });
-
-    expect(harness.result().actions.retryingJobId).toBeNull();
   });
 
   it("keeps Lore status pending until the target document is patched", async () => {

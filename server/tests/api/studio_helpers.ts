@@ -82,8 +82,9 @@ export async function call(
   method: HttpMethod,
   url: string,
   payload?: Record<string, unknown>,
+  requestHeaders?: Record<string, string>,
 ): Promise<InjectedResponse> {
-  const headers = authHeaders(jar);
+  const headers = { ...authHeaders(jar), ...requestHeaders };
   return payload === undefined
     ? app.inject({ method, url, headers })
     : app.inject({ method, url, payload, headers });

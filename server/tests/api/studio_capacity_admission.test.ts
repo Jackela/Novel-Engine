@@ -15,7 +15,7 @@ import {
   snapshotDocuments,
 } from "../../src/contexts/studio/infrastructure/db/schema.js";
 import { jobEvents, jobs, usageEvents } from "../../src/shared/infrastructure/db/schema.js";
-import { studioDatabase } from "./job_test_helpers.js";
+import { seedRetryableProposal, studioDatabase } from "./job_test_helpers.js";
 import { validProposalProse } from "./proposal_test_helpers.js";
 import { buildStudioApp, call, ownerJar, seedProject } from "./studio_helpers.js";
 
@@ -118,36 +118,6 @@ function evidenceCounts(app: FastifyInstance): Record<string, number> {
   };
 }
 
-function seedRetryableProposal(
-  app: FastifyInstance,
-  projectId: string,
-  documentId: string,
-): string {
-  const id = "capacity-api-retry-fixture";
-  const now = new Date("2026-09-02T08:00:00.000Z");
-  studioDatabase(app)
-    .insert(jobs)
-    .values({
-      id,
-      project_id: projectId,
-      document_id: documentId,
-      kind: "proposal",
-      operation: "continue",
-      status: "failed",
-      provider: "mock",
-      model: "fixture-model",
-      request_json: '{"instruction":"","provider":"mock"}',
-      result_json: "{}",
-      error: "fixture failure",
-      created_at: now,
-      updated_at: now,
-      started_at: now,
-      finished_at: now,
-    })
-    .run();
-  return id;
-}
-
 describe("Studio workflow capacity admission API", () => {
   it("refuses all five counted POSTs before side effects and recovers after release", async () => {
     const provider = deferredFirstProvider();
@@ -199,7 +169,16 @@ describe("Studio workflow capacity admission API", () => {
       ] as const;
 
       for (const request of requests) {
-        const response = await call(app, owner, "POST", request.url, request.payload);
+        const response = await call(
+          app,
+          owner,
+          "POST",
+          request.url,
+          request.payload,
+          request.name === "retry"
+            ? { "idempotency-key": "capacity-retry-attempt-0001" }
+            : undefined,
+        );
         expect(response.statusCode, `${request.name}: ${response.body}`).toBe(503);
         expect(response.headers["content-type"]).toContain("application/json");
         expect(response.headers["retry-after"]).toBe("5");

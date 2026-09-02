@@ -97,6 +97,20 @@ export interface AddJobInput {
   now: Date;
 }
 
+/** One durable retry-attempt reservation request. */
+export interface ClaimJobRetryInput {
+  readonly projectId: string;
+  readonly sourceJobId: string;
+  readonly requestKey: string;
+  readonly now: Date;
+}
+
+/** The authoritative retry Job and whether this request reserved it. */
+export interface JobRetryClaim {
+  readonly job: JobRecord;
+  readonly created: boolean;
+}
+
 /** A terminal (or failed) outcome transition appended to a running job. */
 export interface MarkJobOutcomeInput {
   status: string;

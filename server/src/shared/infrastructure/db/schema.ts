@@ -1,3 +1,4 @@
+import { isNotNull } from "drizzle-orm";
 import { index, integer, real, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 
 /**
@@ -55,6 +56,7 @@ export const jobs = sqliteTable(
     result_json: text("result_json").notNull().default("{}"),
     error: text("error"),
     retry_of_job_id: text("retry_of_job_id"),
+    retry_idempotency_key: text("retry_idempotency_key"),
     created_at: integer("created_at", { mode: "timestamp_ms" }).notNull(),
     updated_at: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
     started_at: integer("started_at", { mode: "timestamp_ms" }),
@@ -63,6 +65,9 @@ export const jobs = sqliteTable(
   (table) => [
     index("idx_jobs_status").on(table.status),
     index("idx_jobs_project_created_id").on(table.project_id, table.created_at, table.id),
+    uniqueIndex("uq_jobs_retry_idempotency")
+      .on(table.project_id, table.retry_of_job_id, table.retry_idempotency_key)
+      .where(isNotNull(table.retry_idempotency_key)),
   ],
 );
 
