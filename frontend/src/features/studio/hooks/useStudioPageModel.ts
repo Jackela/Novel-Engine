@@ -9,9 +9,9 @@ import { buildLoreStatusModel, buildStudioNavigatorProps } from "./studioPageMod
 import { useActiveDocument } from "./useActiveDocument";
 import { useDocumentDraft } from "./useDocumentDraft";
 import { useExportDownload } from "./useExportDownload";
-import { combineErrorMessages, useOwnerKeyedErrors } from "./useOwnerKeyedErrors";
 import { useScopedRevisionRestore } from "./useScopedRevisionRestore";
 import { useStudioActions } from "./useStudioActions";
+import { useStudioErrorChannels } from "./useStudioErrorChannels";
 import { useStudioGeneration } from "./useStudioGeneration";
 import { useStudioInspectorState } from "./useStudioInspectorState";
 import { useStudioProject } from "./useStudioProject";
@@ -20,17 +20,6 @@ import { useStudioSearch } from "./useStudioSearch";
 import { wholeBookPlan } from "./wholeBookPlan";
 
 type StudioViewProps = ComponentProps<typeof StudioPageView>;
-
-const DOCUMENT_ERROR_SOURCES = ["draft", "proposal", "revision", "restore"] as const;
-const PROJECT_ERROR_SOURCES = [
-  "jobs",
-  "search",
-  "review",
-  "settings",
-  "retryJob",
-  "createDocument",
-  "moveDocument",
-] as const;
 
 export function useStudioPageModel(
   projectId: string,
@@ -59,12 +48,11 @@ export function useStudioPageModel(
     retryLoad,
   } = useStudioProject(projectId);
   const activeDocument = useActiveDocument(project, section, activeId);
-  const projectErrors = useOwnerKeyedErrors(projectId, PROJECT_ERROR_SOURCES);
-  const documentErrors = useOwnerKeyedErrors(
-    `${projectId}\u0000${activeDocument?.id ?? ""}`,
-    DOCUMENT_ERROR_SOURCES,
+  const { projectErrors, documentErrors, visibleError } = useStudioErrorChannels(
+    projectId,
+    activeDocument?.id ?? null,
+    error,
   );
-  const visibleError = combineErrorMessages(documentErrors.error, projectErrors.error, error);
   const visibleActiveId = activeDocument?.id ?? activeId;
   const {
     draft,

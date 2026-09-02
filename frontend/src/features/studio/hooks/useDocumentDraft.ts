@@ -13,12 +13,14 @@ import {
   stateForOwner,
 } from "./documentDraftState";
 import { reconcileCommittedDraft } from "./reconcileCommittedDraft";
-import { toErrorMessage } from "./toErrorMessage";
 import { useAcceptanceCapture } from "./useAcceptanceCapture";
 import { useDocumentDraftActions } from "./useDocumentDraftActions";
-import { saveDocumentDraft, useDocumentDraftAutosave } from "./useDocumentDraftAutosave";
+import { useDocumentDraftAutosave } from "./useDocumentDraftAutosave";
 import { useDocumentDraftOwner } from "./useDocumentDraftOwner";
-import { useRevisionCache } from "./useRevisionCache";
+import {
+  useDocumentRevisionHistory,
+  usePersistDocumentDraftAndRefreshHistory,
+} from "./useDocumentRevisionHistory";
 
 export function useDocumentDraft(
   activeDocument: StudioDocument | null,
@@ -77,17 +79,6 @@ export function useDocumentDraft(
     saveStateRef.current = saveState;
   }, [saveState]);
 
-  const reportRevisionError = useCallback(
-    (reason: unknown) => {
-      if (isCurrentOwner(owner)) {
-        setRevisionError(toErrorMessage(reason, "Unable to load revisions."));
-      }
-    },
-    [isCurrentOwner, owner, setRevisionError],
-  );
-  const clearRevisionError = useCallback(() => {
-    if (isCurrentOwner(owner)) setRevisionError(null);
-  }, [isCurrentOwner, owner, setRevisionError]);
   const {
     revisions,
     historyInitialized,
@@ -96,11 +87,12 @@ export function useDocumentDraft(
     isLoadingHistory,
     refreshDocumentRevisions,
     loadOlderRevisions,
-  } = useRevisionCache(
+  } = useDocumentRevisionHistory(
     projectId,
     activeDocument?.id ?? null,
-    reportRevisionError,
-    clearRevisionError,
+    owner,
+    isCurrentOwner,
+    setRevisionError,
   );
 
   const setDraft = useCallback<Dispatch<SetStateAction<string>>>(
@@ -220,43 +212,14 @@ export function useDocumentDraft(
     setError,
   );
 
-  const persistDraft = useCallback(
-    async (
-      document: StudioDocument,
-      content: string,
-      title: string,
-      baseRevisionId: string,
-      editVersion: number,
-    ): Promise<StudioDocument | null> => {
-      if (
-        !isCurrentOwner(owner) ||
-        document.project_id !== owner.projectId ||
-        document.id !== owner.documentId
-      ) {
-        return null;
-      }
-      const saved = await saveDocumentDraft(projectId, document, content, title, baseRevisionId);
-      const outcome = reconcileCommittedDocument(saved, {
-        editVersion,
-        successState: "saved",
-        draft: content,
-        titleDraft: title,
-      });
-      if (outcome !== null) {
-        void refreshDocumentRevisions(document.id, saved.current_revision_id);
-        if (outcome !== "conflict") setError(null);
-      }
-      return saved;
-    },
-    [
-      isCurrentOwner,
-      owner,
-      projectId,
-      reconcileCommittedDocument,
-      refreshDocumentRevisions,
-      setError,
-    ],
-  );
+  const persistDraft = usePersistDocumentDraftAndRefreshHistory({
+    projectId,
+    owner,
+    isCurrentOwner,
+    reconcileCommittedDocument,
+    refreshDocumentRevisions,
+    setError,
+  });
 
   const isCurrentDraftOwner = useCallback(() => isCurrentOwner(owner), [isCurrentOwner, owner]);
   const isCurrentDraftProject = useCallback(
