@@ -4,7 +4,7 @@
 
 - Comparison SHA: `a7be8ac960acbed8d099e4e31eef711206a87c85`
 - Implementation SHA: `f6e47d040f96b30d22cc861f989cb48bea393c85`
-- Final local code candidate SHA: `ed7ec04c2e4f8c5b21e4dcd85f4f78282b9808ff`
+- Final local candidate SHA: `edf77e6aaa473f6fa1cdce8e0bb19b22bd14d5d9`
 - Environment: Darwin 27.0.0 arm64, Node.js 24.19.0, pnpm 11.6.0
 
 ## Targeted evidence
@@ -31,7 +31,7 @@ an ephemeral loopback port, waited for `Server listening`, sent `SIGTERM`, and
 observed:
 
 ```json
-{"sha":"ed7ec04c2e4f8c5b21e4dcd85f4f78282b9808ff","ready":true,"requestedSignal":"SIGTERM","code":143,"signal":null,"databaseCreated":true,"logObserved":true}
+{"sha":"edf77e6aaa473f6fa1cdce8e0bb19b22bd14d5d9","ready":true,"requestedSignal":"SIGTERM","code":143,"signal":null,"databaseCreated":true,"logObserved":true}
 ```
 
 The null terminating signal confirms the CLI handled the signal, completed its
@@ -42,10 +42,22 @@ Agent review and this smoke are supporting evidence, not release approval.
 
 | Command | Result |
 |---|---|
-| `pnpm --dir server test` | Passed on the clean fixed-SHA candidate; 128 files and 947 tests in 305.50 seconds. |
-| `pnpm --dir server gates` | Passed; SSOT, hygiene, file-size, migration-channel, llms-txt, and OpenAPI gates were clean across 452 checked files. |
-| `pnpm --dir server type-check && pnpm --dir server lint && pnpm --dir server arch && pnpm --dir server build` | Passed; 315 files passed Biome and 183 modules / 764 dependencies had no architecture violation. |
+| `pnpm --dir server test` | Passed on the clean final local candidate; 128 files and 947 tests in 193.99 seconds. |
+| `pnpm --dir server gates` | Passed; SSOT, hygiene, file-size, migration-channel, llms-txt, and OpenAPI gates were clean across 453 checked files. |
+| `pnpm --dir server type-check && pnpm --dir server lint && pnpm --dir server arch && pnpm --dir server build` | Passed; 316 files passed Biome and 183 modules / 764 dependencies had no architecture violation. |
 | `pnpm spec:validate` | Passed in strict mode for both active changes and the canonical specification, 3 of 3 items. |
+
+## Archive status
+
+This completed change remains **active and not archived**. A local archive
+attempt (`22e53511ecb610ee8fe779add87010b02186ccb6`) was reversed by
+`e898503f` and `3896f9ae` after final review enforced the repository rule that
+archiving occurs only after CI is green. During that abandoned dirty-tree move,
+`gate:hygiene` also tried to read a deleted active path and raised `ENOENT`; the
+post-commit gate passed, and the shared candidate-file enumeration defect is a
+separate tooling finding. Owner: repository maintainer. Closure: required CI is
+green on the exact integration SHA, then the active change is archived and the
+canonical-only strict gate passes.
 
 ## External and human gates
 
