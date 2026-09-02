@@ -8,7 +8,11 @@ import {
   type FileIdentity,
   syncDirectory,
 } from "./export_artifact_fs_support.js";
-import { matchesFileProof, readFileProof } from "./export_publication_file_evidence.js";
+import {
+  ExportFileEvidenceError,
+  matchesFileProof,
+  readFileProof,
+} from "./export_publication_file_evidence.js";
 
 export interface OwnedArtifactProof extends FileIdentity {
   readonly sizeBytes: number;
@@ -67,13 +71,18 @@ export async function removeOwnedFinalViaQuarantine(
 }
 
 async function isExpectedFile(path: string, expected: OwnedArtifactProof): Promise<boolean> {
-  const proof = await readFileProof(path, { missingAllowed: true });
-  return (
-    proof !== null &&
-    proof.dev === expected.dev &&
-    proof.ino === expected.ino &&
-    matchesFileProof(proof, expected.sizeBytes, expected.checksumSha256)
-  );
+  try {
+    const proof = await readFileProof(path, { missingAllowed: true });
+    return (
+      proof !== null &&
+      proof.dev === expected.dev &&
+      proof.ino === expected.ino &&
+      matchesFileProof(proof, expected.sizeBytes, expected.checksumSha256)
+    );
+  } catch (error) {
+    if (error instanceof ExportFileEvidenceError) return false;
+    throw error;
+  }
 }
 
 function isMissingOrReplacedTarget(error: unknown): boolean {

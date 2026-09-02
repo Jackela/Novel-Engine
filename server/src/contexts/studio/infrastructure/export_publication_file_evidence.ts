@@ -6,6 +6,15 @@ import { ExportCapacityExceededError, type ExportCapacityResource } from "../dom
 import { errorCode } from "./export_artifact_fs_support.js";
 
 const MAX_READ_BYTES = 65_536;
+const UNAVAILABLE_FILE_CODES = new Set(["ENOENT", "ENOTDIR", "ELOOP"]);
+
+/** A classified missing, unsafe, replaced, or integrity-invalid export file. */
+export class ExportFileEvidenceError extends Error {
+  constructor(message: string, options?: ErrorOptions) {
+    super(message, options);
+    this.name = "ExportFileEvidenceError";
+  }
+}
 
 export interface FileProof {
   readonly size: bigint;
@@ -58,18 +67,21 @@ export async function readFileProof(
     handle = await open(path, constants.O_RDONLY | constants.O_NOFOLLOW);
   } catch (error) {
     if (options.missingAllowed === true && errorCode(error) === "ENOENT") return null;
-    throw new Error(`Unsafe or missing export file: ${path}`, { cause: error });
+    if (isUnavailableFileError(error)) {
+      throw new ExportFileEvidenceError("Export file is unavailable.", { cause: error });
+    }
+    throw error;
   }
   try {
     const initial = await handle.stat({ bigint: true });
-    if (!initial.isFile()) throw new Error(`Export path is not a regular file: ${path}`);
+    if (!initial.isFile()) throw new ExportFileEvidenceError("Export file is not regular.");
     assertCapacity(initial.size, options.capacity);
     if (initial.size > BigInt(Number.MAX_SAFE_INTEGER)) {
       throw new Error("Export file size exceeds the safe descriptor range.");
     }
     const size = Number(initial.size);
     if (options.expected !== undefined && initial.size !== BigInt(options.expected.sizeBytes)) {
-      throw new Error("Export artifact integrity evidence does not match.");
+      throw new ExportFileEvidenceError("Export artifact integrity evidence does not match.");
     }
     await options.hooks?.afterInitialStat?.();
 
@@ -90,7 +102,9 @@ export async function readFileProof(
       const bufferOffset = contents === undefined ? 0 : offset;
       const { bytesRead } = await handle.read(buffer, bufferOffset, requested, offset);
       options.hooks?.onRead?.(requested, bytesRead);
-      if (bytesRead === 0) throw new Error("Export file was truncated during descriptor read.");
+      if (bytesRead === 0) {
+        throw new ExportFileEvidenceError("Export file was truncated during descriptor read.");
+      }
       digest.update(buffer.subarray(bufferOffset, bufferOffset + bytesRead));
       offset += bytesRead;
     }
@@ -98,7 +112,9 @@ export async function readFileProof(
     const extra = Buffer.allocUnsafe(1);
     const extraRead = await handle.read(extra, 0, 1, size);
     options.hooks?.onRead?.(1, extraRead.bytesRead);
-    if (extraRead.bytesRead !== 0) throw new Error("Export file grew during descriptor read.");
+    if (extraRead.bytesRead !== 0) {
+      throw new ExportFileEvidenceError("Export file grew during descriptor read.");
+    }
     const after = await handle.stat({ bigint: true });
     if (
       !after.isFile() ||
@@ -108,7 +124,7 @@ export async function readFileProof(
       after.ctimeNs !== initial.ctimeNs ||
       after.mtimeNs !== initial.mtimeNs
     ) {
-      throw new Error("Export file changed during descriptor read.");
+      throw new ExportFileEvidenceError("Export file changed during descriptor read.");
     }
     await assertPathStillOwnsDescriptor(path, initial.dev, initial.ino);
 
@@ -135,7 +151,7 @@ export function assertFileProof(
       ? { sizeBytes: expected, checksumSha256: checksum ?? "" }
       : expected;
   if (!matchesFileProof(proof, value.sizeBytes, value.checksumSha256)) {
-    throw new Error("Export artifact integrity evidence does not match.");
+    throw new ExportFileEvidenceError("Export artifact integrity evidence does not match.");
   }
 }
 
@@ -157,9 +173,19 @@ async function assertPathStillOwnsDescriptor(
   try {
     current = await lstat(path, { bigint: true });
   } catch (error) {
-    throw new Error("Export file path was replaced during descriptor read.", { cause: error });
+    if (isUnavailableFileError(error)) {
+      throw new ExportFileEvidenceError("Export file path was replaced during descriptor read.", {
+        cause: error,
+      });
+    }
+    throw error;
   }
   if (!current.isFile() || current.isSymbolicLink() || current.dev !== dev || current.ino !== ino) {
-    throw new Error("Export file path was replaced during descriptor read.");
+    throw new ExportFileEvidenceError("Export file path was replaced during descriptor read.");
   }
+}
+
+function isUnavailableFileError(error: unknown): boolean {
+  const code = errorCode(error);
+  return code !== undefined && UNAVAILABLE_FILE_CODES.has(code);
 }

@@ -1,6 +1,4 @@
-import { createHash } from "node:crypto";
-import { constants } from "node:fs";
-import { lstat, mkdir, open, realpath } from "node:fs/promises";
+import { lstat, mkdir, realpath } from "node:fs/promises";
 import { isAbsolute, relative, resolve, sep } from "node:path";
 import { exportArtifactNames } from "../application/export_artifact_identity.js";
 import type {
@@ -9,11 +7,20 @@ import type {
   ArtifactWriteRequest,
   ExportArtifactGateway,
 } from "../application/export_artifact_service.js";
-import { ExportArtifactWriteError, NotFoundError } from "../domain/exceptions.js";
+import {
+  EXPORT_CAPACITY_LIMITS,
+  ExportArtifactWriteError,
+  NotFoundError,
+} from "../domain/exceptions.js";
 import { assertArtifactByteLength, serializeBoundedArtifact } from "./bounded_export_rendering.js";
 import { errorCode, syncDirectory } from "./export_artifact_fs_support.js";
 import { publishArtifact as publishDurableArtifact } from "./export_artifact_publication.js";
 import type { ExportPublicationCleanupJournal } from "./export_publication_cleanup_journal.js";
+import { ExportFileEvidenceError, readFileProof } from "./export_publication_file_evidence.js";
+
+const UNAVAILABLE_READ_CODES = new Set(["ENOENT", "ENOTDIR", "ELOOP"]);
+
+class ExportArtifactPathError extends Error {}
 
 export interface FilesystemExportArtifactGatewayOptions {
   /** Durable database authority for replaying interrupted rollback cleanup. */
@@ -72,11 +79,18 @@ export class FilesystemExportArtifactGateway implements ExportArtifactGateway {
     try {
       const names = exportArtifactNames(request.projectId, request.artifactId, request.format);
       if (request.relativePath !== names.relativePath)
-        throw new Error("Stored export path is invalid.");
+        throw new ExportArtifactPathError("Stored export path is invalid.");
       const directory = await artifactDirectory(this.dataDirectory, request.projectId, false);
       return await readVerifiedArtifact(resolve(directory, names.filename), request);
-    } catch {
-      throw new NotFoundError("Export file not found.");
+    } catch (error) {
+      if (
+        error instanceof ExportArtifactPathError ||
+        error instanceof ExportFileEvidenceError ||
+        isUnavailableReadError(error)
+      ) {
+        throw new NotFoundError("Export file not found.");
+      }
+      throw error;
     }
   }
 }
@@ -94,7 +108,7 @@ async function artifactDirectory(
 async function realChildDirectory(parent: string, name: string, create: boolean): Promise<string> {
   const candidate = resolve(parent, name);
   if (!isDescendant(parent, candidate)) {
-    throw new Error("Export directory is outside the configured root.");
+    throw new ExportArtifactPathError("Export directory is outside the configured root.");
   }
   let details: Awaited<ReturnType<typeof lstat>>;
   try {
@@ -109,11 +123,11 @@ async function realChildDirectory(parent: string, name: string, create: boolean)
     details = await lstat(candidate);
   }
   if (details.isSymbolicLink() || !details.isDirectory()) {
-    throw new Error("Export directory is not a real directory.");
+    throw new ExportArtifactPathError("Export directory is not a real directory.");
   }
   const actual = await realpath(candidate);
   if (!isDescendant(parent, actual)) {
-    throw new Error("Export directory escapes the configured root.");
+    throw new ExportArtifactPathError("Export directory escapes the configured root.");
   }
   // A first export may create both exports/ and its project leaf. Syncing the
   // parent before publication makes those directory entries durable before
@@ -128,23 +142,26 @@ function isDescendant(root: string, candidate: string): boolean {
 }
 
 async function readVerifiedArtifact(target: string, request: ArtifactReadRequest): Promise<Buffer> {
-  // Node has no portable openat directory-fd API: parent checks precede leaf O_NOFOLLOW protection.
-  const handle = await open(target, constants.O_RDONLY | constants.O_NOFOLLOW);
-  try {
-    const details = await handle.stat();
-    const contents = await handle.readFile();
-    if (
-      !details.isFile() ||
-      details.size !== request.sizeBytes ||
-      contents.length !== request.sizeBytes ||
-      createHash("sha256").update(contents).digest("hex") !== request.checksumSha256
-    ) {
-      throw new Error("Export integrity evidence does not match.");
-    }
-    return contents;
-  } finally {
-    await handle.close();
+  const proof = await readFileProof(target, {
+    collectContents: true,
+    capacity: {
+      resource: "artifact_bytes",
+      limit: EXPORT_CAPACITY_LIMITS.artifact_bytes,
+    },
+    expected: {
+      sizeBytes: request.sizeBytes,
+      checksumSha256: request.checksumSha256,
+    },
+  });
+  if (proof === null || !("contents" in proof)) {
+    throw new ExportFileEvidenceError("Export artifact bytes are unavailable.");
   }
+  return proof.contents;
+}
+
+function isUnavailableReadError(error: unknown): boolean {
+  const code = errorCode(error);
+  return code !== undefined && UNAVAILABLE_READ_CODES.has(code);
 }
 
 const KNOWN_WRITE_ERROR_CODES = new Set([

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { buildApp } from "../../src/apps/api/app.js";
+import type { ExportArtifactGateway } from "../../src/contexts/studio/application/export_artifact_service.js";
 import {
   EXPORT_CAPACITY_LIMITS,
   EXPORT_CAPACITY_RESOURCES,
@@ -123,20 +124,75 @@ describe("export capacity contract", () => {
     },
   );
 
-  it("documents the stable envelope on fresh export only", async () => {
+  it.each(["artifact_bytes", "manifest_bytes"] as const)(
+    "returns fresh-export 422 for %s with no durable evidence",
+    async (resource) => {
+      const limit = EXPORT_CAPACITY_LIMITS[resource];
+      const gateway: ExportArtifactGateway = {
+        writeSnapshotArtifact: async () =>
+          Promise.reject(new ExportCapacityExceededError(resource, limit, limit + 999)),
+        readArtifactBytes: async () => Promise.reject(new Error("Unexpected artifact read.")),
+      };
+      const { app } = await buildStudioApp(monotonicClock(), {
+        exportArtifactGateway: gateway,
+      });
+      try {
+        const owner = await ownerJar(app);
+        const projectId = await seedProjectWithChapter(app, owner, `Capacity ${resource}`);
+
+        const response = await call(app, owner, "POST", `/api/projects/${projectId}/exports`, {
+          format: "markdown",
+        });
+        expect(response.statusCode, response.body).toBe(422);
+        expect(response.json().error.details).toEqual({
+          resource,
+          limit,
+          observed: limit + 1,
+        });
+        const database = studioDatabase(app);
+        expect(database.select().from(jobs).all()).toEqual([]);
+        expect(database.select().from(jobEvents).all()).toEqual([]);
+        expect(database.select().from(projectSnapshots).all()).toEqual([]);
+        expect(database.select().from(snapshotDocuments).all()).toEqual([]);
+        expect(database.select().from(exports).all()).toEqual([]);
+      } finally {
+        await app.close();
+      }
+    },
+  );
+
+  it("documents the stable envelope on fresh export, keyed retry, and download", async () => {
     const app = await buildApp({ logger: false });
     try {
       const document = (await app.inject({ method: "GET", url: "/openapi.json" })).json();
       const fresh = document.paths["/api/projects/{projectId}/exports"].post;
-      expect(fresh.responses["422"].description).toContain("EXPORT_CAPACITY_EXCEEDED");
-      expect(fresh.responses["422"].description).toContain("source_documents");
-      expect(fresh.responses["422"].content["application/json"].schema).toEqual({
-        $ref: "#/components/schemas/ErrorEnvelope",
-      });
+      const freshCapacity = fresh.responses["422"].content["application/json"].schema.oneOf[1];
+      expect(freshCapacity.properties.error.properties.code.enum).toEqual([
+        "EXPORT_CAPACITY_EXCEEDED",
+      ]);
+      expect(freshCapacity.properties.error.properties.details.properties.resource.enum).toEqual([
+        "source_documents",
+        "source_bytes",
+        "artifact_bytes",
+        "manifest_bytes",
+      ]);
       const retry = document.paths["/api/projects/{projectId}/jobs/{jobId}/retry"].post;
-      expect(JSON.stringify(retry.responses["422"])).not.toContain("EXPORT_CAPACITY_EXCEEDED");
+      expect(
+        retry.responses["422"].content["application/json"].schema.oneOf[1].properties.error
+          .properties.code.enum,
+      ).toEqual(["EXPORT_CAPACITY_EXCEEDED"]);
       const download = document.paths["/api/projects/{projectId}/exports/{exportId}/download"].get;
-      expect(download.responses).not.toHaveProperty("422");
+      const downloadCapacity = download.responses["422"].content["application/json"].schema;
+      expect(downloadCapacity.properties.error.properties.code.enum).toEqual([
+        "EXPORT_CAPACITY_EXCEEDED",
+      ]);
+      expect(downloadCapacity.properties.error.properties.details.properties.resource.enum).toEqual(
+        ["artifact_bytes"],
+      );
+      expect(download.responses["503"].headers["Retry-After"]).toBeDefined();
+      for (const status of ["401", "404", "422", "503"]) {
+        expect(Object.keys(download.responses[status].content)).toEqual(["application/json"]);
+      }
     } finally {
       await app.close();
     }

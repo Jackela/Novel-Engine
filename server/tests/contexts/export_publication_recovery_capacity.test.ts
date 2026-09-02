@@ -47,7 +47,7 @@ describe("bounded export publication recovery", () => {
     expect((await stat(path)).size).toBe(size);
   });
 
-  it("removes oversized uncommitted evidence only with an exact cleanup intent", async () => {
+  it("preserves oversized uncommitted evidence when manifest identity no longer proves cleanup authority", async () => {
     const value = await openRecoveryHarness();
     const artifactId = "oversized-manifest";
     await preparePublication(value, artifactId, Buffer.from("uncommitted bytes"));

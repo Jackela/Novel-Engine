@@ -53,6 +53,7 @@ describe("studio operation capacity error mapping", () => {
         .sort();
       expect(documentedCapacityOperations).toEqual(
         [
+          "GET /api/projects/{projectId}/exports/{exportId}/download",
           "POST /api/projects/{projectId}/documents/{documentId}/ai-proposals",
           "POST /api/projects/{projectId}/documents/{documentId}/ai-proposals/stream",
           "POST /api/projects/{projectId}/exports",
@@ -65,6 +66,7 @@ describe("studio operation capacity error mapping", () => {
         document.paths["/api/projects/{projectId}/documents/{documentId}/ai-proposals/stream"].post,
         document.paths["/api/projects/{projectId}/reviews"].post,
         document.paths["/api/projects/{projectId}/exports"].post,
+        document.paths["/api/projects/{projectId}/exports/{exportId}/download"].get,
         document.paths["/api/projects/{projectId}/jobs/{jobId}/retry"].post,
       ];
 

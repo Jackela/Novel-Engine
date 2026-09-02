@@ -2225,13 +2225,46 @@ export interface paths {
                         };
                     };
                 };
-                /** @description Invalid export precondition or permanent fresh-export capacity rejection. EXPORT_CAPACITY_EXCEEDED carries only source_documents, source_bytes, or artifact_bytes plus bounded limit and observed details. */
+                /** @description Invalid export precondition or permanent export-capacity outcome with bounded evidence. */
                 422: {
                     headers: {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["ErrorEnvelope"];
+                        "application/json": {
+                            error: {
+                                /** @enum {string} */
+                                code: "INVALID_OPERATION";
+                                message: string;
+                            };
+                        } | {
+                            error: {
+                                /** @enum {string} */
+                                code: "EXPORT_CAPACITY_EXCEEDED";
+                                details: {
+                                    limit: number;
+                                    observed: number;
+                                    /** @enum {string} */
+                                    resource: "source_documents" | "source_bytes" | "artifact_bytes" | "manifest_bytes";
+                                };
+                                /** @enum {string} */
+                                message: "Export capacity exceeded.";
+                            };
+                        } | {
+                            error: {
+                                /** @enum {string} */
+                                code: "VALIDATION_ERROR";
+                                details: {
+                                    errors: {
+                                        field: string;
+                                        message: string;
+                                        type: string;
+                                    }[];
+                                };
+                                /** @enum {string} */
+                                message: "Request validation failed.";
+                            };
+                        };
                     };
                 };
                 /** @description Workflow capacity exhaustion or unavailable persistence. */
@@ -2308,37 +2341,79 @@ export interface paths {
                         "text/markdown; charset=utf-8": string;
                     };
                 };
-                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                /** @description Default Response */
                 401: {
                     headers: {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/epub+zip": components["schemas"]["ErrorEnvelope"];
-                        "application/vnd.openxmlformats-officedocument.wordprocessingml.document": components["schemas"]["ErrorEnvelope"];
-                        "text/markdown; charset=utf-8": components["schemas"]["ErrorEnvelope"];
+                        "application/json": components["schemas"]["ErrorEnvelope"];
                     };
                 };
-                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                /** @description Default Response */
                 404: {
                     headers: {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/epub+zip": components["schemas"]["ErrorEnvelope"];
-                        "application/vnd.openxmlformats-officedocument.wordprocessingml.document": components["schemas"]["ErrorEnvelope"];
-                        "text/markdown; charset=utf-8": components["schemas"]["ErrorEnvelope"];
+                        "application/json": components["schemas"]["ErrorEnvelope"];
                     };
                 };
-                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
-                503: {
+                /** @description Permanent artifact download capacity refusal with bounded evidence. */
+                422: {
                     headers: {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/epub+zip": components["schemas"]["ErrorEnvelope"];
-                        "application/vnd.openxmlformats-officedocument.wordprocessingml.document": components["schemas"]["ErrorEnvelope"];
-                        "text/markdown; charset=utf-8": components["schemas"]["ErrorEnvelope"];
+                        "application/json": {
+                            error: {
+                                /** @enum {string} */
+                                code: "EXPORT_CAPACITY_EXCEEDED";
+                                details: {
+                                    limit: number;
+                                    observed: number;
+                                    /** @enum {string} */
+                                    resource: "artifact_bytes";
+                                };
+                                /** @enum {string} */
+                                message: "Export capacity exceeded.";
+                            };
+                        };
+                    };
+                };
+                /** @description Workflow capacity exhaustion or unavailable persistence. */
+                503: {
+                    headers: {
+                        /** @description Optional integer-seconds hint emitted only for workflow capacity exhaustion. */
+                        "Retry-After"?: number;
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error: {
+                                /** @enum {string} */
+                                code: "OPERATION_CAPACITY_EXCEEDED";
+                                details: {
+                                    in_flight: number;
+                                    limit: number;
+                                    project_id: string;
+                                    retry_after_seconds: number;
+                                    /** @enum {string} */
+                                    scope: "project" | "application";
+                                };
+                                /** @enum {string} */
+                                message: "Studio operation capacity is exhausted.";
+                            };
+                        } | {
+                            error: {
+                                /** @enum {string} */
+                                code: "SERVICE_UNAVAILABLE";
+                                details?: {
+                                    [key: string]: unknown;
+                                };
+                                message: string;
+                            };
+                        };
                     };
                 };
             };
@@ -2659,13 +2734,46 @@ export interface paths {
                         };
                     };
                 };
-                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                /** @description Invalid export precondition or permanent export-capacity outcome with bounded evidence. */
                 422: {
                     headers: {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["ErrorEnvelope"];
+                        "application/json": {
+                            error: {
+                                /** @enum {string} */
+                                code: "INVALID_OPERATION";
+                                message: string;
+                            };
+                        } | {
+                            error: {
+                                /** @enum {string} */
+                                code: "EXPORT_CAPACITY_EXCEEDED";
+                                details: {
+                                    limit: number;
+                                    observed: number;
+                                    /** @enum {string} */
+                                    resource: "source_documents" | "source_bytes" | "artifact_bytes" | "manifest_bytes";
+                                };
+                                /** @enum {string} */
+                                message: "Export capacity exceeded.";
+                            };
+                        } | {
+                            error: {
+                                /** @enum {string} */
+                                code: "VALIDATION_ERROR";
+                                details: {
+                                    errors: {
+                                        field: string;
+                                        message: string;
+                                        type: string;
+                                    }[];
+                                };
+                                /** @enum {string} */
+                                message: "Request validation failed.";
+                            };
+                        };
                     };
                 };
                 /** @description Workflow capacity exhaustion or unavailable persistence. */

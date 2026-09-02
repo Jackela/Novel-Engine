@@ -10,6 +10,12 @@ import {
 import { exportArtifactPayloadSchema } from "../../application/payload_schemas/export.js";
 import { exportArtifactPayload } from "../../application/payloads.js";
 import type { ExportArtifactFormat } from "../../application/ports/export_store.js";
+import { sendWithinArtifactResponseLifetime } from "./artifact_download_response_lifetime.js";
+import {
+  exportCreateOrRetry422ResponseSchema,
+  exportDownload422ResponseSchema,
+  exportJsonErrorResponseSchema,
+} from "./export_capacity_schemas.js";
 import { jobResponseSchema } from "./job_schemas.js";
 import type { JsonResponseSchema } from "./json_response_schema.js";
 import { requireServices, type StudioRoutesOptions } from "./project_routes.js";
@@ -40,13 +46,6 @@ const exportCreateSchema = Type.Object(
   },
   { additionalProperties: false },
 );
-const exportCreate422ResponseSchema: JsonResponseSchema = {
-  description:
-    "Invalid export precondition or permanent fresh-export capacity rejection. EXPORT_CAPACITY_EXCEEDED carries only source_documents, source_bytes, or artifact_bytes plus bounded limit and observed details.",
-  content: {
-    "application/json": { schema: errorEnvelopeResponse },
-  },
-} as const;
 const deliveryByFormat: Record<ExportArtifactFormat, { contentType: string }> = {
   markdown: { contentType: "text/markdown; charset=utf-8" },
   docx: {
@@ -82,7 +81,7 @@ export const exportRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fast
           ...EXPORT_READ_ERROR_RESPONSES,
           403: errorEnvelopeResponse,
           // No chapter answers INVALID_OPERATION; a permanent fresh limit has its own stable code.
-          422: exportCreate422ResponseSchema,
+          422: exportCreateOrRetry422ResponseSchema,
           409: operationInFlightSchema,
           503: operationCapacityResponseSchema,
         },
@@ -139,25 +138,41 @@ export const exportRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fast
           "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
           "application/epub+zip",
         ],
-        response: { 200: binaryExportSchema, ...EXPORT_READ_ERROR_RESPONSES },
+        response: {
+          200: binaryExportSchema,
+          401: exportJsonErrorResponseSchema,
+          404: exportJsonErrorResponseSchema,
+          422: exportDownload422ResponseSchema,
+          503: operationCapacityResponseSchema,
+        },
       },
     },
     async (request, reply) => {
-      const artifact = await withAsyncStudioErrors(() =>
-        requireServices(options).artifacts.readArtifactForDelivery(
+      await withAsyncStudioErrors(() =>
+        requireServices(options).artifacts.withArtifactDelivery(
           requirePrincipal(request),
           request.params.projectId,
           request.params.exportId,
+          async (artifact) => {
+            const delivery = deliveryByFormat[artifact.format];
+            await sendWithinArtifactResponseLifetime({
+              response: reply.raw,
+              request: request.raw,
+              socket: request.raw.socket,
+              send: () => {
+                void reply
+                  .type(delivery.contentType)
+                  .header(
+                    "content-disposition",
+                    `attachment; filename="export.${exportArtifactExtension(artifact.format)}"`,
+                  )
+                  .send(artifact.bytes);
+              },
+            });
+          },
         ),
       );
-      const delivery = deliveryByFormat[artifact.format];
-      return reply
-        .type(delivery.contentType)
-        .header(
-          "content-disposition",
-          `attachment; filename="export.${exportArtifactExtension(artifact.format)}"`,
-        )
-        .send(artifact.bytes);
+      return reply;
     },
   );
 };

@@ -2,6 +2,8 @@ import { randomUUID } from "node:crypto";
 
 import type { Principal } from "../../../shared/application/ports/auth.js";
 import { InvalidOperationError } from "../../../shared/domain/exceptions.js";
+import { EXPORT_CAPACITY_LIMITS, ExportCapacityExceededError } from "../domain/exceptions.js";
+import { ArtifactDownloadCapacity } from "./artifact_download_capacity.js";
 import { ExportRendererGuard } from "./export_renderer_guard.js";
 import type {
   ExportArtifactFormat,
@@ -61,6 +63,7 @@ export interface SnapshotArtifactServiceOptions {
   readonly now?: (() => Date) | undefined;
   readonly newId?: (() => string) | undefined;
   readonly rendererGuard?: ExportRendererGuard | undefined;
+  readonly downloadCapacity?: ArtifactDownloadCapacity | undefined;
 }
 
 export interface ArtifactOutcomeOptions {
@@ -81,6 +84,7 @@ export class SnapshotArtifactService {
   private readonly now: () => Date;
   private readonly newId: () => string;
   private readonly rendererGuard: ExportRendererGuard;
+  private readonly downloadCapacity: ArtifactDownloadCapacity;
 
   constructor(
     private readonly exportStore: ExportOutcomeStore,
@@ -90,6 +94,7 @@ export class SnapshotArtifactService {
     this.now = options.now ?? (() => new Date());
     this.newId = options.newId ?? randomUUID;
     this.rendererGuard = options.rendererGuard ?? new ExportRendererGuard();
+    this.downloadCapacity = options.downloadCapacity ?? new ArtifactDownloadCapacity();
   }
 
   async recordCompletedExportJob(
@@ -200,25 +205,26 @@ export class SnapshotArtifactService {
     return this.exportStore.listProjectArtifacts(scopeForPrincipal(principal), projectId);
   }
 
-  async readArtifactForDelivery(
+  async withArtifactDelivery<T>(
     principal: Principal,
     projectId: string,
     artifactId: string,
-  ): Promise<{ format: ExportArtifactFormat; bytes: Buffer }> {
+    consume: (artifact: { format: ExportArtifactFormat; bytes: Buffer }) => Promise<T>,
+  ): Promise<T> {
     const artifact = this.scopedArtifact(principal, projectId, artifactId);
-    return {
-      format: artifact.format,
-      bytes: await this.readArtifactBytesForRecord(artifact),
-    };
-  }
-
-  /** Compatibility-only internal buffer seam; HTTP delivery uses the typed result above. */
-  async readArtifactBytes(
-    principal: Principal,
-    projectId: string,
-    artifactId: string,
-  ): Promise<Buffer> {
-    return this.readArtifactBytesForRecord(this.scopedArtifact(principal, projectId, artifactId));
+    const artifactLimit = EXPORT_CAPACITY_LIMITS.artifact_bytes;
+    if (artifact.sizeBytes > artifactLimit) {
+      throw new ExportCapacityExceededError("artifact_bytes", artifactLimit, artifact.sizeBytes);
+    }
+    const permit = this.downloadCapacity.acquire(projectId, artifact.sizeBytes);
+    try {
+      return await consume({
+        format: artifact.format,
+        bytes: await this.readArtifactBytesForRecord(artifact),
+      });
+    } finally {
+      permit.release();
+    }
   }
 
   private scopedArtifact(

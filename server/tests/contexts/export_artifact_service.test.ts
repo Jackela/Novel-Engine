@@ -188,9 +188,11 @@ describe("SnapshotArtifactService", () => {
       ),
     ).toBe(true);
     expect(records.every((record) => record.snapshotId === "snapshot-1")).toBe(true);
-    await expect(service.readArtifactBytes(principal, "project-1", "artifact-1")).resolves.toEqual(
-      Buffer.from("safe"),
-    );
+    await expect(
+      service.withArtifactDelivery(principal, "project-1", "artifact-1", async ({ bytes }) =>
+        Promise.resolve(bytes),
+      ),
+    ).resolves.toEqual(Buffer.from("safe"));
     const [firstRecord] = records;
     if (firstRecord === undefined) throw new Error("Expected the first artifact record.");
     expect(gateway.reads).toEqual([readRequest(firstRecord, "artifact-1", "markdown")]);
@@ -212,10 +214,11 @@ describe("SnapshotArtifactService", () => {
       createdAt: new Date(),
     });
     await expect(
-      new SnapshotArtifactService(store, gateway).readArtifactBytes(
+      new SnapshotArtifactService(store, gateway).withArtifactDelivery(
         principal,
         "project-1",
         "shared",
+        async ({ bytes }) => Promise.resolve(bytes),
       ),
     ).rejects.toThrow(NotFoundError);
   });

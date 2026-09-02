@@ -48,26 +48,26 @@
 
 ## 4. HTTP, retry, and download ownership
 
-- [ ] 4.1 Add fresh export tests for each permanent resource failure returning
+- [x] 4.1 Add fresh export tests for each permanent resource failure returning
       422 `EXPORT_CAPACITY_EXCEEDED` with bounded details and no Job, snapshot,
       artifact, file, manifest, cleanup intent, or event.
-- [ ] 4.2 Add keyed export-retry tests proving one failed Job/event and identical
+- [x] 4.2 Add keyed export-retry tests proving one failed Job/event and identical
       422 replay for the same key, no repeated rendering/evidence, a new attempt
       for a different key, and no retry reservation on renderer 503 refusal.
-- [ ] 4.3 Add an app-local 134,217,728-byte download reservation guard; reserve
+- [x] 4.3 Add an app-local 134,217,728-byte download reservation guard; reserve
       recorded bytes before file open, hold through response finish/close, and
       prove two exact 64 MiB responses fill the pool, the next positive request
       receives 503, and success/error/disconnect release exactly once.
-- [ ] 4.4 Narrow artifact error catches and test classified 404, permanent 422,
+- [x] 4.4 Narrow artifact error catches and test classified 404, permanent 422,
       transient 503, unexpected I/O 500, and programming-defect 500 without
       leaking paths or changing known publication-write auditing.
-- [ ] 4.5 Declare the new envelopes on fresh export, retry, and download routes;
+- [x] 4.5 Declare the new envelopes on fresh export, retry, and download routes;
       preserve existing transient capacity schema and `Retry-After`, regenerate
       OpenAPI and frontend API types, and pass drift/CORS checks.
 
 ## 5. Integrated boundaries and release evidence
 
-- [ ] 5.1 Run the 32,765/32,766/32,767 source-identity regressions together with
+- [x] 5.1 Run the 32,765/32,766/32,767 source-identity regressions together with
       source byte/count bounds to prove the earlier SQLite fix remains intact.
 - [ ] 5.2 Run fresh/retry/download API tests, render-format fixtures, publication
       crash/rollback/recovery tests, server type-check/lint/arch/size/full tests,

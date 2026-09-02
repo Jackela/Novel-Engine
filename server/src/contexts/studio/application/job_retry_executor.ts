@@ -7,12 +7,17 @@ import type { Principal } from "../../../shared/application/ports/auth.js";
 import { InvalidOperationError } from "../../../shared/domain/exceptions.js";
 import {
   ExportArtifactWriteError,
+  ExportCapacityExceededError,
   ExportSourceInvalidatedError,
   NotFoundError,
   ReviewSourceInvalidatedError,
 } from "../domain/exceptions.js";
 import { isExportArtifactFormat } from "./export_artifact_identity.js";
 import type { SnapshotArtifactService } from "./export_artifact_service.js";
+import {
+  exportRetryCapacityOutcome,
+  replayedExportCapacityError,
+} from "./export_retry_capacity_outcome.js";
 import { dumpJson, jobPayload, safeLoadJson } from "./payloads.js";
 import type { JobRecord, ProjectScope, StudioStore } from "./ports/studio_store.js";
 import { scopeForPrincipal } from "./ports/studio_store.js";
@@ -74,6 +79,8 @@ export class JobRetryExecutor {
     const scope = scopeForPrincipal(principal);
     const replay = this.store.findJobRetry(scope, projectId, jobId, requestKey);
     if (replay !== null) {
+      const capacityError = replayedExportCapacityError(replay);
+      if (capacityError !== null) throw capacityError;
       return this.claimAndExecute(
         principal,
         scope,
@@ -113,7 +120,11 @@ export class JobRetryExecutor {
       requestKey,
       now: this.now(),
     });
-    if (!claim.created) return jobPayload(claim.job);
+    if (!claim.created) {
+      const capacityError = replayedExportCapacityError(claim.job);
+      if (capacityError !== null) throw capacityError;
+      return jobPayload(claim.job);
+    }
     const retry = claim.job;
     try {
       if (retry.kind === "proposal") {
@@ -127,6 +138,15 @@ export class JobRetryExecutor {
       }
       throw new InvalidOperationError(`Unsupported job kind for retry: ${retry.kind}`);
     } catch (error) {
+      if (error instanceof ExportCapacityExceededError) {
+        this.store.markJobOutcome(
+          scope,
+          projectId,
+          retry.id,
+          exportRetryCapacityOutcome(retry, error, this.now()),
+        );
+        throw error;
+      }
       if (
         !(error instanceof InvalidOperationError) &&
         !(error instanceof NotFoundError) &&
