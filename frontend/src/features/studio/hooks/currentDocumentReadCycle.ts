@@ -3,13 +3,15 @@ import type { DocumentSummary, ProjectShell, StudioDocument } from "@/app/types/
 
 import type { CurrentDocumentReadKey } from "./currentDocumentReadRegistry";
 import type { ProjectShellReadAuthority } from "./projectShellReadAuthority";
+import { reportUnexpectedError } from "./reportUnexpectedError";
 import { toErrorMessage } from "./toErrorMessage";
 
 const DEFAULT_ERROR = "Unable to load this document. Please retry.";
 const CHURN_ERROR = "This document changed again while loading. Please retry.";
 const INCONSISTENT_ERROR = "This document is listed but could not be loaded. Please retry.";
 
-type CommitShell = () => boolean;
+export type CommitShellResult = "published" | "superseded" | "unexpected";
+type CommitShell = () => CommitShellResult;
 
 export type CurrentDocumentReadOutcome =
   | {
@@ -21,6 +23,7 @@ export type CurrentDocumentReadOutcome =
   | { readonly status: "missing"; readonly commitShell: CommitShell }
   | { readonly status: "session-lost"; readonly commitShell?: CommitShell }
   | { readonly status: "project-missing" }
+  | { readonly status: "unexpected" }
   | {
       readonly status: "failure";
       readonly message: string;
@@ -33,6 +36,7 @@ type TerminalReadOutcome = Extract<
   | { readonly status: "session-lost" }
   | { readonly status: "project-missing" }
   | { readonly status: "failure" }
+  | { readonly status: "unexpected" }
 >;
 
 type ShellReadOutcome =
@@ -71,9 +75,15 @@ async function refreshShell(
   const capture = authority.captureProjectShellRead();
   try {
     const shell = await api.project(key.projectId, { signal });
-    let result: boolean | undefined;
+    let result: CommitShellResult | undefined;
     const commitShell = () => {
-      result ??= authority.publishProjectShellRead(capture, shell);
+      if (result) return result;
+      try {
+        result = authority.publishProjectShellRead(capture, shell) ? "published" : "superseded";
+      } catch (reason) {
+        reportUnexpectedError("Unexpected current-document shell publication failure.", reason);
+        result = "unexpected";
+      }
       return result;
     };
     return { status: "shell", shell, commitShell };

@@ -10,6 +10,7 @@ import {
 import type { ProjectShellReadAuthority } from "./projectShellReadAuthority";
 
 const SHELL_CHANGED_ERROR = "The project changed while loading this document. Please retry.";
+const UNEXPECTED_ERROR = "An unexpected error interrupted document loading. Please retry.";
 
 interface CurrentDocumentState {
   readonly key: CurrentDocumentReadKey | null;
@@ -128,48 +129,51 @@ export function useCurrentDocument(
         });
     };
 
-    void lease.promise.then(
-      (outcome) => {
-        if (!isCurrent()) return;
-        if (outcome.status === "session-lost") {
-          onSessionLoss();
+    void lease.promise.then((outcome) => {
+      if (!isCurrent()) return;
+      if (outcome.status === "session-lost") {
+        onSessionLoss();
+        return;
+      }
+      if (outcome.status === "project-missing") {
+        onProjectMissing();
+        return;
+      }
+      if ("commitShell" in outcome && outcome.commitShell) {
+        const commit = outcome.commitShell();
+        if (commit !== "published") {
+          publishFailure(commit === "superseded" ? SHELL_CHANGED_ERROR : UNEXPECTED_ERROR);
           return;
         }
-        if (outcome.status === "project-missing") {
-          onProjectMissing();
+      }
+      switch (outcome.status) {
+        case "document":
+          setState({
+            key: outcome.key,
+            document: outcome.document,
+            error: null,
+            isLoading: false,
+            attempt: retryEpoch,
+            completed: true,
+          });
           return;
-        }
-        if ("commitShell" in outcome && outcome.commitShell && !outcome.commitShell()) {
-          publishFailure(SHELL_CHANGED_ERROR);
+        case "missing":
+          setState({
+            key,
+            document: null,
+            error: null,
+            isLoading: false,
+            attempt: retryEpoch,
+            completed: true,
+          });
           return;
-        }
-        switch (outcome.status) {
-          case "document":
-            setState({
-              key: outcome.key,
-              document: outcome.document,
-              error: null,
-              isLoading: false,
-              attempt: retryEpoch,
-              completed: true,
-            });
-            return;
-          case "missing":
-            setState({
-              key,
-              document: null,
-              error: null,
-              isLoading: false,
-              attempt: retryEpoch,
-              completed: true,
-            });
-            return;
-          case "failure":
-            publishFailure(outcome.message, outcome.key ?? key);
-        }
-      },
-      () => undefined,
-    );
+        case "failure":
+          publishFailure(outcome.message, outcome.key ?? key);
+          return;
+        case "unexpected":
+          publishFailure(UNEXPECTED_ERROR);
+      }
+    });
 
     return () => {
       released = true;

@@ -1,4 +1,5 @@
 import type { CurrentDocumentReadOutcome } from "./currentDocumentReadCycle";
+import { reportUnexpectedError } from "./reportUnexpectedError";
 
 export interface CurrentDocumentReadKey {
   readonly projectId: string;
@@ -40,6 +41,11 @@ export interface CurrentDocumentReadLease {
 
 type StartRead = (signal: AbortSignal) => Promise<CurrentDocumentReadOutcome>;
 
+function observeUnexpectedFailure(reason: unknown): CurrentDocumentReadOutcome {
+  reportUnexpectedError("Unexpected current-document read-cycle failure.", reason);
+  return { status: "unexpected" };
+}
+
 /** Coalesces the complete convergence cycle for one exact causal owner tuple. */
 export function acquireCurrentDocumentRead(
   key: CurrentDocumentReadKey,
@@ -51,7 +57,9 @@ export function acquireCurrentDocumentRead(
     read = {
       key,
       controller,
-      promise: start(controller.signal),
+      promise: Promise.resolve()
+        .then(() => start(controller.signal))
+        .catch(observeUnexpectedFailure),
       subscribers: 0,
       settled: false,
     };
