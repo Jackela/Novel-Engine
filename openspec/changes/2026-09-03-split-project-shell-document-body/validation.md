@@ -156,3 +156,41 @@ frontend tasks 3.1 and 3.3 have current local evidence above. Lazy Inspector
 ownership, mutation/Draft separation, the full browser matrix, independent
 fixed-SHA reviews, and required CI remain open. This change stays active and
 unarchived; local tests and generated artifacts are not release approval.
+
+## Frontend ownership-race repair
+
+- Fixed implementation SHA: `bc4b2783264a82127efdde53cfb80719558d2682`
+- Comparison SHA: `eebfa7db0e078cf0c47fa89eded2a867aa8791ed`
+
+Contract-first regressions failed in four places before the repair: a
+summary-only change reacquired and aborted the same current-Document lease, a
+foreign-project child summary still issued a body request, a late convergence
+read replaced a concurrent narrow shell mutation, and the Studio shell owner
+had no captured read/mutation epoch to reject that stale publication.
+
+The repaired current-Document key is derived only from the exact scalar owner
+tuple `(project id, Document id, expected revision id, lifecycle)`. Summary
+reorder or Lore-only changes therefore retain the same lease. Child summaries
+must belong to the route project before any body request is acquired, and a
+body response must still match the project/Document tuple before it can be
+accepted. Convergence reads now capture both a shell-read epoch and a local
+shell-mutation epoch. A later local mutation makes the read ineligible to
+publish; the current navigation remains visible and the editor exposes an
+explicit Retry instead of replacing newer state or guessing at a merged shell.
+
+| Validation surface at `bc4b2783` | Result |
+|---|---|
+| Focused ownership regressions | Passed: 4 files and 24 tests. |
+| Full frontend unit suite | Passed: 78 files and 432 tests. |
+| Frontend lint, format, and type-check | Passed: Biome checked 202 files, formatter checked 201 files, and TypeScript reported no error. |
+| Frontend production build | Passed: Vite built 1,923 modules and verified Novel Engine 0.6.0 in HTML and seven JavaScript bundles. |
+| API-types drift | Passed against the then-current OpenAPI snapshot. |
+| React Doctor | Passed: score 100 and zero diagnostics. |
+| Repository file-size gate | Passed: 608 files checked, with no code file over the 300-line budget. |
+| TypeScript-backend Studio smoke | Passed: three Chromium workflows. |
+| Strict OpenSpec | Passed: 19 items, zero failures. |
+
+The validation worktree also contained separately owned, uncommitted project-
+settings server/OpenAPI/generated-type changes. They were neither staged nor
+included in `bc4b2783`; a later integrated fixed-point run must revalidate the
+combined repository. Tasks 3.2, 3.4, 3.5, 5.2, 5.3, and 5.4 remain open.
