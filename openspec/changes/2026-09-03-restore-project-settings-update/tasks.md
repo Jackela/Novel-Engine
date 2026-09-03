@@ -47,28 +47,28 @@
 
 ## 3. Frontend scalar merge and ownership
 
-- [ ] 3.1 Parse PATCH success as strict scalar Project, not Project shell, and
+- [x] 3.1 Parse PATCH success as strict scalar Project, not Project shell, and
       reject missing/extra scalar fields or a body-bearing response.
-- [ ] 3.2 Require response id to match both captured route Project and current
+- [x] 3.2 Require response id to match both captured route Project and current
       shell; treat wrong identity as a contract error with no merge, and merge
       only title, description, settings, and `updated_at`, never id,
       `import_hash`, or `created_at`.
-- [ ] 3.3 Preserve documents, volumes, active Document, Draft, and Inspector
+- [x] 3.3 Preserve documents, volumes, active Document, Draft, and Inspector
       data across the matching mutable-scalar merge.
-- [ ] 3.4 Bind each submit to route project plus settings intent epoch, expose
+- [x] 3.4 Bind each submit to route project plus settings intent epoch, expose
       exact initiating busy state, prevent duplicate activation, abort on final
       owner release, and reject late responses after project change, unmount, or
       a newer intent.
-- [ ] 3.5 Keep local errors readable and retryable, route 401 to Entry and 404 to
+- [x] 3.5 Keep local errors readable and retryable, route 401 to Entry and 404 to
       the library, clear only the current Settings error on success, synchronize
       the form, and restore focus only when the author did not move it.
 
 ## 4. Integrated persistence and release evidence
 
-- [ ] 4.1 Add a TypeScript-backend Playwright workflow that changes title,
+- [x] 4.1 Add a TypeScript-backend Playwright workflow that changes title,
       description, and provider through the Settings panel, reloads the page,
       and proves all three persisted and the provider remains selected.
-- [ ] 4.2 Run project create/list/shell/delete, Owner isolation, auth/CSRF,
+- [x] 4.2 Run project create/list/shell/delete, Owner isolation, auth/CSRF,
       same-ms/backwards-clock Project ordering, settings-driven generation,
       frontend project switching, wrong-response-id/error ownership, form/focus,
       OpenAPI, and generated-type regressions.

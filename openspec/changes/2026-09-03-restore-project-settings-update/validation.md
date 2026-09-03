@@ -5,8 +5,10 @@
 - Fixed baseline: `eebfa7db0e078cf0c47fa89eded2a867aa8791ed`.
 - Server implementation candidate: `cbe69543` (`d2926b22` plus independent
   review repairs).
-- Scope: server tasks 1.1 through 2.5, the frozen OpenAPI baseline, and its
-  generated frontend API type consumer.
+- Frontend implementation candidate: `056e8ed7`.
+- Scope: server tasks 1.1 through 2.5, frontend tasks 3.1 through 3.5 and 4.1
+  through 4.2, the frozen OpenAPI baseline, and its generated frontend API type
+  consumer.
 
 ## Targeted
 
@@ -42,6 +44,29 @@
 - `pnpm --dir frontend type-check` passed.
 - `pnpm spec:validate` passed: 19 items, 0 failures.
 
+## Frontend and browser candidate
+
+- `pnpm --dir frontend test:unit` passed: 80 files, 446 tests.
+- Focused Settings/API/UI verification passed: 5 files, 48 tests. It covers
+  strict scalar parsing, exact omitted request serialization, mutable-only
+  shell merge, immutable/structural preservation, reversed intent settlement,
+  duplicate submission, unmount abort, wrong identity, 401/404 routing,
+  recoverable operational failure, panel-local error semantics, and focus.
+- `pnpm --dir frontend lint`, `format:check`, `type-check`, `build`, and
+  `check:api-types` passed.
+- `pnpm exec react-doctor --json` passed with score 100 and zero diagnostics.
+- `pnpm --dir frontend test:e2e:smoke` passed: 3 tests. The first real
+  TypeScript-backend workflow changed title, description, and provider through
+  Settings, reloaded the deep link, and observed all three persisted values.
+- `pnpm --dir frontend test:e2e:full-audit` was run but is not a full pass: 4
+  passed, 2 failed, and 3 did not run after the serial failure. The failures are
+  outside this Settings write set: content acceptance observed an empty saved
+  chapter after proposal acceptance, and whole-book prose validation received
+  an undefined body while those helpers/flows still assumed Project shell rows
+  contained bodies. This candidate did not modify that document-body chain.
+- `pnpm spec:validate` passed after the Settings implementation: 19 items, 0
+  failures.
+
 ## Independent review and unfinished gates
 
 - Independent fixed-SHA standards/security review first found one P2
@@ -51,8 +76,9 @@
   it reran 3 focused files / 11 tests plus server type-check, lint, architecture,
   and diff checks.
 - Frontend behavior tasks 3.1 through 3.5 and the browser persistence workflow
-  remain owned by their later wave; no frontend behavioral completion is
-  claimed by this server candidate.
+  are implemented in `056e8ed7`.
+- Task 4.3 remains open because the full browser audit is not green and the
+  final fixed-SHA independent standards/security/UX review has not run.
 - Required CI is not run locally and remains `not run`; the integrator must
   obtain green required contexts on the final candidate before archive.
 - Human acceptance is `not run`; the Owner must exercise the Settings flow on
