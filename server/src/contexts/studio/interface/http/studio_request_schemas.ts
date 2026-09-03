@@ -66,6 +66,16 @@ export const projectCreateSchema = Type.Object(
 );
 export type ProjectCreateBody = Static<typeof projectCreateSchema>;
 
+export const projectUpdateSchema = Type.Object(
+  {
+    title: Type.Optional(Type.String({ minLength: 1, maxLength: 240 })),
+    description: Type.Optional(Type.String({ maxLength: 10_000 })),
+    settings: Type.Optional(metadataObject),
+  },
+  { additionalProperties: false, minProperties: 1 },
+);
+export type ProjectUpdateBody = Static<typeof projectUpdateSchema>;
+
 export const documentCreateSchema = Type.Object(
   {
     kind: Type.Unsafe<DocumentKind>({ type: "string", enum: [...DOCUMENT_KINDS] }),

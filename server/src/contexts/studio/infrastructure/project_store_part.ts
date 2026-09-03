@@ -1,14 +1,16 @@
 import { randomUUID } from "node:crypto";
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, sql } from "drizzle-orm";
 
 import type { StudioSqliteDatabase } from "../../../shared/infrastructure/db/connection.js";
 import { jobs, usageEvents } from "../../../shared/infrastructure/db/schema.js";
+import type { ProjectUpdateInput } from "../application/ports/project_update_store.js";
 import type {
   AddImportedProjectInput,
   AddProjectInput,
   DocumentWithCurrent,
   ProjectScope,
 } from "../application/ports/studio_store.js";
+import { NotFoundError } from "../domain/exceptions.js";
 import { DEFAULT_LORE_STATUS } from "../domain/kinds.js";
 import { clearProjectDocumentIndex, refreshDocumentIndex } from "./db/document_search.js";
 import { documents, projects } from "./db/schema.js";
@@ -122,6 +124,24 @@ export class ProjectStorePart {
 
   findProject(scope: ProjectScope, projectId: string): ProjectRow {
     return this.db.transaction((tx) => scopedProject(tx, scope, projectId));
+  }
+
+  updateProject(scope: ProjectScope, projectId: string, input: ProjectUpdateInput): ProjectRow {
+    const updated = this.db
+      .update(projects)
+      .set({
+        ...(input.title === undefined ? {} : { title: input.title }),
+        ...(input.description === undefined ? {} : { description: input.description }),
+        ...(input.settingsJson === undefined ? {} : { settingsJson: input.settingsJson }),
+        updatedAt: sql`max(${projects.updatedAt} + 1, ${input.now.getTime()})`,
+      })
+      .where(and(eq(projects.id, projectId), scopeCondition(scope)))
+      .returning()
+      .get();
+    if (updated === undefined) {
+      throw new NotFoundError("Project not found.");
+    }
+    return updated;
   }
 
   readProjectShell(scope: ProjectScope, projectId: string) {

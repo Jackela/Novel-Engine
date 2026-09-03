@@ -1,5 +1,6 @@
 import type { Principal } from "../../../shared/application/ports/auth.js";
 import { InvalidOperationError } from "../../../shared/domain/exceptions.js";
+import { InvalidProjectUpdateError } from "../domain/exceptions.js";
 import { InFlightOperationGuard } from "./operation_in_flight.js";
 import { dumpJson, projectPayload } from "./payloads.js";
 import type { ProjectArtifactCleaner } from "./ports/project_artifact_cleaner.js";
@@ -76,6 +77,30 @@ export class ProjectService {
     return this.store
       .findProjects(scopeForPrincipal(principal))
       .map((project) => projectPayload(project));
+  }
+
+  /** Partially replace Project settings scalars without materializing its shell. */
+  updateProject(
+    principal: Principal,
+    projectId: string,
+    input: {
+      title?: string | undefined;
+      description?: string | undefined;
+      settings?: Record<string, unknown> | undefined;
+    },
+  ): Record<string, unknown> {
+    const title = input.title?.trim();
+    if (title === "") {
+      throw new InvalidProjectUpdateError("Project title is required.");
+    }
+    const description = input.description?.trim();
+    const updated = this.store.updateProject(scopeForPrincipal(principal), projectId, {
+      ...(title === undefined ? {} : { title }),
+      ...(description === undefined ? {} : { description }),
+      ...(input.settings === undefined ? {} : { settingsJson: dumpJson(input.settings) }),
+      now: this.now(),
+    });
+    return projectPayload(updated);
   }
 
   /** Bounded structural shell in canonical document and volume order. */

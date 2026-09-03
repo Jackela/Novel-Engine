@@ -15,6 +15,14 @@ export class NotFoundError extends Error {
   }
 }
 
+/** A Project settings command is structurally valid but invalid after normalization. */
+export class InvalidProjectUpdateError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "InvalidProjectUpdateError";
+  }
+}
+
 /**
  * A save was based on a revision that is no longer the document's current
  * revision; no revision may be created, overwritten, or merged.

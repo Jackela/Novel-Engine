@@ -3,6 +3,7 @@ import type { StudioBeatStore } from "./beat_store.js";
 import type { StudioJobLedgerStore } from "./job_ledger_store.js";
 import type { StudioLoreStore } from "./lore_store.js";
 import type { DocumentSummaryRecord, ProjectShellRecord } from "./project_shell_records.js";
+import type { ProjectUpdateStore } from "./project_update_store.js";
 import type { ProposalAcceptanceStore } from "./proposal_acceptance_store.js";
 import type { ProposalContextStore } from "./proposal_context_store.js";
 import type { ReviewOutcomeStore } from "./review_outcome_store.js";
@@ -226,6 +227,7 @@ export interface AdvanceDocumentInput {
  */
 export interface StudioStore
   extends StudioVolumeStore,
+    ProjectUpdateStore,
     StudioBeatStore,
     StudioLoreStore,
     ProposalContextStore,

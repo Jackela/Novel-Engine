@@ -8,16 +8,19 @@ import {
   errorEnvelopeResponse,
 } from "../../../../shared/interface/http/error_envelope.js";
 import type { StudioServices } from "../../application/studio_services.js";
+import { projectUpdateRawKeyGuard } from "./project_update_raw_keys.js";
 import { withAsyncStudioErrors, withStudioErrors } from "./studio_error_mapping.js";
 import {
   projectCreateSchema,
   projectIdParams,
   projectMatchQuerySchema,
+  projectUpdateSchema,
 } from "./studio_request_schemas.js";
 import {
   matchListResponseSchema,
   operationInFlightSchema,
   projectListResponseSchema,
+  projectResponseSchema,
   projectShellResponseSchema,
 } from "./studio_schemas.js";
 
@@ -61,6 +64,34 @@ export const projectRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fas
       withStudioErrors(() => ({
         projects: requireServices(options).projects.listProjects(requirePrincipal(request)),
       })),
+  );
+
+  app.patch(
+    "/api/projects/:projectId",
+    {
+      preValidation: [guard, projectUpdateRawKeyGuard],
+      schema: {
+        params: projectIdParams,
+        body: projectUpdateSchema,
+        response: {
+          200: projectResponseSchema,
+          401: errorEnvelopeResponse,
+          403: errorEnvelopeResponse,
+          404: errorEnvelopeResponse,
+          422: errorEnvelopeResponse,
+          500: errorEnvelopeResponse,
+          503: errorEnvelopeResponse,
+        },
+      },
+    },
+    async (request) =>
+      withStudioErrors(() =>
+        requireServices(options).projects.updateProject(
+          requirePrincipal(request),
+          request.params.projectId,
+          request.body,
+        ),
+      ),
   );
 
   app.post(

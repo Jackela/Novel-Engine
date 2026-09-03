@@ -12,6 +12,7 @@ import {
   ExportCapacityExceededError,
   GenerationCapacityExceededError,
   ImportCapacityExceededError,
+  InvalidProjectUpdateError,
   NotFoundError,
   OperationCapacityExceededError,
   OperationInFlightError,
@@ -25,6 +26,16 @@ import {
  * the opaque 500 handler.
  */
 function toAppError(error: unknown): unknown {
+  if (error instanceof InvalidProjectUpdateError) {
+    return new AppError({
+      statusCode: ERROR_HTTP_STATUS[ERROR_CODES.VALIDATION_ERROR],
+      code: ERROR_CODES.VALIDATION_ERROR,
+      message: "Request validation failed.",
+      details: {
+        errors: [{ field: "title", type: "minLength", message: error.message }],
+      },
+    });
+  }
   if (error instanceof NotFoundError) {
     return new AppError({
       statusCode: 404,
