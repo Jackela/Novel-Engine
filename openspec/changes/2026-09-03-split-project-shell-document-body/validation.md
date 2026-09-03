@@ -194,3 +194,43 @@ The validation worktree also contained separately owned, uncommitted project-
 settings server/OpenAPI/generated-type changes. They were neither staged nor
 included in `bc4b2783`; a later integrated fixed-point run must revalidate the
 combined repository. Tasks 3.2, 3.4, 3.5, 5.2, 5.3, and 5.4 remain open.
+
+## Shared convergence-cycle repair
+
+- Superseding frontend implementation SHA:
+  `d59a7b14c16a7b661ebab3c04bf47874fc01b40b`
+- Comparison SHA: `bc4b2783264a82127efdde53cfb80719558d2682`
+
+Independent re-review found that the first ownership repair coalesced only the
+raw current-Document GET. Two equal-tuple subscribers still reacted to the
+same unexpected revision independently, issuing two shell refreshes and
+invalidating one another's read epoch. The new two-subscriber regression
+failed at the comparison SHA because two project reads were observed where the
+contract permits one.
+
+The registry now owns one complete causal read cycle: initial current-Document
+read, one shell refresh, and at most one replacement current-Document read.
+The shell publication is a shared, memoized commit performed by the first
+surviving subscriber, so releasing the initiating subscriber cannot suppress
+the result and multiple survivors cannot repeat the publication. All survivors
+receive the same terminal outcome. The shell mutation epoch remains decisive:
+a concurrent local mutation still rejects the shared commit and leaves an
+explicit Retry. Completed failures are keyed to the refreshed revision so a
+render caused by shell publication cannot start an unbounded extra read; an
+explicit Retry advances the attempt epoch.
+
+| Validation surface at `d59a7b14` | Result |
+|---|---|
+| Focused ownership regressions | Passed: 4 files and 25 tests. |
+| Full frontend unit suite | Passed: 78 files and 433 tests. |
+| Frontend lint, format, and type-check | Passed: Biome checked 203 files, formatter checked 202 files, and TypeScript reported no error. |
+| Frontend production build | Passed: Vite built 1,924 modules and verified Novel Engine 0.6.0 in HTML and seven JavaScript bundles. |
+| API-types drift | Passed against the current OpenAPI snapshot. |
+| React Doctor | Passed: score 100 and zero diagnostics. |
+| Repository gates | Passed: SSOT, hygiene, 609-file size, migration-channel, llms-txt, and OpenAPI snapshot gates. |
+| TypeScript-backend Studio smoke | Passed: three Chromium workflows. |
+| Strict OpenSpec | Passed: 19 items, zero failures. |
+
+This repair does not claim lazy Inspector ownership, mutation/Draft separation,
+the complete browser matrix, independent fixed-SHA review closure, or CI.
+Tasks 3.2, 3.4, 3.5, 5.2, 5.3, and 5.4 remain open.
