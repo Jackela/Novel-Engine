@@ -27,6 +27,7 @@ export function useOwnerKeyedErrors<const Source extends string>(
   sources: readonly Source[],
 ): {
   readonly error: string | null;
+  readonly errors: Readonly<Record<Source, string | null>>;
   readonly publishers: ErrorPublishers<Source>;
 } {
   const [errorsByOwner, setErrorsByOwner] = useState<
@@ -64,6 +65,9 @@ export function useOwnerKeyedErrors<const Source extends string>(
     const message = errorsByOwner.get(ownerKey)?.get(source);
     return message ? [message] : [];
   });
+  const errors = Object.fromEntries(
+    sources.map((source) => [source, errorsByOwner.get(ownerKey)?.get(source) ?? null]),
+  ) as Record<Source, string | null>;
 
-  return { error: combineErrorMessages(...messages), publishers };
+  return { error: combineErrorMessages(...messages), errors, publishers };
 }

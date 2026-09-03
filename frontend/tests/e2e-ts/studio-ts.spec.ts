@@ -96,11 +96,32 @@ test("owner setup, editing, AI proposal accept, search, and deep links", async (
   await expect(page.getByText("Proposed Markdown")).toHaveCount(0);
   await expect(saveStatus).toHaveText(/saved/i);
 
+  // Project settings use the scalar PATCH response without replacing the
+  // loaded shell or editor. A full reload proves the values reached SQLite.
+  await page.getByRole("button", { name: "Settings", exact: true }).click();
+  await expect(page).toHaveURL(/\/settings$/);
+  await page.getByRole("textbox", { name: "Title", exact: true }).fill("The Brass Harbor");
+  await page
+    .getByRole("textbox", { name: "Description" })
+    .fill("A persisted project-settings fixture.");
+  await page.getByRole("combobox", { name: "Provider" }).selectOption("dashscope");
+  await page.getByRole("button", { name: "Save settings" }).click();
+  await expect(page.getByRole("heading", { name: "The Brass Harbor" })).toBeVisible();
+
   // Deep-link fallback: reloading a client route must serve the SPA shell
   // from the TS server and restore the studio from the persisted session.
   const projectUrl = page.url();
   await page.goto(projectUrl);
   await expect(page.locator(".studio-editor")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "The Brass Harbor" })).toBeVisible();
+  await expect(page.getByRole("textbox", { name: "Title", exact: true })).toHaveValue(
+    "The Brass Harbor",
+  );
+  await expect(page.getByRole("textbox", { name: "Description" })).toHaveValue(
+    "A persisted project-settings fixture.",
+  );
+  await expect(page.getByRole("combobox", { name: "Provider" })).toHaveValue("dashscope");
+  await page.getByRole("button", { name: "Manuscript", exact: true }).click();
   await expect(editor).toContainText("Chapter 1");
 });
 

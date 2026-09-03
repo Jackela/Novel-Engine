@@ -1,12 +1,13 @@
-import type { Dispatch, FormEvent, SetStateAction } from "react";
+import type { Dispatch, SetStateAction } from "react";
 import { useCallback, useLayoutEffect, useRef, useState } from "react";
 
 import { api, HttpError } from "@/app/api";
 import { clearRetryAttempt, getOrCreateRetryAttemptKey } from "@/app/retryAttemptRegistry";
 import type { Project, Review } from "@/app/types/studio";
-import { mergeProjectSettings } from "./projectState";
+import type { SettingsFormState } from "../studioInspectorTypes";
 import { toErrorMessage } from "./toErrorMessage";
 import { usePendingAction } from "./usePendingAction";
+import { useProjectSettingsUpdate } from "./useProjectSettingsUpdate";
 import { useStudioDocumentActions } from "./useStudioDocumentActions";
 import type { JobsFreshLoadInitiator } from "./useStudioJobs";
 import { useStudioLoreStatusActions } from "./useStudioLoreStatusActions";
@@ -19,7 +20,10 @@ interface UseStudioActionsOptions {
   setError: Dispatch<SetStateAction<string | null>>;
   errorPublishers?: Partial<StudioActionErrorPublishers>;
   setActiveId: Dispatch<SetStateAction<string | null>>;
-  settingsForm: { title: string; description: string; provider: string };
+  settingsForm: SettingsFormState;
+  setSettingsForm?: Dispatch<SetStateAction<SettingsFormState>>;
+  onSettingsSessionLost?: () => void;
+  onSettingsProjectMissing?: () => void;
   loadJobs: (initiator?: JobsFreshLoadInitiator) => Promise<void>;
   isProposalActionGated?: () => boolean;
 }
@@ -34,7 +38,7 @@ export interface StudioActionErrorPublishers {
 
 type StudioActionErrorSource = keyof StudioActionErrorPublishers;
 
-const ACTION_KEYS = ["runReview", "updateSettings", "retryJob"] as const;
+const ACTION_KEYS = ["runReview", "retryJob"] as const;
 
 type ActionKey = (typeof ACTION_KEYS)[number];
 
@@ -56,6 +60,9 @@ export function useStudioActions({
   errorPublishers,
   setActiveId,
   settingsForm,
+  setSettingsForm,
+  onSettingsSessionLost,
+  onSettingsProjectMissing,
   loadJobs,
   isProposalActionGated = PROPOSAL_ACTIONS_UNGATED,
 }: UseStudioActionsOptions) {
@@ -127,6 +134,16 @@ export function useStudioActions({
     isCurrentOwner,
     clearSharedError,
   });
+  const settingsUpdate = useProjectSettingsUpdate({
+    project,
+    projectId,
+    settingsForm,
+    setProject,
+    setSettingsForm,
+    setSettingsError: errorPublishers?.settings ?? setError,
+    onSessionLost: onSettingsSessionLost,
+    onProjectMissing: onSettingsProjectMissing,
+  });
 
   const runReview = useCallback(async () => {
     const owner = currentOwner();
@@ -153,43 +170,6 @@ export function useStudioActions({
       finishForOwner(owner, "runReview");
     }
   }, [begin, currentOwner, finishForOwner, isCurrentOwner, projectId, publishError, setReviews]);
-
-  const updateProjectSettings = useCallback(
-    async (event: FormEvent) => {
-      event.preventDefault();
-      const owner = currentOwner();
-      if (!owner || !project || !begin("updateSettings")) return;
-      publishError(owner, "settings", null);
-      try {
-        const updated = await api.updateProject(project.id, {
-          title: settingsForm.title,
-          description: settingsForm.description,
-          settings: { ...project.settings, provider: settingsForm.provider },
-        });
-        if (!isCurrentOwner(owner)) return;
-        setProject((current) =>
-          isCurrentOwner(owner) && current?.id === owner.projectId
-            ? mergeProjectSettings(current, updated)
-            : current,
-        );
-        publishError(owner, "settings", null);
-      } catch (reason) {
-        publishError(owner, "settings", toErrorMessage(reason, "Unable to update project."));
-      } finally {
-        finishForOwner(owner, "updateSettings");
-      }
-    },
-    [
-      begin,
-      currentOwner,
-      finishForOwner,
-      isCurrentOwner,
-      project,
-      publishError,
-      settingsForm,
-      setProject,
-    ],
-  );
 
   const retryJob = useCallback(
     async (jobId: string) => {
@@ -235,7 +215,7 @@ export function useStudioActions({
     createDocument: documentActions.createDocument,
     moveDocument: documentActions.moveDocument,
     runReview,
-    updateProjectSettings,
+    updateProjectSettings: settingsUpdate.updateProjectSettings,
     retryJob,
     changeLoreStatus: loreStatusActions.changeLoreStatus,
     loreStatusFor: loreStatusActions.loreStatusFor,
@@ -248,7 +228,7 @@ export function useStudioActions({
     isCreatingDocument: documentActions.isCreatingDocument,
     isMovingDocument: documentActions.isMovingDocument,
     isRunningReview: pending.runReview,
-    isUpdatingSettings: pending.updateSettings,
+    isUpdatingSettings: settingsUpdate.isUpdatingSettings,
     isRetryingJob: pending.retryJob,
     retryingJobId,
   };

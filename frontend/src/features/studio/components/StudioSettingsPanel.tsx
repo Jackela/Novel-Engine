@@ -1,5 +1,5 @@
 import type { Dispatch, FormEvent, SetStateAction } from "react";
-import { useRef } from "react";
+import { useId, useRef } from "react";
 
 import type { ProviderInfo } from "@/app/types/studio";
 
@@ -13,6 +13,7 @@ interface StudioSettingsPanelProps {
   onUpdateSettings: (event: FormEvent<HTMLFormElement>) => void | Promise<void>;
   providers?: ProviderInfo[];
   isSaving?: boolean;
+  error?: string | null;
 }
 
 export function StudioSettingsPanel({
@@ -21,8 +22,10 @@ export function StudioSettingsPanel({
   onUpdateSettings,
   providers = DEFAULT_PROVIDER_OPTIONS,
   isSaving = false,
+  error = null,
 }: StudioSettingsPanelProps) {
   const saveButtonRef = useRef<HTMLButtonElement>(null);
+  const errorId = useId();
   const runWithFocusRestoration = useCommandFocusRestoration(isSaving);
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
@@ -37,10 +40,16 @@ export function StudioSettingsPanel({
   return (
     <form
       aria-busy={isSaving}
+      aria-describedby={error ? errorId : undefined}
       className="studio-inspector__panel"
       onSubmit={(event) => void handleSubmit(event)}
     >
       <h2>Project settings</h2>
+      {error ? (
+        <p aria-live="assertive" className="studio-inspector__error" id={errorId} role="alert">
+          {error}
+        </p>
+      ) : null}
       <label className="studio-inspector__settings-field">
         <span>Title</span>
         <input

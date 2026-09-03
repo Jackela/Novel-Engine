@@ -48,11 +48,8 @@ export function useStudioPageModel(projectId: string, route: StudioRouteState, n
     navigate,
   );
   const activeDocument = currentDocument.document;
-  const { projectErrors, documentErrors, visibleError } = useStudioErrorChannels(
-    projectId,
-    activeDocument?.id ?? null,
-    error,
-  );
+  const { projectErrors, documentErrors, visibleError, visibleErrorWithoutSettings } =
+    useStudioErrorChannels(projectId, activeDocument?.id ?? null, error);
   const visibleActiveId = activeSummary?.id ?? activeId;
   const {
     draft,
@@ -123,6 +120,11 @@ export function useStudioPageModel(projectId: string, route: StudioRouteState, n
     projectErrors.publishers.search,
   );
   const providers = useStudioProviders();
+  const onSettingsSessionLost = useCallback(() => navigate("/", { replace: true }), [navigate]);
+  const onSettingsProjectMissing = useCallback(
+    () => navigate("/projects", { replace: true }),
+    [navigate],
+  );
   const { exportProject, retryExport, exportingFormat, retryingFormat, failedFormat, exportError } =
     useExportDownload(project, projectId, setExports);
   const {
@@ -150,6 +152,9 @@ export function useStudioPageModel(projectId: string, route: StudioRouteState, n
     errorPublishers: projectErrors.publishers,
     setActiveId,
     settingsForm,
+    setSettingsForm,
+    onSettingsSessionLost,
+    onSettingsProjectMissing,
     loadJobs,
     isProposalActionGated: proposalAudit.isGated,
   });
@@ -229,7 +234,7 @@ export function useStudioPageModel(projectId: string, route: StudioRouteState, n
         onRetryDocument: currentDocument.retry,
       },
       inspector: {
-        error: visibleError,
+        error: inspector === "settings" ? visibleErrorWithoutSettings : visibleError,
         inspector,
         setInspector,
         pending: inspectorPending,
@@ -286,6 +291,7 @@ export function useStudioPageModel(projectId: string, route: StudioRouteState, n
           settings: {
             settingsForm,
             providers,
+            error: projectErrors.errors.settings,
             onUpdateSettings: updateProjectSettings,
             setSettingsForm,
           },

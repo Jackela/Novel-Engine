@@ -43,6 +43,7 @@ export function StudioInspectorPanels({
         onUpdateSettings={model.settings.onUpdateSettings}
         providers={model.settings.providers}
         isSaving={pending.settings}
+        error={model.settings.error}
       />
     );
   }

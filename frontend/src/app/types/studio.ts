@@ -20,6 +20,9 @@ type ExportRequestBody = NonNullable<
 type AIProposalBody = NonNullable<
   paths["/api/projects/{projectId}/documents/{documentId}/ai-proposals"]["post"]
 >["requestBody"]["content"]["application/json"];
+type GeneratedProjectUpdateBody = NonNullable<
+  paths["/api/projects/{projectId}"]["patch"]
+>["requestBody"]["content"]["application/json"];
 
 export type DocumentKind = DocumentCreateBody["kind"];
 /** The lore lifecycle status (#444); only `stable` entries inject (ADR-0006). */
@@ -29,6 +32,14 @@ export type StudioJobOperation = AIProposalBody["operation"] | "review" | "expor
 export type SessionKind = "owner";
 export type SaveState = "idle" | "saving" | "saved" | "conflict" | "error";
 export type StudioJobStatus = "pending" | "running" | "completed" | "failed" | "interrupted";
+
+/** Closed PATCH body; the server additionally requires at least one member. */
+export type ProjectUpdateBody = GeneratedProjectUpdateBody &
+  (
+    | { title: NonNullable<GeneratedProjectUpdateBody["title"]> }
+    | { description: NonNullable<GeneratedProjectUpdateBody["description"]> }
+    | { settings: NonNullable<GeneratedProjectUpdateBody["settings"]> }
+  );
 
 export interface ProviderInfo {
   provider: string;

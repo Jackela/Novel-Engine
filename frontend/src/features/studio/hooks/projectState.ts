@@ -1,4 +1,4 @@
-import type { DocumentSummary, Project, StudioDocument } from "@/app/types/studio";
+import type { DocumentSummary, Project, ProjectListItem, StudioDocument } from "@/app/types/studio";
 
 export function summarizeDocument(document: StudioDocument): DocumentSummary {
   const { content_markdown: _content, metadata: _metadata, ...summary } = document;
@@ -33,7 +33,7 @@ export function mergeProjectDocumentOrder(
 }
 
 /** Apply only fields owned by the project-settings mutation. */
-export function mergeProjectSettings(project: Project, updated: Project): Project {
+export function mergeProjectSettings(project: Project, updated: ProjectListItem): Project {
   return {
     ...project,
     title: updated.title,

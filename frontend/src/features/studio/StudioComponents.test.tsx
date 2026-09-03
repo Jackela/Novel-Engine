@@ -48,6 +48,7 @@ function buildInspectorModel(): StudioInspectorModel {
     usage: { projectId: "project-1" },
     settings: {
       settingsForm: { title: "", description: "", provider: "" },
+      error: null,
       providers: [],
       onUpdateSettings: vi.fn(),
       setSettingsForm: vi.fn(),
@@ -186,6 +187,22 @@ describe("Studio split components", () => {
     // #411: no orphan tabpanels without a tablist in the settings state.
     expect(container.querySelectorAll('[role="tabpanel"]')).toHaveLength(0);
     expect(container.querySelector("form.studio-inspector__panel")).not.toBeNull();
+  });
+
+  it("renders a Settings failure once inside the retryable form", () => {
+    const model = buildInspectorModel();
+    model.settings.error = "Persistence unavailable. Try again.";
+    const container = render(
+      <StudioInspector
+        error="Persistence unavailable. Try again."
+        inspector="settings"
+        setInspector={vi.fn()}
+        model={model}
+      />,
+    );
+
+    expect(container.querySelectorAll('[role="alert"]')).toHaveLength(1);
+    expect(container.querySelector("form")?.textContent).toContain("Persistence unavailable.");
   });
 
   it("renders the contextual Lore editor only inside Copilot", () => {

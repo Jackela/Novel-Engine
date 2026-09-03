@@ -256,11 +256,15 @@ describe("useStudioActions", () => {
     });
 
     // Then
-    expect(api.updateProject).toHaveBeenCalledWith(projectFixture.id, {
-      title: "Updated Harbor",
-      description: "Updated description",
-      settings: { provider: "dashscope", temperature: 0.5 },
-    });
+    expect(api.updateProject).toHaveBeenCalledWith(
+      projectFixture.id,
+      {
+        title: "Updated Harbor",
+        description: "Updated description",
+        settings: { provider: "dashscope", temperature: 0.5 },
+      },
+      expect.objectContaining({ signal: expect.any(AbortSignal) }),
+    );
     expect(harness.result().project).toEqual(updated);
     expect(harness.result().error).toBeNull();
   });

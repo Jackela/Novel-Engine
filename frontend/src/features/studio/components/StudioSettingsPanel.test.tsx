@@ -92,6 +92,18 @@ describe("StudioSettingsPanel", () => {
     expect(getByRole(container, "button", { name: "Saving…" })).toBeDisabled();
   });
 
+  it("keeps a save failure in the form and associates it with the form", () => {
+    const container = render(
+      <StudioSettingsPanel {...baseProps} error="Persistence unavailable. Try again." />,
+    );
+
+    const alert = getByRole(container, "alert");
+    const form = container.querySelector("form");
+    expect(alert).toHaveTextContent("Persistence unavailable. Try again.");
+    expect(form).toHaveAttribute("aria-describedby", alert.id);
+    expect(getByRole(container, "button", { name: "Save settings" })).toBeEnabled();
+  });
+
   it("restores focus to the save button after the update completes", async () => {
     const onUpdateSettings = vi.fn(async (event: React.FormEvent) => {
       event.preventDefault();

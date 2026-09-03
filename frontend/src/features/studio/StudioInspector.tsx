@@ -37,7 +37,10 @@ export function StudioInspector({
     inspector === "export" &&
     model.export.errorForExport !== null &&
     model.export.errorForExport === error;
+  const settingsPanelOwnsSharedError =
+    inspector === "settings" && model.settings.error !== null && model.settings.error === error;
   const sharedError = error !== loreError && !exportPanelOwnsSharedError ? error : null;
+  const visibleSharedError = settingsPanelOwnsSharedError ? null : sharedError;
 
   return (
     <aside className="studio-inspector">
@@ -62,9 +65,9 @@ export function StudioInspector({
             </div>
           ) : null}
 
-          {sharedError ? (
+          {visibleSharedError ? (
             <div aria-live="assertive" className="studio-inspector__error" role="alert">
-              {sharedError}
+              {visibleSharedError}
             </div>
           ) : null}
 

@@ -3,6 +3,7 @@ import {
   parseDocuments,
   parseLoreStatus,
   parseOwnerSetup,
+  parseProjectListItem,
   parseProjectShell,
   parseProjects,
   parseProviders,
@@ -29,7 +30,7 @@ import { localServiceUnavailable } from "@/app/networkError";
 import { createRequestAbortScope } from "@/app/requestAbortScope";
 import { clearRetryAttemptSession, parseAndRecordRetrySession } from "@/app/retryAttemptRegistry";
 import { documentRevisionsRequest, type RevisionRequestOptions } from "@/app/revisionApiRequest";
-import type { DocumentKind, ExportFormat, LoreStatus } from "@/app/types/studio";
+import type { DocumentKind, ExportFormat, LoreStatus, ProjectUpdateBody } from "@/app/types/studio";
 
 export class HttpError extends Error {
   constructor(
@@ -134,8 +135,8 @@ const postJson = <T>(path: string, value: unknown, parse: ResponseParser<T>) =>
   request(path, { method: "POST", body: json(value) }, parse);
 const putJson = <T>(path: string, value: unknown, parse: ResponseParser<T>) =>
   request(path, { method: "PUT", body: json(value) }, parse);
-const patchJson = <T>(path: string, value: unknown, parse: ResponseParser<T>) =>
-  request(path, { method: "PATCH", body: json(value) }, parse);
+const patchJson = <T>(path: string, value: unknown, parse: ResponseParser<T>, init?: RequestInit) =>
+  request(path, { ...init, method: "PATCH", body: json(value) }, parse);
 
 async function downloadBlob(path: string, init?: RequestInit): Promise<Blob> {
   const abortScope = createRequestAbortScope(init?.signal);
@@ -284,14 +285,8 @@ export const api = {
       { ...init, method: "POST", body: json({ format }) },
       parseExportJobResponse,
     ),
-  updateProject: (
-    projectId: string,
-    payload: {
-      title?: string;
-      description?: string;
-      settings?: Record<string, unknown>;
-    },
-  ) => patchJson(`/api/projects/${projectId}`, payload, parseProjectShell),
+  updateProject: (projectId: string, payload: ProjectUpdateBody, init?: RequestInit) =>
+    patchJson(`/api/projects/${projectId}`, payload, parseProjectListItem, init),
   deleteProject: (projectId: string) =>
     request(`/api/projects/${projectId}`, { method: "DELETE" }, parseVoid),
   deleteDocument: (projectId: string, documentId: string) =>

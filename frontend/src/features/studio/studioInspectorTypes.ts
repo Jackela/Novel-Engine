@@ -97,7 +97,8 @@ export interface InspectorUsageModel {
 export interface InspectorSettingsModel {
   settingsForm: SettingsFormState;
   providers: ProviderInfo[];
-  onUpdateSettings: (event: FormEvent) => void;
+  error: string | null;
+  onUpdateSettings: (event: FormEvent) => Promise<void>;
   setSettingsForm: Dispatch<SetStateAction<SettingsFormState>>;
 }
 

@@ -51,6 +51,7 @@ function inspectorModel(loreStatus: InspectorLoreStatusModel): StudioInspectorMo
     usage: { projectId: "project-1" },
     settings: {
       settingsForm: { title: "Novel", description: "", provider: "mock" },
+      error: null,
       providers: [],
       onUpdateSettings: vi.fn(),
       setSettingsForm: vi.fn(),
