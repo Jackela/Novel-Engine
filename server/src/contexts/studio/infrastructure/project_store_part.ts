@@ -127,6 +127,13 @@ export class ProjectStorePart {
   }
 
   updateProject(scope: ProjectScope, projectId: string, input: ProjectUpdateInput): ProjectRow {
+    if (
+      input.title === undefined &&
+      input.description === undefined &&
+      input.settingsJson === undefined
+    ) {
+      throw new RangeError("Project update requires at least one mutable field.");
+    }
     const updated = this.db
       .update(projects)
       .set({

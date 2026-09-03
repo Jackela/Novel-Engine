@@ -2,14 +2,17 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { eq } from "drizzle-orm";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, expectTypeOf, it } from "vitest";
 
 import type { ProjectUpdateInput } from "../../src/contexts/studio/application/ports/project_update_store.js";
 import type {
   ProjectRecord,
   StudioStore,
 } from "../../src/contexts/studio/application/ports/studio_store.js";
-import { ProjectService } from "../../src/contexts/studio/application/project_service.js";
+import {
+  ProjectService,
+  type ProjectUpdateCommand,
+} from "../../src/contexts/studio/application/project_service.js";
 import {
   InvalidProjectUpdateError,
   NotFoundError,
@@ -111,16 +114,28 @@ describe("Project settings application boundary", () => {
   });
 
   it("rejects a blank normalized title before consulting persistence", () => {
+    let storeCalls = 0;
+    let nowCalls = 0;
     const store = {
       updateProject: () => {
+        storeCalls += 1;
         throw new Error("store must not be called");
       },
     } as unknown as StudioStore;
-    const service = new ProjectService(store);
+    const service = new ProjectService(store, () => {
+      nowCalls += 1;
+      return new Date();
+    });
 
+    expectTypeOf<Record<string, never>>().not.toMatchTypeOf<ProjectUpdateCommand>();
+    expect(() => service.updateProject(PRINCIPAL, "project-1", {} as ProjectUpdateCommand)).toThrow(
+      InvalidProjectUpdateError,
+    );
     expect(() => service.updateProject(PRINCIPAL, "project-1", { title: "   " })).toThrow(
       InvalidProjectUpdateError,
     );
+    expect(storeCalls).toBe(0);
+    expect(nowCalls).toBe(0);
   });
 });
 
@@ -166,6 +181,21 @@ describe("Project settings store boundary", () => {
         expect(operation).toThrowError(new NotFoundError("Project not found."));
       }
       expect(store.findProject({ ownerId: "owner-1" }, seeded.id).title).toBe("Initial");
+    } finally {
+      studio.close();
+    }
+  });
+
+  it("rejects a runtime empty store command before issuing SQL", async () => {
+    const { queries, seeded, store, studio } = await openHarness();
+    try {
+      expectTypeOf<{ now: Date }>().not.toMatchTypeOf<ProjectUpdateInput>();
+      expect(() =>
+        store.updateProject({ ownerId: "owner-1" }, seeded.id, {
+          now: new Date(),
+        } as ProjectUpdateInput),
+      ).toThrow(RangeError);
+      expect(queries).toEqual([]);
     } finally {
       studio.close();
     }

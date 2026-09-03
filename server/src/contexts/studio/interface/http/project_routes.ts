@@ -7,6 +7,7 @@ import {
   ERROR_CODES,
   errorEnvelopeResponse,
 } from "../../../../shared/interface/http/error_envelope.js";
+import { projectUpdateCommand } from "../../application/project_service.js";
 import type { StudioServices } from "../../application/studio_services.js";
 import { projectUpdateRawKeyGuard } from "./project_update_raw_keys.js";
 import { withAsyncStudioErrors, withStudioErrors } from "./studio_error_mapping.js";
@@ -89,7 +90,7 @@ export const projectRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fas
         requireServices(options).projects.updateProject(
           requirePrincipal(request),
           request.params.projectId,
-          request.body,
+          projectUpdateCommand(request.body),
         ),
       ),
   );

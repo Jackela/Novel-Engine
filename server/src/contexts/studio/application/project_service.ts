@@ -4,6 +4,7 @@ import { InvalidProjectUpdateError } from "../domain/exceptions.js";
 import { InFlightOperationGuard } from "./operation_in_flight.js";
 import { dumpJson, projectPayload } from "./payloads.js";
 import type { ProjectArtifactCleaner } from "./ports/project_artifact_cleaner.js";
+import type { ProjectUpdateInput } from "./ports/project_update_store.js";
 import {
   type DocumentSummaryRecord,
   type StudioStore,
@@ -21,6 +22,28 @@ export interface ProjectServiceOptions {
   readonly inFlight?: InFlightOperationGuard | undefined;
   /** Optional only for persistence-focused unit harnesses. */
   readonly artifactCleaner?: ProjectArtifactCleaner | undefined;
+}
+
+interface OptionalProjectUpdateCommandFields {
+  readonly title?: string | undefined;
+  readonly description?: string | undefined;
+  readonly settings?: Record<string, unknown> | undefined;
+}
+
+/** A partial Project command whose type requires one selected mutable scalar. */
+export type ProjectUpdateCommand =
+  | (OptionalProjectUpdateCommandFields & { readonly title: string })
+  | (OptionalProjectUpdateCommandFields & { readonly description: string })
+  | (OptionalProjectUpdateCommandFields & { readonly settings: Record<string, unknown> });
+
+/** Narrow a schema-validated request after the raw at-least-one guard. */
+export function projectUpdateCommand(
+  input: OptionalProjectUpdateCommandFields,
+): ProjectUpdateCommand {
+  if (input.title !== undefined) return { ...input, title: input.title };
+  if (input.description !== undefined) return { ...input, description: input.description };
+  if (input.settings !== undefined) return { ...input, settings: input.settings };
+  throw new InvalidProjectUpdateError("At least one Project field is required.");
 }
 
 export class ProjectService {
@@ -83,23 +106,34 @@ export class ProjectService {
   updateProject(
     principal: Principal,
     projectId: string,
-    input: {
-      title?: string | undefined;
-      description?: string | undefined;
-      settings?: Record<string, unknown> | undefined;
-    },
+    input: ProjectUpdateCommand,
   ): Record<string, unknown> {
     const title = input.title?.trim();
     if (title === "") {
       throw new InvalidProjectUpdateError("Project title is required.");
     }
     const description = input.description?.trim();
-    const updated = this.store.updateProject(scopeForPrincipal(principal), projectId, {
-      ...(title === undefined ? {} : { title }),
-      ...(description === undefined ? {} : { description }),
-      ...(input.settings === undefined ? {} : { settingsJson: dumpJson(input.settings) }),
-      now: this.now(),
-    });
+    const settingsJson = input.settings === undefined ? undefined : dumpJson(input.settings);
+    if (title === undefined && description === undefined && settingsJson === undefined) {
+      throw new InvalidProjectUpdateError("At least one Project field is required.");
+    }
+    const now = this.now();
+    let normalized: ProjectUpdateInput;
+    if (title !== undefined) {
+      normalized = {
+        title,
+        ...(description === undefined ? {} : { description }),
+        ...(settingsJson === undefined ? {} : { settingsJson }),
+        now,
+      };
+    } else if (description !== undefined) {
+      normalized = { description, ...(settingsJson === undefined ? {} : { settingsJson }), now };
+    } else if (settingsJson !== undefined) {
+      normalized = { settingsJson, now };
+    } else {
+      throw new Error("Validated Project update lost every mutable field.");
+    }
+    const updated = this.store.updateProject(scopeForPrincipal(principal), projectId, normalized);
     return projectPayload(updated);
   }
 

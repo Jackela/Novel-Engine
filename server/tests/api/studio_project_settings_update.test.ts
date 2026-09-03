@@ -119,7 +119,8 @@ describe("Project settings PATCH persistence", () => {
 
   it("advances updated_at under same or backwards clocks and restores catalog ordering", async () => {
     const supplied = "2026-09-03T11:00:00.000Z";
-    const { app } = await buildStudioApp(frozenClock(supplied));
+    let clockTime = Date.parse(supplied);
+    const { app } = await buildStudioApp(() => new Date(clockTime));
     try {
       const jar = await ownerJar(app);
       const first = await call(app, jar, "POST", "/api/projects", { title: "First" });
@@ -129,11 +130,23 @@ describe("Project settings PATCH persistence", () => {
       const same = await call(app, jar, "PATCH", `/api/projects/${projectId}`, {
         title: "First",
       });
+      clockTime -= 1_000;
       const backwards = await call(app, jar, "PATCH", `/api/projects/${projectId}`, {
         description: "backwards clock",
       });
+      clockTime = Date.parse(supplied) + 10_000;
+      const forward = await call(app, jar, "PATCH", `/api/projects/${projectId}`, {
+        description: "forward clock",
+      });
       expect(Date.parse(same.json().updated_at)).toBe(Date.parse(supplied) + 1);
       expect(Date.parse(backwards.json().updated_at)).toBe(Date.parse(supplied) + 2);
+      expect(Date.parse(forward.json().updated_at)).toBe(clockTime);
+      const persisted = app.studioDb?.db
+        .select({ updatedAt: projects.updatedAt })
+        .from(projects)
+        .where(eq(projects.id, projectId))
+        .get();
+      expect(persisted?.updatedAt.getTime()).toBe(clockTime);
 
       const listed = await call(app, jar, "GET", "/api/projects");
       expect(listed.json().projects.map((row: { id: string }) => row.id)).toEqual([
