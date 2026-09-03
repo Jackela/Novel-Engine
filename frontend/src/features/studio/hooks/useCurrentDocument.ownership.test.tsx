@@ -194,4 +194,76 @@ describe("useCurrentDocument ownership", () => {
     expect(view.result()?.document).toBeNull();
     expect(view.result()?.error).toContain("project changed while loading");
   });
+
+  it("shares one mismatch convergence cycle after the initiating subscriber leaves", async () => {
+    const raced = { ...document, current_revision_id: "revision-2" };
+    const replacement = { ...document, current_revision_id: "revision-3" };
+    const refreshed = {
+      ...shell,
+      documents: [{ ...summary, current_revision_id: "revision-3" }],
+    };
+    const refresh = deferred<ProjectShell>();
+    vi.mocked(api.document).mockResolvedValueOnce(raced).mockResolvedValueOnce(replacement);
+    vi.mocked(api.project).mockReturnValue(refresh.promise);
+    const lifecycle = Symbol("shared mismatch lifecycle");
+    let showFirst = true;
+    let first: ReturnType<typeof useCurrentDocument> | undefined;
+    let second: ReturnType<typeof useCurrentDocument> | undefined;
+    let setSharedProject: (project: ProjectShell) => void = () => undefined;
+    const authority = {
+      captureProjectShellRead: () => ({
+        projectId: "project-1",
+        readEpoch: 1,
+        mutationEpoch: 0,
+      }),
+      publishProjectShellRead: (_capture: ProjectShellReadCapture, nextProject: ProjectShell) => {
+        setSharedProject(nextProject);
+        return true;
+      },
+      onSessionLoss: vi.fn(),
+      onProjectMissing: vi.fn(),
+    };
+
+    function First({ currentSummary }: { currentSummary: DocumentSummary }): null {
+      first = useCurrentDocument("project-1", {
+        summary: currentSummary,
+        lifecycle,
+        ...authority,
+      });
+      return null;
+    }
+    function Second({ currentSummary }: { currentSummary: DocumentSummary }): null {
+      second = useCurrentDocument("project-1", {
+        summary: currentSummary,
+        lifecycle,
+        ...authority,
+      });
+      return null;
+    }
+    function Parent() {
+      const [project, setProject] = useState(shell);
+      const currentSummary = project.documents[0];
+      if (!currentSummary) return null;
+      setSharedProject = setProject;
+      return (
+        <>
+          {showFirst ? <First currentSummary={currentSummary} /> : null}
+          <Second currentSummary={currentSummary} />
+        </>
+      );
+    }
+    const mounted = harness.mount(<Parent />);
+    await flushEffects();
+    await vi.waitFor(() => expect(api.project).toHaveBeenCalled());
+
+    showFirst = false;
+    act(() => mounted.root.render(<Parent />));
+    await act(async () => refresh.resolve(refreshed));
+    await flushEffects();
+
+    expect(api.document).toHaveBeenCalledTimes(2);
+    expect(api.project).toHaveBeenCalledTimes(1);
+    expect(first?.document).toBeNull();
+    expect(second?.document).toEqual(replacement);
+  });
 });

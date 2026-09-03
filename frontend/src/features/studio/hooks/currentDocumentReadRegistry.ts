@@ -1,5 +1,4 @@
-import { api } from "@/app/api";
-import type { StudioDocument } from "@/app/types/studio";
+import type { CurrentDocumentReadOutcome } from "./currentDocumentReadCycle";
 
 export interface CurrentDocumentReadKey {
   readonly projectId: string;
@@ -11,7 +10,7 @@ export interface CurrentDocumentReadKey {
 interface SharedRead {
   readonly key: CurrentDocumentReadKey;
   readonly controller: AbortController;
-  readonly promise: Promise<StudioDocument>;
+  readonly promise: Promise<CurrentDocumentReadOutcome>;
   subscribers: number;
   settled: boolean;
 }
@@ -35,19 +34,24 @@ function findRead(key: CurrentDocumentReadKey): SharedRead | undefined {
 }
 
 export interface CurrentDocumentReadLease {
-  readonly promise: Promise<StudioDocument>;
+  readonly promise: Promise<CurrentDocumentReadOutcome>;
   release: () => void;
 }
 
-/** Coalesces only an exact causal owner tuple; it never caches successful bodies. */
-export function acquireCurrentDocumentRead(key: CurrentDocumentReadKey): CurrentDocumentReadLease {
+type StartRead = (signal: AbortSignal) => Promise<CurrentDocumentReadOutcome>;
+
+/** Coalesces the complete convergence cycle for one exact causal owner tuple. */
+export function acquireCurrentDocumentRead(
+  key: CurrentDocumentReadKey,
+  start: StartRead,
+): CurrentDocumentReadLease {
   let read = findRead(key);
   if (!read) {
     const controller = new AbortController();
     read = {
       key,
       controller,
-      promise: api.document(key.projectId, key.documentId, { signal: controller.signal }),
+      promise: start(controller.signal),
       subscribers: 0,
       settled: false,
     };

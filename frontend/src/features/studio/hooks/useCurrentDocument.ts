@@ -1,18 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { api, HttpError } from "@/app/api";
-import type { DocumentSummary, ProjectShell, StudioDocument } from "@/app/types/studio";
+import type { DocumentSummary, StudioDocument } from "@/app/types/studio";
 
+import { runCurrentDocumentReadCycle } from "./currentDocumentReadCycle";
 import {
   acquireCurrentDocumentRead,
   type CurrentDocumentReadKey,
 } from "./currentDocumentReadRegistry";
 import type { ProjectShellReadAuthority } from "./projectShellReadAuthority";
-import { toErrorMessage } from "./toErrorMessage";
 
-const DEFAULT_ERROR = "Unable to load this document. Please retry.";
-const CHURN_ERROR = "This document changed again while loading. Please retry.";
-const INCONSISTENT_ERROR = "This document is listed but could not be loaded. Please retry.";
 const SHELL_CHANGED_ERROR = "The project changed while loading this document. Please retry.";
 
 interface CurrentDocumentState {
@@ -20,12 +16,8 @@ interface CurrentDocumentState {
   readonly document: StudioDocument | null;
   readonly error: string | null;
   readonly isLoading: boolean;
-}
-
-interface ConvergenceGuard {
-  readonly projectId: string;
-  readonly documentId: string;
-  readonly replacementRevisionId: string;
+  readonly attempt: number;
+  readonly completed: boolean;
 }
 
 interface UseCurrentDocumentOptions extends ProjectShellReadAuthority {
@@ -47,16 +39,6 @@ function sameKey(left: CurrentDocumentReadKey | null, right: CurrentDocumentRead
   );
 }
 
-function summaryIn(
-  shell: ProjectShell,
-  projectId: string,
-  documentId: string,
-): DocumentSummary | null {
-  if (shell.id !== projectId) return null;
-  const summary = shell.documents.find((document) => document.id === documentId) ?? null;
-  return summary?.project_id === projectId ? summary : null;
-}
-
 export function useCurrentDocument(
   projectId: string,
   {
@@ -74,10 +56,11 @@ export function useCurrentDocument(
     document: null,
     error: null,
     isLoading: summary !== null,
+    attempt: 0,
+    completed: false,
   });
   const stateRef = useRef(state);
   const cycleRef = useRef<symbol | null>(null);
-  const convergenceRef = useRef<ConvergenceGuard | null>(null);
 
   useEffect(() => {
     stateRef.current = state;
@@ -102,112 +85,90 @@ export function useCurrentDocument(
   useEffect(() => {
     if (key === null) {
       cycleRef.current = null;
-      convergenceRef.current = null;
-      setState({ key: null, document: null, error: null, isLoading: false });
+      setState({
+        key: null,
+        document: null,
+        error: null,
+        isLoading: false,
+        attempt: retryEpoch,
+        completed: true,
+      });
       return;
     }
     const accepted = stateRef.current;
-    if (
-      sameKey(accepted.key, key) &&
-      accepted.document?.current_revision_id === key.expectedRevisionId
-    ) {
+    if (sameKey(accepted.key, key) && accepted.completed && accepted.attempt === retryEpoch) {
       return;
     }
 
     const cycle = Symbol(`current document read ${retryEpoch}`);
     cycleRef.current = cycle;
-    setState({ key, document: null, error: null, isLoading: true });
-    const lease = acquireCurrentDocumentRead(key);
+    setState({
+      key,
+      document: null,
+      error: null,
+      isLoading: true,
+      attempt: retryEpoch,
+      completed: false,
+    });
+    const authority = { captureProjectShellRead, publishProjectShellRead };
+    const lease = acquireCurrentDocumentRead(key, (signal) =>
+      runCurrentDocumentReadCycle(key, authority, signal),
+    );
     let released = false;
     const isCurrent = () => !released && cycleRef.current === cycle;
     const publishFailure = (message: string, failureKey = key) => {
       if (isCurrent())
-        setState({ key: failureKey, document: null, error: message, isLoading: false });
-    };
-
-    const refreshShell = async (): Promise<ProjectShell | null> => {
-      const capture = captureProjectShellRead();
-      try {
-        const refreshed = await api.project(projectId);
-        if (!isCurrent()) return null;
-        if (!publishProjectShellRead(capture, refreshed)) {
-          publishFailure(SHELL_CHANGED_ERROR);
-          return null;
-        }
-        return refreshed;
-      } catch (reason) {
-        if (!isCurrent()) return null;
-        if (reason instanceof HttpError && reason.status === 401) {
-          onSessionLoss();
-          return null;
-        }
-        if (reason instanceof HttpError && reason.status === 404) {
-          onProjectMissing();
-          return null;
-        }
-        publishFailure(toErrorMessage(reason, DEFAULT_ERROR));
-        return null;
-      }
+        setState({
+          key: failureKey,
+          document: null,
+          error: message,
+          isLoading: false,
+          attempt: retryEpoch,
+          completed: true,
+        });
     };
 
     void lease.promise.then(
-      async (document) => {
+      (outcome) => {
         if (!isCurrent()) return;
-        if (document.project_id !== key.projectId || document.id !== key.documentId) {
-          publishFailure(INCONSISTENT_ERROR);
-          return;
-        }
-        if (document.current_revision_id === key.expectedRevisionId) {
-          convergenceRef.current = null;
-          setState({ key, document, error: null, isLoading: false });
-          return;
-        }
-
-        const guard = convergenceRef.current;
-        if (
-          guard?.projectId === projectId &&
-          guard.documentId === key.documentId &&
-          guard.replacementRevisionId === key.expectedRevisionId
-        ) {
-          convergenceRef.current = null;
-          publishFailure(CHURN_ERROR);
-          return;
-        }
-
-        const refreshed = await refreshShell();
-        if (!refreshed || !isCurrent()) return;
-        const freshSummary = summaryIn(refreshed, projectId, key.documentId);
-        if (!freshSummary) {
-          convergenceRef.current = null;
-          return;
-        }
-        const freshKey = { ...key, expectedRevisionId: freshSummary.current_revision_id };
-        if (document.current_revision_id === freshSummary.current_revision_id) {
-          convergenceRef.current = null;
-          setState({ key: freshKey, document, error: null, isLoading: false });
-          return;
-        }
-        convergenceRef.current = {
-          projectId,
-          documentId: key.documentId,
-          replacementRevisionId: freshSummary.current_revision_id,
-        };
-        setState({ key: freshKey, document: null, error: null, isLoading: true });
-      },
-      async (reason) => {
-        if (!isCurrent()) return;
-        if (reason instanceof HttpError && reason.status === 401) {
+        if (outcome.status === "session-lost") {
           onSessionLoss();
           return;
         }
-        if (reason instanceof HttpError && reason.status === 404) {
-          const refreshed = await refreshShell();
-          if (!refreshed || !isCurrent()) return;
-          if (summaryIn(refreshed, projectId, key.documentId)) publishFailure(INCONSISTENT_ERROR);
+        if (outcome.status === "project-missing") {
+          onProjectMissing();
           return;
         }
-        publishFailure(toErrorMessage(reason, DEFAULT_ERROR));
+        if ("commitShell" in outcome && outcome.commitShell && !outcome.commitShell()) {
+          publishFailure(SHELL_CHANGED_ERROR);
+          return;
+        }
+        switch (outcome.status) {
+          case "document":
+            setState({
+              key: outcome.key,
+              document: outcome.document,
+              error: null,
+              isLoading: false,
+              attempt: retryEpoch,
+              completed: true,
+            });
+            return;
+          case "missing":
+            setState({
+              key,
+              document: null,
+              error: null,
+              isLoading: false,
+              attempt: retryEpoch,
+              completed: true,
+            });
+            return;
+          case "failure":
+            publishFailure(outcome.message, outcome.key ?? key);
+        }
       },
+      () => undefined,
     );
 
     return () => {
@@ -220,16 +181,21 @@ export function useCurrentDocument(
     key,
     onProjectMissing,
     onSessionLoss,
-    projectId,
     publishProjectShellRead,
     retryEpoch,
   ]);
 
   const visible = sameKey(state.key, key)
     ? state
-    : { key, document: null, error: null, isLoading: key !== null };
+    : {
+        key,
+        document: null,
+        error: null,
+        isLoading: key !== null,
+        attempt: retryEpoch,
+        completed: false,
+      };
   const retry = useCallback(() => {
-    convergenceRef.current = null;
     setRetryEpoch((current) => current + 1);
   }, []);
 
