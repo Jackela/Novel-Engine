@@ -234,3 +234,41 @@ explicit Retry advances the attempt epoch.
 This repair does not claim lazy Inspector ownership, mutation/Draft separation,
 the complete browser matrix, independent fixed-SHA review closure, or CI.
 Tasks 3.2, 3.4, 3.5, 5.2, 5.3, and 5.4 remain open.
+
+## Unexpected convergence-failure repair
+
+- Superseding frontend implementation SHA:
+  `5f4203afe019479a4ca39fdb94ac594c0d0fd9f7`
+- Comparison SHA: `d59a7b14c16a7b661ebab3c04bf47874fc01b40b`
+
+Final standards review found that the shared-cycle Promise still had an empty
+rejection handler. A programming error outside the cycle's structured HTTP and
+contract outcomes could therefore leave every subscriber permanently loading
+while erasing the diagnostic. The registry now converts one shared unexpected
+rejection into an explicit broadcast outcome and reports the original Error
+once through the browser's standard `reportError` channel, with a
+`console.error` fallback where that channel is unavailable. Every surviving
+subscriber leaves loading, receives a readable local Retry state, and shared
+cleanup still runs through the settled Promise.
+
+Shell publication is guarded the same way. If the authority callback throws,
+its memoized shared commit reports the original Error once and returns an
+unexpected terminal result instead of rethrowing independently from every
+subscriber. Regressions cover both an authority capture/cycle rejection shared
+by two subscribers and a shell-publication throw. They assert one diagnostic,
+no permanent loading state, a readable error, and bounded request counts.
+
+| Validation surface at `5f4203af` | Result |
+|---|---|
+| Focused current-Document regressions | Passed: 3 files and 17 tests. |
+| Full frontend unit suite | Passed: 79 files and 435 tests. |
+| Frontend lint, format, and type-check | Passed: Biome checked 205 files, formatter checked 204 files, and TypeScript reported no error. |
+| Frontend production build | Passed: Vite built 1,925 modules and verified Novel Engine 0.6.0 in HTML and seven JavaScript bundles. |
+| API-types drift | Passed against the current OpenAPI snapshot. |
+| React Doctor | Passed: score 100 and zero diagnostics. |
+| Repository gates | Passed: SSOT, hygiene, 611-file size, migration-channel, llms-txt, and OpenAPI snapshot gates. |
+| TypeScript-backend Studio smoke | Passed: three Chromium workflows. |
+| Strict OpenSpec | Passed: 19 items, zero failures. |
+
+The repair does not change the open-task boundary. Tasks 3.2, 3.4, 3.5, 5.2,
+5.3, and 5.4 remain open pending their separately required evidence.
