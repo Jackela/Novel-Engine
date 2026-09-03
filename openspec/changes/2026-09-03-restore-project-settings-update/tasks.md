@@ -2,46 +2,46 @@
 
 ## 1. Contract-first update coverage
 
-- [ ] 1.1 Add real API failures for title-only, description-only,
+- [x] 1.1 Add real API failures for title-only, description-only,
       settings-only, and combined PATCH requests; prove omitted fields and
       `import_hash`/`created_at` remain unchanged, included settings replaces the
       complete object, and a strictly later `updated_at` is returned and
       persisted under normal, same-millisecond, and backwards clocks.
-- [ ] 1.2 Add strict-body failures for `{}`, unknown properties, null/array
+- [x] 1.2 Add strict-body failures for `{}`, unknown properties, null/array
       bodies, unknown-only and allowed-plus-unknown objects, wrong field types,
       blank-after-trim title, over-240 title, over-10,000 description, and
       non-object settings; assert the raw-key check runs before AJV removal,
       at-least-one examines original supported keys, and every case returns the
       exact 422 envelope with zero project mutation.
-- [ ] 1.3 Add guard/scope failures proving no session returns 401, missing or
+- [x] 1.3 Add guard/scope failures proving no session returns 401, missing or
       mismatched CSRF returns its exact 403 code, no guard failure enters the
       update store, and missing/cross-Owner projects return byte-identical 404
       `NOT_FOUND` / `Project not found.` envelopes after valid guards.
-- [ ] 1.4 Add store/application failures proving normalization occurs before one
+- [x] 1.4 Add store/application failures proving normalization occurs before one
       Owner-scoped atomic update, selected scalar assignments plus
       `max(stored + 1 ms, supplied now)` commit together, equal/backwards clocks
       stay strictly monotonic, a zero-row update is not-found, and injected
       failure preserves every field and timestamp.
-- [ ] 1.5 Assert the exact success response contains only Project scalar fields
+- [x] 1.5 Assert the exact success response contains only Project scalar fields
       and never `documents`, `volumes`, revision fields, metadata, or Markdown.
 
 ## 2. Server Project PATCH
 
-- [ ] 2.1 Add typed closed request schema and update input with at least one
+- [x] 2.1 Add typed closed request schema and update input with at least one
       property, existing title/description bounds, free-form object settings,
       trim normalization, and no client-owned id/timestamp/import fields.
-- [ ] 2.2 Register the principal/CSRF guard and raw original-key checker as
+- [x] 2.2 Register the principal/CSRF guard and raw original-key checker as
       ordered route `preValidation` hooks ahead of AJV; reject unknown-only,
       allowed-plus-unknown, and no-supported-key inputs without entering the
       service or store.
-- [ ] 2.3 Add the Project service update over one Owner-scoped store seam,
+- [x] 2.3 Add the Project service update over one Owner-scoped store seam,
       preserving omitted columns, replacing included settings, assigning one
       strictly monotonic `updated_at`, and mapping zero matched rows to uniform
       Project not-found.
-- [ ] 2.4 Mount CSRF-protected PATCH on the existing project resource and return
+- [x] 2.4 Mount CSRF-protected PATCH on the existing project resource and return
       the existing strict scalar Project payload with exact 401/403/404/422/
       500/503 codes and envelopes.
-- [ ] 2.5 Deliberately regenerate the OpenAPI baseline and frontend generated
+- [x] 2.5 Deliberately regenerate the OpenAPI baseline and frontend generated
       types; prove optional closed fields, at-least-one constraint, scalar
       response, error envelopes, and zero schema/migration drift.
 
