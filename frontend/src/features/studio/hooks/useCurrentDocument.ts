@@ -1,4 +1,3 @@
-import type { Dispatch, SetStateAction } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { api, HttpError } from "@/app/api";
@@ -8,11 +7,13 @@ import {
   acquireCurrentDocumentRead,
   type CurrentDocumentReadKey,
 } from "./currentDocumentReadRegistry";
+import type { ProjectShellReadAuthority } from "./projectShellReadAuthority";
 import { toErrorMessage } from "./toErrorMessage";
 
 const DEFAULT_ERROR = "Unable to load this document. Please retry.";
 const CHURN_ERROR = "This document changed again while loading. Please retry.";
 const INCONSISTENT_ERROR = "This document is listed but could not be loaded. Please retry.";
+const SHELL_CHANGED_ERROR = "The project changed while loading this document. Please retry.";
 
 interface CurrentDocumentState {
   readonly key: CurrentDocumentReadKey | null;
@@ -27,10 +28,9 @@ interface ConvergenceGuard {
   readonly replacementRevisionId: string;
 }
 
-interface UseCurrentDocumentOptions {
+interface UseCurrentDocumentOptions extends ProjectShellReadAuthority {
   readonly summary: DocumentSummary | null;
   readonly lifecycle: symbol;
-  readonly setProject: Dispatch<SetStateAction<ProjectShell | null>>;
   readonly onSessionLoss: () => void;
   readonly onProjectMissing: () => void;
 }
@@ -47,13 +47,26 @@ function sameKey(left: CurrentDocumentReadKey | null, right: CurrentDocumentRead
   );
 }
 
-function summaryIn(shell: ProjectShell, documentId: string): DocumentSummary | null {
-  return shell.documents.find((document) => document.id === documentId) ?? null;
+function summaryIn(
+  shell: ProjectShell,
+  projectId: string,
+  documentId: string,
+): DocumentSummary | null {
+  if (shell.id !== projectId) return null;
+  const summary = shell.documents.find((document) => document.id === documentId) ?? null;
+  return summary?.project_id === projectId ? summary : null;
 }
 
 export function useCurrentDocument(
   projectId: string,
-  { summary, lifecycle, setProject, onSessionLoss, onProjectMissing }: UseCurrentDocumentOptions,
+  {
+    summary,
+    lifecycle,
+    captureProjectShellRead,
+    publishProjectShellRead,
+    onSessionLoss,
+    onProjectMissing,
+  }: UseCurrentDocumentOptions,
 ) {
   const [retryEpoch, setRetryEpoch] = useState(0);
   const [state, setState] = useState<CurrentDocumentState>({
@@ -70,17 +83,20 @@ export function useCurrentDocument(
     stateRef.current = state;
   }, [state]);
 
+  const summaryProjectId = summary?.project_id ?? null;
+  const summaryDocumentId = summary?.id ?? null;
+  const summaryRevisionId = summary?.current_revision_id ?? null;
   const key = useMemo<CurrentDocumentReadKey | null>(
     () =>
-      summary
+      summaryProjectId === projectId && summaryDocumentId !== null && summaryRevisionId !== null
         ? {
             projectId,
-            documentId: summary.id,
-            expectedRevisionId: summary.current_revision_id,
+            documentId: summaryDocumentId,
+            expectedRevisionId: summaryRevisionId,
             lifecycle,
           }
         : null,
-    [lifecycle, projectId, summary],
+    [lifecycle, projectId, summaryDocumentId, summaryProjectId, summaryRevisionId],
   );
 
   useEffect(() => {
@@ -110,10 +126,14 @@ export function useCurrentDocument(
     };
 
     const refreshShell = async (): Promise<ProjectShell | null> => {
+      const capture = captureProjectShellRead();
       try {
         const refreshed = await api.project(projectId);
         if (!isCurrent()) return null;
-        setProject((current) => (isCurrent() && current?.id === projectId ? refreshed : current));
+        if (!publishProjectShellRead(capture, refreshed)) {
+          publishFailure(SHELL_CHANGED_ERROR);
+          return null;
+        }
         return refreshed;
       } catch (reason) {
         if (!isCurrent()) return null;
@@ -156,7 +176,7 @@ export function useCurrentDocument(
 
         const refreshed = await refreshShell();
         if (!refreshed || !isCurrent()) return;
-        const freshSummary = summaryIn(refreshed, key.documentId);
+        const freshSummary = summaryIn(refreshed, projectId, key.documentId);
         if (!freshSummary) {
           convergenceRef.current = null;
           return;
@@ -183,7 +203,7 @@ export function useCurrentDocument(
         if (reason instanceof HttpError && reason.status === 404) {
           const refreshed = await refreshShell();
           if (!refreshed || !isCurrent()) return;
-          if (summaryIn(refreshed, key.documentId)) publishFailure(INCONSISTENT_ERROR);
+          if (summaryIn(refreshed, projectId, key.documentId)) publishFailure(INCONSISTENT_ERROR);
           return;
         }
         publishFailure(toErrorMessage(reason, DEFAULT_ERROR));
@@ -195,7 +215,15 @@ export function useCurrentDocument(
       lease.release();
       if (cycleRef.current === cycle) cycleRef.current = null;
     };
-  }, [key, onProjectMissing, onSessionLoss, projectId, retryEpoch, setProject]);
+  }, [
+    captureProjectShellRead,
+    key,
+    onProjectMissing,
+    onSessionLoss,
+    projectId,
+    publishProjectShellRead,
+    retryEpoch,
+  ]);
 
   const visible = sameKey(state.key, key)
     ? state

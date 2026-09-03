@@ -1,16 +1,16 @@
-import type { Dispatch, SetStateAction } from "react";
 import { useCallback } from "react";
 import type { NavigateFunction } from "react-router-dom";
 
-import type { DocumentSummary, ProjectShell } from "@/app/types/studio";
+import type { DocumentSummary } from "@/app/types/studio";
 
+import type { ProjectShellReadAuthority } from "./projectShellReadAuthority";
 import { useCurrentDocument } from "./useCurrentDocument";
 
 export function usePageCurrentDocument(
   projectId: string,
   summary: DocumentSummary | null,
   lifecycle: symbol,
-  setProject: Dispatch<SetStateAction<ProjectShell | null>>,
+  shellReadAuthority: ProjectShellReadAuthority,
   navigate: NavigateFunction,
 ) {
   const onSessionLoss = useCallback(() => navigate("/", { replace: true }), [navigate]);
@@ -18,7 +18,7 @@ export function usePageCurrentDocument(
   return useCurrentDocument(projectId, {
     summary,
     lifecycle,
-    setProject,
+    ...shellReadAuthority,
     onSessionLoss,
     onProjectMissing,
   });

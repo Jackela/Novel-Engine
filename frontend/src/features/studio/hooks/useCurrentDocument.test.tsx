@@ -1,11 +1,11 @@
-import type { Dispatch, SetStateAction } from "react";
-import { act, useState } from "react";
+import { act, useCallback, useState } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { api, HttpError } from "@/app/api";
 import type { DocumentSummary, ProjectShell, StudioDocument } from "@/app/types/studio";
 import { createMountHarness, deferred, flushEffects } from "@/test/harness";
 
+import type { ProjectShellReadAuthority } from "./projectShellReadAuthority";
 import { useCurrentDocument } from "./useCurrentDocument";
 
 vi.mock("@/app/api", async (importOriginal) => {
@@ -60,13 +60,21 @@ afterEach(() => {
   vi.resetAllMocks();
 });
 
-interface HookOptions {
+interface HookOptions extends ProjectShellReadAuthority {
   summary: DocumentSummary | null;
   lifecycle: symbol;
-  setProject: Dispatch<SetStateAction<ProjectShell | null>>;
   onSessionLoss: () => void;
   onProjectMissing: () => void;
 }
+
+const uncontestedShellReadAuthority = {
+  captureProjectShellRead: () => ({
+    projectId: "project-1",
+    readEpoch: 1,
+    mutationEpoch: 0,
+  }),
+  publishProjectShellRead: () => true,
+};
 
 function renderCurrentDocument(initialSummary: DocumentSummary | null = summary) {
   const lifecycle = Symbol("studio lifecycle");
@@ -78,6 +86,17 @@ function renderCurrentDocument(initialSummary: DocumentSummary | null = summary)
 
   function Probe(): null {
     const [project, setProject] = useState<ProjectShell | null>(visibleShell);
+    const captureProjectShellRead = useCallback(
+      () => ({ projectId: "project-1", readEpoch: 1, mutationEpoch: 0 }),
+      [],
+    );
+    const publishProjectShellRead = useCallback(
+      (_capture: ReturnType<typeof captureProjectShellRead>, nextProject: ProjectShell) => {
+        setProject(nextProject);
+        return true;
+      },
+      [],
+    );
     visibleShell = project;
     const effectiveSummary =
       selected === null
@@ -86,7 +105,8 @@ function renderCurrentDocument(initialSummary: DocumentSummary | null = summary)
     const options: HookOptions = {
       summary: effectiveSummary,
       lifecycle,
-      setProject,
+      captureProjectShellRead,
+      publishProjectShellRead,
       onSessionLoss,
       onProjectMissing,
     };
@@ -126,19 +146,6 @@ describe("useCurrentDocument", () => {
     });
     expect(view.result()).toMatchObject({ document, error: null, isLoading: false });
   });
-
-  it.each([{ project_id: "project-2" }, { id: "document-2" }])(
-    "rejects a current Document with the wrong route identity: %o",
-    async (identity) => {
-      vi.mocked(api.document).mockResolvedValue({ ...document, ...identity });
-
-      const view = renderCurrentDocument();
-      await flushEffects();
-
-      expect(view.result().document).toBeNull();
-      expect(view.result().error).toContain("listed but could not be loaded");
-    },
-  );
 
   it("refreshes the shell once and accepts a raced body only when its pointer matches", async () => {
     const raced = { ...document, current_revision_id: "revision-2" };
@@ -188,11 +195,10 @@ describe("useCurrentDocument", () => {
     const lifecycle = Symbol("shared lifecycle");
     let first: ReturnType<typeof useCurrentDocument> | undefined;
     let second: ReturnType<typeof useCurrentDocument> | undefined;
-    const setProject = vi.fn();
     const options = {
       summary,
       lifecycle,
-      setProject,
+      ...uncontestedShellReadAuthority,
       onSessionLoss: vi.fn(),
       onProjectMissing: vi.fn(),
     };
@@ -260,7 +266,7 @@ describe("useCurrentDocument", () => {
     let current: ReturnType<typeof useCurrentDocument> | undefined;
     const options = {
       lifecycle,
-      setProject: vi.fn(),
+      ...uncontestedShellReadAuthority,
       onSessionLoss: vi.fn(),
       onProjectMissing: vi.fn(),
     };

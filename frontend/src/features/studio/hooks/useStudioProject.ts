@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { api, HttpError } from "@/app/api";
 import type { Project, Review, StudioExport } from "@/app/types/studio";
 
+import type { ProjectShellReadCapture } from "./projectShellReadAuthority";
 import { toErrorMessage } from "./toErrorMessage";
 
 const DEFAULT_LOAD_ERROR = "Unable to load the project. Please retry.";
@@ -48,6 +49,8 @@ export function useStudioProject(projectId: string) {
   const navigate = useNavigate();
   const [lifecycle] = useState(() => Symbol("studio lifecycle"));
   const activeProjectIdRef = useRef<string | null>(null);
+  const projectMutationEpochRef = useRef(0);
+  const projectReadEpochRef = useRef(0);
   const requestEpochRef = useRef(0);
   const requestRef = useRef<ProjectLoadRequest | null>(null);
   const [aggregate, setAggregate] = useState<ProjectAggregateState>(() => ({
@@ -81,12 +84,15 @@ export function useStudioProject(projectId: string) {
         requestRef.current = null;
       }
       requestEpochRef.current += 1;
+      projectMutationEpochRef.current += 1;
+      projectReadEpochRef.current += 1;
     };
   }, [projectId]);
 
   const setProject = useCallback<Dispatch<SetStateAction<Project | null>>>(
     (nextProject) => {
       if (activeProjectIdRef.current !== projectId) return;
+      projectMutationEpochRef.current += 1;
       setAggregate((current) => {
         if (activeProjectIdRef.current !== projectId) return current;
         const currentProject = current.projectId === projectId ? current.project : null;
@@ -97,6 +103,38 @@ export function useStudioProject(projectId: string) {
           exports: current.projectId === projectId ? current.exports : [],
         };
       });
+    },
+    [projectId],
+  );
+
+  const captureProjectShellRead = useCallback(
+    (): ProjectShellReadCapture => ({
+      projectId,
+      readEpoch: ++projectReadEpochRef.current,
+      mutationEpoch: projectMutationEpochRef.current,
+    }),
+    [projectId],
+  );
+
+  const publishProjectShellRead = useCallback(
+    (capture: ProjectShellReadCapture, nextProject: Project): boolean => {
+      if (
+        activeProjectIdRef.current !== projectId ||
+        capture.projectId !== projectId ||
+        nextProject.id !== projectId ||
+        nextProject.documents.some((document) => document.project_id !== projectId) ||
+        nextProject.volumes.some((volume) => volume.project_id !== projectId) ||
+        capture.readEpoch !== projectReadEpochRef.current ||
+        capture.mutationEpoch !== projectMutationEpochRef.current
+      )
+        return false;
+      setAggregate((current) => ({
+        projectId,
+        project: nextProject,
+        reviews: current.projectId === projectId ? current.reviews : [],
+        exports: current.projectId === projectId ? current.exports : [],
+      }));
+      return true;
     },
     [projectId],
   );
@@ -159,6 +197,7 @@ export function useStudioProject(projectId: string) {
     }
 
     const controller = new AbortController();
+    projectReadEpochRef.current += 1;
     const requestEpoch = ++requestEpochRef.current;
     const request: ProjectLoadRequest = {
       projectId,
@@ -247,6 +286,8 @@ export function useStudioProject(projectId: string) {
   return {
     project,
     setProject,
+    captureProjectShellRead,
+    publishProjectShellRead,
     reviews,
     setReviews,
     exports,

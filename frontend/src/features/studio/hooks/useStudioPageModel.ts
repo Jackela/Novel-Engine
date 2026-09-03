@@ -36,13 +36,15 @@ export function useStudioPageModel(projectId: string, route: StudioRouteState, n
     isLoading,
     retryLoad,
     lifecycle,
+    captureProjectShellRead,
+    publishProjectShellRead,
   } = useStudioProject(projectId);
   const activeSummary = useActiveDocument(project, section, activeId);
   const currentDocument = usePageCurrentDocument(
     projectId,
     activeSummary,
     lifecycle,
-    setProject,
+    { captureProjectShellRead, publishProjectShellRead },
     navigate,
   );
   const activeDocument = currentDocument.document;
