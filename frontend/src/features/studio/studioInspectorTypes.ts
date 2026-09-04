@@ -57,6 +57,10 @@ export interface InspectorCopilotModel {
 
 export interface InspectorExportModel {
   exports: StudioExport[];
+  historyInitialized?: boolean;
+  isLoadingHistory?: boolean;
+  historyError?: string | null;
+  onRetryHistory?: () => void | Promise<void>;
   exportingFormat: ExportFormat | null;
   retryingFormat?: ExportFormat | null;
   failedFormat: ExportFormat | null;
@@ -67,6 +71,11 @@ export interface InspectorExportModel {
 
 export interface InspectorReviewModel {
   latestReview: Review | null;
+  historyInitialized?: boolean;
+  isLoadingHistory?: boolean;
+  historyError?: string | null;
+  actionError?: string | null;
+  onRetryHistory?: () => void | Promise<void>;
   onRunReview: () => void | Promise<void>;
 }
 

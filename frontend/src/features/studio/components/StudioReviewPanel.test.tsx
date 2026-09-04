@@ -12,6 +12,37 @@ afterEach(() => {
 });
 
 describe("StudioReviewPanel", () => {
+  it("distinguishes pending and failed history from an empty successful history", () => {
+    const pending = harness.mount(
+      <StudioReviewPanel
+        historyInitialized={false}
+        isLoadingHistory
+        latestReview={null}
+        onRunReview={vi.fn()}
+      />,
+    );
+    expect(pending.container.querySelector('[role="status"]')?.textContent).toContain(
+      "Loading review history",
+    );
+    expect(pending.container.textContent).not.toContain("No review findings");
+
+    act(() => {
+      pending.root.render(
+        <StudioReviewPanel
+          historyError="Unable to load review history."
+          historyInitialized={false}
+          latestReview={null}
+          onRetryHistory={vi.fn()}
+          onRunReview={vi.fn()}
+        />,
+      );
+    });
+    expect(pending.container.querySelector('[role="alert"]')?.textContent).toContain(
+      "Unable to load review history.",
+    );
+    expect(pending.container.textContent).not.toContain("No review findings");
+  });
+
   it("does not steal focus when the author moves to another connected control", async () => {
     const completion = deferred<void>();
     const onRunReview = vi.fn(() => completion.promise);

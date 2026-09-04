@@ -7,6 +7,7 @@ import { buildLoreStatusModel, buildStudioNavigatorProps } from "./studioPageMod
 import { useActiveDocument } from "./useActiveDocument";
 import { useDocumentDraft } from "./useDocumentDraft";
 import { useExportDownload } from "./useExportDownload";
+import { useLazyInspectorHistories } from "./useLazyInspectorHistories";
 import { usePageCurrentDocument } from "./usePageCurrentDocument";
 import { useScopedRevisionRestore } from "./useScopedRevisionRestore";
 import { useStudioActions } from "./useStudioActions";
@@ -26,10 +27,6 @@ export function useStudioPageModel(projectId: string, route: StudioRouteState, n
   const {
     project,
     setProject,
-    reviews,
-    setReviews,
-    exports,
-    setExports,
     error,
     setError,
     loadError,
@@ -38,7 +35,21 @@ export function useStudioPageModel(projectId: string, route: StudioRouteState, n
     lifecycle,
     captureProjectShellRead,
     publishProjectShellRead,
+    recheckProject,
   } = useStudioProject(projectId);
+  const onProjectResourceSessionLost = useCallback(
+    () => navigate("/", { replace: true }),
+    [navigate],
+  );
+  const inspectorHistories = useLazyInspectorHistories({
+    enabled: project !== null,
+    inspector: routeInspector,
+    projectId,
+    recheckProject,
+    onSessionLost: onProjectResourceSessionLost,
+  });
+  const reviews = inspectorHistories.review.data;
+  const exports = inspectorHistories.export.data;
   const activeSummary = useActiveDocument(project, section, activeId);
   const currentDocument = usePageCurrentDocument(
     projectId,
@@ -120,13 +131,13 @@ export function useStudioPageModel(projectId: string, route: StudioRouteState, n
     projectErrors.publishers.search,
   );
   const providers = useStudioProviders();
-  const onSettingsSessionLost = useCallback(() => navigate("/", { replace: true }), [navigate]);
+  const onSettingsSessionLost = onProjectResourceSessionLost;
   const onSettingsProjectMissing = useCallback(
     () => navigate("/projects", { replace: true }),
     [navigate],
   );
   const { exportProject, retryExport, exportingFormat, retryingFormat, failedFormat, exportError } =
-    useExportDownload(project, projectId, setExports);
+    useExportDownload(project, projectId, inspectorHistories.export.setData);
   const {
     createDocument,
     moveDocument,
@@ -147,7 +158,7 @@ export function useStudioPageModel(projectId: string, route: StudioRouteState, n
     project,
     projectId,
     setProject,
-    setReviews,
+    setReviews: inspectorHistories.review.setData,
     setError,
     errorPublishers: projectErrors.publishers,
     setActiveId,
@@ -259,6 +270,10 @@ export function useStudioPageModel(projectId: string, route: StudioRouteState, n
           },
           export: {
             exports,
+            historyInitialized: inspectorHistories.export.initialized,
+            isLoadingHistory: inspectorHistories.export.isLoading,
+            historyError: inspectorHistories.export.error,
+            onRetryHistory: inspectorHistories.export.retry,
             exportingFormat,
             retryingFormat,
             failedFormat,
@@ -268,6 +283,11 @@ export function useStudioPageModel(projectId: string, route: StudioRouteState, n
           },
           review: {
             latestReview,
+            historyInitialized: inspectorHistories.review.initialized,
+            isLoadingHistory: inspectorHistories.review.isLoading,
+            historyError: inspectorHistories.review.error,
+            actionError: projectErrors.errors.review,
+            onRetryHistory: inspectorHistories.review.retry,
             onRunReview: runReview,
           },
           history: {

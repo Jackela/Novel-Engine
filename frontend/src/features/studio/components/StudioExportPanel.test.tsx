@@ -12,6 +12,31 @@ afterEach(() => {
 });
 
 describe("StudioExportPanel", () => {
+  it("keeps history loading and failure distinct from an empty catalog", () => {
+    const mounted = harness.mount(
+      <StudioExportPanel exports={[]} historyInitialized={false} isLoadingHistory />,
+    );
+    expect(mounted.container.querySelector('[role="status"]')?.textContent).toContain(
+      "Loading export history",
+    );
+    expect(mounted.container.textContent).not.toContain("No exports yet");
+
+    act(() => {
+      mounted.root.render(
+        <StudioExportPanel
+          exports={[]}
+          historyError="Unable to load export history."
+          historyInitialized={false}
+          onRetryHistory={vi.fn()}
+        />,
+      );
+    });
+    expect(mounted.container.querySelector('[role="alert"]')?.textContent).toContain(
+      "Unable to load export history.",
+    );
+    expect(mounted.container.textContent).not.toContain("No exports yet");
+  });
+
   it("marks only the retry command busy when a failed format is retried", () => {
     const mounted = harness.mount(
       <StudioExportPanel

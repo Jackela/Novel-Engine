@@ -6,6 +6,10 @@ import { useCommandFocusRestoration } from "../hooks/useCommandFocusRestoration"
 
 interface StudioExportPanelProps {
   exports: StudioExport[];
+  historyInitialized?: boolean;
+  isLoadingHistory?: boolean;
+  historyError?: string | null;
+  onRetryHistory?: () => void | Promise<void>;
   onExport?: (format: ExportFormat) => void | Promise<void>;
   exportingFormat?: ExportFormat | null;
   retryingFormat?: ExportFormat | null;
@@ -30,6 +34,10 @@ const FORMATS: Array<{
 
 export function StudioExportPanel({
   exports,
+  historyInitialized = true,
+  isLoadingHistory = false,
+  historyError = null,
+  onRetryHistory,
   onExport,
   exportingFormat = null,
   retryingFormat = null,
@@ -39,10 +47,15 @@ export function StudioExportPanel({
 }: StudioExportPanelProps) {
   const isExporting = exportingFormat !== null;
   const runWithFocusRestoration = useCommandFocusRestoration(isExporting);
+  const retryHistoryWithFocusRestoration = useCommandFocusRestoration(isLoadingHistory);
   const formatButtonRefs = useRef(new Map<ExportFormat, HTMLButtonElement>());
+  const historyHeadingRef = useRef<HTMLHeadingElement | null>(null);
 
   return (
-    <div className="studio-inspector__panel export-panel">
+    <div
+      aria-busy={isExporting || isLoadingHistory}
+      className="studio-inspector__panel export-panel"
+    >
       <header className="studio-inspector__heading">
         <div>
           <h2>Export project</h2>
@@ -107,8 +120,33 @@ export function StudioExportPanel({
       ) : null}
 
       <section aria-labelledby="export-history-heading" className="export-history">
-        <h3 id="export-history-heading">Export history</h3>
-        {exports.length ? (
+        <h3 id="export-history-heading" ref={historyHeadingRef} tabIndex={-1}>
+          Export history
+        </h3>
+        {isLoadingHistory ? <p role="status">Loading export history…</p> : null}
+        {historyError ? (
+          <div aria-live="assertive" className="studio-inspector__error" role="alert">
+            <p>{historyError}</p>
+            {onRetryHistory ? (
+              <button
+                aria-busy={isLoadingHistory || undefined}
+                className="ui-command"
+                disabled={isLoadingHistory}
+                onClick={(event) => {
+                  void retryHistoryWithFocusRestoration(
+                    event.currentTarget,
+                    onRetryHistory,
+                    () => historyHeadingRef.current,
+                  );
+                }}
+                type="button"
+              >
+                Try again
+              </button>
+            ) : null}
+          </div>
+        ) : null}
+        {historyInitialized && exports.length ? (
           <div className="export-list">
             {exports.map((item) => (
               <a className="studio-inspector__export-row" href={item.download_url} key={item.id}>
@@ -123,9 +161,9 @@ export function StudioExportPanel({
               </a>
             ))}
           </div>
-        ) : (
+        ) : historyInitialized ? (
           <p className="studio-inspector__empty">No exports yet.</p>
-        )}
+        ) : null}
       </section>
     </div>
   );

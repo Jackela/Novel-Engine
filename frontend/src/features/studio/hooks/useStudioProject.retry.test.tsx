@@ -97,8 +97,8 @@ describe("useStudioProject retry lifecycle", () => {
     expect(result().isLoading).toBe(false);
     expect(result().loadError).toBeNull();
     expect(result().project).toEqual(projectFixture);
-    expect(api.reviews).toHaveBeenCalledOnce();
-    expect(api.exports).toHaveBeenCalledOnce();
+    expect(api.reviews).not.toHaveBeenCalled();
+    expect(api.exports).not.toHaveBeenCalled();
   });
 
   it("restarts the current owner load after the StrictMode cleanup boundary", async () => {

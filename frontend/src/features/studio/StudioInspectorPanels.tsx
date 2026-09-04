@@ -82,6 +82,10 @@ export function StudioInspectorPanels({
       >
         <StudioExportPanel
           exports={model.export.exports}
+          historyInitialized={model.export.historyInitialized}
+          isLoadingHistory={model.export.isLoadingHistory}
+          historyError={model.export.historyError}
+          onRetryHistory={model.export.onRetryHistory}
           exportingFormat={model.export.exportingFormat}
           retryingFormat={model.export.retryingFormat}
           onExport={model.export.onExport}
@@ -98,6 +102,11 @@ export function StudioInspectorPanels({
       >
         <StudioReviewPanel
           latestReview={model.review.latestReview}
+          historyInitialized={model.review.historyInitialized}
+          isLoadingHistory={model.review.isLoadingHistory}
+          historyError={model.review.historyError}
+          actionError={model.review.actionError}
+          onRetryHistory={model.review.onRetryHistory}
           onRunReview={model.review.onRunReview}
           isRunning={pending.review}
         />

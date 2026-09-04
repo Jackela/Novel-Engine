@@ -21,10 +21,9 @@ export function useStudioErrorChannels(
     `${projectId}\u0000${documentId ?? ""}`,
     DOCUMENT_ERROR_SOURCES,
   );
-  const projectErrorWithoutSettings = combineErrorMessages(
+  const projectErrorWithoutPanelActions = combineErrorMessages(
     projectErrors.errors.jobs,
     projectErrors.errors.search,
-    projectErrors.errors.review,
     projectErrors.errors.retryJob,
     projectErrors.errors.createDocument,
     projectErrors.errors.moveDocument,
@@ -32,10 +31,15 @@ export function useStudioErrorChannels(
   return {
     projectErrors,
     documentErrors,
-    visibleError: combineErrorMessages(documentErrors.error, projectErrors.error, sharedError),
+    visibleError: combineErrorMessages(
+      documentErrors.error,
+      projectErrorWithoutPanelActions,
+      projectErrors.errors.settings,
+      sharedError,
+    ),
     visibleErrorWithoutSettings: combineErrorMessages(
       documentErrors.error,
-      projectErrorWithoutSettings,
+      projectErrorWithoutPanelActions,
       sharedError,
     ),
   };
