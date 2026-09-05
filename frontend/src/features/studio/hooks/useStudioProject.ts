@@ -48,7 +48,8 @@ export function useStudioProject(projectId: string) {
   const [lifecycle] = useState(() => Symbol("studio lifecycle"));
   const activeProjectIdRef = useRef<string | null>(null);
   const projectMutationEpochRef = useRef(0);
-  const projectReadEpochRef = useRef(0);
+  const nextProjectReadEpochRef = useRef(0);
+  const publishedProjectReadEpochRef = useRef(0);
   const requestEpochRef = useRef(0);
   const requestRef = useRef<ProjectLoadRequest | null>(null);
   const [projectState, setProjectState] = useState<ProjectState>(() => ({
@@ -81,7 +82,7 @@ export function useStudioProject(projectId: string) {
       }
       requestEpochRef.current += 1;
       projectMutationEpochRef.current += 1;
-      projectReadEpochRef.current += 1;
+      publishedProjectReadEpochRef.current = ++nextProjectReadEpochRef.current;
     };
   }, [projectId]);
 
@@ -104,7 +105,7 @@ export function useStudioProject(projectId: string) {
   const captureProjectShellRead = useCallback(
     (): ProjectShellReadCapture => ({
       projectId,
-      readEpoch: ++projectReadEpochRef.current,
+      readEpoch: ++nextProjectReadEpochRef.current,
       mutationEpoch: projectMutationEpochRef.current,
     }),
     [projectId],
@@ -118,10 +119,11 @@ export function useStudioProject(projectId: string) {
         nextProject.id !== projectId ||
         nextProject.documents.some((document) => document.project_id !== projectId) ||
         nextProject.volumes.some((volume) => volume.project_id !== projectId) ||
-        capture.readEpoch !== projectReadEpochRef.current ||
+        capture.readEpoch < publishedProjectReadEpochRef.current ||
         capture.mutationEpoch !== projectMutationEpochRef.current
       )
         return false;
+      publishedProjectReadEpochRef.current = capture.readEpoch;
       setProjectState(() => ({
         projectId,
         project: nextProject,
@@ -179,7 +181,7 @@ export function useStudioProject(projectId: string) {
     }
 
     const controller = new AbortController();
-    projectReadEpochRef.current += 1;
+    publishedProjectReadEpochRef.current = ++nextProjectReadEpochRef.current;
     const requestEpoch = ++requestEpochRef.current;
     const request: ProjectLoadRequest = {
       projectId,
