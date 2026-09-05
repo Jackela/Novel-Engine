@@ -114,9 +114,15 @@ export function StudioInspectorPanels({
       >
         <StudioReviewPanel
           latestReview={model.review.latestReview}
+          summaries={model.review.summaries}
+          detailLoading={model.review.detailLoading}
+          detailError={model.review.detailError}
+          onRetryDetail={model.review.onRetryDetail}
           historyInitialized={model.review.historyInitialized}
-          isLoadingHistory={model.review.isLoadingHistory}
+          historyPaging={model.review.historyPaging}
           historyError={model.review.historyError}
+          olderError={model.review.olderError}
+          onLoadOlderReviews={model.review.onLoadOlderReviews}
           actionError={model.review.actionError}
           onRetryHistory={model.review.onRetryHistory}
           onRunReview={model.review.onRunReview}

@@ -30,7 +30,7 @@ function inspectorModel(loreStatus: InspectorLoreStatusModel): StudioInspectorMo
       failedFormat: null,
       errorForExport: null,
     },
-    review: { latestReview: null, onRunReview: vi.fn() },
+    review: { latestReview: null, summaries: [], onRunReview: vi.fn() },
     history: {
       revisions: [],
       loadedRevisionId: null,

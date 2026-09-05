@@ -14,7 +14,6 @@ import {
 } from "./payload_schemas/job.js";
 import type { LoreAliasPayload, LoreStatusPayload } from "./payload_schemas/lore.js";
 import type { ProjectCatalogSummaryPayload, ProjectPayload } from "./payload_schemas/project.js";
-import type { ReviewPayload, ReviewSeverity } from "./payload_schemas/review.js";
 import type { RevisionPayload, RevisionSummaryPayload } from "./payload_schemas/revision.js";
 import type { VolumePayload } from "./payload_schemas/volume.js";
 import type { ExportArtifactRecord } from "./ports/export_store.js";
@@ -28,7 +27,6 @@ import type {
   RevisionSummaryRecord,
 } from "./ports/studio_store.js";
 import type { VolumeRecord } from "./ports/volume_store.js";
-import type { EditorialAssessment } from "./review_service.js";
 
 /**
  * Payload builders for the studio HTTP surfaces. Return types are `Static`
@@ -231,19 +229,6 @@ export function jobSummaryPayload(job: JobSummaryRecord): JobSummaryPayload {
   };
 }
 
-/** The review-job result payload shared by the bridge and the retry path. */
-export function reviewJobResultJson(assessment: {
-  id: string;
-  snapshotId: string;
-  summary: string;
-}): string {
-  return dumpJson({
-    review_id: assessment.id,
-    snapshot_id: assessment.snapshotId,
-    summary: assessment.summary,
-  });
-}
-
 /** The export-job result payload shared by the bridge and the retry path. */
 export function exportJobResultJson(
   projectId: string,
@@ -267,33 +252,6 @@ export function loreAliasPayload(aliases: readonly string[]): LoreAliasPayload {
 /** The lifecycle-status envelope answered by the lore-status write (#444). */
 export function loreStatusPayload(status: LoreStatus): LoreStatusPayload {
   return { lore_status: status };
-}
-
-/**
- * One stored editorial assessment for the review LIST surface; identical to
- * the shape the review bridge lands in the job `result` JSON.
- */
-export function reviewPayload(assessment: EditorialAssessment): ReviewPayload {
-  return {
-    id: assessment.id,
-    project_id: assessment.projectId,
-    snapshot_id: assessment.snapshotId,
-    provider: assessment.provider,
-    model: assessment.model,
-    summary: assessment.summary,
-    created_at: assessment.createdAt.toISOString(),
-    issues: assessment.issues.map((issue) => ({
-      id: issue.id,
-      document_id: issue.documentId,
-      // Store rows carry write-coerced severities; the payload declares the
-      // closed read-compatible set from the review SSOT.
-      severity: issue.severity as ReviewSeverity,
-      code: issue.code,
-      message: issue.message,
-      suggestion: issue.suggestion,
-      evidence: { ...issue.evidence },
-    })),
-  };
 }
 
 /** One immutable export artifact for the export catalog surface. */

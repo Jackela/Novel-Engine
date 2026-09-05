@@ -6,6 +6,7 @@ import type {
 import { TextGenerationProviderError } from "../../../contexts/ai/application/ports/text_generation.js";
 import type { Principal } from "../../../shared/application/ports/auth.js";
 import { dumpJson, safeLoadJson } from "./payloads.js";
+import type { ReviewPageInput, ReviewSummaryPage } from "./ports/review_outcome_store.js";
 import {
   type EditorialAssessmentRecord,
   type EditorialIssueRecord,
@@ -166,11 +167,24 @@ export class ReviewService {
     }
   }
 
-  /** List stored assessments without reevaluating newer live revisions. */
-  listEditorialAssessments(principal: Principal, projectId: string): EditorialAssessment[] {
-    return this.store
-      .listEditorialAssessments(scopeForPrincipal(principal), projectId)
-      .map(editorialAssessment);
+  /** One bounded newest-first summary page; ordered issues live on the detail read. */
+  collectProjectReviewSummaries(
+    principal: Principal,
+    projectId: string,
+    input: ReviewPageInput,
+  ): ReviewSummaryPage {
+    return this.store.collectProjectReviewSummaries(scopeForPrincipal(principal), projectId, input);
+  }
+
+  /** One complete scoped assessment without reevaluating newer live revisions. */
+  findEditorialAssessment(
+    principal: Principal,
+    projectId: string,
+    reviewId: string,
+  ): EditorialAssessment {
+    return editorialAssessment(
+      this.store.findProjectReview(scopeForPrincipal(principal), projectId, reviewId),
+    );
   }
 }
 

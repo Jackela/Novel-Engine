@@ -1,12 +1,6 @@
-import { useCallback } from "react";
-
-import { api } from "@/app/api";
-import type { Review } from "@/app/types/studio";
 import type { InspectorTab } from "../studioConstants";
 
-import { useLazyInspectorResource } from "./useLazyInspectorResource";
-
-const EMPTY_REVIEWS: Review[] = [];
+import { type ReviewHistoryState, useReviewHistory } from "./useReviewHistory";
 
 interface UseLazyInspectorHistoriesOptions {
   readonly enabled: boolean;
@@ -22,20 +16,15 @@ export function useLazyInspectorHistories({
   projectId,
   recheckProject,
   onSessionLost,
-}: UseLazyInspectorHistoriesOptions) {
-  const requestReviews = useCallback(
-    async (signal: AbortSignal) => (await api.reviews(projectId, { signal })).reviews,
-    [projectId],
-  );
-  const review = useLazyInspectorResource({
-    active: enabled && inspector === "review",
+}: UseLazyInspectorHistoriesOptions): {
+  review: ReviewHistoryState;
+} {
+  const review = useReviewHistory({
+    enabled,
+    inspector,
     projectId,
-    empty: EMPTY_REVIEWS,
-    request: requestReviews,
     recheckProject,
     onSessionLost,
-    missingResourceMessage: "Review history is unavailable for this project.",
-    loadErrorMessage: "Unable to load review history.",
   });
 
   return { review };

@@ -23,10 +23,10 @@ import {
   exportArtifactPayload,
   jobPayload,
   loreAliasPayload,
-  reviewPayload,
 } from "../../src/contexts/studio/application/payloads.js";
 import type { ExportArtifactRecord } from "../../src/contexts/studio/application/ports/export_store.js";
 import type { ProposalStreamFrame } from "../../src/contexts/studio/application/proposal_streaming.js";
+import { reviewPayload } from "../../src/contexts/studio/application/review_payloads.js";
 import type { EditorialAssessment } from "../../src/contexts/studio/application/review_service.js";
 import {
   assertConforms,

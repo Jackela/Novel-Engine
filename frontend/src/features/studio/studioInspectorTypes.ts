@@ -5,6 +5,7 @@ import type {
   LoreStatus,
   ProviderInfo,
   Review,
+  ReviewSummary,
   RevisionSummary,
   StudioExport,
   StudioJob,
@@ -73,11 +74,27 @@ export interface InspectorExportModel {
   onRetryExport?: (format: ExportFormat) => void | Promise<void>;
 }
 
+/**
+ * #459: review-history paging flags grouped into one prop so panel boolean
+ * combinations stay testable.
+ */
+export interface InspectorReviewHistoryPaging {
+  isLoading: boolean;
+  hasOlder: boolean;
+  isLoadingOlder: boolean;
+}
+
 export interface InspectorReviewModel {
   latestReview: Review | null;
+  detailLoading?: boolean;
+  detailError?: string | null;
+  onRetryDetail?: () => void | Promise<void>;
+  summaries: ReviewSummary[];
   historyInitialized?: boolean;
-  isLoadingHistory?: boolean;
+  historyPaging?: InspectorReviewHistoryPaging;
   historyError?: string | null;
+  olderError?: string | null;
+  onLoadOlderReviews?: () => void | Promise<void>;
   actionError?: string | null;
   onRetryHistory?: () => void | Promise<void>;
   onRunReview: () => void | Promise<void>;

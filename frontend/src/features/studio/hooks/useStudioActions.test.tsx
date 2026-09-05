@@ -2,9 +2,9 @@ import { act, useState } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { api } from "@/app/api";
-import type { Project, Review } from "@/app/types/studio";
+import type { Project, ReviewsPage } from "@/app/types/studio";
 import type { InspectorTab } from "@/features/studio/studioConstants";
-import { chapter, job, projectWith, review } from "@/test/factories";
+import { chapter, job, projectWith, reviewSummary, reviewsPage } from "@/test/factories";
 import { createMountHarness, deferred } from "@/test/harness";
 import { summarizeDocument } from "./projectState";
 import { useStudioActions } from "./useStudioActions";
@@ -29,7 +29,7 @@ vi.mock("@/app/api", async (importOriginal) => {
 interface HarnessSnapshot {
   readonly actions: ReturnType<typeof useStudioActions>;
   readonly project: Project | null;
-  readonly reviews: Review[];
+  readonly reviews: ReviewsPage;
   readonly error: string | null;
   readonly activeId: string | null;
   readonly inspector: InspectorTab;
@@ -70,7 +70,7 @@ const loreProjectFixture = projectWith([character, world], {
   description: "Lore project",
   settings: { provider: "mock" },
 });
-const reviewFixture = review({ project_id: projectFixture.id });
+const reviewSummaryFixture = () => reviewSummary({ project_id: projectFixture.id });
 const reviewJob = job({
   id: "job-review-1",
   project_id: projectFixture.id,
@@ -108,7 +108,7 @@ function renderActions(
 
   function Wrapper() {
     const [project, setProject] = useState<Project | null>(initialProject);
-    const [reviews, setReviews] = useState<Review[]>([]);
+    const [reviews, setReviewPage] = useState<ReviewsPage>(reviewsPage([]));
     const [error, setError] = useState<string | null>("previous error");
     const [activeId, setActiveId] = useState<string | null>(null);
     const [inspector] = useState<InspectorTab>("history");
@@ -116,7 +116,7 @@ function renderActions(
       project,
       projectId: initialProject.id,
       setProject,
-      setReviews,
+      setReviewPage,
       setError,
       setActiveId,
       settingsForm: {
@@ -203,7 +203,7 @@ describe("useStudioActions", () => {
   it("runs a review job without reclaiming the deliberate inspector route", async () => {
     // Given
     vi.mocked(api.createReview).mockResolvedValue(reviewJob);
-    vi.mocked(api.reviews).mockResolvedValue({ reviews: [reviewFixture] });
+    vi.mocked(api.reviews).mockResolvedValue(reviewsPage([reviewSummaryFixture()]));
     const harness = renderActions();
 
     // When
@@ -215,7 +215,7 @@ describe("useStudioActions", () => {
     expect(api.reviews).toHaveBeenCalledWith(projectFixture.id, {
       signal: expect.any(AbortSignal),
     });
-    expect(harness.result().reviews).toEqual([reviewFixture]);
+    expect(harness.result().reviews.reviews).toEqual([reviewSummaryFixture()]);
     expect(harness.result().inspector).toBe("history");
   });
 
@@ -235,7 +235,7 @@ describe("useStudioActions", () => {
 
     // Then
     expect(api.reviews).not.toHaveBeenCalled();
-    expect(harness.result().reviews).toEqual([]);
+    expect(harness.result().reviews.reviews).toEqual([]);
     expect(harness.result().error).toBe("Review could not be evaluated.");
   });
 

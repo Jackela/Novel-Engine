@@ -64,7 +64,7 @@ function renderActions() {
         project: visibleProject,
         projectId: project.id,
         setProject,
-        setReviews: vi.fn(),
+        setReviewPage: vi.fn(),
         setError: vi.fn(),
         setActiveId: vi.fn(),
         settingsForm: { title: project.title, description: project.description, provider: "mock" },
