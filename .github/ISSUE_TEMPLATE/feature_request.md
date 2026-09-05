@@ -2,7 +2,7 @@
 name: Feature Request
 about: Propose an improvement to the single-author Novel Engine
 title: "[FEATURE] "
-labels: ["enhancement", "triage"]
+labels: ["enhancement", "needs-triage"]
 assignees: []
 ---
 
