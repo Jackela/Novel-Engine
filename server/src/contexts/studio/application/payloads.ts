@@ -13,12 +13,13 @@ import {
   type JobSummaryPayload,
 } from "./payload_schemas/job.js";
 import type { LoreAliasPayload, LoreStatusPayload } from "./payload_schemas/lore.js";
-import type { ProjectPayload } from "./payload_schemas/project.js";
+import type { ProjectCatalogSummaryPayload, ProjectPayload } from "./payload_schemas/project.js";
 import type { ReviewPayload, ReviewSeverity } from "./payload_schemas/review.js";
 import type { RevisionPayload, RevisionSummaryPayload } from "./payload_schemas/revision.js";
 import type { VolumePayload } from "./payload_schemas/volume.js";
 import type { ExportArtifactRecord } from "./ports/export_store.js";
 import type { JobSummaryRecord } from "./ports/job_records.js";
+import type { ProjectCatalogSummaryRecord } from "./ports/project_catalog_store.js";
 import type {
   DocumentMatchRecord,
   DocumentWithCurrent,
@@ -77,6 +78,18 @@ export function projectPayload(project: ProjectPayloadInput): ProjectPayload {
     description: project.description,
     settings: safeLoadJson(project.settingsJson),
     import_hash: project.importHash,
+    created_at: iso(project.createdAt),
+    updated_at: iso(project.updatedAt),
+  };
+}
+
+export function projectCatalogSummaryPayload(
+  project: ProjectCatalogSummaryRecord,
+): ProjectCatalogSummaryPayload {
+  return {
+    id: project.id,
+    title: project.title,
+    description: project.description,
     created_at: iso(project.createdAt),
     updated_at: iso(project.updatedAt),
   };

@@ -183,6 +183,30 @@
     },
     "/api/projects": {
       "get": {
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "maxLength": 1024,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9_-]+$",
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "content": {
@@ -190,11 +214,16 @@
                 "schema": {
                   "additionalProperties": false,
                   "properties": {
+                    "next_cursor": {
+                      "nullable": true,
+                      "type": "string"
+                    },
                     "projects": {
                       "items": {
                         "additionalProperties": false,
                         "properties": {
                           "created_at": {
+                            "format": "date-time",
                             "type": "string"
                           },
                           "description": {
@@ -203,18 +232,11 @@
                           "id": {
                             "type": "string"
                           },
-                          "import_hash": {
-                            "nullable": true,
-                            "type": "string"
-                          },
-                          "settings": {
-                            "additionalProperties": true,
-                            "type": "object"
-                          },
                           "title": {
                             "type": "string"
                           },
                           "updated_at": {
+                            "format": "date-time",
                             "type": "string"
                           }
                         },
@@ -222,8 +244,6 @@
                           "id",
                           "title",
                           "description",
-                          "settings",
-                          "import_hash",
                           "created_at",
                           "updated_at"
                         ],
@@ -233,7 +253,8 @@
                     }
                   },
                   "required": [
-                    "projects"
+                    "projects",
+                    "next_cursor"
                   ],
                   "type": "object"
                 }
@@ -242,6 +263,16 @@
             "description": "Default Response"
           },
           "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "422": {
             "content": {
               "application/json": {
                 "schema": {

@@ -2,8 +2,10 @@ import type { Principal } from "../../../shared/application/ports/auth.js";
 import { InvalidOperationError } from "../../../shared/domain/exceptions.js";
 import { InvalidProjectUpdateError } from "../domain/exceptions.js";
 import { InFlightOperationGuard } from "./operation_in_flight.js";
-import { dumpJson, projectPayload } from "./payloads.js";
+import type { ProjectCatalogSummaryPayload } from "./payload_schemas/project.js";
+import { dumpJson, projectCatalogSummaryPayload, projectPayload } from "./payloads.js";
 import type { ProjectArtifactCleaner } from "./ports/project_artifact_cleaner.js";
+import type { ProjectPageCursor, ProjectPageInput } from "./ports/project_catalog_store.js";
 import type { ProjectUpdateInput } from "./ports/project_update_store.js";
 import {
   type DocumentSummaryRecord,
@@ -44,6 +46,12 @@ export function projectUpdateCommand(
   if (input.description !== undefined) return { ...input, description: input.description };
   if (input.settings !== undefined) return { ...input, settings: input.settings };
   throw new InvalidProjectUpdateError("At least one Project field is required.");
+}
+
+/** The bounded catalog page handed to the HTTP surface. */
+export interface ProjectCatalogPayloadPage {
+  readonly projects: ProjectCatalogSummaryPayload[];
+  readonly nextCursor: ProjectPageCursor | null;
 }
 
 export class ProjectService {
@@ -95,11 +103,13 @@ export class ProjectService {
     );
   }
 
-  /** Projects of the principal, most recently updated first. */
-  listProjects(principal: Principal): Record<string, unknown>[] {
-    return this.store
-      .findProjects(scopeForPrincipal(principal))
-      .map((project) => projectPayload(project));
+  /** Bounded catalog page of the principal, most recently updated first. */
+  listProjects(principal: Principal, input: ProjectPageInput): ProjectCatalogPayloadPage {
+    const page = this.store.findProjectCatalogSummaries(scopeForPrincipal(principal), input);
+    return {
+      projects: page.projects.map((project) => projectCatalogSummaryPayload(project)),
+      nextCursor: page.nextCursor,
+    };
   }
 
   /** Partially replace Project settings scalars without materializing its shell. */

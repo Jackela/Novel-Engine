@@ -28,6 +28,7 @@ import {
 import { appConfig } from "@/app/config";
 import { type JobsRequestOptions, projectJobsRequest, retryJobRequest } from "@/app/jobApiRequest";
 import { localServiceUnavailable } from "@/app/networkError";
+import { type ProjectsRequestOptions, projectCatalogRequest } from "@/app/projectApiRequest";
 import { createRequestAbortScope } from "@/app/requestAbortScope";
 import { clearRetryAttemptSession, parseAndRecordRetrySession } from "@/app/retryAttemptRegistry";
 import { documentRevisionsRequest, type RevisionRequestOptions } from "@/app/revisionApiRequest";
@@ -180,7 +181,8 @@ export const api = {
     return request("/api/session", { method: "DELETE" }, parseVoid);
   },
   providers: () => request("/api/providers", undefined, parseProviders),
-  projects: (init?: RequestInit) => request("/api/projects", init, parseProjects),
+  projects: (options: ProjectsRequestOptions = {}) =>
+    request(...projectCatalogRequest(options), parseProjects),
   project: (projectId: string, init?: RequestInit) =>
     request(`/api/projects/${projectId}`, init, parseProjectShell),
   createProject: (title: string, description: string) =>

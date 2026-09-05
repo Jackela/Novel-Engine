@@ -3,6 +3,7 @@ import type {
   DocumentKind,
   DocumentSummary,
   LoreStatus,
+  ProjectCatalogItem,
   ProjectListItem,
   ProjectShell,
   StudioDocument,
@@ -173,12 +174,36 @@ export function parseProjectShell(value: unknown, label = "project shell"): Proj
 
 export const parseStudioDocument = parseDocument;
 
-export function parseProjects(value: unknown): { projects: ProjectListItem[] } {
+const projectCatalogKeys = ["id", "title", "description", "created_at", "updated_at"] as const;
+
+/** Bounded catalog row (#458); settings/import metadata stay server authority. */
+export function parseProjectCatalogItem(
+  value: unknown,
+  label = "project catalog item",
+): ProjectCatalogItem {
+  const item = objectValue(value, label);
+  exactKeys(item, projectCatalogKeys, label);
+  return {
+    id: stringField(item, "id", label),
+    title: stringField(item, "title", label),
+    description: stringField(item, "description", label),
+    created_at: stringField(item, "created_at", label),
+    updated_at: stringField(item, "updated_at", label),
+  };
+}
+
+export interface ProjectsPage {
+  readonly projects: ProjectCatalogItem[];
+  readonly next_cursor: string | null;
+}
+
+export function parseProjects(value: unknown): ProjectsPage {
   const item = objectValue(value, "projects response");
   return {
     projects: arrayField(item, "projects", "projects response", (entry, index) =>
-      parseProjectListItem(entry, `projects[${index}]`),
+      parseProjectCatalogItem(entry, `projects[${index}]`),
     ),
+    next_cursor: nullableStringField(item, "next_cursor", "projects response"),
   };
 }
 

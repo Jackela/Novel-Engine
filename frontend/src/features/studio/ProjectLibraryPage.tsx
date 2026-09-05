@@ -5,6 +5,8 @@ import { useNavigate } from "react-router-dom";
 import { api } from "@/app/api";
 import { productIdentity } from "@/app/productIdentity";
 
+import { ProjectCatalogList } from "./components/ProjectCatalogList";
+import { ProjectLibraryLoadState } from "./components/ProjectLibraryLoadState";
 import { toErrorMessage } from "./hooks/toErrorMessage";
 import { useCommandFocusRestoration } from "./hooks/useCommandFocusRestoration";
 import { useProjectLibraryBootstrap } from "./hooks/useProjectLibraryBootstrap";
@@ -24,10 +26,21 @@ export function ProjectLibraryPage() {
   const onUnauthenticated = useCallback(() => {
     navigate("/", { replace: true });
   }, [navigate]);
-  const { projects, error, isLoading, hasLoaded, reload, mountedRef } =
-    useProjectLibraryBootstrap(onUnauthenticated);
+  const {
+    projects,
+    nextCursor,
+    error,
+    olderError,
+    isLoading,
+    isLoadingOlder,
+    hasLoaded,
+    reload,
+    loadOlder,
+    mountedRef,
+  } = useProjectLibraryBootstrap(onUnauthenticated);
   const runRetryWithFocusRestoration = useCommandFocusRestoration(isLoading);
   const runOperationWithFocusRestoration = useCommandFocusRestoration(operation !== null);
+  const runOlderWithFocusRestoration = useCommandFocusRestoration(isLoadingOlder);
 
   const beginOperation = (next: LibraryOperation): boolean => {
     if (commandRef.current !== null) return false;
@@ -85,6 +98,11 @@ export function ProjectLibraryPage() {
     void runOperationWithFocusRestoration(createButtonRef.current, createProject);
   };
 
+  const activateLoadOlder = (target: HTMLButtonElement) => {
+    if (commandRef.current !== null) return;
+    void runOlderWithFocusRestoration(target, loadOlder, () => headingRef.current);
+  };
+
   return (
     <main className="library">
       <header className="library__header">
@@ -128,35 +146,16 @@ export function ProjectLibraryPage() {
           </p>
         ) : null}
         {!hasLoaded ? (
-          error ? (
-            <div className="library__load-state">
-              <p aria-live="assertive" className="ui-form-error" role="alert">
-                {error}
-              </p>
-              <button
-                aria-busy={isLoading || undefined}
-                aria-label="Try again"
-                className="ui-command ui-command--primary"
-                disabled={isLoading || operation !== null}
-                onClick={(event) => {
-                  if (commandRef.current !== null) return;
-                  void runRetryWithFocusRestoration(
-                    event.currentTarget,
-                    retryLoad,
-                    () => headingRef.current,
-                  );
-                }}
-                type="button"
-              >
-                {isLoading ? <Loader2 aria-hidden="true" className="ui-spin" /> : null}
-                {isLoading ? "Trying again..." : "Try again"}
-              </button>
-            </div>
-          ) : (
-            <p aria-live="polite" className="library__load-state" role="status">
-              <Loader2 aria-hidden="true" className="ui-spin" /> Loading projects...
-            </p>
-          )
+          <ProjectLibraryLoadState
+            commandsLocked={operation !== null}
+            error={error}
+            headingRef={headingRef}
+            isLoading={isLoading}
+            onRetry={(target, heading) => {
+              if (commandRef.current !== null) return;
+              void runRetryWithFocusRestoration(target, retryLoad, heading);
+            }}
+          />
         ) : (
           <div className="library__grid">
             <form className="library-create" onSubmit={submitProject}>
@@ -193,22 +192,15 @@ export function ProjectLibraryPage() {
                 {operation === "create" ? "Creating project..." : "Create project"}
               </button>
             </form>
-            {projects.map((project) => (
-              <button
-                className="library__project-row"
-                disabled={operation !== null}
-                key={project.id}
-                onClick={() => navigate(`/projects/${project.id}/manuscript`)}
-                type="button"
-              >
-                <BookOpen aria-hidden="true" />
-                <span>
-                  <strong>{project.title}</strong>
-                  <small>{project.description || "No premise yet"}</small>
-                </span>
-                <time>{new Date(project.updated_at).toLocaleDateString()}</time>
-              </button>
-            ))}
+            <ProjectCatalogList
+              disabled={operation !== null || isLoadingOlder}
+              hasOlderProjects={nextCursor !== null}
+              isLoadingOlder={isLoadingOlder}
+              olderError={olderError}
+              onActivateOlder={activateLoadOlder}
+              onOpenProject={(projectId) => navigate(`/projects/${projectId}/manuscript`)}
+              projects={projects}
+            />
           </div>
         )}
       </section>

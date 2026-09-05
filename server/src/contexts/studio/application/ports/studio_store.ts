@@ -2,6 +2,7 @@ import type { Principal } from "../../../../shared/application/ports/auth.js";
 import type { StudioBeatStore } from "./beat_store.js";
 import type { StudioJobLedgerStore } from "./job_ledger_store.js";
 import type { StudioLoreStore } from "./lore_store.js";
+import type { ProjectCatalogStore } from "./project_catalog_store.js";
 import type { DocumentSummaryRecord, ProjectShellRecord } from "./project_shell_records.js";
 import type { ProjectUpdateStore } from "./project_update_store.js";
 import type { ProposalAcceptanceStore } from "./proposal_acceptance_store.js";
@@ -135,6 +136,15 @@ export type {
   RecordCompletedProposalJobInput,
 } from "./job_records.js";
 
+/** Catalog-page types live in their focused port module; re-exported here. */
+export type {
+  ProjectCatalogPage,
+  ProjectCatalogSummaryRecord,
+  ProjectPageCursor,
+  ProjectPageInput,
+  ProjectPageLimit,
+} from "./project_catalog_store.js";
+
 /** Review-outcome types live in their focused port module; re-exported here. */
 export type {
   EditorialAssessmentRecord,
@@ -233,7 +243,8 @@ export interface StudioStore
     ProposalContextStore,
     ProposalAcceptanceStore,
     ReviewOutcomeStore,
-    StudioJobLedgerStore {
+    StudioJobLedgerStore,
+    ProjectCatalogStore {
   addProject(
     scope: ProjectScope,
     input: AddProjectInput,
@@ -241,7 +252,6 @@ export interface StudioStore
     project: ProjectRecord;
     documents: DocumentWithCurrent[];
   };
-  findProjects(scope: ProjectScope): ProjectRecord[];
   findProject(scope: ProjectScope, projectId: string): ProjectRecord;
   readProjectShell(scope: ProjectScope, projectId: string): ProjectShellRecord;
   /** Existing project of this principal carrying the given import hash, if any. */

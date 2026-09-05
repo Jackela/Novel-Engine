@@ -151,6 +151,22 @@ export const revisionListQuerySchema = Type.Object(
 );
 export type RevisionListQuery = Static<typeof revisionListQuerySchema>;
 
+/** The bounded catalog read: `limit` defaults to 50 (missing → bounded page). */
+export const projectListQuerySchema = Type.Object(
+  {
+    limit: Type.Optional(Type.Integer({ default: 50, minimum: 1, maximum: 100 })),
+    cursor: Type.Optional(
+      Type.String({
+        minLength: 1,
+        maxLength: 1024,
+        pattern: "^[A-Za-z0-9_-]+$",
+      }),
+    ),
+  },
+  { additionalProperties: false },
+);
+export type ProjectListQuery = Static<typeof projectListQuerySchema>;
+
 /** The full-text query string: `q` is required (missing → 422). */
 export const projectMatchQuerySchema = Type.Object(
   { q: Type.String() },

@@ -27,7 +27,11 @@ export const projects = sqliteTable(
     createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
     updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
   },
-  (table) => [uniqueIndex("uq_project_owner_import_hash").on(table.ownerId, table.importHash)],
+  (table) => [
+    uniqueIndex("uq_project_owner_import_hash").on(table.ownerId, table.importHash),
+    // The catalog keyset range (#458): owner-scoped (updated_at, id) order.
+    index("idx_projects_owner_updated_id").on(table.ownerId, table.updatedAt, table.id),
+  ],
 );
 
 /**

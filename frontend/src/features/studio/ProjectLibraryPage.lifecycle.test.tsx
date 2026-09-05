@@ -4,7 +4,8 @@ import { MemoryRouter, Route, Routes, useLocation, useNavigate } from "react-rou
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { api, HttpError } from "@/app/api";
-import type { Project, Session } from "@/app/types/studio";
+import type { ProjectsPage } from "@/app/projectShellContract";
+import type { Session } from "@/app/types/studio";
 import { project } from "@/test/factories";
 import { createMountHarness, deferred, flushEffects } from "@/test/harness";
 
@@ -100,7 +101,10 @@ describe("ProjectLibraryPage request lifecycle", () => {
     vi.mocked(api.session).mockResolvedValue(ownerSession);
     vi.mocked(api.projects)
       .mockRejectedValueOnce(new HttpError("Projects unavailable.", 503))
-      .mockResolvedValueOnce({ projects: [project({ title: "Recovered draft" })] });
+      .mockResolvedValueOnce({
+        projects: [project({ title: "Recovered draft" })],
+        next_cursor: null,
+      });
 
     const { container } = renderLibrary();
     await flushEffects();
@@ -127,7 +131,7 @@ describe("ProjectLibraryPage request lifecycle", () => {
       .mockReturnValueOnce(retrySession.promise);
     vi.mocked(api.projects)
       .mockRejectedValueOnce(new HttpError("Projects unavailable.", 503))
-      .mockResolvedValueOnce({ projects: [] });
+      .mockResolvedValueOnce({ projects: [], next_cursor: null });
 
     const { container } = renderLibrary();
     await flushEffects();
@@ -148,7 +152,7 @@ describe("ProjectLibraryPage request lifecycle", () => {
   });
 
   it("restores Retry focus after failure but preserves deliberate focus movement", async () => {
-    const retryFailure = rejectableDeferred<{ projects: Project[] }>();
+    const retryFailure = rejectableDeferred<ProjectsPage>();
     vi.mocked(api.session).mockResolvedValue(ownerSession);
     vi.mocked(api.projects)
       .mockRejectedValueOnce(new HttpError("Projects unavailable.", 503))
@@ -181,7 +185,7 @@ describe("ProjectLibraryPage request lifecycle", () => {
 
   it("aborts a project-list read when the library unmounts", async () => {
     vi.mocked(api.session).mockResolvedValue(ownerSession);
-    vi.mocked(api.projects).mockReturnValue(deferred<{ projects: Project[] }>().promise);
+    vi.mocked(api.projects).mockReturnValue(deferred<ProjectsPage>().promise);
 
     const mounted = renderLibrary();
     await flushEffects();
@@ -195,7 +199,7 @@ describe("ProjectLibraryPage request lifecycle", () => {
 
   it("does not publish a stale project list after route exit", async () => {
     vi.mocked(api.session).mockResolvedValue(ownerSession);
-    const projects = deferred<{ projects: Project[] }>();
+    const projects = deferred<ProjectsPage>();
     vi.mocked(api.projects).mockReturnValue(projects.promise);
 
     const { container } = renderLibrary();
@@ -205,7 +209,7 @@ describe("ProjectLibraryPage request lifecycle", () => {
     });
 
     await act(async () => {
-      projects.resolve({ projects: [project({ title: "Stale draft" })] });
+      projects.resolve({ projects: [project({ title: "Stale draft" })], next_cursor: null });
       await projects.promise;
     });
 

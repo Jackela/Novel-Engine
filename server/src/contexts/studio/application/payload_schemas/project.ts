@@ -21,6 +21,23 @@ export const projectPayloadSchema = Type.Object(projectProperties, { additionalP
 
 export type ProjectPayload = Static<typeof projectPayloadSchema>;
 
+/**
+ * Lightweight catalog row (#458): the list read carries only the scalars the
+ * library renders; settings/import metadata stay on the shell/detail payload.
+ */
+export const projectCatalogSummaryPayloadSchema = Type.Object(
+  {
+    id: Type.String(),
+    title: Type.String(),
+    description: Type.String(),
+    created_at: Type.String({ format: "date-time" }),
+    updated_at: Type.String({ format: "date-time" }),
+  },
+  { additionalProperties: false },
+);
+
+export type ProjectCatalogSummaryPayload = Static<typeof projectCatalogSummaryPayloadSchema>;
+
 export const projectShellPayloadSchema = Type.Object(
   {
     ...projectProperties,

@@ -116,7 +116,7 @@ describe("ProjectLibraryPage command ownership", () => {
       .mockReturnValueOnce(retrySession.promise);
     vi.mocked(api.projects)
       .mockRejectedValueOnce(new HttpError("Projects unavailable.", 503))
-      .mockResolvedValueOnce({ projects: [] });
+      .mockResolvedValueOnce({ projects: [], next_cursor: null });
 
     const { container } = renderLibrary();
     await flushEffects();
@@ -141,7 +141,7 @@ describe("ProjectLibraryPage command ownership", () => {
 
   it("guards project creation against duplicate submission", async () => {
     vi.mocked(api.session).mockResolvedValue(ownerSession);
-    vi.mocked(api.projects).mockResolvedValue({ projects: [] });
+    vi.mocked(api.projects).mockResolvedValue({ projects: [], next_cursor: null });
     const created = deferred<Project>();
     vi.mocked(api.createProject).mockReturnValue(created.promise);
 
@@ -171,7 +171,7 @@ describe("ProjectLibraryPage command ownership", () => {
 
   it("does not navigate when project creation completes after route exit", async () => {
     vi.mocked(api.session).mockResolvedValue(ownerSession);
-    vi.mocked(api.projects).mockResolvedValue({ projects: [] });
+    vi.mocked(api.projects).mockResolvedValue({ projects: [], next_cursor: null });
     const created = deferred<Project>();
     vi.mocked(api.createProject).mockReturnValue(created.promise);
 
@@ -194,7 +194,7 @@ describe("ProjectLibraryPage command ownership", () => {
 
   it("guards logout against duplicate activation", async () => {
     vi.mocked(api.session).mockResolvedValue(ownerSession);
-    vi.mocked(api.projects).mockResolvedValue({ projects: [] });
+    vi.mocked(api.projects).mockResolvedValue({ projects: [], next_cursor: null });
     const logout = deferred<void>();
     vi.mocked(api.logout).mockReturnValue(logout.promise);
 
