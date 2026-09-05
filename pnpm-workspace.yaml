@@ -8,6 +8,11 @@ allowBuilds:
   better-sqlite3: true
   esbuild: true
 overrides:
+  # Legacy drizzle-kit chain (drizzle-kit > @esbuild-kit/esm-loader >
+  # @esbuild-kit/core-utils > esbuild 0.18.20) carries GHSA-67mh-4wv8-2f99.
+  # core-utils only calls esbuild transform/transformSync, which are stable
+  # across 0.25.x; align it with drizzle-kit's own esbuild ^0.25.4 (#462).
+  "@esbuild-kit/core-utils>esbuild": ">=0.25.12 <0.26"
   brace-expansion: ">=5.0.9 <6"
   fast-uri: ">=3.1.5 <5"
   nanoid: ">=3.3.18 <4"
