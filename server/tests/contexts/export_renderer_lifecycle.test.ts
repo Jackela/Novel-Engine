@@ -126,8 +126,12 @@ class LifecycleStore implements E.ExportOutcomeStore {
     throw new Error("Unexpected retry.");
   }
 
-  listProjectArtifacts(): E.ExportArtifactRecord[] {
-    return [];
+  listProjectArtifacts(
+    _scope: ProjectScope,
+    _projectId: string,
+    _input: E.ExportPageInput,
+  ): E.ExportArtifactPage {
+    return { artifacts: [], nextCursor: null };
   }
 
   findProjectArtifact(): E.ExportArtifactRecord {

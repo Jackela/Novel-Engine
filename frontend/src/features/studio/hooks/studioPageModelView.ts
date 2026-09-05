@@ -21,6 +21,7 @@ import type {
 } from "../studioInspectorTypes";
 import { buildProposalAuditView } from "./proposalAuditView";
 import type { useExportDownload } from "./useExportDownload";
+import type { useExportHistory } from "./useExportHistory";
 import type { useLazyInspectorHistories } from "./useLazyInspectorHistories";
 import type { BeatLifecycleState } from "./useStudioBeatActions";
 import type { useStudioGeneration } from "./useStudioGeneration";
@@ -97,7 +98,7 @@ export function buildBeatModel(
   };
 }
 
-type ExportHistory = ReturnType<typeof useLazyInspectorHistories>["export"];
+type ExportHistory = ReturnType<typeof useExportHistory>;
 type ReviewHistory = ReturnType<typeof useLazyInspectorHistories>["review"];
 
 /** Narrow document commands and their active identity (#444, #466). */
@@ -193,11 +194,15 @@ export function buildStudioInspectorModel({
       setProposal: copilot.setProposal,
     },
     export: {
-      exports: exportPanel.history.data,
-      historyInitialized: exportPanel.history.initialized,
-      isLoadingHistory: exportPanel.history.isLoading,
-      historyError: exportPanel.history.error,
-      onRetryHistory: exportPanel.history.retry,
+      exports: exportPanel.history.exports,
+      historyInitialized: exportPanel.history.historyInitialized,
+      isLoadingHistory: exportPanel.history.isLoadingHistory,
+      historyError: exportPanel.history.historyError,
+      onRetryHistory: exportPanel.history.onRetryHistory,
+      hasOlderExports: exportPanel.history.hasOlderExports,
+      isLoadingOlderExports: exportPanel.history.isLoadingOlderExports,
+      olderExportsError: exportPanel.history.olderError,
+      onLoadOlderExports: exportPanel.history.onLoadOlderExports,
       exportingFormat: exportPanel.exportingFormat,
       retryingFormat: exportPanel.retryingFormat,
       failedFormat: exportPanel.failedFormat,

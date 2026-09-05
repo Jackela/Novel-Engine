@@ -126,7 +126,10 @@ describe("export artifact catalog and delivery", () => {
 
       const list = await call(app, owner, "GET", `/api/projects/${project.id}/exports`);
       expect(list.statusCode, list.body).toBe(200);
-      expect(list.json()).toEqual({ exports: [...records].reverse().map(publicArtifact) });
+      expect(list.json()).toEqual({
+        exports: [...records].reverse().map(publicArtifact),
+        next_cursor: null,
+      });
       for (const item of list.json().exports as Array<Record<string, unknown>>) {
         expect(item).not.toHaveProperty("relative_path");
         expect(item).not.toHaveProperty("path");

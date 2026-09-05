@@ -3,10 +3,11 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { exportArtifactNames } from "../../src/contexts/studio/application/export_artifact_identity.js";
-import type {
-  ExportArtifactFormat,
-  ExportSource,
-  PreparedExportArtifact,
+import {
+  type ExportArtifactFormat,
+  type ExportSource,
+  exportPageLimit,
+  type PreparedExportArtifact,
 } from "../../src/contexts/studio/application/ports/export_store.js";
 import { scopeForPrincipal } from "../../src/contexts/studio/application/ports/studio_store.js";
 import { ProjectService } from "../../src/contexts/studio/application/project_service.js";
@@ -109,10 +110,14 @@ describe("ExportStorePart artifact catalog", () => {
         prepared(secondSource, "artifact-other", "docx", harness.clock()),
       ).artifact;
 
-      expect(harness.exportStore.listProjectArtifacts(harness.scope, firstProjectId)).toEqual([
-        latest,
-        early,
-      ]);
+      expect(
+        harness.exportStore.listProjectArtifacts(harness.scope, firstProjectId, {
+          limit: exportPageLimit(50),
+        }),
+      ).toEqual({
+        artifacts: [latest, early],
+        nextCursor: null,
+      });
       expect(
         harness.exportStore.findProjectArtifact(harness.scope, firstProjectId, latest.id),
       ).toMatchObject({

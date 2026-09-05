@@ -212,6 +212,11 @@ export function parseJobs(value: unknown): JobsPage {
   };
 }
 
+export interface ExportsPage {
+  readonly exports: StudioExport[];
+  readonly next_cursor: string | null;
+}
+
 function parseExport(value: unknown, label = "export"): StudioExport {
   const item = objectValue(value, label);
   return {
@@ -249,12 +254,13 @@ export function parseUsage(value: unknown): ProjectUsage {
   };
 }
 
-export function parseExports(value: unknown): { exports: StudioExport[] } {
+export function parseExports(value: unknown): ExportsPage {
   const item = objectValue(value, "exports response");
   return {
     exports: arrayField(item, "exports", "exports response", (entry, index) =>
       parseExport(entry, `exports[${index}]`),
     ),
+    next_cursor: nullableStringField(item, "next_cursor", "exports response"),
   };
 }
 

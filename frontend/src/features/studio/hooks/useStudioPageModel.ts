@@ -6,6 +6,7 @@ import { buildStudioInspectorModel, buildStudioNavigatorProps } from "./studioPa
 import { useActiveDocument } from "./useActiveDocument";
 import { useDocumentDraft } from "./useDocumentDraft";
 import { useExportDownload } from "./useExportDownload";
+import { useExportHistory } from "./useExportHistory";
 import { useLazyInspectorHistories } from "./useLazyInspectorHistories";
 import { usePageCurrentDocument } from "./usePageCurrentDocument";
 import { useScopedRevisionRestore } from "./useScopedRevisionRestore";
@@ -122,7 +123,17 @@ export function useStudioPageModel(projectId: string, route: StudioRouteState, n
     projectErrors.publishers.search,
   );
   const providers = useStudioProviders();
-  const exportDownload = useExportDownload(project, projectId, inspectorHistories.export.setData);
+  const exportHistory = useExportHistory({
+    active: project !== null && routeInspector === "export",
+    projectId,
+    recheckProject,
+    onSessionLost: navigation.onProjectResourceSessionLost,
+  });
+  const exportDownload = useExportDownload(
+    project,
+    projectId,
+    exportHistory.applyRefreshedFirstPage,
+  );
   const {
     createDocument,
     moveDocument,
@@ -234,7 +245,7 @@ export function useStudioPageModel(projectId: string, route: StudioRouteState, n
             onLoadOlderJobs: loadOlderJobs,
             onRetryJob: retryJob,
           },
-          export: { ...exportDownload, history: inspectorHistories.export },
+          export: { ...exportDownload, history: exportHistory },
           review: {
             history: inspectorHistories.review,
             actionError: projectErrors.errors.review,

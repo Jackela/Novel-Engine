@@ -2,7 +2,8 @@ import { act, useState } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { api } from "@/app/api";
-import type { Project, StudioExport, StudioJob } from "@/app/types/studio";
+import type { ExportsPage } from "@/app/apiWorkflowContract";
+import type { Project, StudioJob } from "@/app/types/studio";
 import { job, project, studioExport } from "@/test/factories";
 import { createMountHarness, deferred } from "@/test/harness";
 
@@ -22,7 +23,7 @@ vi.mock("@/app/api", async (importOriginal) => {
 });
 
 interface HarnessSnapshot {
-  readonly exports: StudioExport[];
+  readonly exports: ExportsPage["exports"];
   readonly error: string | null;
   readonly exportError: ReturnType<typeof useExportDownload>["exportError"];
   readonly exportProject: ReturnType<typeof useExportDownload>["exportProject"];
@@ -68,9 +69,10 @@ function renderExportHook(): {
   let current: HarnessSnapshot | undefined;
 
   function Wrapper(): null {
-    const [exports, setExports] = useState<StudioExport[]>([]);
+    const [exports, setExports] = useState<ExportsPage["exports"]>([]);
     const [error, setError] = useState<string | null>(null);
-    const hook = useExportDownload(selectedProject, selectedProject.id, setExports);
+    const applyPage = (page: ExportsPage): void => setExports(page.exports);
+    const hook = useExportDownload(selectedProject, selectedProject.id, applyPage);
     current = { exports, error, clearSharedError: () => setError(null), ...hook };
     return null;
   }
@@ -152,7 +154,7 @@ describe("useExportDownload lifecycle", () => {
     vi.mocked(api.createExport)
       .mockReturnValueOnce(projectAResponse.promise)
       .mockReturnValueOnce(projectBResponse.promise);
-    vi.mocked(api.exports).mockResolvedValue({ exports: [exportB] });
+    vi.mocked(api.exports).mockResolvedValue({ exports: [exportB], next_cursor: null });
     vi.mocked(api.download).mockResolvedValue(new Blob(["glass"]));
     const download = installDownloadSpies("blob:export-2");
     const harness = renderExportHook();
@@ -192,7 +194,7 @@ describe("useExportDownload lifecycle", () => {
   });
 
   it("aborts a stale catalog and does not publish or continue its completion", async () => {
-    const catalogResponse = deferred<{ exports: StudioExport[] }>();
+    const catalogResponse = deferred<ExportsPage>();
     vi.mocked(api.createExport).mockResolvedValue(exportJobA);
     vi.mocked(api.exports).mockReturnValue(catalogResponse.promise);
     const download = installDownloadSpies();
@@ -204,7 +206,7 @@ describe("useExportDownload lifecycle", () => {
     harness.rerender(projectB);
     expect(catalogSignal?.aborted).toBe(true);
     await act(async () => {
-      catalogResponse.resolve({ exports: [exportA] });
+      catalogResponse.resolve({ exports: [exportA], next_cursor: null });
       await pending;
     });
 
@@ -241,7 +243,7 @@ describe("useExportDownload lifecycle", () => {
   it("aborts an unmounted blob transport and never creates or clicks a stale URL", async () => {
     const blobResponse = deferred<Blob>();
     vi.mocked(api.createExport).mockResolvedValue(exportJobA);
-    vi.mocked(api.exports).mockResolvedValue({ exports: [exportA] });
+    vi.mocked(api.exports).mockResolvedValue({ exports: [exportA], next_cursor: null });
     vi.mocked(api.download).mockReturnValue(blobResponse.promise);
     const download = installDownloadSpies();
     const harness = renderExportHook();
@@ -262,7 +264,7 @@ describe("useExportDownload lifecycle", () => {
 
   it("revokes a created URL immediately when its project owner changes", async () => {
     vi.mocked(api.createExport).mockResolvedValue(exportJobA);
-    vi.mocked(api.exports).mockResolvedValue({ exports: [exportA] });
+    vi.mocked(api.exports).mockResolvedValue({ exports: [exportA], next_cursor: null });
     vi.mocked(api.download).mockResolvedValue(new Blob(["draft"]));
     const download = installDownloadSpies();
     const harness = renderExportHook();

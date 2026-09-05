@@ -2276,7 +2276,10 @@ export interface paths {
         };
         get: {
             parameters: {
-                query?: never;
+                query?: {
+                    limit?: number;
+                    cursor?: string;
+                };
                 header?: never;
                 path: {
                     projectId: string;
@@ -2304,6 +2307,7 @@ export interface paths {
                                 size_bytes: number;
                                 snapshot_id: string;
                             }[];
+                            next_cursor: string | null;
                         };
                     };
                 };
@@ -2318,6 +2322,15 @@ export interface paths {
                 };
                 /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
                 404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                422: {
                     headers: {
                         [name: string]: unknown;
                     };

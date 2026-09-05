@@ -2,7 +2,8 @@ import { act, StrictMode, useState } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { api } from "@/app/api";
-import type { Project, StudioExport, StudioJob } from "@/app/types/studio";
+import type { ExportsPage } from "@/app/apiWorkflowContract";
+import type { Project, StudioJob } from "@/app/types/studio";
 import { job, project, studioExport } from "@/test/factories";
 import { createMountHarness, deferred } from "@/test/harness";
 
@@ -23,7 +24,7 @@ vi.mock("@/app/api", async (importOriginal) => {
 });
 
 interface HarnessSnapshot {
-  readonly exports: StudioExport[];
+  readonly exports: ExportsPage["exports"];
   readonly exportError: ReturnType<typeof useExportDownload>["exportError"];
   readonly exportProject: ReturnType<typeof useExportDownload>["exportProject"];
   readonly exportingFormat: ReturnType<typeof useExportDownload>["exportingFormat"];
@@ -64,11 +65,12 @@ function renderExportHook(
   let current: HarnessSnapshot | undefined;
 
   function Wrapper(): null {
-    const [exports, setExports] = useState<StudioExport[]>([]);
+    const [exports, setExports] = useState<ExportsPage["exports"]>([]);
+    const applyPage = (page: ExportsPage): void => setExports(page.exports);
     const { exportProject, exportingFormat, exportError } = useExportDownload(
       selectedProject,
       selectedProject?.id ?? projectFixture.id,
-      setExports,
+      applyPage,
     );
     current = { exports, exportError, exportProject, exportingFormat };
     return null;
@@ -121,7 +123,7 @@ describe("useExportDownload", () => {
     const blob = new Blob(["# Clockwork Harbor"], { type: "text/markdown" });
     const download = installDownloadSpies();
     vi.mocked(api.createExport).mockResolvedValue(exportJob);
-    vi.mocked(api.exports).mockResolvedValue({ exports: [exportFixture] });
+    vi.mocked(api.exports).mockResolvedValue({ exports: [exportFixture], next_cursor: null });
     vi.mocked(api.download).mockResolvedValue(blob);
     const harness = renderExportHook();
     let pending!: Promise<void>;
@@ -166,7 +168,7 @@ describe("useExportDownload", () => {
     const blob = new Blob(["draft"], { type: "text/markdown" });
     const download = installDownloadSpies();
     vi.mocked(api.createExport).mockResolvedValue(exportJob);
-    vi.mocked(api.exports).mockResolvedValue({ exports: [exportFixture] });
+    vi.mocked(api.exports).mockResolvedValue({ exports: [exportFixture], next_cursor: null });
     vi.mocked(api.download).mockResolvedValue(blob);
     const harness = renderExportHook();
     vi.spyOn(document.body, "appendChild").mockImplementationOnce(() => {
@@ -231,7 +233,7 @@ describe("useExportDownload", () => {
     const createResponse = deferred<StudioJob>();
     const blob = new Blob(["draft"], { type: "text/markdown" });
     vi.mocked(api.createExport).mockReturnValue(createResponse.promise);
-    vi.mocked(api.exports).mockResolvedValue({ exports: [exportFixture] });
+    vi.mocked(api.exports).mockResolvedValue({ exports: [exportFixture], next_cursor: null });
     vi.mocked(api.download).mockResolvedValue(blob);
     const download = installDownloadSpies();
     const harness = renderExportHook();
@@ -260,7 +262,7 @@ describe("useExportDownload", () => {
   it("keeps the command owner active after the StrictMode lifecycle replay", async () => {
     const blob = new Blob(["draft"], { type: "text/markdown" });
     vi.mocked(api.createExport).mockResolvedValue(exportJob);
-    vi.mocked(api.exports).mockResolvedValue({ exports: [exportFixture] });
+    vi.mocked(api.exports).mockResolvedValue({ exports: [exportFixture], next_cursor: null });
     vi.mocked(api.download).mockResolvedValue(blob);
     const download = installDownloadSpies();
     const harness = renderExportHook(projectFixture, true);

@@ -1,8 +1,9 @@
-import { Download, ExternalLink } from "lucide-react";
+import { Download } from "lucide-react";
 import { useRef } from "react";
 
 import type { ExportFormat, StudioExport } from "@/app/types/studio";
 import { useCommandFocusRestoration } from "../hooks/useCommandFocusRestoration";
+import { StudioExportHistorySection } from "./StudioExportHistorySection";
 
 interface StudioExportPanelProps {
   exports: StudioExport[];
@@ -10,6 +11,10 @@ interface StudioExportPanelProps {
   isLoadingHistory?: boolean;
   historyError?: string | null;
   onRetryHistory?: () => void | Promise<void>;
+  hasOlderExports?: boolean;
+  isLoadingOlderExports?: boolean;
+  olderExportsError?: string | null;
+  onLoadOlderExports?: () => void | Promise<void>;
   onExport?: (format: ExportFormat) => void | Promise<void>;
   exportingFormat?: ExportFormat | null;
   retryingFormat?: ExportFormat | null;
@@ -38,6 +43,10 @@ export function StudioExportPanel({
   isLoadingHistory = false,
   historyError = null,
   onRetryHistory,
+  hasOlderExports = false,
+  isLoadingOlderExports = false,
+  olderExportsError = null,
+  onLoadOlderExports,
   onExport,
   exportingFormat = null,
   retryingFormat = null,
@@ -47,9 +56,7 @@ export function StudioExportPanel({
 }: StudioExportPanelProps) {
   const isExporting = exportingFormat !== null;
   const runWithFocusRestoration = useCommandFocusRestoration(isExporting);
-  const retryHistoryWithFocusRestoration = useCommandFocusRestoration(isLoadingHistory);
   const formatButtonRefs = useRef(new Map<ExportFormat, HTMLButtonElement>());
-  const historyHeadingRef = useRef<HTMLHeadingElement | null>(null);
 
   return (
     <div
@@ -119,52 +126,17 @@ export function StudioExportPanel({
         </div>
       ) : null}
 
-      <section aria-labelledby="export-history-heading" className="export-history">
-        <h3 id="export-history-heading" ref={historyHeadingRef} tabIndex={-1}>
-          Export history
-        </h3>
-        {isLoadingHistory ? <p role="status">Loading export history…</p> : null}
-        {historyError ? (
-          <div aria-live="assertive" className="studio-inspector__error" role="alert">
-            <p>{historyError}</p>
-            {onRetryHistory ? (
-              <button
-                aria-busy={isLoadingHistory || undefined}
-                className="ui-command"
-                disabled={isLoadingHistory}
-                onClick={(event) => {
-                  void retryHistoryWithFocusRestoration(
-                    event.currentTarget,
-                    onRetryHistory,
-                    () => historyHeadingRef.current,
-                  );
-                }}
-                type="button"
-              >
-                Try again
-              </button>
-            ) : null}
-          </div>
-        ) : null}
-        {historyInitialized && exports.length ? (
-          <div className="export-list">
-            {exports.map((item) => (
-              <a className="studio-inspector__export-row" href={item.download_url} key={item.id}>
-                <span>
-                  <strong>{item.format.toUpperCase()}</strong>
-                  <small>
-                    {Math.ceil(item.size_bytes / 1024)} KB ·{" "}
-                    {new Date(item.created_at).toLocaleString()}
-                  </small>
-                </span>
-                <ExternalLink aria-hidden="true" />
-              </a>
-            ))}
-          </div>
-        ) : historyInitialized ? (
-          <p className="studio-inspector__empty">No exports yet.</p>
-        ) : null}
-      </section>
+      <StudioExportHistorySection
+        exports={exports}
+        historyInitialized={historyInitialized}
+        isLoadingHistory={isLoadingHistory}
+        historyError={historyError}
+        onRetryHistory={onRetryHistory}
+        hasOlderExports={hasOlderExports}
+        isLoadingOlderExports={isLoadingOlderExports}
+        olderExportsError={olderExportsError}
+        onLoadOlderExports={onLoadOlderExports}
+      />
     </div>
   );
 }

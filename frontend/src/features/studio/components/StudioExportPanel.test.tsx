@@ -1,6 +1,7 @@
 import { act } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { studioExport } from "@/test/factories";
 import { createMountHarness, deferred } from "@/test/harness";
 
 import { StudioExportPanel } from "./StudioExportPanel";
@@ -159,5 +160,45 @@ describe("StudioExportPanel", () => {
     act(() => mounted.root.render(content(null, null)));
 
     expect(document.activeElement).toBe(wordButton);
+  });
+
+  it("renders an explicit Load older exports control with busy and terminal states", () => {
+    const onLoadOlderExports = vi.fn();
+    const exports = [studioExport()];
+    const olderButton = (container: HTMLElement): HTMLButtonElement | null =>
+      container.querySelector<HTMLButtonElement>("button.ui-command");
+
+    const mounted = harness.mount(
+      <StudioExportPanel
+        exports={exports}
+        hasOlderExports
+        historyInitialized
+        onLoadOlderExports={onLoadOlderExports}
+      />,
+    );
+    expect(olderButton(mounted.container)?.textContent).toContain("Load older exports");
+    expect(mounted.container.textContent).not.toContain("End of export history");
+
+    act(() => {
+      mounted.root.render(
+        <StudioExportPanel
+          exports={exports}
+          hasOlderExports
+          historyInitialized
+          isLoadingOlderExports
+          onLoadOlderExports={onLoadOlderExports}
+        />,
+      );
+    });
+    const busyButton = olderButton(mounted.container);
+    expect(busyButton?.getAttribute("aria-busy")).toBe("true");
+    expect(busyButton?.disabled).toBe(true);
+    expect(busyButton?.textContent).toContain("Loading older exports");
+
+    act(() => {
+      mounted.root.render(<StudioExportPanel exports={exports} historyInitialized />);
+    });
+    expect(olderButton(mounted.container)).toBeNull();
+    expect(mounted.container.textContent).toContain("End of export history");
   });
 });

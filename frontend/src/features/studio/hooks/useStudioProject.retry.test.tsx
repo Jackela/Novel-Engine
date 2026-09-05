@@ -70,7 +70,7 @@ describe("useStudioProject retry lifecycle", () => {
       .mockRejectedValueOnce(new HttpError("Service unavailable.", 503))
       .mockReturnValueOnce(retryProject.promise);
     vi.mocked(api.reviews).mockResolvedValue({ reviews: [] });
-    vi.mocked(api.exports).mockResolvedValue({ exports: [] });
+    vi.mocked(api.exports).mockResolvedValue({ exports: [], next_cursor: null });
     const { result } = renderProjectHook();
     await flushEffects();
     expect(result().loadError).toBe("Service unavailable.");
@@ -111,7 +111,7 @@ describe("useStudioProject retry lifecycle", () => {
       )
       .mockResolvedValueOnce(projectFixture);
     vi.mocked(api.reviews).mockResolvedValue({ reviews: [] });
-    vi.mocked(api.exports).mockResolvedValue({ exports: [] });
+    vi.mocked(api.exports).mockResolvedValue({ exports: [], next_cursor: null });
 
     const { result } = renderProjectHook(true);
     await flushEffects();
@@ -128,7 +128,7 @@ describe("useStudioProject retry lifecycle", () => {
       .mockReturnValueOnce(staleRetry.promise)
       .mockResolvedValueOnce(nextProject);
     vi.mocked(api.reviews).mockResolvedValue({ reviews: [] });
-    vi.mocked(api.exports).mockResolvedValue({ exports: [] });
+    vi.mocked(api.exports).mockResolvedValue({ exports: [], next_cursor: null });
     const hook = renderProjectHook();
     await flushEffects();
     let stalePromise!: Promise<void>;

@@ -10,12 +10,14 @@ import {
 import { exportArtifactPayloadSchema } from "../../application/payload_schemas/export.js";
 import { exportArtifactPayload } from "../../application/payloads.js";
 import type { ExportArtifactFormat } from "../../application/ports/export_store.js";
+import { exportPageLimit } from "../../application/ports/export_store.js";
 import { sendWithinArtifactResponseLifetime } from "./artifact_download_response_lifetime.js";
 import {
   exportCreateOrRetry422ResponseSchema,
   exportDownload422ResponseSchema,
   exportJsonErrorResponseSchema,
 } from "./export_capacity_schemas.js";
+import { decodeExportCursor, encodeExportCursor } from "./export_cursor.js";
 import { jobResponseSchema } from "./job_schemas.js";
 import type { JsonResponseSchema } from "./json_response_schema.js";
 import { requireServices, type StudioRoutesOptions } from "./project_routes.js";
@@ -26,10 +28,27 @@ import { operationCapacityResponseSchema, operationInFlightSchema } from "./stud
 /**
  * The export artifact response (#440) is the TypeBox payload SSOT from
  * `application/payload_schemas/export.ts`; the LIST envelope wraps those
- * items. Binary delivery keeps its hand-written binary schema below.
+ * items as bounded keyset pages (#460). Binary delivery keeps its
+ * hand-written binary schema below.
  */
+const exportListQuerySchema = Type.Object(
+  {
+    limit: Type.Optional(Type.Integer({ default: 50, minimum: 1, maximum: 100 })),
+    cursor: Type.Optional(
+      Type.String({
+        minLength: 1,
+        maxLength: 1024,
+        pattern: "^[A-Za-z0-9_-]+$",
+      }),
+    ),
+  },
+  { additionalProperties: false },
+);
 const exportListResponseSchema = Type.Object(
-  { exports: Type.Array(exportArtifactPayloadSchema) },
+  {
+    exports: Type.Array(exportArtifactPayloadSchema),
+    next_cursor: Type.Unsafe<string | null>({ type: "string", nullable: true }),
+  },
   { additionalProperties: false },
 );
 const binaryExportSchema: JsonResponseSchema = {
@@ -59,6 +78,11 @@ const EXPORT_READ_ERROR_RESPONSES = {
   401: errorEnvelopeResponse,
   404: errorEnvelopeResponse,
   503: errorEnvelopeResponse,
+} as const;
+
+const EXPORT_LIST_ERROR_RESPONSES = {
+  ...EXPORT_READ_ERROR_RESPONSES,
+  422: errorEnvelopeResponse,
 } as const;
 
 /**
@@ -114,16 +138,33 @@ export const exportRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fast
       preHandler: [guard],
       schema: {
         params: projectIdParams,
+        querystring: exportListQuerySchema,
         security: [{ cookieAuth: [] }],
-        response: { 200: exportListResponseSchema, ...EXPORT_READ_ERROR_RESPONSES },
+        response: { 200: exportListResponseSchema, ...EXPORT_LIST_ERROR_RESPONSES },
       },
     },
-    async (request) =>
-      withStudioErrors(() => ({
-        exports: requireServices(options)
-          .artifacts.catalogProjectArtifacts(requirePrincipal(request), request.params.projectId)
-          .map((artifact) => exportArtifactPayload(artifact, request.params.projectId)),
-      })),
+    async (request) => {
+      const cursor =
+        request.query.cursor === undefined
+          ? undefined
+          : decodeExportCursor(request.query.cursor, request.params.projectId);
+      return withStudioErrors(() => {
+        const page = requireServices(options).artifacts.catalogProjectArtifacts(
+          requirePrincipal(request),
+          request.params.projectId,
+          {
+            limit: exportPageLimit(request.query.limit ?? 50),
+            ...(cursor === undefined ? {} : { cursor }),
+          },
+        );
+        return {
+          exports: page.artifacts.map((artifact) =>
+            exportArtifactPayload(artifact, request.params.projectId),
+          ),
+          next_cursor: encodeExportCursor(request.params.projectId, page.nextCursor),
+        };
+      });
+    },
   );
 
   app.get(

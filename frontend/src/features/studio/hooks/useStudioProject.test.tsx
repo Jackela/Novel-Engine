@@ -227,7 +227,7 @@ describe("useStudioProject", () => {
     // Given
     vi.mocked(api.project).mockRejectedValue(new HttpError("Authentication required.", 401));
     vi.mocked(api.reviews).mockResolvedValue({ reviews: [] });
-    vi.mocked(api.exports).mockResolvedValue({ exports: [] });
+    vi.mocked(api.exports).mockResolvedValue({ exports: [], next_cursor: null });
 
     // When
     const hook = renderStudioProjectHook("project-1");
@@ -243,7 +243,7 @@ describe("useStudioProject", () => {
     // Given
     vi.mocked(api.project).mockRejectedValue(new HttpError("Upstream failure.", 503));
     vi.mocked(api.reviews).mockResolvedValue({ reviews: [] });
-    vi.mocked(api.exports).mockResolvedValue({ exports: [] });
+    vi.mocked(api.exports).mockResolvedValue({ exports: [], next_cursor: null });
 
     // When
     const harness = renderStudioProjectHook("project-1");
@@ -292,7 +292,7 @@ describe("useStudioProject", () => {
     // Given
     const second = makeProject("project-2", "two");
     vi.mocked(api.reviews).mockResolvedValue({ reviews: [] });
-    vi.mocked(api.exports).mockResolvedValue({ exports: [] });
+    vi.mocked(api.exports).mockResolvedValue({ exports: [], next_cursor: null });
     // The stale project request only settles when its signal is aborted.
     vi.mocked(api.project)
       .mockImplementationOnce((_projectId: string, init?: RequestInit) => {

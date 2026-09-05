@@ -9,11 +9,14 @@ import {
 import { sameExportSourceProjection } from "../../application/export_source_identity.js";
 import type {
   ExportArtifactFormat,
+  ExportArtifactPage,
   ExportArtifactRecord,
+  ExportPageInput,
   ExportSource,
   ExportSourceDocument,
   PreparedExportArtifact,
 } from "../../application/ports/export_store.js";
+import { buildProjectArtifactPageQuery } from "../export_page_queries.js";
 import { isExportSnapshotWithinSourceCapacity } from "./export_source_capacity.js";
 import { assertCapturedExportSource } from "./export_source_revalidation.js";
 import {
@@ -165,14 +168,22 @@ export function insertExportArtifact(
   return toArtifactRecord({ ...input, projectId, snapshotId });
 }
 
-export function loadProjectArtifacts(tx: Tx, projectId: string): ExportArtifactRecord[] {
-  return tx
-    .select()
-    .from(exportArtifacts)
-    .where(eq(exportArtifacts.projectId, projectId))
-    .orderBy(desc(exportArtifacts.createdAt), desc(exportArtifacts.id))
-    .all()
-    .map(toArtifactRecord);
+export function loadProjectArtifacts(
+  tx: Tx,
+  projectId: string,
+  input: ExportPageInput,
+): ExportArtifactPage {
+  const rows = buildProjectArtifactPageQuery(tx, projectId, input).all();
+  const returned = rows.slice(0, input.limit).map(toArtifactRecord);
+  if (returned.length === 0) return { artifacts: [], nextCursor: null };
+  const boundary = returned.at(-1);
+  return {
+    artifacts: returned,
+    nextCursor:
+      rows.length > input.limit && boundary !== undefined
+        ? { createdAtMs: boundary.createdAt.getTime(), id: boundary.id }
+        : null,
+  };
 }
 
 export function loadProjectArtifact(
@@ -202,6 +213,13 @@ function findExportSnapshot(tx: Tx, projectId: string, snapshotId: string) {
     .get();
 }
 
+/**
+ * Batched snapshot-document inserts (#460): 8 bound columns per row keep
+ * every statement below SQLite's 32,767-variable ceiling, and the statement
+ * count grows at most once per batch instead of once per document.
+ */
+const SNAPSHOT_DOCUMENT_INSERT_BATCH_SIZE = 4_000;
+
 function writeExportSnapshot(
   tx: Tx,
   projectId: string,
@@ -212,18 +230,26 @@ function writeExportSnapshot(
   tx.insert(projectSnapshots)
     .values({ id: snapshotId, projectId, reason: "export", createdAt })
     .run();
-  for (const document of documentsToCapture) {
+  for (
+    let offset = 0;
+    offset < documentsToCapture.length;
+    offset += SNAPSHOT_DOCUMENT_INSERT_BATCH_SIZE
+  ) {
     tx.insert(snapshotDocuments)
-      .values({
-        id: randomUUID(),
-        snapshotId,
-        documentId: document.documentId,
-        revisionId: document.revisionId,
-        documentKind: document.kind,
-        documentTitle: document.title,
-        revisionMetadataJson: document.metadataJson,
-        position: document.position,
-      })
+      .values(
+        documentsToCapture
+          .slice(offset, offset + SNAPSHOT_DOCUMENT_INSERT_BATCH_SIZE)
+          .map((document) => ({
+            id: randomUUID(),
+            snapshotId,
+            documentId: document.documentId,
+            revisionId: document.revisionId,
+            documentKind: document.kind,
+            documentTitle: document.title,
+            revisionMetadataJson: document.metadataJson,
+            position: document.position,
+          })),
+      )
       .run();
   }
   return snapshotId;

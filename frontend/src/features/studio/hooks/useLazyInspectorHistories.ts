@@ -1,13 +1,12 @@
 import { useCallback } from "react";
 
 import { api } from "@/app/api";
-import type { Review, StudioExport } from "@/app/types/studio";
+import type { Review } from "@/app/types/studio";
 import type { InspectorTab } from "../studioConstants";
 
 import { useLazyInspectorResource } from "./useLazyInspectorResource";
 
 const EMPTY_REVIEWS: Review[] = [];
-const EMPTY_EXPORTS: StudioExport[] = [];
 
 interface UseLazyInspectorHistoriesOptions {
   readonly enabled: boolean;
@@ -28,10 +27,6 @@ export function useLazyInspectorHistories({
     async (signal: AbortSignal) => (await api.reviews(projectId, { signal })).reviews,
     [projectId],
   );
-  const requestExports = useCallback(
-    async (signal: AbortSignal) => (await api.exports(projectId, { signal })).exports,
-    [projectId],
-  );
   const review = useLazyInspectorResource({
     active: enabled && inspector === "review",
     projectId,
@@ -42,16 +37,6 @@ export function useLazyInspectorHistories({
     missingResourceMessage: "Review history is unavailable for this project.",
     loadErrorMessage: "Unable to load review history.",
   });
-  const exportHistory = useLazyInspectorResource({
-    active: enabled && inspector === "export",
-    projectId,
-    empty: EMPTY_EXPORTS,
-    request: requestExports,
-    recheckProject,
-    onSessionLost,
-    missingResourceMessage: "Export history is unavailable for this project.",
-    loadErrorMessage: "Unable to load export history.",
-  });
 
-  return { review, export: exportHistory };
+  return { review };
 }

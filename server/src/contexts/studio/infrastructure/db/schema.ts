@@ -235,7 +235,7 @@ export const exports = sqliteTable(
     createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
   },
   (table) => [
-    index("idx_exports_project_created").on(table.projectId, table.createdAt),
+    index("idx_exports_project_created_id").on(table.projectId, table.createdAt, table.id),
     index("idx_exports_snapshot").on(table.snapshotId),
   ],
 );
