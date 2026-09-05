@@ -42,6 +42,9 @@ export type VolumeIdParams = Static<typeof volumeIdParams>;
 export const jobIdParams = Type.Object({ projectId: pathSegment, jobId: pathSegment });
 export type JobIdParams = Static<typeof jobIdParams>;
 
+export const reviewIdParams = Type.Object({ projectId: pathSegment, reviewId: pathSegment });
+export type ReviewIdParams = Static<typeof reviewIdParams>;
+
 export const exportIdParams = Type.Object({ projectId: pathSegment, exportId: pathSegment });
 export type ExportIdParams = Static<typeof exportIdParams>;
 

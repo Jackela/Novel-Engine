@@ -3,7 +3,7 @@ import { useCallback, useLayoutEffect, useRef, useState } from "react";
 
 import { api, HttpError } from "@/app/api";
 import { clearRetryAttempt, getOrCreateRetryAttemptKey } from "@/app/retryAttemptRegistry";
-import type { Project, Review } from "@/app/types/studio";
+import type { Project, ReviewsPage } from "@/app/types/studio";
 import type { SettingsFormState } from "../studioInspectorTypes";
 import { toErrorMessage } from "./toErrorMessage";
 import { usePendingAction } from "./usePendingAction";
@@ -16,7 +16,7 @@ interface UseStudioActionsOptions {
   project: Project | null;
   projectId: string;
   setProject: Dispatch<SetStateAction<Project | null>>;
-  setReviews: Dispatch<SetStateAction<Review[]>>;
+  setReviewPage: (page: ReviewsPage) => void;
   setError: Dispatch<SetStateAction<string | null>>;
   errorPublishers?: Partial<StudioActionErrorPublishers>;
   setActiveId: Dispatch<SetStateAction<string | null>>;
@@ -55,7 +55,7 @@ export function useStudioActions({
   project,
   projectId,
   setProject,
-  setReviews,
+  setReviewPage,
   setError,
   errorPublishers,
   setActiveId,
@@ -152,7 +152,7 @@ export function useStudioActions({
     let reviewController: AbortController | null = null;
     try {
       // The synchronous job contract (#272): the response is the terminal
-      // review job; the assessment list is refreshed afterwards.
+      // review job; one cursorless first-page refresh follows (#459).
       const job = await api.createReview(projectId);
       if (job.status !== "completed") {
         throw new Error(job.error ?? "Unable to run review.");
@@ -162,14 +162,14 @@ export function useStudioActions({
       owner.controllers.add(reviewController);
       const response = await api.reviews(projectId, { signal: reviewController.signal });
       if (!isCurrentOwner(owner) || reviewController.signal.aborted) return;
-      setReviews((current) => (isCurrentOwner(owner) ? response.reviews : current));
+      setReviewPage(response);
     } catch (reason) {
       publishError(owner, "review", toErrorMessage(reason, "Unable to run review."));
     } finally {
       if (reviewController) owner.controllers.delete(reviewController);
       finishForOwner(owner, "runReview");
     }
-  }, [begin, currentOwner, finishForOwner, isCurrentOwner, projectId, publishError, setReviews]);
+  }, [begin, currentOwner, finishForOwner, isCurrentOwner, projectId, publishError, setReviewPage]);
 
   const retryJob = useCallback(
     async (jobId: string) => {

@@ -2,8 +2,8 @@ import { act, useState } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { api } from "@/app/api";
-import type { Project, Review } from "@/app/types/studio";
-import { projectWith } from "@/test/factories";
+import type { Project, ReviewsPage } from "@/app/types/studio";
+import { projectWith, reviewsPage } from "@/test/factories";
 import { createMountHarness } from "@/test/harness";
 
 import { useStudioActions } from "./useStudioActions";
@@ -31,14 +31,14 @@ describe("useStudioActions proposal audit gate", () => {
 
     function Wrapper() {
       const [project, setProject] = useState<Project | null>(projectFixture);
-      const [, setReviews] = useState<Review[]>([]);
+      const [, setReviewPage] = useState<ReviewsPage>(reviewsPage([]));
       const [, setError] = useState<string | null>(null);
       const [, setActiveId] = useState<string | null>(null);
       actions = useStudioActions({
         project,
         projectId: projectFixture.id,
         setProject,
-        setReviews,
+        setReviewPage,
         setError,
         setActiveId,
         settingsForm: { title: "Project", description: "", provider: "mock" },

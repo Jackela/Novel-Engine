@@ -6027,6 +6027,28 @@
       "get": {
         "parameters": [
           {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "maxLength": 1024,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9_-]+$",
+              "type": "string"
+            }
+          },
+          {
             "in": "path",
             "name": "projectId",
             "required": true,
@@ -6042,6 +6064,16 @@
                 "schema": {
                   "additionalProperties": false,
                   "properties": {
+                    "next_cursor": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
                     "reviews": {
                       "items": {
                         "additionalProperties": false,
@@ -6053,50 +6085,9 @@
                           "id": {
                             "type": "string"
                           },
-                          "issues": {
-                            "items": {
-                              "additionalProperties": false,
-                              "properties": {
-                                "code": {
-                                  "type": "string"
-                                },
-                                "document_id": {
-                                  "type": "string"
-                                },
-                                "evidence": {
-                                  "additionalProperties": true,
-                                  "type": "object"
-                                },
-                                "id": {
-                                  "type": "string"
-                                },
-                                "message": {
-                                  "type": "string"
-                                },
-                                "severity": {
-                                  "enum": [
-                                    "blocker",
-                                    "warning",
-                                    "suggestion"
-                                  ],
-                                  "type": "string"
-                                },
-                                "suggestion": {
-                                  "type": "string"
-                                }
-                              },
-                              "required": [
-                                "id",
-                                "document_id",
-                                "severity",
-                                "code",
-                                "message",
-                                "suggestion",
-                                "evidence"
-                              ],
-                              "type": "object"
-                            },
-                            "type": "array"
+                          "issue_count": {
+                            "minimum": 0,
+                            "type": "integer"
                           },
                           "model": {
                             "type": "string"
@@ -6121,8 +6112,8 @@
                           "provider",
                           "model",
                           "summary",
-                          "created_at",
-                          "issues"
+                          "issue_count",
+                          "created_at"
                         ],
                         "type": "object"
                       },
@@ -6130,7 +6121,8 @@
                     }
                   },
                   "required": [
-                    "reviews"
+                    "reviews",
+                    "next_cursor"
                   ],
                   "type": "object"
                 }
@@ -6149,6 +6141,16 @@
             "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
           },
           "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "422": {
             "content": {
               "application/json": {
                 "schema": {
@@ -6503,6 +6505,150 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/api/projects/{projectId}/reviews/{reviewId}": {
+      "get": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "reviewId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "created_at": {
+                      "format": "date-time",
+                      "type": "string"
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "issues": {
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "code": {
+                            "type": "string"
+                          },
+                          "document_id": {
+                            "type": "string"
+                          },
+                          "evidence": {
+                            "additionalProperties": true,
+                            "type": "object"
+                          },
+                          "id": {
+                            "type": "string"
+                          },
+                          "message": {
+                            "type": "string"
+                          },
+                          "severity": {
+                            "enum": [
+                              "blocker",
+                              "warning",
+                              "suggestion"
+                            ],
+                            "type": "string"
+                          },
+                          "suggestion": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "document_id",
+                          "severity",
+                          "code",
+                          "message",
+                          "suggestion",
+                          "evidence"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "model": {
+                      "type": "string"
+                    },
+                    "project_id": {
+                      "type": "string"
+                    },
+                    "provider": {
+                      "type": "string"
+                    },
+                    "snapshot_id": {
+                      "type": "string"
+                    },
+                    "summary": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "project_id",
+                    "snapshot_id",
+                    "provider",
+                    "model",
+                    "summary",
+                    "created_at",
+                    "issues"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
           }
         }
       }

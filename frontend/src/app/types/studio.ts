@@ -179,6 +179,23 @@ export interface Review {
   issues: ReviewIssue[];
 }
 
+/** One bounded review-history item (#459); ordered issues live on the detail read. */
+export interface ReviewSummary {
+  id: string;
+  project_id: string;
+  snapshot_id: string;
+  provider: string;
+  model: string;
+  summary: string;
+  issue_count: number;
+  created_at: string;
+}
+
+export interface ReviewsPage {
+  reviews: ReviewSummary[];
+  next_cursor: string | null;
+}
+
 /** Per-model aggregate row of `GET /api/projects/:projectId/usage` (#377). */
 export interface UsageModelRow {
   model: string;

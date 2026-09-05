@@ -226,7 +226,7 @@ describe("useStudioProject", () => {
   it("replaces to the entry route when authentication is required", async () => {
     // Given
     vi.mocked(api.project).mockRejectedValue(new HttpError("Authentication required.", 401));
-    vi.mocked(api.reviews).mockResolvedValue({ reviews: [] });
+    vi.mocked(api.reviews).mockResolvedValue({ reviews: [], next_cursor: null });
     vi.mocked(api.exports).mockResolvedValue({ exports: [] });
 
     // When
@@ -242,7 +242,7 @@ describe("useStudioProject", () => {
   it("renders a readable error state and keeps the route when the failure is not a 404", async () => {
     // Given
     vi.mocked(api.project).mockRejectedValue(new HttpError("Upstream failure.", 503));
-    vi.mocked(api.reviews).mockResolvedValue({ reviews: [] });
+    vi.mocked(api.reviews).mockResolvedValue({ reviews: [], next_cursor: null });
     vi.mocked(api.exports).mockResolvedValue({ exports: [] });
 
     // When
@@ -291,7 +291,7 @@ describe("useStudioProject", () => {
   it("aborts the in-flight requests of the previous project when the id changes", async () => {
     // Given
     const second = makeProject("project-2", "two");
-    vi.mocked(api.reviews).mockResolvedValue({ reviews: [] });
+    vi.mocked(api.reviews).mockResolvedValue({ reviews: [], next_cursor: null });
     vi.mocked(api.exports).mockResolvedValue({ exports: [] });
     // The stale project request only settles when its signal is aborted.
     vi.mocked(api.project)

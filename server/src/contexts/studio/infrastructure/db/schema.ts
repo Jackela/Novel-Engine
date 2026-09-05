@@ -182,7 +182,7 @@ export const reviews = sqliteTable(
     createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
   },
   (table) => [
-    index("idx_reviews_project_created").on(table.projectId, table.createdAt),
+    index("idx_reviews_project_created_id").on(table.projectId, table.createdAt, table.id),
     index("idx_reviews_snapshot").on(table.snapshotId),
   ],
 );

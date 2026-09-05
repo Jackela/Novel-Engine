@@ -142,10 +142,16 @@ export type {
   EditorialIssueRecord,
   EvaluatedReview,
   ReviewCompletionRecord,
+  ReviewPageCursor,
+  ReviewPageInput,
+  ReviewPageLimit,
   ReviewSnapshotDocument,
   ReviewSource,
   ReviewSourceDocument,
+  ReviewSummaryPage,
+  ReviewSummaryRecord,
 } from "./review_outcome_store.js";
+export { reviewPageLimit } from "./review_outcome_store.js";
 
 /**
  * Owner scoping of every project query: the single principal since #311

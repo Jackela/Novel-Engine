@@ -18,6 +18,7 @@ describe("StudioReviewPanel", () => {
         historyInitialized={false}
         isLoadingHistory
         latestReview={null}
+        summaries={[]}
         onRunReview={vi.fn()}
       />,
     );
@@ -32,6 +33,7 @@ describe("StudioReviewPanel", () => {
           historyError="Unable to load review history."
           historyInitialized={false}
           latestReview={null}
+          summaries={[]}
           onRetryHistory={vi.fn()}
           onRunReview={vi.fn()}
         />,
@@ -47,7 +49,7 @@ describe("StudioReviewPanel", () => {
     const completion = deferred<void>();
     const onRunReview = vi.fn(() => completion.promise);
     const mounted = harness.mount(
-      <StudioReviewPanel latestReview={null} onRunReview={onRunReview} />,
+      <StudioReviewPanel latestReview={null} summaries={[]} onRunReview={onRunReview} />,
     );
     const runButton = mounted.container.querySelector<HTMLButtonElement>(
       'button[aria-label="Run review"]',
@@ -57,7 +59,12 @@ describe("StudioReviewPanel", () => {
     act(() => {
       runButton.click();
       mounted.root.render(
-        <StudioReviewPanel latestReview={null} onRunReview={onRunReview} isRunning />,
+        <StudioReviewPanel
+          latestReview={null}
+          summaries={[]}
+          onRunReview={onRunReview}
+          isRunning
+        />,
       );
     });
     const otherButton = document.createElement("button");
@@ -72,7 +79,12 @@ describe("StudioReviewPanel", () => {
 
     act(() => {
       mounted.root.render(
-        <StudioReviewPanel latestReview={null} onRunReview={onRunReview} isRunning={false} />,
+        <StudioReviewPanel
+          latestReview={null}
+          summaries={[]}
+          onRunReview={onRunReview}
+          isRunning={false}
+        />,
       );
     });
     expect(document.activeElement).toBe(otherButton);

@@ -38,7 +38,7 @@ function renderActions(): () => ReturnType<typeof useStudioActions> {
       project,
       projectId: project.id,
       setProject: vi.fn(),
-      setReviews: vi.fn(),
+      setReviewPage: vi.fn(),
       setError: vi.fn(),
       setActiveId: vi.fn(),
       settingsForm: { title: project.title, description: project.description, provider: "mock" },

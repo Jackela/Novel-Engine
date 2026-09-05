@@ -3,22 +3,28 @@ import { eq } from "drizzle-orm";
 import type { StudioSqliteDatabase } from "../../../shared/infrastructure/db/connection.js";
 import { jobs } from "../../../shared/infrastructure/db/schema.js";
 import type { AddJobInput } from "../application/ports/job_records.js";
-import type {
-  EvaluatedReview,
-  ReviewCompletionRecord,
-  ReviewOutcomeStore,
-  ReviewSource,
+import {
+  type EvaluatedReview,
+  type ReviewCompletionRecord,
+  type ReviewOutcomeStore,
+  type ReviewPageInput,
+  type ReviewSource,
+  reviewPageLimit,
 } from "../application/ports/review_outcome_store.js";
 import type { ProjectScope } from "../application/ports/studio_store.js";
 import { InvalidJobTransitionError, NotFoundError } from "../domain/exceptions.js";
 import { applyJobOutcome, insertJobAndEvent } from "./db/job_writes.js";
 import {
-  loadProjectReviewAssessments,
+  findProjectReviewRow,
+  loadReviewIssueCounts,
+  loadReviewIssues,
   persistReviewAssessment,
   readReviewSourceDocuments,
+  toEditorialAssessment,
 } from "./db/review_records.js";
 import { scopedProject, type Tx } from "./db/studio_query_helpers.js";
 import { jobWithEvents } from "./job_store_part.js";
+import { buildReviewSummariesQuery } from "./review_page_queries.js";
 
 /** Atomic persistence adapter for source reads and successful review outcomes. */
 export class ReviewStorePart implements ReviewOutcomeStore {
@@ -85,10 +91,38 @@ export class ReviewStorePart implements ReviewOutcomeStore {
     );
   }
 
-  listEditorialAssessments(scope: ProjectScope, projectId: string) {
+  /** The bounded review-history index: summaries newest first, detail reads separately. */
+  collectProjectReviewSummaries(scope: ProjectScope, projectId: string, input: ReviewPageInput) {
+    const limit = reviewPageLimit(input.limit);
     return this.db.transaction((tx) => {
       const project = scopedProject(tx, scope, projectId);
-      return loadProjectReviewAssessments(tx, project.id);
+      const rows = buildReviewSummariesQuery(tx, project.id, { ...input, limit }).all();
+      const page = rows.slice(0, limit);
+      const boundary = page.at(-1);
+      const nextCursor =
+        rows.length > limit && boundary !== undefined
+          ? { createdAtMs: boundary.createdAt.getTime(), id: boundary.id }
+          : null;
+      const counts = loadReviewIssueCounts(
+        tx,
+        page.map((row) => row.id),
+      );
+      return {
+        reviews: page.map((row) => ({ ...row, issueCount: counts.get(row.id) ?? 0 })),
+        nextCursor,
+      };
+    });
+  }
+
+  /** One complete scoped assessment with ordered issues; issues never ride the list. */
+  findProjectReview(scope: ProjectScope, projectId: string, reviewId: string) {
+    return this.db.transaction((tx) => {
+      const project = scopedProject(tx, scope, projectId);
+      const review = findProjectReviewRow(tx, project.id, reviewId);
+      if (review === undefined) {
+        throw new NotFoundError("Review not found.");
+      }
+      return toEditorialAssessment(review, loadReviewIssues(tx, review));
     });
   }
 

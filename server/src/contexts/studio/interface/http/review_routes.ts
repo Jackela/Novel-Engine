@@ -6,12 +6,19 @@ import {
   ERROR_CODES,
   errorEnvelopeResponse,
 } from "../../../../shared/interface/http/error_envelope.js";
-import { reviewPayload } from "../../application/payloads.js";
+import { reviewPayload, reviewSummaryPayload } from "../../application/payloads.js";
+import { reviewPageLimit } from "../../application/ports/review_outcome_store.js";
 import { jobResponseSchema } from "./job_schemas.js";
 import { requireServices, type StudioRoutesOptions } from "./project_routes.js";
-import { reviewCreateSchema, reviewListResponseSchema } from "./review_schemas.js";
+import { decodeReviewCursor, encodeReviewCursor } from "./review_cursor.js";
+import {
+  reviewCreateSchema,
+  reviewListQuerySchema,
+  reviewListResponseSchema,
+  reviewResponseSchema,
+} from "./review_schemas.js";
 import { withAsyncStudioErrors, withStudioErrors } from "./studio_error_mapping.js";
-import { projectIdParams } from "./studio_request_schemas.js";
+import { projectIdParams, reviewIdParams } from "./studio_request_schemas.js";
 import { operationCapacityResponseSchema, operationInFlightSchema } from "./studio_schemas.js";
 
 /** Snapshot-bound editorial assessments, with server-owned provider provenance. */
@@ -96,8 +103,46 @@ export const reviewRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fast
       preHandler: [guard],
       schema: {
         params: projectIdParams,
+        querystring: reviewListQuerySchema,
         response: {
           200: reviewListResponseSchema,
+          401: errorEnvelopeResponse,
+          404: errorEnvelopeResponse,
+          422: errorEnvelopeResponse,
+          503: errorEnvelopeResponse,
+        },
+      },
+    },
+    async (request) => {
+      const cursor =
+        request.query.cursor === undefined
+          ? undefined
+          : decodeReviewCursor(request.query.cursor, request.params.projectId);
+      return withStudioErrors(() => {
+        const page = requireServices(options).reviewAssessments.collectProjectReviewSummaries(
+          requirePrincipal(request),
+          request.params.projectId,
+          {
+            limit: reviewPageLimit(request.query.limit ?? 50),
+            ...(cursor === undefined ? {} : { cursor }),
+          },
+        );
+        return {
+          reviews: page.reviews.map(reviewSummaryPayload),
+          next_cursor: encodeReviewCursor(request.params.projectId, page.nextCursor),
+        };
+      });
+    },
+  );
+
+  app.get(
+    "/api/projects/:projectId/reviews/:reviewId",
+    {
+      preHandler: [guard],
+      schema: {
+        params: reviewIdParams,
+        response: {
+          200: reviewResponseSchema,
           401: errorEnvelopeResponse,
           404: errorEnvelopeResponse,
           503: errorEnvelopeResponse,
@@ -105,13 +150,14 @@ export const reviewRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fast
       },
     },
     async (request) =>
-      withStudioErrors(() => ({
-        reviews: requireServices(options)
-          .reviewAssessments.listEditorialAssessments(
+      withStudioErrors(() =>
+        reviewPayload(
+          requireServices(options).reviewAssessments.findEditorialAssessment(
             requirePrincipal(request),
             request.params.projectId,
-          )
-          .map(reviewPayload),
-      })),
+            request.params.reviewId,
+          ),
+        ),
+      ),
   );
 };

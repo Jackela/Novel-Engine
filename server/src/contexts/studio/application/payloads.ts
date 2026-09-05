@@ -14,7 +14,11 @@ import {
 } from "./payload_schemas/job.js";
 import type { LoreAliasPayload, LoreStatusPayload } from "./payload_schemas/lore.js";
 import type { ProjectPayload } from "./payload_schemas/project.js";
-import type { ReviewPayload, ReviewSeverity } from "./payload_schemas/review.js";
+import type {
+  ReviewPayload,
+  ReviewSeverity,
+  ReviewSummaryPayload,
+} from "./payload_schemas/review.js";
 import type { RevisionPayload, RevisionSummaryPayload } from "./payload_schemas/revision.js";
 import type { VolumePayload } from "./payload_schemas/volume.js";
 import type { ExportArtifactRecord } from "./ports/export_store.js";
@@ -23,6 +27,7 @@ import type {
   DocumentMatchRecord,
   DocumentWithCurrent,
   JobRecord,
+  ReviewSummaryRecord,
   RevisionRecord,
   RevisionSummaryRecord,
 } from "./ports/studio_store.js";
@@ -257,8 +262,8 @@ export function loreStatusPayload(status: LoreStatus): LoreStatusPayload {
 }
 
 /**
- * One stored editorial assessment for the review LIST surface; identical to
- * the shape the review bridge lands in the job `result` JSON.
+ * One stored editorial assessment for the review DETAIL surface (#459);
+ * identical to the shape the review bridge lands in the job `result` JSON.
  */
 export function reviewPayload(assessment: EditorialAssessment): ReviewPayload {
   return {
@@ -280,6 +285,20 @@ export function reviewPayload(assessment: EditorialAssessment): ReviewPayload {
       suggestion: issue.suggestion,
       evidence: { ...issue.evidence },
     })),
+  };
+}
+
+/** One bounded review-history summary for the review LIST surface (#459). */
+export function reviewSummaryPayload(summary: ReviewSummaryRecord): ReviewSummaryPayload {
+  return {
+    id: summary.id,
+    project_id: summary.projectId,
+    snapshot_id: summary.snapshotId,
+    provider: summary.provider,
+    model: summary.model,
+    summary: summary.summary,
+    issue_count: summary.issueCount,
+    created_at: summary.createdAt.toISOString(),
   };
 }
 

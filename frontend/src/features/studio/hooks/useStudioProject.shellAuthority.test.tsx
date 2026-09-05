@@ -32,7 +32,7 @@ afterEach(() => {
 function renderProject(projectValue: Project) {
   let current: ReturnType<typeof useStudioProject> | undefined;
   vi.mocked(api.project).mockResolvedValue(projectValue);
-  vi.mocked(api.reviews).mockResolvedValue({ reviews: [] });
+  vi.mocked(api.reviews).mockResolvedValue({ reviews: [], next_cursor: null });
   vi.mocked(api.exports).mockResolvedValue({ exports: [] });
 
   function Probe(): null {

@@ -10,6 +10,8 @@ import {
   type EditorialAssessmentRecord,
   type EditorialIssueRecord,
   type EvaluatedReview,
+  type ReviewPageInput,
+  type ReviewSummaryPage,
   type StudioStore,
   scopeForPrincipal,
 } from "./ports/studio_store.js";
@@ -166,11 +168,24 @@ export class ReviewService {
     }
   }
 
-  /** List stored assessments without reevaluating newer live revisions. */
-  listEditorialAssessments(principal: Principal, projectId: string): EditorialAssessment[] {
-    return this.store
-      .listEditorialAssessments(scopeForPrincipal(principal), projectId)
-      .map(editorialAssessment);
+  /** One bounded newest-first summary page; ordered issues live on the detail read. */
+  collectProjectReviewSummaries(
+    principal: Principal,
+    projectId: string,
+    input: ReviewPageInput,
+  ): ReviewSummaryPage {
+    return this.store.collectProjectReviewSummaries(scopeForPrincipal(principal), projectId, input);
+  }
+
+  /** One complete scoped assessment without reevaluating newer live revisions. */
+  findEditorialAssessment(
+    principal: Principal,
+    projectId: string,
+    reviewId: string,
+  ): EditorialAssessment {
+    return editorialAssessment(
+      this.store.findProjectReview(scopeForPrincipal(principal), projectId, reviewId),
+    );
   }
 }
 

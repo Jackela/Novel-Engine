@@ -2,8 +2,8 @@ import { act } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { api } from "@/app/api";
-import type { Review } from "@/app/types/studio";
-import { job, projectWith, review } from "@/test/factories";
+import type { ReviewsPage } from "@/app/types/studio";
+import { job, projectWith, review, reviewSummary, reviewsPage } from "@/test/factories";
 import { createMountHarness, deferred } from "@/test/harness";
 
 import { useStudioActions } from "./useStudioActions";
@@ -22,6 +22,7 @@ vi.mock("@/app/api", async (importOriginal) => {
 
 const projectA = projectWith([]);
 const reviewFixture = review({ project_id: projectA.id });
+const reviewSummaryFixture = reviewSummary({ project_id: projectA.id, id: reviewFixture.id });
 const reviewJob = job({
   id: "job-review-1",
   project_id: projectA.id,
@@ -39,8 +40,8 @@ afterEach(() => {
 
 describe("useStudioActions project lifecycle", () => {
   it("aborts and discards a project A review refresh after its workbench switches to B", async () => {
-    const reviewResponse = deferred<{ reviews: Review[] }>();
-    const setReviews = vi.fn();
+    const reviewResponse = deferred<ReviewsPage>();
+    const setReviewPage = vi.fn();
     const setError = vi.fn();
     let actions: ReturnType<typeof useStudioActions> | undefined;
     vi.mocked(api.createReview).mockResolvedValue(reviewJob);
@@ -51,7 +52,7 @@ describe("useStudioActions project lifecycle", () => {
         project: projectA,
         projectId: projectA.id,
         setProject: vi.fn(),
-        setReviews,
+        setReviewPage,
         setError,
         setActiveId: vi.fn(),
         settingsForm: {
@@ -71,7 +72,7 @@ describe("useStudioActions project lifecycle", () => {
     });
     await vi.waitFor(() => expect(api.reviews).toHaveBeenCalledTimes(1));
     const reviewSignal = vi.mocked(api.reviews).mock.calls[0]?.[1]?.signal;
-    setReviews.mockClear();
+    setReviewPage.mockClear();
     setError.mockClear();
 
     // StudioPage keys the complete workbench by projectId. Unmounting A is the
@@ -79,11 +80,11 @@ describe("useStudioActions project lifecycle", () => {
     harness.unmount(container);
     expect(reviewSignal?.aborted).toBe(true);
     await act(async () => {
-      reviewResponse.resolve({ reviews: [reviewFixture] });
+      reviewResponse.resolve(reviewsPage([reviewSummaryFixture]));
       await pendingReview;
     });
 
-    expect(setReviews).not.toHaveBeenCalled();
+    expect(setReviewPage).not.toHaveBeenCalled();
     expect(setError).not.toHaveBeenCalled();
   });
 });

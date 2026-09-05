@@ -1,14 +1,23 @@
 import { RotateCcw } from "lucide-react";
 import { useRef } from "react";
 
-import type { Review } from "@/app/types/studio";
+import type { Review, ReviewSummary } from "@/app/types/studio";
 import { useCommandFocusRestoration } from "../hooks/useCommandFocusRestoration";
+import { StudioReviewHistoryList } from "./StudioReviewHistoryList";
 
 interface StudioReviewPanelProps {
   latestReview: Review | null;
+  summaries: ReviewSummary[];
+  detailLoading?: boolean;
+  detailError?: string | null;
+  onRetryDetail?: () => void | Promise<void>;
   historyInitialized?: boolean;
   isLoadingHistory?: boolean;
   historyError?: string | null;
+  hasOlderReviews?: boolean;
+  isLoadingOlder?: boolean;
+  olderError?: string | null;
+  onLoadOlderReviews?: () => void | Promise<void>;
   actionError?: string | null;
   onRetryHistory?: () => void | Promise<void>;
   onRunReview: () => void | Promise<void>;
@@ -17,9 +26,17 @@ interface StudioReviewPanelProps {
 
 export function StudioReviewPanel({
   latestReview,
+  summaries,
+  detailLoading = false,
+  detailError = null,
+  onRetryDetail,
   historyInitialized = true,
   isLoadingHistory = false,
   historyError = null,
+  hasOlderReviews = false,
+  isLoadingOlder = false,
+  olderError = null,
+  onLoadOlderReviews,
   actionError = null,
   onRetryHistory,
   onRunReview,
@@ -81,6 +98,17 @@ export function StudioReviewPanel({
           {actionError}
         </div>
       ) : null}
+      {detailLoading ? <p role="status">Loading review findings…</p> : null}
+      {detailError ? (
+        <div aria-live="assertive" className="studio-inspector__error" role="alert">
+          <p>{detailError}</p>
+          {onRetryDetail ? (
+            <button className="ui-command" onClick={() => void onRetryDetail()} type="button">
+              Try again
+            </button>
+          ) : null}
+        </div>
+      ) : null}
       {historyInitialized && latestReview?.issues.length ? (
         latestReview.issues.map((issue) => (
           <article
@@ -95,9 +123,18 @@ export function StudioReviewPanel({
             <small>{issue.suggestion}</small>
           </article>
         ))
-      ) : historyInitialized ? (
+      ) : historyInitialized && !detailLoading && !detailError && summaries.length === 0 ? (
         <p className="studio-inspector__empty">No review findings. Run a review when ready.</p>
       ) : null}
+      <StudioReviewHistoryList
+        hasOlderReviews={hasOlderReviews}
+        historyInitialized={historyInitialized}
+        isLoadingHistory={isLoadingHistory}
+        isLoadingOlder={isLoadingOlder}
+        onLoadOlderReviews={onLoadOlderReviews ?? (() => undefined)}
+        olderError={olderError}
+        summaries={summaries}
+      />
     </div>
   );
 }

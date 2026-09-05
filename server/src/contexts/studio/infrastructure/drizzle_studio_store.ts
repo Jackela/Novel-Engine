@@ -21,7 +21,9 @@ import type {
   ProjectUsageAggregate,
   RecordCompletedProposalJobInput,
   ReviewCompletionRecord,
+  ReviewPageInput,
   ReviewSource,
+  ReviewSummaryPage,
   RevisionPageInput,
   RevisionSummaryPage,
   StudioStore,
@@ -288,7 +290,19 @@ export class DrizzleStudioStore extends ProjectStorePart implements StudioStore 
     return this.editorialReviews.completeReviewRetryJob(scope, projectId, jobId, input);
   }
 
-  listEditorialAssessments(scope: ProjectScope, projectId: string): EditorialAssessmentRecord[] {
-    return this.editorialReviews.listEditorialAssessments(scope, projectId);
+  collectProjectReviewSummaries(
+    scope: ProjectScope,
+    projectId: string,
+    input: ReviewPageInput,
+  ): ReviewSummaryPage {
+    return this.editorialReviews.collectProjectReviewSummaries(scope, projectId, input);
+  }
+
+  findProjectReview(
+    scope: ProjectScope,
+    projectId: string,
+    reviewId: string,
+  ): EditorialAssessmentRecord {
+    return this.editorialReviews.findProjectReview(scope, projectId, reviewId);
   }
 }

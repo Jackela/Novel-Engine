@@ -56,7 +56,7 @@ function renderActions(target: Project = projectA) {
       project: target,
       projectId: target.id,
       setProject,
-      setReviews: vi.fn(),
+      setReviewPage: vi.fn(),
       setError,
       setActiveId: vi.fn(),
       settingsForm: { title: target.title, description: target.description, provider: "mock" },

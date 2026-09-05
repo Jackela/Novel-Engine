@@ -49,7 +49,7 @@ describe("Studio page Lore status authority", () => {
     vi.mocked(api.providers).mockResolvedValue({ providers: [] });
     vi.mocked(api.jobs).mockResolvedValue({ jobs: [], next_cursor: null });
     vi.mocked(api.revisions).mockResolvedValue({ revisions: [], next_cursor: null });
-    vi.mocked(api.reviews).mockResolvedValue({ reviews: [] });
+    vi.mocked(api.reviews).mockResolvedValue({ reviews: [], next_cursor: null });
     vi.mocked(api.exports).mockResolvedValue({ exports: [] });
     vi.mocked(api.saveLoreStatus)
       .mockResolvedValueOnce({ lore_status: "stable" })
