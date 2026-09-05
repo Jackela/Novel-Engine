@@ -17,6 +17,11 @@ import type {
 import { DuplicateVolumeError, NotFoundError } from "../domain/exceptions.js";
 import { documents, projects, volumes } from "./db/schema.js";
 import {
+  assertMergedVolumeChapterCapacity,
+  assertProjectVolumeCapacity,
+  assertVolumeChapterCapacity,
+} from "./db/structure_capacity_checks.js";
+import {
   documentSummaries,
   documentWithCurrent,
   isUniqueViolation,
@@ -53,6 +58,7 @@ export class VolumeStorePart implements StudioVolumeStore {
     try {
       return this.db.transaction((tx) => {
         const project = scopedProject(tx, scope, projectId);
+        assertProjectVolumeCapacity(tx, project.id);
         const position = nextVolumePosition(tx, project.id);
         const row = insertVolume(tx, {
           projectId: project.id,
@@ -113,6 +119,9 @@ export class VolumeStorePart implements StudioVolumeStore {
       if (survivor === undefined) {
         throw new NotFoundError("Surviving volume not found.");
       }
+      // The merge itself is a chapter-capacity write: refuse it before any
+      // orphan moves (#461).
+      assertMergedVolumeChapterCapacity(tx, survivor.id, doomed.id);
       const orphans = tx
         .select()
         .from(documents)
@@ -143,6 +152,7 @@ export class VolumeStorePart implements StudioVolumeStore {
       if (document.kind !== "chapter") {
         throw new InvalidOperationError("Only chapters belong to volumes.");
       }
+      assertVolumeChapterCapacity(tx, target.id, { excludingDocumentId: document.id });
       const position = tailPosition(tx, target.id) + 1;
       tx.update(documents)
         .set({ volumeId: target.id, position, updatedAt: input.now })

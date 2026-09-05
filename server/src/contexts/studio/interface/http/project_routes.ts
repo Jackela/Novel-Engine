@@ -16,6 +16,7 @@ import {
   encodeProjectCatalogCursor,
 } from "./project_catalog_cursor.js";
 import { projectUpdateRawKeyGuard } from "./project_update_raw_keys.js";
+import { structureCapacity422ResponseSchema } from "./structure_capacity_schemas.js";
 import { withAsyncStudioErrors, withStudioErrors } from "./studio_error_mapping.js";
 import {
   projectCreateSchema,
@@ -103,7 +104,8 @@ export const projectRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fas
           401: errorEnvelopeResponse,
           403: errorEnvelopeResponse,
           404: errorEnvelopeResponse,
-          422: errorEnvelopeResponse,
+          // Oversized settings JSON refuses permanently (#461).
+          422: structureCapacity422ResponseSchema,
           500: errorEnvelopeResponse,
           503: errorEnvelopeResponse,
         },

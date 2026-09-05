@@ -515,13 +515,46 @@ export interface paths {
                         "application/json": components["schemas"]["ErrorEnvelope"];
                     };
                 };
-                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                /** @description Invalid input or permanent authoring-structure capacity refusal with bounded evidence. */
                 422: {
                     headers: {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["ErrorEnvelope"];
+                        "application/json": {
+                            error: {
+                                /** @enum {string} */
+                                code: "INVALID_OPERATION";
+                                message: string;
+                            };
+                        } | {
+                            error: {
+                                /** @enum {string} */
+                                code: "STRUCTURE_CAPACITY_EXCEEDED";
+                                details: {
+                                    limit: number;
+                                    observed: number;
+                                    /** @enum {string} */
+                                    resource: "project_documents" | "project_volumes" | "volume_chapters" | "project_settings_bytes" | "document_metadata_bytes" | "outline_beats";
+                                };
+                                /** @enum {string} */
+                                message: "Authoring structure capacity exceeded.";
+                            };
+                        } | {
+                            error: {
+                                /** @enum {string} */
+                                code: "VALIDATION_ERROR";
+                                details: {
+                                    errors: {
+                                        field: string;
+                                        message: string;
+                                        type: string;
+                                    }[];
+                                };
+                                /** @enum {string} */
+                                message: "Request validation failed.";
+                            };
+                        };
                     };
                 };
                 /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
@@ -631,13 +664,46 @@ export interface paths {
                         "application/json": components["schemas"]["ErrorEnvelope"];
                     };
                 };
-                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                /** @description Invalid input or permanent authoring-structure capacity refusal with bounded evidence. */
                 422: {
                     headers: {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["ErrorEnvelope"];
+                        "application/json": {
+                            error: {
+                                /** @enum {string} */
+                                code: "INVALID_OPERATION";
+                                message: string;
+                            };
+                        } | {
+                            error: {
+                                /** @enum {string} */
+                                code: "STRUCTURE_CAPACITY_EXCEEDED";
+                                details: {
+                                    limit: number;
+                                    observed: number;
+                                    /** @enum {string} */
+                                    resource: "project_documents" | "project_volumes" | "volume_chapters" | "project_settings_bytes" | "document_metadata_bytes" | "outline_beats";
+                                };
+                                /** @enum {string} */
+                                message: "Authoring structure capacity exceeded.";
+                            };
+                        } | {
+                            error: {
+                                /** @enum {string} */
+                                code: "VALIDATION_ERROR";
+                                details: {
+                                    errors: {
+                                        field: string;
+                                        message: string;
+                                        type: string;
+                                    }[];
+                                };
+                                /** @enum {string} */
+                                message: "Request validation failed.";
+                            };
+                        };
                     };
                 };
                 /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
@@ -763,13 +829,46 @@ export interface paths {
                         };
                     };
                 };
-                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                /** @description Invalid input or permanent authoring-structure capacity refusal with bounded evidence. */
                 422: {
                     headers: {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["ErrorEnvelope"];
+                        "application/json": {
+                            error: {
+                                /** @enum {string} */
+                                code: "INVALID_OPERATION";
+                                message: string;
+                            };
+                        } | {
+                            error: {
+                                /** @enum {string} */
+                                code: "STRUCTURE_CAPACITY_EXCEEDED";
+                                details: {
+                                    limit: number;
+                                    observed: number;
+                                    /** @enum {string} */
+                                    resource: "project_documents" | "project_volumes" | "volume_chapters" | "project_settings_bytes" | "document_metadata_bytes" | "outline_beats";
+                                };
+                                /** @enum {string} */
+                                message: "Authoring structure capacity exceeded.";
+                            };
+                        } | {
+                            error: {
+                                /** @enum {string} */
+                                code: "VALIDATION_ERROR";
+                                details: {
+                                    errors: {
+                                        field: string;
+                                        message: string;
+                                        type: string;
+                                    }[];
+                                };
+                                /** @enum {string} */
+                                message: "Request validation failed.";
+                            };
+                        };
                     };
                 };
                 /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
@@ -1072,13 +1171,46 @@ export interface paths {
                         };
                     };
                 };
-                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                /** @description Invalid input or permanent authoring-structure capacity refusal with bounded evidence. */
                 422: {
                     headers: {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["ErrorEnvelope"];
+                        "application/json": {
+                            error: {
+                                /** @enum {string} */
+                                code: "INVALID_OPERATION";
+                                message: string;
+                            };
+                        } | {
+                            error: {
+                                /** @enum {string} */
+                                code: "STRUCTURE_CAPACITY_EXCEEDED";
+                                details: {
+                                    limit: number;
+                                    observed: number;
+                                    /** @enum {string} */
+                                    resource: "project_documents" | "project_volumes" | "volume_chapters" | "project_settings_bytes" | "document_metadata_bytes" | "outline_beats";
+                                };
+                                /** @enum {string} */
+                                message: "Authoring structure capacity exceeded.";
+                            };
+                        } | {
+                            error: {
+                                /** @enum {string} */
+                                code: "VALIDATION_ERROR";
+                                details: {
+                                    errors: {
+                                        field: string;
+                                        message: string;
+                                        type: string;
+                                    }[];
+                                };
+                                /** @enum {string} */
+                                message: "Request validation failed.";
+                            };
+                        };
                     };
                 };
                 /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
@@ -2131,13 +2263,46 @@ export interface paths {
                         };
                     };
                 };
-                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                /** @description Invalid input or permanent authoring-structure capacity refusal with bounded evidence. */
                 422: {
                     headers: {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["ErrorEnvelope"];
+                        "application/json": {
+                            error: {
+                                /** @enum {string} */
+                                code: "INVALID_OPERATION";
+                                message: string;
+                            };
+                        } | {
+                            error: {
+                                /** @enum {string} */
+                                code: "STRUCTURE_CAPACITY_EXCEEDED";
+                                details: {
+                                    limit: number;
+                                    observed: number;
+                                    /** @enum {string} */
+                                    resource: "project_documents" | "project_volumes" | "volume_chapters" | "project_settings_bytes" | "document_metadata_bytes" | "outline_beats";
+                                };
+                                /** @enum {string} */
+                                message: "Authoring structure capacity exceeded.";
+                            };
+                        } | {
+                            error: {
+                                /** @enum {string} */
+                                code: "VALIDATION_ERROR";
+                                details: {
+                                    errors: {
+                                        field: string;
+                                        message: string;
+                                        type: string;
+                                    }[];
+                                };
+                                /** @enum {string} */
+                                message: "Request validation failed.";
+                            };
+                        };
                     };
                 };
                 /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
@@ -2240,13 +2405,46 @@ export interface paths {
                         "application/json": components["schemas"]["ErrorEnvelope"];
                     };
                 };
-                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                /** @description Invalid input or permanent authoring-structure capacity refusal with bounded evidence. */
                 422: {
                     headers: {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["ErrorEnvelope"];
+                        "application/json": {
+                            error: {
+                                /** @enum {string} */
+                                code: "INVALID_OPERATION";
+                                message: string;
+                            };
+                        } | {
+                            error: {
+                                /** @enum {string} */
+                                code: "STRUCTURE_CAPACITY_EXCEEDED";
+                                details: {
+                                    limit: number;
+                                    observed: number;
+                                    /** @enum {string} */
+                                    resource: "project_documents" | "project_volumes" | "volume_chapters" | "project_settings_bytes" | "document_metadata_bytes" | "outline_beats";
+                                };
+                                /** @enum {string} */
+                                message: "Authoring structure capacity exceeded.";
+                            };
+                        } | {
+                            error: {
+                                /** @enum {string} */
+                                code: "VALIDATION_ERROR";
+                                details: {
+                                    errors: {
+                                        field: string;
+                                        message: string;
+                                        type: string;
+                                    }[];
+                                };
+                                /** @enum {string} */
+                                message: "Request validation failed.";
+                            };
+                        };
                     };
                 };
                 /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
@@ -3592,13 +3790,46 @@ export interface paths {
                         };
                     };
                 };
-                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                /** @description Invalid input or permanent authoring-structure capacity refusal with bounded evidence. */
                 422: {
                     headers: {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["ErrorEnvelope"];
+                        "application/json": {
+                            error: {
+                                /** @enum {string} */
+                                code: "INVALID_OPERATION";
+                                message: string;
+                            };
+                        } | {
+                            error: {
+                                /** @enum {string} */
+                                code: "STRUCTURE_CAPACITY_EXCEEDED";
+                                details: {
+                                    limit: number;
+                                    observed: number;
+                                    /** @enum {string} */
+                                    resource: "project_documents" | "project_volumes" | "volume_chapters" | "project_settings_bytes" | "document_metadata_bytes" | "outline_beats";
+                                };
+                                /** @enum {string} */
+                                message: "Authoring structure capacity exceeded.";
+                            };
+                        } | {
+                            error: {
+                                /** @enum {string} */
+                                code: "VALIDATION_ERROR";
+                                details: {
+                                    errors: {
+                                        field: string;
+                                        message: string;
+                                        type: string;
+                                    }[];
+                                };
+                                /** @enum {string} */
+                                message: "Request validation failed.";
+                            };
+                        };
                     };
                 };
                 /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
@@ -3866,13 +4097,46 @@ export interface paths {
                         "application/json": components["schemas"]["ErrorEnvelope"];
                     };
                 };
-                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                /** @description Invalid input or permanent authoring-structure capacity refusal with bounded evidence. */
                 422: {
                     headers: {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["ErrorEnvelope"];
+                        "application/json": {
+                            error: {
+                                /** @enum {string} */
+                                code: "INVALID_OPERATION";
+                                message: string;
+                            };
+                        } | {
+                            error: {
+                                /** @enum {string} */
+                                code: "STRUCTURE_CAPACITY_EXCEEDED";
+                                details: {
+                                    limit: number;
+                                    observed: number;
+                                    /** @enum {string} */
+                                    resource: "project_documents" | "project_volumes" | "volume_chapters" | "project_settings_bytes" | "document_metadata_bytes" | "outline_beats";
+                                };
+                                /** @enum {string} */
+                                message: "Authoring structure capacity exceeded.";
+                            };
+                        } | {
+                            error: {
+                                /** @enum {string} */
+                                code: "VALIDATION_ERROR";
+                                details: {
+                                    errors: {
+                                        field: string;
+                                        message: string;
+                                        type: string;
+                                    }[];
+                                };
+                                /** @enum {string} */
+                                message: "Request validation failed.";
+                            };
+                        };
                     };
                 };
                 /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
