@@ -59,7 +59,7 @@ export function useStudioPageModel(projectId: string, route: StudioRouteState, n
   );
   const activeDocument = currentDocument.document;
   const { projectErrors, documentErrors, visibleError, visibleErrorWithoutSettings } =
-    useStudioErrorChannels(projectId, activeDocument?.id ?? null, error);
+    useStudioErrorChannels(projectId, activeSummary?.id ?? null, error);
   const {
     draft,
     setDraft,
@@ -85,6 +85,7 @@ export function useStudioPageModel(projectId: string, route: StudioRouteState, n
     documentErrors.publishers.draft,
     documentErrors.publishers.revision,
     documentErrors.publishers.restore,
+    activeSummary?.id ?? null,
   );
   const generation = useStudioGeneration({
     projectId,

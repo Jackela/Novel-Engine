@@ -314,9 +314,9 @@ describe("useDocumentDraft identity", () => {
     expect(draft.result().project?.documents).toEqual(summaries(latestA, documentB));
 
     draft.rerender(latestA, draft.result().project ?? project);
-    expect(draft.result().hook.draft).toBe("Unsaved local document A");
+    expect(draft.result().hook.draft).toBe(latestA.content_markdown);
     expect(draft.result().hook.loadedRevision.current).toBe(latestA.current_revision_id);
-    expect(draft.result().hook.saveState).toBe("conflict");
+    expect(draft.result().hook.saveState).toBe("idle");
     await act(async () => {
       await draft.result().hook.restoreRevision("revision-old");
     });

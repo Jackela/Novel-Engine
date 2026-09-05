@@ -24,7 +24,7 @@ export function useAcceptanceCapture(
       ownerRef.current === owner && owner.documentId === documentId
         ? captureCommittedDraftReconciler(draftRef.current, reconcile, (document, outcome) => {
             void refreshRevisions(document.id, document.current_revision_id);
-            if (outcome !== "conflict") setError(null);
+            if (outcome !== "conflict" && ownerRef.current === owner) setError(null);
           })
         : undefined,
     [draftRef, owner, ownerRef, reconcile, refreshRevisions, setError],

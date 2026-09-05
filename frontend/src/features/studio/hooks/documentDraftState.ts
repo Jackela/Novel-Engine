@@ -88,7 +88,7 @@ export function stateForOwner(
 }
 
 export function replaceOwnerState(current: DraftStates, next: DraftState): DraftStates {
-  return { ...current, [next.ownerKey]: next };
+  return current[next.ownerKey] === next ? current : { [next.ownerKey]: next };
 }
 
 function advanceRevisionLineage(current: DraftState, nextRevisionId: string): ReadonlySet<string> {

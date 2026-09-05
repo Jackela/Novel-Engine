@@ -29,10 +29,11 @@ export function useDocumentDraft(
   setError: Dispatch<SetStateAction<string | null>>,
   setRevisionError: Dispatch<SetStateAction<string | null>> = setError,
   setRestoreError: Dispatch<SetStateAction<string | null>> = setError,
+  selectedDocumentId: string | null = activeDocument?.id ?? null,
 ) {
   const { owner, ownerRef, mountedRef, isCurrentOwner, isCurrentProject } = useDocumentDraftOwner(
     projectId,
-    activeDocument?.id ?? null,
+    selectedDocumentId,
   );
   const [draftStates, setDraftStates] = useState<DraftStates>(() => ({
     [owner.key]: draftStateFor(activeDocument, owner.key),
@@ -43,13 +44,18 @@ export function useDocumentDraft(
   const activeDraftState = stateForActiveDocument(draftStates, activeDocument, owner.key);
   const { draft, titleDraft, saveState } = activeDraftState;
 
-  // Persist a clean aggregate advance into the owner cache. The render-time
-  // projection makes the new baseline visible immediately; materializing it
-  // here ensures a later commit can still reconcile against that baseline
-  // after the author has switched to another document.
+  // Only the selected Document owns a Draft. A temporary body-loading state
+  // preserves this owner; selecting another Document replaces its local state.
   useEffect(() => {
     setDraftStates((current) => materializeActiveDraftState(current, activeDocument, owner.key));
   }, [activeDocument, owner.key]);
+
+  useEffect(() => {
+    if (!isCurrentOwner(owner)) return;
+    persistedDraftsRef.current.clear();
+    setError(null);
+    setRestoreError(null);
+  }, [isCurrentOwner, owner, setError, setRestoreError]);
 
   const loadedRevision = useMemo(
     () => ({ current: activeDraftState.loadedRevisionId, ownerToken: owner.token }),
@@ -144,10 +150,10 @@ export function useDocumentDraft(
 
   const setCurrentSaveState = useCallback(
     (nextSaveState: SaveState) => {
-      if (!isCurrentProject(owner)) return;
-      if (ownerRef.current?.key === owner.key) saveStateRef.current = nextSaveState;
+      if (!isCurrentOwner(owner)) return;
+      saveStateRef.current = nextSaveState;
       setDraftStates((current) =>
-        isCurrentProject(owner)
+        isCurrentOwner(owner)
           ? replaceOwnerState(current, {
               ...stateForOwner(current, activeDocument, owner.key),
               saveState: nextSaveState,
@@ -155,7 +161,7 @@ export function useDocumentDraft(
           : current,
       );
     },
-    [activeDocument, isCurrentProject, owner, ownerRef],
+    [activeDocument, isCurrentOwner, owner],
   );
 
   const applyDocument = useCallback(

@@ -58,7 +58,7 @@ async function persistDocumentDraftAndRefreshHistory({
   });
   if (outcome !== null) {
     void refreshDocumentRevisions(document.id, saved.current_revision_id);
-    if (outcome !== "conflict") setError(null);
+    if (outcome !== "conflict" && isCurrentOwner(owner)) setError(null);
   }
   return saved;
 }

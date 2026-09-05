@@ -164,7 +164,7 @@ describe("useDocumentDraft external commit reconciliation", () => {
     expect(api.saveDocument).not.toHaveBeenCalled();
   });
 
-  it("keeps a newer local draft in conflict with an accepted aggregate revision", async () => {
+  it("discards a switched local draft and returns to the accepted revision", async () => {
     const acceptedA = {
       ...documentA,
       current_revision_id: "revision-a-accepted",
@@ -179,9 +179,9 @@ describe("useDocumentDraft external commit reconciliation", () => {
     draft.rerender(documentB, acceptedProject);
     draft.rerender(acceptedA, acceptedProject);
 
-    expect(draft.result().draft).toBe("Document A newer local draft");
+    expect(draft.result().draft).toBe(acceptedA.content_markdown);
     expect(draft.result().loadedRevision.current).toBe(acceptedA.current_revision_id);
-    expect(draft.result().saveState).toBe("conflict");
+    expect(draft.result().saveState).toBe("idle");
     await advanceAutosave();
     expect(api.saveDocument).not.toHaveBeenCalled();
   });
@@ -210,7 +210,7 @@ describe("useDocumentDraft external commit reconciliation", () => {
     });
   });
 
-  it("publishes an in-flight A save failure after A to B to A without polluting B", async () => {
+  it("ignores an obsolete A save failure after A to B to A", async () => {
     let rejectSave!: (reason: unknown) => void;
     const saveA = new Promise<StudioDocument>((_resolve, reject) => {
       rejectSave = reject;
@@ -233,12 +233,12 @@ describe("useDocumentDraft external commit reconciliation", () => {
     });
     await flushEffects();
 
-    expect(draft.result().hook.saveState).toBe("error");
-    expect(draft.result().error).toBe("Document A save failed.");
+    expect(draft.result().hook.saveState).toBe("idle");
+    expect(draft.result().error).toBeNull();
     draft.rerender(documentB);
     expect(draft.result().error).toBeNull();
     draft.rerender(documentA);
-    expect(draft.result().error).toBe("Document A save failed.");
+    expect(draft.result().error).toBeNull();
   });
 
   it("clears A's prior draft error when an inactive retry save commits", async () => {

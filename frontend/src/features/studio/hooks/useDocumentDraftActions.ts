@@ -257,7 +257,7 @@ export function useDocumentDraftActions({
         });
         if (outcome !== null) {
           await refreshDocumentRevisions(activeDocument.id, restored.current_revision_id);
-          if (outcome !== "conflict") setRestoreError(null);
+          if (outcome !== "conflict" && isCurrentOwner(owner)) setRestoreError(null);
         }
       } catch (reason) {
         if (reason instanceof HttpError && reason.status === 409) {
@@ -265,18 +265,18 @@ export function useDocumentDraftActions({
           try {
             const latestDocument = await refreshLatestDocument(activeDocument.id);
             if (!latestDocument) return;
-            reconcileCommittedDocument(latestDocument, {
-              editVersion: restoreEditVersion,
-              successState: "conflict",
-              preserveLocalDraft: true,
-            });
-            if (isCurrentProject(owner)) {
+            if (isCurrentOwner(owner)) {
+              reconcileCommittedDocument(latestDocument, {
+                editVersion: restoreEditVersion,
+                successState: "conflict",
+                preserveLocalDraft: true,
+              });
               setRestoreError(
                 "The document changed before the revision could be restored. The latest revision is ready; resolve the local draft or try restoring again.",
               );
             }
           } catch (refreshReason) {
-            if (isCurrentProject(owner)) {
+            if (isCurrentOwner(owner)) {
               setRestoreError(
                 toErrorMessage(refreshReason, "Unable to refresh the latest document."),
               );
@@ -284,7 +284,7 @@ export function useDocumentDraftActions({
           }
           return;
         }
-        if (isCurrentProject(owner)) {
+        if (isCurrentOwner(owner)) {
           setRestoreError(toErrorMessage(reason, "Unable to restore revision."));
         }
       }
@@ -293,7 +293,6 @@ export function useDocumentDraftActions({
       activeDocument,
       draftRef,
       isCurrentOwner,
-      isCurrentProject,
       loadedRevision,
       owner,
       projectId,

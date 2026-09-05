@@ -98,7 +98,7 @@ async function advanceAutosave(): Promise<void> {
 }
 
 describe("useDocumentDraft committed reconciliation", () => {
-  it("keeps document A's pre-debounce draft isolated while visiting document B", async () => {
+  it("discards document A's pre-debounce draft after visiting document B", async () => {
     const draft = renderDraft();
     await flushMicrotasks();
 
@@ -117,7 +117,7 @@ describe("useDocumentDraft committed reconciliation", () => {
 
     draft.rerender(documentA);
 
-    expect(draft.result().hook.draft).toBe("Document A local draft");
+    expect(draft.result().hook.draft).toBe(documentA.content_markdown);
     expect(draft.result().hook.titleDraft).toBe(documentA.title);
   });
 
@@ -150,7 +150,7 @@ describe("useDocumentDraft committed reconciliation", () => {
 
     expect(draft.result().hook.draft).toBe(committedA.content_markdown);
     expect(draft.result().hook.loadedRevision.current).toBe(committedA.current_revision_id);
-    expect(draft.result().hook.saveState).toBe("saved");
+    expect(draft.result().hook.saveState).toBe("idle");
   });
 
   it("keeps a newer document A edit and exposes conflict after its older save commits", async () => {
@@ -274,7 +274,7 @@ describe("useDocumentDraft committed reconciliation", () => {
 
     expect(draft.result().hook.draft).toBe(acceptedTwice.content_markdown);
     expect(draft.result().hook.loadedRevision.current).toBe(acceptedTwice.current_revision_id);
-    expect(draft.result().hook.saveState).toBe("saved");
+    expect(draft.result().hook.saveState).toBe("idle");
   });
 
   it("reconciles a committed document A restore without changing document B", async () => {

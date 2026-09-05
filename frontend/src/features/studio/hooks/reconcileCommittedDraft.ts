@@ -42,11 +42,6 @@ export function reconcileCommittedDraft(
   ) {
     return null;
   }
-  options.persistedDraftsRef.current.set(owner.key, {
-    ownerKey: owner.key,
-    draft: document.content_markdown,
-    titleDraft: document.title,
-  });
   options.setProject((current) =>
     options.mountedRef.current && current?.id === owner.projectId
       ? {
@@ -57,9 +52,18 @@ export function reconcileCommittedDraft(
         }
       : current,
   );
+  const activeOwner = options.ownerRef.current;
+  // An inactive commit updates the shell; its body is read afresh on return.
+  // Never recreate a Draft or retain an inactive body for that Document.
+  if (activeOwner?.key !== owner.key) return "inactive-owner";
+  options.persistedDraftsRef.current.set(owner.key, {
+    ownerKey: owner.key,
+    draft: document.content_markdown,
+    titleDraft: document.title,
+  });
+  const sameLifecycle = activeOwner.token === owner.token;
   const visibleState: VisibleDraftState | undefined =
-    options.ownerRef.current?.token === owner.token &&
-    options.draftRef.current.ownerToken === owner.token
+    sameLifecycle && options.draftRef.current.ownerToken === activeOwner.token
       ? {
           draft: options.draftRef.current.draft,
           titleDraft: options.draftRef.current.titleDraft,
@@ -67,16 +71,20 @@ export function reconcileCommittedDraft(
           loadedRevisionId: options.loadedRevision.current,
         }
       : undefined;
+  // A -> B -> A starts a new edit counter. Compare against that lifecycle's
+  // clean baseline, never the discarded edit version or text from old A.
+  const activeExpectation = sameLifecycle
+    ? expectation
+    : { editVersion: 0, successState: expectation.successState };
   options.setDraftStates((current) =>
-    options.mountedRef.current
-      ? reconcileOwnerCommit(current, document, owner.key, expectation, visibleState)
+    options.mountedRef.current && options.ownerRef.current === activeOwner
+      ? reconcileOwnerCommit(current, document, owner.key, activeExpectation, visibleState)
       : current,
   );
-  if (options.ownerRef.current?.key !== owner.key) return "inactive-owner";
-  const nextSaveState = hasNewerLocalEdit(options.draftRef.current, expectation)
+  const nextSaveState = hasNewerLocalEdit(options.draftRef.current, activeExpectation)
     ? "conflict"
     : expectation.successState;
-  options.loadedRevision.current = document.current_revision_id;
+  if (sameLifecycle) options.loadedRevision.current = document.current_revision_id;
   options.saveStateRef.current = nextSaveState;
   return nextSaveState;
 }

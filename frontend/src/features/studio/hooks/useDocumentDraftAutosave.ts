@@ -105,12 +105,12 @@ export function useDocumentDraftAutosave({
         if (!isCurrentProject()) return;
         const isConflict = reason instanceof HttpError && reason.status === 409;
         setCurrentSaveState(isConflict ? "conflict" : "error");
-        setError(toErrorMessage(reason, "Unable to save."));
+        if (isCurrentOwner()) setError(toErrorMessage(reason, "Unable to save."));
         if (isConflict) {
           try {
             await refreshLatestDocument(currentDocument.id);
           } catch (refreshReason) {
-            if (isCurrentProject()) {
+            if (isCurrentOwner()) {
               setError(toErrorMessage(refreshReason, "Unable to refresh the latest document."));
             }
           }
