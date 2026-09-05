@@ -36,6 +36,41 @@ export interface ExportArtifactRecord {
   readonly createdAt: Date;
 }
 
+/** The validated row budget of one bounded export catalog page. */
+export type ExportPageLimit = number & { readonly __exportPageLimit: unique symbol };
+
+/** Inclusive application/store boundary for one page of the catalog. */
+export const MIN_EXPORT_PAGE_LIMIT = 1;
+export const MAX_EXPORT_PAGE_LIMIT = 100;
+
+/** Validate and narrow a transport/application number before persistence. */
+export function exportPageLimit(value: number): ExportPageLimit {
+  if (!Number.isInteger(value) || value < MIN_EXPORT_PAGE_LIMIT || value > MAX_EXPORT_PAGE_LIMIT) {
+    throw new RangeError(
+      `Export page limit must be an integer from ${MIN_EXPORT_PAGE_LIMIT} through ${MAX_EXPORT_PAGE_LIMIT}.`,
+    );
+  }
+  return value as ExportPageLimit;
+}
+
+/** Persistence-neutral exclusive position in `(created_at DESC, id DESC)` order. */
+export interface ExportPageCursor {
+  readonly createdAtMs: number;
+  readonly id: string;
+}
+
+/** One typed keyset request; the first page omits its exclusive cursor. */
+export interface ExportPageInput {
+  readonly limit: ExportPageLimit;
+  readonly cursor?: ExportPageCursor | undefined;
+}
+
+/** One bounded catalog page and the exclusive position required to continue it. */
+export interface ExportArtifactPage {
+  readonly artifacts: ExportArtifactRecord[];
+  readonly nextCursor: ExportPageCursor | null;
+}
+
 /** File evidence plus the captured source needed for one database landing. */
 export interface PreparedExportArtifact {
   readonly source: ExportSource;
@@ -69,7 +104,11 @@ export interface ExportOutcomeStore {
     jobId: string,
     input: PreparedExportArtifact,
   ): ExportCompletionRecord;
-  listProjectArtifacts(scope: ProjectScope, projectId: string): ExportArtifactRecord[];
+  listProjectArtifacts(
+    scope: ProjectScope,
+    projectId: string,
+    input: ExportPageInput,
+  ): ExportArtifactPage;
   findProjectArtifact(
     scope: ProjectScope,
     projectId: string,

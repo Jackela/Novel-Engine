@@ -7,9 +7,11 @@ import { ArtifactDownloadCapacity } from "./artifact_download_capacity.js";
 import { ExportRendererGuard } from "./export_renderer_guard.js";
 import type {
   ExportArtifactFormat,
+  ExportArtifactPage,
   ExportArtifactRecord,
   ExportCompletionRecord,
   ExportOutcomeStore,
+  ExportPageInput,
   PreparedExportArtifact,
 } from "./ports/export_store.js";
 import { scopeForPrincipal } from "./ports/studio_store.js";
@@ -201,8 +203,12 @@ export class SnapshotArtifactService {
     };
   }
 
-  catalogProjectArtifacts(principal: Principal, projectId: string): ExportArtifactRecord[] {
-    return this.exportStore.listProjectArtifacts(scopeForPrincipal(principal), projectId);
+  catalogProjectArtifacts(
+    principal: Principal,
+    projectId: string,
+    input: ExportPageInput,
+  ): ExportArtifactPage {
+    return this.exportStore.listProjectArtifacts(scopeForPrincipal(principal), projectId, input);
   }
 
   async withArtifactDelivery<T>(

@@ -33,7 +33,7 @@ function renderProject(projectValue: Project) {
   let current: ReturnType<typeof useStudioProject> | undefined;
   vi.mocked(api.project).mockResolvedValue(projectValue);
   vi.mocked(api.reviews).mockResolvedValue({ reviews: [] });
-  vi.mocked(api.exports).mockResolvedValue({ exports: [] });
+  vi.mocked(api.exports).mockResolvedValue({ exports: [], next_cursor: null });
 
   function Probe(): null {
     current = useStudioProject(projectValue.id);

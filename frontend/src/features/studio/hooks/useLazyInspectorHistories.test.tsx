@@ -16,7 +16,6 @@ vi.mock("@/app/api", async (importOriginal) => {
     api: {
       ...actual.api,
       reviews: vi.fn<typeof actual.api.reviews>(),
-      exports: vi.fn<typeof actual.api.exports>(),
     },
   };
 });
@@ -61,24 +60,20 @@ function renderHistories(initialInspector: InspectorTab = "copilot") {
 }
 
 describe("useLazyInspectorHistories", () => {
-  it("activates only the URL-selected history and reuses settled project cache", async () => {
+  it("activates only the URL-selected review history and reuses settled project cache", async () => {
     vi.mocked(api.reviews).mockResolvedValue({ reviews: [] });
-    vi.mocked(api.exports).mockResolvedValue({ exports: [] });
     const mounted = renderHistories();
     await flushEffects();
     expect(api.reviews).not.toHaveBeenCalled();
-    expect(api.exports).not.toHaveBeenCalled();
 
     mounted.select("review");
     await flushEffects();
     expect(api.reviews).toHaveBeenCalledOnce();
-    expect(api.exports).not.toHaveBeenCalled();
     expect(mounted.result().review.initialized).toBe(true);
 
-    mounted.select("export");
+    mounted.select("copilot");
     await flushEffects();
     expect(api.reviews).toHaveBeenCalledOnce();
-    expect(api.exports).toHaveBeenCalledOnce();
 
     mounted.select("review");
     await flushEffects();
@@ -91,12 +86,11 @@ describe("useLazyInspectorHistories", () => {
     vi.mocked(api.reviews)
       .mockReturnValueOnce(first.promise)
       .mockResolvedValueOnce({ reviews: [secondReview] });
-    vi.mocked(api.exports).mockResolvedValue({ exports: [] });
     const mounted = renderHistories("review");
     await flushEffects();
     const firstSignal = vi.mocked(api.reviews).mock.calls[0]?.[1]?.signal;
 
-    mounted.select("export");
+    mounted.select("copilot");
     expect(firstSignal?.aborted).toBe(true);
     await act(async () => {
       first.resolve({ reviews: [review({ id: "stale", project_id: "project-1" })] });
@@ -125,7 +119,6 @@ describe("useLazyInspectorHistories", () => {
     expect(mounted.result().review.phase).toBe("success");
     expect(mounted.result().review.initialized).toBe(true);
     expect(mounted.result().review.data).toEqual([]);
-    expect(api.exports).not.toHaveBeenCalled();
   });
 
   it("lets a completed Review mutation replace and cancel an older history read", async () => {
@@ -147,19 +140,11 @@ describe("useLazyInspectorHistories", () => {
     expect(mounted.result().review.data).toEqual([createdReview]);
   });
 
-  it("routes authentication loss and rechecks shell authority for a scoped 404", async () => {
+  it("routes authentication loss without rechecking shell authority", async () => {
     vi.mocked(api.reviews).mockRejectedValueOnce(new HttpError("Authentication required.", 401));
     const authenticated = renderHistories("review");
     await flushEffects();
     expect(authenticated.onSessionLost).toHaveBeenCalledOnce();
     expect(authenticated.recheckProject).not.toHaveBeenCalled();
-
-    harness.cleanup();
-    vi.mocked(api.exports).mockRejectedValueOnce(new HttpError("Not found.", 404));
-    const missing = renderHistories("export");
-    await flushEffects();
-    expect(missing.recheckProject).toHaveBeenCalledOnce();
-    expect(missing.result().export.phase).toBe("failure");
-    expect(missing.result().export.error).toBe("Export history is unavailable for this project.");
   });
 });

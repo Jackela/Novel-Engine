@@ -50,8 +50,15 @@ class FakeExportStore implements E.ExportOutcomeStore {
     throw new Error("Unexpected export retry write.");
   }
 
-  listProjectArtifacts(): E.ExportArtifactRecord[] {
-    return [...this.appended];
+  listProjectArtifacts(
+    _scope: ProjectScope,
+    _projectId: string,
+    input: E.ExportPageInput,
+  ): E.ExportArtifactPage {
+    return {
+      artifacts: [...this.appended.slice(0, input.limit)],
+      nextCursor: null,
+    };
   }
 
   findProjectArtifact(

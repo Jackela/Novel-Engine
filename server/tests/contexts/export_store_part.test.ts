@@ -7,10 +7,11 @@ import { describe, expect, it } from "vitest";
 import { DocumentService } from "../../src/contexts/studio/application/document_service.js";
 import { exportArtifactNames } from "../../src/contexts/studio/application/export_artifact_identity.js";
 import { SnapshotArtifactService } from "../../src/contexts/studio/application/export_artifact_service.js";
-import type {
-  ExportArtifactFormat,
-  ExportSource,
-  PreparedExportArtifact,
+import {
+  type ExportArtifactFormat,
+  type ExportSource,
+  exportPageLimit,
+  type PreparedExportArtifact,
 } from "../../src/contexts/studio/application/ports/export_store.js";
 import { jobPageLimit } from "../../src/contexts/studio/application/ports/job_records.js";
 import {
@@ -136,7 +137,11 @@ describe("ExportStorePart", () => {
       ).rejects.toThrow(InvalidOperationError);
 
       expect(artifactWrites).toBe(0);
-      expect(harness.exportStore.listProjectArtifacts(harness.scope, projectId)).toEqual([]);
+      expect(
+        harness.exportStore.listProjectArtifacts(harness.scope, projectId, {
+          limit: exportPageLimit(50),
+        }),
+      ).toEqual({ artifacts: [], nextCursor: null });
       expect(
         harness.studio.db
           .select()
@@ -173,7 +178,11 @@ describe("ExportStorePart", () => {
 
       for (const input of invalid) {
         expect(() => harness.exportStore.recordCompletedExportJob(harness.scope, input)).toThrow();
-        expect(harness.exportStore.listProjectArtifacts(harness.scope, projectId)).toEqual([]);
+        expect(
+          harness.exportStore.listProjectArtifacts(harness.scope, projectId, {
+            limit: exportPageLimit(50),
+          }),
+        ).toEqual({ artifacts: [], nextCursor: null });
         expect(
           harness.store.collectProjectJobSummaries(harness.scope, projectId, {
             limit: jobPageLimit(50),

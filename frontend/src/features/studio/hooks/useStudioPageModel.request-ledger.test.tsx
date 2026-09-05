@@ -153,7 +153,7 @@ function seedApiMocks(): void {
   vi.mocked(api.jobs).mockReset().mockResolvedValue({ jobs: [], next_cursor: null });
   vi.mocked(api.revisions).mockReset().mockResolvedValue({ revisions: [], next_cursor: null });
   vi.mocked(api.reviews).mockReset().mockResolvedValue({ reviews: [] });
-  vi.mocked(api.exports).mockReset().mockResolvedValue({ exports: [] });
+  vi.mocked(api.exports).mockReset().mockResolvedValue({ exports: [], next_cursor: null });
 }
 
 async function settleUntil(description: string, ready: () => boolean): Promise<void> {

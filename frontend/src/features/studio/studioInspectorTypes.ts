@@ -61,6 +61,10 @@ export interface InspectorExportModel {
   isLoadingHistory?: boolean;
   historyError?: string | null;
   onRetryHistory?: () => void | Promise<void>;
+  hasOlderExports?: boolean;
+  isLoadingOlderExports?: boolean;
+  olderExportsError?: string | null;
+  onLoadOlderExports?: () => void | Promise<void>;
   exportingFormat: ExportFormat | null;
   retryingFormat?: ExportFormat | null;
   failedFormat: ExportFormat | null;

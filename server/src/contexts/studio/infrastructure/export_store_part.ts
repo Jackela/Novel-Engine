@@ -4,9 +4,11 @@ import { jobs } from "../../../shared/infrastructure/db/schema.js";
 import { sameExportSourceProjection } from "../application/export_source_identity.js";
 import { exportJobResultJson } from "../application/payloads.js";
 import type {
+  ExportArtifactPage,
   ExportArtifactRecord,
   ExportCompletionRecord,
   ExportOutcomeStore,
+  ExportPageInput,
   ExportSource,
   PreparedExportArtifact,
 } from "../application/ports/export_store.js";
@@ -115,10 +117,14 @@ export class ExportStorePart implements ExportOutcomeStore {
     );
   }
 
-  listProjectArtifacts(scope: ProjectScope, projectId: string): ExportArtifactRecord[] {
+  listProjectArtifacts(
+    scope: ProjectScope,
+    projectId: string,
+    input: ExportPageInput,
+  ): ExportArtifactPage {
     return this.db.transaction((tx) => {
       const project = scopedProject(tx, scope, projectId);
-      return loadProjectArtifacts(tx, project.id);
+      return loadProjectArtifacts(tx, project.id, input);
     });
   }
 

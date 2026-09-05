@@ -1,8 +1,8 @@
-import type { Dispatch, SetStateAction } from "react";
 import { useCallback, useLayoutEffect, useRef, useState } from "react";
 
 import { api } from "@/app/api";
-import type { ExportFormat, Project, StudioExport } from "@/app/types/studio";
+import type { ExportsPage } from "@/app/apiWorkflowContract";
+import type { ExportFormat, Project } from "@/app/types/studio";
 
 import { downloadBrowserBlob } from "./downloadBrowserBlob";
 import { toErrorMessage } from "./toErrorMessage";
@@ -32,7 +32,8 @@ interface FailedExport extends OwnedFormat {
 export function useExportDownload(
   project: Project | null,
   projectId: string,
-  setExports: Dispatch<SetStateAction<StudioExport[]>>,
+  /** Merge one bounded cursorless first page after a completed export (#460). */
+  applyCompletedCatalogPage: (page: ExportsPage) => void,
 ) {
   const [exporting, setExporting] = useState<OwnedFormat | null>(null);
   const [retrying, setRetrying] = useState<OwnedFormat | null>(null);
@@ -111,7 +112,8 @@ export function useExportDownload(
       let completed = false;
       try {
         // The synchronous job contract (#272): the response is the terminal
-        // export job; the artifact catalog is refreshed from its export_id.
+        // export job; one bounded cursorless catalog page is refreshed from
+        // its export_id (#460) — never the complete history.
         const requestInit = { signal: invocation.controller.signal };
         const job = await api.createExport(owner.projectId, format, requestInit);
         if (!isCurrentInvocation(invocation)) return;
@@ -120,7 +122,7 @@ export function useExportDownload(
         }
         const catalog = await api.exports(owner.projectId, requestInit);
         if (!isCurrentInvocation(invocation)) return;
-        setExports((current) => (isCurrentEpoch(invocation) ? catalog.exports : current));
+        if (isCurrentEpoch(invocation)) applyCompletedCatalogPage(catalog);
         const item = catalog.exports.find((candidate) => candidate.id === job.result.export_id);
         if (!item) {
           throw new Error("Export artifact is not available.");
@@ -158,7 +160,7 @@ export function useExportDownload(
         if (activeInvocationRef.current === invocation) activeInvocationRef.current = null;
       }
     },
-    [isCurrentEpoch, isCurrentInvocation, project, projectId, setExports],
+    [applyCompletedCatalogPage, isCurrentEpoch, isCurrentInvocation, project, projectId],
   );
 
   const exportProject = useCallback(
