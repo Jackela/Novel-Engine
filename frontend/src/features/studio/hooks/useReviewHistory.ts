@@ -1,11 +1,11 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef } from "react";
 
 import { api } from "@/app/api";
 import type { Review, ReviewSummary, ReviewsPage } from "@/app/types/studio";
 import type { InspectorTab } from "../studioConstants";
 import type { InspectorReviewModel } from "../studioInspectorTypes";
 
-import { toErrorMessage } from "./toErrorMessage";
+import { appendUniqueById, useKeysetOlderPages } from "./keysetHistory";
 import { useLazyInspectorResource } from "./useLazyInspectorResource";
 
 interface UseReviewHistoryOptions {
@@ -14,12 +14,6 @@ interface UseReviewHistoryOptions {
   readonly projectId: string;
   readonly recheckProject: (signal: AbortSignal) => Promise<boolean>;
   readonly onSessionLost: () => void;
-}
-
-interface OlderRequest {
-  readonly controller: AbortController;
-  readonly cursor: string;
-  readonly epoch: number;
 }
 
 export interface ReviewDetailState {
@@ -44,19 +38,6 @@ export interface ReviewHistoryState {
 }
 
 const EMPTY_PAGE: ReviewsPage = { reviews: [], next_cursor: null };
-
-function appendUniqueSummaries(current: ReviewsPage, older: ReviewsPage): ReviewsPage {
-  const known = new Set(current.reviews.map((summary) => summary.id));
-  const uniqueOlder = older.reviews.filter((summary) => {
-    if (known.has(summary.id)) return false;
-    known.add(summary.id);
-    return true;
-  });
-  return {
-    reviews: [...current.reviews, ...uniqueOlder],
-    next_cursor: older.next_cursor,
-  };
-}
 
 /**
  * One URL-selected Review history: bounded first summary page, explicit older
@@ -85,68 +66,26 @@ export function useReviewHistory({
     loadErrorMessage: "Unable to load review history.",
   });
 
-  const olderRef = useRef<OlderRequest | null>(null);
-  const olderEpochRef = useRef(0);
-  const [older, setOlder] = useState<{ loading: boolean; error: string | null }>({
-    loading: false,
-    error: null,
+  const olderPages = useKeysetOlderPages<ReviewsPage>({
+    cleanupKey: `${projectId}:${active}`,
+    isEnabled: () => active,
+    nextCursor: page.data.next_cursor,
+    fetchPage: (cursor, signal) => api.reviews(projectId, { cursor, signal }),
+    commitPage: (olderPage) =>
+      page.setData((current) => ({
+        reviews: appendUniqueById(current.reviews, olderPage.reviews, (summary) => summary.id),
+        next_cursor: olderPage.next_cursor,
+      })),
+    busyErrorMessage: "Unable to load older reviews.",
   });
-
-  // Owner switches (project or activation) must abort any in-flight
-  // older-page request: without the abort, a late success would append the
-  // previous project's summaries onto the new owner's empty first page.
-  // biome-ignore lint/correctness/useExhaustiveDependencies: projectId and active are intentional change triggers for this cleanup-only effect; the reset communicates through refs and state, not through reading them.
-  useEffect(() => {
-    return () => {
-      const inFlight = olderRef.current;
-      if (inFlight) {
-        olderRef.current = null;
-        inFlight.controller.abort();
-        olderEpochRef.current += 1;
-      }
-      setOlder({ loading: false, error: null });
-    };
-  }, [projectId, active]);
-
-  const nextCursor = page.data.next_cursor;
-  const isLoadingOlder = older.loading;
-  const loadOlder = useCallback((): Promise<void> => {
-    if (!active || nextCursor === null || olderRef.current !== null) return Promise.resolve();
-    const controller = new AbortController();
-    const epoch = ++olderEpochRef.current;
-    const cursor = nextCursor;
-    olderRef.current = { controller, cursor, epoch };
-    setOlder({ loading: true, error: null });
-    return (async () => {
-      try {
-        const olderPage = await api.reviews(projectId, { cursor, signal: controller.signal });
-        if (olderRef.current?.epoch !== epoch || controller.signal.aborted) return;
-        olderRef.current = null;
-        setOlder({ loading: false, error: null });
-        page.setData((current) => appendUniqueSummaries(current, olderPage));
-      } catch (reason) {
-        if (olderRef.current?.epoch !== epoch || controller.signal.aborted) return;
-        olderRef.current = null;
-        setOlder({
-          loading: false,
-          error: toErrorMessage(reason, "Unable to load older reviews."),
-        });
-      }
-    })();
-  }, [active, page, projectId, nextCursor]);
+  const abortInFlightOlder = olderPages.abortInFlight;
 
   const setFirstPage = useCallback(
     (freshPage: ReviewsPage): void => {
-      const inFlight = olderRef.current;
-      if (inFlight) {
-        olderRef.current = null;
-        inFlight.controller.abort();
-        olderEpochRef.current += 1;
-      }
-      setOlder({ loading: false, error: null });
+      abortInFlightOlder();
       page.setData(freshPage);
     },
-    [page],
+    [abortInFlightOlder, page],
   );
 
   // Newest summary identity drives the detail read; the commit-phase mirror
@@ -188,15 +127,15 @@ export function useReviewHistory({
 
   return {
     summaries: page.data.reviews,
-    nextCursor,
+    nextCursor: page.data.next_cursor,
     initialized: page.initialized,
     isLoading: page.isLoading,
     error: page.error,
     retry: page.retry,
     setFirstPage,
-    isLoadingOlder,
-    olderError: older.error,
-    loadOlder,
+    isLoadingOlder: olderPages.isLoadingOlder,
+    olderError: olderPages.olderError,
+    loadOlder: olderPages.loadOlder,
     detail: {
       review: detail.data,
       isLoading: active && detail.isLoading,

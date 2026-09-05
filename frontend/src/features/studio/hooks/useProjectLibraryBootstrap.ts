@@ -1,17 +1,17 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { api, HttpError } from "@/app/api";
+import type { ProjectsPage } from "@/app/projectShellContract";
 import type { ProjectCatalogItem } from "@/app/types/studio";
 
+import { appendUniqueById, useKeysetOlderPages } from "./keysetHistory";
 import { toErrorMessage } from "./toErrorMessage";
 
 interface ProjectLibraryBootstrapState {
   readonly projects: ProjectCatalogItem[];
   readonly nextCursor: string | null;
   readonly error: string | null;
-  readonly olderError: string | null;
   readonly isLoading: boolean;
-  readonly isLoadingOlder: boolean;
   readonly hasLoaded: boolean;
 }
 
@@ -19,24 +19,9 @@ const INITIAL_STATE: ProjectLibraryBootstrapState = {
   projects: [],
   nextCursor: null,
   error: null,
-  olderError: null,
   isLoading: true,
-  isLoadingOlder: false,
   hasLoaded: false,
 };
-
-function appendUniqueProjects(
-  current: readonly ProjectCatalogItem[],
-  older: readonly ProjectCatalogItem[],
-): ProjectCatalogItem[] {
-  const known = new Set(current.map((project) => project.id));
-  const uniqueOlder = older.filter((project) => {
-    if (known.has(project.id)) return false;
-    known.add(project.id);
-    return true;
-  });
-  return [...current, ...uniqueOlder];
-}
 
 /**
  * Verifies the session before loading projects and owns the bounded catalog
@@ -48,12 +33,28 @@ export function useProjectLibraryBootstrap(onUnauthenticated: () => void) {
   const requestRef = useRef(0);
   const controllerRef = useRef<AbortController | null>(null);
   const inFlightReloadRef = useRef<Promise<void> | null>(null);
-  const olderRef = useRef<{ cursor: string; promise: Promise<void> } | null>(null);
+
+  const olderPages = useKeysetOlderPages<ProjectsPage>({
+    cleanupKey: "project-library",
+    isEnabled: () => mountedRef.current,
+    isBlocked: () => state.isLoading,
+    nextCursor: state.nextCursor,
+    fetchPage: (cursor, signal) => api.projects({ cursor, signal }),
+    commitPage: (page) =>
+      setState((current) => ({
+        ...current,
+        projects: appendUniqueById(current.projects, page.projects, (project) => project.id),
+        nextCursor: page.next_cursor,
+      })),
+    onSessionLost: onUnauthenticated,
+    busyErrorMessage: "Unable to load older projects.",
+  });
+  const abortInFlightOlder = olderPages.abortInFlight;
 
   const reload = useCallback((): Promise<void> => {
     if (inFlightReloadRef.current !== null) return inFlightReloadRef.current;
     const run = (async () => {
-      olderRef.current = null;
+      abortInFlightOlder();
       const request = requestRef.current + 1;
       requestRef.current = request;
       controllerRef.current?.abort();
@@ -62,12 +63,7 @@ export function useProjectLibraryBootstrap(onUnauthenticated: () => void) {
       const isCurrent = () =>
         mountedRef.current && requestRef.current === request && !controller.signal.aborted;
 
-      setState((current) => ({
-        ...current,
-        isLoading: true,
-        olderError: null,
-        isLoadingOlder: false,
-      }));
+      setState((current) => ({ ...current, isLoading: true }));
       try {
         await api.session({ signal: controller.signal });
         if (!isCurrent()) return;
@@ -77,9 +73,7 @@ export function useProjectLibraryBootstrap(onUnauthenticated: () => void) {
             projects: response.projects,
             nextCursor: response.next_cursor,
             error: null,
-            olderError: null,
             isLoading: false,
-            isLoadingOlder: false,
             hasLoaded: true,
           });
         }
@@ -93,8 +87,11 @@ export function useProjectLibraryBootstrap(onUnauthenticated: () => void) {
           ...current,
           error: toErrorMessage(reason, "Unable to load projects."),
           isLoading: false,
-          isLoadingOlder: false,
         }));
+      } finally {
+        // First-page busy cleanup never depends on request currency: a
+        // superseded read still releases the busy flag it raised.
+        setState((current) => (current.isLoading ? { ...current, isLoading: false } : current));
       }
     })();
 
@@ -104,51 +101,7 @@ export function useProjectLibraryBootstrap(onUnauthenticated: () => void) {
     });
     inFlightReloadRef.current = tracked;
     return tracked;
-  }, [onUnauthenticated]);
-
-  const loadOlder = useCallback((): Promise<void> => {
-    const activeOlder = olderRef.current;
-    if (activeOlder !== null) return activeOlder.promise;
-    const cursor = state.nextCursor;
-    if (cursor === null || state.isLoading || state.isLoadingOlder) return Promise.resolve();
-    const request = requestRef.current + 1;
-    requestRef.current = request;
-    const controller = new AbortController();
-    controllerRef.current = controller;
-    const isCurrent = () =>
-      mountedRef.current && requestRef.current === request && !controller.signal.aborted;
-
-    setState((current) => ({ ...current, isLoadingOlder: true, olderError: null }));
-    let promise: Promise<void> = Promise.resolve();
-    promise = (async () => {
-      try {
-        const response = await api.projects({ cursor, signal: controller.signal });
-        if (!isCurrent()) return;
-        setState((current) => ({
-          ...current,
-          projects: appendUniqueProjects(current.projects, response.projects),
-          nextCursor: response.next_cursor,
-          isLoadingOlder: false,
-          olderError: null,
-        }));
-      } catch (reason) {
-        if (!isCurrent()) return;
-        if (reason instanceof HttpError && reason.status === 401) {
-          onUnauthenticated();
-          return;
-        }
-        setState((current) => ({
-          ...current,
-          isLoadingOlder: false,
-          olderError: toErrorMessage(reason, "Unable to load older projects."),
-        }));
-      } finally {
-        if (olderRef.current?.promise === promise) olderRef.current = null;
-      }
-    })();
-    olderRef.current = { cursor, promise };
-    return promise;
-  }, [onUnauthenticated, state.isLoading, state.isLoadingOlder, state.nextCursor]);
+  }, [abortInFlightOlder, onUnauthenticated]);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -157,11 +110,17 @@ export function useProjectLibraryBootstrap(onUnauthenticated: () => void) {
       mountedRef.current = false;
       requestRef.current += 1;
       inFlightReloadRef.current = null;
-      olderRef.current = null;
       controllerRef.current?.abort();
       controllerRef.current = null;
     };
   }, [reload]);
 
-  return { ...state, reload, loadOlder, mountedRef };
+  return {
+    ...state,
+    isLoadingOlder: olderPages.isLoadingOlder,
+    olderError: olderPages.olderError,
+    reload,
+    loadOlder: olderPages.loadOlder,
+    mountedRef,
+  };
 }
