@@ -1,7 +1,7 @@
-import { useCallback, useState } from "react";
+import { useState } from "react";
 import type { NavigateFunction } from "react-router-dom";
 
-import { type StudioRouteState, studioInspectorPath } from "../studioRouteState";
+import type { StudioRouteState } from "../studioRouteState";
 import { buildProposalAuditView } from "./proposalAuditView";
 import { buildLoreStatusModel, buildStudioNavigatorProps } from "./studioPageModelView";
 import { useActiveDocument } from "./useActiveDocument";
@@ -14,10 +14,14 @@ import { useStudioActions } from "./useStudioActions";
 import { useStudioErrorChannels } from "./useStudioErrorChannels";
 import { useStudioGeneration } from "./useStudioGeneration";
 import { useStudioInspectorState } from "./useStudioInspectorState";
+import {
+  buildInspectorPending,
+  buildWholeBookNavigatorModel,
+  useStudioPageNavigation,
+} from "./useStudioPageNavigation";
 import { useStudioProject } from "./useStudioProject";
 import { useStudioProviders } from "./useStudioProviders";
 import { useStudioSearch } from "./useStudioSearch";
-import { wholeBookPlan } from "./wholeBookPlan";
 
 type Nav = NavigateFunction;
 
@@ -37,19 +41,14 @@ export function useStudioPageModel(projectId: string, route: StudioRouteState, n
     publishProjectShellRead,
     recheckProject,
   } = useStudioProject(projectId);
-  const onProjectResourceSessionLost = useCallback(
-    () => navigate("/", { replace: true }),
-    [navigate],
-  );
+  const navigation = useStudioPageNavigation({ navigate, projectId, section, routeInspector });
   const inspectorHistories = useLazyInspectorHistories({
     enabled: project !== null,
     inspector: routeInspector,
     projectId,
     recheckProject,
-    onSessionLost: onProjectResourceSessionLost,
+    onSessionLost: navigation.onProjectResourceSessionLost,
   });
-  const reviews = inspectorHistories.review.data;
-  const exports = inspectorHistories.export.data;
   const activeSummary = useActiveDocument(project, section, activeId);
   const currentDocument = usePageCurrentDocument(
     projectId,
@@ -61,7 +60,6 @@ export function useStudioPageModel(projectId: string, route: StudioRouteState, n
   const activeDocument = currentDocument.document;
   const { projectErrors, documentErrors, visibleError, visibleErrorWithoutSettings } =
     useStudioErrorChannels(projectId, activeDocument?.id ?? null, error);
-  const visibleActiveId = activeSummary?.id ?? activeId;
   const {
     draft,
     setDraft,
@@ -109,18 +107,11 @@ export function useStudioPageModel(projectId: string, route: StudioRouteState, n
     copilot,
     wholeBookLoop,
   } = generation;
-  const onSelectInspector = useCallback(
-    (nextInspector: Parameters<typeof studioInspectorPath>[2]) => {
-      if (nextInspector === routeInspector) return;
-      navigate(studioInspectorPath(projectId, section, nextInspector));
-    },
-    [navigate, projectId, routeInspector, section],
-  );
   const { inspector, setInspector, settingsForm, setSettingsForm } = useStudioInspectorState({
     inspector: routeInspector,
     project,
     loadJobs,
-    onSelectInspector,
+    onSelectInspector: navigation.onSelectInspector,
   });
   const { restoringRevisionId, restoreRevision: onRestoreRevision } = useScopedRevisionRestore(
     `${projectId}\u0000${activeDocument?.id ?? ""}`,
@@ -131,11 +122,6 @@ export function useStudioPageModel(projectId: string, route: StudioRouteState, n
     projectErrors.publishers.search,
   );
   const providers = useStudioProviders();
-  const onSettingsSessionLost = onProjectResourceSessionLost;
-  const onSettingsProjectMissing = useCallback(
-    () => navigate("/projects", { replace: true }),
-    [navigate],
-  );
   const { exportProject, retryExport, exportingFormat, retryingFormat, failedFormat, exportError } =
     useExportDownload(project, projectId, inspectorHistories.export.setData);
   const {
@@ -164,31 +150,27 @@ export function useStudioPageModel(projectId: string, route: StudioRouteState, n
     setActiveId,
     settingsForm,
     setSettingsForm,
-    onSettingsSessionLost,
-    onSettingsProjectMissing,
+    onSettingsSessionLost: navigation.onProjectResourceSessionLost,
+    onSettingsProjectMissing: navigation.onSettingsProjectMissing,
     loadJobs,
     isProposalActionGated: proposalAudit.isGated,
   });
 
   if (!project) return { project, viewProps: null, loadError, isLoading, retryLoad };
 
-  const latestReview = reviews[0] ?? null;
-  const inspectorPending = {
-    proposal: {
-      running: copilot.isRunningProposal,
-      accepting: copilot.isAcceptingProposal,
-    },
-    review: isRunningReview,
+  const inspectorPending = buildInspectorPending({
+    copilot,
+    isRunningReview,
     jobs: {
-      loading: isLoadingJobs,
+      isLoading: isLoadingJobs,
       loadingInitiator: jobsLoadingInitiator,
-      retrying: isRetryingJob,
+      isRetrying: isRetryingJob,
       retryGated: proposalAuditGated,
       retryingJobId,
     },
-    settings: isUpdatingSettings,
-    history: { restoringRevisionId },
-  };
+    isUpdatingSettings,
+    restoringRevisionId,
+  });
 
   return {
     project,
@@ -202,7 +184,7 @@ export function useStudioPageModel(projectId: string, route: StudioRouteState, n
         {
           project,
           section,
-          activeId: visibleActiveId,
+          activeId: activeSummary?.id ?? activeId,
           search,
           isSearching,
           searchResults,
@@ -215,17 +197,7 @@ export function useStudioPageModel(projectId: string, route: StudioRouteState, n
           isMovingDocument,
           creatingDocumentKind,
           movingDocument,
-          wholeBook: {
-            phase: wholeBookLoop.phase,
-            remaining: wholeBookPlan(project).length,
-            onStart: () => wholeBookLoop.start(wholeBookPlan(project)),
-            onStop: () => wholeBookLoop.stop(),
-            ...buildProposalAuditView(
-              wholeBookLoop.proposalOutcomeUnknown,
-              wholeBookLoop.proposalAuditStatus,
-              wholeBookLoop.retryProposalAudit,
-            ),
-          },
+          wholeBook: buildWholeBookNavigatorModel(project, wholeBookLoop),
         },
         navigate,
       ),
@@ -269,7 +241,7 @@ export function useStudioPageModel(projectId: string, route: StudioRouteState, n
             setProposal: copilot.setProposal,
           },
           export: {
-            exports,
+            exports: inspectorHistories.export.data,
             historyInitialized: inspectorHistories.export.initialized,
             isLoadingHistory: inspectorHistories.export.isLoading,
             historyError: inspectorHistories.export.error,
@@ -282,7 +254,7 @@ export function useStudioPageModel(projectId: string, route: StudioRouteState, n
             onRetryExport: retryExport,
           },
           review: {
-            latestReview,
+            latestReview: inspectorHistories.review.data[0] ?? null,
             historyInitialized: inspectorHistories.review.initialized,
             isLoadingHistory: inspectorHistories.review.isLoading,
             historyError: inspectorHistories.review.error,

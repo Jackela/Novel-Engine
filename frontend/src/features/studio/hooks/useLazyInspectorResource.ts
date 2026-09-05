@@ -60,8 +60,10 @@ export function useLazyInspectorResource<T>({
     error: null,
   }));
 
-  activeRef.current = active;
-  phaseRef.current = state.projectId === projectId ? state.phase : "idle";
+  useEffect(() => {
+    activeRef.current = active;
+    phaseRef.current = state.projectId === projectId ? state.phase : "idle";
+  }, [active, projectId, state.phase, state.projectId]);
 
   const isCurrent = useCallback(
     (ownedRequest: LazyResourceRequest) =>
