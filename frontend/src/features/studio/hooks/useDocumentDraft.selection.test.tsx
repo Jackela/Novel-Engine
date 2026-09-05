@@ -142,7 +142,13 @@ describe("Document selection owns the Draft lifetime", () => {
     const save = new Promise<StudioDocument>((_resolve, reject) => {
       rejectSave = reject;
     });
-    vi.mocked(api.saveDocument).mockReturnValue(save);
+    vi.mocked(api.saveDocument)
+      .mockReturnValueOnce(save)
+      .mockResolvedValueOnce({
+        ...documentA,
+        content_markdown: "New A",
+        current_revision_id: "new-a",
+      });
     const view = renderDraft();
     await flushMicrotasks();
     act(() => view.result().hook.setDraft("Old A"));
@@ -150,6 +156,8 @@ describe("Document selection owns the Draft lifetime", () => {
     await view.select(documentB);
     await view.select(documentA);
     act(() => view.result().hook.setDraft("New A"));
+    await advance();
+    expect(api.saveDocument).toHaveBeenCalledOnce();
     await act(async () => {
       rejectSave(new HttpError("Obsolete failure", status));
       await save.catch(() => undefined);
@@ -157,6 +165,13 @@ describe("Document selection owns the Draft lifetime", () => {
     expect(view.result().hook.draft).toBe("New A");
     expect(view.result().hook.saveState).toBe("saving");
     expect(view.result().error).toBeNull();
+    await advance();
+    expect(api.saveDocument).toHaveBeenCalledTimes(2);
+    expect(api.saveDocument).toHaveBeenLastCalledWith(
+      project.id,
+      documentA.id,
+      expect.objectContaining({ content_markdown: "New A" }),
+    );
   });
 
   it("adopts a late committed revision without resurrecting the discarded newer Draft", async () => {

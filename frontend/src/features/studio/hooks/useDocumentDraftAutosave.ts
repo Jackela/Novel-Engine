@@ -1,4 +1,10 @@
-import { type Dispatch, type MutableRefObject, type SetStateAction, useEffect } from "react";
+import {
+  type Dispatch,
+  type MutableRefObject,
+  type SetStateAction,
+  useEffect,
+  useState,
+} from "react";
 
 import { api, HttpError } from "@/app/api";
 import type { SaveState, StudioDocument } from "@/app/types/studio";
@@ -55,6 +61,8 @@ export function useDocumentDraftAutosave({
   setCurrentSaveState,
   setError,
 }: AutosaveOptions): void {
+  const [pendingAutosaves, setPendingAutosaves] = useState<ReadonlySet<string>>(() => new Set());
+  const isAutosavePending = pendingAutosaves.has(ownerKey);
   useEffect(() => {
     if (!activeDocument) return;
     const persisted = persistedDraftsRef.current.get(ownerKey);
@@ -75,6 +83,7 @@ export function useDocumentDraftAutosave({
     if (
       saveStateRef.current === "conflict" ||
       saveStateRef.current === "error" ||
+      isAutosavePending ||
       conflictActionPendingRef.current === ownerToken
     ) {
       return;
@@ -93,6 +102,7 @@ export function useDocumentDraftAutosave({
       }
       if (saveInFlightRef.current.has(ownerKey)) return;
       saveInFlightRef.current.add(ownerKey);
+      setPendingAutosaves((current) => new Set(current).add(ownerKey));
       try {
         await persistDraft(
           currentDocument,
@@ -117,6 +127,13 @@ export function useDocumentDraftAutosave({
         }
       } finally {
         saveInFlightRef.current.delete(ownerKey);
+        // Recheck a new lifecycle's Draft when the old request releases its
+        // lock, even when that request's error must remain invisible.
+        setPendingAutosaves((current) => {
+          const next = new Set(current);
+          next.delete(ownerKey);
+          return next;
+        });
       }
     }, 1500);
     return () => {
@@ -131,6 +148,7 @@ export function useDocumentDraftAutosave({
     draft,
     titleDraft,
     saveState,
+    isAutosavePending,
     persistDraft,
     refreshLatestDocument,
     setCurrentSaveState,
