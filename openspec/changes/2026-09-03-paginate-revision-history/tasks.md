@@ -77,10 +77,10 @@
 
 ## 5. Integrated evidence and release boundary
 
-- [ ] 5.1 Run revision create/save/import/accept/restore, migration/startup,
+- [x] 5.1 Run revision create/save/import/accept/restore, migration/startup,
       authorization, OpenAPI/type drift, query-plan, frontend contract/cache,
       autosave, History, and stale/abort regressions.
-- [ ] 5.2 Run server type-check/lint/arch/size/full tests, frontend
+- [x] 5.2 Run server type-check/lint/arch/size/full tests, frontend
       lint/format/type/unit/build, relevant Playwright History workflow,
       migration-channel gates, strict OpenSpec, and independent code/UX review
       on a fixed SHA; record exact results and every skip.

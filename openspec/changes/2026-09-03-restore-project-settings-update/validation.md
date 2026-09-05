@@ -1,5 +1,39 @@
 # Validation evidence
 
+## Final integrated candidate evidence — 2026-09-05 (`13a4fed4`)
+
+The merged main commit `13a4fed4d9252d33793e3806a2e9565ec7618c3e` (squash
+merge of [PR #456](https://github.com/Jackela/Novel-Engine/pull/456);
+tree-identical to review candidate `d532d261`, re-verified by empty
+`git diff --stat`) is the final integrated candidate. Full evidence lives in
+[the acceptance closeout](../../../docs/agents/acceptance-evidence-closeout-2026-09-05.md):
+
+- Task 4.3 is closed on `13a4fed4`: server type-check, lint (432 files),
+  architecture, size (via gates, 621 files), full tests (202 files / 1273
+  tests), and gates all passed; frontend lint (215 files), format (214
+  files), type-check, unit (84 files / 464 tests), and build passed; React
+  diagnostics passed with `pnpm --dir frontend exec react-doctor --json`
+  (score 100, 202 files, zero diagnostics); browser workflows passed — smoke
+  3 tests including the Settings title/description/provider persistence
+  flow, and full-audit 9 tests (the historical `4 passed / 2 failed / 3 not
+  run` audit belonged to the pre-merge shell/body chain and is superseded);
+  strict OpenSpec passed 19/19.
+- Required CI on `13a4fed4`: `validate`, `container`, and
+  `Analyze (javascript-typescript)` all green (run URLs in the closeout).
+- Independent review accounting: the standards/security re-review at
+  `cbe69543` is clean; the remaining range to `13a4fed4` is covered by the
+  segment review chain in the closeout (bounded clean review of
+  `b2019bae..b061e4df`, reviewed Lore repair, and a verified zero-product-code
+  delta after `688acfe7`). No Settings-surface product code changed after
+  `688acfe7`.
+- Task 4.4 remains open: the canonical-spec merge/archive step is a separate
+  deliberate decision gated on the change's own closed gates, including
+  human acceptance. The 4.3 row in the earlier pointer below is superseded
+  by this section; its 4.4 row remains current.
+
+Human acceptance remains `not run`; use
+[the acceptance packet](../../../docs/agents/refactor-human-acceptance-2026-09-05.md).
+
 ## Current closeout pointer — 2026-09-05
 
 The failed browser audit and pending review descriptions below are historical
