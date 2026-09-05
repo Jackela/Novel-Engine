@@ -1,10 +1,11 @@
 import type { Dispatch, SetStateAction } from "react";
-import { useCallback, useRef, useState } from "react";
+import { useCallback } from "react";
 
 import { api } from "@/app/api";
 import type { LoreStatus, Project } from "@/app/types/studio";
 
-import { toErrorMessage } from "./toErrorMessage";
+import type { NarrowSummaryPatch } from "./projectState";
+import { useNarrowSummaryField } from "./useNarrowSummaryField";
 
 interface LoreStatusOwner {
   readonly projectId: string;
@@ -16,12 +17,6 @@ export interface LoreStatusLifecycleState {
   readonly attemptedStatus: LoreStatus | null;
 }
 
-const IDLE_LORE_STATUS: LoreStatusLifecycleState = {
-  isSaving: false,
-  error: null,
-  attemptedStatus: null,
-};
-
 interface UseStudioLoreStatusActionsOptions<Owner extends LoreStatusOwner> {
   readonly project: Project | null;
   readonly projectId: string;
@@ -31,16 +26,24 @@ interface UseStudioLoreStatusActionsOptions<Owner extends LoreStatusOwner> {
   readonly clearSharedError: (owner: Owner) => void;
 }
 
-interface LoreStatusOperation<Owner> {
-  readonly owner: Owner;
-  promise: Promise<void>;
-}
+/** The lore-status surface's own value authority is its closed response. */
+const invokeLoreStatus = async (
+  projectId: string,
+  documentId: string,
+  requested: LoreStatus,
+): Promise<LoreStatus> => (await api.saveLoreStatus(projectId, documentId, requested)).lore_status;
 
-function lifecycleKey(projectId: string, documentId: string): string {
-  return `${projectId}\u0000${documentId}`;
-}
+const lorePatch = (status: LoreStatus): NarrowSummaryPatch => ({
+  field: "lore_status",
+  value: status,
+});
 
-/** Lore mutations keyed by their origin project and document. */
+/**
+ * Lore mutations keyed by their origin project and document (#444). The
+ * field runs on the shared narrow-summary intent epoch (#466): only the
+ * latest Lore intent for a document may publish, and only while its
+ * captured revision still owns the shell row.
+ */
 export function useStudioLoreStatusActions<Owner extends LoreStatusOwner>({
   project,
   projectId,
@@ -49,74 +52,34 @@ export function useStudioLoreStatusActions<Owner extends LoreStatusOwner>({
   isCurrentOwner,
   clearSharedError,
 }: UseStudioLoreStatusActionsOptions<Owner>) {
-  const [lifecycle, setLifecycle] = useState<Record<string, LoreStatusLifecycleState>>({});
-  const operationsRef = useRef(new Map<string, LoreStatusOperation<Owner>>());
+  const narrow = useNarrowSummaryField<Owner, LoreStatus>({
+    project,
+    projectId,
+    setProject,
+    currentOwner,
+    isCurrentOwner,
+    clearSharedError,
+    failureMessage: "Unable to update the lore status.",
+    invoke: invokeLoreStatus,
+    patchFor: lorePatch,
+  });
 
   const changeLoreStatus = useCallback(
-    (documentId: string, loreStatus: LoreStatus): Promise<void> => {
-      const owner = currentOwner();
-      if (!owner || !project) return Promise.resolve();
-      const key = lifecycleKey(owner.projectId, documentId);
-      const existing = operationsRef.current.get(key);
-      if (existing) return existing.promise;
-
-      const operation: LoreStatusOperation<Owner> = {
-        owner,
-        promise: Promise.resolve(),
-      };
-      operationsRef.current.set(key, operation);
-      operation.promise = (async () => {
-        clearSharedError(owner);
-        setLifecycle((current) => ({
-          ...current,
-          [key]: { isSaving: true, error: null, attemptedStatus: loreStatus },
-        }));
-        let failure: string | null = null;
-        try {
-          const { lore_status } = await api.saveLoreStatus(project.id, documentId, loreStatus);
-          if (!isCurrentOwner(owner)) return;
-          setProject((current) =>
-            isCurrentOwner(owner) && current?.id === owner.projectId
-              ? {
-                  ...current,
-                  documents: (current.documents ?? []).map((document) =>
-                    document.id === documentId ? { ...document, lore_status } : document,
-                  ),
-                }
-              : current,
-          );
-        } catch (reason) {
-          if (isCurrentOwner(owner)) {
-            failure = toErrorMessage(reason, "Unable to update the lore status.");
-          }
-        } finally {
-          if (operationsRef.current.get(key) === operation) {
-            operationsRef.current.delete(key);
-            if (isCurrentOwner(owner)) {
-              setLifecycle((current) => {
-                if (failure !== null) {
-                  return {
-                    ...current,
-                    [key]: { isSaving: false, error: failure, attemptedStatus: loreStatus },
-                  };
-                }
-                const next = { ...current };
-                delete next[key];
-                return next;
-              });
-            }
-          }
-        }
-      })();
-      return operation.promise;
-    },
-    [clearSharedError, currentOwner, isCurrentOwner, project, setProject],
+    (documentId: string, loreStatus: LoreStatus): Promise<void> =>
+      narrow.run(documentId, loreStatus),
+    [narrow],
   );
 
   const loreStatusFor = useCallback(
-    (documentId: string): LoreStatusLifecycleState =>
-      lifecycle[lifecycleKey(projectId, documentId)] ?? IDLE_LORE_STATUS,
-    [lifecycle, projectId],
+    (documentId: string): LoreStatusLifecycleState => {
+      const state = narrow.lifecycleFor(documentId);
+      return {
+        isSaving: state.isSaving,
+        error: state.error,
+        attemptedStatus: state.attempted,
+      };
+    },
+    [narrow],
   );
   return { changeLoreStatus, loreStatusFor };
 }

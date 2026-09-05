@@ -1,3 +1,4 @@
+import { StudioBeatPanel } from "./components/StudioBeatPanel";
 import { StudioCopilotPanel } from "./components/StudioCopilotPanel";
 import { StudioExportPanel } from "./components/StudioExportPanel";
 import { StudioHistoryPanel } from "./components/StudioHistoryPanel";
@@ -24,7 +25,7 @@ export function StudioInspectorPanels({
   pending,
   model,
 }: StudioInspectorPanelsProps) {
-  // The page model owns Lore eligibility; the panel owns document identity.
+  // The page model owns Lore and beat eligibility; the panels own document identity.
   const loreStatus = model.loreStatus ? (
     <StudioLoreStatusPanel
       documentId={model.loreStatus.documentId}
@@ -32,6 +33,16 @@ export function StudioInspectorPanels({
       attemptedStatus={model.loreStatus.attemptedStatus}
       isSaving={model.loreStatus.isSaving}
       onSubmit={model.loreStatus.submit}
+    />
+  ) : null;
+  const beat = model.beat ? (
+    <StudioBeatPanel
+      documentId={model.beat.documentId}
+      beatRef={model.beat.beatRef}
+      attemptedTitle={model.beat.attemptedTitle}
+      isSaving={model.beat.isSaving}
+      error={model.beat.error}
+      onLink={model.beat.link}
     />
   ) : null;
 
@@ -57,6 +68,7 @@ export function StudioInspectorPanels({
         role="tabpanel"
       >
         {inspector === "copilot" ? loreStatus : null}
+        {inspector === "copilot" ? beat : null}
         <StudioCopilotPanel
           instruction={model.copilot.instruction}
           setInstruction={model.copilot.setInstruction}

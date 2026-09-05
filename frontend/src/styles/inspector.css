@@ -139,6 +139,49 @@
 .studio-lore-status .studio-inspector__actions {
   margin-top: 2px;
 }
+/* Chapter beat-association panel (#466): a chapter-scoped command form
+   mirroring the lore lifecycle panel. */
+.studio-beat {
+  display: grid;
+  gap: 7px;
+  margin: 12px 12px 0;
+  padding: 12px;
+  border: 1px solid #d6dada;
+  border-radius: 5px;
+  background: #f4f7f7;
+}
+.studio-beat .studio-inspector__settings-field input {
+  width: 100%;
+  border: 1px solid #d7dcdd;
+  border-radius: 5px;
+  padding: 10px 11px;
+  outline: none;
+  background: var(--surface);
+  font-weight: 400;
+}
+.studio-beat .studio-inspector__settings-field input:focus {
+  border-color: var(--teal-strong);
+  box-shadow: 0 0 0 3px var(--focus-ring);
+}
+.studio-beat__hint {
+  margin: 0;
+  color: #4f595a;
+  font-size: 12px;
+  line-height: 1.5;
+}
+.studio-beat .studio-inspector__actions {
+  margin-top: 2px;
+}
+.studio-beat__error {
+  margin: 0;
+  padding: 8px 10px;
+  border: 1px solid #fecaca;
+  border-radius: 5px;
+  background: var(--danger-soft);
+  color: #8c2f26;
+  font-size: 12px;
+  line-height: 1.5;
+}
 .studio-inspector__heading {
   display: flex;
   justify-content: space-between;

@@ -158,16 +158,18 @@ describe("useStudioActions Lore document identity", () => {
     expect(view.result().error).toBeNull();
   });
 
-  it("deduplicates same-document saves before React can render pending state", async () => {
+  it("deduplicates identical same-document saves before React can render pending state", async () => {
     const request = rejectable<{ lore_status: LoreStatus }>();
     vi.mocked(api.saveLoreStatus).mockReturnValue(request.promise);
     const view = renderActions();
     let first!: Promise<void>;
     let duplicate!: Promise<void>;
 
+    // #466: only the identical in-flight request dedupes; a changed value
+    // is a newer intent that supersedes the older command.
     act(() => {
       first = view.result().actions.changeLoreStatus(character.id, "stable");
-      duplicate = view.result().actions.changeLoreStatus(character.id, "deprecated");
+      duplicate = view.result().actions.changeLoreStatus(character.id, "stable");
     });
 
     expect(api.saveLoreStatus).toHaveBeenCalledTimes(1);

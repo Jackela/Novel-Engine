@@ -8,6 +8,7 @@ import type { SettingsFormState } from "../studioInspectorTypes";
 import { toErrorMessage } from "./toErrorMessage";
 import { usePendingAction } from "./usePendingAction";
 import { useProjectSettingsUpdate } from "./useProjectSettingsUpdate";
+import { useStudioBeatActions } from "./useStudioBeatActions";
 import { useStudioDocumentActions } from "./useStudioDocumentActions";
 import type { JobsFreshLoadInitiator } from "./useStudioJobs";
 import { useStudioLoreStatusActions } from "./useStudioLoreStatusActions";
@@ -134,6 +135,14 @@ export function useStudioActions({
     isCurrentOwner,
     clearSharedError,
   });
+  const beatActions = useStudioBeatActions({
+    project,
+    projectId,
+    setProject,
+    currentOwner,
+    isCurrentOwner,
+    clearSharedError,
+  });
   const settingsUpdate = useProjectSettingsUpdate({
     project,
     projectId,
@@ -219,6 +228,8 @@ export function useStudioActions({
     retryJob,
     changeLoreStatus: loreStatusActions.changeLoreStatus,
     loreStatusFor: loreStatusActions.loreStatusFor,
+    linkBeat: beatActions.linkBeat,
+    beatFor: beatActions.beatFor,
     pending: {
       ...documentActions.pending,
       ...pending,
