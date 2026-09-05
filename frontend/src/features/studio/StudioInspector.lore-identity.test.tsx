@@ -57,6 +57,8 @@ function inspectorModel(loreStatus: InspectorLoreStatusModel): StudioInspectorMo
       setSettingsForm: vi.fn(),
     },
     loreStatus,
+    // #466: no active chapter in this fixture, so no beat panel renders.
+    beat: null,
   };
 }
 

@@ -1,4 +1,10 @@
-import type { DocumentSummary, Project, ProjectListItem, StudioDocument } from "@/app/types/studio";
+import type {
+  DocumentSummary,
+  LoreStatus,
+  Project,
+  ProjectListItem,
+  StudioDocument,
+} from "@/app/types/studio";
 
 export function summarizeDocument(document: StudioDocument): DocumentSummary {
   const { content_markdown: _content, metadata: _metadata, ...summary } = document;
@@ -40,5 +46,42 @@ export function mergeProjectSettings(project: Project, updated: ProjectListItem)
     description: updated.description,
     settings: updated.settings,
     updated_at: updated.updated_at > project.updated_at ? updated.updated_at : project.updated_at,
+  };
+}
+
+/** One narrow summary field a revision-free command owns exclusively (#466). */
+export type NarrowSummaryPatch =
+  | { readonly field: "lore_status"; readonly value: LoreStatus }
+  | { readonly field: "beat_ref"; readonly value: string | null };
+
+/** The project/Document/revision world a narrow command was issued against. */
+export interface NarrowFieldCapture {
+  readonly projectId: string;
+  readonly documentId: string;
+  /** Summary revision observed when the command was issued. */
+  readonly revisionId: string;
+}
+
+/**
+ * Patch exactly one narrow summary field, and only while the captured
+ * project/Document identity still owns the shell row at the same revision
+ * (task 3.4): an older-revision response never overwrites newer authority.
+ */
+export function mergeProjectNarrowField(
+  project: Project,
+  capture: NarrowFieldCapture,
+  patch: NarrowSummaryPatch,
+): Project {
+  if (project.id !== capture.projectId) return project;
+  const row = project.documents.find((document) => document.id === capture.documentId);
+  if (row === undefined || row.current_revision_id !== capture.revisionId) return project;
+  return {
+    ...project,
+    documents: project.documents.map((document) => {
+      if (document.id !== capture.documentId) return document;
+      return patch.field === "lore_status"
+        ? { ...document, lore_status: patch.value }
+        : { ...document, beat_ref: patch.value };
+    }),
   };
 }

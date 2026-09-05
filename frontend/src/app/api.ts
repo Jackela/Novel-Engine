@@ -1,5 +1,6 @@
 import {
   parseAliases,
+  parseChapterBeat,
   parseDocuments,
   parseLoreStatus,
   parseOwnerSetup,
@@ -230,6 +231,8 @@ export const api = {
       { lore_status },
       parseLoreStatus,
     ),
+  linkChapterBeat: (projectId: string, documentId: string, beat: string | null) =>
+    putJson(`/api/projects/${projectId}/documents/${documentId}/beat`, { beat }, parseChapterBeat),
   saveDocument: (
     projectId: string,
     documentId: string,

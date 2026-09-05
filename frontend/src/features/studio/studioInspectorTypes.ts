@@ -127,6 +127,26 @@ export interface InspectorLoreStatusModel {
   readonly submit: (status: LoreStatus) => Promise<void>;
 }
 
+/** #466: chapter-scoped beat association for the active chapter. */
+export interface InspectorBeatModel {
+  /** React identity for the active chapter. */
+  readonly documentId: string;
+  /**
+   * Stored-reference authority: the successful command's normalized title,
+   * or null when unlinked. The independently resolved display is not
+   * authority and may differ after an outline rename.
+   */
+  readonly beatRef: string | null;
+  /** Pending belongs to this chapter, never to whichever entry is active now. */
+  readonly isSaving: boolean;
+  /** Failed mutation for this chapter; other documents do not inherit it. */
+  readonly error: string | null;
+  /** Keeps the failed title available when the author returns to this chapter. */
+  readonly attemptedTitle: string | null;
+  /** Links to a beat title, or clears the association with null. */
+  readonly link: (beat: string | null) => Promise<void>;
+}
+
 export interface StudioInspectorModel {
   copilot: InspectorCopilotModel;
   export: InspectorExportModel;
@@ -136,4 +156,5 @@ export interface StudioInspectorModel {
   usage: InspectorUsageModel;
   settings: InspectorSettingsModel;
   loreStatus: InspectorLoreStatusModel | null;
+  beat: InspectorBeatModel | null;
 }

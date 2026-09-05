@@ -2,8 +2,7 @@ import { useState } from "react";
 import type { NavigateFunction } from "react-router-dom";
 
 import type { StudioRouteState } from "../studioRouteState";
-import { buildProposalAuditView } from "./proposalAuditView";
-import { buildLoreStatusModel, buildStudioNavigatorProps } from "./studioPageModelView";
+import { buildStudioInspectorModel, buildStudioNavigatorProps } from "./studioPageModelView";
 import { useActiveDocument } from "./useActiveDocument";
 import { useDocumentDraft } from "./useDocumentDraft";
 import { useExportDownload } from "./useExportDownload";
@@ -123,8 +122,7 @@ export function useStudioPageModel(projectId: string, route: StudioRouteState, n
     projectErrors.publishers.search,
   );
   const providers = useStudioProviders();
-  const { exportProject, retryExport, exportingFormat, retryingFormat, failedFormat, exportError } =
-    useExportDownload(project, projectId, inspectorHistories.export.setData);
+  const exportDownload = useExportDownload(project, projectId, inspectorHistories.export.setData);
   const {
     createDocument,
     moveDocument,
@@ -133,6 +131,8 @@ export function useStudioPageModel(projectId: string, route: StudioRouteState, n
     retryJob,
     changeLoreStatus,
     loreStatusFor,
+    linkBeat,
+    beatFor,
     isRunningReview,
     isUpdatingSettings,
     isRetryingJob,
@@ -224,43 +224,20 @@ export function useStudioPageModel(projectId: string, route: StudioRouteState, n
         pending: inspectorPending,
         // #412: per-tab groups assembled once here instead of a forwarded
         // props corridor through StudioPageView -> Inspector -> Panels.
-        model: {
-          copilot: {
-            instruction: copilot.instruction,
-            proposal: copilot.proposal,
-            streamingText: copilot.streamingText,
-            onRunProposal: copilot.runProposal,
-            onAcceptProposal: copilot.acceptProposal,
-            onStopProposal: () => copilot.stopProposal(),
-            ...buildProposalAuditView(
-              copilot.proposalOutcomeUnknown,
-              copilot.proposalAuditStatus,
-              copilot.retryProposalAudit,
-            ),
-            unknownAttemptOperation: copilot.unknownAttemptOperation,
-            setInstruction: copilot.setInstruction,
-            setProposal: copilot.setProposal,
+        model: buildStudioInspectorModel({
+          projectId,
+          copilot,
+          jobs: {
+            jobs,
+            hasOlderJobs,
+            onLoadJobs: () => loadJobs("refresh"),
+            onLoadOlderJobs: loadOlderJobs,
+            onRetryJob: retryJob,
           },
-          export: {
-            exports: inspectorHistories.export.data,
-            historyInitialized: inspectorHistories.export.initialized,
-            isLoadingHistory: inspectorHistories.export.isLoading,
-            historyError: inspectorHistories.export.error,
-            onRetryHistory: inspectorHistories.export.retry,
-            exportingFormat,
-            retryingFormat,
-            failedFormat,
-            errorForExport: exportError,
-            onExport: exportProject,
-            onRetryExport: retryExport,
-          },
+          export: { ...exportDownload, history: inspectorHistories.export },
           review: {
-            latestReview: inspectorHistories.review.data[0] ?? null,
-            historyInitialized: inspectorHistories.review.initialized,
-            isLoadingHistory: inspectorHistories.review.isLoading,
-            historyError: inspectorHistories.review.error,
+            history: inspectorHistories.review,
             actionError: projectErrors.errors.review,
-            onRetryHistory: inspectorHistories.review.retry,
             onRunReview: runReview,
           },
           history: {
@@ -273,14 +250,6 @@ export function useStudioPageModel(projectId: string, route: StudioRouteState, n
             onLoadOlderRevisions: loadOlderRevisions,
             onRestoreRevision,
           },
-          jobs: {
-            jobs,
-            hasOlderJobs,
-            onLoadJobs: () => loadJobs("refresh"),
-            onLoadOlderJobs: loadOlderJobs,
-            onRetryJob: retryJob,
-          },
-          usage: { projectId },
           settings: {
             settingsForm,
             providers,
@@ -288,14 +257,15 @@ export function useStudioPageModel(projectId: string, route: StudioRouteState, n
             onUpdateSettings: updateProjectSettings,
             setSettingsForm,
           },
-          loreStatus: buildLoreStatusModel(
-            activeDocument?.id === activeSummary?.id ? activeSummary : null,
+          narrowCommands: {
+            activeSummary,
+            activeDocument,
             changeLoreStatus,
-            activeDocument
-              ? loreStatusFor(activeDocument.id)
-              : { isSaving: false, error: null, attemptedStatus: null },
-          ),
-        },
+            loreStatusFor,
+            linkBeat,
+            beatFor,
+          },
+        }),
       },
       statusbar: {
         activeDocument,

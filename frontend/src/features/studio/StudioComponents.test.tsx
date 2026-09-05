@@ -55,6 +55,8 @@ function buildInspectorModel(): StudioInspectorModel {
     },
     // #444: no active Lore document in this fixture, so no panel renders.
     loreStatus: null,
+    // #466: no active chapter in this fixture, so no beat panel renders.
+    beat: null,
   };
 }
 
