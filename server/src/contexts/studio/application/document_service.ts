@@ -1,6 +1,7 @@
 import type { Principal } from "../../../shared/application/ports/auth.js";
 import { InvalidOperationError } from "../../../shared/domain/exceptions.js";
 import { isDocumentKind } from "../domain/kinds.js";
+import { assertSerializedCapacity } from "../domain/structure_capacity.js";
 import { buildFtsMatchQuery } from "./fts_match_query.js";
 import { documentMatchPayload, documentPayload, dumpJson } from "./payloads.js";
 import type { ProjectScope } from "./ports/studio_store.js";
@@ -44,6 +45,8 @@ export class DocumentService {
       input.position === undefined || input.position === null
         ? this.store.nextPosition(scope, projectId, input.kind, targetVolumeId)
         : input.position;
+    const metadataJson = dumpJson(input.metadata ?? {});
+    assertSerializedCapacity("document_metadata_bytes", metadataJson);
     return documentPayload(
       this.store.addDocument(scope, projectId, {
         kind: input.kind,
@@ -51,7 +54,7 @@ export class DocumentService {
         contentMarkdown: input.contentMarkdown ?? "",
         position,
         volumeId: targetVolumeId,
-        metadataJson: dumpJson(input.metadata ?? {}),
+        metadataJson,
         now: this.now(),
       }),
     );
@@ -88,12 +91,14 @@ export class DocumentService {
       input.title !== undefined && input.title !== null && input.title.trim() !== ""
         ? input.title.trim()
         : null;
+    const metadataJson = dumpJson(input.metadata ?? {});
+    assertSerializedCapacity("document_metadata_bytes", metadataJson);
     return documentPayload(
       this.store.advanceDocument(scopeForPrincipal(principal), projectId, documentId, {
         contentMarkdown: input.contentMarkdown,
         baseRevisionId: input.baseRevisionId,
         title,
-        metadataJson: dumpJson(input.metadata ?? {}),
+        metadataJson,
         source: input.source ?? "author",
         now: this.now(),
       }),

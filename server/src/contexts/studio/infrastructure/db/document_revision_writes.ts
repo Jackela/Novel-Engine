@@ -8,6 +8,7 @@ import type {
 import { NotFoundError, RevisionConflictError } from "../../domain/exceptions.js";
 import { refreshDocumentIndex } from "./document_search.js";
 import { documentRevisions, documents, projects } from "./schema.js";
+import { assertOutlineBeatCapacity } from "./structure_capacity_checks.js";
 import { insertRevision, scopedDocument, scopedProject, type Tx } from "./studio_query_helpers.js";
 
 /**
@@ -35,6 +36,10 @@ export function advanceDocumentInTransaction(
   if (current === undefined) {
     throw new NotFoundError("Current revision not found.");
   }
+  // Every path that mints outline content (author saves, restores, accepted
+  // AI proposals) funnels through this chokepoint, so the beat budget holds
+  // for all of them before any revision row is written (#461).
+  assertOutlineBeatCapacity(document.kind, input.contentMarkdown);
   const revision = insertRevision(tx, {
     documentId: document.id,
     parentRevisionId: document.currentRevisionId,
