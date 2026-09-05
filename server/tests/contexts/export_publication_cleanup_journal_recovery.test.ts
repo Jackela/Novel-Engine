@@ -1,4 +1,4 @@
-import { access, link, readdir, readFile, rename, unlink, writeFile } from "node:fs/promises";
+import { access, link, readdir, readFile, rename, stat, unlink, writeFile } from "node:fs/promises";
 import { basename, join } from "node:path";
 
 import { afterEach, describe, expect, it } from "vitest";
@@ -102,8 +102,13 @@ describe("export publication cleanup journal recovery", () => {
     const staging = join(projectDirectory(value), ".staging");
     const manifest = await stagingFile(staging, ".manifest.json");
     const bytes = await readFile(manifest);
-    await unlink(manifest);
-    await writeFile(manifest, bytes);
+    const replacement = join(value.directory, "replacement-manifest");
+    await writeFile(replacement, bytes, { flag: "wx" });
+    const originalIdentity = await stat(manifest, { bigint: true });
+    const replacementIdentity = await stat(replacement, { bigint: true });
+    expect(replacementIdentity.dev).toBe(originalIdentity.dev);
+    expect(replacementIdentity.ino).not.toBe(originalIdentity.ino);
+    await rename(replacement, manifest);
     await unlink(await stagingFile(staging, ".stage"));
     await unlink(finalPath(value, "manifest-replaced"));
 

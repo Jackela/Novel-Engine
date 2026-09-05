@@ -5,9 +5,9 @@ import {
   mkdtemp,
   readdir,
   readFile,
+  rename,
   rm,
   stat,
-  unlink,
   writeFile,
 } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -123,8 +123,13 @@ describe("export publication sidecar ownership", () => {
         const name = (await readdir(value.staging)).find((entry) => entry.endsWith(suffix));
         if (name === undefined) throw new Error(`Expected a ${sidecar} sidecar.`);
         const path = join(value.staging, name);
-        await unlink(path);
-        await writeFile(path, `replacement ${sidecar} bytes`);
+        const replacement = join(value.directory, "replacement");
+        await writeFile(replacement, `replacement ${sidecar} bytes`, { flag: "wx" });
+        const originalIdentity = await stat(path, { bigint: true });
+        const replacementIdentity = await stat(replacement, { bigint: true });
+        expect(replacementIdentity.dev).toBe(originalIdentity.dev);
+        expect(replacementIdentity.ino).not.toBe(originalIdentity.ino);
+        await rename(replacement, path);
 
         await expect(evidence.acknowledge()).rejects.toThrow(/preserved a replacement/i);
         await expect(readFile(path, "utf8")).resolves.toBe(`replacement ${sidecar} bytes`);
