@@ -1,5 +1,19 @@
 # Validation evidence
 
+## Pre-merge Lore correction — 2026-09-05
+
+The final task 3.4 audit confirmed a stale `savedStatus` display after a
+same-Revision Lore update. `688acfe70cc52b2aa811d0d4e4425292190983d9` makes the
+page consume the matching shell summary. Its real page/Inspector regression
+failed on `b061e4df` and passed after the fix, preserving body identity,
+Revision, Markdown, and a single Document read through draft → stable → draft.
+The combined Lore suite passed 22 tests; independent Standards/Spec reviews
+closed this finding. See the
+[maintenance record](../../../docs/agents/repository-maintenance-2026-09-05.md)
+and [PR #456](https://github.com/Jackela/Novel-Engine/pull/456) for the final
+candidate SHA and full/CI evidence. Task 3.4 remains open for its other
+field-intent and beat scenarios; human acceptance remains separate.
+
 ## Current closeout pointer — 2026-09-05
 
 Code candidate: `b2019baec05485c9ae4aa930cdeb6e8dccba48ee`; finding baseline:
