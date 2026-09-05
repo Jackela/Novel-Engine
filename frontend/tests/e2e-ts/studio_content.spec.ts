@@ -1,7 +1,7 @@
 import { existsSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 
-import { type BrowserContext, expect, type Page, test } from "@playwright/test";
+import { type APIResponse, type BrowserContext, expect, type Page, test } from "@playwright/test";
 
 import {
   assertNarrativeProse,
@@ -28,6 +28,14 @@ import {
 
 interface EnvelopeBody {
   error: { code: string; message: string; details: Record<string, unknown> };
+}
+
+async function expectApiError(response: APIResponse, status: number, code: string) {
+  expect(response.status()).toBe(status);
+  const body = (await response.json()) as EnvelopeBody;
+  expect(body.error.code).toBe(code);
+  expect(typeof body.error.message).toBe("string");
+  return body;
 }
 
 test.describe
@@ -90,7 +98,6 @@ test.describe
           return { x: box.x, y: box.y, right: box.right, bottom: box.bottom };
         }),
       );
-      expect(tablistBox).not.toBeNull();
       if (tablistBox === null) throw new Error("Expected a visible Inspector tablist.");
       for (const box of tabBoxes) {
         expect(box.x).toBeGreaterThanOrEqual(tablistBox.x - 0.5);
@@ -281,8 +288,7 @@ test.describe
       });
 
       const missing = await studio.request.get(`/api/projects/${projectId}`);
-      expect(missing.status()).toBe(404);
-      expect(((await missing.json()) as EnvelopeBody).error.code).toBe("NOT_FOUND");
+      await expectApiError(missing, 404, "NOT_FOUND");
       const undeliverable = await studio.request.get(artifact.download_url);
       expect(undeliverable.status()).toBe(404);
     });
@@ -333,15 +339,14 @@ test.describe
         {
           data: {
             content_markdown: "Stale tab write.",
-            base_revision_id: history.revisions[0]?.id,
+            base_revision_id: history.revisions.find(
+              (revision) => revision.id !== chapter?.current_revision_id,
+            )?.id,
           },
           headers: { "x-csrf-token": csrfToken },
         },
       );
-      expect(conflict.status()).toBe(409);
-      const conflictBody = (await conflict.json()) as EnvelopeBody;
-      expect(conflictBody.error.code).toBe("REVISION_CONFLICT");
-      expect(typeof conflictBody.error.message).toBe("string");
+      const conflictBody = await expectApiError(conflict, 409, "REVISION_CONFLICT");
       expect(conflictBody.error.details.current_revision_id).toBe(chapter?.current_revision_id);
 
       // CSRF double-submit: a session-authenticated write without the header is
@@ -349,13 +354,11 @@ test.describe
       const missingToken = await studio.request.post("/api/projects", {
         data: { title: "No token ledger" },
       });
-      expect(missingToken.status()).toBe(403);
-      expect(((await missingToken.json()) as EnvelopeBody).error.code).toBe("CSRF_TOKEN_MISSING");
+      await expectApiError(missingToken, 403, "CSRF_TOKEN_MISSING");
       const tamperedToken = await studio.request.post("/api/projects", {
         data: { title: "Tampered token ledger" },
         headers: { "x-csrf-token": `${csrfToken}-tampered` },
       });
-      expect(tamperedToken.status()).toBe(403);
-      expect(((await tamperedToken.json()) as EnvelopeBody).error.code).toBe("CSRF_TOKEN_INVALID");
+      await expectApiError(tamperedToken, 403, "CSRF_TOKEN_INVALID");
     });
   });
