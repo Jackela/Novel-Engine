@@ -22,18 +22,46 @@ afterEach(() => {
 });
 
 describe("workspace product identity", () => {
-  it("reads the product name and a SemVer release from one manifest", () => {
+  it("rejects adversarial prerelease identifiers without unbounded backtracking", () => {
     const path = manifestPath({
       name: "novel-engine-server",
       productName: "Novel Engine",
-      version: "1.2.3-beta.1+build.7",
+      version: `0.0.0-0.${"--.".repeat(1000)}!`,
     });
-
-    expect(readProductIdentity(path)).toEqual({
-      name: "Novel Engine",
-      version: "1.2.3-beta.1+build.7",
-    });
+    const moduleUrl = new URL(
+      "../../src/shared/infrastructure/workspace_manifest.ts",
+      import.meta.url,
+    );
+    const result = spawnSync(
+      process.execPath,
+      [
+        "--input-type=module",
+        "--eval",
+        `import { readProductIdentity } from ${JSON.stringify(moduleUrl.href)}; readProductIdentity(process.argv[1]);`,
+        path,
+      ],
+      { encoding: "utf8", timeout: 2000 },
+    );
+    expect(result.error).toBeUndefined();
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain("valid SemVer");
   });
+
+  it.each(["1.2.3-beta.1+build.7", "1.2.3-0.01a.--+build.007"])(
+    "reads the product name and SemVer %s from one manifest",
+    (version) => {
+      const path = manifestPath({
+        name: "novel-engine-server",
+        productName: "Novel Engine",
+        version,
+      });
+
+      expect(readProductIdentity(path)).toEqual({
+        name: "Novel Engine",
+        version,
+      });
+    },
+  );
 
   it.each([
     {
@@ -83,3 +111,5 @@ describe("workspace product identity", () => {
     expect(() => readProductIdentity(manifestPath(manifest))).toThrow(message);
   });
 });
+
+import { spawnSync } from "node:child_process";

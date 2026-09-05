@@ -64,14 +64,29 @@ afterEach(async () => {
 });
 
 describe("product identity SSOT gate", () => {
-  it("accepts an arbitrary aligned SemVer without a release literal in the gate", async () => {
-    const root = await createFixture("7.8.9-rc.1+build.4");
-
-    const result = runGate(root);
-
-    expect(result.status, result.stderr).toBe(0);
-    expect(result.stdout).toContain("Novel Engine 7.8.9-rc.1+build.4 is aligned");
+  it("rejects adversarial prerelease identifiers without unbounded backtracking", async () => {
+    const root = await createFixture(`0.0.0-0.${"--.".repeat(1000)}!`);
+    const result = spawnSync(process.execPath, [CHECK_SSOT, root], {
+      cwd: root,
+      encoding: "utf8",
+      timeout: 2000,
+    });
+    expect(result.error).toBeUndefined();
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain("valid SemVer");
   });
+
+  it.each(["7.8.9-rc.1+build.4", "1.2.3-0.01a.--+build.007"])(
+    "accepts aligned SemVer %s without a release literal in the gate",
+    async (version) => {
+      const root = await createFixture(version);
+
+      const result = runGate(root);
+
+      expect(result.status, result.stderr).toBe(0);
+      expect(result.stdout).toContain(`Novel Engine ${version} is aligned`);
+    },
+  );
 
   it.each(["", "1.2", "v1.2.3", "01.2.3", "1.2.3-01", " 1.2.3 "])(
     "rejects malformed manifest version %j",
