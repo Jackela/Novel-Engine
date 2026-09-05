@@ -1,7 +1,7 @@
 import type { ComponentProps } from "react";
 import type { NavigateFunction } from "react-router-dom";
 
-import type { DocumentKind, LoreStatus, StudioDocument } from "@/app/types/studio";
+import type { DocumentKind, DocumentSummary, LoreStatus } from "@/app/types/studio";
 
 import type { StudioNavigator } from "../StudioNavigator";
 import { isLoreEntryKind } from "../studioConstants";
@@ -30,11 +30,11 @@ export function buildStudioNavigatorProps(
 }
 
 /**
- * Adapt one active domain document into the concrete Lore editor seam. The
+ * Adapt the active shell summary into the concrete Lore editor seam. The
  * returned submit function preserves the mutation owner's completion Promise.
  */
 export function buildLoreStatusModel(
-  document: StudioDocument | null,
+  document: Pick<DocumentSummary, "id" | "kind" | "lore_status"> | null,
   changeLoreStatus: (documentId: string, status: LoreStatus) => Promise<void>,
   lifecycle: LoreStatusLifecycleState,
 ): InspectorLoreStatusModel | null {

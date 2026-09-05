@@ -289,7 +289,7 @@ export function useStudioPageModel(projectId: string, route: StudioRouteState, n
             setSettingsForm,
           },
           loreStatus: buildLoreStatusModel(
-            activeDocument,
+            activeDocument?.id === activeSummary?.id ? activeSummary : null,
             changeLoreStatus,
             activeDocument
               ? loreStatusFor(activeDocument.id)
