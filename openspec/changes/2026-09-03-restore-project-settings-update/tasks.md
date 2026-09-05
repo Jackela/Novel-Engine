@@ -72,7 +72,7 @@
       same-ms/backwards-clock Project ordering, settings-driven generation,
       frontend project switching, wrong-response-id/error ownership, form/focus,
       OpenAPI, and generated-type regressions.
-- [ ] 4.3 Run server type-check/lint/arch/size/full tests and gates, frontend
+- [x] 4.3 Run server type-check/lint/arch/size/full tests and gates, frontend
       lint/format/type/unit/build and React diagnostics, browser workflows,
       strict OpenSpec, and independent fixed-SHA standards/security/UX review;
       record exact results and every skip.

@@ -73,7 +73,7 @@
       trigger, retain a conflicted Draft while active, discard it on explicit
       switch/reload, and prevent late save/conflict results from crossing
       project or document ownership.
-- [ ] 3.6 Add the bounded current-read convergence loop: on an unexpected
+- [x] 3.6 Add the bounded current-read convergence loop: on an unexpected
       response revision, render nothing stale, refresh shell once, accept only
       a matching response; navigate to the library when the project vanished,
       select fallback/no-Document when the Document vanished without another

@@ -1,5 +1,41 @@
 # Validation evidence
 
+## Final integrated candidate evidence — 2026-09-05 (`13a4fed4`)
+
+The merged main commit `13a4fed4d9252d33793e3806a2e9565ec7618c3e` (squash
+merge of [PR #456](https://github.com/Jackela/Novel-Engine/pull/456);
+tree-identical to review candidate `d532d261`, re-verified by empty
+`git diff --stat`) is the final integrated candidate. Full evidence lives in
+[the acceptance closeout](../../../docs/agents/acceptance-evidence-closeout-2026-09-05.md):
+
+- Local full rerun on `13a4fed4`, no skips: server gates (621-file size gate,
+  19 llms-txt targets, migration channel, OpenAPI snapshot), type-check, lint
+  (432 files), architecture, and the first full-suite pass recorded on a
+  final SHA (202 files / 1273 tests); frontend lint (215 files), format
+  (214 files), type-check, unit (84 files / 464 tests), build (1929 modules),
+  API-types drift, and React diagnostics (score 100, 202 files); browser
+  smoke 3 passed — including the bounded History keyboard-retry workflow —
+  and full-audit 9 passed; strict OpenSpec 19/19.
+- Required CI on `13a4fed4`: `validate`, `container`, and
+  `Analyze (javascript-typescript)` all green (run URLs in the closeout).
+- Independent review chain over `2a1d959f..13a4fed4` is closed segment by
+  segment in the closeout, including a bounded clean review (no P0-P2) of
+  `b2019bae..b061e4df` and a verified zero-product-code delta after
+  `688acfe7`.
+- Task 5.1 is closed by that evidence: every listed regression category maps
+  to named passing coverage on `13a4fed4` (mapping table in the closeout).
+- Task 5.2 is closed by that evidence: every listed surface reran green on
+  `13a4fed4` (the server "size" surface is `gate:sizes` inside
+  `pnpm --dir server gates`), with the review requirement satisfied by the
+  segment chain above.
+- Task 5.3 remains open: the canonical-spec merge/archive step is a separate
+  deliberate decision gated on the change's own closed gates, including human
+  acceptance. The rows in the earlier pointer below are superseded for 5.1
+  and 5.2 by this section; its 5.3 row remains current.
+
+Human acceptance remains `not run`; use
+[the acceptance packet](../../../docs/agents/refactor-human-acceptance-2026-09-05.md).
+
 ## Current closeout pointer — 2026-09-05
 
 The phase records below retain their original SHAs and results. Later evidence

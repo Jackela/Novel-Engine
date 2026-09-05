@@ -1,5 +1,74 @@
 # Validation evidence
 
+## Final integrated candidate evidence — 2026-09-05 (`13a4fed4`)
+
+The merged main commit `13a4fed4d9252d33793e3806a2e9565ec7618c3e` (squash
+merge of [PR #456](https://github.com/Jackela/Novel-Engine/pull/456);
+tree-identical to review candidate `d532d261`, re-verified by empty
+`git diff --stat`) is the final integrated candidate. Full evidence lives in
+[the acceptance closeout](../../../docs/agents/acceptance-evidence-closeout-2026-09-05.md):
+local full rerun with no skips (server 202 files / 1273 tests, frontend 84
+files / 464 tests, build, drift, React diagnostics 100, browser smoke 3 and
+full-audit 9 passed, strict OpenSpec 19/19), green required CI, and the
+closed segment review chain over `2a1d959f..13a4fed4`.
+
+Task 3.6 is closed on `13a4fed4` per its stated condition — each
+churn/removal/error scenario is now explicitly attributed to a named passing
+test:
+
+| 3.6 branch | Attribution |
+| --- | --- |
+| Unexpected response revision: nothing stale rendered, one shell refresh, only a matching response accepted | `useCurrentDocument.test.tsx` — "refreshes the shell once and accepts a raced body only when its pointer matches" (one `api.project`, one `api.document` call). |
+| Project vanished → library | `useCurrentDocument.test.tsx` — "classifies authentication and project absence globally"; `useStudioProject.test.tsx` — "replaces to the project library with no partial aggregate when the project is missing". |
+| Document vanished → fallback/no-Document without another read for it | `useCurrentDocument.test.tsx` — "refreshes structural authority after a scoped 404 without inventing a body"; fallback selection in `useActiveDocument.test.tsx` (section-kind match, first-document fallback, no-Document case). |
+| Second revision churn mismatch → stop with readable Retry | `useCurrentDocument.test.tsx` — "bounds revision churn to one shell refresh and one replacement body read" (error contains "changed again"). |
+| Shared cycle, released-owner suppression, last-release abort, unexpected failure | `useCurrentDocument.ownership/unexpected.test.tsx` — coalescing, suppression, shared mismatch cycle, `reportError` broadcast with local Retry. |
+
+All of these run inside the 464-test frontend full suite that passed on
+`13a4fed4`. The remaining tasks stay open with individually reconciled
+findings (ticketed; see the closeout):
+
+- 1.5 — open: no dedicated no-sibling-body resume assertion exists; the
+  loop-level resume test ("resumes after a generation-capacity refusal…")
+  is driven by the in-run `committedChapters` set, while summary-source
+  skipping is proven only at the `wholeBookPlan` pure-function layer.
+- 3.2 — open: each declared behavior has a named test (shell-first bootstrap
+  with zero Review/Export reads in `useStudioProject.test.tsx`; route-
+  compatible active Document in `useActiveDocument`/`useCurrentDocument`
+  tests; independent shell/editor failure and Retry in `StudioPage`/
+  `StudioEditorPane` tests), but no single page-level request-ledger
+  assertion proves "one project + one active Document + zero sibling/
+  inspector reads" in a multi-document fixture.
+- 3.4 — open with implementation gaps: Lore responses are sourced from the
+  API response and patch only the owned summary field with owner-level late
+  suppression (tested), but a field-specific intent epoch is not implemented
+  (only a per-document dedupe map; contrast the epoch pattern in
+  `useProjectSettingsUpdate`); the beat association command is not wired in
+  the frontend (`frontend/src/app/api.ts` has no beat method; the
+  `PUT /documents/:id/beat` surface exists only server-side and `beat_ref`
+  is display-only), so normalized-`beat_ref`-from-command, concurrent
+  outline rename, and older-revision authority coverage cannot exist yet;
+  revision-granularity stale rejection for narrow payloads is likewise
+  unimplemented.
+- 4.1–4.4 — open per the prior disposition (browser matrices). Unit-level
+  attribution now recorded: 4.1 no-cross-request proof in
+  `useLazyInspectorHistories.test.tsx` plus routing/deep-link/Back-Forward
+  in `studio_content.spec.ts`; 4.2 independent pending/error/abort/Retry
+  states in `useLazyInspectorResource`/panel tests; 4.3 all five 401/404
+  routing behaviors in `useStudioProject`/`useCurrentDocument`/
+  `useLazyInspectorHistories` tests; 4.4 tabs/busy/focus/Stop coverage with
+  the lazy-hydration coexistence composite untested.
+- 5.1/5.2 — open: the listed TS-browser workflows project-switch, reorder,
+  Review run, and Export failure/retry do not exist; `api.deleteDocument`
+  and `api.moveChapterToVolume` have no Studio UI callers (product gaps to
+  triage). Server/unit portions reran green on `13a4fed4`.
+- 5.3 — open: the four-domain single-fixed-SHA review loop has not been
+  performed as one pass.
+- 5.4 — open: archive step, separately gated.
+
+Human acceptance remains `not run`; use
+[the isolated acceptance packet](../../../docs/agents/refactor-human-acceptance-2026-09-05.md).
+
 ## Pre-merge Lore correction — 2026-09-05
 
 The final task 3.4 audit confirmed a stale `savedStatus` display after a
