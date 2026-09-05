@@ -1,8 +1,13 @@
 import { randomUUID } from "node:crypto";
-import { and, desc, eq, sql } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 
 import type { StudioSqliteDatabase } from "../../../shared/infrastructure/db/connection.js";
 import { jobs, usageEvents } from "../../../shared/infrastructure/db/schema.js";
+import type {
+  ProjectCatalogPage,
+  ProjectPageInput,
+} from "../application/ports/project_catalog_store.js";
+import { projectPageLimit } from "../application/ports/project_catalog_store.js";
 import type { ProjectUpdateInput } from "../application/ports/project_update_store.js";
 import type {
   AddImportedProjectInput,
@@ -23,6 +28,7 @@ import {
   scopedProject,
   volumesInOrder,
 } from "./db/studio_query_helpers.js";
+import { buildProjectCatalogSummariesQuery } from "./project_page_queries.js";
 import { DEFAULT_VOLUME_TITLE, insertVolume } from "./volume_store_part.js";
 
 /**
@@ -113,13 +119,21 @@ export class ProjectStorePart {
     });
   }
 
-  findProjects(scope: ProjectScope): ProjectRow[] {
-    return this.db
-      .select()
-      .from(projects)
-      .where(scopeCondition(scope))
-      .orderBy(desc(projects.updatedAt), desc(projects.id))
-      .all();
+  findProjectCatalogSummaries(scope: ProjectScope, input: ProjectPageInput): ProjectCatalogPage {
+    const limit = projectPageLimit(input.limit);
+    return this.db.transaction((tx) => {
+      const rows = buildProjectCatalogSummariesQuery(tx, scope, { ...input, limit }).all();
+      const returnedRows = rows.slice(0, limit);
+      if (returnedRows.length === 0) {
+        return { projects: [], nextCursor: null };
+      }
+      const boundary = returnedRows.at(-1);
+      const nextCursor =
+        rows.length > limit && boundary !== undefined
+          ? { updatedAtMs: boundary.updatedAt.getTime(), id: boundary.id }
+          : null;
+      return { projects: returnedRows, nextCursor };
+    });
   }
 
   findProject(scope: ProjectScope, projectId: string): ProjectRow {

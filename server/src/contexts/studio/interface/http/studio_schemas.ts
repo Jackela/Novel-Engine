@@ -4,7 +4,7 @@ import {
   documentSummaryPayloadSchema,
   matchResultPayloadSchema,
 } from "../../application/payload_schemas/document.js";
-import { projectPayloadSchema } from "../../application/payload_schemas/project.js";
+import { projectCatalogSummaryPayloadSchema } from "../../application/payload_schemas/project.js";
 import { revisionSummaryPayloadSchema } from "../../application/payload_schemas/revision.js";
 import type { JsonResponseSchema } from "./json_response_schema.js";
 
@@ -40,7 +40,10 @@ export const revisionListResponseSchema = Type.Object(
 );
 
 export const projectListResponseSchema = Type.Object(
-  { projects: Type.Array(projectPayloadSchema) },
+  {
+    projects: Type.Array(projectCatalogSummaryPayloadSchema),
+    next_cursor: Type.Unsafe<string | null>({ type: "string", nullable: true }),
+  },
   { additionalProperties: false },
 );
 

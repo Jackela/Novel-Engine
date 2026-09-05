@@ -114,6 +114,15 @@ export interface ProjectListItem {
   updated_at: string;
 }
 
+/** Bounded catalog page row (#458); settings and import metadata stay unloaded. */
+export interface ProjectCatalogItem {
+  id: string;
+  title: string;
+  description: string;
+  created_at: string;
+  updated_at: string;
+}
+
 /** Structural Document row carried by ProjectShell and reorder responses. */
 export interface DocumentSummary {
   id: string;

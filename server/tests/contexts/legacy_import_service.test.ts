@@ -3,6 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, describe, expect, it, vi } from "vitest";
 import { ImportService } from "../../src/contexts/studio/application/import_service.js";
+import { projectPageLimit } from "../../src/contexts/studio/application/ports/project_catalog_store.js";
 import { createStudioServices } from "../../src/contexts/studio/application/studio_services.js";
 import { DrizzleStudioStore } from "../../src/contexts/studio/infrastructure/drizzle_studio_store.js";
 import { FilesystemExportArtifactGateway } from "../../src/contexts/studio/infrastructure/export_artifact_files.js";
@@ -81,7 +82,9 @@ describe("legacy import service", () => {
     expect(first.created).toBe(true);
     expect(second.created).toBe(false);
     expect(second.chapter_count).toBe(2);
-    expect(services.projects.listProjects(owner)).toHaveLength(1);
+    expect(
+      services.projects.listProjects(owner, { limit: projectPageLimit(50) }).projects,
+    ).toHaveLength(1);
   });
 
   it("finishes the filesystem read before the first store access", async () => {

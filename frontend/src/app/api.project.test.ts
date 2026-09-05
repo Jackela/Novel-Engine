@@ -62,17 +62,50 @@ describe("Studio project API client", () => {
 
   it("uses the project contract and includes cookies", async () => {
     const fetchMock = vi.fn().mockResolvedValue(
-      new Response(JSON.stringify({ projects: [] }), {
+      new Response(JSON.stringify({ projects: [], next_cursor: null }), {
         status: 200,
         headers: { "Content-Type": "application/json" },
       }),
     );
     vi.stubGlobal("fetch", fetchMock);
 
-    await expect(api.projects()).resolves.toEqual({ projects: [] });
+    await expect(api.projects()).resolves.toEqual({ projects: [], next_cursor: null });
     expect(fetchMock).toHaveBeenCalledWith(
       "/api/projects",
       expect.objectContaining({ credentials: "include" }),
+    );
+  });
+
+  it("encodes bounded catalog queries and parses the continuation cursor", async () => {
+    const item = {
+      id: "project-1",
+      title: "Catalog row",
+      description: "Bounded premise",
+      created_at: "2026-09-05T00:00:00Z",
+      updated_at: "2026-09-05T00:00:00.001Z",
+    };
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ projects: [item], next_cursor: "next-token" }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(api.projects({ limit: 25, cursor: "cursor-token" })).resolves.toEqual({
+      projects: [item],
+      next_cursor: "next-token",
+    });
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/projects?limit=25&cursor=cursor-token",
+      expect.any(Object),
+    );
+
+    expect(() => api.projects({ limit: 0 })).toThrow(
+      "Project page limit must be an integer from 1 through 100.",
+    );
+    expect(() => api.projects({ limit: 101 })).toThrow(
+      "Project page limit must be an integer from 1 through 100.",
     );
   });
 
@@ -89,5 +122,20 @@ describe("Studio project API client", () => {
 
     const error = await api.projects().catch((reason: unknown) => reason);
     expect(error).toMatchObject({ message: "Invalid projects[0].title" });
+  });
+
+  it("requires the nullable continuation cursor on catalog pages", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response(JSON.stringify({ projects: [] }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        }),
+      ),
+    );
+
+    const error = await api.projects().catch((reason: unknown) => reason);
+    expect(error).toMatchObject({ message: "Invalid projects response.next_cursor" });
   });
 });

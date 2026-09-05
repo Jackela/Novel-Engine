@@ -228,14 +228,14 @@ describe("Studio API client", () => {
   it("does not send X-CSRF-Token header on read requests", async () => {
     vi.stubGlobal("document", { cookie: "novel_engine_csrf=test-csrf-token" });
     const fetchMock = vi.fn().mockResolvedValue(
-      new Response(JSON.stringify({ projects: [] }), {
+      new Response(JSON.stringify({ projects: [], next_cursor: null }), {
         status: 200,
         headers: { "Content-Type": "application/json" },
       }),
     );
     vi.stubGlobal("fetch", fetchMock);
 
-    await expect(api.projects()).resolves.toEqual({ projects: [] });
+    await expect(api.projects()).resolves.toEqual({ projects: [], next_cursor: null });
     const init = fetchMock.mock.calls[0][1] as RequestInit | undefined;
     const headers = init?.headers as Record<string, string> | undefined;
     expect(headers?.["X-CSRF-Token"]).toBeUndefined();

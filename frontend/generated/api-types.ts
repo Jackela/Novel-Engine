@@ -110,7 +110,10 @@ export interface paths {
         };
         get: {
             parameters: {
-                query?: never;
+                query?: {
+                    limit?: number;
+                    cursor?: string;
+                };
                 header?: never;
                 path?: never;
                 cookie?: never;
@@ -124,15 +127,14 @@ export interface paths {
                     };
                     content: {
                         "application/json": {
+                            next_cursor: string | null;
                             projects: {
+                                /** Format: date-time */
                                 created_at: string;
                                 description: string;
                                 id: string;
-                                import_hash: string | null;
-                                settings: {
-                                    [key: string]: unknown;
-                                };
                                 title: string;
+                                /** Format: date-time */
                                 updated_at: string;
                             }[];
                         };
@@ -140,6 +142,15 @@ export interface paths {
                 };
                 /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
                 401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                422: {
                     headers: {
                         [name: string]: unknown;
                     };
