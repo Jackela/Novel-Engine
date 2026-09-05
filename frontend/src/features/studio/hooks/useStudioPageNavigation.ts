@@ -1,4 +1,4 @@
-import { useCallback, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import type { NavigateFunction } from "react-router-dom";
 
 import type { Project } from "@/app/types/studio";
@@ -22,9 +22,12 @@ export function useStudioPageNavigation({
 }: NavigationOptions) {
   // react-router re-creates `navigate` on every pathname change; the session
   // callbacks feed lazy-inspector effect deps, so they read the latest
-  // `navigate` through a ref and stay identity-stable (#465).
+  // `navigate` through a ref and stay identity-stable (#465). The ref updates
+  // in an effect, never during render.
   const navigateRef = useRef(navigate);
-  navigateRef.current = navigate;
+  useEffect(() => {
+    navigateRef.current = navigate;
+  }, [navigate]);
   const onProjectResourceSessionLost = useCallback(
     () => navigateRef.current("/", { replace: true }),
     [],

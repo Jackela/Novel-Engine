@@ -49,7 +49,9 @@ function resolveStateAction<T>(current: T, action: SetStateAction<T>): T {
 export function useStudioProject(projectId: string) {
   const navigate = useNavigate();
   const navigateRef = useRef(navigate);
-  navigateRef.current = navigate;
+  useEffect(() => {
+    navigateRef.current = navigate;
+  }, [navigate]);
   const [lifecycle] = useState(() => Symbol("studio lifecycle"));
   const activeProjectIdRef = useRef<string | null>(null);
   const projectMutationEpochRef = useRef(0);

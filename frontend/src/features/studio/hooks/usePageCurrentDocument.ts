@@ -1,4 +1,4 @@
-import { useCallback, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import type { NavigateFunction } from "react-router-dom";
 
 import type { DocumentSummary } from "@/app/types/studio";
@@ -15,9 +15,12 @@ export function usePageCurrentDocument(
 ) {
   // react-router re-creates `navigate` on every pathname change; these loss
   // callbacks feed `useCurrentDocument`'s effect deps, so they read the latest
-  // `navigate` through a ref and stay identity-stable (#465).
+  // `navigate` through a ref and stay identity-stable (#465). The ref updates
+  // in an effect, never during render.
   const navigateRef = useRef(navigate);
-  navigateRef.current = navigate;
+  useEffect(() => {
+    navigateRef.current = navigate;
+  }, [navigate]);
   const onSessionLoss = useCallback(() => navigateRef.current("/", { replace: true }), []);
   const onProjectMissing = useCallback(
     () => navigateRef.current("/projects", { replace: true }),
