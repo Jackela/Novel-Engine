@@ -201,4 +201,43 @@ describe("StudioExportPanel", () => {
     expect(olderButton(mounted.container)).toBeNull();
     expect(mounted.container.textContent).toContain("End of export history");
   });
+
+  it("moves orphaned Load older focus to the history heading on the terminal page", async () => {
+    const completion = deferred<void>();
+    const onLoadOlderExports = vi.fn(() => completion.promise);
+    const exports = [studioExport()];
+    const content = (hasOlderExports: boolean, isLoadingOlderExports: boolean) => (
+      <StudioExportPanel
+        exports={exports}
+        hasOlderExports={hasOlderExports}
+        historyInitialized
+        isLoadingOlderExports={isLoadingOlderExports}
+        onLoadOlderExports={onLoadOlderExports}
+      />
+    );
+    const mounted = harness.mount(content(true, false));
+    const loadButton = mounted.container.querySelector<HTMLButtonElement>(
+      ".export-history > button.ui-command",
+    );
+    const heading = mounted.container.querySelector<HTMLHeadingElement>("#export-history-heading");
+    if (loadButton === null || heading === null) {
+      throw new Error("Expected the Load older command and the history heading.");
+    }
+
+    loadButton.focus();
+    act(() => {
+      loadButton.click();
+      mounted.root.render(content(true, true));
+    });
+    await act(async () => {
+      completion.resolve(undefined);
+      await completion.promise;
+    });
+    // The last page unmounts the initiating button, so the section heading
+    // is the declared end-state landing zone.
+    act(() => mounted.root.render(content(false, false)));
+
+    expect(mounted.container.querySelector(".export-history > button.ui-command")).toBeNull();
+    expect(document.activeElement).toBe(heading);
+  });
 });

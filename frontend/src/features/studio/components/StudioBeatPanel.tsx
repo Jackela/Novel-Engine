@@ -1,5 +1,7 @@
-import type { FormEvent } from "react";
-import { useState } from "react";
+import type { FormEvent, MouseEvent, RefObject } from "react";
+import { useCallback, useLayoutEffect, useRef, useState } from "react";
+
+import { useCommandFocusRestoration } from "../hooks/useCommandFocusRestoration";
 
 interface StudioBeatPanelProps {
   documentId: string;
@@ -25,6 +27,32 @@ export function StudioBeatPanel({
   error = null,
   onLink,
 }: StudioBeatPanelProps) {
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  const linkButtonRef = useRef<HTMLButtonElement | null>(null);
+  const activeDocumentIdRef = useRef(documentId);
+  const runWithFocusRestoration = useCommandFocusRestoration(isSaving);
+
+  useLayoutEffect(() => {
+    activeDocumentIdRef.current = documentId;
+  }, [documentId]);
+
+  const linkWithFocusRestoration = useCallback(
+    (trigger: HTMLButtonElement, beat: string | null) => {
+      const originDocumentId = documentId;
+      void runWithFocusRestoration(
+        trigger,
+        () => onLink(beat),
+        // A success keeps the initiating command disabled (`requested ===
+        // beatRef`, or Clear with no reference left), so the beat input is
+        // the semantic landing zone — but only for the same document.
+        () => (activeDocumentIdRef.current === originDocumentId ? inputRef.current : null),
+      );
+    },
+    [documentId, onLink, runWithFocusRestoration],
+  );
+
+  // The keyed form resets local title at the document boundary, while the
+  // persistent owner above can resolve a returning document's semantic target.
   return (
     <BeatEntryForm
       key={documentId}
@@ -32,7 +60,9 @@ export function StudioBeatPanel({
       attemptedTitle={attemptedTitle}
       isSaving={isSaving}
       error={error}
-      onLink={onLink}
+      onLinkCommand={linkWithFocusRestoration}
+      inputRef={inputRef}
+      linkButtonRef={linkButtonRef}
     />
   );
 }
@@ -42,22 +72,33 @@ interface BeatEntryFormProps {
   readonly attemptedTitle: string | null;
   readonly isSaving: boolean;
   readonly error: string | null;
-  readonly onLink: (beat: string | null) => Promise<void>;
+  readonly onLinkCommand: (trigger: HTMLButtonElement, beat: string | null) => void;
+  readonly inputRef: RefObject<HTMLInputElement | null>;
+  readonly linkButtonRef: RefObject<HTMLButtonElement | null>;
 }
 
-function BeatEntryForm({ beatRef, attemptedTitle, isSaving, error, onLink }: BeatEntryFormProps) {
+function BeatEntryForm({
+  beatRef,
+  attemptedTitle,
+  isSaving,
+  error,
+  onLinkCommand,
+  inputRef,
+  linkButtonRef,
+}: BeatEntryFormProps) {
   const [title, setTitle] = useState(attemptedTitle ?? beatRef ?? "");
   const requested = title.trim();
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (isSaving || requested === "" || requested === beatRef) return;
-    void onLink(requested);
+    const linkButton = linkButtonRef.current;
+    if (linkButton === null || isSaving || requested === "" || requested === beatRef) return;
+    onLinkCommand(linkButton, requested);
   };
 
-  const clearBeat = () => {
+  const clearBeat = (event: MouseEvent<HTMLButtonElement>) => {
     if (isSaving || beatRef === null) return;
-    void onLink(null);
+    onLinkCommand(event.currentTarget, null);
   };
 
   return (
@@ -68,6 +109,7 @@ function BeatEntryForm({ beatRef, attemptedTitle, isSaving, error, onLink }: Bea
           aria-label="Beat title"
           disabled={isSaving}
           onChange={(event) => setTitle(event.target.value)}
+          ref={inputRef}
           type="text"
           value={title}
         />
@@ -80,6 +122,7 @@ function BeatEntryForm({ beatRef, attemptedTitle, isSaving, error, onLink }: Bea
           aria-busy={isSaving}
           className="ui-command ui-command--primary"
           disabled={isSaving || requested === "" || requested === beatRef}
+          ref={linkButtonRef}
           type="submit"
         >
           {isSaving ? "Saving…" : "Link beat"}
@@ -94,7 +137,7 @@ function BeatEntryForm({ beatRef, attemptedTitle, isSaving, error, onLink }: Bea
         </button>
       </div>
       {error ? (
-        <p aria-live="polite" className="studio-beat__error" role="alert">
+        <p aria-live="assertive" className="studio-beat__error" role="alert">
           {error}
         </p>
       ) : null}

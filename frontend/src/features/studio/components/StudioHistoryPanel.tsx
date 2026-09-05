@@ -120,7 +120,7 @@ export function StudioHistoryPanel({
       </div>
       {(hasOlderRevisions || isLoadingOlder) && onLoadOlderRevisions ? (
         <button
-          aria-busy={isLoadingHistory || undefined}
+          aria-busy={isLoadingOlder || isLoadingHistory || undefined}
           className="ui-command studio-inspector__load-older"
           disabled={isBusy}
           onClick={(event) => {

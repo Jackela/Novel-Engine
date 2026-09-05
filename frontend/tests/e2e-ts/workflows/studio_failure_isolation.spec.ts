@@ -12,7 +12,8 @@ import { createProject, typeChapter } from "../content_acceptance_helpers";
 // blocked surface must fail alone with its own Retry, 401/404 route to
 // Entry/library, hydration never hides tab roving, busy naming, retry focus,
 // or the whole-book Stop control, and selecting Review or Export never
-// requests the other.
+// requests the other. The #466 beat command surface keeps its focus contract:
+// link and clear restore focus to the beat input on both terminal paths.
 test.describe
   .serial("#467 failure isolation and lazy hydration", () => {
     test.setTimeout(150_000);
@@ -307,5 +308,61 @@ test.describe
       expect([reviewReads, exportReads]).toEqual([2, 2]);
 
       studio.off("request", countReads);
+    });
+
+    // #466 command-focus semantics on the chapter beat surface: the pending
+    // window disables the whole form, so both terminal paths — a link whose
+    // success keeps the submit command disabled, and a clear that disables
+    // its own trigger — must hand focus back to the beat input.
+    test("beat link and clear commands restore focus to the beat input", async () => {
+      const projectId = await createProject(studio, "Beat Focus Ledger");
+      await typeChapter(studio, "# Chapter 1\n\nThe harbor bell rang twice.");
+
+      // The link command must resolve against a real outline beat (#313).
+      await studio.getByRole("button", { name: "Add Outline" }).click();
+      await expect(studio.getByRole("textbox", { name: "Document title" })).toHaveValue(
+        "Outline 1",
+      );
+      await typeChapter(studio, "## The Harbor\n\nA quiet pier at dawn.");
+      await studio.getByRole("button", { name: "Chapter 1", exact: true }).click();
+      await expect(studio.locator(".cm-content")).toContainText("The harbor bell rang twice.");
+
+      // Hold the first PUT so the pending window is observable.
+      let releaseBeatLink: (() => void) | undefined;
+      const beatLinkHeld = new Promise<void>((resolve) => {
+        releaseBeatLink = resolve;
+      });
+      let beatHoldsLeft = 1;
+      const beatPath = `**/api/projects/${projectId}/documents/*/beat`;
+      await studio.route(beatPath, async (handled) => {
+        if (beatHoldsLeft > 0) {
+          beatHoldsLeft -= 1;
+          await beatLinkHeld;
+        }
+        await handled.continue();
+      });
+
+      const beatInput = studio.getByLabel("Beat title");
+      await beatInput.fill("The Harbor");
+      await studio.getByRole("button", { name: "Link beat" }).click();
+      await expect(studio.getByRole("button", { name: "Saving…" })).toHaveAttribute(
+        "aria-busy",
+        "true",
+      );
+      await expect(beatInput).toBeDisabled();
+
+      releaseBeatLink?.();
+      // Success stores the requested title, so the submit command stays
+      // disabled and the input is the declared landing zone.
+      await expect(studio.getByRole("button", { name: "Link beat" })).toBeDisabled();
+      await expect(beatInput).toBeEnabled();
+      await expect(beatInput).toBeFocused();
+
+      // The clear command runs unheld; its success disables its own trigger.
+      await studio.getByRole("button", { name: "Clear" }).click();
+      await expect(studio.getByRole("button", { name: "Clear" })).toBeDisabled();
+      await expect(beatInput).toBeFocused();
+
+      await studio.unroute(beatPath);
     });
   });

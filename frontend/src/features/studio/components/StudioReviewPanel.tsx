@@ -107,7 +107,13 @@ export function StudioReviewPanel({
         <div aria-live="assertive" className="studio-inspector__error" role="alert">
           <p>{detailError}</p>
           {onRetryDetail ? (
-            <button className="ui-command" onClick={() => void onRetryDetail()} type="button">
+            <button
+              aria-busy={detailLoading || undefined}
+              className="ui-command"
+              disabled={detailLoading}
+              onClick={() => void onRetryDetail()}
+              type="button"
+            >
               Try again
             </button>
           ) : null}

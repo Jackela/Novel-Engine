@@ -123,3 +123,9 @@
   color: #626a6b;
   font-size: 12px;
 }
+.library__catalog-end {
+  margin: 4px 0 0;
+  color: #626a6b;
+  font-size: 12px;
+  text-align: center;
+}
