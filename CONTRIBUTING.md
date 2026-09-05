@@ -6,7 +6,7 @@ doubt, AGENTS.md is authoritative.
 
 ## Environment
 
-- Node 24 (server) / Node 22 (validate scripts), pnpm 11 workspace (`server/` + `frontend/`).
+- Node 24 for development and all validation, with the pnpm version pinned in root `package.json` (currently 11.6.0).
 - Copy env templates as described in `server/src/shared/infrastructure/config/server_config.ts` docs; never commit `.env*`.
 
 ## Common validation commands
