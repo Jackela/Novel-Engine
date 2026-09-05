@@ -7,6 +7,7 @@ import { jobResponseSchema } from "./job_schemas.js";
 import type { JsonResponseSchema } from "./json_response_schema.js";
 import { requireServices, type StudioRoutesOptions } from "./project_routes.js";
 import { writeProposalStreamResponse } from "./proposal_stream_response.js";
+import { structureCapacity422ResponseSchema } from "./structure_capacity_schemas.js";
 import { withAsyncStudioErrors, withStudioErrors } from "./studio_error_mapping.js";
 import { documentIdParams, jobIdParams, proposalCreateSchema } from "./studio_request_schemas.js";
 import { operationCapacityResponseSchema, operationInFlightSchema } from "./studio_schemas.js";
@@ -146,7 +147,9 @@ export const proposalRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fa
         response: {
           200: jobResponseSchema,
           ...PROPOSAL_ERROR_RESPONSES,
-          422: errorEnvelopeResponse,
+          // Accepting a proposal beyond the outline-beat budget refuses
+          // permanently (#461).
+          422: structureCapacity422ResponseSchema,
         },
       },
     },

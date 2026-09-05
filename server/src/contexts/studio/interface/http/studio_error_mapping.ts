@@ -19,6 +19,7 @@ import {
   RevisionConflictError,
   SnapshotConflict,
 } from "../../domain/exceptions.js";
+import { StructureCapacityExceededError } from "../../domain/structure_capacity.js";
 
 /**
  * Translate studio domain failures into the unified error envelope. Unknown
@@ -106,6 +107,18 @@ function toAppError(error: unknown): unknown {
     return new AppError({
       statusCode: ERROR_HTTP_STATUS[ERROR_CODES.IMPORT_CAPACITY_EXCEEDED],
       code: ERROR_CODES.IMPORT_CAPACITY_EXCEEDED,
+      message: error.message,
+      details: {
+        resource: error.resource,
+        limit: error.limit,
+        observed: error.observed,
+      },
+    });
+  }
+  if (error instanceof StructureCapacityExceededError) {
+    return new AppError({
+      statusCode: ERROR_HTTP_STATUS[ERROR_CODES.STRUCTURE_CAPACITY_EXCEEDED],
+      code: ERROR_CODES.STRUCTURE_CAPACITY_EXCEEDED,
       message: error.message,
       details: {
         resource: error.resource,
