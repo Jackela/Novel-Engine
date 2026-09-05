@@ -5,6 +5,7 @@ import { errorEnvelopeResponse } from "../../../../shared/interface/http/error_e
 import { revisionPageLimit } from "../../application/ports/studio_store.js";
 import { requireServices, type StudioRoutesOptions } from "./project_routes.js";
 import { decodeRevisionCursor, encodeRevisionCursor } from "./revision_cursor.js";
+import { structureCapacity422ResponseSchema } from "./structure_capacity_schemas.js";
 import { withStudioErrors } from "./studio_error_mapping.js";
 import {
   documentCreateSchema,
@@ -31,7 +32,8 @@ const SAVE_RESPONSES = {
   401: errorEnvelopeResponse,
   403: errorEnvelopeResponse,
   404: errorEnvelopeResponse,
-  422: errorEnvelopeResponse,
+  // Metadata bytes and outline beats refuse here permanently (#461).
+  422: structureCapacity422ResponseSchema,
   409: revisionConflictSchema,
   503: errorEnvelopeResponse,
 } as const;
@@ -42,7 +44,8 @@ const CREATE_RESPONSES = {
   403: errorEnvelopeResponse,
   // The parent project is scoped first: a foreign or missing project 404s.
   404: errorEnvelopeResponse,
-  422: errorEnvelopeResponse,
+  // Document, volume-chapter, and outline-beat budgets gate the create (#461).
+  422: structureCapacity422ResponseSchema,
   409: documentConflictSchema,
   503: errorEnvelopeResponse,
 } as const;
@@ -181,8 +184,11 @@ export const documentRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fa
         body: documentPlaceSchema,
         response: {
           200: documentResponseSchema,
-          ...WRITE_RESPONSES,
+          ...GUARD_RESPONSES,
+          403: errorEnvelopeResponse,
           404: errorEnvelopeResponse,
+          // Placement into a full volume refuses permanently (#461).
+          422: structureCapacity422ResponseSchema,
         },
       },
     },
@@ -282,8 +288,11 @@ export const documentRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fa
         body: restoreSchema,
         response: {
           200: documentResponseSchema,
-          ...WRITE_RESPONSES,
+          ...GUARD_RESPONSES,
+          403: errorEnvelopeResponse,
           404: errorEnvelopeResponse,
+          // Restoring an over-budget outline revision refuses permanently (#461).
+          422: structureCapacity422ResponseSchema,
           409: revisionConflictSchema,
         },
       },

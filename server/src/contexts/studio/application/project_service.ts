@@ -1,6 +1,7 @@
 import type { Principal } from "../../../shared/application/ports/auth.js";
 import { InvalidOperationError } from "../../../shared/domain/exceptions.js";
 import { InvalidProjectUpdateError } from "../domain/exceptions.js";
+import { assertSerializedCapacity } from "../domain/structure_capacity.js";
 import { InFlightOperationGuard } from "./operation_in_flight.js";
 import type { ProjectCatalogSummaryPayload } from "./payload_schemas/project.js";
 import { dumpJson, projectCatalogSummaryPayload, projectPayload } from "./payloads.js";
@@ -124,6 +125,9 @@ export class ProjectService {
     }
     const description = input.description?.trim();
     const settingsJson = input.settings === undefined ? undefined : dumpJson(input.settings);
+    if (settingsJson !== undefined) {
+      assertSerializedCapacity("project_settings_bytes", settingsJson);
+    }
     if (title === undefined && description === undefined && settingsJson === undefined) {
       throw new InvalidProjectUpdateError("At least one Project field is required.");
     }

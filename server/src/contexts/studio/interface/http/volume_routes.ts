@@ -7,6 +7,7 @@ import {
 } from "../../../../shared/interface/http/error_envelope.js";
 import type { JsonResponseSchema } from "./json_response_schema.js";
 import { requireServices, type StudioRoutesOptions } from "./project_routes.js";
+import { structureCapacity422ResponseSchema } from "./structure_capacity_schemas.js";
 import { withStudioErrors } from "./studio_error_mapping.js";
 import { projectIdParams, volumeIdParams } from "./studio_request_schemas.js";
 import {
@@ -41,7 +42,8 @@ const CREATE_RESPONSES = {
   403: errorEnvelopeResponse,
   // The parent project is scoped first: a foreign or missing project 404s.
   404: errorEnvelopeResponse,
-  422: errorEnvelopeResponse,
+  // The per-project volume budget gates the create (#461).
+  422: structureCapacity422ResponseSchema,
   409: volumeConflictSchema,
   503: errorEnvelopeResponse,
 } as const;
@@ -172,8 +174,9 @@ export const volumeRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fast
           204: { type: "null" },
           ...VOLUME_READ_ERROR_RESPONSES,
           403: errorEnvelopeResponse,
-          // The at-least-one-volume guard answers 422 INVALID_OPERATION.
-          422: errorEnvelopeResponse,
+          // The at-least-one-volume guard answers 422 INVALID_OPERATION; a
+          // merge that would overflow the survivor refuses on capacity (#461).
+          422: structureCapacity422ResponseSchema,
         },
       },
     },

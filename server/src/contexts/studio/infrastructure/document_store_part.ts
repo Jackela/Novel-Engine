@@ -24,6 +24,11 @@ import {
 } from "./db/document_search.js";
 import { documentRevisions, documents, projects, snapshotDocuments } from "./db/schema.js";
 import {
+  assertOutlineBeatCapacity,
+  assertProjectDocumentCapacity,
+  assertVolumeChapterCapacity,
+} from "./db/structure_capacity_checks.js";
+import {
   documentsWithCurrent,
   documentWithCurrent,
   insertRevision,
@@ -72,6 +77,13 @@ export class DocumentStorePart {
     try {
       return this.db.transaction((tx) => {
         const project = scopedProject(tx, scope, projectId);
+        // Capacity refusals precede every insert: no row, revision, index
+        // entry, or project timestamp survives an over-budget create (#461).
+        assertProjectDocumentCapacity(tx, project.id);
+        if (input.kind === "chapter" && input.volumeId !== null) {
+          assertVolumeChapterCapacity(tx, input.volumeId);
+        }
+        assertOutlineBeatCapacity(input.kind, input.contentMarkdown);
         const document: typeof documents.$inferInsert = {
           id: randomUUID(),
           projectId: project.id,
