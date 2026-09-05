@@ -1,5 +1,23 @@
 # Validation evidence
 
+## Current closeout pointer — 2026-09-05
+
+The failed browser audit and pending review descriptions below are historical
+observations for their named phase candidates. The subsequent refactor handoff
+recorded 9/9 browser flows on `67c33992`; the new Draft repair candidate
+`b2019baec05485c9ae4aa930cdeb6e8dccba48ee` again passed all 9 flows, including
+Settings title/description/provider persistence. See
+[the exact-candidate evidence](../../../docs/agents/draft-selection-closeout-2026-09-05.md).
+
+| Open task | Implementation / validation correspondence | Remaining closure condition |
+| --- | --- | --- |
+| 4.3 | Server Settings update/validation/OpenAPI/application suites; frontend `useProjectSettingsUpdate.test.tsx`, `StudioSettingsPanel.test.tsx`, and the TS main Studio persistence workflow. The new candidate passed frontend full checks, 463 unit tests, API drift, React diagnostics, gates, OpenSpec and 9 E2E flows. | Server full/type/lint/arch evidence below remains at `cbe69543`; await final-candidate CI and explicitly account for the complete independent security/UX review scope. |
+| 4.4 | CI and canonical-spec/archive step, separately owned from shell work. | Remains open. No archive, merge, or release is authorized by local validation. |
+
+Human acceptance remains `not run`; the
+[acceptance packet](../../../docs/agents/refactor-human-acceptance-2026-09-05.md)
+includes Settings persistence, errors, busy state, and keyboard focus.
+
 ## Candidate
 
 - Fixed baseline: `eebfa7db0e078cf0c47fa89eded2a867aa8791ed`.

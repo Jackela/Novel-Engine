@@ -1,5 +1,20 @@
 # Validation evidence
 
+## Current closeout pointer — 2026-09-05
+
+The phase records below retain their original SHAs and results. Later evidence
+is recorded in [Draft selection closeout](../../../docs/agents/draft-selection-closeout-2026-09-05.md)
+on code candidate `b2019baec05485c9ae4aa930cdeb6e8dccba48ee`.
+
+| Open task | Implementation / validation correspondence | Remaining closure condition |
+| --- | --- | --- |
+| 5.1 | Server revision pagination, cursor, word-count reconciliation and restore suites; frontend `useRevisionCache.*`, `useDocumentDraft.*`, and `StudioHistoryPanel.*`. The new code candidate passed 463 frontend tests and the full 9-flow TS E2E suite, including History pagination/retry. | Keep server phase results at their historical SHAs; use final-candidate CI for server full and cross-surface validation. |
+| 5.2 | New-candidate frontend lint/format/type/unit/build, API drift, React diagnostics, repository gates, strict OpenSpec, and complete E2E passed; independent new review is bounded to the Draft repair. | The full independent UX/revision audit matrix is not supplied by a passing test count or this bounded review. |
+| 5.3 | Required CI and canonical-spec/archive step. | Remains open. Record exact final PR SHA/check URLs; no archive or integration in this closeout. |
+
+No historical run is relabeled as a new-SHA run. Human acceptance remains
+`not run`; use [the acceptance packet](../../../docs/agents/refactor-human-acceptance-2026-09-05.md).
+
 ## Fixed points
 
 - Comparison SHA: `c474c6e3039590067795d4980300a640b873d905`

@@ -69,7 +69,7 @@
       display, ignore stale narrow responses, apply reorder summaries without
       rolling back a newer body, and prove reverse same-revision, concurrent
       outline rename, or older-revision responses cannot overwrite authority.
-- [ ] 3.5 Separate Draft from accepted cache state: keep the 1.5-second save
+- [x] 3.5 Separate Draft from accepted cache state: keep the 1.5-second save
       trigger, retain a conflicted Draft while active, discard it on explicit
       switch/reload, and prevent late save/conflict results from crossing
       project or document ownership.

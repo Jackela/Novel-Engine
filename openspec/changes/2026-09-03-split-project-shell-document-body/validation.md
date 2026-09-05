@@ -1,5 +1,31 @@
 # Validation evidence
 
+## Current closeout pointer — 2026-09-05
+
+Code candidate: `b2019baec05485c9ae4aa930cdeb6e8dccba48ee`; finding baseline:
+`52741fbf1872a80e398639cba68c05bbab6eaeb7`. The
+[Draft closeout record](../../../docs/agents/draft-selection-closeout-2026-09-05.md)
+contains the two failing regressions, 35 passing Draft tests, 463-test frontend
+full suite, 9-flow TS E2E pass, gates and independent bounded reviews.
+
+| Task previously left open | Implementation / evidence correspondence | Disposition |
+| --- | --- | --- |
+| 1.5 | `wholeBookPlan.ts` consumes summary source; `wholeBookPlan.test.ts` covers author/restore/ai-accepted and reading order. | Open: a dedicated no-sibling-body-request resume integration assertion is not identified. |
+| 3.2 | `useStudioProject`, `useStudioPageModel`, current-document and shell tests establish shell-first bootstrap with separate body state. | Implementation mapped; retain open pending explicit page-level request/retry evidence accounting. |
+| 3.4 | Complete write responses, Lore patching and reorder have separate paths. | Open: the complete field-intent epoch, beat-command authority, reverse same-revision and outline-rename matrix still needs its own focused audit. |
+| 3.5 | `useDocumentDraft`, `documentDraftState`, committed reconciliation and autosave now enforce active selection lifetime. `useDocumentDraft.selection.test.tsx` plus identity/lifecycle/external/reconciliation suites exercise discard, loading gaps, conflict, late success/error and blocked-save wakeup. | Closed for this implementation task at the code candidate: 35 focused tests, frontend full and independent Standards/Spec repair reviews passed. Human acceptance remains separate. |
+| 3.6 | `currentDocumentReadCycle` implements the bounded shell refresh/replacement loop; `useCurrentDocument*` regression suites exist and pass within frontend full. | Implementation mapped; retain open until each churn/removal/error scenario is explicitly attributed. |
+| 4.1 | `useLazyInspectorHistories` and its tests cover selected panel loading, cancellation and return. | Open browser evidence: existing Review/History Back/Forward flow does not prove every Review/Export request-isolation route. |
+| 4.2–4.3 | `useLazyInspectorResource`, current-document and shell tests cover independent failures, 401/404 and stale responses. | Open: browser cross-resource failure/navigation matrix is not fully attributed. |
+| 4.4 | History keyboard retry, Inspector navigation and whole-book Stop have existing tests. | Open: specific lazy Review/Export pending/retry focus and simultaneous Stop matrix needs explicit evidence. |
+| 5.1–5.3 | New frontend full/E2E/gates plus bounded independent Draft reviews are supporting evidence. | Open: task 3.4, remaining browser/UX coverage and broader review scope are not closed by total test counts. |
+| 5.4 | CI, canonical-spec and archive are separate gates. Settings PATCH is now implemented by its separately owned change; the older “missing PATCH” phrase records the original scope boundary. | Open: no archive or merge is performed. |
+
+Historical records below are preserved rather than rewritten as current runs.
+The final PR must identify its own head SHA and actual required-CI URLs. Human
+acceptance is `not run`; use
+[the isolated acceptance packet](../../../docs/agents/refactor-human-acceptance-2026-09-05.md).
+
 ## Fixed points
 
 - Comparison SHA: `2f7a0277cef5c19ad3ce22f8f6b2959beae352aa`
