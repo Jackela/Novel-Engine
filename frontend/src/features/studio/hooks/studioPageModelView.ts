@@ -16,13 +16,13 @@ import { isLoreEntryKind } from "../studioConstants";
 import type {
   InspectorBeatModel,
   InspectorLoreStatusModel,
+  InspectorReviewModel,
   SettingsFormState,
   StudioInspectorModel,
 } from "../studioInspectorTypes";
 import { buildProposalAuditView } from "./proposalAuditView";
 import type { useExportDownload } from "./useExportDownload";
 import type { useExportHistory } from "./useExportHistory";
-import type { useLazyInspectorHistories } from "./useLazyInspectorHistories";
 import type { BeatLifecycleState } from "./useStudioBeatActions";
 import type { useStudioGeneration } from "./useStudioGeneration";
 import type { LoreStatusLifecycleState } from "./useStudioLoreStatusActions";
@@ -99,7 +99,6 @@ export function buildBeatModel(
 }
 
 type ExportHistory = ReturnType<typeof useExportHistory>;
-type ReviewHistory = ReturnType<typeof useLazyInspectorHistories>["review"];
 
 /** Narrow document commands and their active identity (#444, #466). */
 interface InspectorNarrowCommands {
@@ -123,11 +122,11 @@ export interface StudioInspectorModelInputs {
     readonly onRetryJob: (jobId: string) => void | Promise<void>;
   };
   readonly export: ReturnType<typeof useExportDownload> & { readonly history: ExportHistory };
-  readonly review: {
-    readonly history: ReviewHistory;
-    readonly actionError: string | null;
-    readonly onRunReview: () => void | Promise<void>;
-  };
+  /**
+   * #459: the review tab arrives as the finished `InspectorReviewModel`,
+   * assembled by `reviewInspectorModel` from the keyset-paged history state.
+   */
+  readonly review: InspectorReviewModel;
   readonly history: {
     readonly revisions: RevisionSummary[];
     readonly loadedRevisionId: string | null;
@@ -210,15 +209,7 @@ export function buildStudioInspectorModel({
       onExport: exportPanel.exportProject,
       onRetryExport: exportPanel.retryExport,
     },
-    review: {
-      latestReview: review.history.data[0] ?? null,
-      historyInitialized: review.history.initialized,
-      isLoadingHistory: review.history.isLoading,
-      historyError: review.history.error,
-      actionError: review.actionError,
-      onRetryHistory: review.history.retry,
-      onRunReview: review.onRunReview,
-    },
+    review,
     history: {
       revisions: history.revisions,
       loadedRevisionId: history.loadedRevisionId,

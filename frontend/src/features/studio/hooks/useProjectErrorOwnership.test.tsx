@@ -2,8 +2,8 @@ import { act, useState } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { api } from "@/app/api";
-import type { Project, Review } from "@/app/types/studio";
-import { projectWith } from "@/test/factories";
+import type { Project, ReviewsPage } from "@/app/types/studio";
+import { projectWith, reviewsPage } from "@/test/factories";
 import { createMountHarness } from "@/test/harness";
 
 import { useOwnerKeyedErrors } from "./useOwnerKeyedErrors";
@@ -49,7 +49,7 @@ function renderProjectOperations() {
 
   function Wrapper(): null {
     const [visibleProject, setProject] = useState<Project | null>(project);
-    const [, setReviews] = useState<Review[]>([]);
+    const [, setReviewPage] = useState<ReviewsPage>(reviewsPage([]));
     const [, setActiveId] = useState<string | null>(null);
     const errors = useOwnerKeyedErrors(project.id, projectErrorSources);
     const jobs = useStudioJobs(project.id, errors.publishers.jobs);
@@ -59,7 +59,7 @@ function renderProjectOperations() {
         project: visibleProject,
         projectId: project.id,
         setProject,
-        setReviews,
+        setReviewPage,
         setError: errors.publishers.jobs,
         errorPublishers: errors.publishers,
         setActiveId,

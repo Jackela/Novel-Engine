@@ -3,6 +3,10 @@ import type { JobPageInput, JobSummaryPage } from "../application/ports/job_reco
 import type { SetLoreAliasesInput, SetLoreStatusInput } from "../application/ports/lore_store.js";
 import type { ProposalContextSource } from "../application/ports/proposal_context_store.js";
 import type {
+  ReviewPageInput,
+  ReviewSummaryPage,
+} from "../application/ports/review_outcome_store.js";
+import type {
   AddDocumentInput,
   AddJobInput,
   AddUsageEventInput,
@@ -288,7 +292,19 @@ export class DrizzleStudioStore extends ProjectStorePart implements StudioStore 
     return this.editorialReviews.completeReviewRetryJob(scope, projectId, jobId, input);
   }
 
-  listEditorialAssessments(scope: ProjectScope, projectId: string): EditorialAssessmentRecord[] {
-    return this.editorialReviews.listEditorialAssessments(scope, projectId);
+  collectProjectReviewSummaries(
+    scope: ProjectScope,
+    projectId: string,
+    input: ReviewPageInput,
+  ): ReviewSummaryPage {
+    return this.editorialReviews.collectProjectReviewSummaries(scope, projectId, input);
+  }
+
+  findProjectReview(
+    scope: ProjectScope,
+    projectId: string,
+    reviewId: string,
+  ): EditorialAssessmentRecord {
+    return this.editorialReviews.findProjectReview(scope, projectId, reviewId);
   }
 }

@@ -152,7 +152,7 @@ function seedApiMocks(): void {
   vi.mocked(api.providers).mockReset().mockResolvedValue({ providers: [] });
   vi.mocked(api.jobs).mockReset().mockResolvedValue({ jobs: [], next_cursor: null });
   vi.mocked(api.revisions).mockReset().mockResolvedValue({ revisions: [], next_cursor: null });
-  vi.mocked(api.reviews).mockReset().mockResolvedValue({ reviews: [] });
+  vi.mocked(api.reviews).mockReset().mockResolvedValue({ reviews: [], next_cursor: null });
   vi.mocked(api.exports).mockReset().mockResolvedValue({ exports: [], next_cursor: null });
 }
 

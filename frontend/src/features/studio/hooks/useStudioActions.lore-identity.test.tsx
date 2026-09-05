@@ -66,7 +66,7 @@ function renderActions(initialProject: Project = projectFixture) {
       project,
       projectId: initialProject.id,
       setProject,
-      setReviews: vi.fn(),
+      setReviewPage: vi.fn(),
       setError,
       setActiveId: vi.fn(),
       settingsForm: {
@@ -100,7 +100,7 @@ function renderObservedActions() {
       project: value,
       projectId: value.id,
       setProject,
-      setReviews: vi.fn(),
+      setReviewPage: vi.fn(),
       setError,
       setActiveId: vi.fn(),
       settingsForm: { title: value.title, description: value.description, provider: "mock" },

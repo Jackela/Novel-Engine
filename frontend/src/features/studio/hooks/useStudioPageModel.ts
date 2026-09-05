@@ -9,6 +9,7 @@ import { useExportDownload } from "./useExportDownload";
 import { useExportHistory } from "./useExportHistory";
 import { useLazyInspectorHistories } from "./useLazyInspectorHistories";
 import { usePageCurrentDocument } from "./usePageCurrentDocument";
+import { reviewInspectorModel } from "./useReviewHistory";
 import { useScopedRevisionRestore } from "./useScopedRevisionRestore";
 import { useStudioActions } from "./useStudioActions";
 import { useStudioErrorChannels } from "./useStudioErrorChannels";
@@ -156,7 +157,7 @@ export function useStudioPageModel(projectId: string, route: StudioRouteState, n
     project,
     projectId,
     setProject,
-    setReviews: inspectorHistories.review.setData,
+    setReviewPage: inspectorHistories.review.setFirstPage,
     setError,
     errorPublishers: projectErrors.publishers,
     setActiveId,
@@ -246,11 +247,11 @@ export function useStudioPageModel(projectId: string, route: StudioRouteState, n
             onRetryJob: retryJob,
           },
           export: { ...exportDownload, history: exportHistory },
-          review: {
-            history: inspectorHistories.review,
-            actionError: projectErrors.errors.review,
-            onRunReview: runReview,
-          },
+          review: reviewInspectorModel(
+            inspectorHistories.review,
+            projectErrors.errors.review,
+            runReview,
+          ),
           history: {
             revisions,
             loadedRevisionId: loadedRevision.current,

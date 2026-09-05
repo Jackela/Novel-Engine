@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { and, asc, desc, eq, inArray } from "drizzle-orm";
+import { and, asc, eq, inArray, sql } from "drizzle-orm";
 
 import { InvalidOperationError } from "../../../../shared/domain/exceptions.js";
 import type {
@@ -93,18 +93,49 @@ export function persistReviewAssessment(
   return toEditorialAssessment(review, issues);
 }
 
-/** Load persisted assessments newest first for the read surface. */
-export function loadProjectReviewAssessments(
+/** Load one project-scoped review row; the caller owns the miss boundary. */
+export function findProjectReviewRow(
   tx: Tx,
   projectId: string,
-): EditorialAssessmentRecord[] {
+  reviewId: string,
+): ReviewRow | undefined {
   return tx
     .select()
     .from(reviews)
-    .where(eq(reviews.projectId, projectId))
-    .orderBy(desc(reviews.createdAt), desc(reviews.id))
+    .where(and(eq(reviews.id, reviewId), eq(reviews.projectId, projectId)))
+    .get();
+}
+
+/** Resolve exact issue counts for one page of reviews in a single grouped read. */
+export function loadReviewIssueCounts(tx: Tx, reviewIds: readonly string[]): Map<string, number> {
+  if (reviewIds.length === 0) return new Map();
+  const rows = tx
+    .select({ reviewId: reviewIssues.reviewId, total: sql<number>`count(*)` })
+    .from(reviewIssues)
+    .where(inArray(reviewIssues.reviewId, [...reviewIds]))
+    .groupBy(reviewIssues.reviewId)
+    .all();
+  return new Map(rows.map((row) => [row.reviewId, Number(row.total)]));
+}
+
+/**
+ * Ordered issues for one stored review. Order derives from stored snapshot
+ * positions only; revision bodies and metadata are never selected on read.
+ */
+export function loadReviewIssues(tx: Tx, review: ReviewRow): EditorialIssueRecord[] {
+  const positions = tx
+    .select({ documentId: snapshotDocuments.documentId, position: snapshotDocuments.position })
+    .from(snapshotDocuments)
+    .where(eq(snapshotDocuments.snapshotId, review.snapshotId))
+    .orderBy(asc(snapshotDocuments.position), asc(snapshotDocuments.id))
+    .all();
+  const issues = tx
+    .select()
+    .from(reviewIssues)
+    .where(eq(reviewIssues.reviewId, review.id))
     .all()
-    .map((review) => toEditorialAssessment(review, findReviewIssues(tx, review.id)));
+    .map(toEditorialIssue);
+  return orderedIssues(issues, positions);
 }
 
 function assertReviewSourceAvailable(
@@ -164,26 +195,6 @@ function persistSnapshotDocuments(
   });
 }
 
-function loadSnapshotDocuments(tx: Tx, snapshotId: string): ReviewSnapshotDocument[] {
-  return tx
-    .select({ snapshotDocument: snapshotDocuments, revision: documentRevisions })
-    .from(snapshotDocuments)
-    .innerJoin(documentRevisions, eq(snapshotDocuments.revisionId, documentRevisions.id))
-    .where(eq(snapshotDocuments.snapshotId, snapshotId))
-    .orderBy(asc(snapshotDocuments.position), asc(snapshotDocuments.id))
-    .all()
-    .map(({ snapshotDocument, revision }) => ({
-      documentId: snapshotDocument.documentId,
-      snapshotDocumentId: snapshotDocument.id,
-      revisionId: snapshotDocument.revisionId,
-      kind: snapshotDocument.documentKind,
-      title: snapshotDocument.documentTitle,
-      contentMarkdown: revision.contentMarkdown,
-      metadataJson: snapshotDocument.revisionMetadataJson,
-      position: snapshotDocument.position,
-    }));
-}
-
 function persistFindings(
   tx: Tx,
   reviewId: string,
@@ -215,22 +226,9 @@ function persistFindings(
   return orderedIssues(rows.map(toEditorialIssue), captured);
 }
 
-function findReviewIssues(tx: Tx, reviewId: string): EditorialIssueRecord[] {
-  const review = tx.select().from(reviews).where(eq(reviews.id, reviewId)).get();
-  if (review === undefined) return [];
-  const captured = loadSnapshotDocuments(tx, review.snapshotId);
-  const issues = tx
-    .select()
-    .from(reviewIssues)
-    .where(eq(reviewIssues.reviewId, reviewId))
-    .all()
-    .map(toEditorialIssue);
-  return orderedIssues(issues, captured);
-}
-
 function orderedIssues(
   issues: EditorialIssueRecord[],
-  captured: readonly ReviewSnapshotDocument[],
+  captured: ReadonlyArray<{ documentId: string; position: number }>,
 ): EditorialIssueRecord[] {
   const position = new Map(captured.map((document) => [document.documentId, document.position]));
   return issues.sort(
@@ -241,7 +239,7 @@ function orderedIssues(
   );
 }
 
-function toEditorialAssessment(
+export function toEditorialAssessment(
   review: ReviewRow,
   issues: EditorialIssueRecord[],
 ): EditorialAssessmentRecord {

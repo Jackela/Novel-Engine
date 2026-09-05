@@ -145,7 +145,11 @@ export type {
   ProjectPageLimit,
 } from "./project_catalog_store.js";
 
-/** Review-outcome types live in their focused port module; re-exported here. */
+/**
+ * Review-outcome types live in their focused port module; re-exported here.
+ * The #459 keyset-page types stay importable from `review_outcome_store.js`
+ * only — the barrel crossed the file-size budget after #473/#474 landed.
+ */
 export type {
   EditorialAssessmentRecord,
   EditorialIssueInput,

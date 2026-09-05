@@ -21,6 +21,7 @@ import {
   parseExports,
   parseJob,
   parseJobs,
+  parseReviewDetail,
   parseReviewJobResponse,
   parseReviews,
   parseUsage,
@@ -30,6 +31,7 @@ import { downloadBlob, json, patchJson, postJson, putJson, request } from "@/app
 import { type JobsRequestOptions, projectJobsRequest, retryJobRequest } from "@/app/jobApiRequest";
 import { type ProjectsRequestOptions, projectCatalogRequest } from "@/app/projectApiRequest";
 import { clearRetryAttemptSession, parseAndRecordRetrySession } from "@/app/retryAttemptRegistry";
+import { type ReviewListOptions, reviewDetailPath, reviewsRequest } from "@/app/reviewApiRequest";
 import { documentRevisionsRequest, type RevisionRequestOptions } from "@/app/revisionApiRequest";
 import type { DocumentKind, ExportFormat, LoreStatus, ProjectUpdateBody } from "@/app/types/studio";
 
@@ -144,8 +146,10 @@ export const api = {
       { method: "POST" },
       parseJob,
     ),
-  reviews: (projectId: string, init?: RequestInit) =>
-    request(`/api/projects/${projectId}/reviews`, init, parseReviews),
+  reviews: (projectId: string, options: ReviewListOptions = {}) =>
+    request(...reviewsRequest(projectId, options), parseReviews),
+  reviewDetail: (projectId: string, reviewId: string, init?: RequestInit) =>
+    request(reviewDetailPath(projectId, reviewId), init, parseReviewDetail),
   createReview: (projectId: string) =>
     request(`/api/projects/${projectId}/reviews`, { method: "POST" }, parseReviewJobResponse),
   exports: (projectId: string, options: ExportsRequestOptions = {}) => {

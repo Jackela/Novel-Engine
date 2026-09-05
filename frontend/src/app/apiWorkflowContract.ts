@@ -14,6 +14,8 @@ import type {
   ProjectUsage,
   Review,
   ReviewIssue,
+  ReviewSummary,
+  ReviewsPage,
   StudioExport,
   StudioJob,
   StudioJobEvent,
@@ -121,7 +123,31 @@ function parseIssue(value: unknown, label: string): ReviewIssue {
   };
 }
 
-function parseReview(value: unknown, label = "review"): Review {
+function parseReviewSummary(value: unknown, label: string): ReviewSummary {
+  const item = objectValue(value, label);
+  return {
+    id: stringField(item, "id", label),
+    project_id: stringField(item, "project_id", label),
+    snapshot_id: stringField(item, "snapshot_id", label),
+    provider: stringField(item, "provider", label),
+    model: stringField(item, "model", label),
+    summary: stringField(item, "summary", label),
+    issue_count: numberField(item, "issue_count", label),
+    created_at: isoUtcStringField(item, "created_at", label),
+  };
+}
+
+export function parseReviews(value: unknown): ReviewsPage {
+  const item = objectValue(value, "reviews response");
+  return {
+    reviews: arrayField(item, "reviews", "reviews response", (entry, index) =>
+      parseReviewSummary(entry, `reviews[${index}]`),
+    ),
+    next_cursor: nullableStringField(item, "next_cursor", "reviews response"),
+  };
+}
+
+export function parseReviewDetail(value: unknown, label = "review detail"): Review {
   const item = objectValue(value, label);
   return {
     id: stringField(item, "id", label),
@@ -133,15 +159,6 @@ function parseReview(value: unknown, label = "review"): Review {
     created_at: stringField(item, "created_at", label),
     issues: arrayField(item, "issues", label, (issue, index) =>
       parseIssue(issue, `${label}.issues[${index}]`),
-    ),
-  };
-}
-
-export function parseReviews(value: unknown): { reviews: Review[] } {
-  const item = objectValue(value, "reviews response");
-  return {
-    reviews: arrayField(item, "reviews", "reviews response", (entry, index) =>
-      parseReview(entry, `reviews[${index}]`),
     ),
   };
 }

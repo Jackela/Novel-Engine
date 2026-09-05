@@ -9,6 +9,7 @@ import {
   type TextGenerationProviderFactory,
 } from "../../src/contexts/ai/application/ports/text_generation.js";
 import { DocumentService } from "../../src/contexts/studio/application/document_service.js";
+import { reviewPageLimit } from "../../src/contexts/studio/application/ports/review_outcome_store.js";
 import type { StudioStore } from "../../src/contexts/studio/application/ports/studio_store.js";
 import { scopeForPrincipal } from "../../src/contexts/studio/application/ports/studio_store.js";
 import { ProjectService } from "../../src/contexts/studio/application/project_service.js";
@@ -157,10 +158,14 @@ describe("ReviewService (#316 provider-driven review)", () => {
         scopeForPrincipal(harness.principal),
         secondEvaluation,
       ).assessment;
-      const listed = reviews.listEditorialAssessments(harness.principal, project.id);
+      const listed = reviews.collectProjectReviewSummaries(harness.principal, project.id, {
+        limit: reviewPageLimit(10),
+      });
 
-      expect(listed.map((assessment) => assessment.id)).toEqual([second.id, first.id]);
-      expect(assessmentCodes(listed[0] ?? second)).toEqual(["warning:pacing"]);
+      expect(listed.reviews.map((summary) => summary.id)).toEqual([second.id, first.id]);
+      expect(listed.nextCursor).toBeNull();
+      const detailed = reviews.findEditorialAssessment(harness.principal, project.id, second.id);
+      expect(assessmentCodes(detailed)).toEqual(["warning:pacing"]);
     } finally {
       await harness.cleanup();
     }
@@ -213,7 +218,11 @@ describe("ReviewService (#316 provider-driven review)", () => {
       expect((failure as TextGenerationProviderError).message).toContain(
         "review provider exploded",
       );
-      expect(reviews.listEditorialAssessments(harness.principal, project.id)).toEqual([]);
+      expect(
+        reviews.collectProjectReviewSummaries(harness.principal, project.id, {
+          limit: reviewPageLimit(10),
+        }).reviews,
+      ).toEqual([]);
     } finally {
       await harness.cleanup();
     }

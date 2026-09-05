@@ -2,6 +2,8 @@ import type {
   DocumentSummary,
   Project,
   Review,
+  ReviewSummary,
+  ReviewsPage,
   RevisionSummary,
   StudioDocument,
   StudioExport,
@@ -99,6 +101,27 @@ export function review(overrides: Partial<Review> = {}): Review {
     issues: [],
     ...overrides,
   };
+}
+
+export function reviewSummary(overrides: Partial<ReviewSummary> = {}): ReviewSummary {
+  return {
+    id: "review-1",
+    project_id: "project-1",
+    snapshot_id: "snapshot-1",
+    provider: "mock",
+    model: "studio-copilot-v1",
+    summary: "Looks good.",
+    issue_count: 0,
+    created_at: FIXTURE_TIMESTAMP,
+    ...overrides,
+  };
+}
+
+export function reviewsPage(
+  reviews: ReviewSummary[] = [reviewSummary()],
+  next_cursor: string | null = null,
+): ReviewsPage {
+  return { reviews, next_cursor };
 }
 
 export function studioExport(overrides: Partial<StudioExport> = {}): StudioExport {
