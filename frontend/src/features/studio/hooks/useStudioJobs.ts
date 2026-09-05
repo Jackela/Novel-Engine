@@ -2,8 +2,10 @@ import type { Dispatch, SetStateAction } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { api } from "@/app/api";
+import type { JobsPage } from "@/app/apiWorkflowContract";
 import type { StudioJobSummary } from "@/app/types/studio";
 
+import { appendUniqueById, useKeysetOlderPages } from "./keysetHistory";
 import { toErrorMessage } from "./toErrorMessage";
 
 interface JobsState {
@@ -34,12 +36,10 @@ interface ProposalAuditState {
   readonly status: ProposalAuditStatus;
 }
 
+/** The single in-flight first-page read that owns the jobs surface. */
 interface ActiveJobsRequest {
   readonly projectId: string;
-  readonly kind: "fresh" | "older";
-  readonly cursor: string | null;
   readonly controller: AbortController;
-  promise: Promise<void>;
 }
 
 function emptyJobsState(projectId: string): JobsState {
@@ -50,19 +50,6 @@ function emptyJobsState(projectId: string): JobsState {
     isLoading: false,
     loadingInitiator: null,
   };
-}
-
-function appendUniqueJobs(
-  current: readonly StudioJobSummary[],
-  older: readonly StudioJobSummary[],
-): StudioJobSummary[] {
-  const known = new Set(current.map((job) => job.id));
-  const uniqueOlder = older.filter((job) => {
-    if (known.has(job.id)) return false;
-    known.add(job.id);
-    return true;
-  });
-  return [...current, ...uniqueOlder];
 }
 
 export function useStudioJobs(
@@ -112,9 +99,42 @@ export function useStudioJobs(
     [projectId],
   );
 
+  const stateIsCurrent = state.projectId === projectId;
+  const jobs = stateIsCurrent ? state.jobs : [];
+  const nextCursor = stateIsCurrent ? state.nextCursor : null;
+
+  // The older traversal shares the surface's single-flight rule: it waits
+  // while a first-page read owns the surface, and a first-page read preempts
+  // it through abortInFlight.
+  const olderPages = useKeysetOlderPages<JobsPage>({
+    cleanupKey: projectId,
+    isEnabled: () => activeProjectIdRef.current === projectId,
+    isBlocked: () => {
+      const active = controllerRef.current;
+      return active !== null && !active.controller.signal.aborted;
+    },
+    nextCursor,
+    fetchPage: (cursor, signal) => api.jobs(projectId, { cursor, signal }),
+    commitPage: (page) =>
+      setState((current) => ({
+        projectId,
+        jobs:
+          current.projectId === projectId
+            ? appendUniqueById(current.jobs, page.jobs, (job) => job.id)
+            : page.jobs,
+        nextCursor: page.next_cursor,
+        isLoading: false,
+        loadingInitiator: null,
+      })),
+    onOutcome: (error) => setError(error),
+    busyErrorMessage: "Unable to load older jobs.",
+  });
+  const abortInFlightOlder = olderPages.abortInFlight;
+
   const startFreshRequest = useCallback(
     (initiator: JobsFreshLoadInitiator, audit: boolean): Promise<boolean> => {
       if (activeProjectIdRef.current !== projectId) return Promise.resolve(false);
+      abortInFlightOlder();
       controllerRef.current?.controller.abort();
       const controller = new AbortController();
       const requestEpoch = ++requestEpochRef.current;
@@ -127,13 +147,7 @@ export function useStudioJobs(
         loadingInitiator: initiator,
       }));
 
-      const request: ActiveJobsRequest = {
-        projectId,
-        kind: "fresh",
-        cursor: null,
-        controller,
-        promise: Promise.resolve(),
-      };
+      const request: ActiveJobsRequest = { projectId, controller };
 
       const isCurrentRequest = () =>
         !controller.signal.aborted &&
@@ -170,11 +184,10 @@ export function useStudioJobs(
           if (controllerRef.current === request) controllerRef.current = null;
         }
       })();
-      request.promise = outcome.then(() => undefined);
       controllerRef.current = request;
       return outcome;
     },
-    [projectId, publishProposalAuditStatus, setError],
+    [abortInFlightOlder, projectId, publishProposalAuditStatus, setError],
   );
 
   const loadJobs = useCallback(
@@ -183,87 +196,8 @@ export function useStudioJobs(
     [startFreshRequest],
   );
 
-  const stateIsCurrent = state.projectId === projectId;
-  const jobs = stateIsCurrent ? state.jobs : [];
-  const nextCursor = stateIsCurrent ? state.nextCursor : null;
-  const isLoading = stateIsCurrent ? state.isLoading : false;
-  const loadingInitiator = stateIsCurrent ? state.loadingInitiator : null;
   const proposalAuditStatus =
     proposalAuditState.projectId === projectId ? proposalAuditState.status : "idle";
-
-  const loadOlderJobs = useCallback((): Promise<void> => {
-    if (activeProjectIdRef.current !== projectId || nextCursor === null) {
-      return Promise.resolve();
-    }
-    const activeRequest = controllerRef.current;
-    if (activeRequest && !activeRequest.controller.signal.aborted) {
-      if (
-        activeRequest.projectId === projectId &&
-        activeRequest.kind === "older" &&
-        activeRequest.cursor === nextCursor
-      ) {
-        return activeRequest.promise;
-      }
-      return Promise.resolve();
-    }
-
-    const controller = new AbortController();
-    const requestEpoch = ++requestEpochRef.current;
-    const request: ActiveJobsRequest = {
-      projectId,
-      kind: "older",
-      cursor: nextCursor,
-      controller,
-      promise: Promise.resolve(),
-    };
-    const isCurrentRequest = () =>
-      !controller.signal.aborted &&
-      requestEpochRef.current === requestEpoch &&
-      activeProjectIdRef.current === projectId;
-
-    setState((current) => ({
-      projectId,
-      jobs: current.projectId === projectId ? current.jobs : [],
-      nextCursor: current.projectId === projectId ? current.nextCursor : null,
-      isLoading: true,
-      loadingInitiator: "load_older",
-    }));
-
-    request.promise = (async () => {
-      try {
-        const response = await api.jobs(projectId, {
-          cursor: nextCursor,
-          signal: controller.signal,
-        });
-        if (!isCurrentRequest()) return;
-        setState((current) => ({
-          projectId,
-          jobs:
-            current.projectId === projectId
-              ? appendUniqueJobs(current.jobs, response.jobs)
-              : response.jobs,
-          nextCursor: response.next_cursor,
-          isLoading: false,
-          loadingInitiator: null,
-        }));
-        setError(null);
-      } catch (reason) {
-        if (!isCurrentRequest()) return;
-        setState((current) => ({
-          projectId,
-          jobs: current.projectId === projectId ? current.jobs : [],
-          nextCursor: current.projectId === projectId ? current.nextCursor : null,
-          isLoading: false,
-          loadingInitiator: null,
-        }));
-        setError(toErrorMessage(reason, "Unable to load older jobs."));
-      } finally {
-        if (controllerRef.current === request) controllerRef.current = null;
-      }
-    })();
-    controllerRef.current = request;
-    return request.promise;
-  }, [nextCursor, projectId, setError]);
 
   const auditProposalOutcome = useCallback(async (): Promise<boolean> => {
     if (activeProjectIdRef.current !== projectId) return false;
@@ -284,10 +218,19 @@ export function useStudioJobs(
     );
   }, [projectId]);
 
+  const isLoading = stateIsCurrent && (state.isLoading || olderPages.isLoadingOlder);
+  const loadingInitiator = !stateIsCurrent
+    ? null
+    : state.isLoading
+      ? state.loadingInitiator
+      : olderPages.isLoadingOlder
+        ? "load_older"
+        : null;
+
   return {
     jobs,
     loadJobs,
-    loadOlderJobs,
+    loadOlderJobs: olderPages.loadOlder,
     hasOlderJobs: nextCursor !== null,
     isLoading,
     loadingInitiator,

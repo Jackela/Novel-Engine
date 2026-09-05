@@ -3,14 +3,10 @@ import {
   encodeCanonicalCursor,
   invalidCursor,
 } from "../../../../shared/interface/http/canonical_cursor.js";
+import type { JobPageCursor } from "../../application/ports/job_records.js";
 
 const CURSOR_VERSION = 1;
 const JOB_ID_MAX_LENGTH = 128;
-
-export interface JobCursorPosition {
-  readonly createdAtMs: number;
-  readonly id: string;
-}
 
 function isCursorTuple(value: unknown): value is [1, string, number, string] {
   if (!Array.isArray(value) || value.length !== 4) return false;
@@ -27,7 +23,7 @@ function isCursorTuple(value: unknown): value is [1, string, number, string] {
 }
 
 /** Decode the opaque project-bound jobs position or fail through the validation envelope. */
-export function decodeJobCursor(token: string, routeProjectId: string): JobCursorPosition {
+export function decodeJobCursor(token: string, routeProjectId: string): JobPageCursor {
   const decoded = decodeCanonicalCursor(token);
   if (!isCursorTuple(decoded) || decoded[1] !== routeProjectId) return invalidCursor();
   return { createdAtMs: decoded[2], id: decoded[3] };
@@ -36,7 +32,7 @@ export function decodeJobCursor(token: string, routeProjectId: string): JobCurso
 /** Encode a trusted application position as the versioned opaque wire token. */
 export function encodeJobCursor(
   routeProjectId: string,
-  position: JobCursorPosition | null,
+  position: JobPageCursor | null,
 ): string | null {
   if (position === null) return null;
   if (
