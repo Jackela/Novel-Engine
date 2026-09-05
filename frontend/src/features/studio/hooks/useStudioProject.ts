@@ -41,10 +41,17 @@ function resolveStateAction<T>(current: T, action: SetStateAction<T>): T {
  * Cancellation plus a request epoch prevents stale completion, while scoped
  * projections hide prior-project state synchronously before the next effect.
  * Authentication and absence navigate deliberately; operational failures stay
- * on the requested route and expose `retryLoad`.
+ * on the requested route and expose `retryLoad`. The shell bootstrap runs for
+ * the route project identity only: `navigate` is held in a ref because
+ * react-router re-creates it on every pathname change, and a bare dependency
+ * would replay the bootstrap read on same-project navigations (#465).
  */
 export function useStudioProject(projectId: string) {
   const navigate = useNavigate();
+  const navigateRef = useRef(navigate);
+  useEffect(() => {
+    navigateRef.current = navigate;
+  }, [navigate]);
   const [lifecycle] = useState(() => Symbol("studio lifecycle"));
   const activeProjectIdRef = useRef<string | null>(null);
   const projectMutationEpochRef = useRef(0);
@@ -144,17 +151,17 @@ export function useStudioProject(projectId: string) {
       } catch (reason) {
         if (signal.aborted || activeProjectIdRef.current !== projectId) return false;
         if (reason instanceof HttpError && reason.status === 401) {
-          navigate("/", { replace: true });
+          navigateRef.current("/", { replace: true });
           return false;
         }
         if (reason instanceof HttpError && reason.status === 404) {
-          navigate("/projects", { replace: true });
+          navigateRef.current("/projects", { replace: true });
           return false;
         }
         throw reason;
       }
     },
-    [captureProjectShellRead, navigate, projectId, publishProjectShellRead],
+    [captureProjectShellRead, projectId, publishProjectShellRead],
   );
 
   const setError = useCallback<Dispatch<SetStateAction<string | null>>>(
@@ -212,11 +219,11 @@ export function useStudioProject(projectId: string) {
         if (!isCurrentRequest()) return;
         controller.abort();
         if (reason instanceof HttpError && reason.status === 401) {
-          navigate("/", { replace: true });
+          navigateRef.current("/", { replace: true });
           return;
         }
         if (!shellPublished && reason instanceof HttpError && reason.status === 404) {
-          navigate("/projects", { replace: true });
+          navigateRef.current("/projects", { replace: true });
           return;
         }
         const message = toErrorMessage(reason, DEFAULT_LOAD_ERROR);
@@ -233,8 +240,11 @@ export function useStudioProject(projectId: string) {
     })();
 
     return request.promise;
-  }, [navigate, projectId]);
+  }, [projectId]);
 
+  // Bootstrap is keyed by the route project identity only; `retryLoad` is
+  // stable for one projectId, so same-project pathname changes (section and
+  // route-inspector navigation) never replay the shell read (#465).
   useEffect(() => {
     void retryLoad();
   }, [retryLoad]);
