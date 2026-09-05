@@ -1,14 +1,15 @@
 import type { TypeBoxTypeProvider } from "@fastify/type-provider-typebox";
-import type { FastifyPluginAsync, FastifyReply } from "fastify";
+import type { FastifyPluginAsync } from "fastify";
 import { principalGuard, requirePrincipal } from "../../../../shared/interface/http/auth_guard.js";
 import { errorEnvelopeResponse } from "../../../../shared/interface/http/error_envelope.js";
-import type { ProposalStreamFrame } from "../../application/proposal_streaming.js";
+import { proposalGeneration422ResponseSchema } from "./generation_capacity_schemas.js";
 import { jobResponseSchema } from "./job_schemas.js";
 import type { JsonResponseSchema } from "./json_response_schema.js";
 import { requireServices, type StudioRoutesOptions } from "./project_routes.js";
+import { writeProposalStreamResponse } from "./proposal_stream_response.js";
 import { withAsyncStudioErrors, withStudioErrors } from "./studio_error_mapping.js";
 import { documentIdParams, jobIdParams, proposalCreateSchema } from "./studio_request_schemas.js";
-import { operationInFlightSchema } from "./studio_schemas.js";
+import { operationCapacityResponseSchema, operationInFlightSchema } from "./studio_schemas.js";
 
 /**
  * The stream endpoint hijacks the reply and writes raw SSE frames, so its
@@ -28,46 +29,13 @@ const PROPOSAL_ERROR_RESPONSES = {
   401: errorEnvelopeResponse,
   403: errorEnvelopeResponse,
   404: errorEnvelopeResponse,
-  422: errorEnvelopeResponse,
   503: errorEnvelopeResponse,
 } as const;
 
-/** One SSE event: a single JSON frame per `data:` field, blank-line ended. */
-function sseFrame(frame: ProposalStreamFrame): string {
-  return `data: ${JSON.stringify(frame)}\n\n`;
-}
-
-/** SSE response headers: disable proxy buffering so deltas arrive immediately. */
-const SSE_HEADERS = {
-  "content-type": "text/event-stream; charset=utf-8",
-  "cache-control": "no-cache",
-  connection: "keep-alive",
-  "x-accel-buffering": "no",
+const PROPOSAL_GENERATION_ERROR_RESPONSES = {
+  ...PROPOSAL_ERROR_RESPONSES,
+  422: proposalGeneration422ResponseSchema,
 } as const;
-
-/**
- * Drive the proposal stream: validation (and every envelope error) resolves
- * before the first frame, then the reply is hijacked and frames are written
- * as they arrive. The disconnect signal aborts the upstream generator; a
- * provider failure arrives as the stream's error frame.
- */
-async function writeProposalStream(
-  reply: FastifyReply,
-  frames: AsyncGenerator<ProposalStreamFrame, void, void>,
-  disconnect: AbortController,
-): Promise<void> {
-  let current = await withAsyncStudioErrors(() => frames.next());
-  reply.hijack();
-  reply.raw.writeHead(200, SSE_HEADERS);
-  const write = (frame: ProposalStreamFrame): void => {
-    if (!disconnect.signal.aborted) reply.raw.write(sseFrame(frame));
-  };
-  while (!current.done) {
-    write(current.value);
-    current = await frames.next();
-  }
-  reply.raw.end();
-}
 
 /**
  * The AI proposal surface: synchronous generation that records a proposal on
@@ -88,8 +56,9 @@ export const proposalRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fa
         body: proposalCreateSchema,
         response: {
           200: jobResponseSchema,
-          ...PROPOSAL_ERROR_RESPONSES,
+          ...PROPOSAL_GENERATION_ERROR_RESPONSES,
           409: operationInFlightSchema,
+          503: operationCapacityResponseSchema,
         },
       },
     },
@@ -125,8 +94,9 @@ export const proposalRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fa
         body: proposalCreateSchema,
         response: {
           200: proposalStreamResponseSchema,
-          ...PROPOSAL_ERROR_RESPONSES,
+          ...PROPOSAL_GENERATION_ERROR_RESPONSES,
           409: operationInFlightSchema,
+          503: operationCapacityResponseSchema,
         },
       },
     },
@@ -143,10 +113,7 @@ export const proposalRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fa
       // itself emits "close" as soon as the request message is fully read,
       // which would abort every stream before it starts.
       const disconnect = new AbortController();
-      request.raw.socket?.on("close", () => disconnect.abort());
-      reply.raw.on("close", () => disconnect.abort());
-      reply.raw.on("error", () => disconnect.abort());
-      const frames = requireServices(options).proposals.draftProposalStream(
+      const streamSession = requireServices(options).proposals.draftProposalStream(
         requirePrincipal(request),
         request.params.projectId,
         request.params.documentId,
@@ -158,7 +125,15 @@ export const proposalRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fa
         reportCleanupFailure,
         disconnect.signal,
       );
-      await writeProposalStream(reply, frames, disconnect);
+      await writeProposalStreamResponse({
+        response: reply.raw,
+        socket: request.raw.socket,
+        frames: streamSession.frames,
+        disconnect,
+        hijack: () => reply.hijack(),
+        pullFirst: () => withAsyncStudioErrors(() => streamSession.frames.next()),
+        releaseCapacity: streamSession.releaseCapacity,
+      });
     },
   );
 
@@ -171,6 +146,7 @@ export const proposalRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fa
         response: {
           200: jobResponseSchema,
           ...PROPOSAL_ERROR_RESPONSES,
+          422: errorEnvelopeResponse,
         },
       },
     },

@@ -1,4 +1,13 @@
-import { index, integer, real, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { isNotNull, sql } from "drizzle-orm";
+import {
+  check,
+  index,
+  integer,
+  real,
+  sqliteTable,
+  text,
+  uniqueIndex,
+} from "drizzle-orm/sqlite-core";
 
 /**
  * The first schema of the TS rewrite (#264): the sessions table with its
@@ -55,6 +64,7 @@ export const jobs = sqliteTable(
     result_json: text("result_json").notNull().default("{}"),
     error: text("error"),
     retry_of_job_id: text("retry_of_job_id"),
+    retry_idempotency_key: text("retry_idempotency_key"),
     created_at: integer("created_at", { mode: "timestamp_ms" }).notNull(),
     updated_at: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
     started_at: integer("started_at", { mode: "timestamp_ms" }),
@@ -62,7 +72,10 @@ export const jobs = sqliteTable(
   },
   (table) => [
     index("idx_jobs_status").on(table.status),
-    index("idx_jobs_project_id").on(table.project_id),
+    index("idx_jobs_project_created_id").on(table.project_id, table.created_at, table.id),
+    uniqueIndex("uq_jobs_retry_idempotency")
+      .on(table.project_id, table.retry_of_job_id, table.retry_idempotency_key)
+      .where(isNotNull(table.retry_idempotency_key)),
   ],
 );
 
@@ -75,9 +88,10 @@ export const jobEvents = sqliteTable(
       .references(() => jobs.id, { onDelete: "cascade" }),
     status: text("status").notNull(),
     details_json: text("details_json").notNull().default("{}"),
+    sequence: integer("sequence").notNull().default(1),
     created_at: integer("created_at", { mode: "timestamp_ms" }).notNull(),
   },
-  (table) => [index("idx_job_events_job_id").on(table.job_id)],
+  (table) => [uniqueIndex("uq_job_events_job_sequence").on(table.job_id, table.sequence)],
 );
 
 /**
@@ -98,5 +112,15 @@ export const usageEvents = sqliteTable(
     estimated_cost: real("estimated_cost"),
     created_at: integer("created_at", { mode: "timestamp_ms" }).notNull(),
   },
-  (table) => [index("idx_usage_events_project_id").on(table.project_id)],
+  (table) => [
+    index("idx_usage_events_project_id").on(table.project_id),
+    check(
+      "ck_usage_events_prompt_tokens_safe",
+      sql`typeof(${table.prompt_tokens}) = 'integer' AND ${table.prompt_tokens} BETWEEN 0 AND 9007199254740991`,
+    ),
+    check(
+      "ck_usage_events_completion_tokens_safe",
+      sql`typeof(${table.completion_tokens}) = 'integer' AND ${table.completion_tokens} BETWEEN 0 AND 9007199254740991`,
+    ),
+  ],
 );

@@ -3,7 +3,10 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
-import type { AddJobInput } from "../../src/contexts/studio/application/ports/job_records.js";
+import {
+  type AddJobInput,
+  jobPageLimit,
+} from "../../src/contexts/studio/application/ports/job_records.js";
 import { scopeForPrincipal } from "../../src/contexts/studio/application/ports/studio_store.js";
 import { InvalidJobTransitionError } from "../../src/contexts/studio/domain/exceptions.js";
 import { DrizzleStudioStore } from "../../src/contexts/studio/infrastructure/drizzle_studio_store.js";
@@ -54,9 +57,9 @@ function usageInput() {
 
 async function openHarness() {
   const directory = await mkdtemp(join(tmpdir(), "novel-engine-job-store-tx-"));
-  const studio = await openStudioDatabase(directory);
+  const studio = await openStudioDatabase(join(directory, "novel-engine.sqlite3"));
   const clock = monotonicClock();
-  const store = new DrizzleStudioStore({ database: studio.db, dataDirectory: directory });
+  const store = new DrizzleStudioStore({ database: studio.db });
   // Projects reference the owners table, so the harness registers a real owner.
   const auth = new AuthService({
     store: new DrizzleAuthStore(studio.db),
@@ -114,7 +117,9 @@ describe("atomic completed-proposal landing (#392)", () => {
     ).toThrow("simulated ledger failure between the two writes");
 
     // The whole transaction rolled back: no job row, no usage event.
-    expect(store.collectProjectJobs(scope, projectId)).toEqual([]);
+    expect(
+      store.collectProjectJobSummaries(scope, projectId, { limit: jobPageLimit(50) }).jobs,
+    ).toEqual([]);
     const usage = store.aggregateProjectUsage(scope, projectId, new Date());
     expect(usage.requestCount).toBe(0);
   });
@@ -123,8 +128,9 @@ describe("atomic completed-proposal landing (#392)", () => {
 describe("atomic retry completion with usage (#392)", () => {
   it("commits the outcome transition and its usage event together", async () => {
     const { scope, clock, store, projectId } = await openHarness();
+    const tiedAt = clock();
     const running = store.addJob(scope, {
-      ...completedJobInput(projectId, clock()),
+      ...completedJobInput(projectId, tiedAt),
       status: "running",
     });
     const done = store.markJobOutcomeWithUsage(scope, projectId, running.id, {
@@ -134,12 +140,16 @@ describe("atomic retry completion with usage (#392)", () => {
         resultJson: "{}",
         error: null,
         eventDetailsJson: "{}",
-        now: clock(),
+        now: tiedAt,
       },
       usage: usageInput(),
     });
     expect(done.status).toBe("completed");
     expect(done.model).toBe("retry-model");
+    expect(done.events.map((event) => event.status)).toEqual(["running", "completed"]);
+    expect(store.findJob(scope, projectId, running.id).events.map((event) => event.status)).toEqual(
+      ["running", "completed"],
+    );
     const usage = store.aggregateProjectUsage(scope, projectId, new Date());
     expect(usage.requestCount).toBe(1);
   });

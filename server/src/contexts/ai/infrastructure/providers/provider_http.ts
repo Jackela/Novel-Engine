@@ -1,11 +1,12 @@
 import {
+  isSafeUsageToken,
   type ProviderStep,
   TextGenerationProviderError,
 } from "../../application/ports/text_generation.js";
 
 const RETRYABLE_HTTP_STATUSES = new Set([429, 500, 502, 503, 504]);
 const MAX_PROVIDER_ATTEMPTS = 3;
-const MAX_PROVIDER_ERROR_BODY_LENGTH = 1_000;
+const PROVIDER_CLEANUP_GRACE_MS = 1_000;
 
 /** Chapter generation calls must outlive the enclosing request timeout. */
 export const GENERATION_TIMEOUT_FLOOR_SECONDS = 180;
@@ -17,9 +18,9 @@ export function isJsonObject(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-/** Structural usage token read; malformed or negative values stay null. */
+/** Structural usage token read; inexact or malformed values stay null. */
 export function usageToken(value: unknown): number | null {
-  return typeof value === "number" && Number.isInteger(value) && value >= 0 ? value : null;
+  return isSafeUsageToken(value) ? value : null;
 }
 
 export function isResponseLike(value: unknown): value is Response {
@@ -30,10 +31,6 @@ export function isResponseLike(value: unknown): value is Response {
     typeof value.text === "function" &&
     typeof value.json === "function"
   );
-}
-
-export function readableResponse(response: Response): Response {
-  return typeof response.clone === "function" ? response.clone() : response;
 }
 
 /** Trim the configured key; the provider label keeps each error message verbatim. */
@@ -156,24 +153,56 @@ export function runWithRetryPolicy<T>(
 }
 
 /** Normalize a non-success HTTP response without using its body to choose retry behavior. */
-export function httpStatusFailure(
-  context: string,
-  status: number,
-  responseBody: string,
-): ProviderTransportError {
-  const detail = responseBody.trim();
-  const suffix = detail === "" ? "" : ` ${detail}`;
-  return new ProviderTransportError(`${context}: ${status}${suffix}`, { status });
+export function httpStatusFailure(context: string, status: number): ProviderTransportError {
+  return new ProviderTransportError(`${context}: provider returned HTTP ${status}.`, { status });
 }
 
-/** Redact complete provider credentials before bounding response diagnostics. */
-export function redactCredentialAndTruncateResponseBody(
-  responseBody: string,
-  credential: string,
-): string {
-  const redacted =
-    credential === "" ? responseBody : responseBody.split(credential).join("[REDACTED]");
-  return redacted.slice(0, MAX_PROVIDER_ERROR_BODY_LENGTH);
+/** Await cleanup without allowing rejection or a hostile thenable to replace request truth. */
+export async function settleProviderCleanup(start: () => Promise<unknown>): Promise<void> {
+  let cleanup: Promise<unknown>;
+  try {
+    cleanup = Promise.resolve(start());
+  } catch {
+    return;
+  }
+  void cleanup.catch(() => undefined);
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const graceElapsed = new Promise<void>((resolve) => {
+    timer = setTimeout(resolve, PROVIDER_CLEANUP_GRACE_MS);
+  });
+  try {
+    await Promise.race([cleanup.catch(() => undefined), graceElapsed]);
+  } finally {
+    if (timer !== undefined) clearTimeout(timer);
+  }
+}
+
+/** Cancel one response body within the shared bounded cleanup grace. */
+export function cancelProviderResponseBody(
+  body: ReadableStream<Uint8Array> | null | undefined,
+): Promise<void> {
+  return body === null || body === undefined
+    ? Promise.resolve()
+    : settleProviderCleanup(() => body.cancel());
+}
+
+export type ProviderFailureRegistrar = (failure: ProviderTransportError) => ProviderTransportError;
+
+/** Register HTTP status first, then cancel its untrusted body without consuming it. */
+export async function discardHttpFailureResponse(
+  context: string,
+  response: Response,
+  registerFailure: ProviderFailureRegistrar = (failure) => failure,
+): Promise<ProviderTransportError> {
+  let authoritative: unknown;
+  try {
+    authoritative = registerFailure(httpStatusFailure(context, response.status));
+  } catch (error) {
+    authoritative = error;
+  }
+  await cancelProviderResponseBody(response.body);
+  if (authoritative instanceof ProviderTransportError) return authoritative;
+  throw authoritative;
 }
 
 /** Normalize a response that failed JSON-object parsing. */

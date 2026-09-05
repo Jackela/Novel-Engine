@@ -1,5 +1,5 @@
-import { wordCount } from "./payloads.js";
-import type { EditorialIssueInput, ReviewSnapshotDocument } from "./ports/studio_store.js";
+import { revisionWordCount } from "../domain/revision_word_count.js";
+import type { EditorialIssueInput, ReviewSourceDocument } from "./ports/studio_store.js";
 
 /**
  * The server-owned closed review vocabulary (#316): the LLM may only report
@@ -37,7 +37,7 @@ function asNonEmptyString(value: unknown): string | null {
  */
 export function coerceEditorialFindings(
   raw: unknown,
-  documents: readonly ReviewSnapshotDocument[],
+  documents: readonly ReviewSourceDocument[],
 ): EditorialIssueInput[] {
   const findings = (raw as { findings?: unknown } | null)?.findings;
   if (!Array.isArray(findings)) {
@@ -87,14 +87,14 @@ export function coerceEditorialFindings(
 export const THIN_CHAPTER_WORDS = 250;
 
 export function chapterWordCounts(
-  documents: readonly ReviewSnapshotDocument[],
+  documents: readonly ReviewSourceDocument[],
 ): Array<{ id: string; title: string; words: number; empty: boolean }> {
   return documents
     .filter((document) => document.kind === "chapter")
     .map((document) => ({
       id: document.documentId,
       title: document.title,
-      words: wordCount(document.contentMarkdown),
+      words: revisionWordCount(document.contentMarkdown),
       empty: document.contentMarkdown.trim() === "",
     }));
 }

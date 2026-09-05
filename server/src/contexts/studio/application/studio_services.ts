@@ -5,9 +5,10 @@ import { type ExportArtifactGateway, SnapshotArtifactService } from "./export_ar
 import { ImportService } from "./import_service.js";
 import { JobHistoryService } from "./job_history_service.js";
 import { LoreAliasService } from "./lore_alias_service.js";
-import { InFlightOperationGuard } from "./operation_in_flight.js";
-import type { ExportStore } from "./ports/export_store.js";
+import { InFlightOperationGuard, type OperationCapacityPolicy } from "./operation_in_flight.js";
+import type { ExportOutcomeStore } from "./ports/export_store.js";
 import type { LegacyWorkspaceReader } from "./ports/legacy_workspace_reader.js";
+import type { ProjectArtifactCleaner } from "./ports/project_artifact_cleaner.js";
 import type { StudioStore } from "./ports/studio_store.js";
 import { ProjectService } from "./project_service.js";
 import { AiProposalService } from "./proposal_service.js";
@@ -37,13 +38,17 @@ export interface CreateStudioServicesOptions {
   /** Server-owned review provenance; model choice is never an HTTP input. */
   reviewProvenance?: ReviewProviderProvenance | undefined;
   /** Export snapshots and artifact records have a focused persistence boundary. */
-  artifactStore: ExportStore;
+  artifactStore: ExportOutcomeStore;
   /** Filesystem adapter for atomic artifact writes and confined retrieval. */
   artifactFiles: ExportArtifactGateway;
+  /** Post-commit cleanup for one deleted project's secondary export tree. */
+  projectArtifactCleaner: ProjectArtifactCleaner;
   /** Read-only legacy workspace access; the composition root injects the FS adapter. */
   legacyWorkspaceReader: LegacyWorkspaceReader;
   /** Lorebook injection budget (#445); undefined keeps the adjudicated default. */
   loreBudgetCharacters?: number | undefined;
+  /** App-local admission limits for expensive Studio workflows. */
+  operationCapacity?: OperationCapacityPolicy | undefined;
 }
 
 export function createStudioServices(
@@ -53,23 +58,21 @@ export function createStudioServices(
   const now = options.now ?? (() => new Date());
   // One guard per app instance: it serializes identical in-flight pipeline
   // operations (#305) across the proposal and export/retry surfaces.
-  const inFlight = new InFlightOperationGuard();
+  const inFlight = new InFlightOperationGuard(options.operationCapacity);
   const documents = new DocumentService(store, now);
   const reviewAssessments = new ReviewService(store, {
     now,
     provenance: options.reviewProvenance,
     providerFactory: options.providerFactory,
   });
-  const artifacts = new SnapshotArtifactService(
-    options.artifactStore,
-    store,
-    options.artifactFiles,
-    {
-      now,
-    },
-  );
+  const artifacts = new SnapshotArtifactService(options.artifactStore, options.artifactFiles, {
+    now,
+  });
   return {
-    projects: new ProjectService(store, now),
+    projects: new ProjectService(store, now, {
+      inFlight,
+      artifactCleaner: options.projectArtifactCleaner,
+    }),
     documents,
     volumes: new VolumeService(store, now),
     beats: new BeatAssociationService(store, now),
@@ -77,7 +80,6 @@ export function createStudioServices(
     revisions: new RevisionService(store, documents),
     proposals: new AiProposalService(
       store,
-      documents,
       options.providerFactory,
       inFlight,
       now,

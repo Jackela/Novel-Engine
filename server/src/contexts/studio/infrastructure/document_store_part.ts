@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { and, asc, desc, eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 
 import { InvalidOperationError } from "../../../shared/domain/exceptions.js";
 import type { StudioSqliteDatabase } from "../../../shared/infrastructure/db/connection.js";
@@ -9,14 +9,14 @@ import type {
   DocumentMatchRecord,
   DocumentWithCurrent,
   ProjectScope,
+  RevisionPageInput,
+  RevisionSummaryPage,
 } from "../application/ports/studio_store.js";
-import {
-  DuplicateDocumentError,
-  NotFoundError,
-  RevisionConflictError,
-  SnapshotConflict,
-} from "../domain/exceptions.js";
+import { revisionPageLimit } from "../application/ports/studio_store.js";
+import { DuplicateDocumentError, NotFoundError, SnapshotConflict } from "../domain/exceptions.js";
 import { DEFAULT_LORE_STATUS } from "../domain/kinds.js";
+import { assertStoredRevisionWordCount } from "../domain/revision_word_count.js";
+import { advanceDocumentInTransaction } from "./db/document_revision_writes.js";
 import {
   clearDocumentIndex,
   matchDocumentIndex,
@@ -25,13 +25,15 @@ import {
 import { documentRevisions, documents, projects, snapshotDocuments } from "./db/schema.js";
 import {
   documentsWithCurrent,
+  documentWithCurrent,
   insertRevision,
   isUniqueViolation,
   type RevisionRow,
+  scopedCurrentDocument,
   scopedDocument,
   scopedProject,
-  type Tx,
 } from "./db/studio_query_helpers.js";
+import { buildRevisionSummariesQuery } from "./revision_page_queries.js";
 
 /**
  * The document, revision, and FTS half of the Drizzle studio store. Every
@@ -56,6 +58,14 @@ export class DocumentStorePart {
       scopedProject(tx, scope, projectId);
       return documentWithCurrent(tx, projectId, documentId);
     });
+  }
+
+  readCurrentDocument(
+    scope: ProjectScope,
+    projectId: string,
+    documentId: string,
+  ): DocumentWithCurrent {
+    return this.db.transaction((tx) => scopedCurrentDocument(tx, scope, projectId, documentId));
   }
 
   addDocument(scope: ProjectScope, projectId: string, input: AddDocumentInput) {
@@ -124,49 +134,9 @@ export class DocumentStorePart {
     documentId: string,
     input: AdvanceDocumentInput,
   ): DocumentWithCurrent {
-    return this.db.transaction((tx) => {
-      const project = scopedProject(tx, scope, projectId);
-      const document = scopedDocument(tx, scope, projectId, documentId);
-      if (document.currentRevisionId !== input.baseRevisionId) {
-        throw new RevisionConflictError(document.currentRevisionId);
-      }
-      const current = tx
-        .select()
-        .from(documentRevisions)
-        .where(eq(documentRevisions.id, document.currentRevisionId ?? ""))
-        .get();
-      if (current === undefined) {
-        throw new NotFoundError("Current revision not found.");
-      }
-      const revision = insertRevision(tx, {
-        documentId: document.id,
-        parentRevisionId: document.currentRevisionId,
-        revisionNumber: current.revisionNumber + 1,
-        contentMarkdown: input.contentMarkdown,
-        metadataJson: input.metadataJson,
-        source: input.source,
-        now: input.now,
-      });
-      const title = input.title ?? document.title;
-      tx.update(documents)
-        .set({ currentRevisionId: revision.id, title, updatedAt: input.now })
-        .where(eq(documents.id, document.id))
-        .run();
-      refreshDocumentIndex(tx, {
-        documentId: document.id,
-        projectId: project.id,
-        title,
-        content: input.contentMarkdown,
-      });
-      tx.update(projects).set({ updatedAt: input.now }).where(eq(projects.id, project.id)).run();
-      return {
-        ...document,
-        title,
-        currentRevisionId: revision.id,
-        updatedAt: input.now,
-        currentRevision: revision,
-      };
-    });
+    return this.db.transaction((tx) =>
+      advanceDocumentInTransaction(tx, scope, projectId, documentId, input),
+    );
   }
 
   dropDocument(scope: ProjectScope, projectId: string, documentId: string): void {
@@ -203,13 +173,7 @@ export class DocumentStorePart {
         .where(eq(documents.id, document.id))
         .run();
       tx.update(projects).set({ updatedAt: input.now }).where(eq(projects.id, project.id)).run();
-      const [updated] = documentsWithCurrent(tx, project.id).filter(
-        (candidate) => candidate.id === document.id,
-      );
-      if (updated === undefined) {
-        throw new NotFoundError("Document not found.");
-      }
-      return updated;
+      return documentWithCurrent(tx, project.id, document.id);
     });
   }
 
@@ -251,19 +215,28 @@ export class DocumentStorePart {
     return (rows[0]?.position ?? 0) + 1;
   }
 
-  findRevisions(scope: ProjectScope, projectId: string, documentId: string): RevisionRow[] {
+  findRevisionSummaries(
+    scope: ProjectScope,
+    projectId: string,
+    documentId: string,
+    input: RevisionPageInput,
+  ): RevisionSummaryPage {
+    const limit = revisionPageLimit(input.limit);
     return this.db.transaction((tx) => {
       scopedDocument(tx, scope, projectId, documentId);
-      return tx
-        .select({ revision: documentRevisions })
-        .from(documentRevisions)
-        .innerJoin(documents, eq(documentRevisions.documentId, documents.id))
-        .where(
-          and(eq(documentRevisions.documentId, documentId), eq(documents.projectId, projectId)),
-        )
-        .orderBy(asc(documentRevisions.revisionNumber))
-        .all()
-        .map((row) => row.revision);
+      const rows = buildRevisionSummariesQuery(tx, documentId, { ...input, limit }).all();
+      const revisions = rows.slice(0, limit).map((row) => ({
+        ...row,
+        wordCount: assertStoredRevisionWordCount(row.wordCount),
+      }));
+      const boundary = revisions.at(-1);
+      return {
+        revisions,
+        nextCursor:
+          rows.length > limit && boundary !== undefined
+            ? { revisionNumber: boundary.revisionNumber, id: boundary.id }
+            : null,
+      };
     });
   }
 
@@ -293,20 +266,4 @@ export class DocumentStorePart {
       return row.revision;
     });
   }
-}
-
-function documentWithCurrent(tx: Tx, projectId: string, documentId: string): DocumentWithCurrent {
-  const row = tx
-    .select({ document: documents, revision: documentRevisions })
-    .from(documents)
-    .leftJoin(documentRevisions, eq(documents.currentRevisionId, documentRevisions.id))
-    .where(and(eq(documents.id, documentId), eq(documents.projectId, projectId)))
-    .get();
-  if (row === undefined) {
-    throw new NotFoundError(
-      `No document '${documentId}' exists in project '${projectId}': the id does not exist ` +
-        `there, or the document belongs to a different project.`,
-    );
-  }
-  return { ...row.document, currentRevision: row.revision };
 }

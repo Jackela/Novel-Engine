@@ -1,7 +1,7 @@
 import { existsSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 
-import { type BrowserContext, expect, type Page, test } from "@playwright/test";
+import { type APIResponse, type BrowserContext, expect, type Page, test } from "@playwright/test";
 
 import {
   assertNarrativeProse,
@@ -28,6 +28,14 @@ import {
 
 interface EnvelopeBody {
   error: { code: string; message: string; details: Record<string, unknown> };
+}
+
+async function expectApiError(response: APIResponse, status: number, code: string) {
+  expect(response.status()).toBe(status);
+  const body = (await response.json()) as EnvelopeBody;
+  expect(body.error.code).toBe(code);
+  expect(typeof body.error.message).toBe("string");
+  return body;
 }
 
 test.describe
@@ -71,6 +79,63 @@ test.describe
 
     test.afterAll(async () => {
       await studioContext.close();
+    });
+
+    test("Inspector tabs stay contained and its disclosure recovers across breakpoints", async () => {
+      await createProject(studio, "Inspector Geometry");
+
+      const disclosure = studio.locator("details.studio-inspector__disclosure");
+      const summary = studio.locator("summary.studio-inspector__summary");
+      const tablist = studio.getByRole("tablist", { name: "Inspector panels" });
+      const tabs = tablist.getByRole("tab");
+
+      await expect(summary).toBeVisible();
+      await expect(tabs).toHaveCount(6);
+      const tablistBox = await tablist.boundingBox();
+      const tabBoxes = await tabs.evaluateAll((elements) =>
+        elements.map((element) => {
+          const box = element.getBoundingClientRect();
+          return { x: box.x, y: box.y, right: box.right, bottom: box.bottom };
+        }),
+      );
+      if (tablistBox === null) throw new Error("Expected a visible Inspector tablist.");
+      for (const box of tabBoxes) {
+        expect(box.x).toBeGreaterThanOrEqual(tablistBox.x - 0.5);
+        expect(box.right).toBeLessThanOrEqual(tablistBox.x + tablistBox.width + 0.5);
+        expect(box.y).toBeGreaterThanOrEqual(tablistBox.y - 0.5);
+        expect(box.bottom).toBeLessThanOrEqual(tablistBox.y + tablistBox.height + 0.5);
+      }
+      expect(new Set(tabBoxes.map((box) => Math.round(box.y))).size).toBe(2);
+
+      const reviewTab = tablist.getByRole("tab", { name: "Review" });
+      const historyTab = tablist.getByRole("tab", { name: "History" });
+      await reviewTab.click();
+      await expect(studio).toHaveURL(/\/review$/);
+      await expect(reviewTab).toHaveAttribute("aria-selected", "true");
+      await reviewTab.press("ArrowRight");
+      await expect(studio).toHaveURL(/\/history$/);
+      await expect(historyTab).toHaveAttribute("aria-selected", "true");
+      await studio.goBack();
+      await expect(studio).toHaveURL(/\/review$/);
+      await expect(reviewTab).toHaveAttribute("aria-selected", "true");
+      await studio.goForward();
+      await expect(studio).toHaveURL(/\/history$/);
+      await tablist.getByRole("tab", { name: "Copilot" }).click();
+      await expect(studio).toHaveURL(/\/manuscript$/);
+      await tablist.getByRole("tab", { name: "Jobs" }).click();
+      await expect(studio).toHaveURL(/\/manuscript\?inspector=jobs$/);
+
+      await studio.setViewportSize({ width: 900, height: 900 });
+      await expect(summary).toBeVisible();
+      await expect(studio.getByRole("heading", { name: "Inspector Geometry" })).toBeVisible();
+      await summary.click();
+      await expect(disclosure).not.toHaveAttribute("open", "");
+
+      await studio.setViewportSize({ width: 1280, height: 900 });
+      await expect(summary).toBeVisible();
+      await summary.click();
+      await expect(disclosure).toHaveAttribute("open", "");
+      await expect(tablist).toBeVisible();
     });
 
     test("accepted proposal leaves narrative prose in the editor and the saved document", async () => {
@@ -223,8 +288,7 @@ test.describe
       });
 
       const missing = await studio.request.get(`/api/projects/${projectId}`);
-      expect(missing.status()).toBe(404);
-      expect(((await missing.json()) as EnvelopeBody).error.code).toBe("NOT_FOUND");
+      await expectApiError(missing, 404, "NOT_FOUND");
       const undeliverable = await studio.request.get(artifact.download_url);
       expect(undeliverable.status()).toBe(404);
     });
@@ -275,15 +339,14 @@ test.describe
         {
           data: {
             content_markdown: "Stale tab write.",
-            base_revision_id: history.revisions[0]?.id,
+            base_revision_id: history.revisions.find(
+              (revision) => revision.id !== chapter?.current_revision_id,
+            )?.id,
           },
           headers: { "x-csrf-token": csrfToken },
         },
       );
-      expect(conflict.status()).toBe(409);
-      const conflictBody = (await conflict.json()) as EnvelopeBody;
-      expect(conflictBody.error.code).toBe("REVISION_CONFLICT");
-      expect(typeof conflictBody.error.message).toBe("string");
+      const conflictBody = await expectApiError(conflict, 409, "REVISION_CONFLICT");
       expect(conflictBody.error.details.current_revision_id).toBe(chapter?.current_revision_id);
 
       // CSRF double-submit: a session-authenticated write without the header is
@@ -291,13 +354,11 @@ test.describe
       const missingToken = await studio.request.post("/api/projects", {
         data: { title: "No token ledger" },
       });
-      expect(missingToken.status()).toBe(403);
-      expect(((await missingToken.json()) as EnvelopeBody).error.code).toBe("CSRF_TOKEN_MISSING");
+      await expectApiError(missingToken, 403, "CSRF_TOKEN_MISSING");
       const tamperedToken = await studio.request.post("/api/projects", {
         data: { title: "Tampered token ledger" },
         headers: { "x-csrf-token": `${csrfToken}-tampered` },
       });
-      expect(tamperedToken.status()).toBe(403);
-      expect(((await tamperedToken.json()) as EnvelopeBody).error.code).toBe("CSRF_TOKEN_INVALID");
+      await expectApiError(tamperedToken, 403, "CSRF_TOKEN_INVALID");
     });
   });

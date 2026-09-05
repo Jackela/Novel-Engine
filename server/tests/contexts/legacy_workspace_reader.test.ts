@@ -24,7 +24,7 @@ function makeWorkspace(label: string, input: LegacyWorkspaceInput): string {
 }
 
 describe("legacy workspace reader", () => {
-  it("reads canonical metadata and raw chapters in lexical filename order without mutation", () => {
+  it("reads canonical metadata and raw chapters in lexical filename order without mutation", async () => {
     const first = "# Second\r\n\r\nA lantern stayed lit.\r\n";
     const second = "# Tenth\n\n星光 remained.\n";
     const source = makeWorkspace("ordered", {
@@ -37,7 +37,7 @@ describe("legacy workspace reader", () => {
     });
     const before = directoryFingerprint(source);
 
-    const workspace = reader.read(source);
+    const workspace = await reader.read(source);
 
     expect(workspace.source).toBe(realpathSync(source));
     expect(workspace.title).toBe("Legacy Stars");
@@ -55,63 +55,63 @@ describe("legacy workspace reader", () => {
       },
     ]);
     expect(workspace.sourceHash).toMatch(/^[0-9a-f]{64}$/);
-    expect(reader.read(source).sourceHash).toBe(workspace.sourceHash);
+    expect((await reader.read(source)).sourceHash).toBe(workspace.sourceHash);
     expect(directoryFingerprint(source)).toBe(before);
   });
 
-  it("parses quoted, commented, and block scalars like yaml.safe_load", () => {
+  it("parses quoted, commented, and block scalars like yaml.safe_load", async () => {
     const source = makeWorkspace("scalars", {
       title: '"Quoted Title" # trailing note',
       premise: ">-\n  Folded premise\n  across lines",
       chapters: [{ filename: "chapter-001.md", content: "# One\n" }],
     });
-    const workspace = reader.read(source);
+    const workspace = await reader.read(source);
     expect(workspace.title).toBe("Quoted Title");
     expect(workspace.description).toBe("Folded premise across lines");
   });
 
-  it("binds the hash to the canonical source and eligible raw bytes", () => {
+  it("binds the hash to the canonical source and eligible raw bytes", async () => {
     const input: LegacyWorkspaceInput = {
       title: "Shared Story",
       chapters: [{ filename: "chapter-001.md", content: "# Before\n" }],
     };
     const first = makeWorkspace("first", input);
     const second = makeWorkspace("second", input);
-    const firstHash = reader.read(first).sourceHash;
+    const firstHash = (await reader.read(first)).sourceHash;
 
-    expect(reader.read(second).sourceHash).not.toBe(firstHash);
+    expect((await reader.read(second)).sourceHash).not.toBe(firstHash);
 
     writeFileSync(join(first, "manuscript", "chapters", "chapter-001.md"), "# After\n", "utf8");
-    expect(reader.read(first).sourceHash).not.toBe(firstHash);
+    expect((await reader.read(first)).sourceHash).not.toBe(firstHash);
 
     const fallback = makeWorkspace("fallback", { chapters: [] });
-    const fallbackWorkspace = reader.read(fallback);
+    const fallbackWorkspace = await reader.read(fallback);
     expect(fallbackWorkspace.title).toBe(basename(realpathSync(fallback)));
     expect(fallbackWorkspace.description).toBe("");
   });
 
-  it("uses the legacy structure error when story.yaml is absent", () => {
+  it("uses the legacy structure error when story.yaml is absent", async () => {
     const source = makeWorkspace("missing-story", {
       chapters: [{ filename: "chapter-001.md", content: "# One\n" }],
     });
     unlinkSync(join(source, "story.yaml"));
 
-    expect(() => reader.read(source)).toThrowError(
+    await expect(reader.read(source)).rejects.toThrowError(
       new InvalidOperationError("Legacy workspace must contain story.yaml."),
     );
   });
 
-  it("rejects a symbolic-link source root before it resolves the target", () => {
+  it("rejects a symbolic-link source root before it resolves the target", async () => {
     const target = makeWorkspace("root-target", {
       chapters: [{ filename: "chapter-001.md", content: "# One\n" }],
     });
     const source = workspacePath("root-link");
     symlinkSync(target, source, "dir");
 
-    expect(() => reader.read(source)).toThrowError(InvalidOperationError);
+    await expect(reader.read(source)).rejects.toThrowError(InvalidOperationError);
   });
 
-  it("rejects symbolic-link chapters instead of following them", () => {
+  it("rejects symbolic-link chapters instead of following them", async () => {
     const source = makeWorkspace("chapter-link", {
       chapters: [{ filename: "chapter-001.md", content: "# One\n" }],
     });
@@ -123,10 +123,10 @@ describe("legacy workspace reader", () => {
       join(source, "manuscript", "chapters", "chapter-002.md"),
     );
 
-    expect(() => reader.read(source)).toThrowError(InvalidOperationError);
+    await expect(reader.read(source)).rejects.toThrowError(InvalidOperationError);
   });
 
-  it("reads a direct data/imports child for the web preview without mutation", () => {
+  it("reads a direct data/imports child for the web preview without mutation", async () => {
     const dataDirectory = workspacePath("web-data");
     const source = makeLegacyWorkspace(join(dataDirectory, "imports", "safe-workspace"), {
       title: "Confined Story",
@@ -137,7 +137,7 @@ describe("legacy workspace reader", () => {
     });
     const before = directoryFingerprint(source);
 
-    const workspace = reader.readConfinedLegacyWorkspace(dataDirectory, "safe-workspace");
+    const workspace = await reader.readConfinedLegacyWorkspace(dataDirectory, "safe-workspace");
 
     expect(workspace.source).toBe(realpathSync(source));
     expect(workspace.title).toBe("Confined Story");
@@ -149,20 +149,20 @@ describe("legacy workspace reader", () => {
     expect(directoryFingerprint(source)).toBe(before);
   });
 
-  it("rejects unsafe web source names before looking below data/imports", () => {
+  it("rejects unsafe web source names before looking below data/imports", async () => {
     const dataDirectory = workspacePath("unsafe-web-source");
 
     const unsafeSources = ["", "   ", ".", "..", "a/b", "a\\b", "../safe", "/tmp/safe", "C:\\safe"];
     for (const source of unsafeSources) {
-      expect(() => reader.readConfinedLegacyWorkspace(dataDirectory, source)).toThrowError(
+      await expect(reader.readConfinedLegacyWorkspace(dataDirectory, source)).rejects.toThrowError(
         new InvalidOperationError(WEB_SOURCE_ERROR),
       );
     }
   });
 
-  it("rejects missing, non-directory, and symbolic-link web roots or sources", () => {
+  it("rejects missing, non-directory, and symbolic-link web roots or sources", async () => {
     const missingRoot = workspacePath("missing-web-root");
-    expect(() => reader.readConfinedLegacyWorkspace(missingRoot, "safe")).toThrowError(
+    await expect(reader.readConfinedLegacyWorkspace(missingRoot, "safe")).rejects.toThrowError(
       new NotFoundError(IMPORT_NOT_FOUND_ERROR),
     );
 
@@ -176,7 +176,7 @@ describe("legacy workspace reader", () => {
     symlinkSync(outside, join(importsRoot, "linked-source"), "dir");
 
     for (const source of ["missing", "not-a-directory", "linked-source"]) {
-      expect(() => reader.readConfinedLegacyWorkspace(dataDirectory, source)).toThrowError(
+      await expect(reader.readConfinedLegacyWorkspace(dataDirectory, source)).rejects.toThrowError(
         new NotFoundError(IMPORT_NOT_FOUND_ERROR),
       );
     }
@@ -184,18 +184,18 @@ describe("legacy workspace reader", () => {
     const linkedRootData = workspacePath("linked-web-root");
     mkdirSync(linkedRootData, { recursive: true });
     symlinkSync(outside, join(linkedRootData, "imports"), "dir");
-    expect(() => reader.readConfinedLegacyWorkspace(linkedRootData, "safe")).toThrowError(
+    await expect(reader.readConfinedLegacyWorkspace(linkedRootData, "safe")).rejects.toThrowError(
       new NotFoundError(IMPORT_NOT_FOUND_ERROR),
     );
   });
 
-  it("validates confined workspace files without traversing their links", () => {
+  it("validates confined workspace files without traversing their links", async () => {
     const dataDirectory = workspacePath("web-structure");
     const importsRoot = join(dataDirectory, "imports");
     mkdirSync(join(importsRoot, "missing-story"), { recursive: true });
-    expect(() => reader.readConfinedLegacyWorkspace(dataDirectory, "missing-story")).toThrowError(
-      new InvalidOperationError("Legacy workspace must contain story.yaml."),
-    );
+    await expect(
+      reader.readConfinedLegacyWorkspace(dataDirectory, "missing-story"),
+    ).rejects.toThrowError(new InvalidOperationError("Legacy workspace must contain story.yaml."));
 
     const source = makeLegacyWorkspace(join(importsRoot, "linked-chapter"), {
       chapters: [{ filename: "chapter-001.md", content: "# One\n" }],
@@ -206,16 +206,18 @@ describe("legacy workspace reader", () => {
     const linkedStory = makeLegacyWorkspace(join(importsRoot, "linked-story"), { chapters: [] });
     unlinkSync(join(linkedStory, "story.yaml"));
     symlinkSync(join(outside, "story.yaml"), join(linkedStory, "story.yaml"));
-    expect(() => reader.readConfinedLegacyWorkspace(dataDirectory, "linked-story")).toThrowError(
-      new InvalidOperationError("Legacy workspace must contain story.yaml."),
-    );
+    await expect(
+      reader.readConfinedLegacyWorkspace(dataDirectory, "linked-story"),
+    ).rejects.toThrowError(new InvalidOperationError("Legacy workspace must contain story.yaml."));
 
     symlinkSync(
       join(outside, "manuscript", "chapters", "chapter-001.md"),
       join(source, "manuscript", "chapters", "chapter-002.md"),
     );
 
-    expect(() => reader.readConfinedLegacyWorkspace(dataDirectory, "linked-chapter")).toThrowError(
+    await expect(
+      reader.readConfinedLegacyWorkspace(dataDirectory, "linked-chapter"),
+    ).rejects.toThrowError(
       new InvalidOperationError("Legacy workspace must not contain symbolic links."),
     );
   });

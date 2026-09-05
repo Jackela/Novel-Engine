@@ -80,7 +80,9 @@ describe("StudioUsagePanel", () => {
     const container = renderUsagePanel(true);
     await flush();
 
-    expect(api.usage).toHaveBeenCalledWith("project-1");
+    expect(api.usage).toHaveBeenCalledWith("project-1", {
+      signal: expect.any(AbortSignal),
+    });
     expect(container.querySelector(".usage__table")).toBeNull();
     expect(container.textContent).toContain("No usage recorded yet.");
     expect(container.textContent).toContain("0");
@@ -143,5 +145,39 @@ describe("StudioUsagePanel", () => {
     renderUsagePanel(false);
     await flush();
     expect(api.usage).not.toHaveBeenCalled();
+  });
+
+  it("does not steal focus after refresh when the author moved elsewhere", async () => {
+    const container = renderUsagePanel(true);
+    await flush();
+    const refresh = container.querySelector<HTMLButtonElement>(
+      'button[aria-label="Refresh usage"]',
+    );
+    if (refresh === null) throw new Error("Expected the usage refresh button.");
+
+    let rejectRefresh!: (reason: Error) => void;
+    vi.mocked(api.usage).mockReturnValueOnce(
+      new Promise<ProjectUsage>((_resolve, reject) => {
+        rejectRefresh = reject;
+      }),
+    );
+    refresh.focus();
+    act(() => refresh.click());
+    expect(refresh).toBeDisabled();
+
+    const otherButton = document.createElement("button");
+    document.body.appendChild(otherButton);
+    otherButton.focus();
+    await act(async () => {
+      rejectRefresh(new Error("Usage service unavailable."));
+      await Promise.resolve();
+    });
+
+    expect(refresh).toBeEnabled();
+    expect(document.activeElement).toBe(otherButton);
+    expect(container.querySelector('[role="alert"]')?.textContent).toContain(
+      "Usage service unavailable.",
+    );
+    otherButton.remove();
   });
 });

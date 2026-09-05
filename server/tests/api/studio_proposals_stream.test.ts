@@ -6,10 +6,12 @@ import {
   TextGenerationProviderError,
   type TextGenerationProviderFactory,
 } from "../../src/contexts/ai/application/ports/text_generation.js";
+import { wordCount } from "../../src/contexts/studio/application/payloads.js";
 import type { ProposalStreamFrame } from "../../src/contexts/studio/application/proposal_streaming.js";
 import { isProposalMarkdownProse } from "../../src/contexts/studio/application/sanitization.js";
 import { jobs, usageEvents } from "../../src/shared/infrastructure/db/schema.js";
 import { cookieHeader, loginOwner } from "./auth_helpers.js";
+import { validProposalProse } from "./proposal_test_helpers.js";
 import {
   buildStudioApp,
   call,
@@ -110,6 +112,48 @@ describe("proposal stream endpoint (#308)", () => {
       expect(isProposalMarkdownProse(joined)).toBe(true);
       expect(job.events.map((event: { status: string }) => event.status)).toEqual(["completed"]);
       expect(database.select().from(usageEvents).all()).toHaveLength(usageBefore + 1);
+    } finally {
+      await app.close();
+    }
+  });
+
+  it("falls back when a stream provider reports unsafe token counts", async () => {
+    const factory: TextGenerationProviderFactory = (_provider) => ({
+      generateStructured: async () => {
+        throw new Error("the synchronous path must not run for the stream endpoint");
+      },
+      async *generateStructuredStreaming(_task, options) {
+        yield validProposalProse;
+        options?.onOutcome?.({
+          model: "unsafe-stream-model",
+          promptTokens: Number.MAX_SAFE_INTEGER + 1,
+          completionTokens: 1e308,
+        });
+      },
+    });
+    const { app } = await buildStudioApp(undefined, { textProviderFactory: factory });
+    try {
+      const jar = await ownerJar(app);
+      const project = await seedProject(app, jar, "Unsafe stream counts");
+      const document = project.documents[0] as DocumentPayload;
+      const instruction = "Tighten this stream safely.";
+
+      const response = await call(app, jar, "POST", STREAM_PATH(project.id, document.id), {
+        operation: "continue",
+        instruction,
+        provider: "mock",
+      });
+      expect(response.statusCode, response.body).toBe(200);
+      expect(parseFrames(response.body).at(-1)?.type).toBe("done");
+
+      const database = app.studioDb?.db;
+      if (database === undefined) throw new Error("studio test app must expose its database");
+      const usage = database.select().from(usageEvents).get();
+      if (usage === undefined) throw new Error("expected usage event");
+      expect(usage.provider).toBe("mock");
+      expect(usage.model).toBe("unsafe-stream-model");
+      expect(usage.prompt_tokens).toBe(wordCount(instruction));
+      expect(usage.completion_tokens).toBe(wordCount(validProposalProse));
     } finally {
       await app.close();
     }

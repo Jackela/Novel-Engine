@@ -13,12 +13,13 @@
 import { describe, expect, it } from "vitest";
 import {
   documentPayloadSchema,
+  documentSummaryPayloadSchema,
   matchResultPayloadSchema,
 } from "../../src/contexts/studio/application/payload_schemas/document.js";
 import { jobPayloadSchema } from "../../src/contexts/studio/application/payload_schemas/job.js";
 import {
-  projectDetailPayloadSchema,
   projectPayloadSchema,
+  projectShellPayloadSchema,
 } from "../../src/contexts/studio/application/payload_schemas/project.js";
 import { revisionPayloadSchema } from "../../src/contexts/studio/application/payload_schemas/revision.js";
 import { volumePayloadSchema } from "../../src/contexts/studio/application/payload_schemas/volume.js";
@@ -31,8 +32,13 @@ import {
   volumePayload,
 } from "../../src/contexts/studio/application/payloads.js";
 import {
+  documentSummaryPayload,
+  projectShellPayload,
+} from "../../src/contexts/studio/application/project_shell_payloads.js";
+import {
   assertConforms,
   documentFixture,
+  documentSummaryFixture,
   firstRequired,
   jobFixture,
   matchFixture,
@@ -55,9 +61,15 @@ const CASES: Array<{
     schema: projectPayloadSchema as unknown as SchemaNode,
   },
   {
-    name: "projectPayload (detail form) -> projectDetailPayloadSchema",
-    build: () => projectPayload(projectFixture(), [documentFixture()], [volumeFixture()]),
-    schema: projectDetailPayloadSchema as unknown as SchemaNode,
+    name: "projectShellPayload -> projectShellPayloadSchema",
+    build: () =>
+      projectShellPayload(projectFixture(), [documentSummaryFixture()], [volumeFixture()]),
+    schema: projectShellPayloadSchema as unknown as SchemaNode,
+  },
+  {
+    name: "documentSummaryPayload -> documentSummaryPayloadSchema",
+    build: () => documentSummaryPayload(documentSummaryFixture()),
+    schema: documentSummaryPayloadSchema as unknown as SchemaNode,
   },
   {
     name: "documentPayload (in volume) -> documentPayloadSchema",
@@ -105,6 +117,14 @@ describe("payload builders conform to their payload SSOT schemas", () => {
 });
 
 describe("payload drift guard trips on every drift class", () => {
+  it("rejects an open revision source in a document summary", () => {
+    const payload = documentSummaryPayload(documentSummaryFixture()) as Record<string, unknown>;
+    payload.revision_source = "external";
+    expect(() =>
+      assertConforms(payload, documentSummaryPayloadSchema as unknown as SchemaNode),
+    ).toThrow(/allowed values/);
+  });
+
   it.each(CASES)("rejects an undeclared extra field in $name", ({ build, schema }) => {
     const drifted = { ...build(), drift_extra_field: true };
     expect(() => assertConforms(drifted, schema)).toThrow(/must NOT have additional properties/);

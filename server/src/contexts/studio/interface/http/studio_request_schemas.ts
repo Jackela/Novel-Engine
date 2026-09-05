@@ -66,6 +66,16 @@ export const projectCreateSchema = Type.Object(
 );
 export type ProjectCreateBody = Static<typeof projectCreateSchema>;
 
+export const projectUpdateSchema = Type.Object(
+  {
+    title: Type.Optional(Type.String({ minLength: 1, maxLength: 240 })),
+    description: Type.Optional(Type.String({ maxLength: 10_000 })),
+    settings: Type.Optional(metadataObject),
+  },
+  { additionalProperties: false, minProperties: 1 },
+);
+export type ProjectUpdateBody = Static<typeof projectUpdateSchema>;
+
 export const documentCreateSchema = Type.Object(
   {
     kind: Type.Unsafe<DocumentKind>({ type: "string", enum: [...DOCUMENT_KINDS] }),
@@ -125,6 +135,21 @@ export const restoreSchema = Type.Object(
   { additionalProperties: false },
 );
 export type RestoreBody = Static<typeof restoreSchema>;
+
+export const revisionListQuerySchema = Type.Object(
+  {
+    limit: Type.Optional(Type.Integer({ default: 50, minimum: 1, maximum: 100 })),
+    cursor: Type.Optional(
+      Type.String({
+        minLength: 1,
+        maxLength: 1024,
+        pattern: "^[A-Za-z0-9_-]+$",
+      }),
+    ),
+  },
+  { additionalProperties: false },
+);
+export type RevisionListQuery = Static<typeof revisionListQuerySchema>;
 
 /** The full-text query string: `q` is required (missing → 422). */
 export const projectMatchQuerySchema = Type.Object(

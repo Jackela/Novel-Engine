@@ -3,10 +3,11 @@
 Reference for what each CI gate enforces and what to do when it goes red.
 The authoritative definition of every gate is the workflow files under
 `.github/workflows/`; this document explains behavior and response playbooks.
+Record validation status using [Change Evidence](change-evidence.md).
 
-Since the #277 cutover the tree is TypeScript-only (pnpm workspace
-`frontend/` + `server/`); the Python gates and the `python-freeze` guard
-were retired with the Python tree (git tag `python-final`).
+Since the #277 cutover the tree is TypeScript-only. The Python tree at tag
+`python-final` is history, not a current validation twin or fallback. Resolve
+current commands from the pnpm package scripts and live workflows.
 
 ## Gate inventory
 
@@ -14,12 +15,12 @@ were retired with the Python tree (git tag `python-final`).
 | --- | --- | --- |
 | `CI` / Validate dependency security | `pnpm audit --audit-level high --prod` (production deps only) | The PR introduces or keeps a *production* dependency with a known high advisory |
 | `Dependency Audit` (scheduled, daily 03:17 UTC + manual dispatch) | Full audit including dev tooling; tracks failures in one reusable issue until green | A new upstream advisory affects any locked dependency, including dev-only paths |
-| `CI` / Validate SSOT, hygiene, and OpenSpec | `pnpm --dir server gates` + `pnpm spec:validate` | Version/identity drift (release version authority is `server/package.json`), forbidden residues, file-size budget breach, migration-channel violations, llms.txt link drift (a raw URL whose path is missing from git HEAD, or a link not matching the expected raw URL shape), OpenAPI snapshot drift, or invalid OpenSpec deltas |
+| `CI` / `validate` job | Dependency security; server SSOT/hygiene/OpenAPI gates, architecture, TypeScript, Biome, and full tests; strict OpenSpec; frontend Biome, TypeScript, unit tests, build, generated API-type drift, React diagnostics, and the browser workflow | One or more validation surfaces failed; inspect the failing step on that exact SHA |
 | `CI` / Validate React static diagnostics | `react-doctor` with **zero tolerance: warnings fail too**, not just errors | Any diagnostic, including `warning` severity (`unused-export`, `async-defer-await`, …) |
-| `CI` / Validate frontend | eslint `--max-warnings=0`, prettier, tsc, vitest, vite build | Conventional test/lint/type failures |
+| `CI` / Validate frontend | Biome check and format, TypeScript, Vitest, and Vite build | Conventional lint, format, type, test, or build failure |
 | `CI` / Check generated API types drift | regenerates `frontend/generated/api-types.ts` from `server/qa-baselines/openapi.current.json` and compares byte-identical | The committed generated types are stale — run `pnpm --dir frontend gen:api-types` |
 | `CI` / Validate Studio workflow against the TS backend | Playwright (`playwright.ts.config.ts`) against the emitted CLI serving `frontend/dist` | A browser-level Studio workflow or content-acceptance assertion broke |
-| `CI` (server job) / gates, architecture, types, tests | Node QA gates, dependency-cruiser, `tsc --strict`, Biome, vitest with Fastify `inject()` | A `server/` module breaks layering or a conventional test/lint/type failure |
+| `CI` / `server` job | Duplicate server gates, dependency-cruiser, TypeScript, Biome, and Vitest validation retained as defense in depth | A server contract or conventional check failed independently of the `validate` job |
 | `CI` / container | `docker build` + fresh install, persistence across restart, deep link, drizzle-migration table check | The production image fails to boot, persist, or serve the SPA |
 | `CodeQL` | javascript-typescript analysis over `server/` + `frontend/` | A CodeQL alert on the TS workspace |
 
@@ -91,14 +92,12 @@ behavior, **not a gate malfunction**. Baselines must be regenerated
 deliberately (with review evidence) whenever the file changes; see the
 failure hint printed by the gate itself.
 
-### At-limit watch list
+### Current size evidence
 
-These files sit exactly at the 300-line limit — any growth turns the gate
-red, so prefer splitting them proactively:
-
-- `server/tests/api/studio_proposals.test.ts`
-- `server/src/contexts/studio/application/provider_scaffold.ts`
-- `server/src/contexts/studio/application/ports/studio_store.ts`
+Do not maintain an at-limit file list in documentation: it is an instantaneous
+cache of repository state. Read the current checker output and inspect the
+candidate file before editing. A clean historical run does not prove that a
+later candidate remains within budget.
 
 ## Dependabot status
 

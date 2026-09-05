@@ -11,16 +11,59 @@ export interface StudioConnection {
   readonly db: StudioSqliteDatabase;
 }
 
+/** Optional statement observer used by bounded-query integration evidence. */
+export interface StudioQueryLogger {
+  logQuery(query: string, params: unknown[]): void;
+}
+
+export interface OpenConnectionOptions {
+  readonly queryLogger?: StudioQueryLogger | undefined;
+}
+
+/** Carries the still-open handle when initialization cleanup itself fails. */
+export class StudioConnectionInitializationCleanupError extends AggregateError {
+  constructor(
+    readonly raw: Database.Database,
+    initializationError: unknown,
+    cleanupError: unknown,
+  ) {
+    super(
+      [initializationError, cleanupError],
+      "Studio connection initialization and cleanup both failed.",
+    );
+    this.name = "StudioConnectionInitializationCleanupError";
+  }
+}
+
 /**
  * Open the content-authority connection with the adjudicated per-connection
- * PRAGMAs: write-ahead logging for abrupt-stop durability, enforced foreign
- * keys for cascade integrity, and NORMAL sync — the WAL checkpoint cadence
- * makes it the safe default the Python runtime also pins.
+ * PRAGMAs: write-ahead logging, enforced foreign keys for cascade integrity,
+ * and FULL sync. Export publication and project deletion remove filesystem
+ * recovery evidence only after a commit, so that commit must survive power
+ * loss rather than relying on a later WAL checkpoint.
  */
-export function openConnection(databasePath: string): StudioConnection {
+export function openConnection(
+  databasePath: string,
+  options: OpenConnectionOptions = {},
+): StudioConnection {
   const raw = new Database(databasePath);
-  raw.pragma("journal_mode = WAL");
-  raw.pragma("foreign_keys = ON");
-  raw.pragma("synchronous = NORMAL");
-  return { raw, db: drizzle(raw, { schema }) };
+  try {
+    raw.pragma("journal_mode = WAL");
+    raw.pragma("foreign_keys = ON");
+    raw.pragma("synchronous = FULL");
+    return {
+      raw,
+      db: drizzle(raw, {
+        schema,
+        ...(options.queryLogger === undefined ? {} : { logger: options.queryLogger }),
+      }),
+    };
+  } catch (error) {
+    try {
+      raw.close();
+    } catch (cleanupError) {
+      throw new StudioConnectionInitializationCleanupError(raw, error, cleanupError);
+    }
+    throw error;
+  }
 }

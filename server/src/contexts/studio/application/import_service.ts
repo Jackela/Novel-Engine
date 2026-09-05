@@ -1,11 +1,20 @@
 import type { Principal } from "../../../shared/application/ports/auth.js";
 import { InvalidOperationError } from "../../../shared/domain/exceptions.js";
-import { dumpJson, projectPayload } from "./payloads.js";
+import { dumpJson } from "./payloads.js";
 import type { LegacyWorkspace, LegacyWorkspaceReader } from "./ports/legacy_workspace_reader.js";
-import { type StudioStore, scopeForPrincipal } from "./ports/studio_store.js";
+import { type ProjectRecord, type StudioStore, scopeForPrincipal } from "./ports/studio_store.js";
 
 /** Imported projects keep the authoring-core default settings (Python parity). */
 const IMPORT_SETTINGS_JSON = dumpJson({ provider: "mock" });
+
+export interface LegacyImportResult extends Record<string, unknown> {
+  readonly project_id: string;
+  readonly title: string;
+  readonly description: string;
+  readonly import_hash: string;
+  readonly chapter_count: number;
+  readonly created: boolean;
+}
 
 /**
  * Read-only, idempotent import of a legacy file workspace. The workspace
@@ -32,24 +41,24 @@ export class ImportService {
    * below the application-owned data/imports root by the reader before any
    * workspace content is inspected. Never writes.
    */
-  previewConfinedLegacyWorkspace(dataDirectory: string, source: string): Record<string, unknown> {
-    return legacyPreviewPayload(this.reader.readConfinedLegacyWorkspace(dataDirectory, source));
+  async previewConfinedLegacyWorkspace(
+    dataDirectory: string,
+    source: string,
+  ): Promise<Record<string, unknown>> {
+    const workspace = await this.reader.readConfinedLegacyWorkspace(dataDirectory, source);
+    return legacyPreviewPayload(workspace);
   }
 
   /**
    * Import the workspace for this principal, or return the project an earlier
    * import of the same source hash already created in this principal's scope.
    */
-  importLegacyWorkspace(principal: Principal, source: string): Record<string, unknown> {
-    const workspace = this.reader.read(source);
+  async importLegacyWorkspace(principal: Principal, source: string): Promise<LegacyImportResult> {
+    const workspace = await this.reader.read(source);
     const scope = scopeForPrincipal(principal);
     const existing = this.store.findProjectByImportHash(scope, workspace.sourceHash);
     if (existing !== null) {
-      return projectPayload(
-        existing,
-        this.store.findDocuments(scope, existing.id),
-        this.store.findVolumes(scope, existing.id),
-      );
+      return legacyImportResult(existing, workspace, false);
     }
     const title = workspace.title.trim();
     if (title === "") {
@@ -66,12 +75,23 @@ export class ImportService {
       })),
       now: this.now(),
     });
-    return projectPayload(
-      created.project,
-      created.documents,
-      this.store.findVolumes(scope, created.project.id),
-    );
+    return legacyImportResult(created.project, workspace, true);
   }
+}
+
+function legacyImportResult(
+  project: ProjectRecord,
+  workspace: LegacyWorkspace,
+  created: boolean,
+): LegacyImportResult {
+  return {
+    project_id: project.id,
+    title: project.title,
+    description: project.description,
+    import_hash: project.importHash ?? workspace.sourceHash,
+    chapter_count: workspace.chapters.length,
+    created,
+  };
 }
 
 /** The fixed summary of what an import would create (Python preview parity). */

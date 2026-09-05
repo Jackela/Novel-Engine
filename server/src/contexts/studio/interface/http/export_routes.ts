@@ -3,15 +3,25 @@ import { Type } from "@fastify/type-provider-typebox";
 import type { FastifyPluginAsync } from "fastify";
 import { principalGuard, requirePrincipal } from "../../../../shared/interface/http/auth_guard.js";
 import { errorEnvelopeResponse } from "../../../../shared/interface/http/error_envelope.js";
+import {
+  EXPORT_ARTIFACT_FORMATS,
+  exportArtifactExtension,
+} from "../../application/export_artifact_identity.js";
 import { exportArtifactPayloadSchema } from "../../application/payload_schemas/export.js";
 import { exportArtifactPayload } from "../../application/payloads.js";
 import type { ExportArtifactFormat } from "../../application/ports/export_store.js";
+import { sendWithinArtifactResponseLifetime } from "./artifact_download_response_lifetime.js";
+import {
+  exportCreateOrRetry422ResponseSchema,
+  exportDownload422ResponseSchema,
+  exportJsonErrorResponseSchema,
+} from "./export_capacity_schemas.js";
 import { jobResponseSchema } from "./job_schemas.js";
 import type { JsonResponseSchema } from "./json_response_schema.js";
 import { requireServices, type StudioRoutesOptions } from "./project_routes.js";
 import { withAsyncStudioErrors, withStudioErrors } from "./studio_error_mapping.js";
 import { exportIdParams, projectIdParams } from "./studio_request_schemas.js";
-import { operationInFlightSchema } from "./studio_schemas.js";
+import { operationCapacityResponseSchema, operationInFlightSchema } from "./studio_schemas.js";
 
 /**
  * The export artifact response (#440) is the TypeBox payload SSOT from
@@ -31,18 +41,17 @@ const exportCreateSchema = Type.Object(
   {
     format: Type.Unsafe<ExportArtifactFormat>({
       type: "string",
-      enum: ["markdown", "docx", "epub"],
+      enum: [...EXPORT_ARTIFACT_FORMATS],
     }),
   },
   { additionalProperties: false },
 );
-const deliveryByFormat: Record<ExportArtifactFormat, { contentType: string; extension: string }> = {
-  markdown: { contentType: "text/markdown; charset=utf-8", extension: "md" },
+const deliveryByFormat: Record<ExportArtifactFormat, { contentType: string }> = {
+  markdown: { contentType: "text/markdown; charset=utf-8" },
   docx: {
     contentType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-    extension: "docx",
   },
-  epub: { contentType: "application/epub+zip", extension: "epub" },
+  epub: { contentType: "application/epub+zip" },
 };
 
 /** Guard + scope failures shared by the project-scoped export reads. */
@@ -71,19 +80,27 @@ export const exportRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fast
           201: jobResponseSchema,
           ...EXPORT_READ_ERROR_RESPONSES,
           403: errorEnvelopeResponse,
-          // A project with no chapter answers 422 INVALID_OPERATION.
-          422: errorEnvelopeResponse,
+          // No chapter answers INVALID_OPERATION; a permanent fresh limit has its own stable code.
+          422: exportCreateOrRetry422ResponseSchema,
           409: operationInFlightSchema,
+          503: operationCapacityResponseSchema,
         },
       },
     },
     async (request, reply) => {
       const { format } = request.body;
+      const reportCleanupFailure = (failure: unknown): void => {
+        request.log.error(
+          { err: failure, errorId: request.id, artifact_cleanup_failed: true },
+          "artifact cleanup failed",
+        );
+      };
       const payload = await withAsyncStudioErrors(() =>
         requireServices(options).jobHistory.recordExportJob(
           requirePrincipal(request),
           request.params.projectId,
           format,
+          reportCleanupFailure,
         ),
       );
       reply.status(201);
@@ -121,22 +138,41 @@ export const exportRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fast
           "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
           "application/epub+zip",
         ],
-        response: { 200: binaryExportSchema, ...EXPORT_READ_ERROR_RESPONSES },
+        response: {
+          200: binaryExportSchema,
+          401: exportJsonErrorResponseSchema,
+          404: exportJsonErrorResponseSchema,
+          422: exportDownload422ResponseSchema,
+          503: operationCapacityResponseSchema,
+        },
       },
     },
     async (request, reply) => {
-      const artifact = await withAsyncStudioErrors(() =>
-        requireServices(options).artifacts.readArtifactForDelivery(
+      await withAsyncStudioErrors(() =>
+        requireServices(options).artifacts.withArtifactDelivery(
           requirePrincipal(request),
           request.params.projectId,
           request.params.exportId,
+          async (artifact) => {
+            const delivery = deliveryByFormat[artifact.format];
+            await sendWithinArtifactResponseLifetime({
+              response: reply.raw,
+              request: request.raw,
+              socket: request.raw.socket,
+              send: () => {
+                void reply
+                  .type(delivery.contentType)
+                  .header(
+                    "content-disposition",
+                    `attachment; filename="export.${exportArtifactExtension(artifact.format)}"`,
+                  )
+                  .send(artifact.bytes);
+              },
+            });
+          },
         ),
       );
-      const delivery = deliveryByFormat[artifact.format];
-      return reply
-        .type(delivery.contentType)
-        .header("content-disposition", `attachment; filename="export.${delivery.extension}"`)
-        .send(artifact.bytes);
+      return reply;
     },
   );
 };

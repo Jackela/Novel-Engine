@@ -2,17 +2,17 @@ import { randomUUID } from "node:crypto";
 
 import type { Principal } from "../../../shared/application/ports/auth.js";
 import { InvalidOperationError } from "../../../shared/domain/exceptions.js";
+import { EXPORT_CAPACITY_LIMITS, ExportCapacityExceededError } from "../domain/exceptions.js";
+import { ArtifactDownloadCapacity } from "./artifact_download_capacity.js";
+import { ExportRendererGuard } from "./export_renderer_guard.js";
 import type {
   ExportArtifactFormat,
   ExportArtifactRecord,
-  ExportStore,
+  ExportCompletionRecord,
+  ExportOutcomeStore,
+  PreparedExportArtifact,
 } from "./ports/export_store.js";
-import {
-  type DocumentWithCurrent,
-  type ProjectRecord,
-  type ProjectScope,
-  scopeForPrincipal,
-} from "./ports/studio_store.js";
+import { scopeForPrincipal } from "./ports/studio_store.js";
 
 /** One frozen chapter handed to the file-format adapter in snapshot order. */
 export interface ArtifactChapter {
@@ -34,7 +34,9 @@ export interface ArtifactFileEvidence {
   readonly relativePath: string;
   readonly sizeBytes: number;
   readonly checksumSha256: string;
-  /** Removes this publication after a later persistence failure, best-effort. */
+  /** Removes durable recovery sidecars after the database commit marker exists. */
+  acknowledge(): Promise<void>;
+  /** Removes this publication after a later persistence failure. */
   rollback(): Promise<void>;
 }
 
@@ -50,110 +52,179 @@ export interface ArtifactReadRequest {
 
 /** Filesystem boundary for rendering and safe retrieval of export artifacts. */
 export interface ExportArtifactGateway {
-  writeSnapshotArtifact(request: ArtifactWriteRequest): Promise<ArtifactFileEvidence>;
+  writeSnapshotArtifact(
+    request: ArtifactWriteRequest,
+    reportCleanupFailure?: (failure: unknown) => void,
+  ): Promise<ArtifactFileEvidence>;
   readArtifactBytes(request: ArtifactReadRequest): Promise<Buffer>;
-}
-
-/** The existing project port supplies only the title needed by renderers. */
-export interface ProjectTitleLookup {
-  findProject(scope: ProjectScope, projectId: string): Pick<ProjectRecord, "title">;
-  /**
-   * The live authoring read prevents a no-chapter request from creating an
-   * otherwise orphaned export snapshot. It remains optional for narrow
-   * artifact-only adapters, which still reject empty snapshot data below.
-   */
-  findDocuments?(
-    scope: ProjectScope,
-    projectId: string,
-  ): ReadonlyArray<Pick<DocumentWithCurrent, "kind">>;
 }
 
 export interface SnapshotArtifactServiceOptions {
   readonly now?: (() => Date) | undefined;
   readonly newId?: (() => string) | undefined;
+  readonly rendererGuard?: ExportRendererGuard | undefined;
+  readonly downloadCapacity?: ArtifactDownloadCapacity | undefined;
+}
+
+export interface ArtifactOutcomeOptions {
+  readonly reportCleanupFailure?: ((failure: unknown) => void) | undefined;
+}
+
+interface PreparedPublication {
+  readonly input: PreparedExportArtifact;
+  readonly file: ArtifactFileEvidence;
 }
 
 /**
- * Turns immutable export snapshots into files. Snapshot reuse and artifact
- * records remain owned by ExportStore; this service never creates jobs.
+ * Renders one read-only export source, then delegates discoverable outcome
+ * publication to the atomic export store. Filesystem compensation remains
+ * here because SQLite cannot enlist the artifact file in its transaction.
  */
 export class SnapshotArtifactService {
   private readonly now: () => Date;
   private readonly newId: () => string;
+  private readonly rendererGuard: ExportRendererGuard;
+  private readonly downloadCapacity: ArtifactDownloadCapacity;
 
   constructor(
-    private readonly exportStore: ExportStore,
-    private readonly projectTitles: ProjectTitleLookup,
+    private readonly exportStore: ExportOutcomeStore,
     private readonly artifactGateway: ExportArtifactGateway,
     options: SnapshotArtifactServiceOptions = {},
   ) {
     this.now = options.now ?? (() => new Date());
     this.newId = options.newId ?? randomUUID;
+    this.rendererGuard = options.rendererGuard ?? new ExportRendererGuard();
+    this.downloadCapacity = options.downloadCapacity ?? new ArtifactDownloadCapacity();
   }
 
-  async materializeSnapshotArtifact(
+  async recordCompletedExportJob(
     principal: Principal,
     projectId: string,
     format: ExportArtifactFormat,
-  ): Promise<ExportArtifactRecord> {
+    options: ArtifactOutcomeOptions = {},
+  ): Promise<ExportCompletionRecord> {
+    return this.withRendererPermit(projectId, () =>
+      this.recordCompletedExportJobWithPermit(principal, projectId, format, options),
+    );
+  }
+
+  private async recordCompletedExportJobWithPermit(
+    principal: Principal,
+    projectId: string,
+    format: ExportArtifactFormat,
+    options: ArtifactOutcomeOptions,
+  ): Promise<ExportCompletionRecord> {
     const scope = scopeForPrincipal(principal);
-    const project = this.projectTitles.findProject(scope, projectId);
-    this.assertProjectHasChapter(scope, projectId);
-    const createdAt = this.now();
-    const snapshot = this.exportStore.materializeArtifactSnapshot(scope, projectId, createdAt);
-    const chapters = snapshot.documents
+    const publication = await this.preparePublication(
+      principal,
+      projectId,
+      format,
+      options.reportCleanupFailure,
+    );
+    return this.landPublication(
+      publication,
+      (input) => this.exportStore.recordCompletedExportJob(scope, input),
+      options.reportCleanupFailure,
+    );
+  }
+
+  async withRendererPermit<T>(projectId: string, work: () => Promise<T>): Promise<T> {
+    const permit = this.rendererGuard.acquire(projectId);
+    try {
+      return await work();
+    } finally {
+      permit.release();
+    }
+  }
+
+  async completeExportRetryJob(
+    principal: Principal,
+    projectId: string,
+    jobId: string,
+    format: ExportArtifactFormat,
+    options: ArtifactOutcomeOptions = {},
+  ): Promise<ExportCompletionRecord> {
+    const scope = scopeForPrincipal(principal);
+    const publication = await this.preparePublication(
+      principal,
+      projectId,
+      format,
+      options.reportCleanupFailure,
+    );
+    return this.landPublication(
+      publication,
+      (input) => this.exportStore.completeExportRetryJob(scope, projectId, jobId, input),
+      options.reportCleanupFailure,
+    );
+  }
+
+  private async preparePublication(
+    principal: Principal,
+    projectId: string,
+    format: ExportArtifactFormat,
+    reportCleanupFailure?: (failure: unknown) => void,
+  ): Promise<PreparedPublication> {
+    const source = this.exportStore.readExportSource(
+      scopeForPrincipal(principal),
+      projectId,
+      this.now(),
+    );
+    const chapters = source.documents
       .filter((document) => document.kind === "chapter")
       .map((document) => ({ title: document.title, contentMarkdown: document.contentMarkdown }));
     if (chapters.length === 0) {
       throw new InvalidOperationError("A project needs at least one chapter before export.");
     }
     const id = this.newId();
-    const file = await this.artifactGateway.writeSnapshotArtifact({
-      projectId,
-      artifactId: id,
-      format,
-      projectTitle: project.title,
-      chapters,
-    });
-    try {
-      return this.exportStore.appendArtifact(scope, projectId, {
+    const file = await this.artifactGateway.writeSnapshotArtifact(
+      {
+        projectId,
+        artifactId: id,
+        format,
+        projectTitle: source.projectTitle,
+        chapters,
+      },
+      reportCleanupFailure,
+    );
+    const createdAt = this.now();
+    return {
+      file,
+      input: {
+        source,
         id,
-        snapshotId: snapshot.snapshotId,
         format,
         relativePath: file.relativePath,
         sizeBytes: file.sizeBytes,
         checksumSha256: file.checksumSha256,
         createdAt,
-      });
-    } catch (error) {
-      await rollbackWithoutMasking(file);
-      throw error;
-    }
+      },
+    };
   }
 
   catalogProjectArtifacts(principal: Principal, projectId: string): ExportArtifactRecord[] {
     return this.exportStore.listProjectArtifacts(scopeForPrincipal(principal), projectId);
   }
 
-  async readArtifactForDelivery(
+  async withArtifactDelivery<T>(
     principal: Principal,
     projectId: string,
     artifactId: string,
-  ): Promise<{ format: ExportArtifactFormat; bytes: Buffer }> {
+    consume: (artifact: { format: ExportArtifactFormat; bytes: Buffer }) => Promise<T>,
+  ): Promise<T> {
     const artifact = this.scopedArtifact(principal, projectId, artifactId);
-    return {
-      format: artifact.format,
-      bytes: await this.readArtifactBytesForRecord(artifact),
-    };
-  }
-
-  /** Compatibility-only internal buffer seam; HTTP delivery uses the typed result above. */
-  async readArtifactBytes(
-    principal: Principal,
-    projectId: string,
-    artifactId: string,
-  ): Promise<Buffer> {
-    return this.readArtifactBytesForRecord(this.scopedArtifact(principal, projectId, artifactId));
+    const artifactLimit = EXPORT_CAPACITY_LIMITS.artifact_bytes;
+    if (artifact.sizeBytes > artifactLimit) {
+      throw new ExportCapacityExceededError("artifact_bytes", artifactLimit, artifact.sizeBytes);
+    }
+    const permit = this.downloadCapacity.acquire(projectId, artifact.sizeBytes);
+    try {
+      return await consume({
+        format: artifact.format,
+        bytes: await this.readArtifactBytesForRecord(artifact),
+      });
+    } finally {
+      permit.release();
+    }
   }
 
   private scopedArtifact(
@@ -168,11 +239,20 @@ export class SnapshotArtifactService {
     );
   }
 
-  private assertProjectHasChapter(scope: ProjectScope, projectId: string): void {
-    const documents = this.projectTitles.findDocuments?.(scope, projectId);
-    if (documents !== undefined && !documents.some((document) => document.kind === "chapter")) {
-      throw new InvalidOperationError("A project needs at least one chapter before export.");
+  private async landPublication<T>(
+    publication: PreparedPublication,
+    land: (input: PreparedExportArtifact) => T,
+    reportCleanupFailure?: (failure: unknown) => void,
+  ): Promise<T> {
+    let result: T;
+    try {
+      result = land(publication.input);
+    } catch (error) {
+      await rollbackWithoutMasking(publication.file, reportCleanupFailure);
+      throw error;
     }
+    await acknowledgeWithoutMasking(publication.file, reportCleanupFailure);
+    return result;
   }
 
   private readArtifactBytesForRecord(artifact: ExportArtifactRecord): Promise<Buffer> {
@@ -187,10 +267,34 @@ export class SnapshotArtifactService {
   }
 }
 
-async function rollbackWithoutMasking(file: ArtifactFileEvidence): Promise<void> {
+async function rollbackWithoutMasking(
+  file: ArtifactFileEvidence,
+  reportCleanupFailure?: (failure: unknown) => void,
+): Promise<void> {
   try {
     await file.rollback();
-  } catch {
-    return;
+  } catch (failure) {
+    try {
+      reportCleanupFailure?.(failure);
+    } catch {
+      // Cleanup reporting is secondary evidence and cannot replace the
+      // transaction error that triggered compensation.
+    }
+  }
+}
+
+async function acknowledgeWithoutMasking(
+  file: ArtifactFileEvidence,
+  reportCleanupFailure?: (failure: unknown) => void,
+): Promise<void> {
+  try {
+    await file.acknowledge();
+  } catch (failure) {
+    try {
+      reportCleanupFailure?.(failure);
+    } catch {
+      // The database already committed. Sidecar cleanup is recoverable startup
+      // work and must not turn a completed outcome into a failed response.
+    }
   }
 }

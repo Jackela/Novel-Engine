@@ -1,7 +1,10 @@
 import { eq } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
 
-import { jobs as jobsTable } from "../../src/shared/infrastructure/db/schema.js";
+import {
+  jobEvents as jobEventsTable,
+  jobs as jobsTable,
+} from "../../src/shared/infrastructure/db/schema.js";
 import { firstDocument, studioDatabase } from "./job_test_helpers.js";
 import {
   buildStudioApp,
@@ -14,7 +17,7 @@ import {
 } from "./studio_helpers.js";
 
 describe("jobs surface", () => {
-  it("lists jobs newest first with each event stream newest first", async () => {
+  it("lists summaries newest first and detail events oldest first", async () => {
     const clock = monotonicClock();
     const { app } = await buildStudioApp(clock);
     try {
@@ -44,19 +47,123 @@ describe("jobs surface", () => {
         owner,
         "POST",
         `/api/projects/${project.id}/jobs/${older.id}/retry`,
+        undefined,
+        { "idempotency-key": "jobs-ordering-retry-0001" },
       );
       expect(retried.statusCode, retried.body).toBe(200);
       expect(retried.json().status).toBe("completed");
 
       const listed = await call(app, owner, "GET", `/api/projects/${project.id}/jobs`);
       expect(listed.statusCode, listed.body).toBe(200);
-      const jobs = listed.json().jobs as JobPayload[];
+      const jobs = listed.json().jobs as Array<Pick<JobPayload, "id" | "retry_of_job_id">>;
       expect(jobs.map((job) => job.id)).toEqual([retried.json().id, newer.id, older.id]);
       const retryJob = jobs[0];
       expect(retryJob?.retry_of_job_id).toBe(older.id);
-      expect(retryJob?.events.map((event) => event.status)).toEqual(["completed", "running"]);
-      expect(retryJob?.events[1]?.details).toEqual({ retry_of: older.id });
-      expect(jobs[2]?.events).toHaveLength(1);
+      const retryDetail = await call(
+        app,
+        owner,
+        "GET",
+        `/api/projects/${project.id}/jobs/${String(retryJob?.id)}`,
+      );
+      expect(retryDetail.json<JobPayload>().events.map((event) => event.status)).toEqual([
+        "running",
+        "completed",
+      ]);
+      expect(retryDetail.json<JobPayload>().events[0]?.details).toEqual({ retry_of: older.id });
+      const olderDetail = await call(
+        app,
+        owner,
+        "GET",
+        `/api/projects/${project.id}/jobs/${older.id}`,
+      );
+      expect(olderDetail.json<JobPayload>().events).toHaveLength(1);
+    } finally {
+      await app.close();
+    }
+  });
+
+  it("uses a job id tie-breaker and causal event sequence for equal timestamps", async () => {
+    const { app } = await buildStudioApp(monotonicClock());
+    try {
+      const owner = await ownerJar(app);
+      const project = await seedProject(app, owner, "Tied job ordering");
+      const database = studioDatabase(app);
+      const tiedAt = new Date("2026-01-01T00:00:00.000Z");
+      const lowerJobId = "00000000-0000-4000-8000-000000000001";
+      const higherJobId = "00000000-0000-4000-8000-000000000002";
+      database
+        .insert(jobsTable)
+        .values([
+          {
+            id: lowerJobId,
+            project_id: project.id,
+            document_id: null,
+            kind: "proposal",
+            operation: "continue",
+            status: "completed",
+            provider: "mock",
+            model: "deterministic-story-v1",
+            request_json: "{}",
+            result_json: "{}",
+            error: null,
+            retry_of_job_id: null,
+            created_at: tiedAt,
+            updated_at: tiedAt,
+          },
+          {
+            id: higherJobId,
+            project_id: project.id,
+            document_id: null,
+            kind: "proposal",
+            operation: "rewrite",
+            status: "completed",
+            provider: "mock",
+            model: "deterministic-story-v1",
+            request_json: "{}",
+            result_json: "{}",
+            error: null,
+            retry_of_job_id: null,
+            created_at: tiedAt,
+            updated_at: tiedAt,
+          },
+        ])
+        .run();
+      database
+        .insert(jobEventsTable)
+        .values([
+          {
+            id: "00000000-0000-4000-8000-000000000012",
+            job_id: higherJobId,
+            status: "running",
+            details_json: "{}",
+            sequence: 1,
+            created_at: tiedAt,
+          },
+          {
+            id: "00000000-0000-4000-8000-000000000011",
+            job_id: higherJobId,
+            status: "completed",
+            details_json: "{}",
+            sequence: 2,
+            created_at: tiedAt,
+          },
+        ])
+        .run();
+
+      const listed = await call(app, owner, "GET", `/api/projects/${project.id}/jobs`);
+      expect(listed.statusCode, listed.body).toBe(200);
+      const listedJobs = listed.json().jobs as Array<Pick<JobPayload, "id">>;
+      expect(listedJobs.map((job) => job.id)).toEqual([higherJobId, lowerJobId]);
+      const detail = await call(
+        app,
+        owner,
+        "GET",
+        `/api/projects/${project.id}/jobs/${higherJobId}`,
+      );
+      expect(detail.json<JobPayload>().events.map((event) => event.id)).toEqual([
+        "00000000-0000-4000-8000-000000000012",
+        "00000000-0000-4000-8000-000000000011",
+      ]);
     } finally {
       await app.close();
     }
@@ -79,6 +186,8 @@ describe("jobs surface", () => {
         owner,
         "POST",
         `/api/projects/${project.id}/jobs/${completed.id}/retry`,
+        undefined,
+        { "idempotency-key": "completed-retry-gate-0001" },
       );
       expect(rejected.statusCode, rejected.body).toBe(422);
       expect(rejected.json().error.code).toBe("INVALID_OPERATION");
@@ -99,16 +208,19 @@ describe("jobs surface", () => {
         owner,
         "POST",
         `/api/projects/${project.id}/jobs/${imported.id}/retry`,
+        undefined,
+        { "idempotency-key": "import-retry-gate-000001" },
       );
       expect(importRejected.statusCode, importRejected.body).toBe(422);
       expect(importRejected.json().error.code).toBe("INVALID_OPERATION");
       expect(importRejected.json().error.message).toContain("Import");
 
       const listed = await call(app, owner, "GET", `/api/projects/${project.id}/jobs`);
-      expect((listed.json().jobs as JobPayload[]).map((job) => job.retry_of_job_id)).toEqual([
-        null,
-        null,
-      ]);
+      expect(
+        (listed.json().jobs as Array<Pick<JobPayload, "retry_of_job_id">>).map(
+          (job) => job.retry_of_job_id,
+        ),
+      ).toEqual([null, null]);
     } finally {
       await app.close();
     }

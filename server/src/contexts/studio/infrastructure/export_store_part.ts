@@ -1,116 +1,124 @@
-import { randomUUID } from "node:crypto";
-import { and, asc, desc, eq } from "drizzle-orm";
-
-import { InvalidOperationError } from "../../../shared/domain/exceptions.js";
+import { eq } from "drizzle-orm";
 import type { StudioSqliteDatabase } from "../../../shared/infrastructure/db/connection.js";
+import { jobs } from "../../../shared/infrastructure/db/schema.js";
+import { sameExportSourceProjection } from "../application/export_source_identity.js";
+import { exportJobResultJson } from "../application/payloads.js";
 import type {
-  AppendArtifactInput,
-  ExportArtifactFormat,
   ExportArtifactRecord,
-  ExportSnapshotDocument,
-  ExportSnapshotMaterialization,
-  ExportStore,
+  ExportCompletionRecord,
+  ExportOutcomeStore,
+  ExportSource,
+  PreparedExportArtifact,
 } from "../application/ports/export_store.js";
+import type { AddJobInput } from "../application/ports/job_records.js";
 import type { ProjectScope } from "../application/ports/studio_store.js";
-import { NotFoundError } from "../domain/exceptions.js";
+import { InvalidJobTransitionError, NotFoundError } from "../domain/exceptions.js";
 import {
-  documentRevisions,
-  documents,
-  exports as exportArtifacts,
-  projectSnapshots,
-  snapshotDocuments,
-  volumes,
-} from "./db/schema.js";
-import { compareReadingOrder, scopedProject, type Tx } from "./db/studio_query_helpers.js";
+  findLatestExportSnapshot,
+  insertExportArtifact,
+  loadProjectArtifact,
+  loadProjectArtifacts,
+  readCurrentExportDocuments,
+  readExportSnapshotDocuments,
+  resolveExportSnapshot,
+} from "./db/export_records.js";
+import {
+  assertCurrentExportSourceCapacity,
+  isExportSnapshotWithinSourceCapacity,
+} from "./db/export_source_capacity.js";
+import { applyJobOutcome, insertJobAndEvent } from "./db/job_writes.js";
+import { scopedProject, type Tx } from "./db/studio_query_helpers.js";
+import { jobWithEvents } from "./job_store_part.js";
 
-interface CurrentDocument {
-  documentId: string;
-  revisionId: string;
-  kind: string;
-  title: string;
-  metadataJson: string;
-  /** Sequential reading-order index (1..n), not the in-volume position. */
-  position: number;
-}
+const EXPORT_PROVIDER = "studio";
 
-/**
- * Immutable export snapshot and artifact persistence, kept separate from the
- * authoring StudioStore so rendering can evolve without broadening that port.
- */
-export class ExportStorePart implements ExportStore {
-  private readonly db: StudioSqliteDatabase;
+/** Atomic persistence adapter for export capture, evidence, and job outcomes. */
+export class ExportStorePart implements ExportOutcomeStore {
+  constructor(protected readonly db: StudioSqliteDatabase) {}
 
-  constructor(db: StudioSqliteDatabase) {
-    this.db = db;
-  }
-
-  materializeArtifactSnapshot(
-    scope: ProjectScope,
-    projectId: string,
-    now: Date,
-  ): ExportSnapshotMaterialization {
+  readExportSource(scope: ProjectScope, projectId: string, capturedAt: Date): ExportSource {
     return this.db.transaction((tx) => {
       const project = scopedProject(tx, scope, projectId);
-      const current = readCurrentDocuments(tx, project.id);
+      assertCurrentExportSourceCapacity(tx, project.id);
+      const current = readCurrentExportDocuments(tx, project.id);
       const latest = findLatestExportSnapshot(tx, project.id);
-      if (latest !== undefined) {
-        const captured = readSnapshotDocuments(tx, latest.id);
-        if (hasMatchingRevisionMap(current, captured)) {
-          return { snapshotId: latest.id, documents: captured };
+      if (latest !== undefined && isExportSnapshotWithinSourceCapacity(tx, project.id, latest.id)) {
+        const captured = readExportSnapshotDocuments(tx, latest.id);
+        if (sameExportSourceProjection(current, captured)) {
+          return {
+            projectId: project.id,
+            projectTitle: project.title,
+            capturedAt,
+            reuseSnapshotId: latest.id,
+            documents: captured,
+          };
         }
       }
-      const snapshotId = writeExportSnapshot(tx, project.id, current, now);
-      return { snapshotId, documents: readSnapshotDocuments(tx, snapshotId) };
+      return {
+        projectId: project.id,
+        projectTitle: project.title,
+        capturedAt,
+        reuseSnapshotId: null,
+        documents: current,
+      };
     });
   }
 
-  appendArtifact(
+  recordCompletedExportJob(
+    scope: ProjectScope,
+    input: PreparedExportArtifact,
+  ): ExportCompletionRecord {
+    return this.db.transaction(
+      (tx) => {
+        const projectId = this.scopedInputProject(tx, scope, input);
+        const artifact = this.persistArtifact(tx, projectId, input);
+        const jobId = insertJobAndEvent(
+          tx,
+          completedExportJobInput(projectId, artifact, input),
+          (id) => this.beforeFreshJobEventInsert(tx, id),
+        );
+        return { artifact, job: jobWithEvents(tx, jobId) };
+      },
+      { behavior: "immediate" },
+    );
+  }
+
+  completeExportRetryJob(
     scope: ProjectScope,
     projectId: string,
-    input: AppendArtifactInput,
-  ): ExportArtifactRecord {
-    return this.db.transaction((tx) => {
-      const project = scopedProject(tx, scope, projectId);
-      const snapshot = tx
-        .select({ id: projectSnapshots.id })
-        .from(projectSnapshots)
-        .where(
-          and(
-            eq(projectSnapshots.id, input.snapshotId),
-            eq(projectSnapshots.projectId, project.id),
-            eq(projectSnapshots.reason, "export"),
-          ),
-        )
-        .get();
-      if (snapshot === undefined) {
-        throw new NotFoundError("Export snapshot not found.");
-      }
-      tx.insert(exportArtifacts)
-        .values({
-          id: input.id,
-          projectId: project.id,
-          snapshotId: snapshot.id,
-          format: input.format,
-          relativePath: input.relativePath,
-          sizeBytes: input.sizeBytes,
-          checksumSha256: input.checksumSha256,
-          createdAt: input.createdAt,
-        })
-        .run();
-      return toArtifactRecord({ ...input, projectId: project.id });
-    });
+    jobId: string,
+    input: PreparedExportArtifact,
+  ): ExportCompletionRecord {
+    return this.db.transaction(
+      (tx) => {
+        scopedProject(tx, scope, projectId);
+        if (input.source.projectId !== projectId) {
+          throw new Error("Export source project does not match the retry target.");
+        }
+        const job = this.requireRunningExportRetry(tx, projectId, jobId, input.format);
+        const artifact = this.persistArtifact(tx, projectId, input);
+        applyJobOutcome(
+          tx,
+          job.id,
+          {
+            status: "completed",
+            resultJson: exportJobResultJson(projectId, artifact),
+            error: null,
+            eventDetailsJson: JSON.stringify({ export_id: artifact.id }),
+            now: input.createdAt,
+          },
+          (id) => this.beforeRetryEventInsert(tx, id),
+        );
+        return { artifact, job: jobWithEvents(tx, job.id) };
+      },
+      { behavior: "immediate" },
+    );
   }
 
   listProjectArtifacts(scope: ProjectScope, projectId: string): ExportArtifactRecord[] {
     return this.db.transaction((tx) => {
       const project = scopedProject(tx, scope, projectId);
-      return tx
-        .select()
-        .from(exportArtifacts)
-        .where(eq(exportArtifacts.projectId, project.id))
-        .orderBy(desc(exportArtifacts.createdAt), desc(exportArtifacts.id))
-        .all()
-        .map(toArtifactRecord);
+      return loadProjectArtifacts(tx, project.id);
     });
   }
 
@@ -121,165 +129,94 @@ export class ExportStorePart implements ExportStore {
   ): ExportArtifactRecord {
     return this.db.transaction((tx) => {
       const project = scopedProject(tx, scope, projectId);
-      const artifact = tx
-        .select()
-        .from(exportArtifacts)
-        .where(and(eq(exportArtifacts.id, artifactId), eq(exportArtifacts.projectId, project.id)))
-        .get();
-      if (artifact === undefined) {
-        throw new NotFoundError("Export artifact not found.");
-      }
-      return toArtifactRecord(artifact);
+      const artifact = loadProjectArtifact(tx, project.id, artifactId);
+      if (artifact === undefined) throw new NotFoundError("Export artifact not found.");
+      return artifact;
     });
   }
-}
 
-function readCurrentDocuments(tx: Tx, projectId: string): CurrentDocument[] {
-  const rows = tx
-    .select({
-      document: documents,
-      revision: documentRevisions,
-      volumePosition: volumes.position,
-    })
-    .from(documents)
-    .leftJoin(documentRevisions, eq(documents.currentRevisionId, documentRevisions.id))
-    .leftJoin(volumes, eq(documents.volumeId, volumes.id))
-    .where(eq(documents.projectId, projectId))
-    .all();
-  const ordered = rows
-    .map((row) => ({
-      key: {
-        kind: row.document.kind,
-        position: row.document.position,
-        createdAt: row.document.createdAt,
-        id: row.document.id,
-        volumePosition: row.volumePosition ?? null,
-      },
-      row,
-    }))
-    .sort((left, right) => compareReadingOrder(left.key, right.key))
-    .map((entry) => entry.row);
-  return ordered.map(({ document, revision }, index) => {
+  /** Failure seam after snapshot writes but before the artifact row. */
+  protected beforeArtifactInsert(_tx: Tx, _artifactId: string): void {}
+
+  /** Failure seam after the fresh job row but before its completed event. */
+  protected beforeFreshJobEventInsert(_tx: Tx, _jobId: string): void {}
+
+  /** Failure seam after retry update but before its completed event. */
+  protected beforeRetryEventInsert(_tx: Tx, _jobId: string): void {}
+
+  private scopedInputProject(tx: Tx, scope: ProjectScope, input: PreparedExportArtifact): string {
+    const project = scopedProject(tx, scope, input.source.projectId);
+    return project.id;
+  }
+
+  private persistArtifact(
+    tx: Tx,
+    projectId: string,
+    input: PreparedExportArtifact,
+  ): ExportArtifactRecord {
+    if (input.source.projectId !== projectId) {
+      throw new Error("Export source project does not match the persistence target.");
+    }
+    const snapshotId = resolveExportSnapshot(tx, projectId, input.source);
+    return insertExportArtifact(tx, projectId, snapshotId, input, (artifactId) =>
+      this.beforeArtifactInsert(tx, artifactId),
+    );
+  }
+
+  private requireRunningExportRetry(
+    tx: Tx,
+    projectId: string,
+    jobId: string,
+    format: PreparedExportArtifact["format"],
+  ): typeof jobs.$inferSelect {
+    const job = tx.select().from(jobs).where(eq(jobs.id, jobId)).get();
     if (
-      document.currentRevisionId === null ||
-      revision === null ||
-      revision.id !== document.currentRevisionId ||
-      revision.documentId !== document.id
+      job === undefined ||
+      job.project_id !== projectId ||
+      job.kind !== "export" ||
+      job.operation !== "export" ||
+      job.document_id !== null ||
+      job.retry_of_job_id === null
     ) {
-      throw new InvalidOperationError(
-        "Every export snapshot document requires a current revision.",
-      );
+      throw new NotFoundError("Export retry job not found.");
     }
-    // The frozen snapshot carries a dense reading-order index so every later
-    // consumer sorts chapters into the exact exported sequence.
-    return {
-      documentId: document.id,
-      revisionId: revision.id,
-      kind: document.kind,
-      title: document.title,
-      metadataJson: revision.metadataJson,
-      position: index + 1,
-    };
-  });
-}
-
-function findLatestExportSnapshot(tx: Tx, projectId: string) {
-  return tx
-    .select()
-    .from(projectSnapshots)
-    .where(and(eq(projectSnapshots.projectId, projectId), eq(projectSnapshots.reason, "export")))
-    .orderBy(desc(projectSnapshots.createdAt), desc(projectSnapshots.id))
-    .get();
-}
-
-function readSnapshotDocuments(tx: Tx, snapshotId: string): ExportSnapshotDocument[] {
-  const rows = tx
-    .select({ snapshotDocument: snapshotDocuments, revision: documentRevisions })
-    .from(snapshotDocuments)
-    .leftJoin(documentRevisions, eq(snapshotDocuments.revisionId, documentRevisions.id))
-    .where(eq(snapshotDocuments.snapshotId, snapshotId))
-    .orderBy(asc(snapshotDocuments.position), asc(snapshotDocuments.documentId))
-    .all();
-  return rows.map(({ snapshotDocument, revision }) => {
-    if (revision === null || revision.documentId !== snapshotDocument.documentId) {
-      throw new InvalidOperationError("Export snapshot references an invalid document revision.");
+    if (job.status !== "running" && job.status !== "pending") {
+      throw new InvalidJobTransitionError(job.id, job.status, "completed");
     }
-    return {
-      snapshotDocumentId: snapshotDocument.id,
-      documentId: snapshotDocument.documentId,
-      revisionId: snapshotDocument.revisionId,
-      kind: snapshotDocument.documentKind,
-      title: snapshotDocument.documentTitle,
-      contentMarkdown: revision.contentMarkdown,
-      metadataJson: snapshotDocument.revisionMetadataJson,
-      position: snapshotDocument.position,
-    };
-  });
-}
-
-function hasMatchingRevisionMap(
-  current: readonly CurrentDocument[],
-  captured: readonly ExportSnapshotDocument[],
-): boolean {
-  if (current.length !== captured.length) {
-    return false;
+    if (job.provider !== EXPORT_PROVIDER) {
+      throw new Error("Export retry provider is invalid.");
+    }
+    if (readStoredExportFormat(job.request_json) !== format) {
+      throw new Error("Export retry format does not match the prepared artifact.");
+    }
+    return job;
   }
-  const capturedByDocumentId = new Map(
-    captured.map((document) => [document.documentId, document.revisionId]),
-  );
-  return (
-    capturedByDocumentId.size === current.length &&
-    current.every(
-      (document) => capturedByDocumentId.get(document.documentId) === document.revisionId,
-    )
-  );
 }
 
-function writeExportSnapshot(
-  tx: Tx,
+function completedExportJobInput(
   projectId: string,
-  current: readonly CurrentDocument[],
-  now: Date,
-): string {
-  const snapshotId = randomUUID();
-  tx.insert(projectSnapshots)
-    .values({ id: snapshotId, projectId, reason: "export", createdAt: now })
-    .run();
-  for (const document of current) {
-    tx.insert(snapshotDocuments)
-      .values({
-        id: randomUUID(),
-        snapshotId,
-        documentId: document.documentId,
-        revisionId: document.revisionId,
-        documentKind: document.kind,
-        documentTitle: document.title,
-        revisionMetadataJson: document.metadataJson,
-        position: document.position,
-      })
-      .run();
-  }
-  return snapshotId;
-}
-
-function toArtifactRecord(
-  artifact: typeof exportArtifacts.$inferSelect | (AppendArtifactInput & { projectId: string }),
-): ExportArtifactRecord {
+  artifact: ExportArtifactRecord,
+  input: PreparedExportArtifact,
+): AddJobInput {
   return {
-    id: artifact.id,
-    projectId: artifact.projectId,
-    snapshotId: artifact.snapshotId,
-    format: readArtifactFormat(artifact.format),
-    relativePath: artifact.relativePath,
-    sizeBytes: artifact.sizeBytes,
-    checksumSha256: artifact.checksumSha256,
-    createdAt: artifact.createdAt,
+    projectId,
+    documentId: null,
+    kind: "export",
+    operation: "export",
+    status: "completed",
+    provider: EXPORT_PROVIDER,
+    model: "",
+    requestJson: JSON.stringify({ format: input.format }),
+    resultJson: exportJobResultJson(projectId, artifact),
+    error: null,
+    eventDetailsJson: JSON.stringify({ export_id: artifact.id }),
+    now: input.createdAt,
   };
 }
 
-function readArtifactFormat(format: string): ExportArtifactFormat {
-  if (format === "markdown" || format === "docx" || format === "epub") {
-    return format;
-  }
-  throw new InvalidOperationError("Export artifact format is invalid.");
+function readStoredExportFormat(requestJson: string): string | undefined {
+  const parsed: unknown = JSON.parse(requestJson);
+  if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed)) return undefined;
+  const format = (parsed as Record<string, unknown>).format;
+  return typeof format === "string" ? format : undefined;
 }

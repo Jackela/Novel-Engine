@@ -40,7 +40,7 @@ describe("non-drizzle schema guard", () => {
     const databasePath = join(directory, DATABASE_FILENAME);
     createPythonSchemaDatabase(databasePath);
 
-    await expect(openStudioDatabase(directory)).rejects.toThrow(/non-drizzle schema/);
+    await expect(openStudioDatabase(databasePath)).rejects.toThrow(/non-drizzle schema/);
     await expect(readdir(join(directory, "backups"))).rejects.toThrow();
   });
 
@@ -48,8 +48,12 @@ describe("non-drizzle schema guard", () => {
     const directory = await makeDataDirectory();
     createPythonSchemaDatabase(join(directory, DATABASE_FILENAME));
 
-    await expect(openStudioDatabase(directory)).rejects.toThrow(/non-drizzle schema/);
-    await expect(openStudioDatabase(directory)).rejects.toThrow(/non-drizzle schema/);
+    await expect(openStudioDatabase(join(directory, DATABASE_FILENAME))).rejects.toThrow(
+      /non-drizzle schema/,
+    );
+    await expect(openStudioDatabase(join(directory, DATABASE_FILENAME))).rejects.toThrow(
+      /non-drizzle schema/,
+    );
     await expect(readdir(join(directory, "backups"))).rejects.toThrow();
   });
 
@@ -65,7 +69,7 @@ describe("non-drizzle schema guard", () => {
 
     // Journal-less foreign tables are not the Python schema: the pipeline
     // still writes its pre-migration backup before migrations run.
-    await expect(openStudioDatabase(directory)).resolves.toBeTruthy();
+    await expect(openStudioDatabase(databasePath)).resolves.toBeTruthy();
     const backups = await readdir(join(directory, "backups"));
     expect(backups.length).toBe(1);
   });

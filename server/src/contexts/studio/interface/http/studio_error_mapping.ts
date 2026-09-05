@@ -2,13 +2,19 @@ import { InvalidOperationError } from "../../../../shared/domain/exceptions.js";
 import {
   AppError,
   ERROR_CODES,
+  ERROR_HTTP_STATUS,
   INVALID_OPERATION_CODE,
   INVALID_OPERATION_STATUS_CODE,
 } from "../../../../shared/interface/http/error_envelope.js";
 import {
   DuplicateDocumentError,
   DuplicateVolumeError,
+  ExportCapacityExceededError,
+  GenerationCapacityExceededError,
+  ImportCapacityExceededError,
+  InvalidProjectUpdateError,
   NotFoundError,
+  OperationCapacityExceededError,
   OperationInFlightError,
   RevisionConflictError,
   SnapshotConflict,
@@ -20,6 +26,16 @@ import {
  * the opaque 500 handler.
  */
 function toAppError(error: unknown): unknown {
+  if (error instanceof InvalidProjectUpdateError) {
+    return new AppError({
+      statusCode: ERROR_HTTP_STATUS[ERROR_CODES.VALIDATION_ERROR],
+      code: ERROR_CODES.VALIDATION_ERROR,
+      message: "Request validation failed.",
+      details: {
+        errors: [{ field: "title", type: "minLength", message: error.message }],
+      },
+    });
+  }
   if (error instanceof NotFoundError) {
     return new AppError({
       statusCode: 404,
@@ -65,6 +81,60 @@ function toAppError(error: unknown): unknown {
         project_id: error.projectId,
         document_id: error.documentId,
         operation: error.operation,
+      },
+      ...(error.retryAfterSeconds === undefined
+        ? {}
+        : { responseHeaders: { "retry-after": String(error.retryAfterSeconds) } }),
+    });
+  }
+  if (error instanceof OperationCapacityExceededError) {
+    return new AppError({
+      statusCode: ERROR_HTTP_STATUS[ERROR_CODES.OPERATION_CAPACITY_EXCEEDED],
+      code: ERROR_CODES.OPERATION_CAPACITY_EXCEEDED,
+      message: error.message,
+      details: {
+        scope: error.scope,
+        limit: error.limit,
+        in_flight: error.inFlight,
+        project_id: error.projectId,
+        retry_after_seconds: error.retryAfterSeconds,
+      },
+      responseHeaders: { "retry-after": String(error.retryAfterSeconds) },
+    });
+  }
+  if (error instanceof ImportCapacityExceededError) {
+    return new AppError({
+      statusCode: ERROR_HTTP_STATUS[ERROR_CODES.IMPORT_CAPACITY_EXCEEDED],
+      code: ERROR_CODES.IMPORT_CAPACITY_EXCEEDED,
+      message: error.message,
+      details: {
+        resource: error.resource,
+        limit: error.limit,
+        observed: error.observed,
+      },
+    });
+  }
+  if (error instanceof ExportCapacityExceededError) {
+    return new AppError({
+      statusCode: ERROR_HTTP_STATUS[ERROR_CODES.EXPORT_CAPACITY_EXCEEDED],
+      code: ERROR_CODES.EXPORT_CAPACITY_EXCEEDED,
+      message: error.message,
+      details: {
+        resource: error.resource,
+        limit: error.limit,
+        observed: error.observed,
+      },
+    });
+  }
+  if (error instanceof GenerationCapacityExceededError) {
+    return new AppError({
+      statusCode: ERROR_HTTP_STATUS[ERROR_CODES.GENERATION_CAPACITY_EXCEEDED],
+      code: ERROR_CODES.GENERATION_CAPACITY_EXCEEDED,
+      message: error.message,
+      details: {
+        resource: error.resource,
+        limit: error.limit,
+        observed: error.observed,
       },
     });
   }

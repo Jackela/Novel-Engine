@@ -4,7 +4,7 @@
 
 ## OVERVIEW
 
-Novel Engine 0.4.0 is a self-hosted writing studio. Backend: Node.js 24, Fastify v5, TypeBox, Drizzle (better-sqlite3), SQLite. Frontend: React 19, Vite, TypeScript. Package manager: pnpm 11 (workspace: `frontend/` + `server/`). The Python stack is retired at git tag `python-final` (0.3.x); history is the archive.
+Novel Engine is a self-hosted writing studio. Backend: Node.js 24, Fastify v5, TypeBox, Drizzle (better-sqlite3), SQLite. Frontend: React 19, Vite, TypeScript. Package manager: pnpm 11 (workspace: `frontend/` + `server/`). The Python stack is retired at git tag `python-final` (0.3.x); history is the archive.
 
 Domain vocabulary is defined in `CONTEXT.md`; use its canonical terms in code names, docs, and discussion.
 
@@ -115,6 +115,7 @@ Require separate human confirmation before changing root package/lock files, `RE
 - Keep evidence replayable. Report exact commands, browser/API flows, or skipped checks with reasons.
 - Validate through the surface that owns the change: service/API tests for backend behavior, browser workflows for UI behavior, import/spec/SSOT gates for contracts.
 - Treat generated outputs, caches, local evidence, and ignored agent configuration as harness state, not product architecture.
+- Use `docs/agents/change-evidence.md` for evidence levels, fixed-SHA records, skips, human gates, and multi-agent write-set ownership.
 
 ## VALIDATION
 
@@ -137,11 +138,11 @@ pnpm --dir frontend build
 pnpm spec:validate
 ```
 
-CI additionally runs the API-types drift check, React static diagnostics, Playwright workflows against the TS backend, and a container persistence check. `make validate` / `just validate` wrap a subset; consult `.github/workflows/ci.yml` for the full contract.
+CI additionally runs the API-types drift check, React static diagnostics, Playwright workflows against the TS backend, and a container persistence check. `make validate` / `just validate` wrap a subset and are not CI-completion evidence; consult `.github/workflows/ci.yml` for the full contract.
 
 ## GIT / AUDIT
 
-Before AI work use `just snapshot` (or a deliberate snapshot commit). After work use `just check` and `just validate`. `just panic` is the emergency rollback path and must not be invoked casually.
+Before AI work, record `git status`, the relevant diff, and a fixed comparison SHA. Create a deliberate path-scoped snapshot commit only when every staged file belongs to the task. The legacy `just snapshot` stages the whole worktree and `just panic` performs destructive recovery; agents MUST NOT run either against user work. After work, inspect the complete diff and run the owning package scripts and applicable validation surfaces listed above, recording actual results and skips through `docs/agents/change-evidence.md`.
 
 Audit findings in `AUDIT_REPORT_Linus.md` are read-only references. Match one finding, its stated location, and its fix direction; do not broaden scope merely because nearby cleanup is possible.
 

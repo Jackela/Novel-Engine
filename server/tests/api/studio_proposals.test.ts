@@ -10,7 +10,7 @@ import {
   call,
   type DocumentPayload,
   draftProposal,
-  getProject,
+  getDocument,
   listRevisions,
   ownerJar,
   seedDocument,
@@ -88,7 +88,7 @@ describe("proposal flow", () => {
       const jar = await ownerJar(app);
       const project = await seedProject(app, jar, "Prose");
       const document = project.documents[0] as DocumentPayload;
-      const before = (await getProject(app, jar, project.id)).documents[0] as DocumentPayload;
+      const before = await getDocument(app, jar, project.id, document.id);
       const job = await draftProposal(app, jar, project.id, document.id, {
         operation: "continue",
         instruction: "Tighten the chase.",
@@ -110,7 +110,7 @@ describe("proposal flow", () => {
       expect(job.events.map((event) => event.status)).toEqual(["completed"]);
       expect(job.events.map((event) => event.details)).toEqual([{ proposal_only: true }]);
       // No acceptance yet: the document still points at revision A, nothing new exists.
-      const after = (await getProject(app, jar, project.id)).documents[0] as DocumentPayload;
+      const after = await getDocument(app, jar, project.id, document.id);
       expect(after.current_revision_id).toBe(before.current_revision_id);
       expect(after.content_markdown).toBe(before.content_markdown);
       expect(await listRevisions(app, jar, project.id, document.id)).toHaveLength(1);
@@ -252,11 +252,11 @@ describe("proposal flow", () => {
       expect(revisions).toHaveLength(2);
       const acceptedRevision = revisions.find((revision) => revision.id === acceptedRevisionId);
       expect(acceptedRevision?.source).toBe("ai-accepted");
-      expect(acceptedRevision?.metadata.ai_job_id).toBe(job.id);
-      expect(acceptedRevision?.content_markdown).toBe(job.result.proposal_markdown);
 
-      const after = (await getProject(app, jar, project.id)).documents[0] as DocumentPayload;
+      const after = await getDocument(app, jar, project.id, document.id);
       expect(after.current_revision_id).toBe(acceptedRevisionId);
+      expect(after.metadata.ai_job_id).toBe(job.id);
+      expect(after.content_markdown).toBe(job.result.proposal_markdown);
       expect(wordCount(after.content_markdown)).toBeGreaterThan(50);
     } finally {
       await app.close();

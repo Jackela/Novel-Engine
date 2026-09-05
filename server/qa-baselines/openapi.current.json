@@ -166,7 +166,7 @@
                 }
               }
             },
-            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+            "description": "Request validation, invalid legacy structure, or import capacity rejection. IMPORT_CAPACITY_EXCEEDED carries only resource, limit, and observed details."
           },
           "503": {
             "content": {
@@ -200,98 +200,6 @@
                           "description": {
                             "type": "string"
                           },
-                          "documents": {
-                            "items": {
-                              "additionalProperties": false,
-                              "properties": {
-                                "beat_ref": {
-                                  "nullable": true,
-                                  "type": "string"
-                                },
-                                "content_markdown": {
-                                  "type": "string"
-                                },
-                                "created_at": {
-                                  "type": "string"
-                                },
-                                "current_revision_id": {
-                                  "type": "string"
-                                },
-                                "id": {
-                                  "type": "string"
-                                },
-                                "kind": {
-                                  "enum": [
-                                    "chapter",
-                                    "outline",
-                                    "character",
-                                    "world",
-                                    "note"
-                                  ],
-                                  "type": "string"
-                                },
-                                "lore_status": {
-                                  "enum": [
-                                    "draft",
-                                    "stable",
-                                    "deprecated"
-                                  ],
-                                  "nullable": true,
-                                  "type": "string"
-                                },
-                                "metadata": {
-                                  "additionalProperties": true,
-                                  "type": "object"
-                                },
-                                "position": {
-                                  "type": "integer"
-                                },
-                                "project_id": {
-                                  "type": "string"
-                                },
-                                "revision_source": {
-                                  "enum": [
-                                    "author",
-                                    "ai-accepted",
-                                    "restore"
-                                  ],
-                                  "type": "string"
-                                },
-                                "title": {
-                                  "type": "string"
-                                },
-                                "updated_at": {
-                                  "type": "string"
-                                },
-                                "volume_id": {
-                                  "nullable": true,
-                                  "type": "string"
-                                },
-                                "word_count": {
-                                  "type": "integer"
-                                }
-                              },
-                              "required": [
-                                "id",
-                                "project_id",
-                                "kind",
-                                "title",
-                                "position",
-                                "volume_id",
-                                "beat_ref",
-                                "lore_status",
-                                "current_revision_id",
-                                "content_markdown",
-                                "metadata",
-                                "revision_source",
-                                "word_count",
-                                "created_at",
-                                "updated_at"
-                              ],
-                              "type": "object"
-                            },
-                            "type": "array"
-                          },
                           "id": {
                             "type": "string"
                           },
@@ -308,41 +216,6 @@
                           },
                           "updated_at": {
                             "type": "string"
-                          },
-                          "volumes": {
-                            "items": {
-                              "additionalProperties": false,
-                              "properties": {
-                                "created_at": {
-                                  "type": "string"
-                                },
-                                "id": {
-                                  "type": "string"
-                                },
-                                "position": {
-                                  "type": "integer"
-                                },
-                                "project_id": {
-                                  "type": "string"
-                                },
-                                "title": {
-                                  "type": "string"
-                                },
-                                "updated_at": {
-                                  "type": "string"
-                                }
-                              },
-                              "required": [
-                                "id",
-                                "project_id",
-                                "title",
-                                "position",
-                                "created_at",
-                                "updated_at"
-                              ],
-                              "type": "object"
-                            },
-                            "type": "array"
                           }
                         },
                         "required": [
@@ -438,9 +311,6 @@
                             "nullable": true,
                             "type": "string"
                           },
-                          "content_markdown": {
-                            "type": "string"
-                          },
                           "created_at": {
                             "type": "string"
                           },
@@ -469,10 +339,6 @@
                             "nullable": true,
                             "type": "string"
                           },
-                          "metadata": {
-                            "additionalProperties": true,
-                            "type": "object"
-                          },
                           "position": {
                             "type": "integer"
                           },
@@ -498,6 +364,7 @@
                             "type": "string"
                           },
                           "word_count": {
+                            "minimum": 0,
                             "type": "integer"
                           }
                         },
@@ -511,8 +378,6 @@
                           "beat_ref",
                           "lore_status",
                           "current_revision_id",
-                          "content_markdown",
-                          "metadata",
                           "revision_source",
                           "word_count",
                           "created_at",
@@ -681,6 +546,63 @@
             },
             "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
           },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "error": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "code": {
+                          "enum": [
+                            "OPERATION_IN_FLIGHT"
+                          ],
+                          "type": "string"
+                        },
+                        "details": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "document_id": {
+                              "nullable": true,
+                              "type": "string"
+                            },
+                            "operation": {
+                              "type": "string"
+                            },
+                            "project_id": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "project_id",
+                            "document_id",
+                            "operation"
+                          ],
+                          "type": "object"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message",
+                        "details"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
           "503": {
             "content": {
               "application/json": {
@@ -725,9 +647,6 @@
                             "nullable": true,
                             "type": "string"
                           },
-                          "content_markdown": {
-                            "type": "string"
-                          },
                           "created_at": {
                             "type": "string"
                           },
@@ -756,10 +675,6 @@
                             "nullable": true,
                             "type": "string"
                           },
-                          "metadata": {
-                            "additionalProperties": true,
-                            "type": "object"
-                          },
                           "position": {
                             "type": "integer"
                           },
@@ -785,6 +700,7 @@
                             "type": "string"
                           },
                           "word_count": {
+                            "minimum": 0,
                             "type": "integer"
                           }
                         },
@@ -798,8 +714,6 @@
                           "beat_ref",
                           "lore_status",
                           "current_revision_id",
-                          "content_markdown",
-                          "metadata",
                           "revision_source",
                           "word_count",
                           "created_at",
@@ -890,6 +804,152 @@
             "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
           },
           "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          }
+        }
+      },
+      "patch": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "minProperties": 1,
+                "properties": {
+                  "description": {
+                    "maxLength": 10000,
+                    "type": "string"
+                  },
+                  "settings": {
+                    "additionalProperties": true,
+                    "type": "object"
+                  },
+                  "title": {
+                    "maxLength": 240,
+                    "minLength": 1,
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "created_at": {
+                      "type": "string"
+                    },
+                    "description": {
+                      "type": "string"
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "import_hash": {
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "settings": {
+                      "additionalProperties": true,
+                      "type": "object"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "updated_at": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "title",
+                    "description",
+                    "settings",
+                    "import_hash",
+                    "created_at",
+                    "updated_at"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "500": {
             "content": {
               "application/json": {
                 "schema": {
@@ -1384,9 +1444,6 @@
                             "nullable": true,
                             "type": "string"
                           },
-                          "content_markdown": {
-                            "type": "string"
-                          },
                           "created_at": {
                             "type": "string"
                           },
@@ -1415,10 +1472,6 @@
                             "nullable": true,
                             "type": "string"
                           },
-                          "metadata": {
-                            "additionalProperties": true,
-                            "type": "object"
-                          },
                           "position": {
                             "type": "integer"
                           },
@@ -1444,6 +1497,7 @@
                             "type": "string"
                           },
                           "word_count": {
+                            "minimum": 0,
                             "type": "integer"
                           }
                         },
@@ -1457,8 +1511,6 @@
                           "beat_ref",
                           "lore_status",
                           "current_revision_id",
-                          "content_markdown",
-                          "metadata",
                           "revision_source",
                           "word_count",
                           "created_at",
@@ -1622,6 +1674,154 @@
               }
             },
             "description": "Default Response"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          }
+        }
+      },
+      "get": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "documentId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "beat_ref": {
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "content_markdown": {
+                      "type": "string"
+                    },
+                    "created_at": {
+                      "type": "string"
+                    },
+                    "current_revision_id": {
+                      "type": "string"
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "kind": {
+                      "enum": [
+                        "chapter",
+                        "outline",
+                        "character",
+                        "world",
+                        "note"
+                      ],
+                      "type": "string"
+                    },
+                    "lore_status": {
+                      "enum": [
+                        "draft",
+                        "stable",
+                        "deprecated"
+                      ],
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "metadata": {
+                      "additionalProperties": true,
+                      "type": "object"
+                    },
+                    "position": {
+                      "type": "integer"
+                    },
+                    "project_id": {
+                      "type": "string"
+                    },
+                    "revision_source": {
+                      "enum": [
+                        "author",
+                        "ai-accepted",
+                        "restore"
+                      ],
+                      "type": "string"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "updated_at": {
+                      "type": "string"
+                    },
+                    "volume_id": {
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "word_count": {
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "project_id",
+                    "kind",
+                    "title",
+                    "position",
+                    "volume_id",
+                    "beat_ref",
+                    "lore_status",
+                    "current_revision_id",
+                    "content_markdown",
+                    "metadata",
+                    "revision_source",
+                    "word_count",
+                    "created_at",
+                    "updated_at"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
           },
           "503": {
             "content": {
@@ -2141,21 +2341,284 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
+                  "oneOf": [
+                    {
+                      "additionalProperties": false,
+                      "properties": {
+                        "error": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "code": {
+                              "enum": [
+                                "INVALID_OPERATION"
+                              ],
+                              "type": "string"
+                            },
+                            "message": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "code",
+                            "message"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "error"
+                      ],
+                      "type": "object"
+                    },
+                    {
+                      "additionalProperties": false,
+                      "properties": {
+                        "error": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "code": {
+                              "enum": [
+                                "GENERATION_CAPACITY_EXCEEDED"
+                              ],
+                              "type": "string"
+                            },
+                            "details": {
+                              "additionalProperties": false,
+                              "properties": {
+                                "limit": {
+                                  "enum": [
+                                    8388608
+                                  ],
+                                  "type": "integer"
+                                },
+                                "observed": {
+                                  "enum": [
+                                    8388609
+                                  ],
+                                  "type": "integer"
+                                },
+                                "resource": {
+                                  "enum": [
+                                    "prompt_bytes"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "resource",
+                                "limit",
+                                "observed"
+                              ],
+                              "type": "object"
+                            },
+                            "message": {
+                              "enum": [
+                                "Generation capacity exceeded."
+                              ],
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "code",
+                            "message",
+                            "details"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "error"
+                      ],
+                      "type": "object"
+                    },
+                    {
+                      "additionalProperties": false,
+                      "properties": {
+                        "error": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "code": {
+                              "enum": [
+                                "VALIDATION_ERROR"
+                              ],
+                              "type": "string"
+                            },
+                            "details": {
+                              "additionalProperties": false,
+                              "properties": {
+                                "errors": {
+                                  "items": {
+                                    "additionalProperties": false,
+                                    "properties": {
+                                      "field": {
+                                        "type": "string"
+                                      },
+                                      "message": {
+                                        "type": "string"
+                                      },
+                                      "type": {
+                                        "type": "string"
+                                      }
+                                    },
+                                    "required": [
+                                      "field",
+                                      "message",
+                                      "type"
+                                    ],
+                                    "type": "object"
+                                  },
+                                  "type": "array"
+                                }
+                              },
+                              "required": [
+                                "errors"
+                              ],
+                              "type": "object"
+                            },
+                            "message": {
+                              "enum": [
+                                "Request validation failed."
+                              ],
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "code",
+                            "message",
+                            "details"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "error"
+                      ],
+                      "type": "object"
+                    }
+                  ]
                 }
               }
             },
-            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+            "description": "Invalid proposal input or permanent generation-capacity refusal."
           },
           "503": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
+                  "oneOf": [
+                    {
+                      "additionalProperties": false,
+                      "properties": {
+                        "error": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "code": {
+                              "enum": [
+                                "OPERATION_CAPACITY_EXCEEDED"
+                              ],
+                              "type": "string"
+                            },
+                            "details": {
+                              "additionalProperties": false,
+                              "properties": {
+                                "in_flight": {
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "limit": {
+                                  "minimum": 1,
+                                  "type": "integer"
+                                },
+                                "project_id": {
+                                  "type": "string"
+                                },
+                                "retry_after_seconds": {
+                                  "minimum": 1,
+                                  "type": "integer"
+                                },
+                                "scope": {
+                                  "enum": [
+                                    "project",
+                                    "application"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "scope",
+                                "limit",
+                                "in_flight",
+                                "project_id",
+                                "retry_after_seconds"
+                              ],
+                              "type": "object"
+                            },
+                            "message": {
+                              "enum": [
+                                "Studio operation capacity is exhausted."
+                              ],
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "code",
+                            "message",
+                            "details"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "error"
+                      ],
+                      "type": "object"
+                    },
+                    {
+                      "additionalProperties": false,
+                      "properties": {
+                        "error": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "code": {
+                              "enum": [
+                                "SERVICE_UNAVAILABLE"
+                              ],
+                              "type": "string"
+                            },
+                            "details": {
+                              "additionalProperties": true,
+                              "type": "object"
+                            },
+                            "message": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "code",
+                            "message"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "error"
+                      ],
+                      "type": "object"
+                    }
+                  ]
                 }
               }
             },
-            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+            "description": "Workflow capacity exhaustion or unavailable persistence.",
+            "headers": {
+              "Retry-After": {
+                "description": "Optional integer-seconds hint emitted only for workflow capacity exhaustion.",
+                "schema": {
+                  "minimum": 1,
+                  "type": "integer"
+                }
+              }
+            }
           }
         }
       }
@@ -2320,21 +2783,284 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
+                  "oneOf": [
+                    {
+                      "additionalProperties": false,
+                      "properties": {
+                        "error": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "code": {
+                              "enum": [
+                                "INVALID_OPERATION"
+                              ],
+                              "type": "string"
+                            },
+                            "message": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "code",
+                            "message"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "error"
+                      ],
+                      "type": "object"
+                    },
+                    {
+                      "additionalProperties": false,
+                      "properties": {
+                        "error": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "code": {
+                              "enum": [
+                                "GENERATION_CAPACITY_EXCEEDED"
+                              ],
+                              "type": "string"
+                            },
+                            "details": {
+                              "additionalProperties": false,
+                              "properties": {
+                                "limit": {
+                                  "enum": [
+                                    8388608
+                                  ],
+                                  "type": "integer"
+                                },
+                                "observed": {
+                                  "enum": [
+                                    8388609
+                                  ],
+                                  "type": "integer"
+                                },
+                                "resource": {
+                                  "enum": [
+                                    "prompt_bytes"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "resource",
+                                "limit",
+                                "observed"
+                              ],
+                              "type": "object"
+                            },
+                            "message": {
+                              "enum": [
+                                "Generation capacity exceeded."
+                              ],
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "code",
+                            "message",
+                            "details"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "error"
+                      ],
+                      "type": "object"
+                    },
+                    {
+                      "additionalProperties": false,
+                      "properties": {
+                        "error": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "code": {
+                              "enum": [
+                                "VALIDATION_ERROR"
+                              ],
+                              "type": "string"
+                            },
+                            "details": {
+                              "additionalProperties": false,
+                              "properties": {
+                                "errors": {
+                                  "items": {
+                                    "additionalProperties": false,
+                                    "properties": {
+                                      "field": {
+                                        "type": "string"
+                                      },
+                                      "message": {
+                                        "type": "string"
+                                      },
+                                      "type": {
+                                        "type": "string"
+                                      }
+                                    },
+                                    "required": [
+                                      "field",
+                                      "message",
+                                      "type"
+                                    ],
+                                    "type": "object"
+                                  },
+                                  "type": "array"
+                                }
+                              },
+                              "required": [
+                                "errors"
+                              ],
+                              "type": "object"
+                            },
+                            "message": {
+                              "enum": [
+                                "Request validation failed."
+                              ],
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "code",
+                            "message",
+                            "details"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "error"
+                      ],
+                      "type": "object"
+                    }
+                  ]
                 }
               }
             },
-            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+            "description": "Invalid proposal input or permanent generation-capacity refusal."
           },
           "503": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
+                  "oneOf": [
+                    {
+                      "additionalProperties": false,
+                      "properties": {
+                        "error": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "code": {
+                              "enum": [
+                                "OPERATION_CAPACITY_EXCEEDED"
+                              ],
+                              "type": "string"
+                            },
+                            "details": {
+                              "additionalProperties": false,
+                              "properties": {
+                                "in_flight": {
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "limit": {
+                                  "minimum": 1,
+                                  "type": "integer"
+                                },
+                                "project_id": {
+                                  "type": "string"
+                                },
+                                "retry_after_seconds": {
+                                  "minimum": 1,
+                                  "type": "integer"
+                                },
+                                "scope": {
+                                  "enum": [
+                                    "project",
+                                    "application"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "scope",
+                                "limit",
+                                "in_flight",
+                                "project_id",
+                                "retry_after_seconds"
+                              ],
+                              "type": "object"
+                            },
+                            "message": {
+                              "enum": [
+                                "Studio operation capacity is exhausted."
+                              ],
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "code",
+                            "message",
+                            "details"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "error"
+                      ],
+                      "type": "object"
+                    },
+                    {
+                      "additionalProperties": false,
+                      "properties": {
+                        "error": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "code": {
+                              "enum": [
+                                "SERVICE_UNAVAILABLE"
+                              ],
+                              "type": "string"
+                            },
+                            "details": {
+                              "additionalProperties": true,
+                              "type": "object"
+                            },
+                            "message": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "code",
+                            "message"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "error"
+                      ],
+                      "type": "object"
+                    }
+                  ]
                 }
               }
             },
-            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+            "description": "Workflow capacity exhaustion or unavailable persistence.",
+            "headers": {
+              "Retry-After": {
+                "description": "Optional integer-seconds hint emitted only for workflow capacity exhaustion.",
+                "schema": {
+                  "minimum": 1,
+                  "type": "integer"
+                }
+              }
+            }
           }
         }
       }
@@ -2872,6 +3598,28 @@
       "get": {
         "parameters": [
           {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "maxLength": 1024,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9_-]+$",
+              "type": "string"
+            }
+          },
+          {
             "in": "path",
             "name": "projectId",
             "required": true,
@@ -2895,14 +3643,16 @@
                 "schema": {
                   "additionalProperties": false,
                   "properties": {
+                    "next_cursor": {
+                      "nullable": true,
+                      "type": "string"
+                    },
                     "revisions": {
                       "items": {
                         "additionalProperties": false,
                         "properties": {
-                          "content_markdown": {
-                            "type": "string"
-                          },
                           "created_at": {
+                            "format": "date-time",
                             "type": "string"
                           },
                           "document_id": {
@@ -2911,15 +3661,12 @@
                           "id": {
                             "type": "string"
                           },
-                          "metadata": {
-                            "additionalProperties": true,
-                            "type": "object"
-                          },
                           "parent_revision_id": {
                             "nullable": true,
                             "type": "string"
                           },
                           "revision_number": {
+                            "minimum": 1,
                             "type": "integer"
                           },
                           "source": {
@@ -2931,6 +3678,7 @@
                             "type": "string"
                           },
                           "word_count": {
+                            "minimum": 0,
                             "type": "integer"
                           }
                         },
@@ -2939,8 +3687,6 @@
                           "document_id",
                           "parent_revision_id",
                           "revision_number",
-                          "content_markdown",
-                          "metadata",
                           "source",
                           "word_count",
                           "created_at"
@@ -2951,7 +3697,8 @@
                     }
                   },
                   "required": [
-                    "revisions"
+                    "revisions",
+                    "next_cursor"
                   ],
                   "type": "object"
                 }
@@ -2970,6 +3717,16 @@
             "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
           },
           "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "422": {
             "content": {
               "application/json": {
                 "schema": {
@@ -3779,21 +4536,285 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
+                  "oneOf": [
+                    {
+                      "additionalProperties": false,
+                      "properties": {
+                        "error": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "code": {
+                              "enum": [
+                                "INVALID_OPERATION"
+                              ],
+                              "type": "string"
+                            },
+                            "message": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "code",
+                            "message"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "error"
+                      ],
+                      "type": "object"
+                    },
+                    {
+                      "additionalProperties": false,
+                      "properties": {
+                        "error": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "code": {
+                              "enum": [
+                                "EXPORT_CAPACITY_EXCEEDED"
+                              ],
+                              "type": "string"
+                            },
+                            "details": {
+                              "additionalProperties": false,
+                              "properties": {
+                                "limit": {
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "observed": {
+                                  "maximum": 9007199254740991,
+                                  "minimum": 1,
+                                  "type": "integer"
+                                },
+                                "resource": {
+                                  "enum": [
+                                    "source_documents",
+                                    "source_bytes",
+                                    "artifact_bytes",
+                                    "manifest_bytes"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "resource",
+                                "limit",
+                                "observed"
+                              ],
+                              "type": "object"
+                            },
+                            "message": {
+                              "enum": [
+                                "Export capacity exceeded."
+                              ],
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "code",
+                            "message",
+                            "details"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "error"
+                      ],
+                      "type": "object"
+                    },
+                    {
+                      "additionalProperties": false,
+                      "properties": {
+                        "error": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "code": {
+                              "enum": [
+                                "VALIDATION_ERROR"
+                              ],
+                              "type": "string"
+                            },
+                            "details": {
+                              "additionalProperties": false,
+                              "properties": {
+                                "errors": {
+                                  "items": {
+                                    "additionalProperties": false,
+                                    "properties": {
+                                      "field": {
+                                        "type": "string"
+                                      },
+                                      "message": {
+                                        "type": "string"
+                                      },
+                                      "type": {
+                                        "type": "string"
+                                      }
+                                    },
+                                    "required": [
+                                      "field",
+                                      "message",
+                                      "type"
+                                    ],
+                                    "type": "object"
+                                  },
+                                  "type": "array"
+                                }
+                              },
+                              "required": [
+                                "errors"
+                              ],
+                              "type": "object"
+                            },
+                            "message": {
+                              "enum": [
+                                "Request validation failed."
+                              ],
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "code",
+                            "message",
+                            "details"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "error"
+                      ],
+                      "type": "object"
+                    }
+                  ]
                 }
               }
             },
-            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+            "description": "Invalid export precondition or permanent export-capacity outcome with bounded evidence."
           },
           "503": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
+                  "oneOf": [
+                    {
+                      "additionalProperties": false,
+                      "properties": {
+                        "error": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "code": {
+                              "enum": [
+                                "OPERATION_CAPACITY_EXCEEDED"
+                              ],
+                              "type": "string"
+                            },
+                            "details": {
+                              "additionalProperties": false,
+                              "properties": {
+                                "in_flight": {
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "limit": {
+                                  "minimum": 1,
+                                  "type": "integer"
+                                },
+                                "project_id": {
+                                  "type": "string"
+                                },
+                                "retry_after_seconds": {
+                                  "minimum": 1,
+                                  "type": "integer"
+                                },
+                                "scope": {
+                                  "enum": [
+                                    "project",
+                                    "application"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "scope",
+                                "limit",
+                                "in_flight",
+                                "project_id",
+                                "retry_after_seconds"
+                              ],
+                              "type": "object"
+                            },
+                            "message": {
+                              "enum": [
+                                "Studio operation capacity is exhausted."
+                              ],
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "code",
+                            "message",
+                            "details"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "error"
+                      ],
+                      "type": "object"
+                    },
+                    {
+                      "additionalProperties": false,
+                      "properties": {
+                        "error": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "code": {
+                              "enum": [
+                                "SERVICE_UNAVAILABLE"
+                              ],
+                              "type": "string"
+                            },
+                            "details": {
+                              "additionalProperties": true,
+                              "type": "object"
+                            },
+                            "message": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "code",
+                            "message"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "error"
+                      ],
+                      "type": "object"
+                    }
+                  ]
                 }
               }
             },
-            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+            "description": "Workflow capacity exhaustion or unavailable persistence.",
+            "headers": {
+              "Retry-After": {
+                "description": "Optional integer-seconds hint emitted only for workflow capacity exhaustion.",
+                "schema": {
+                  "minimum": 1,
+                  "type": "integer"
+                }
+              }
+            }
           }
         }
       }
@@ -3851,63 +4872,208 @@
           },
           "401": {
             "content": {
-              "application/epub+zip": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              },
-              "application/vnd.openxmlformats-officedocument.wordprocessingml.document": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              },
-              "text/markdown; charset=utf-8": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorEnvelope"
                 }
               }
             },
-            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+            "description": "Default Response"
           },
           "404": {
             "content": {
-              "application/epub+zip": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              },
-              "application/vnd.openxmlformats-officedocument.wordprocessingml.document": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              },
-              "text/markdown; charset=utf-8": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorEnvelope"
                 }
               }
             },
-            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+            "description": "Default Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "error": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "code": {
+                          "enum": [
+                            "EXPORT_CAPACITY_EXCEEDED"
+                          ],
+                          "type": "string"
+                        },
+                        "details": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "limit": {
+                              "maximum": 9007199254740991,
+                              "minimum": 0,
+                              "type": "integer"
+                            },
+                            "observed": {
+                              "maximum": 9007199254740991,
+                              "minimum": 1,
+                              "type": "integer"
+                            },
+                            "resource": {
+                              "enum": [
+                                "artifact_bytes"
+                              ],
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "resource",
+                            "limit",
+                            "observed"
+                          ],
+                          "type": "object"
+                        },
+                        "message": {
+                          "enum": [
+                            "Export capacity exceeded."
+                          ],
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message",
+                        "details"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Permanent artifact download capacity refusal with bounded evidence."
           },
           "503": {
             "content": {
-              "application/epub+zip": {
+              "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              },
-              "application/vnd.openxmlformats-officedocument.wordprocessingml.document": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              },
-              "text/markdown; charset=utf-8": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
+                  "oneOf": [
+                    {
+                      "additionalProperties": false,
+                      "properties": {
+                        "error": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "code": {
+                              "enum": [
+                                "OPERATION_CAPACITY_EXCEEDED"
+                              ],
+                              "type": "string"
+                            },
+                            "details": {
+                              "additionalProperties": false,
+                              "properties": {
+                                "in_flight": {
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "limit": {
+                                  "minimum": 1,
+                                  "type": "integer"
+                                },
+                                "project_id": {
+                                  "type": "string"
+                                },
+                                "retry_after_seconds": {
+                                  "minimum": 1,
+                                  "type": "integer"
+                                },
+                                "scope": {
+                                  "enum": [
+                                    "project",
+                                    "application"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "scope",
+                                "limit",
+                                "in_flight",
+                                "project_id",
+                                "retry_after_seconds"
+                              ],
+                              "type": "object"
+                            },
+                            "message": {
+                              "enum": [
+                                "Studio operation capacity is exhausted."
+                              ],
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "code",
+                            "message",
+                            "details"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "error"
+                      ],
+                      "type": "object"
+                    },
+                    {
+                      "additionalProperties": false,
+                      "properties": {
+                        "error": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "code": {
+                              "enum": [
+                                "SERVICE_UNAVAILABLE"
+                              ],
+                              "type": "string"
+                            },
+                            "details": {
+                              "additionalProperties": true,
+                              "type": "object"
+                            },
+                            "message": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "code",
+                            "message"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "error"
+                      ],
+                      "type": "object"
+                    }
+                  ]
                 }
               }
             },
-            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+            "description": "Workflow capacity exhaustion or unavailable persistence.",
+            "headers": {
+              "Retry-After": {
+                "description": "Optional integer-seconds hint emitted only for workflow capacity exhaustion.",
+                "schema": {
+                  "minimum": 1,
+                  "type": "integer"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -3920,6 +5086,28 @@
     "/api/projects/{projectId}/jobs": {
       "get": {
         "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "maxLength": 1024,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9_-]+$",
+              "type": "string"
+            }
+          },
           {
             "in": "path",
             "name": "projectId",
@@ -3941,6 +5129,7 @@
                         "additionalProperties": false,
                         "properties": {
                           "created_at": {
+                            "format": "date-time",
                             "type": "string"
                           },
                           "document_id": {
@@ -3951,45 +5140,30 @@
                             "nullable": true,
                             "type": "string"
                           },
-                          "events": {
-                            "description": "Chronological trail (oldest first) on a single job payload; the jobs LIST endpoint is the spec-mandated newest-first surface.",
-                            "items": {
-                              "additionalProperties": false,
-                              "properties": {
-                                "created_at": {
-                                  "type": "string"
-                                },
-                                "details": {
-                                  "additionalProperties": true,
-                                  "type": "object"
-                                },
-                                "id": {
-                                  "type": "string"
-                                },
-                                "status": {
-                                  "type": "string"
-                                }
-                              },
-                              "required": [
-                                "id",
-                                "status",
-                                "details",
-                                "created_at"
-                              ],
-                              "type": "object"
-                            },
-                            "type": "array"
-                          },
                           "id": {
                             "type": "string"
                           },
                           "kind": {
+                            "enum": [
+                              "proposal",
+                              "review",
+                              "export",
+                              "import"
+                            ],
                             "type": "string"
                           },
                           "model": {
                             "type": "string"
                           },
                           "operation": {
+                            "enum": [
+                              "continue",
+                              "rewrite",
+                              "generate",
+                              "review",
+                              "export",
+                              "import"
+                            ],
                             "type": "string"
                           },
                           "project_id": {
@@ -3998,22 +5172,22 @@
                           "provider": {
                             "type": "string"
                           },
-                          "request": {
-                            "additionalProperties": true,
-                            "type": "object"
-                          },
-                          "result": {
-                            "additionalProperties": true,
-                            "type": "object"
-                          },
                           "retry_of_job_id": {
                             "nullable": true,
                             "type": "string"
                           },
                           "status": {
+                            "enum": [
+                              "pending",
+                              "running",
+                              "completed",
+                              "failed",
+                              "interrupted"
+                            ],
                             "type": "string"
                           },
                           "updated_at": {
+                            "format": "date-time",
                             "type": "string"
                           }
                         },
@@ -4026,21 +5200,23 @@
                           "status",
                           "provider",
                           "model",
-                          "request",
-                          "result",
                           "error",
                           "retry_of_job_id",
                           "created_at",
-                          "updated_at",
-                          "events"
+                          "updated_at"
                         ],
                         "type": "object"
                       },
                       "type": "array"
+                    },
+                    "next_cursor": {
+                      "nullable": true,
+                      "type": "string"
                     }
                   },
                   "required": [
-                    "jobs"
+                    "jobs",
+                    "next_cursor"
                   ],
                   "type": "object"
                 }
@@ -4059,6 +5235,190 @@
             "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
           },
           "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          }
+        }
+      }
+    },
+    "/api/projects/{projectId}/jobs/{jobId}": {
+      "get": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "maxLength": 64,
+              "minLength": 1,
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "jobId",
+            "required": true,
+            "schema": {
+              "maxLength": 64,
+              "minLength": 1,
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "created_at": {
+                      "type": "string"
+                    },
+                    "document_id": {
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "error": {
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "events": {
+                      "description": "Chronological trail (oldest first) on a single job payload; the jobs LIST endpoint is the spec-mandated newest-first surface.",
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "created_at": {
+                            "type": "string"
+                          },
+                          "details": {
+                            "additionalProperties": true,
+                            "type": "object"
+                          },
+                          "id": {
+                            "type": "string"
+                          },
+                          "status": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "status",
+                          "details",
+                          "created_at"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "kind": {
+                      "type": "string"
+                    },
+                    "model": {
+                      "type": "string"
+                    },
+                    "operation": {
+                      "type": "string"
+                    },
+                    "project_id": {
+                      "type": "string"
+                    },
+                    "provider": {
+                      "type": "string"
+                    },
+                    "request": {
+                      "additionalProperties": true,
+                      "type": "object"
+                    },
+                    "result": {
+                      "additionalProperties": true,
+                      "type": "object"
+                    },
+                    "retry_of_job_id": {
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string"
+                    },
+                    "updated_at": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "project_id",
+                    "document_id",
+                    "kind",
+                    "operation",
+                    "status",
+                    "provider",
+                    "model",
+                    "request",
+                    "result",
+                    "error",
+                    "retry_of_job_id",
+                    "created_at",
+                    "updated_at",
+                    "events"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "422": {
             "content": {
               "application/json": {
                 "schema": {
@@ -4097,6 +5457,17 @@
             "name": "jobId",
             "required": true,
             "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "idempotency-key",
+            "required": true,
+            "schema": {
+              "maxLength": 128,
+              "minLength": 16,
+              "pattern": "^[A-Za-z0-9._~-]+$",
               "type": "string"
             }
           }
@@ -4293,27 +5664,361 @@
                 }
               }
             },
-            "description": "Default Response"
+            "description": "The retry attempt with this idempotency key is still running.",
+            "headers": {
+              "Retry-After": {
+                "description": "Wait one second before replaying this same retry attempt.",
+                "schema": {
+                  "const": 1,
+                  "type": "integer"
+                }
+              }
+            }
           },
           "422": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
+                  "oneOf": [
+                    {
+                      "additionalProperties": false,
+                      "properties": {
+                        "error": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "code": {
+                              "enum": [
+                                "INVALID_OPERATION"
+                              ],
+                              "type": "string"
+                            },
+                            "message": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "code",
+                            "message"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "error"
+                      ],
+                      "type": "object"
+                    },
+                    {
+                      "additionalProperties": false,
+                      "properties": {
+                        "error": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "code": {
+                              "enum": [
+                                "EXPORT_CAPACITY_EXCEEDED"
+                              ],
+                              "type": "string"
+                            },
+                            "details": {
+                              "additionalProperties": false,
+                              "properties": {
+                                "limit": {
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "observed": {
+                                  "maximum": 9007199254740991,
+                                  "minimum": 1,
+                                  "type": "integer"
+                                },
+                                "resource": {
+                                  "enum": [
+                                    "source_documents",
+                                    "source_bytes",
+                                    "artifact_bytes",
+                                    "manifest_bytes"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "resource",
+                                "limit",
+                                "observed"
+                              ],
+                              "type": "object"
+                            },
+                            "message": {
+                              "enum": [
+                                "Export capacity exceeded."
+                              ],
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "code",
+                            "message",
+                            "details"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "error"
+                      ],
+                      "type": "object"
+                    },
+                    {
+                      "additionalProperties": false,
+                      "properties": {
+                        "error": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "code": {
+                              "enum": [
+                                "GENERATION_CAPACITY_EXCEEDED"
+                              ],
+                              "type": "string"
+                            },
+                            "details": {
+                              "additionalProperties": false,
+                              "properties": {
+                                "limit": {
+                                  "enum": [
+                                    8388608
+                                  ],
+                                  "type": "integer"
+                                },
+                                "observed": {
+                                  "enum": [
+                                    8388609
+                                  ],
+                                  "type": "integer"
+                                },
+                                "resource": {
+                                  "enum": [
+                                    "prompt_bytes"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "resource",
+                                "limit",
+                                "observed"
+                              ],
+                              "type": "object"
+                            },
+                            "message": {
+                              "enum": [
+                                "Generation capacity exceeded."
+                              ],
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "code",
+                            "message",
+                            "details"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "error"
+                      ],
+                      "type": "object"
+                    },
+                    {
+                      "additionalProperties": false,
+                      "properties": {
+                        "error": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "code": {
+                              "enum": [
+                                "VALIDATION_ERROR"
+                              ],
+                              "type": "string"
+                            },
+                            "details": {
+                              "additionalProperties": false,
+                              "properties": {
+                                "errors": {
+                                  "items": {
+                                    "additionalProperties": false,
+                                    "properties": {
+                                      "field": {
+                                        "type": "string"
+                                      },
+                                      "message": {
+                                        "type": "string"
+                                      },
+                                      "type": {
+                                        "type": "string"
+                                      }
+                                    },
+                                    "required": [
+                                      "field",
+                                      "message",
+                                      "type"
+                                    ],
+                                    "type": "object"
+                                  },
+                                  "type": "array"
+                                }
+                              },
+                              "required": [
+                                "errors"
+                              ],
+                              "type": "object"
+                            },
+                            "message": {
+                              "enum": [
+                                "Request validation failed."
+                              ],
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "code",
+                            "message",
+                            "details"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "error"
+                      ],
+                      "type": "object"
+                    }
+                  ]
                 }
               }
             },
-            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+            "description": "Invalid retry input or permanent export/generation capacity outcome."
           },
           "503": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
+                  "oneOf": [
+                    {
+                      "additionalProperties": false,
+                      "properties": {
+                        "error": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "code": {
+                              "enum": [
+                                "OPERATION_CAPACITY_EXCEEDED"
+                              ],
+                              "type": "string"
+                            },
+                            "details": {
+                              "additionalProperties": false,
+                              "properties": {
+                                "in_flight": {
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "limit": {
+                                  "minimum": 1,
+                                  "type": "integer"
+                                },
+                                "project_id": {
+                                  "type": "string"
+                                },
+                                "retry_after_seconds": {
+                                  "minimum": 1,
+                                  "type": "integer"
+                                },
+                                "scope": {
+                                  "enum": [
+                                    "project",
+                                    "application"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "scope",
+                                "limit",
+                                "in_flight",
+                                "project_id",
+                                "retry_after_seconds"
+                              ],
+                              "type": "object"
+                            },
+                            "message": {
+                              "enum": [
+                                "Studio operation capacity is exhausted."
+                              ],
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "code",
+                            "message",
+                            "details"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "error"
+                      ],
+                      "type": "object"
+                    },
+                    {
+                      "additionalProperties": false,
+                      "properties": {
+                        "error": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "code": {
+                              "enum": [
+                                "SERVICE_UNAVAILABLE"
+                              ],
+                              "type": "string"
+                            },
+                            "details": {
+                              "additionalProperties": true,
+                              "type": "object"
+                            },
+                            "message": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "code",
+                            "message"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "error"
+                      ],
+                      "type": "object"
+                    }
+                  ]
                 }
               }
             },
-            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+            "description": "Workflow capacity exhaustion or unavailable persistence.",
+            "headers": {
+              "Retry-After": {
+                "description": "Optional integer-seconds hint emitted only for workflow capacity exhaustion.",
+                "schema": {
+                  "minimum": 1,
+                  "type": "integer"
+                }
+              }
+            }
           }
         }
       }
@@ -4613,6 +6318,63 @@
             },
             "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
           },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "error": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "code": {
+                          "enum": [
+                            "OPERATION_IN_FLIGHT"
+                          ],
+                          "type": "string"
+                        },
+                        "details": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "document_id": {
+                              "nullable": true,
+                              "type": "string"
+                            },
+                            "operation": {
+                              "type": "string"
+                            },
+                            "project_id": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "project_id",
+                            "document_id",
+                            "operation"
+                          ],
+                          "type": "object"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message",
+                        "details"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
           "422": {
             "content": {
               "application/json": {
@@ -4627,11 +6389,120 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
+                  "oneOf": [
+                    {
+                      "additionalProperties": false,
+                      "properties": {
+                        "error": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "code": {
+                              "enum": [
+                                "OPERATION_CAPACITY_EXCEEDED"
+                              ],
+                              "type": "string"
+                            },
+                            "details": {
+                              "additionalProperties": false,
+                              "properties": {
+                                "in_flight": {
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "limit": {
+                                  "minimum": 1,
+                                  "type": "integer"
+                                },
+                                "project_id": {
+                                  "type": "string"
+                                },
+                                "retry_after_seconds": {
+                                  "minimum": 1,
+                                  "type": "integer"
+                                },
+                                "scope": {
+                                  "enum": [
+                                    "project",
+                                    "application"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "scope",
+                                "limit",
+                                "in_flight",
+                                "project_id",
+                                "retry_after_seconds"
+                              ],
+                              "type": "object"
+                            },
+                            "message": {
+                              "enum": [
+                                "Studio operation capacity is exhausted."
+                              ],
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "code",
+                            "message",
+                            "details"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "error"
+                      ],
+                      "type": "object"
+                    },
+                    {
+                      "additionalProperties": false,
+                      "properties": {
+                        "error": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "code": {
+                              "enum": [
+                                "SERVICE_UNAVAILABLE"
+                              ],
+                              "type": "string"
+                            },
+                            "details": {
+                              "additionalProperties": true,
+                              "type": "object"
+                            },
+                            "message": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "code",
+                            "message"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "error"
+                      ],
+                      "type": "object"
+                    }
+                  ]
                 }
               }
             },
-            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+            "description": "Workflow capacity exhaustion or unavailable persistence.",
+            "headers": {
+              "Retry-After": {
+                "description": "Optional integer-seconds hint emitted only for workflow capacity exhaustion.",
+                "schema": {
+                  "minimum": 1,
+                  "type": "integer"
+                }
+              }
+            }
           }
         }
       }
@@ -5806,6 +7677,9 @@
               "application/json": {
                 "schema": {
                   "properties": {
+                    "name": {
+                      "type": "string"
+                    },
                     "owner_configured": {
                       "type": "boolean"
                     },
@@ -5815,6 +7689,7 @@
                   },
                   "required": [
                     "owner_configured",
+                    "name",
                     "version"
                   ],
                   "type": "object"

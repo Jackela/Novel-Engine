@@ -33,6 +33,20 @@ describe("configuration at the composition root", () => {
     expect(existsSync(join(workspace, "data"))).toBe(false);
   });
 
+  it("rejects an invalid direct workflow capacity before opening persistence", async () => {
+    const workspace = await makeWorkspace();
+
+    await expect(
+      buildApp({
+        logger: false,
+        databasePath: join(workspace, "data", "novel-engine.sqlite3"),
+        operationCapacity: { applicationLimit: 1, projectLimit: 2 },
+      }),
+    ).rejects.toThrow(/project.*must not exceed.*application/i);
+
+    expect(existsSync(join(workspace, "data"))).toBe(false);
+  });
+
   it("invalidates sessions on every non-production restart with an unset secret", async () => {
     const workspace = await makeWorkspace();
     const first = await buildApp({ logger: false, config: configOver(workspace) });

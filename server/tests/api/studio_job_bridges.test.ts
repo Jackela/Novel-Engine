@@ -7,7 +7,6 @@ import { jobs as jobsTable, usageEvents } from "../../src/shared/infrastructure/
 import {
   firstDocument,
   flakyProviderFactory,
-  forceJobStatus,
   seedProjectWithChapter,
   studioDatabase,
 } from "./job_test_helpers.js";
@@ -102,7 +101,9 @@ describe("terminal job bridges", () => {
     const { app } = await buildStudioApp(clock);
     try {
       const owner = await ownerJar(app);
-      const projectId = await seedProjectWithChapter(app, owner, "Review job bridge");
+      const project = await seedProject(app, owner, "Review job bridge");
+      const document = firstDocument(project);
+      const projectId = project.id;
 
       const created = await call(app, owner, "POST", `/api/projects/${projectId}/reviews`);
       expect(created.statusCode, created.body).toBe(201);
@@ -125,6 +126,15 @@ describe("terminal job bridges", () => {
       expect(listed.statusCode, listed.body).toBe(200);
       expect(listed.json().reviews).toHaveLength(1);
       expect(listed.json().reviews[0].id).toBe(job.result.review_id);
+
+      const protectedSource = await call(
+        app,
+        owner,
+        "DELETE",
+        `/api/projects/${projectId}/documents/${document.id}`,
+      );
+      expect(protectedSource.statusCode, protectedSource.body).toBe(409);
+      expect(protectedSource.json().error.code).toBe("SNAPSHOT_CONFLICT");
     } finally {
       await app.close();
     }
@@ -159,6 +169,8 @@ describe("job retry chains", () => {
         owner,
         "POST",
         `/api/projects/${project.id}/jobs/${failedJob.id}/retry`,
+        undefined,
+        { "idempotency-key": "proposal-job-bridge-retry-0001" },
       );
       expect(retry.statusCode, retry.body).toBe(200);
       const retryJob = retry.json() as JobPayload;
@@ -182,9 +194,19 @@ describe("job retry chains", () => {
       expect(usage[0]?.completion_tokens).toBe(5);
 
       const listed = await call(app, owner, "GET", `/api/projects/${project.id}/jobs`);
-      const original = (listed.json().jobs as JobPayload[]).find((job) => job.id === failedJob.id);
+      const original = (listed.json().jobs as Array<Pick<JobPayload, "id" | "status">>).find(
+        (job) => job.id === failedJob.id,
+      );
       expect(original?.status).toBe("failed");
-      expect(original?.events.map((event) => event.status)).toEqual(["failed"]);
+      const originalDetail = await call(
+        app,
+        owner,
+        "GET",
+        `/api/projects/${project.id}/jobs/${failedJob.id}`,
+      );
+      expect(originalDetail.json<JobPayload>().events.map((event) => event.status)).toEqual([
+        "failed",
+      ]);
     } finally {
       await app.close();
     }
@@ -232,6 +254,8 @@ describe("job retry chains", () => {
         owner,
         "POST",
         `/api/projects/${project.id}/jobs/export-job-interrupted/retry`,
+        undefined,
+        { "idempotency-key": "export-job-bridge-retry-0001" },
       );
       expect(retry.statusCode, retry.body).toBe(200);
       const retryJob = retry.json() as JobPayload;
@@ -242,7 +266,7 @@ describe("job retry chains", () => {
       expect(retryJob.events.map((event) => event.status)).toEqual(["running", "failed"]);
 
       const listed = await call(app, owner, "GET", `/api/projects/${project.id}/jobs`);
-      const jobs = listed.json().jobs as JobPayload[];
+      const jobs = listed.json().jobs as Array<Pick<JobPayload, "id" | "status">>;
       expect(jobs.find((job) => job.id === "export-job-interrupted")?.status).toBe("interrupted");
       expect(jobs[0]?.id).toBe(retryJob.id);
     } finally {
@@ -252,26 +276,33 @@ describe("job retry chains", () => {
 
   it("retries a failed review job into a fresh assessment", async () => {
     const clock = monotonicClock();
-    const { app } = await buildStudioApp(clock);
+    const failures = { count: 1 };
+    const { app } = await buildStudioApp(clock, {
+      textProviderFactory: flakyProviderFactory(failures),
+    });
     try {
       const owner = await ownerJar(app);
       const projectId = await seedProjectWithChapter(app, owner, "Review retry");
 
       const created = await call(app, owner, "POST", `/api/projects/${projectId}/reviews`);
       const reviewJob = created.json() as JobPayload;
-      forceJobStatus(app, reviewJob.id, "failed");
+      expect(reviewJob.status).toBe("failed");
+      expect(reviewJob.model).toBe("");
 
       const retry = await call(
         app,
         owner,
         "POST",
         `/api/projects/${projectId}/jobs/${reviewJob.id}/retry`,
+        undefined,
+        { "idempotency-key": "review-job-bridge-retry-0001" },
       );
       expect(retry.statusCode, retry.body).toBe(200);
       const retryJob = retry.json() as JobPayload;
       expect(retryJob.status).toBe("completed");
       expect(retryJob.kind).toBe("review");
       expect(retryJob.retry_of_job_id).toBe(reviewJob.id);
+      expect(retryJob.model).toBe("recovered-model");
       expect(retryJob.result.review_id).toEqual(expect.any(String));
       expect(retryJob.result.review_id).not.toBe(reviewJob.result.review_id);
     } finally {

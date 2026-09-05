@@ -2,6 +2,7 @@ import { and, eq, gte } from "drizzle-orm";
 
 import { usageEvents } from "../../../../shared/infrastructure/db/schema.js";
 import type { ProjectUsageDailyBucket } from "../../application/ports/project_usage.js";
+import { addSafeUsage, assertSafeUsageToken } from "./safe_usage_tokens.js";
 import type { Tx } from "./studio_query_helpers.js";
 
 const DAY_MS = 86_400_000;
@@ -31,13 +32,19 @@ export function dailyUsageBuckets(tx: Tx, projectId: string, now: Date): Project
     byDate.set(key, { date: key, requestCount: 0, promptTokens: 0, completionTokens: 0 });
   }
   for (const event of events) {
+    assertSafeUsageToken(event.promptTokens, "prompt");
+    assertSafeUsageToken(event.completionTokens, "completion");
     const bucket = byDate.get(new Date(event.createdAt.getTime()).toISOString().slice(0, 10));
     if (bucket === undefined) {
       continue;
     }
-    bucket.requestCount += 1;
-    bucket.promptTokens += event.promptTokens;
-    bucket.completionTokens += event.completionTokens;
+    bucket.requestCount = addSafeUsage(bucket.requestCount, 1, "request");
+    bucket.promptTokens = addSafeUsage(bucket.promptTokens, event.promptTokens, "prompt");
+    bucket.completionTokens = addSafeUsage(
+      bucket.completionTokens,
+      event.completionTokens,
+      "completion",
+    );
   }
   return [...byDate.values()];
 }

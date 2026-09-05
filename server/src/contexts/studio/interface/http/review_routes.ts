@@ -12,6 +12,7 @@ import { requireServices, type StudioRoutesOptions } from "./project_routes.js";
 import { reviewCreateSchema, reviewListResponseSchema } from "./review_schemas.js";
 import { withAsyncStudioErrors, withStudioErrors } from "./studio_error_mapping.js";
 import { projectIdParams } from "./studio_request_schemas.js";
+import { operationCapacityResponseSchema, operationInFlightSchema } from "./studio_schemas.js";
 
 /** Snapshot-bound editorial assessments, with server-owned provider provenance. */
 export const reviewRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fastify, options) => {
@@ -57,8 +58,9 @@ export const reviewRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fast
           401: errorEnvelopeResponse,
           403: errorEnvelopeResponse,
           404: errorEnvelopeResponse,
+          409: operationInFlightSchema,
           422: errorEnvelopeResponse,
-          503: errorEnvelopeResponse,
+          503: operationCapacityResponseSchema,
         },
       },
       config: {
@@ -70,10 +72,17 @@ export const reviewRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fast
       },
     },
     async (request, reply) => {
+      const reportCleanupFailure = (failure: unknown): void => {
+        request.log.error(
+          { err: failure, errorId: request.id, provider_cleanup_failed: true },
+          "provider cleanup failed",
+        );
+      };
       const payload = await withAsyncStudioErrors(() =>
         requireServices(options).jobHistory.recordReviewJob(
           requirePrincipal(request),
           request.params.projectId,
+          reportCleanupFailure,
         ),
       );
       reply.status(201);

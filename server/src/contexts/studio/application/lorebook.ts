@@ -4,7 +4,7 @@ import {
   isLoreStatus,
   type LoreStatus,
 } from "../domain/kinds.js";
-import type { ProjectScope, StudioStore } from "./ports/studio_store.js";
+import type { ProposalContextDocument } from "./ports/proposal_context_store.js";
 
 /**
  * Keyword-triggered lorebook (#315, ADR-0004 layer 2): character and world
@@ -212,18 +212,11 @@ export function loreEntrySummary(entry: LoreEntrySource): string {
   return `${kept.trimEnd()}…`;
 }
 
-/**
- * Gather lore entries from the project's own character/world documents in the
- * store's composite reading order — the same order the resident assembler and
- * every project listing use, which pins injection order deterministically.
- */
-export function collectLoreEntries(
-  store: StudioStore,
-  scope: ProjectScope,
-  projectId: string,
+/** Project-captured lore projection; performs no persistence reads. */
+export function loreEntriesFromDocuments(
+  documents: readonly ProposalContextDocument[],
 ): LoreEntrySource[] {
-  return store
-    .findDocuments(scope, projectId)
+  return documents
     .filter((document) => isLoreEntryKind(document.kind))
     .map((document) => ({
       title: document.title,

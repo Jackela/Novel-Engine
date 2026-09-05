@@ -20,6 +20,9 @@ import type {
   StudioJobKind,
   StudioJobOperation,
   StudioJobStatus,
+  StudioJobSummary,
+  StudioJobSummaryKind,
+  StudioJobSummaryOperation,
   UsageModelRow,
 } from "@/app/types/studio";
 
@@ -27,7 +30,74 @@ const exportFormats = ["markdown", "docx", "epub"] as const;
 const jobKinds = ["proposal", "review", "export"] as const;
 const jobOperations = ["continue", "rewrite", "generate", "review", "export"] as const;
 const jobStatuses = ["pending", "running", "completed", "failed", "interrupted"] as const;
+const jobSummaryKinds = [...jobKinds, "import"] as const;
+const jobSummaryOperations = [...jobOperations, "import"] as const;
+const jobSummaryFields = [
+  "id",
+  "project_id",
+  "document_id",
+  "kind",
+  "operation",
+  "status",
+  "provider",
+  "model",
+  "error",
+  "retry_of_job_id",
+  "created_at",
+  "updated_at",
+] as const;
+const jobSummaryFieldSet = new Set<string>(jobSummaryFields);
+const isoUtcTimestamp = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.\d+)?Z$/;
 const severities = ["blocker", "warning", "suggestion"] as const;
+
+function isoUtcStringField(source: Record<string, unknown>, key: string, parent: string): string {
+  const value = stringField(source, key, parent);
+  const match = isoUtcTimestamp.exec(value);
+  const parsed = new Date(value);
+  if (
+    match === null ||
+    Number.isNaN(parsed.getTime()) ||
+    parsed.getUTCFullYear() !== Number(match[1]) ||
+    parsed.getUTCMonth() + 1 !== Number(match[2]) ||
+    parsed.getUTCDate() !== Number(match[3]) ||
+    parsed.getUTCHours() !== Number(match[4]) ||
+    parsed.getUTCMinutes() !== Number(match[5]) ||
+    parsed.getUTCSeconds() !== Number(match[6])
+  ) {
+    throw new Error(`Invalid ${parent}.${key}`);
+  }
+  return value;
+}
+
+function parseJobSummary(value: unknown, label: string): StudioJobSummary {
+  const item = objectValue(value, label);
+  const fields = Object.keys(item);
+  if (
+    fields.length !== jobSummaryFields.length ||
+    fields.some((key) => !jobSummaryFieldSet.has(key))
+  ) {
+    throw new Error(`Invalid ${label}`);
+  }
+  return {
+    id: stringField(item, "id", label),
+    project_id: stringField(item, "project_id", label),
+    document_id: nullableStringField(item, "document_id", label),
+    kind: literalField(item, "kind", label, jobSummaryKinds) as StudioJobSummaryKind,
+    operation: literalField(
+      item,
+      "operation",
+      label,
+      jobSummaryOperations,
+    ) as StudioJobSummaryOperation,
+    status: literalField(item, "status", label, jobStatuses) as StudioJobStatus,
+    provider: stringField(item, "provider", label),
+    model: stringField(item, "model", label),
+    error: nullableStringField(item, "error", label),
+    retry_of_job_id: nullableStringField(item, "retry_of_job_id", label),
+    created_at: isoUtcStringField(item, "created_at", label),
+    updated_at: isoUtcStringField(item, "updated_at", label),
+  };
+}
 
 function optionalString(
   source: Record<string, unknown>,
@@ -127,12 +197,18 @@ export function parseJob(value: unknown, label = "job"): StudioJob {
   };
 }
 
-export function parseJobs(value: unknown): { jobs: StudioJob[] } {
+export interface JobsPage {
+  readonly jobs: StudioJobSummary[];
+  readonly next_cursor: string | null;
+}
+
+export function parseJobs(value: unknown): JobsPage {
   const item = objectValue(value, "jobs response");
   return {
     jobs: arrayField(item, "jobs", "jobs response", (entry, index) =>
-      parseJob(entry, `jobs[${index}]`),
+      parseJobSummary(entry, `jobs[${index}]`),
     ),
+    next_cursor: nullableStringField(item, "next_cursor", "jobs response"),
   };
 }
 

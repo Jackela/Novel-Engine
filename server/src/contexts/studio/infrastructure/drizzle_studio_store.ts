@@ -1,22 +1,29 @@
 import type { StudioSqliteDatabase } from "../../../shared/infrastructure/db/connection.js";
+import type { JobPageInput, JobSummaryPage } from "../application/ports/job_records.js";
 import type { SetLoreAliasesInput, SetLoreStatusInput } from "../application/ports/lore_store.js";
+import type { ProposalContextSource } from "../application/ports/proposal_context_store.js";
 import type {
   AddDocumentInput,
   AddJobInput,
   AddUsageEventInput,
   AdvanceDocumentInput,
-  CaptureReviewSnapshotInput,
+  ClaimJobRetryInput,
   CompleteJobWithUsageInput,
   DocumentMatchRecord,
+  DocumentSummaryRecord,
   DocumentWithCurrent,
   EditorialAssessmentRecord,
+  EvaluatedReview,
   JobRecord,
+  JobRetryClaim,
   MarkJobOutcomeInput,
   ProjectScope,
   ProjectUsageAggregate,
   RecordCompletedProposalJobInput,
-  RecordSnapshotReviewInput,
-  ReviewSnapshotDocument,
+  ReviewCompletionRecord,
+  ReviewSource,
+  RevisionPageInput,
+  RevisionSummaryPage,
   StudioStore,
 } from "../application/ports/studio_store.js";
 import type {
@@ -28,13 +35,13 @@ import { DocumentStorePart } from "./document_store_part.js";
 import { JobStorePart } from "./job_store_part.js";
 import { LoreStorePart } from "./lore_store_part.js";
 import { ProjectStorePart } from "./project_store_part.js";
+import { ProposalAcceptanceStorePart } from "./proposal_acceptance_store_part.js";
+import { ProposalContextStorePart } from "./proposal_context_store_part.js";
 import { ReviewStorePart } from "./review_store_part.js";
 import { VolumeStorePart } from "./volume_store_part.js";
 
 export interface DrizzleStudioStoreOptions {
   database: StudioSqliteDatabase;
-  /** Data directory owning `novel-engine.sqlite3`; export trees live beneath it. */
-  dataDirectory: string;
 }
 
 /**
@@ -45,14 +52,18 @@ export class DrizzleStudioStore extends ProjectStorePart implements StudioStore 
   private readonly documentStore: DocumentStorePart;
   private readonly volumeStore: VolumeStorePart;
   private readonly editorialReviews: ReviewStorePart;
+  private readonly proposalAcceptance: ProposalAcceptanceStorePart;
+  private readonly proposalContext: ProposalContextStorePart;
   private readonly workflowJobs: JobStorePart;
   private readonly loreKeys: LoreStorePart;
 
   constructor(options: DrizzleStudioStoreOptions) {
-    super(options.database, options.dataDirectory);
+    super(options.database);
     this.documentStore = new DocumentStorePart(options.database);
     this.volumeStore = new VolumeStorePart(options.database);
     this.editorialReviews = new ReviewStorePart(options.database);
+    this.proposalAcceptance = new ProposalAcceptanceStorePart(options.database);
+    this.proposalContext = new ProposalContextStorePart(options.database);
     this.workflowJobs = new JobStorePart(options.database);
     this.loreKeys = new LoreStorePart(options.database);
   }
@@ -92,6 +103,22 @@ export class DrizzleStudioStore extends ProjectStorePart implements StudioStore 
 
   findDocument(scope: ProjectScope, projectId: string, documentId: string): DocumentWithCurrent {
     return this.documentStore.findDocument(scope, projectId, documentId);
+  }
+
+  readCurrentDocument(
+    scope: ProjectScope,
+    projectId: string,
+    documentId: string,
+  ): DocumentWithCurrent {
+    return this.documentStore.readCurrentDocument(scope, projectId, documentId);
+  }
+
+  readProposalContext(
+    scope: ProjectScope,
+    projectId: string,
+    documentId: string,
+  ): ProposalContextSource {
+    return this.proposalContext.readProposalContext(scope, projectId, documentId);
   }
 
   addDocument(
@@ -147,7 +174,7 @@ export class DrizzleStudioStore extends ProjectStorePart implements StudioStore 
     projectId: string,
     documentIds: string[],
     now: Date,
-  ): DocumentWithCurrent[] {
+  ): DocumentSummaryRecord[] {
     // The reorder projection is a reading-order behavior owned by the
     // volume part (ADR-0005); it mutates only document positions.
     return this.volumeStore.renumberDocuments(scope, projectId, documentIds, now);
@@ -157,8 +184,13 @@ export class DrizzleStudioStore extends ProjectStorePart implements StudioStore 
     return this.documentStore.nextPosition(scope, projectId, kind, volumeId);
   }
 
-  findRevisions(scope: ProjectScope, projectId: string, documentId: string) {
-    return this.documentStore.findRevisions(scope, projectId, documentId);
+  findRevisionSummaries(
+    scope: ProjectScope,
+    projectId: string,
+    documentId: string,
+    input: RevisionPageInput,
+  ): RevisionSummaryPage {
+    return this.documentStore.findRevisionSummaries(scope, projectId, documentId, input);
   }
 
   findRevision(scope: ProjectScope, projectId: string, documentId: string, revisionId: string) {
@@ -175,6 +207,19 @@ export class DrizzleStudioStore extends ProjectStorePart implements StudioStore 
 
   addJob(scope: ProjectScope, input: AddJobInput): JobRecord {
     return this.workflowJobs.addJob(scope, input);
+  }
+
+  findJobRetry(
+    scope: ProjectScope,
+    projectId: string,
+    sourceJobId: string,
+    requestKey: string,
+  ): JobRecord | null {
+    return this.workflowJobs.findJobRetry(scope, projectId, sourceJobId, requestKey);
+  }
+
+  claimJobRetry(scope: ProjectScope, input: ClaimJobRetryInput): JobRetryClaim {
+    return this.workflowJobs.claimJobRetry(scope, input);
   }
 
   addUsageEvent(scope: ProjectScope, input: AddUsageEventInput): void {
@@ -205,8 +250,12 @@ export class DrizzleStudioStore extends ProjectStorePart implements StudioStore 
     return this.workflowJobs.findJob(scope, projectId, jobId);
   }
 
-  collectProjectJobs(scope: ProjectScope, projectId: string): JobRecord[] {
-    return this.workflowJobs.collectProjectJobs(scope, projectId);
+  collectProjectJobSummaries(
+    scope: ProjectScope,
+    projectId: string,
+    input: JobPageInput,
+  ): JobSummaryPage {
+    return this.workflowJobs.collectProjectJobSummaries(scope, projectId, input);
   }
 
   markJobOutcome(
@@ -218,30 +267,25 @@ export class DrizzleStudioStore extends ProjectStorePart implements StudioStore 
     return this.workflowJobs.markJobOutcome(scope, projectId, jobId, input);
   }
 
-  setJobResult(
+  acceptCompletedProposal(scope: ProjectScope, projectId: string, jobId: string, now: Date) {
+    return this.proposalAcceptance.acceptCompletedProposal(scope, projectId, jobId, now);
+  }
+
+  readReviewSource(scope: ProjectScope, projectId: string, capturedAt: Date): ReviewSource {
+    return this.editorialReviews.readReviewSource(scope, projectId, capturedAt);
+  }
+
+  recordCompletedReviewJob(scope: ProjectScope, input: EvaluatedReview): ReviewCompletionRecord {
+    return this.editorialReviews.recordCompletedReviewJob(scope, input);
+  }
+
+  completeReviewRetryJob(
     scope: ProjectScope,
     projectId: string,
     jobId: string,
-    resultJson: string,
-    now: Date,
-  ): JobRecord {
-    return this.workflowJobs.setJobResult(scope, projectId, jobId, resultJson, now);
-  }
-
-  captureReviewSnapshot(
-    scope: ProjectScope,
-    projectId: string,
-    input: CaptureReviewSnapshotInput,
-  ): { snapshotId: string; documents: ReviewSnapshotDocument[] } {
-    return this.editorialReviews.captureReviewSnapshot(scope, projectId, input);
-  }
-
-  recordSnapshotReview(
-    scope: ProjectScope,
-    projectId: string,
-    input: RecordSnapshotReviewInput,
-  ): EditorialAssessmentRecord {
-    return this.editorialReviews.recordSnapshotReview(scope, projectId, input);
+    input: EvaluatedReview,
+  ): ReviewCompletionRecord {
+    return this.editorialReviews.completeReviewRetryJob(scope, projectId, jobId, input);
   }
 
   listEditorialAssessments(scope: ProjectScope, projectId: string): EditorialAssessmentRecord[] {

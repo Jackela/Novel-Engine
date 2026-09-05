@@ -1,48 +1,96 @@
-import { createHash, randomUUID } from "node:crypto";
-import { constants } from "node:fs";
-import { link, mkdir, open, realpath, unlink } from "node:fs/promises";
+import { lstat, mkdir, realpath } from "node:fs/promises";
 import { isAbsolute, relative, resolve, sep } from "node:path";
-import { Document, HeadingLevel, Packer, Paragraph } from "docx";
-
+import { exportArtifactNames } from "../application/export_artifact_identity.js";
 import type {
-  ArtifactChapter,
   ArtifactFileEvidence,
   ArtifactReadRequest,
   ArtifactWriteRequest,
   ExportArtifactGateway,
 } from "../application/export_artifact_service.js";
-import type { ExportArtifactFormat } from "../application/ports/export_store.js";
-import { NotFoundError } from "../domain/exceptions.js";
-import { epubBytes, plainText, xmlSafeText } from "./epub_xml.js";
+import {
+  EXPORT_CAPACITY_LIMITS,
+  ExportArtifactWriteError,
+  NotFoundError,
+} from "../domain/exceptions.js";
+import { assertArtifactByteLength, serializeBoundedArtifact } from "./bounded_export_rendering.js";
+import { errorCode, syncDirectory } from "./export_artifact_fs_support.js";
+import { publishArtifact as publishDurableArtifact } from "./export_artifact_publication.js";
+import type { ExportPublicationCleanupJournal } from "./export_publication_cleanup_journal.js";
+import { ExportFileEvidenceError, readFileProof } from "./export_publication_file_evidence.js";
 
-const extensionByFormat: Record<ExportArtifactFormat, string> = {
-  markdown: "md",
-  docx: "docx",
-  epub: "epub",
-};
+const UNAVAILABLE_READ_CODES = new Set(["ENOENT", "ENOTDIR", "ELOOP"]);
+
+class ExportArtifactPathError extends Error {}
+
+export interface FilesystemExportArtifactGatewayOptions {
+  /** Durable database authority for replaying interrupted rollback cleanup. */
+  readonly cleanupJournal?: ExportPublicationCleanupJournal | undefined;
+  /** Deterministic publication/temporary ids used only by collision tests. */
+  readonly newId?: (() => string) | undefined;
+  /** Deterministic shared-staging race seam used only by filesystem tests. */
+  readonly afterStagingReady?: (() => Promise<void>) | undefined;
+  /** Deterministic staged-descriptor mutation seam used only by capacity tests. */
+  readonly afterStageWrite?: ((stage: string) => Promise<void>) | undefined;
+  /** Deterministic race seam used only by filesystem rollback tests. */
+  readonly afterRollbackQuarantine?:
+    | ((quarantine: string, target: string) => Promise<void>)
+    | undefined;
+}
 
 // Filesystem implementation of atomic rendering and confined artifact lookup.
 export class FilesystemExportArtifactGateway implements ExportArtifactGateway {
-  constructor(private readonly dataDirectory: string) {}
+  constructor(
+    private readonly dataDirectory: string,
+    private readonly options: FilesystemExportArtifactGatewayOptions = {},
+  ) {}
 
-  async writeSnapshotArtifact(request: ArtifactWriteRequest): Promise<ArtifactFileEvidence> {
-    const names = artifactNames(request.projectId, request.artifactId, request.format);
-    const contents = await serializeArtifact(request);
-    const directory = await artifactDirectory(this.dataDirectory, request.projectId, true);
-    const target = resolve(directory, names.filename);
-    const temporary = resolve(directory, `.${request.artifactId}.${randomUUID()}.tmp`);
-    return publishArtifact(temporary, target, contents, names.relativePath);
+  async writeSnapshotArtifact(
+    request: ArtifactWriteRequest,
+    reportCleanupFailure?: (failure: unknown) => void,
+  ): Promise<ArtifactFileEvidence> {
+    const names = exportArtifactNames(request.projectId, request.artifactId, request.format);
+    const contents = await serializeBoundedArtifact(request);
+    assertArtifactByteLength(request.format, contents.length);
+    try {
+      const directory = await artifactDirectory(this.dataDirectory, request.projectId, true);
+      const target = resolve(directory, names.filename);
+      return await publishDurableArtifact({
+        projectDirectory: directory,
+        target,
+        relativePath: names.relativePath,
+        projectId: request.projectId,
+        artifactId: request.artifactId,
+        format: request.format,
+        contents,
+        reportCleanupFailure,
+        newId: this.options.newId,
+        afterStagingReady: this.options.afterStagingReady,
+        afterStageWrite: this.options.afterStageWrite,
+        afterRollbackQuarantine: this.options.afterRollbackQuarantine,
+        cleanupJournal: this.options.cleanupJournal,
+      });
+    } catch (error) {
+      if (isKnownWriteFailure(error)) throw new ExportArtifactWriteError();
+      throw error;
+    }
   }
 
   async readArtifactBytes(request: ArtifactReadRequest): Promise<Buffer> {
     try {
-      const names = artifactNames(request.projectId, request.artifactId, request.format);
+      const names = exportArtifactNames(request.projectId, request.artifactId, request.format);
       if (request.relativePath !== names.relativePath)
-        throw new Error("Stored export path is invalid.");
+        throw new ExportArtifactPathError("Stored export path is invalid.");
       const directory = await artifactDirectory(this.dataDirectory, request.projectId, false);
       return await readVerifiedArtifact(resolve(directory, names.filename), request);
-    } catch {
-      throw new NotFoundError("Export file not found.");
+    } catch (error) {
+      if (
+        error instanceof ExportArtifactPathError ||
+        error instanceof ExportFileEvidenceError ||
+        isUnavailableReadError(error)
+      ) {
+        throw new NotFoundError("Export file not found.");
+      }
+      throw error;
     }
   }
 }
@@ -52,45 +100,40 @@ async function artifactDirectory(
   projectId: string,
   create: boolean,
 ): Promise<string> {
-  assertSafePart(projectId);
-  const dataRoot = resolve(dataDirectory);
-  const exportsRoot = resolve(dataRoot, "exports");
-  const directory = resolve(exportsRoot, projectId);
-  if (!isDescendant(dataRoot, exportsRoot) || !isDescendant(exportsRoot, directory)) {
-    throw new Error("Export directory is outside the configured root.");
-  }
-  if (create) await mkdir(directory, { recursive: true });
-  const [realDataRoot, realExportsRoot, realDirectory] = await Promise.all([
-    realpath(dataRoot),
-    realpath(exportsRoot),
-    realpath(directory),
-  ]);
-  if (
-    !isDescendant(realDataRoot, realExportsRoot) ||
-    !isDescendant(realExportsRoot, realDirectory)
-  ) {
-    throw new Error("Export directory escapes the configured root.");
-  }
-  return realDirectory;
+  const dataRoot = await realpath(resolve(dataDirectory));
+  const exportsRoot = await realChildDirectory(dataRoot, "exports", create);
+  return realChildDirectory(exportsRoot, projectId, create);
 }
 
-function artifactNames(
-  projectId: string,
-  artifactId: string,
-  format: ExportArtifactFormat,
-): { filename: string; relativePath: string } {
-  assertSafePart(projectId);
-  assertSafePart(artifactId);
-  const extension = extensionByFormat[format];
-  if (extension === undefined) throw new Error("Export format is invalid.");
-  const filename = `${artifactId}.${extension}`;
-  return { filename, relativePath: `exports/${projectId}/${filename}` };
-}
-
-function assertSafePart(value: string): void {
-  if (value === "" || value === "." || value === ".." || /[\\/\0]/.test(value)) {
-    throw new Error("Export identifier is invalid.");
+async function realChildDirectory(parent: string, name: string, create: boolean): Promise<string> {
+  const candidate = resolve(parent, name);
+  if (!isDescendant(parent, candidate)) {
+    throw new ExportArtifactPathError("Export directory is outside the configured root.");
   }
+  let details: Awaited<ReturnType<typeof lstat>>;
+  try {
+    details = await lstat(candidate);
+  } catch (error) {
+    if (!create || errorCode(error) !== "ENOENT") throw error;
+    try {
+      await mkdir(candidate);
+    } catch (mkdirError) {
+      if (errorCode(mkdirError) !== "EEXIST") throw mkdirError;
+    }
+    details = await lstat(candidate);
+  }
+  if (details.isSymbolicLink() || !details.isDirectory()) {
+    throw new ExportArtifactPathError("Export directory is not a real directory.");
+  }
+  const actual = await realpath(candidate);
+  if (!isDescendant(parent, actual)) {
+    throw new ExportArtifactPathError("Export directory escapes the configured root.");
+  }
+  // A first export may create both exports/ and its project leaf. Syncing the
+  // parent before publication makes those directory entries durable before
+  // SQLite can commit the artifact row.
+  if (create) await syncDirectory(parent);
+  return actual;
 }
 
 function isDescendant(root: string, candidate: string): boolean {
@@ -98,124 +141,50 @@ function isDescendant(root: string, candidate: string): boolean {
   return offset !== "" && offset !== ".." && !offset.startsWith(`..${sep}`) && !isAbsolute(offset);
 }
 
-async function publishArtifact(
-  temporary: string,
-  target: string,
-  contents: Buffer,
-  relativePath: string,
-): Promise<ArtifactFileEvidence> {
-  let handle: Awaited<ReturnType<typeof open>> | undefined;
-  let linked = false;
-  try {
-    handle = await open(temporary, constants.O_WRONLY | constants.O_CREAT | constants.O_EXCL);
-    await handle.writeFile(contents);
-    await handle.sync();
-    const identity = await handle.stat();
-    await handle.close();
-    handle = undefined;
-    await link(temporary, target);
-    linked = true;
-    await unlink(temporary);
-    const checksumSha256 = createHash("sha256").update(contents).digest("hex");
-    return {
-      relativePath,
-      sizeBytes: contents.length,
-      checksumSha256,
-      rollback: () => rollbackPublishedArtifact(target, contents, identity.dev, identity.ino),
-    };
-  } catch (error) {
-    if (handle !== undefined) await ignore(handle.close());
-    if (linked) await ignore(unlink(target));
-    await ignore(unlink(temporary));
-    throw error;
-  }
-}
-
 async function readVerifiedArtifact(target: string, request: ArtifactReadRequest): Promise<Buffer> {
-  // Node has no portable openat directory-fd API: parent checks precede leaf O_NOFOLLOW protection.
-  const handle = await open(target, constants.O_RDONLY | constants.O_NOFOLLOW);
-  try {
-    const details = await handle.stat();
-    const contents = await handle.readFile();
-    if (
-      !details.isFile() ||
-      details.size !== request.sizeBytes ||
-      contents.length !== request.sizeBytes ||
-      createHash("sha256").update(contents).digest("hex") !== request.checksumSha256
-    ) {
-      throw new Error("Export integrity evidence does not match.");
-    }
-    return contents;
-  } finally {
-    await handle.close();
+  const proof = await readFileProof(target, {
+    collectContents: true,
+    capacity: {
+      resource: "artifact_bytes",
+      limit: EXPORT_CAPACITY_LIMITS.artifact_bytes,
+    },
+    expected: {
+      sizeBytes: request.sizeBytes,
+      checksumSha256: request.checksumSha256,
+    },
+  });
+  if (proof === null || !("contents" in proof)) {
+    throw new ExportFileEvidenceError("Export artifact bytes are unavailable.");
   }
+  return proof.contents;
 }
 
-async function rollbackPublishedArtifact(
-  target: string,
-  contents: Buffer,
-  dev: number,
-  ino: number,
-): Promise<void> {
-  try {
-    const handle = await open(target, constants.O_RDONLY | constants.O_NOFOLLOW);
-    try {
-      const details = await handle.stat();
-      const actual = await handle.readFile();
-      if (
-        !details.isFile() ||
-        details.dev !== dev ||
-        details.ino !== ino ||
-        !actual.equals(contents)
-      ) {
-        return;
-      }
-    } finally {
-      await handle.close();
-    }
-    await unlink(target);
-  } catch {
-    return;
-  }
+function isUnavailableReadError(error: unknown): boolean {
+  const code = errorCode(error);
+  return code !== undefined && UNAVAILABLE_READ_CODES.has(code);
 }
 
-async function ignore(promise: Promise<unknown>): Promise<void> {
-  try {
-    await promise;
-  } catch {
-    return;
-  }
-}
+const KNOWN_WRITE_ERROR_CODES = new Set([
+  "EACCES",
+  "EBUSY",
+  "EDQUOT",
+  "EMLINK",
+  "EFBIG",
+  "EIO",
+  "ENAMETOOLONG",
+  "EMFILE",
+  "ENFILE",
+  "ENOENT",
+  "ENOSYS",
+  "ENOSPC",
+  "ENOTSUP",
+  "EOPNOTSUPP",
+  "EPERM",
+  "EROFS",
+  "EXDEV",
+]);
 
-async function serializeArtifact(request: ArtifactWriteRequest): Promise<Buffer> {
-  if (request.format === "markdown")
-    return Buffer.from(markdownText(request.projectTitle, request.chapters), "utf8");
-  return request.format === "docx"
-    ? docxBytes(request.projectTitle, request.chapters)
-    : epubBytes(request.projectTitle, request.artifactId, request.chapters);
-}
-
-function markdownText(title: string, chapters: readonly ArtifactChapter[]): string {
-  return `${[`# ${title}`, ...chapters.map((chapter) => chapter.contentMarkdown.trim())]
-    .join("\n\n")
-    .trim()}\n`;
-}
-
-async function docxBytes(title: string, chapters: readonly ArtifactChapter[]): Promise<Buffer> {
-  // The docx library escapes markup itself but does not strip characters that
-  // are invalid in XML 1.0; user-saved titles and prose must not corrupt
-  // word/document.xml (the EPUB path gets the same treatment via escapeXml).
-  const children: Paragraph[] = [
-    new Paragraph({ text: xmlSafeText(title), heading: HeadingLevel.TITLE }),
-  ];
-  for (const chapter of chapters) {
-    children.push(
-      new Paragraph({ text: xmlSafeText(chapter.title), heading: HeadingLevel.HEADING_1 }),
-    );
-    for (const paragraph of plainText(chapter.contentMarkdown).split(/\n\s*\n/)) {
-      const text = xmlSafeText(paragraph.trim());
-      if (text !== "") children.push(new Paragraph({ text }));
-    }
-  }
-  return Packer.toBuffer(new Document({ sections: [{ children }] }));
+function isKnownWriteFailure(error: unknown): boolean {
+  const code = errorCode(error);
+  return code !== undefined && KNOWN_WRITE_ERROR_CODES.has(code);
 }

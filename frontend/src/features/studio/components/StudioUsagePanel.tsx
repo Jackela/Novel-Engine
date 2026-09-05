@@ -2,6 +2,7 @@ import { RefreshCw } from "lucide-react";
 
 import type { ProjectUsage } from "@/app/types/studio";
 
+import { useCommandFocusRestoration } from "../hooks/useCommandFocusRestoration";
 import { useProjectUsage } from "../hooks/useProjectUsage";
 import { UsageDailyBars } from "./UsageDailyBars";
 import { UsageModelTable } from "./UsageModelTable";
@@ -30,6 +31,7 @@ interface StudioUsagePanelProps {
  */
 export function StudioUsagePanel({ projectId, active }: StudioUsagePanelProps) {
   const { usage, isLoading, error, reload } = useProjectUsage(projectId, active);
+  const runRefreshWithFocusRestoration = useCommandFocusRestoration(isLoading);
   const totals: ProjectUsage | null = usage;
 
   return (
@@ -44,7 +46,9 @@ export function StudioUsagePanel({ projectId, active }: StudioUsagePanelProps) {
           aria-label={isLoading ? "Refreshing usage" : "Refresh usage"}
           className="ui-command--icon"
           disabled={isLoading}
-          onClick={() => void reload()}
+          onClick={(event) => {
+            void runRefreshWithFocusRestoration(event.currentTarget, reload);
+          }}
           title="Refresh usage"
           type="button"
         >

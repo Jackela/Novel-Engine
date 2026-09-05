@@ -7,17 +7,22 @@ import {
   ERROR_CODES,
   errorEnvelopeResponse,
 } from "../../../../shared/interface/http/error_envelope.js";
+import { projectUpdateCommand } from "../../application/project_service.js";
 import type { StudioServices } from "../../application/studio_services.js";
-import { withStudioErrors } from "./studio_error_mapping.js";
+import { projectUpdateRawKeyGuard } from "./project_update_raw_keys.js";
+import { withAsyncStudioErrors, withStudioErrors } from "./studio_error_mapping.js";
 import {
   projectCreateSchema,
   projectIdParams,
   projectMatchQuerySchema,
+  projectUpdateSchema,
 } from "./studio_request_schemas.js";
 import {
   matchListResponseSchema,
-  projectDetailResponseSchema,
+  operationInFlightSchema,
   projectListResponseSchema,
+  projectResponseSchema,
+  projectShellResponseSchema,
 } from "./studio_schemas.js";
 
 export interface StudioRoutesOptions {
@@ -62,6 +67,34 @@ export const projectRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fas
       })),
   );
 
+  app.patch(
+    "/api/projects/:projectId",
+    {
+      preValidation: [guard, projectUpdateRawKeyGuard],
+      schema: {
+        params: projectIdParams,
+        body: projectUpdateSchema,
+        response: {
+          200: projectResponseSchema,
+          401: errorEnvelopeResponse,
+          403: errorEnvelopeResponse,
+          404: errorEnvelopeResponse,
+          422: errorEnvelopeResponse,
+          500: errorEnvelopeResponse,
+          503: errorEnvelopeResponse,
+        },
+      },
+    },
+    async (request) =>
+      withStudioErrors(() =>
+        requireServices(options).projects.updateProject(
+          requirePrincipal(request),
+          request.params.projectId,
+          projectUpdateCommand(request.body),
+        ),
+      ),
+  );
+
   app.post(
     "/api/projects",
     {
@@ -69,7 +102,7 @@ export const projectRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fas
       schema: {
         body: projectCreateSchema,
         response: {
-          201: projectDetailResponseSchema,
+          201: projectShellResponseSchema,
           401: errorEnvelopeResponse,
           403: errorEnvelopeResponse,
           422: errorEnvelopeResponse,
@@ -96,7 +129,7 @@ export const projectRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fas
       schema: {
         params: projectIdParams,
         response: {
-          200: projectDetailResponseSchema,
+          200: projectShellResponseSchema,
           401: errorEnvelopeResponse,
           404: errorEnvelopeResponse,
           503: errorEnvelopeResponse,
@@ -106,7 +139,7 @@ export const projectRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fas
     async (request) =>
       withStudioErrors(
         () =>
-          requireServices(options).projects.projectDetail(
+          requireServices(options).projects.projectShell(
             requirePrincipal(request),
             request.params.projectId,
           ).payload,
@@ -150,15 +183,23 @@ export const projectRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fas
           401: errorEnvelopeResponse,
           403: errorEnvelopeResponse,
           404: errorEnvelopeResponse,
+          409: operationInFlightSchema,
           503: errorEnvelopeResponse,
         },
       },
     },
     async (request, reply) => {
-      withStudioErrors(() =>
+      const reportCleanupFailure = (failure: unknown): void => {
+        request.log.error(
+          { err: failure, errorId: request.id, project_artifact_cleanup_failed: true },
+          "project artifact cleanup failed",
+        );
+      };
+      await withAsyncStudioErrors(() =>
         requireServices(options).projects.removeProject(
           requirePrincipal(request),
           request.params.projectId,
+          reportCleanupFailure,
         ),
       );
       reply.status(204);

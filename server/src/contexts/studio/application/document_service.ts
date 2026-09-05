@@ -4,11 +4,8 @@ import { isDocumentKind } from "../domain/kinds.js";
 import { buildFtsMatchQuery } from "./fts_match_query.js";
 import { documentMatchPayload, documentPayload, dumpJson } from "./payloads.js";
 import type { ProjectScope } from "./ports/studio_store.js";
-import {
-  type DocumentWithCurrent,
-  type StudioStore,
-  scopeForPrincipal,
-} from "./ports/studio_store.js";
+import { type StudioStore, scopeForPrincipal } from "./ports/studio_store.js";
+import { documentSummaryPayload } from "./project_shell_payloads.js";
 
 /**
  * Conflict-checked document saves: the base revision decides between minting
@@ -60,13 +57,13 @@ export class DocumentService {
     );
   }
 
-  documentById(
+  currentDocument(
     principal: Principal,
     projectId: string,
     documentId: string,
   ): Record<string, unknown> {
     return documentPayload(
-      this.store.findDocument(scopeForPrincipal(principal), projectId, documentId),
+      this.store.readCurrentDocument(scopeForPrincipal(principal), projectId, documentId),
     );
   }
 
@@ -137,7 +134,7 @@ export class DocumentService {
   ): Record<string, unknown>[] {
     return this.store
       .renumberDocuments(scopeForPrincipal(principal), projectId, documentIds, this.now())
-      .map((document: DocumentWithCurrent) => documentPayload(document));
+      .map(documentSummaryPayload);
   }
 }
 

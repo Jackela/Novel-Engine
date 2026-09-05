@@ -1,89 +1,90 @@
-import { useCallback, useEffect, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 
-import { api } from "@/app/api";
-import type { Revision } from "@/app/types/studio";
+import type { RevisionSummary } from "@/app/types/studio";
 
-const emptyRevisions: Revision[] = [];
-const revisionCache = new Map<string, Revision[]>();
-const revisionRequestVersions = new Map<string, number>();
-const listeners = new Set<() => void>();
-let revisionStoreVersion = 0;
+import {
+  activateRevisionOwner,
+  getRevisionCacheStats,
+  getRevisionCacheVersion,
+  getRevisionOwnerState,
+  type RevisionSubscriber,
+  requestInitialRevisions,
+  requestOlderRevisions,
+  requestRevisionRefresh,
+  resetRevisionCacheStore,
+  revisionCacheKey,
+  subscribeRevisionCache,
+} from "./revisionCacheStore";
+
+const noop = () => undefined;
 
 interface RevisionCacheResult {
-  readonly revisions: Revision[];
-  readonly refreshDocumentRevisions: (documentId: string) => Promise<void>;
-}
-
-function cacheKey(projectId: string, documentId: string): string {
-  return `${projectId}\u0000${documentId}`;
-}
-
-function emitRevisionStoreChange(): void {
-  revisionStoreVersion += 1;
-  for (const listener of listeners) {
-    listener();
-  }
-}
-
-function subscribeRevisionStore(listener: () => void): () => void {
-  listeners.add(listener);
-  return () => {
-    listeners.delete(listener);
-  };
-}
-
-function getRevisionStoreSnapshot(): number {
-  return revisionStoreVersion;
-}
-
-function revisionsFor(projectId: string, documentId: string | null): Revision[] {
-  return documentId
-    ? (revisionCache.get(cacheKey(projectId, documentId)) ?? emptyRevisions)
-    : emptyRevisions;
-}
-
-function replaceCachedRevisions(
-  projectId: string,
-  documentId: string,
-  revisions: Revision[],
-): void {
-  revisionCache.set(cacheKey(projectId, documentId), revisions);
-  emitRevisionStoreChange();
+  readonly revisions: RevisionSummary[];
+  readonly historyInitialized: boolean;
+  readonly hasOlderRevisions: boolean;
+  readonly isLoadingOlder: boolean;
+  readonly isLoadingHistory: boolean;
+  readonly refreshDocumentRevisions: (
+    documentId: string,
+    expectedRevisionId: string,
+  ) => Promise<void>;
+  readonly loadOlderRevisions: () => Promise<void>;
 }
 
 export function useRevisionCache(
   projectId: string,
   documentId: string | null,
   onError: (reason: unknown) => void,
+  onSuccess: () => void = noop,
 ): RevisionCacheResult {
-  useSyncExternalStore(subscribeRevisionStore, getRevisionStoreSnapshot, getRevisionStoreSnapshot);
-
-  const refreshDocumentRevisions = useCallback(
-    async (nextDocumentId: string): Promise<void> => {
-      const key = cacheKey(projectId, nextDocumentId);
-      const requestVersion = (revisionRequestVersions.get(key) ?? 0) + 1;
-      revisionRequestVersions.set(key, requestVersion);
-      try {
-        if (revisionRequestVersions.get(key) !== requestVersion) return;
-        const response = await api.revisions(projectId, nextDocumentId);
-        if (revisionRequestVersions.get(key) === requestVersion) {
-          replaceCachedRevisions(projectId, nextDocumentId, response.revisions);
-        }
-      } catch (reason: unknown) {
-        if (revisionRequestVersions.get(key) === requestVersion) onError(reason);
-      }
-    },
-    [onError, projectId],
-  );
+  useSyncExternalStore(subscribeRevisionCache, getRevisionCacheVersion, getRevisionCacheVersion);
+  const key = documentId ? revisionCacheKey(projectId, documentId) : null;
+  const ownerKeyRef = useRef<string | null>(null);
+  const [subscriberToken] = useState(() => Symbol("revision-subscriber"));
+  const subscriberRef = useRef<RevisionSubscriber>({ onError, onSuccess });
+  subscriberRef.current.onError = onError;
+  subscriberRef.current.onSuccess = onSuccess;
 
   useEffect(() => {
-    if (documentId === null) return;
-    replaceCachedRevisions(projectId, documentId, emptyRevisions);
-    void refreshDocumentRevisions(documentId);
-  }, [documentId, projectId, refreshDocumentRevisions]);
+    if (key === null) return;
+    ownerKeyRef.current = key;
+    const deactivate = activateRevisionOwner(key, subscriberToken, subscriberRef.current);
+    return () => {
+      if (ownerKeyRef.current === key) ownerKeyRef.current = null;
+      deactivate();
+    };
+  }, [key, subscriberToken]);
+
+  useEffect(() => {
+    if (documentId !== null) void requestInitialRevisions(projectId, documentId);
+  }, [documentId, projectId]);
+
+  const refreshDocumentRevisions = useCallback(
+    (nextDocumentId: string, expectedRevisionId: string): Promise<void> => {
+      if (ownerKeyRef.current !== revisionCacheKey(projectId, nextDocumentId)) {
+        return Promise.resolve();
+      }
+      return requestRevisionRefresh(projectId, nextDocumentId, expectedRevisionId);
+    },
+    [projectId],
+  );
+
+  const loadOlderRevisions = useCallback((): Promise<void> => {
+    if (documentId === null || ownerKeyRef.current !== key) return Promise.resolve();
+    return requestOlderRevisions(projectId, documentId);
+  }, [documentId, key, projectId]);
+  const state = getRevisionOwnerState(key);
 
   return {
-    revisions: revisionsFor(projectId, documentId),
+    revisions: state.revisions,
+    historyInitialized: state.initialized,
+    hasOlderRevisions: state.hasOlder,
+    isLoadingOlder: state.isLoadingOlder,
+    isLoadingHistory: state.isLoading,
     refreshDocumentRevisions,
+    loadOlderRevisions,
   };
 }
+
+export const resetRevisionCacheForTests = resetRevisionCacheStore;
+export const revisionCacheStatsForTests = getRevisionCacheStats;

@@ -2,17 +2,35 @@ import type { TypeBoxTypeProvider } from "@fastify/type-provider-typebox";
 import type { FastifyPluginAsync } from "fastify";
 import { principalGuard, requirePrincipal } from "../../../../shared/interface/http/auth_guard.js";
 import { errorEnvelopeResponse } from "../../../../shared/interface/http/error_envelope.js";
-import { jobListResponseSchema, jobResponseSchema, usageResponseSchema } from "./job_schemas.js";
+import { jobPageLimit } from "../../application/ports/job_records.js";
+import { jobRetry422ResponseSchema } from "./generation_capacity_schemas.js";
+import { decodeJobCursor, encodeJobCursor } from "./job_cursor.js";
+import {
+  jobDetailParamsSchema,
+  jobListQuerySchema,
+  jobListResponseSchema,
+  jobResponseSchema,
+  jobRetryHeadersSchema,
+  usageResponseSchema,
+} from "./job_schemas.js";
 import { requireServices, type StudioRoutesOptions } from "./project_routes.js";
 import { withAsyncStudioErrors, withStudioErrors } from "./studio_error_mapping.js";
 import { jobIdParams, projectIdParams } from "./studio_request_schemas.js";
-import { operationInFlightSchema } from "./studio_schemas.js";
+import {
+  keyedRetryInFlightResponseSchema,
+  operationCapacityResponseSchema,
+} from "./studio_schemas.js";
 
 /** Guard + scope failures shared by the project-scoped job reads. */
 const JOB_READ_ERROR_RESPONSES = {
   401: errorEnvelopeResponse,
   404: errorEnvelopeResponse,
   503: errorEnvelopeResponse,
+} as const;
+
+const JOB_LIST_ERROR_RESPONSES = {
+  ...JOB_READ_ERROR_RESPONSES,
+  422: errorEnvelopeResponse,
 } as const;
 
 /**
@@ -30,16 +48,53 @@ export const jobRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fastify
       preHandler: [guard],
       schema: {
         params: projectIdParams,
-        response: { 200: jobListResponseSchema, ...JOB_READ_ERROR_RESPONSES },
+        querystring: jobListQuerySchema,
+        response: { 200: jobListResponseSchema, ...JOB_LIST_ERROR_RESPONSES },
+      },
+    },
+    async (request) => {
+      const cursor =
+        request.query.cursor === undefined
+          ? undefined
+          : decodeJobCursor(request.query.cursor, request.params.projectId);
+      return withStudioErrors(() => {
+        const page = requireServices(options).jobHistory.collectProjectJobSummaries(
+          requirePrincipal(request),
+          request.params.projectId,
+          {
+            limit: jobPageLimit(request.query.limit ?? 50),
+            ...(cursor === undefined ? {} : { cursor }),
+          },
+        );
+        return {
+          jobs: page.jobs,
+          next_cursor: encodeJobCursor(request.params.projectId, page.nextCursor),
+        };
+      });
+    },
+  );
+
+  app.get(
+    "/api/projects/:projectId/jobs/:jobId",
+    {
+      preHandler: [guard],
+      schema: {
+        params: jobDetailParamsSchema,
+        response: {
+          200: jobResponseSchema,
+          ...JOB_READ_ERROR_RESPONSES,
+          422: errorEnvelopeResponse,
+        },
       },
     },
     async (request) =>
-      withStudioErrors(() => ({
-        jobs: requireServices(options).jobHistory.collectProjectJobs(
+      withStudioErrors(() =>
+        requireServices(options).jobHistory.findProjectJob(
           requirePrincipal(request),
           request.params.projectId,
+          request.params.jobId,
         ),
-      })),
+      ),
   );
 
   app.post(
@@ -48,20 +103,28 @@ export const jobRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fastify
       preHandler: [guard],
       schema: {
         params: jobIdParams,
+        headers: jobRetryHeadersSchema,
         response: {
           200: jobResponseSchema,
           ...JOB_READ_ERROR_RESPONSES,
           403: errorEnvelopeResponse,
-          // Non-retryable terminal states answer 422 INVALID_OPERATION.
-          422: errorEnvelopeResponse,
-          409: operationInFlightSchema,
+          422: jobRetry422ResponseSchema,
+          409: keyedRetryInFlightResponseSchema,
+          503: operationCapacityResponseSchema,
         },
       },
     },
     async (request) => {
       const reportCleanupFailure = (failure: unknown): void => {
         request.log.error(
-          { err: failure, errorId: request.id, provider_cleanup_failed: true },
+          {
+            err: failure,
+            errorId: request.id,
+            request_cleanup_failed: true,
+            // Preserve the established retry-cleanup diagnostic consumed by
+            // provider lifecycle monitoring while export retries share this seam.
+            provider_cleanup_failed: true,
+          },
           "provider cleanup failed",
         );
       };
@@ -70,6 +133,7 @@ export const jobRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fastify
           requirePrincipal(request),
           request.params.projectId,
           request.params.jobId,
+          request.headers["idempotency-key"],
           reportCleanupFailure,
         ),
       );

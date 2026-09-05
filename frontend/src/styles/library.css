@@ -37,11 +37,29 @@
   margin: 7px 0 28px;
   color: #687071;
 }
+.library__action-error {
+  margin: -16px 0 24px;
+}
 .library__grid {
   display: grid;
   grid-template-columns: 340px minmax(0, 1fr);
   gap: 28px;
   align-items: start;
+}
+.library__load-state {
+  min-height: 88px;
+  margin: 0;
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--surface);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.library__load-state .ui-form-error,
+.library__load-state.ui-form-error {
+  margin: 0;
 }
 .library-create {
   background: var(--surface);

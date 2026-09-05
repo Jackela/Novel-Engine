@@ -142,3 +142,17 @@
   gap: 8px;
   align-content: center;
 }
+.studio-load-error {
+  padding: 24px;
+  text-align: center;
+}
+.studio-load-error h1,
+.studio-load-error p {
+  margin: 0;
+}
+.studio-load-error__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}

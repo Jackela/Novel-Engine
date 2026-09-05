@@ -85,6 +85,62 @@
       "when": 1788100409646,
       "tag": "0011_lore-entry-status",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "6",
+      "when": 1788177304856,
+      "tag": "0012_cleanup-orphan-review-snapshots",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "6",
+      "when": 1788181111830,
+      "tag": "0013_cleanup-orphan-export-snapshots",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "6",
+      "when": 1788217409425,
+      "tag": "0014_export-publication-cleanup-intents",
+      "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "6",
+      "when": 1788328966061,
+      "tag": "0015_job-event-sequence",
+      "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "6",
+      "when": 1788345447338,
+      "tag": "0016_paginate-project-jobs",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "6",
+      "when": 1788353880653,
+      "tag": "0017_durable-retry-idempotency",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "6",
+      "when": 1788362169093,
+      "tag": "0018_enforce-safe-usage-tokens",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "6",
+      "when": 1788377784428,
+      "tag": "0019_persist-revision-word-count",
+      "breakpoints": true
     }
   ]
 }

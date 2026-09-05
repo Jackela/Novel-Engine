@@ -1,10 +1,12 @@
 import type {
+  DocumentSummary,
   Project,
   Review,
-  Revision,
+  RevisionSummary,
   StudioDocument,
   StudioExport,
   StudioJob,
+  StudioJobSummary,
   Volume,
 } from "@/app/types/studio";
 
@@ -25,6 +27,8 @@ export function chapter(id: string, overrides: Partial<StudioDocument> = {}): St
     title: `Titled ${id}`,
     position: 0,
     volume_id: "volume-1",
+    beat_ref: null,
+    lore_status: null,
     current_revision_id: `revision-${id}`,
     content_markdown: "",
     metadata: {},
@@ -46,26 +50,25 @@ export function project(overrides: Partial<Project> = {}): Project {
     created_at: FIXTURE_TIMESTAMP,
     updated_at: FIXTURE_TIMESTAMP,
     documents: [],
+    volumes: [],
     ...overrides,
   };
 }
 
 export function projectWith(
-  documents: StudioDocument[],
+  documents: DocumentSummary[],
   overrides: Partial<Project> = {},
 ): Project {
   return project({ ...overrides, documents });
 }
 
-export function revision(id: string, overrides: Partial<Revision> = {}): Revision {
+export function revision(id: string, overrides: Partial<RevisionSummary> = {}): RevisionSummary {
   return {
     id,
     document_id: "document-1",
     parent_revision_id: null,
     revision_number: 1,
-    content_markdown: "Draft",
-    metadata: {},
-    source: "manual",
+    source: "author",
     word_count: 1,
     created_at: FIXTURE_TIMESTAMP,
     ...overrides,
@@ -127,6 +130,24 @@ export function job(overrides: Partial<StudioJob> = {}): StudioJob {
     error: null,
     retry_of_job_id: null,
     events: [],
+    created_at: FIXTURE_TIMESTAMP,
+    updated_at: FIXTURE_TIMESTAMP,
+    ...overrides,
+  };
+}
+
+export function jobSummary(overrides: Partial<StudioJobSummary> = {}): StudioJobSummary {
+  return {
+    id: "job-1",
+    project_id: "project-1",
+    document_id: "document-1",
+    kind: "proposal",
+    operation: "continue",
+    status: "completed",
+    provider: "mock",
+    model: "studio-copilot-v1",
+    error: null,
+    retry_of_job_id: null,
     created_at: FIXTURE_TIMESTAMP,
     updated_at: FIXTURE_TIMESTAMP,
     ...overrides,

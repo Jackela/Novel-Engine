@@ -3,9 +3,9 @@ import { MemoryRouter, useLocation, useNavigationType } from "react-router-dom";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { api, HttpError } from "@/app/api";
-import type { Project, Review, StudioExport } from "@/app/types/studio";
-import { project, review, studioExport } from "@/test/factories";
-import { createMountHarness, flushEffects } from "@/test/harness";
+import type { Project } from "@/app/types/studio";
+import { project } from "@/test/factories";
+import { createMountHarness, deferred, flushEffects } from "@/test/harness";
 
 import { useStudioProject } from "./useStudioProject";
 
@@ -25,10 +25,8 @@ vi.mock("@/app/api", async (importOriginal) => {
 
 type HookResult = ReturnType<typeof useStudioProject>;
 
-interface AggregateFixture {
+interface ProjectFixture {
   readonly project: Project;
-  readonly review: Review;
-  readonly studioExport: StudioExport;
 }
 
 interface HarnessSnapshot {
@@ -44,27 +42,13 @@ afterEach(() => {
   vi.resetAllMocks();
 });
 
-function makeAggregate(projectId: string, label: string): AggregateFixture {
+function makeProject(projectId: string, label: string): ProjectFixture {
   return {
     project: project({
       id: projectId,
       title: `Project ${label}`,
       description: `Description ${label}`,
       settings: { provider: "mock" },
-    }),
-    review: review({
-      id: `review-${label}`,
-      project_id: projectId,
-      snapshot_id: `review-snapshot-${label}`,
-      model: "mock-model",
-      summary: `Review ${label}`,
-    }),
-    studioExport: studioExport({
-      id: `export-${label}`,
-      project_id: projectId,
-      snapshot_id: `export-snapshot-${label}`,
-      checksum_sha256: `checksum-${label}`,
-      download_url: `/downloads/export-${label}`,
     }),
   };
 }
@@ -116,14 +100,10 @@ function renderStudioProjectHook(
 }
 
 describe("useStudioProject", () => {
-  it("publishes the complete project aggregate when every request succeeds", async () => {
+  it("publishes only the bounded project shell during bootstrap", async () => {
     // Given
-    const fixture = makeAggregate("project-1", "one");
+    const fixture = makeProject("project-1", "one");
     vi.mocked(api.project).mockResolvedValue(fixture.project);
-    vi.mocked(api.reviews).mockResolvedValue({ reviews: [fixture.review] });
-    vi.mocked(api.exports).mockResolvedValue({
-      exports: [fixture.studioExport],
-    });
 
     // When
     const harness = renderStudioProjectHook("project-1");
@@ -131,54 +111,33 @@ describe("useStudioProject", () => {
 
     // Then
     expect(harness.result().hook.project).toEqual(fixture.project);
-    expect(harness.result().hook.reviews).toEqual([fixture.review]);
-    expect(harness.result().hook.exports).toEqual([fixture.studioExport]);
+    expect(api.reviews).not.toHaveBeenCalled();
+    expect(api.exports).not.toHaveBeenCalled();
   });
 
-  it("replaces the route with no partial aggregate when the project is missing (404)", async () => {
+  it("replaces to the project library with no partial aggregate when the project is missing", async () => {
     // Given
-    const fixture = makeAggregate("project-1", "one");
-    let rejectExports: ((reason?: unknown) => void) | undefined;
-    const exportRequest = new Promise<{ exports: StudioExport[] }>((_resolve, reject) => {
-      rejectExports = reject;
-    });
-    vi.mocked(api.project).mockResolvedValue(fixture.project);
-    vi.mocked(api.reviews).mockResolvedValue({ reviews: [fixture.review] });
-    vi.mocked(api.exports).mockReturnValue(exportRequest);
+    vi.mocked(api.project).mockRejectedValue(new HttpError("Project not found.", 404));
 
     // When
     const harness = renderStudioProjectHook("project-1");
     await flushEffects();
-    await act(async () => {
-      if (rejectExports === undefined) {
-        throw new Error("Expected the exports request reject function.");
-      }
-      rejectExports(new HttpError("Project not found.", 404));
-      await exportRequest.catch(() => undefined);
-      await Promise.resolve();
-    });
 
     // Then
-    expect(harness.result().pathname).toBe("/");
+    expect(harness.result().pathname).toBe("/projects");
     expect(harness.result().navigationType).toBe("REPLACE");
     expect(harness.result().hook.project).toBeNull();
-    expect(harness.result().hook.reviews).toEqual([]);
-    expect(harness.result().hook.exports).toEqual([]);
+    expect(api.reviews).not.toHaveBeenCalled();
+    expect(api.exports).not.toHaveBeenCalled();
   });
 
-  it("publishes the new aggregate when the project id changes", async () => {
+  it("publishes the new shell when the project id changes", async () => {
     // Given
-    const first = makeAggregate("project-1", "one");
-    const second = makeAggregate("project-2", "two");
+    const first = makeProject("project-1", "one");
+    const second = makeProject("project-2", "two");
     vi.mocked(api.project)
       .mockResolvedValueOnce(first.project)
       .mockResolvedValueOnce(second.project);
-    vi.mocked(api.reviews)
-      .mockResolvedValueOnce({ reviews: [first.review] })
-      .mockResolvedValueOnce({ reviews: [second.review] });
-    vi.mocked(api.exports)
-      .mockResolvedValueOnce({ exports: [first.studioExport] })
-      .mockResolvedValueOnce({ exports: [second.studioExport] });
 
     // When
     const harness = renderStudioProjectHook("project-1");
@@ -189,17 +148,95 @@ describe("useStudioProject", () => {
 
     // Then
     expect(firstPublished.project).toEqual(first.project);
-    expect(firstPublished.reviews).toEqual([first.review]);
-    expect(firstPublished.exports).toEqual([first.studioExport]);
     expect(harness.result().hook.project).toEqual(second.project);
-    expect(harness.result().hook.reviews).toEqual([second.review]);
-    expect(harness.result().hook.exports).toEqual([second.studioExport]);
     expect(api.project).toHaveBeenNthCalledWith(1, "project-1", {
       signal: expect.any(AbortSignal),
     });
     expect(api.project).toHaveBeenNthCalledWith(2, "project-2", {
       signal: expect.any(AbortSignal),
     });
+  });
+
+  it("hides the previous project aggregate and errors as soon as the route identity changes", async () => {
+    // Given
+    const first = makeProject("project-1", "one");
+    const secondProject = deferred<Project>();
+    vi.mocked(api.project)
+      .mockResolvedValueOnce(first.project)
+      .mockReturnValueOnce(secondProject.promise);
+    const hook = renderStudioProjectHook("project-1");
+    await flushEffects();
+    act(() => {
+      hook.result().hook.setError("Project one action failed.");
+    });
+
+    // When: project two has not loaded yet.
+    hook.rerender("project-2");
+
+    // Then: no project-one state remains interactive for even one render.
+    expect(hook.result().hook.project).toBeNull();
+    expect(hook.result().hook.error).toBeNull();
+    expect(hook.result().hook.loadError).toBeNull();
+  });
+
+  it("discards reverse-order shell completion from the previous project", async () => {
+    // Given
+    const first = makeProject("project-1", "one");
+    const second = makeProject("project-2", "two");
+    const firstProject = deferred<Project>();
+    vi.mocked(api.project)
+      .mockReturnValueOnce(firstProject.promise)
+      .mockResolvedValueOnce(second.project);
+    const hook = renderStudioProjectHook("project-1");
+    await flushEffects();
+
+    // When: project two wins, then the transport-ignoring project-one mocks finish late.
+    hook.rerender("project-2");
+    await flushEffects();
+    await act(async () => {
+      firstProject.resolve(first.project);
+      await firstProject.promise;
+      await Promise.resolve();
+    });
+
+    // Then
+    expect(hook.result().hook.project).toEqual(second.project);
+  });
+
+  it("retries an operational failure and clears the stale load error on shell success", async () => {
+    // Given
+    const fixture = makeProject("project-1", "one");
+    vi.mocked(api.project)
+      .mockRejectedValueOnce(new HttpError("Upstream failure.", 503))
+      .mockResolvedValueOnce(fixture.project);
+    const hook = renderStudioProjectHook("project-1");
+    await flushEffects();
+    expect(hook.result().hook.loadError).toBe("Upstream failure.");
+
+    // When
+    await act(async () => {
+      await hook.result().hook.retryLoad();
+    });
+
+    // Then
+    expect(hook.result().hook.loadError).toBeNull();
+    expect(hook.result().hook.project).toEqual(fixture.project);
+  });
+
+  it("replaces to the entry route when authentication is required", async () => {
+    // Given
+    vi.mocked(api.project).mockRejectedValue(new HttpError("Authentication required.", 401));
+    vi.mocked(api.reviews).mockResolvedValue({ reviews: [] });
+    vi.mocked(api.exports).mockResolvedValue({ exports: [] });
+
+    // When
+    const hook = renderStudioProjectHook("project-1");
+    await flushEffects();
+
+    // Then
+    expect(hook.result().pathname).toBe("/");
+    expect(hook.result().navigationType).toBe("REPLACE");
+    expect(hook.result().hook.loadError).toBeNull();
   });
 
   it("renders a readable error state and keeps the route when the failure is not a 404", async () => {
@@ -218,9 +255,42 @@ describe("useStudioProject", () => {
     expect(harness.result().hook.project).toBeNull();
   });
 
+  it("refreshes shell authority for an Inspector 404 without clearing the loaded project", async () => {
+    const first = makeProject("project-1", "one");
+    const refreshed = makeProject("project-1", "refreshed");
+    vi.mocked(api.project)
+      .mockResolvedValueOnce(first.project)
+      .mockResolvedValueOnce(refreshed.project);
+    const mounted = renderStudioProjectHook("project-1");
+    await flushEffects();
+
+    await act(async () => {
+      await mounted.result().hook.recheckProject(new AbortController().signal);
+    });
+
+    expect(mounted.result().hook.project).toEqual(refreshed.project);
+    expect(mounted.result().pathname).toBe("/projects/project-1/manuscript");
+  });
+
+  it("replaces to the library when an Inspector recheck proves the project is missing", async () => {
+    const first = makeProject("project-1", "one");
+    vi.mocked(api.project)
+      .mockResolvedValueOnce(first.project)
+      .mockRejectedValueOnce(new HttpError("Project not found.", 404));
+    const mounted = renderStudioProjectHook("project-1");
+    await flushEffects();
+
+    await act(async () => {
+      await mounted.result().hook.recheckProject(new AbortController().signal);
+    });
+
+    expect(mounted.result().pathname).toBe("/projects");
+    expect(mounted.result().navigationType).toBe("REPLACE");
+  });
+
   it("aborts the in-flight requests of the previous project when the id changes", async () => {
     // Given
-    const second = makeAggregate("project-2", "two");
+    const second = makeProject("project-2", "two");
     vi.mocked(api.reviews).mockResolvedValue({ reviews: [] });
     vi.mocked(api.exports).mockResolvedValue({ exports: [] });
     // The stale project request only settles when its signal is aborted.

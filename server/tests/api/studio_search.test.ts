@@ -111,6 +111,29 @@ describe("project full-text query surface", () => {
     }
   });
 
+  it("breaks equal relevance ranks by document id", async () => {
+    const { app } = await buildStudioApp();
+    try {
+      const jar = await ownerJar(app);
+      const project = await seedProject(app, jar, "Rank ties");
+      const raw = app.studioDb?.raw;
+      if (raw === undefined) throw new Error("expected studio database handle");
+      const lowerId = "00000000-0000-4000-8000-000000000001";
+      const higherId = "00000000-0000-4000-8000-000000000002";
+      const insert = raw.prepare(
+        "INSERT INTO document_search(document_id, project_id, title, content) VALUES (?, ?, ?, ?)",
+      );
+      insert.run(higherId, project.id, "Equal B", "ranktietoken identical words");
+      insert.run(lowerId, project.id, "Equal A", "ranktietoken identical words");
+
+      const found = await queryDocuments(app, jar, project.id, "ranktietoken");
+      expect(found.statusCode, found.body).toBe(200);
+      expect(found.results.map((item) => item.document_id)).toEqual([lowerId, higherId]);
+    } finally {
+      await app.close();
+    }
+  });
+
   it("matches reduced tokens with AND semantics; operator-laden input stays a 200", async () => {
     const { app } = await buildStudioApp();
     try {

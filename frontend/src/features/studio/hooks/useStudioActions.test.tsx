@@ -2,11 +2,11 @@ import { act, useState } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { api } from "@/app/api";
-import type { Project, Review, StudioJob } from "@/app/types/studio";
+import type { Project, Review } from "@/app/types/studio";
 import type { InspectorTab } from "@/features/studio/studioConstants";
 import { chapter, job, projectWith, review } from "@/test/factories";
-import { createMountHarness } from "@/test/harness";
-
+import { createMountHarness, deferred } from "@/test/harness";
+import { summarizeDocument } from "./projectState";
 import { useStudioActions } from "./useStudioActions";
 
 vi.mock("@/app/api", async (importOriginal) => {
@@ -21,6 +21,7 @@ vi.mock("@/app/api", async (importOriginal) => {
       reviews: vi.fn<typeof actual.api.reviews>(),
       updateProject: vi.fn<typeof actual.api.updateProject>(),
       retryJob: vi.fn<typeof actual.api.retryJob>(),
+      saveLoreStatus: vi.fn<typeof actual.api.saveLoreStatus>(),
     },
   };
 });
@@ -38,7 +39,7 @@ const chapterOne = chapter("chapter-1", {
   title: "Chapter One",
   current_revision_id: "revision-1",
   content_markdown: "# Chapter 1\n\n",
-  revision_source: "manual",
+  revision_source: "author",
   word_count: 2,
 });
 const note = {
@@ -52,6 +53,22 @@ const note = {
 const projectFixture = projectWith([chapterOne, note], {
   description: "Old description",
   settings: { provider: "mock", temperature: 0.5 },
+});
+const character = chapter("character-1", {
+  kind: "character",
+  title: "Mara",
+  volume_id: null,
+  lore_status: "draft",
+});
+const world = chapter("world-1", {
+  kind: "world",
+  title: "Harbor",
+  volume_id: null,
+  lore_status: "stable",
+});
+const loreProjectFixture = projectWith([character, world], {
+  description: "Lore project",
+  settings: { provider: "mock" },
 });
 const reviewFixture = review({ project_id: projectFixture.id });
 const reviewJob = job({
@@ -70,12 +87,6 @@ const reviewJob = job({
     },
   ],
 });
-const retriedJob = job({
-  project_id: projectFixture.id,
-  document_id: chapterOne.id,
-  status: "pending" as const,
-  retry_of_job_id: "failed-job-1",
-});
 const harness = createMountHarness();
 
 afterEach(() => {
@@ -87,6 +98,7 @@ function renderActions(
   loadJobs: ReturnType<typeof vi.fn<() => Promise<void>>> = vi
     .fn<() => Promise<void>>()
     .mockResolvedValue(undefined),
+  initialProject: Project = projectFixture,
 ): {
   readonly result: () => HarnessSnapshot;
   readonly loadJobs: ReturnType<typeof vi.fn<() => Promise<void>>>;
@@ -95,19 +107,18 @@ function renderActions(
   let current: HarnessSnapshot | undefined;
 
   function Wrapper() {
-    const [project, setProject] = useState<Project | null>(projectFixture);
+    const [project, setProject] = useState<Project | null>(initialProject);
     const [reviews, setReviews] = useState<Review[]>([]);
     const [error, setError] = useState<string | null>("previous error");
     const [activeId, setActiveId] = useState<string | null>(null);
-    const [inspector, setInspector] = useState<InspectorTab>("history");
+    const [inspector] = useState<InspectorTab>("history");
     const actions = useStudioActions({
       project,
-      projectId: projectFixture.id,
+      projectId: initialProject.id,
       setProject,
       setReviews,
       setError,
       setActiveId,
-      setInspector,
       settingsForm: {
         title: "Updated Harbor",
         description: "Updated description",
@@ -162,7 +173,11 @@ describe("useStudioActions", () => {
       title: "Chapter 2",
       content_markdown: "# Chapter 2\n\n",
     });
-    expect(harness.result().project?.documents).toEqual([chapterOne, note, created]);
+    expect(harness.result().project?.documents).toEqual([
+      chapterOne,
+      note,
+      summarizeDocument(created),
+    ]);
     expect(harness.result().activeId).toBe(created.id);
   });
 
@@ -185,7 +200,7 @@ describe("useStudioActions", () => {
     expect(harness.result().project?.documents).toEqual(reordered);
   });
 
-  it("runs a review job and refreshes the assessment list", async () => {
+  it("runs a review job without reclaiming the deliberate inspector route", async () => {
     // Given
     vi.mocked(api.createReview).mockResolvedValue(reviewJob);
     vi.mocked(api.reviews).mockResolvedValue({ reviews: [reviewFixture] });
@@ -197,9 +212,11 @@ describe("useStudioActions", () => {
     });
 
     // Then
-    expect(api.reviews).toHaveBeenCalledWith(projectFixture.id);
+    expect(api.reviews).toHaveBeenCalledWith(projectFixture.id, {
+      signal: expect.any(AbortSignal),
+    });
     expect(harness.result().reviews).toEqual([reviewFixture]);
-    expect(harness.result().inspector).toBe("review");
+    expect(harness.result().inspector).toBe("history");
   });
 
   it("reports a failed review job without switching inspector", async () => {
@@ -239,54 +256,62 @@ describe("useStudioActions", () => {
     });
 
     // Then
-    expect(api.updateProject).toHaveBeenCalledWith(projectFixture.id, {
-      title: "Updated Harbor",
-      description: "Updated description",
-      settings: { provider: "dashscope", temperature: 0.5 },
-    });
+    expect(api.updateProject).toHaveBeenCalledWith(
+      projectFixture.id,
+      {
+        title: "Updated Harbor",
+        description: "Updated description",
+        settings: { provider: "dashscope", temperature: 0.5 },
+      },
+      expect.objectContaining({ signal: expect.any(AbortSignal) }),
+    );
     expect(harness.result().project).toEqual(updated);
     expect(harness.result().error).toBeNull();
   });
 
-  it("reloads jobs after retrying a failed job", async () => {
-    // Given
-    let resolveLoadJobs: (() => void) | undefined;
-    const loadJobs = vi.fn<() => Promise<void>>().mockReturnValue(
-      new Promise<void>((resolve) => {
-        resolveLoadJobs = resolve;
-      }),
-    );
-    let resolveRetry: ((job: StudioJob) => void) | undefined;
-    vi.mocked(api.retryJob).mockReturnValue(
-      new Promise<StudioJob>((resolve) => {
-        resolveRetry = resolve;
-      }),
-    );
-    const harness = renderActions(loadJobs);
+  it("keeps Lore status pending until the target document is patched", async () => {
+    const response = deferred<{ lore_status: "stable" }>();
+    vi.mocked(api.saveLoreStatus).mockReturnValue(response.promise);
+    const actionsHarness = renderActions(undefined, loreProjectFixture);
+    let savePromise!: Promise<void>;
 
-    // When
-    const retryPromise = harness.result().actions.retryJob("job-1");
+    act(() => {
+      savePromise = actionsHarness.result().actions.changeLoreStatus(character.id, "stable");
+    });
     await act(async () => {
       await Promise.resolve();
     });
 
-    // Then
-    expect(api.retryJob).toHaveBeenCalledWith(projectFixture.id, "job-1");
-    expect(harness.result().actions.retryingJobId).toBe("job-1");
+    expect(api.saveLoreStatus).toHaveBeenCalledWith(loreProjectFixture.id, character.id, "stable");
+    expect(actionsHarness.result().actions.loreStatusFor(character.id).isSaving).toBe(true);
+    expect(actionsHarness.result().project?.documents).toEqual([character, world]);
 
     await act(async () => {
-      resolveRetry?.(retriedJob);
-      await Promise.resolve();
+      response.resolve({ lore_status: "stable" });
+      await savePromise;
     });
 
-    expect(harness.loadJobs).toHaveBeenCalledTimes(1);
-    expect(harness.result().actions.retryingJobId).toBe("job-1");
+    expect(actionsHarness.result().actions.loreStatusFor(character.id).isSaving).toBe(false);
+    expect(actionsHarness.result().project?.documents).toEqual([
+      { ...character, lore_status: "stable" },
+      world,
+    ]);
+    expect(actionsHarness.result().error).toBeNull();
+  });
+
+  it("retains the saved Lore status and records a document-scoped failure", async () => {
+    vi.mocked(api.saveLoreStatus).mockRejectedValue(new Error("Lore status was rejected."));
+    const actionsHarness = renderActions(undefined, loreProjectFixture);
 
     await act(async () => {
-      resolveLoadJobs?.();
-      await retryPromise;
+      await actionsHarness.result().actions.changeLoreStatus(character.id, "deprecated");
     });
 
-    expect(harness.result().actions.retryingJobId).toBeNull();
+    expect(actionsHarness.result().project?.documents).toEqual([character, world]);
+    expect(actionsHarness.result().actions.loreStatusFor(character.id).isSaving).toBe(false);
+    expect(actionsHarness.result().actions.loreStatusFor(character.id).error).toBe(
+      "Lore status was rejected.",
+    );
+    expect(actionsHarness.result().error).toBeNull();
   });
 });

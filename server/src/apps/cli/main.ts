@@ -2,6 +2,7 @@
 import { pathToFileURL } from "node:url";
 
 import type { FastifyInstance } from "fastify";
+import { openReconciledStudioDatabase } from "../../contexts/studio/infrastructure/reconciled_studio_database.js";
 import {
   type LoadServerConfigInput,
   loadServerConfig,
@@ -9,10 +10,20 @@ import {
 } from "../../shared/infrastructure/config/server_config.js";
 import { DrizzleAuthStore } from "../../shared/infrastructure/db/auth_store.js";
 import { backupDatabaseFile } from "../../shared/infrastructure/db/backup.js";
-import { openStudioDatabase } from "../../shared/infrastructure/db/startup.js";
-import { readWorkspaceVersion } from "../../shared/infrastructure/workspace_manifest.js";
+import { acquireDataDirectoryLock } from "../../shared/infrastructure/db/data_directory_lock.js";
+import {
+  assertNoLegacyDatabaseSibling,
+  databaseDataDirectory,
+} from "../../shared/infrastructure/db/database_authority.js";
+import { readProductIdentity } from "../../shared/infrastructure/workspace_manifest.js";
 import { buildApp } from "../api/app.js";
+import { closeResourceAndRethrow } from "../api/app_lifecycle.js";
 import { runLegacyImportCommand } from "./legacy_import_command.js";
+import {
+  processShutdownSignalSource,
+  runCliOwnedServeLifecycle,
+  type ShutdownSignalSource,
+} from "./shutdown_signals.js";
 
 /**
  * The single emitted TS CLI root (#272): `serve`, `import`, `backup`, and
@@ -22,7 +33,12 @@ import { runLegacyImportCommand } from "./legacy_import_command.js";
 
 export type WriteLine = (line: string) => void;
 
-export type ServeRunner = (app: FastifyInstance, host: string, port: number) => Promise<void>;
+type ServeOperation = (app: FastifyInstance, host: string, port: number) => Promise<void>;
+
+/** The lifecycle owner is explicit before a serve operation is invoked. */
+export type ServeRunner =
+  | { readonly owner: "cli-owned"; readonly run: ServeOperation }
+  | { readonly owner: "runner-owned"; readonly run: ServeOperation };
 
 export interface ImportRunnerContext {
   readonly config: ServerConfig;
@@ -42,9 +58,17 @@ export interface CliContext {
   readonly envFile?: LoadServerConfigInput["envFile"];
   readonly workingDirectory?: LoadServerConfigInput["workingDirectory"];
   readonly writeLine?: WriteLine | undefined;
-  /** Injectable listener for tests; the default binds the built app. */
+  /** Injectable lifecycle for tests; the default is CLI-owned. */
   readonly serve?: ServeRunner | undefined;
+  /** Injectable signal event source; used only by CLI-owned serve lifecycles. */
+  readonly shutdownSignalSource?: ShutdownSignalSource | undefined;
+  /** Injectable composition boundary for lifecycle failure tests. */
+  readonly buildApplication?: typeof buildApp | undefined;
   readonly importRunner?: ImportRunner | undefined;
+  /** Injectable backup boundary for lifecycle failure tests. */
+  readonly backupDatabaseFile?: typeof backupDatabaseFile | undefined;
+  /** Injectable ownership boundary for lifecycle failure tests. */
+  readonly acquireDataDirectoryLock?: typeof acquireDataDirectoryLock | undefined;
 }
 
 const USAGE = [
@@ -52,16 +76,25 @@ const USAGE = [
   "",
   "Commands:",
   "  serve [--host HOST] [--port PORT]",
-  "      Back up the SQLite store, apply migrations, then serve the API.",
+  "      Back up, migrate, reconcile exports, recover jobs, then serve the API.",
   "  import --source DIR [--owner NAME]",
   "      Import a legacy file workspace as the owner principal.",
   "  backup",
   "      Write a SQLite backup beneath the backups directory and print its path.",
   "  doctor",
-  "      Report version, database integrity, journal mode, foreign keys, owner.",
+  "      Report product identity, database integrity, journal mode, foreign keys, owner.",
 ].join("\n");
 
 const NO_DATABASE_MESSAGE = "No database exists yet.";
+
+function writeCliError(error: unknown, writeLine: WriteLine): void {
+  if (error instanceof AggregateError) {
+    writeLine(error.message);
+    for (const nested of error.errors) writeCliError(nested, writeLine);
+    return;
+  }
+  writeLine(error instanceof Error ? error.message : String(error));
+}
 
 interface ParsedArguments {
   command: string | undefined;
@@ -109,7 +142,9 @@ async function defaultServe(app: FastifyInstance, host: string, port: number): P
   await app.listen({ host, port });
 }
 
-/** serve: the persistence pipeline (backup → migrate → recover) runs inside buildApp. */
+const DEFAULT_SERVE_RUNNER: ServeRunner = { owner: "cli-owned", run: defaultServe };
+
+/** serve: backup → migrate → reconcile exports → recover jobs runs inside buildApp. */
 async function serveCommand(
   parsed: ParsedArguments,
   context: CliContext,
@@ -123,20 +158,44 @@ async function serveCommand(
     writeLine(`Invalid port: ${rawPort ?? String(port)}`);
     return 2;
   }
-  const app = await buildApp({ logger: true, config });
-  const runServe = context.serve ?? defaultServe;
-  await runServe(app, host, port);
-  return 0;
+  const buildApplication = context.buildApplication ?? buildApp;
+  const app = await buildApplication({ logger: true, config });
+  const serve = context.serve ?? DEFAULT_SERVE_RUNNER;
+  if (serve.owner === "runner-owned") {
+    await serve.run(app, host, port);
+    return 0;
+  }
+  return runCliOwnedServeLifecycle({
+    source: context.shutdownSignalSource ?? processShutdownSignalSource,
+    listen: () => serve.run(app, host, port),
+    close: () => app.close(),
+  });
 }
 
 async function backupCommand(context: CliContext, writeLine: WriteLine): Promise<number> {
   const config = configFor(context);
-  const target = await backupDatabaseFile(config.databasePath);
+  const acquireOwnership = context.acquireDataDirectoryLock ?? acquireDataDirectoryLock;
+  const runBackup = context.backupDatabaseFile ?? backupDatabaseFile;
+  const dataDirectory = databaseDataDirectory(config.databasePath);
+  const ownership = acquireOwnership(dataDirectory);
+  let target: string | null;
+  try {
+    await assertNoLegacyDatabaseSibling(config.databasePath, dataDirectory);
+    target = await runBackup(config.databasePath);
+  } catch (error) {
+    return closeResourceAndRethrow(
+      () => ownership.close(),
+      error,
+      "Database backup and ownership cleanup both failed.",
+    );
+  }
+  ownership.close();
   writeLine(target ?? NO_DATABASE_MESSAGE);
   return 0;
 }
 
 interface DoctorReport {
+  name: string;
   version: string;
   database: string;
   quick_check: string;
@@ -147,8 +206,10 @@ interface DoctorReport {
 
 async function doctorCommand(context: CliContext, writeLine: WriteLine): Promise<number> {
   const config = configFor(context);
+  const identity = readProductIdentity();
   const report: DoctorReport = {
-    version: readWorkspaceVersion(),
+    name: identity.name,
+    version: identity.version,
     database: config.databasePath,
     quick_check: "unknown",
     journal_mode: "unknown",
@@ -156,7 +217,7 @@ async function doctorCommand(context: CliContext, writeLine: WriteLine): Promise
     owner_configured: false,
   };
   try {
-    const studio = await openStudioDatabase(config.dataDirectory);
+    const studio = await openReconciledStudioDatabase(config.databasePath);
     try {
       report.quick_check = String(studio.raw.pragma("quick_check", { simple: true }));
       report.journal_mode = String(studio.raw.pragma("journal_mode", { simple: true }));
@@ -195,14 +256,14 @@ async function importCommand(
 const legacyImportRunner: ImportRunner = async (args, context) => {
   try {
     const imported = await runLegacyImportCommand({
-      dataDirectory: context.config.dataDirectory,
+      databasePath: context.config.databasePath,
       source: args.source,
       owner: args.owner,
     });
     context.writeLine(JSON.stringify(imported, null, 2));
     return 0;
   } catch (error) {
-    context.writeLine(error instanceof Error ? error.message : String(error));
+    writeCliError(error, context.writeLine);
     return 1;
   }
 };
@@ -228,7 +289,7 @@ export async function runCli(argv: readonly string[], context: CliContext = {}):
   } catch (error) {
     // Every command reports failures through the same error channel; an
     // unhandled rejection would still exit 1 but silently.
-    writeLine(error instanceof Error ? error.message : String(error));
+    writeCliError(error, writeLine);
     return 1;
   }
 }

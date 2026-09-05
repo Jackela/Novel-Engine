@@ -5,15 +5,25 @@ import {
 } from "../../../contexts/ai/application/ports/text_generation.js";
 import type { Principal } from "../../../shared/application/ports/auth.js";
 import { InvalidOperationError } from "../../../shared/domain/exceptions.js";
-import { NotFoundError } from "../domain/exceptions.js";
+import {
+  ExportArtifactWriteError,
+  ExportCapacityExceededError,
+  ExportSourceInvalidatedError,
+  GenerationCapacityExceededError,
+  NotFoundError,
+  ReviewSourceInvalidatedError,
+} from "../domain/exceptions.js";
+import { isExportArtifactFormat } from "./export_artifact_identity.js";
 import type { SnapshotArtifactService } from "./export_artifact_service.js";
 import {
-  dumpJson,
-  exportJobResultJson,
-  jobPayload,
-  reviewJobResultJson,
-  safeLoadJson,
-} from "./payloads.js";
+  exportRetryCapacityOutcome,
+  replayedExportCapacityError,
+} from "./export_retry_capacity_outcome.js";
+import {
+  generationRetryCapacityOutcome,
+  replayedGenerationCapacityError,
+} from "./generation_retry_capacity_outcome.js";
+import { dumpJson, jobPayload, safeLoadJson } from "./payloads.js";
 import type { JobRecord, ProjectScope, StudioStore } from "./ports/studio_store.js";
 import { scopeForPrincipal } from "./ports/studio_store.js";
 import {
@@ -24,15 +34,11 @@ import {
 } from "./proposal_landing.js";
 import {
   admitTextProvider,
+  proposalRevisionFromContext,
   proposalStepForOperation,
-  resolveProposalRevision,
 } from "./proposal_pipeline.js";
+import { proposalRetryStaleBaseOutcome } from "./proposal_retry_base_outcome.js";
 import type { ReviewService } from "./review_service.js";
-
-const RETRYABLE_STATUSES = new Set(["failed", "interrupted"]);
-
-const ONLY_FAILED_RETRIED = "Only failed or interrupted jobs may be retried.";
-const IMPORT_NOT_RETRIED = "Import jobs cannot be retried.";
 
 export interface JobRetryExecutorOptions {
   readonly now?: (() => Date) | undefined;
@@ -73,46 +79,97 @@ export class JobRetryExecutor {
     principal: Principal,
     projectId: string,
     jobId: string,
+    requestKey: string,
     reportCleanupFailure: (failure: unknown) => void,
   ): Promise<Record<string, unknown>> {
     const scope = scopeForPrincipal(principal);
-    const original = this.store.findJob(scope, projectId, jobId);
-    if (!RETRYABLE_STATUSES.has(original.status)) {
-      throw new InvalidOperationError(ONLY_FAILED_RETRIED);
+    const replay = this.store.findJobRetry(scope, projectId, jobId, requestKey);
+    if (replay !== null) {
+      const capacityError =
+        replayedExportCapacityError(replay) ?? replayedGenerationCapacityError(replay);
+      if (capacityError !== null) throw capacityError;
+      return this.claimAndExecute(
+        principal,
+        scope,
+        projectId,
+        jobId,
+        requestKey,
+        reportCleanupFailure,
+      );
     }
-    if (original.kind === "import") {
-      throw new InvalidOperationError(IMPORT_NOT_RETRIED);
+    const source = this.store.findJob(scope, projectId, jobId);
+    if (source.kind === "export") {
+      return this.artifacts.withRendererPermit(projectId, () =>
+        this.claimAndExecute(principal, scope, projectId, jobId, requestKey, reportCleanupFailure),
+      );
     }
-    const retry = this.store.addJob(scope, {
-      projectId: original.projectId,
-      documentId: original.documentId,
-      kind: original.kind,
-      operation: original.operation,
-      status: "running",
-      provider: original.provider,
-      model: original.model,
-      requestJson: original.requestJson,
-      resultJson: dumpJson({}),
-      error: null,
-      retryOfJobId: original.id,
-      eventDetailsJson: dumpJson({ retry_of: original.id }),
+    return this.claimAndExecute(
+      principal,
+      scope,
+      projectId,
+      jobId,
+      requestKey,
+      reportCleanupFailure,
+    );
+  }
+
+  private async claimAndExecute(
+    principal: Principal,
+    scope: ProjectScope,
+    projectId: string,
+    jobId: string,
+    requestKey: string,
+    reportCleanupFailure: (failure: unknown) => void,
+  ): Promise<Record<string, unknown>> {
+    const claim = this.store.claimJobRetry(scope, {
+      projectId,
+      sourceJobId: jobId,
+      requestKey,
       now: this.now(),
     });
+    if (!claim.created) {
+      const capacityError =
+        replayedExportCapacityError(claim.job) ?? replayedGenerationCapacityError(claim.job);
+      if (capacityError !== null) throw capacityError;
+      return jobPayload(claim.job);
+    }
+    const retry = claim.job;
     try {
       if (retry.kind === "proposal") {
         return await this.reexecuteProposalJob(scope, retry, reportCleanupFailure);
       }
       if (retry.kind === "review") {
-        return this.reexecuteReviewJob(principal, scope, retry);
+        return await this.reexecuteReviewJob(principal, scope, retry, reportCleanupFailure);
       }
       if (retry.kind === "export") {
-        return await this.reexecuteExportJob(principal, scope, retry);
+        return await this.reexecuteExportJob(principal, retry, reportCleanupFailure);
       }
       throw new InvalidOperationError(`Unsupported job kind for retry: ${retry.kind}`);
     } catch (error) {
+      if (error instanceof ExportCapacityExceededError) {
+        this.store.markJobOutcome(
+          scope,
+          projectId,
+          retry.id,
+          exportRetryCapacityOutcome(retry, error, this.now()),
+        );
+        throw error;
+      }
+      if (error instanceof GenerationCapacityExceededError) {
+        this.store.markJobOutcome(
+          scope,
+          projectId,
+          retry.id,
+          generationRetryCapacityOutcome(retry, error, this.now()),
+        );
+        throw error;
+      }
       if (
         !(error instanceof InvalidOperationError) &&
         !(error instanceof NotFoundError) &&
+        !(error instanceof ExportArtifactWriteError) &&
+        !(error instanceof ExportSourceInvalidatedError) &&
+        !(error instanceof ReviewSourceInvalidatedError) &&
         !(error instanceof TextGenerationProviderError)
       ) {
         throw error;
@@ -146,30 +203,26 @@ export class JobRetryExecutor {
       throw new InvalidOperationError("Original AI job is missing its request context.");
     }
     const providerName = admitTextProvider(retry.provider);
-    const { document, revision } = resolveProposalRevision(
-      this.store,
-      scope,
-      retry.projectId,
-      retry.documentId,
-    );
+    const context = this.store.readProposalContext(scope, retry.projectId, retry.documentId);
+    const { revision } = proposalRevisionFromContext(context);
+    if (revision.id !== baseRevisionId) {
+      const outcome = proposalRetryStaleBaseOutcome(baseRevisionId, revision.id, this.now());
+      const failed = this.store.markJobOutcome(scope, retry.projectId, retry.id, outcome);
+      return jobPayload(failed);
+    }
     let provider: TextGenerationProvider | undefined;
     try {
+      const task = buildProposalTask(
+        step,
+        retry.operation,
+        instruction,
+        context,
+        this.loreBudgetCharacters,
+      );
       provider = this.providerFactory(providerName);
       // A retried generation is a proposal generation too (#314): it assembles
       // the same resident context instead of the amnesiac historical shape.
-      const result = await provider.generateStructured(
-        buildProposalTask(
-          step,
-          retry.operation,
-          instruction,
-          this.store,
-          scope,
-          retry.projectId,
-          document,
-          revision,
-          this.loreBudgetCharacters,
-        ),
-      );
+      const result = await provider.generateStructured(task);
       const outcome = validatedProposalOrThrow(result);
       const now = this.now();
       // #392: the outcome transition and its usage event commit together, so
@@ -181,7 +234,7 @@ export class JobRetryExecutor {
             model: result.model,
             resultJson: dumpJson({
               proposal_markdown: outcome.proposal,
-              base_revision_id: revision.id,
+              base_revision_id: baseRevisionId,
               accepted_revision_id: null,
             }),
             error: null,
@@ -195,7 +248,7 @@ export class JobRetryExecutor {
             completionTokens: resolvedTokenCount(result.completionTokens, outcome.proposal),
             requestEvidenceJson: dumpJson({
               operation: retry.operation,
-              base_revision_id: revision.id,
+              base_revision_id: baseRevisionId,
             }),
           },
         }),
@@ -211,42 +264,47 @@ export class JobRetryExecutor {
     principal: Principal,
     scope: ProjectScope,
     retry: JobRecord,
+    reportCleanupFailure: (failure: unknown) => void,
   ): Promise<Record<string, unknown>> {
-    const assessment = await this.reviews.evaluateProject(principal, retry.projectId);
-    return jobPayload(
-      this.store.markJobOutcome(scope, retry.projectId, retry.id, {
-        status: "completed",
-        resultJson: reviewJobResultJson(assessment),
-        error: null,
-        eventDetailsJson: dumpJson({ review_id: assessment.id }),
-        now: this.now(),
-      }),
-    );
+    const evaluation = await this.reviews.evaluateProject(principal, retry.projectId, {
+      provider: admitTextProvider(retry.provider),
+      reportCleanupFailure,
+    });
+    try {
+      return jobPayload(
+        this.store.completeReviewRetryJob(scope, retry.projectId, retry.id, evaluation).job,
+      );
+    } catch (error) {
+      if (!(error instanceof ReviewSourceInvalidatedError)) throw error;
+      return jobPayload(
+        this.store.markJobOutcome(scope, retry.projectId, retry.id, {
+          status: "failed",
+          model: evaluation.model,
+          error: error.message,
+          eventDetailsJson: dumpJson({ error: error.message }),
+          now: this.now(),
+        }),
+      );
+    }
   }
 
   private async reexecuteExportJob(
     principal: Principal,
-    scope: ProjectScope,
     retry: JobRecord,
+    reportCleanupFailure: (failure: unknown) => void,
   ): Promise<Record<string, unknown>> {
     const request = safeLoadJson(retry.requestJson);
     const format = request.format;
-    if (format !== "markdown" && format !== "docx" && format !== "epub") {
+    if (!isExportArtifactFormat(format)) {
       throw new InvalidOperationError("Original export job is missing its format.");
     }
-    const artifact = await this.artifacts.materializeSnapshotArtifact(
+    const completed = await this.artifacts.completeExportRetryJob(
       principal,
       retry.projectId,
+      retry.id,
       format,
+      { reportCleanupFailure },
     );
-    return jobPayload(
-      this.store.markJobOutcome(scope, retry.projectId, retry.id, {
-        status: "completed",
-        resultJson: exportJobResultJson(retry.projectId, artifact),
-        error: null,
-        eventDetailsJson: dumpJson({ export_id: artifact.id }),
-        now: this.now(),
-      }),
-    );
+    return jobPayload(completed.job);
   }
 }

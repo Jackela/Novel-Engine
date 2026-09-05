@@ -1,6 +1,6 @@
 import type { LoreEntrySource, LoreMatch, LoreMatchRank } from "./lorebook.js";
 import { type LoreMatchCorpora, loreEntrySummary, matchLoreEntriesWithRank } from "./lorebook.js";
-import { LOREBOOK_BEGIN, LOREBOOK_END } from "./sanitization.js";
+import { escapePromptData, LOREBOOK_BEGIN, LOREBOOK_END } from "./sanitization.js";
 
 /**
  * Progressive disclosure under the lorebook injection budget (#445, ADR-0006):
@@ -28,20 +28,109 @@ export interface PlannedLoreInjection {
   readonly mode: LoreInjectionMode;
 }
 
+/** Deterministic work counters used to prove the planner's linear contract. */
+export interface LorePlanningInstrumentation {
+  readonly onRepresentationPrepared: (mode: LoreInjectionMode) => void;
+  readonly onFinalRenderPass: () => void;
+  readonly onLineRendered: (line: string) => void;
+}
+
 const LOREBOOK_SECTION_HEADER =
   "LOREBOOK (reference entries triggered by their keys occurring above):";
 
-/**
- * Deterministic promotion priority (#445): title hits expand before alias
- * hits; equal ranks expand in the match list's reading order. The explicit
- * index tiebreak pins stability regardless of engine sort behavior.
- */
-function comparePromotionPriority(
-  left: { readonly match: LoreMatch; readonly index: number },
-  right: { readonly match: LoreMatch; readonly index: number },
-): number {
-  const rankOrder = (rank: LoreMatchRank) => (rank === "title" ? 0 : 1);
-  return rankOrder(left.match.rank) - rankOrder(right.match.rank) || left.index - right.index;
+interface PreparedLoreInjection {
+  readonly entry: LoreEntrySource;
+  readonly rank: LoreMatchRank;
+  readonly summaryLines: readonly [string, "", string, ""];
+  readonly fullLines: readonly [string, "", string, ""];
+  readonly summaryLength: number;
+  readonly fullLength: number;
+}
+
+interface PreparedLorePlan {
+  readonly entries: readonly PreparedLoreInjection[];
+  readonly modes: LoreInjectionMode[];
+}
+
+function headingLine(title: string, mode: LoreInjectionMode): string {
+  // Headings stay single-line so each `###` reliably opens exactly one entry;
+  // the suffix marks entries whose body was withheld by the budget (#445).
+  const encodedTitle = escapePromptData(title.replace(/\s+/g, " ").trim());
+  return mode === "full" ? `### ${encodedTitle}` : `### ${encodedTitle} (summary only)`;
+}
+
+function fragmentLines(heading: string, body: string): readonly [string, "", string, ""] {
+  return [heading, "", body, ""];
+}
+
+function prepareLoreInjection(
+  match: LoreMatch,
+  instrumentation?: LorePlanningInstrumentation,
+): PreparedLoreInjection {
+  // Snapshot source access before deriving both representations. Apart from
+  // making getter-backed inputs deterministic, this prevents repeated body
+  // scans while evaluating later promotions.
+  const title = match.entry.title;
+  const contentMarkdown = match.entry.contentMarkdown;
+  const summaryBody = escapePromptData(
+    loreEntrySummary({
+      title,
+      loreAliasesJson: match.entry.loreAliasesJson,
+      status: match.entry.status,
+      contentMarkdown,
+    }),
+  );
+  const fullBody = escapePromptData(contentMarkdown?.trim() ?? "");
+  const summaryLines = fragmentLines(headingLine(title, "summary"), summaryBody);
+  instrumentation?.onRepresentationPrepared("summary");
+  const fullLines = fragmentLines(headingLine(title, "full"), fullBody);
+  instrumentation?.onRepresentationPrepared("full");
+  return {
+    entry: match.entry,
+    rank: match.rank,
+    summaryLines,
+    fullLines,
+    summaryLength: summaryLines[0].length + summaryLines[2].length,
+    fullLength: fullLines[0].length + fullLines[2].length,
+  };
+}
+
+function summaryFloorLength(entries: readonly PreparedLoreInjection[]): number {
+  // Empty separator lines are already represented by the fixed newline count:
+  // four per entry, plus three around the section header and boundary markers.
+  return (
+    LOREBOOK_SECTION_HEADER.length +
+    LOREBOOK_BEGIN.length +
+    LOREBOOK_END.length +
+    entries.reduce((total, entry) => total + entry.summaryLength, 0) +
+    entries.length * 4 +
+    3
+  );
+}
+
+function prepareLorePlan(
+  matched: readonly LoreMatch[],
+  budgetCharacters: number,
+  instrumentation?: LorePlanningInstrumentation,
+): PreparedLorePlan {
+  const entries = matched.map((match) => prepareLoreInjection(match, instrumentation));
+  const modes: LoreInjectionMode[] = entries.map(() => "summary");
+  let renderedLength = summaryFloorLength(entries);
+
+  // Two stable passes are sufficient for the closed rank set and preserve
+  // reading order within each rank without sorting or copying whole plans.
+  for (const rank of ["title", "alias"] as const) {
+    for (let index = 0; index < entries.length; index += 1) {
+      const entry = entries[index];
+      if (entry === undefined || entry.rank !== rank) continue;
+      const promotedLength = renderedLength + entry.fullLength - entry.summaryLength;
+      if (promotedLength <= budgetCharacters) {
+        modes[index] = "full";
+        renderedLength = promotedLength;
+      }
+    }
+  }
+  return { entries, modes };
 }
 
 /**
@@ -54,79 +143,91 @@ function comparePromotionPriority(
 export function planLoreInjections(
   matched: readonly LoreMatch[],
   budgetCharacters: number,
+  instrumentation?: LorePlanningInstrumentation,
 ): PlannedLoreInjection[] {
-  const plan: PlannedLoreInjection[] = matched.map((match) => ({
-    entry: match.entry,
-    mode: "summary",
+  const prepared = prepareLorePlan(matched, budgetCharacters, instrumentation);
+  return prepared.entries.map((entry, index) => ({
+    entry: entry.entry,
+    mode: prepared.modes[index] ?? "summary",
   }));
-  const promotionOrder = matched
-    .map((match, index) => ({ match, index }))
-    .sort(comparePromotionPriority);
-  for (const { index } of promotionOrder) {
-    const candidate: PlannedLoreInjection[] = plan.map((planned, position) =>
-      position === index ? { ...planned, mode: "full" } : planned,
-    );
-    const upgraded = candidate[index];
-    if (upgraded !== undefined && renderedSectionLength(candidate) <= budgetCharacters) {
-      plan[index] = upgraded;
+}
+
+function* iteratePreparedInjectionLines(
+  prepared: PreparedLorePlan,
+  instrumentation?: LorePlanningInstrumentation,
+): Generator<string> {
+  if (prepared.entries.length === 0) {
+    return;
+  }
+  instrumentation?.onFinalRenderPass();
+  const emit = function* (lines: Iterable<string>): Generator<string> {
+    for (const line of lines) {
+      instrumentation?.onLineRendered(line);
+      yield line;
     }
+  };
+  yield* emit(["", LOREBOOK_SECTION_HEADER, LOREBOOK_BEGIN]);
+  for (let index = 0; index < prepared.entries.length; index += 1) {
+    const entry = prepared.entries[index];
+    if (entry === undefined) continue;
+    yield* emit(prepared.modes[index] === "full" ? entry.fullLines : entry.summaryLines);
   }
-  return plan;
+  yield* emit([LOREBOOK_END]);
 }
 
-function headingLine(entry: LoreEntrySource, mode: LoreInjectionMode): string {
-  // Headings stay single-line so each `###` reliably opens exactly one entry;
-  // the suffix marks entries whose body was withheld by the budget (#445).
-  const title = entry.title.replace(/\s+/g, " ").trim();
-  return mode === "full" ? `### ${title}` : `### ${title} (summary only)`;
-}
-
-function bodyLine(entry: LoreEntrySource, mode: LoreInjectionMode): string {
-  return mode === "full" ? (entry.contentMarkdown?.trim() ?? "") : loreEntrySummary(entry);
-}
-
-function injectionLines(planned: readonly PlannedLoreInjection[]): string[] {
-  if (planned.length === 0) {
-    return [];
-  }
+function fullInjectionLines(entries: readonly LoreEntrySource[]): string[] {
+  if (entries.length === 0) return [];
   const sections: string[] = ["", LOREBOOK_SECTION_HEADER, LOREBOOK_BEGIN];
-  for (const injection of planned) {
+  for (const entry of entries) {
+    const title = entry.title;
+    const contentMarkdown = entry.contentMarkdown;
     sections.push(
-      headingLine(injection.entry, injection.mode),
-      "",
-      bodyLine(injection.entry, injection.mode),
-      "",
+      ...fragmentLines(headingLine(title, "full"), escapePromptData(contentMarkdown?.trim() ?? "")),
     );
   }
   sections.push(LOREBOOK_END);
   return sections;
 }
 
-function renderedSectionLength(planned: readonly PlannedLoreInjection[]): number {
-  return injectionLines(planned).join("\n").length;
-}
-
 /**
  * Full-text rendering of already-matched entries (the pre-budget layout,
- * retained for the no-budget callers): one trusted-context block per entry.
+ * retained for the no-budget callers): one reference-data block per entry.
  */
 export function renderLoreSection(matched: readonly LoreEntrySource[]): string[] {
-  return injectionLines(matched.map((entry) => ({ entry, mode: "full" })));
+  return fullInjectionLines(matched);
 }
 
 /** Match then plan then render in one step; an empty result renders nothing. */
+export function* iterateTriggeredLoreSections(
+  input: {
+    entries: readonly LoreEntrySource[];
+    /** Character budget of the rendered section; defaults to the #445 value. */
+    budgetCharacters?: number | undefined;
+    instrumentation?: LorePlanningInstrumentation | undefined;
+  } & LoreMatchCorpora,
+): Generator<string> {
+  const matched = matchLoreEntriesWithRank(input.entries, {
+    resident: input.resident,
+    manuscript: input.manuscript,
+  });
+  yield* iteratePreparedInjectionLines(
+    prepareLorePlan(
+      matched,
+      input.budgetCharacters ?? DEFAULT_LOREBOOK_BUDGET_CHARACTERS,
+      input.instrumentation,
+    ),
+    input.instrumentation,
+  );
+}
+
+/** Compatibility materializer for callers that own an array-shaped boundary. */
 export function triggeredLoreSections(
   input: {
     entries: readonly LoreEntrySource[];
     /** Character budget of the rendered section; defaults to the #445 value. */
     budgetCharacters?: number | undefined;
+    instrumentation?: LorePlanningInstrumentation | undefined;
   } & LoreMatchCorpora,
 ): string[] {
-  const matched = matchLoreEntriesWithRank(input.entries, {
-    resident: input.resident,
-    manuscript: input.manuscript,
-  });
-  return injectionLines(
-    planLoreInjections(matched, input.budgetCharacters ?? DEFAULT_LOREBOOK_BUDGET_CHARACTERS),
-  );
+  return [...iterateTriggeredLoreSections(input)];
 }

@@ -32,6 +32,15 @@ export function StudioInspector({
   const inspectorId = useId();
   const tabId = (tab: Exclude<InspectorTab, "settings">) => `${inspectorId}-${tab}-tab`;
   const panelId = (tab: Exclude<InspectorTab, "settings">) => `${inspectorId}-${tab}-panel`;
+  const loreError = model.loreStatus?.error ?? null;
+  const exportPanelOwnsSharedError =
+    inspector === "export" &&
+    model.export.errorForExport !== null &&
+    model.export.errorForExport === error;
+  const settingsPanelOwnsSharedError =
+    inspector === "settings" && model.settings.error !== null && model.settings.error === error;
+  const sharedError = error !== loreError && !exportPanelOwnsSharedError ? error : null;
+  const visibleSharedError = settingsPanelOwnsSharedError ? null : sharedError;
 
   return (
     <aside className="studio-inspector">
@@ -50,9 +59,15 @@ export function StudioInspector({
             />
           )}
 
-          {error && inspector !== "export" ? (
+          {loreError ? (
             <div aria-live="assertive" className="studio-inspector__error" role="alert">
-              {error}
+              {loreError}
+            </div>
+          ) : null}
+
+          {visibleSharedError ? (
+            <div aria-live="assertive" className="studio-inspector__error" role="alert">
+              {visibleSharedError}
             </div>
           ) : null}
 

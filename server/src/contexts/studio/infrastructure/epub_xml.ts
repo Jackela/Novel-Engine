@@ -1,3 +1,5 @@
+import type { EventEmitter } from "node:events";
+
 import JSZip from "jszip";
 
 import type { ArtifactChapter } from "../application/export_artifact_service.js";
@@ -34,11 +36,11 @@ export function plainText(markdown: string): string {
     .trim();
 }
 
-export async function epubBytes(
+export function epubStream(
   title: string,
   artifactId: string,
   chapters: readonly ArtifactChapter[],
-): Promise<Buffer> {
+): EventEmitter {
   const zip = new JSZip();
   const chapterFiles = chapters.map(
     (_chapter, index) => `chapter-${String(index + 1).padStart(3, "0")}.xhtml`,
@@ -54,7 +56,7 @@ export async function epubBytes(
   zip.file("OEBPS/nav.xhtml", navigationXhtml(title, chapters, chapterFiles));
   zip.file("OEBPS/toc.ncx", tableOfContents(title, chapters, chapterFiles));
   zip.file("OEBPS/content.opf", packageDocument(title, artifactId, chapterFiles));
-  return zip.generateAsync({ type: "nodebuffer", compression: "DEFLATE" });
+  return zip.generateNodeStream({ type: "nodebuffer", compression: "DEFLATE" });
 }
 
 function chapterXhtml(chapter: ArtifactChapter): string {

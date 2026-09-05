@@ -10,7 +10,7 @@ import {
 } from "../../../../shared/interface/http/error_envelope.js";
 import type { JsonResponseSchema } from "./json_response_schema.js";
 import { requireServices, type StudioRoutesOptions } from "./project_routes.js";
-import { withStudioErrors } from "./studio_error_mapping.js";
+import { withAsyncStudioErrors } from "./studio_error_mapping.js";
 
 const legacyPreviewRequestSchema = Type.Object(
   {
@@ -43,6 +43,14 @@ const legacyPreviewResponseSchema: JsonResponseSchema = {
   },
   required: ["source", "source_hash", "title", "description", "chapter_count", "chapters"],
   additionalProperties: false,
+} as const;
+
+const legacyPreview422ResponseSchema: JsonResponseSchema = {
+  description:
+    "Request validation, invalid legacy structure, or import capacity rejection. IMPORT_CAPACITY_EXCEEDED carries only resource, limit, and observed details.",
+  content: {
+    "application/json": { schema: errorEnvelopeResponse },
+  },
 } as const;
 
 function requireLocalOwner(principal: Principal): void {
@@ -81,7 +89,7 @@ export const importRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fast
           401: errorEnvelopeResponse,
           403: errorEnvelopeResponse,
           404: errorEnvelopeResponse,
-          422: errorEnvelopeResponse,
+          422: legacyPreview422ResponseSchema,
           503: errorEnvelopeResponse,
         },
       },
@@ -96,7 +104,7 @@ export const importRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fast
           message: "The persistence layer is not configured.",
         });
       }
-      return withStudioErrors(() =>
+      return withAsyncStudioErrors(() =>
         requireServices(options).imports.previewConfinedLegacyWorkspace(dataDirectory, source),
       );
     },

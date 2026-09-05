@@ -1,14 +1,15 @@
 import type { Dispatch, SetStateAction } from "react";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import type { Project } from "@/app/types/studio";
 import type { InspectorTab } from "../studioConstants";
 import type { SettingsFormState } from "../studioInspectorTypes";
 
 interface UseStudioInspectorStateArgs {
-  readonly section: string;
+  readonly inspector: InspectorTab;
   readonly project: Project | null;
   readonly loadJobs: () => Promise<void>;
+  readonly onSelectInspector: (inspector: InspectorTab) => void;
 }
 
 interface StudioInspectorState {
@@ -21,14 +22,6 @@ interface StudioInspectorState {
 interface SettingsFormSnapshot {
   readonly projectKey: string | null;
   readonly form: SettingsFormState;
-}
-
-function inspectorForSection(section: string): InspectorTab | null {
-  if (section === "review") return "review";
-  if (section === "history") return "history";
-  if (section === "export") return "export";
-  if (section === "settings") return "settings";
-  return null;
 }
 
 function projectKey(project: Project | null): string | null {
@@ -46,11 +39,11 @@ function settingsFormFor(project: Project | null): SettingsFormState {
 }
 
 export function useStudioInspectorState({
-  section,
+  inspector,
   project,
   loadJobs,
+  onSelectInspector,
 }: UseStudioInspectorStateArgs): StudioInspectorState {
-  const [selectedInspector, setSelectedInspector] = useState<InspectorTab>("copilot");
   const currentProjectKey = projectKey(project);
   const [settingsSnapshot, setSettingsSnapshot] = useState<SettingsFormSnapshot>(() => ({
     projectKey: currentProjectKey,
@@ -59,16 +52,17 @@ export function useStudioInspectorState({
 
   const setInspector = useCallback<Dispatch<SetStateAction<InspectorTab>>>(
     (nextInspector) => {
-      setSelectedInspector((current) => {
-        const next = typeof nextInspector === "function" ? nextInspector(current) : nextInspector;
-        if (next === "jobs") {
-          void loadJobs();
-        }
-        return next;
-      });
+      const next = typeof nextInspector === "function" ? nextInspector(inspector) : nextInspector;
+      onSelectInspector(next);
     },
-    [loadJobs],
+    [inspector, onSelectInspector],
   );
+
+  useEffect(() => {
+    if (inspector === "jobs") {
+      void loadJobs();
+    }
+  }, [inspector, loadJobs]);
 
   const setSettingsForm = useCallback<Dispatch<SetStateAction<SettingsFormState>>>(
     (nextForm) => {
@@ -84,7 +78,6 @@ export function useStudioInspectorState({
     [currentProjectKey, project],
   );
 
-  const inspector = inspectorForSection(section) ?? selectedInspector;
   const settingsForm =
     settingsSnapshot.projectKey === currentProjectKey
       ? settingsSnapshot.form

@@ -20,6 +20,9 @@ type ExportRequestBody = NonNullable<
 type AIProposalBody = NonNullable<
   paths["/api/projects/{projectId}/documents/{documentId}/ai-proposals"]["post"]
 >["requestBody"]["content"]["application/json"];
+type GeneratedProjectUpdateBody = NonNullable<
+  paths["/api/projects/{projectId}"]["patch"]
+>["requestBody"]["content"]["application/json"];
 
 export type DocumentKind = DocumentCreateBody["kind"];
 /** The lore lifecycle status (#444); only `stable` entries inject (ADR-0006). */
@@ -30,6 +33,14 @@ export type SessionKind = "owner";
 export type SaveState = "idle" | "saving" | "saved" | "conflict" | "error";
 export type StudioJobStatus = "pending" | "running" | "completed" | "failed" | "interrupted";
 
+/** Closed PATCH body; the server additionally requires at least one member. */
+export type ProjectUpdateBody = GeneratedProjectUpdateBody &
+  (
+    | { title: NonNullable<GeneratedProjectUpdateBody["title"]> }
+    | { description: NonNullable<GeneratedProjectUpdateBody["description"]> }
+    | { settings: NonNullable<GeneratedProjectUpdateBody["settings"]> }
+  );
+
 export interface ProviderInfo {
   provider: string;
   configured: boolean;
@@ -37,6 +48,8 @@ export interface ProviderInfo {
   is_default: boolean;
 }
 export type StudioJobKind = "proposal" | "review" | "export";
+export type StudioJobSummaryKind = StudioJobKind | "import";
+export type StudioJobSummaryOperation = StudioJobOperation | "import";
 
 export interface Session {
   session_id: string;
@@ -47,6 +60,7 @@ export interface Session {
 
 export interface SetupStatus {
   owner_configured: boolean;
+  name: string;
   version: string;
 }
 
@@ -57,23 +71,23 @@ export interface StudioDocument {
   title: string;
   position: number;
   /** Owning volume of a chapter; non-chapter documents stay null (#312). */
-  volume_id?: string | null;
+  volume_id: string | null;
   /**
    * Soft link to the chapter's associated outline beat title (#376); null
    * when unlinked or dangling. This is a title link, not an ordinal — the
    * in-volume ordinal is `position`.
    */
-  beat_ref?: string | null;
+  beat_ref: string | null;
   /**
    * Lore lifecycle status (#444, ADR-0006): draft | stable | deprecated for
    * character/world documents; null for every other kind — the lifecycle
    * semantics never leak beyond lore. Only `stable` entries inject.
    */
-  lore_status?: LoreStatus | null;
+  lore_status: LoreStatus | null;
   current_revision_id: string;
   content_markdown: string;
   metadata: Record<string, unknown>;
-  revision_source: string;
+  revision_source: RevisionSource;
   word_count: number;
   created_at: string;
   updated_at: string;
@@ -89,7 +103,8 @@ export interface Volume {
   updated_at: string;
 }
 
-export interface Project {
+/** Lightweight project-catalog row; it never owns Studio structure. */
+export interface ProjectListItem {
   id: string;
   title: string;
   description: string;
@@ -97,20 +112,50 @@ export interface Project {
   import_hash: string | null;
   created_at: string;
   updated_at: string;
-  documents?: StudioDocument[];
-  volumes?: Volume[];
 }
 
-export interface Revision {
+/** Structural Document row carried by ProjectShell and reorder responses. */
+export interface DocumentSummary {
+  id: string;
+  project_id: string;
+  kind: DocumentKind;
+  title: string;
+  position: number;
+  volume_id: string | null;
+  beat_ref: string | null;
+  lore_status: LoreStatus | null;
+  current_revision_id: string;
+  revision_source: RevisionSource;
+  word_count: number;
+  created_at: string;
+  updated_at: string;
+}
+
+/** Navigation/settings authority. Accepted Markdown belongs to StudioDocument. */
+export interface ProjectShell extends ProjectListItem {
+  documents: DocumentSummary[];
+  volumes: Volume[];
+}
+
+/** Temporary compatibility name while remaining Studio hooks migrate by wave. */
+export type Project = ProjectShell;
+
+export type RevisionSource = "author" | "ai-accepted" | "restore";
+
+/** Lightweight immutable History item; revision bodies stay server authority. */
+export interface RevisionSummary {
   id: string;
   document_id: string;
   parent_revision_id: string | null;
   revision_number: number;
-  content_markdown: string;
-  metadata: Record<string, unknown>;
-  source: string;
+  source: RevisionSource;
   word_count: number;
   created_at: string;
+}
+
+export interface RevisionPage {
+  revisions: RevisionSummary[];
+  next_cursor: string | null;
 }
 
 export interface ReviewIssue {
@@ -165,6 +210,22 @@ export interface StudioJobEvent {
   status: StudioJobStatus;
   details: Record<string, unknown>;
   created_at: string;
+}
+
+/** Cheap project-history item; complete request/result/events live on Job detail. */
+export interface StudioJobSummary {
+  id: string;
+  project_id: string;
+  document_id: string | null;
+  kind: StudioJobSummaryKind;
+  operation: StudioJobSummaryOperation;
+  status: StudioJobStatus;
+  provider: string;
+  model: string;
+  error: string | null;
+  retry_of_job_id: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface StudioJob {

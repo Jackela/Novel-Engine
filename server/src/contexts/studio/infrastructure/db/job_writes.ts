@@ -1,12 +1,14 @@
 import { randomUUID } from "node:crypto";
 import { eq } from "drizzle-orm";
 
+import { nextJobEventSequence } from "../../../../shared/infrastructure/db/job_event_sequence.js";
 import { jobEvents, jobs, usageEvents } from "../../../../shared/infrastructure/db/schema.js";
 import type {
   AddJobInput,
   AddUsageEventInput,
   MarkJobOutcomeInput,
 } from "../../application/ports/job_records.js";
+import { assertSafeUsageToken } from "./safe_usage_tokens.js";
 import type { Tx } from "./studio_query_helpers.js";
 
 /**
@@ -16,7 +18,11 @@ import type { Tx } from "./studio_query_helpers.js";
  */
 
 /** Insert the job row plus its first event; returns the new job id. */
-export function insertJobAndEvent(tx: Tx, input: AddJobInput): string {
+export function insertJobAndEvent(
+  tx: Tx,
+  input: AddJobInput,
+  beforeEventInsert: (jobId: string) => void = () => {},
+): string {
   const job: typeof jobs.$inferInsert = {
     id: randomUUID(),
     project_id: input.projectId,
@@ -35,12 +41,14 @@ export function insertJobAndEvent(tx: Tx, input: AddJobInput): string {
   tx.insert(jobs)
     .values({ ...job, retry_of_job_id: input.retryOfJobId ?? null })
     .run();
+  beforeEventInsert(job.id);
   tx.insert(jobEvents)
     .values({
       id: randomUUID(),
       job_id: job.id,
       status: input.status,
       details_json: input.eventDetailsJson,
+      sequence: 1,
       created_at: input.now,
     })
     .run();
@@ -49,6 +57,8 @@ export function insertJobAndEvent(tx: Tx, input: AddJobInput): string {
 
 /** Insert one usage-ledger row. */
 export function writeUsageEvent(tx: Tx, input: AddUsageEventInput): void {
+  assertSafeUsageToken(input.promptTokens, "prompt");
+  assertSafeUsageToken(input.completionTokens, "completion");
   tx.insert(usageEvents)
     .values({
       id: randomUUID(),
@@ -66,7 +76,12 @@ export function writeUsageEvent(tx: Tx, input: AddUsageEventInput): void {
 }
 
 /** Apply a terminal outcome transition and append its matching event. */
-export function applyJobOutcome(tx: Tx, jobId: string, input: MarkJobOutcomeInput): void {
+export function applyJobOutcome(
+  tx: Tx,
+  jobId: string,
+  input: MarkJobOutcomeInput,
+  beforeEventInsert: (jobId: string) => void = () => {},
+): void {
   tx.update(jobs)
     .set({
       status: input.status,
@@ -78,12 +93,14 @@ export function applyJobOutcome(tx: Tx, jobId: string, input: MarkJobOutcomeInpu
     })
     .where(eq(jobs.id, jobId))
     .run();
+  beforeEventInsert(jobId);
   tx.insert(jobEvents)
     .values({
       id: randomUUID(),
       job_id: jobId,
       status: input.status,
       details_json: input.eventDetailsJson,
+      sequence: nextJobEventSequence(tx, jobId),
       created_at: input.now,
     })
     .run();

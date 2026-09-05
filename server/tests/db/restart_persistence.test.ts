@@ -8,6 +8,8 @@ import { describe, expect, it } from "vitest";
 import { jobEvents, jobs, sessions } from "../../src/shared/infrastructure/db/schema.js";
 import { openStudioDatabase } from "../../src/shared/infrastructure/db/startup.js";
 
+const DATABASE_FILENAME = "novel-engine.sqlite3";
+
 async function makeDataDirectory(): Promise<string> {
   return mkdtemp(join(tmpdir(), "novel-engine-restart-"));
 }
@@ -25,7 +27,7 @@ describe("restart persistence", () => {
     const expires = new Date("2026-09-17T10:00:00.000Z");
     const lastSeen = new Date("2026-08-18T11:30:00.000Z");
 
-    const first = await openStudioDatabase(directory);
+    const first = await openStudioDatabase(join(directory, DATABASE_FILENAME));
     try {
       expect(columnNames(first, "sessions")).toEqual([
         "id",
@@ -51,7 +53,7 @@ describe("restart persistence", () => {
       first.close();
     }
 
-    const second = await openStudioDatabase(directory);
+    const second = await openStudioDatabase(join(directory, DATABASE_FILENAME));
     try {
       const restored = await second.db.select().from(sessions).where(eq(sessions.id, "session-1"));
       expect(restored).toHaveLength(1);
@@ -86,7 +88,7 @@ describe("restart persistence", () => {
     const directory = await makeDataDirectory();
     const beforeRestart = new Date("2026-08-18T10:00:00.000Z");
 
-    const first = await openStudioDatabase(directory);
+    const first = await openStudioDatabase(join(directory, DATABASE_FILENAME));
     try {
       await first.db.insert(jobs).values([
         {
@@ -116,8 +118,18 @@ describe("restart persistence", () => {
       first.close();
     }
 
-    const second = await openStudioDatabase(directory);
+    let statusBeforeJobRecovery: string | undefined;
+    const second = await openStudioDatabase(join(directory, DATABASE_FILENAME), {
+      beforeJobRecovery: (database) => {
+        statusBeforeJobRecovery = database
+          .select({ status: jobs.status })
+          .from(jobs)
+          .where(eq(jobs.id, "job-running"))
+          .get()?.status;
+      },
+    });
     try {
+      expect(statusBeforeJobRecovery).toBe("running");
       const interrupted = await second.db.select().from(jobs).where(eq(jobs.id, "job-running"));
       expect(interrupted).toHaveLength(1);
       expect(interrupted[0]?.status).toBe("interrupted");
@@ -149,10 +161,10 @@ describe("restart persistence", () => {
   it("keeps the jobs schema free of invented lease machinery", async () => {
     const directory = await makeDataDirectory();
 
-    const studio = await openStudioDatabase(directory);
+    const studio = await openStudioDatabase(join(directory, DATABASE_FILENAME));
     try {
       // The proposal workflow (#268) grew the persistence columns (project
-      // scoping, provider/model, request/result, retry chain) — everything
+      // scoping, provider/model, request/result, retry chain/identity) — everything
       // the adjudicated synchronous jobs model carries, and nothing more.
       expect(columnNames(studio, "jobs")).toEqual([
         "id",
@@ -171,6 +183,7 @@ describe("restart persistence", () => {
         "request_json",
         "result_json",
         "retry_of_job_id",
+        "retry_idempotency_key",
       ]);
       for (const name of columnNames(studio, "jobs")) {
         expect(name).not.toMatch(/lease|ttl|heartbeat|worker/i);

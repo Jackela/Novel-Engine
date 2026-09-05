@@ -47,6 +47,69 @@ const secondDocument = {
 const baseProject = projectWith([baseDocument, secondDocument]);
 
 describe("StudioNavigator", () => {
+  it("keeps the running whole-book Stop command available after leaving Manuscript", () => {
+    const onStop = vi.fn();
+    const container = render(
+      <StudioNavigator
+        project={baseProject}
+        section="outline"
+        activeId="doc-1"
+        search=""
+        isSearching={false}
+        searchResults={[]}
+        onSearchChange={() => undefined}
+        onSearchSubmit={(event) => event.preventDefault()}
+        onNavigateSection={() => undefined}
+        onSelectDocument={() => undefined}
+        onCreateDocument={() => undefined}
+        onMoveDocument={() => undefined}
+        wholeBook={{
+          phase: { kind: "running", current: 2, total: 4 },
+          remaining: 3,
+          onStart: vi.fn(),
+          onStop,
+        }}
+      />,
+    );
+
+    const stop = Array.from(container.querySelectorAll<HTMLButtonElement>("button")).find(
+      (button) => button.textContent === "Stop generating",
+    );
+    expect(stop).toBeDefined();
+    expect(container.textContent).toContain("Generating chapter 2 of 4");
+    click(stop ?? null);
+    expect(onStop).toHaveBeenCalledOnce();
+  });
+
+  it("keeps a terminal whole-book outcome visible outside Manuscript", () => {
+    const container = render(
+      <StudioNavigator
+        project={baseProject}
+        section="world"
+        activeId="doc-1"
+        search=""
+        isSearching={false}
+        searchResults={[]}
+        onSearchChange={() => undefined}
+        onSearchSubmit={(event) => event.preventDefault()}
+        onNavigateSection={() => undefined}
+        onSelectDocument={() => undefined}
+        onCreateDocument={() => undefined}
+        onMoveDocument={() => undefined}
+        wholeBook={{
+          phase: { kind: "done", generated: 2, stoppedEarly: false },
+          remaining: 1,
+          onStart: vi.fn(),
+          onStop: vi.fn(),
+        }}
+      />,
+    );
+
+    expect(container.querySelector('[role="status"]')?.textContent).toContain(
+      "Completed — 2 chapters accepted.",
+    );
+  });
+
   it("keeps navigation callbacks scoped to section, search, and document actions", () => {
     const callbacks = {
       searchChange: vi.fn(),
@@ -79,6 +142,12 @@ describe("StudioNavigator", () => {
     expect(container.querySelector("summary")?.hasAttribute("aria-label")).toBe(false);
     expect(container.querySelector('button[aria-label="Add Manuscript"]')).not.toBeNull();
     expect(container.querySelector('button[aria-label="Move Second down"]')).not.toBeNull();
+
+    const sectionLabels = Array.from(
+      container.querySelectorAll<HTMLButtonElement>(".studio-nav__sections button"),
+      (button) => button.textContent,
+    );
+    expect(sectionLabels).toEqual(["Manuscript", "Outline", "Characters", "World", "Settings"]);
 
     click(Array.from(container.querySelectorAll(".studio-nav__sections button"))[1]);
     click(container.querySelector(".studio-nav__search-results button"));

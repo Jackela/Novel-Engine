@@ -5,6 +5,7 @@ import { chapter, projectWith } from "@/test/factories";
 import { createMountHarness } from "@/test/harness";
 
 import { StudioInspector } from "./StudioInspector";
+import { StudioStatusbar } from "./StudioStatusbar";
 import { StudioTopbar } from "./StudioTopbar";
 import type { StudioInspectorModel } from "./studioInspectorTypes";
 
@@ -30,18 +31,30 @@ function buildInspectorModel(): StudioInspectorModel {
     history: {
       revisions: [],
       loadedRevisionId: null,
+      historyInitialized: true,
+      hasOlderRevisions: false,
+      isLoadingOlder: false,
+      isLoadingHistory: false,
+      onLoadOlderRevisions: vi.fn(),
       onRestoreRevision: vi.fn(),
     },
-    jobs: { jobs: [], onLoadJobs: vi.fn(), onRetryJob: vi.fn() },
+    jobs: {
+      jobs: [],
+      hasOlderJobs: false,
+      onLoadJobs: vi.fn(),
+      onLoadOlderJobs: vi.fn(),
+      onRetryJob: vi.fn(),
+    },
     usage: { projectId: "project-1" },
     settings: {
       settingsForm: { title: "", description: "", provider: "" },
+      error: null,
       providers: [],
       onUpdateSettings: vi.fn(),
       setSettingsForm: vi.fn(),
     },
-    // #444: no active document in this fixture, so no lore panel renders.
-    loreStatus: { document: null, onStatusChange: vi.fn() },
+    // #444: no active Lore document in this fixture, so no panel renders.
+    loreStatus: null,
   };
 }
 
@@ -117,6 +130,7 @@ describe("Studio split components", () => {
       tabs.every((tab) => panels.some((panel) => panel.id === tab.getAttribute("aria-controls"))),
     ).toBe(true);
     expect(panels.filter((panel) => panel.hasAttribute("hidden"))).toHaveLength(5);
+    expect(container.querySelector('form[aria-label="Lore status"]')).toBeNull();
 
     click(tabs.find((tab) => tab.textContent?.includes("Review")) ?? null);
     expect(setInspector).toHaveBeenCalledWith("review");
@@ -175,14 +189,131 @@ describe("Studio split components", () => {
     expect(container.querySelector("form.studio-inspector__panel")).not.toBeNull();
   });
 
+  it("renders a Settings failure once inside the retryable form", () => {
+    const model = buildInspectorModel();
+    model.settings.error = "Persistence unavailable. Try again.";
+    const container = render(
+      <StudioInspector
+        error="Persistence unavailable. Try again."
+        inspector="settings"
+        setInspector={vi.fn()}
+        model={model}
+      />,
+    );
+
+    expect(container.querySelectorAll('[role="alert"]')).toHaveLength(1);
+    expect(container.querySelector("form")?.textContent).toContain("Persistence unavailable.");
+  });
+
+  it("renders the contextual Lore editor only inside Copilot", () => {
+    const model = buildInspectorModel();
+    model.loreStatus = {
+      documentId: "character-1",
+      savedStatus: "draft",
+      isSaving: false,
+      error: null,
+      attemptedStatus: null,
+      submit: vi.fn().mockResolvedValue(undefined),
+    };
+
+    const copilot = render(
+      <StudioInspector error={null} inspector="copilot" setInspector={vi.fn()} model={model} />,
+    );
+    const history = render(
+      <StudioInspector error={null} inspector="history" setInspector={vi.fn()} model={model} />,
+    );
+    const settings = render(
+      <StudioInspector error={null} inspector="settings" setInspector={vi.fn()} model={model} />,
+    );
+
+    expect(copilot.querySelector('form[aria-label="Lore status"]')).not.toBeNull();
+    expect(history.querySelector('form[aria-label="Lore status"]')).toBeNull();
+    expect(settings.querySelector('form[aria-label="Lore status"]')).toBeNull();
+  });
+
+  it("keeps a Lore save failure visible while the contextual Export tab is active", () => {
+    const model = buildInspectorModel();
+    model.loreStatus = {
+      documentId: "character-1",
+      savedStatus: "draft",
+      isSaving: false,
+      error: "Unable to update the lore status.",
+      attemptedStatus: "stable",
+      submit: vi.fn().mockResolvedValue(undefined),
+    };
+    const container = render(
+      <StudioInspector error={null} inspector="export" setInspector={vi.fn()} model={model} />,
+    );
+
+    const alerts = Array.from(container.querySelectorAll('[role="alert"]'));
+    expect(alerts).toHaveLength(1);
+    expect(alerts[0]?.textContent).toContain("Unable to update the lore status.");
+  });
+
+  it("keeps distinct Lore and workflow failures readable at the same time", () => {
+    const model = buildInspectorModel();
+    model.loreStatus = {
+      documentId: "character-1",
+      savedStatus: "draft",
+      isSaving: false,
+      error: "Unable to update the lore status.",
+      attemptedStatus: "stable",
+      submit: vi.fn().mockResolvedValue(undefined),
+    };
+    const container = render(
+      <StudioInspector
+        error="Unable to create a proposal."
+        inspector="copilot"
+        setInspector={vi.fn()}
+        model={model}
+      />,
+    );
+
+    const alertText = Array.from(container.querySelectorAll('[role="alert"]')).map(
+      (alert) => alert.textContent,
+    );
+    expect(alertText).toEqual([
+      "Unable to update the lore status.",
+      "Unable to create a proposal.",
+    ]);
+  });
+
+  it("does not duplicate an Export failure already rendered by the Export workflow", () => {
+    const model = buildInspectorModel();
+    model.export.errorForExport = "Unable to export the project.";
+    const container = render(
+      <StudioInspector
+        error="Unable to export the project."
+        inspector="export"
+        setInspector={vi.fn()}
+        model={model}
+      />,
+    );
+
+    expect(container.querySelectorAll('[role="alert"]')).toHaveLength(1);
+  });
+
   it("keeps topbar navigation focused on returning to the project library", () => {
     const back = vi.fn();
 
     const container = render(<StudioTopbar project={baseProject} onBack={back} />);
 
+    expect(container.querySelector(".ui-brand")?.textContent).toContain("Test Engine");
     expect(container.textContent).toContain("Clockwork Harbor");
     click(container.querySelector('button[aria-label="Back to projects"]'));
     expect(back).toHaveBeenCalledTimes(1);
     expect(container.querySelector(".editor-export-menu")).toBeNull();
+  });
+
+  it("renders the build identity in the Studio status bar", () => {
+    const container = render(
+      <StudioStatusbar
+        activeDocument={baseDocument}
+        loadedRevisionId={baseDocument.current_revision_id}
+        saveState="saved"
+      />,
+    );
+
+    expect(container.textContent).toContain("Test Engine test");
   });
 });

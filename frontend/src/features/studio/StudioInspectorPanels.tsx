@@ -24,40 +24,39 @@ export function StudioInspectorPanels({
   pending,
   model,
 }: StudioInspectorPanelsProps) {
-  // Document-scoped lore lifecycle gate (#444): visible whenever the active
-  // document is a lore entry, above any tab panel; renders null otherwise.
-  const loreStatus = (
+  // The page model owns Lore eligibility; the panel owns document identity.
+  const loreStatus = model.loreStatus ? (
     <StudioLoreStatusPanel
-      document={model.loreStatus.document}
-      isSaving={pending.loreStatus ?? false}
-      onStatusChange={model.loreStatus.onStatusChange}
+      documentId={model.loreStatus.documentId}
+      savedStatus={model.loreStatus.savedStatus}
+      attemptedStatus={model.loreStatus.attemptedStatus}
+      isSaving={model.loreStatus.isSaving}
+      onSubmit={model.loreStatus.submit}
     />
-  );
+  ) : null;
 
   if (inspector === "settings") {
     return (
-      <>
-        {loreStatus}
-        <StudioSettingsPanel
-          settingsForm={model.settings.settingsForm}
-          setSettingsForm={model.settings.setSettingsForm}
-          onUpdateSettings={model.settings.onUpdateSettings}
-          providers={model.settings.providers}
-          isSaving={pending.settings}
-        />
-      </>
+      <StudioSettingsPanel
+        settingsForm={model.settings.settingsForm}
+        setSettingsForm={model.settings.setSettingsForm}
+        onUpdateSettings={model.settings.onUpdateSettings}
+        providers={model.settings.providers}
+        isSaving={pending.settings}
+        error={model.settings.error}
+      />
     );
   }
 
   return (
     <>
-      {loreStatus}
       <div
         aria-labelledby={tabId("copilot")}
         hidden={inspector !== "copilot"}
         id={panelId("copilot")}
         role="tabpanel"
       >
+        {inspector === "copilot" ? loreStatus : null}
         <StudioCopilotPanel
           instruction={model.copilot.instruction}
           setInstruction={model.copilot.setInstruction}
@@ -69,6 +68,10 @@ export function StudioInspectorPanels({
           isAcceptingProposal={pending.proposal.accepting}
           streamingText={model.copilot.streamingText}
           onStopProposal={model.copilot.onStopProposal}
+          proposalOutcomeUnknown={model.copilot.proposalOutcomeUnknown}
+          proposalAuditStatus={model.copilot.proposalAuditStatus}
+          unknownAttemptOperation={model.copilot.unknownAttemptOperation}
+          onRetryProposalAudit={model.copilot.onRetryProposalAudit}
         />
       </div>
       <div
@@ -79,7 +82,12 @@ export function StudioInspectorPanels({
       >
         <StudioExportPanel
           exports={model.export.exports}
+          historyInitialized={model.export.historyInitialized}
+          isLoadingHistory={model.export.isLoadingHistory}
+          historyError={model.export.historyError}
+          onRetryHistory={model.export.onRetryHistory}
           exportingFormat={model.export.exportingFormat}
+          retryingFormat={model.export.retryingFormat}
           onExport={model.export.onExport}
           error={model.export.errorForExport}
           failedFormat={model.export.failedFormat}
@@ -94,6 +102,11 @@ export function StudioInspectorPanels({
       >
         <StudioReviewPanel
           latestReview={model.review.latestReview}
+          historyInitialized={model.review.historyInitialized}
+          isLoadingHistory={model.review.isLoadingHistory}
+          historyError={model.review.historyError}
+          actionError={model.review.actionError}
+          onRetryHistory={model.review.onRetryHistory}
           onRunReview={model.review.onRunReview}
           isRunning={pending.review}
         />
@@ -109,6 +122,11 @@ export function StudioInspectorPanels({
           loadedRevisionId={model.history.loadedRevisionId}
           onRestoreRevision={model.history.onRestoreRevision}
           restoringRevisionId={pending.history?.restoringRevisionId}
+          historyInitialized={model.history.historyInitialized}
+          hasOlderRevisions={model.history.hasOlderRevisions}
+          isLoadingOlder={model.history.isLoadingOlder}
+          isLoadingHistory={model.history.isLoadingHistory}
+          onLoadOlderRevisions={model.history.onLoadOlderRevisions}
         />
       </div>
       <div
@@ -119,9 +137,13 @@ export function StudioInspectorPanels({
       >
         <StudioJobsPanel
           jobs={model.jobs.jobs}
+          hasOlderJobs={model.jobs.hasOlderJobs}
           onLoadJobs={model.jobs.onLoadJobs}
+          onLoadOlderJobs={model.jobs.onLoadOlderJobs}
           onRetryJob={model.jobs.onRetryJob}
           isLoading={pending.jobs.loading}
+          loadingInitiator={pending.jobs.loadingInitiator}
+          retryGated={pending.jobs.retryGated}
           retryingJobId={
             pending.jobs.retryingJobId ??
             (pending.jobs.retrying

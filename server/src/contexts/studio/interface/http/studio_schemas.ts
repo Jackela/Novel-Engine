@@ -1,11 +1,11 @@
 import { Type } from "@fastify/type-provider-typebox";
 import { ERROR_CODES } from "../../../../shared/interface/http/error_envelope.js";
 import {
-  documentPayloadSchema,
+  documentSummaryPayloadSchema,
   matchResultPayloadSchema,
 } from "../../application/payload_schemas/document.js";
 import { projectPayloadSchema } from "../../application/payload_schemas/project.js";
-import { revisionPayloadSchema } from "../../application/payload_schemas/revision.js";
+import { revisionSummaryPayloadSchema } from "../../application/payload_schemas/revision.js";
 import type { JsonResponseSchema } from "./json_response_schema.js";
 
 /**
@@ -21,18 +21,21 @@ export {
   matchResultPayloadSchema as matchResultSchema,
 } from "../../application/payload_schemas/document.js";
 export {
-  projectDetailPayloadSchema as projectDetailResponseSchema,
   projectPayloadSchema as projectResponseSchema,
+  projectShellPayloadSchema as projectShellResponseSchema,
 } from "../../application/payload_schemas/project.js";
 export { revisionPayloadSchema as revisionResponseSchema } from "../../application/payload_schemas/revision.js";
 
 export const documentListResponseSchema = Type.Object(
-  { documents: Type.Array(documentPayloadSchema) },
+  { documents: Type.Array(documentSummaryPayloadSchema) },
   { additionalProperties: false },
 );
 
 export const revisionListResponseSchema = Type.Object(
-  { revisions: Type.Array(revisionPayloadSchema) },
+  {
+    revisions: Type.Array(revisionSummaryPayloadSchema),
+    next_cursor: Type.Unsafe<string | null>({ type: "string", nullable: true }),
+  },
   { additionalProperties: false },
 );
 
@@ -113,6 +116,90 @@ export const operationInFlightSchema: JsonResponseSchema = {
     },
   },
   required: ["error"],
+} as const;
+
+/** The keyed retry conflict documents its fixed replay polling hint. */
+export const keyedRetryInFlightResponseSchema: JsonResponseSchema = {
+  description: "The retry attempt with this idempotency key is still running.",
+  headers: {
+    "Retry-After": {
+      description: "Wait one second before replaying this same retry attempt.",
+      type: "integer",
+      const: 1,
+    },
+  },
+  content: {
+    "application/json": { schema: operationInFlightSchema },
+  },
+} as const;
+
+const operationCapacityExceededEnvelope = {
+  type: "object",
+  additionalProperties: false,
+  properties: {
+    error: {
+      type: "object",
+      additionalProperties: false,
+      properties: {
+        code: { type: "string", enum: [ERROR_CODES.OPERATION_CAPACITY_EXCEEDED] },
+        message: {
+          type: "string",
+          enum: ["Studio operation capacity is exhausted."],
+        },
+        details: {
+          type: "object",
+          additionalProperties: false,
+          properties: {
+            scope: { type: "string", enum: ["project", "application"] },
+            limit: { type: "integer", minimum: 1 },
+            in_flight: { type: "integer", minimum: 0 },
+            project_id: { type: "string" },
+            retry_after_seconds: { type: "integer", minimum: 1 },
+          },
+          required: ["scope", "limit", "in_flight", "project_id", "retry_after_seconds"],
+        },
+      },
+      required: ["code", "message", "details"],
+    },
+  },
+  required: ["error"],
+} as const;
+
+const persistenceUnavailableEnvelope = {
+  type: "object",
+  additionalProperties: false,
+  properties: {
+    error: {
+      type: "object",
+      additionalProperties: false,
+      properties: {
+        code: { type: "string", enum: [ERROR_CODES.SERVICE_UNAVAILABLE] },
+        message: { type: "string" },
+        details: { type: "object", additionalProperties: true },
+      },
+      required: ["code", "message"],
+    },
+  },
+  required: ["error"],
+} as const;
+
+/** Capacity-aware 503 contract; Retry-After is absent for persistence outages. */
+export const operationCapacityResponseSchema: JsonResponseSchema = {
+  description: "Workflow capacity exhaustion or unavailable persistence.",
+  headers: {
+    "Retry-After": {
+      description: "Optional integer-seconds hint emitted only for workflow capacity exhaustion.",
+      type: "integer",
+      minimum: 1,
+    },
+  },
+  content: {
+    "application/json": {
+      schema: {
+        oneOf: [operationCapacityExceededEnvelope, persistenceUnavailableEnvelope],
+      },
+    },
+  },
 } as const;
 
 /** The fixed 409 envelope when an immutable snapshot references the document. */

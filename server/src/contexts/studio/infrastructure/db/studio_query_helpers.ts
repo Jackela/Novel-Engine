@@ -1,9 +1,18 @@
 import { randomUUID } from "node:crypto";
-import { and, eq } from "drizzle-orm";
+import { and, asc, eq } from "drizzle-orm";
 
 import type { StudioSqliteDatabase } from "../../../../shared/infrastructure/db/connection.js";
-import type { DocumentWithCurrent, ProjectScope } from "../../application/ports/studio_store.js";
+import type {
+  DocumentSummaryRecord,
+  DocumentWithCurrent,
+  ProjectScope,
+} from "../../application/ports/studio_store.js";
 import { NotFoundError } from "../../domain/exceptions.js";
+import { assertStoredRevisionSource } from "../../domain/revision_source.js";
+import {
+  assertStoredRevisionWordCount,
+  revisionWordCount,
+} from "../../domain/revision_word_count.js";
 import { documentRevisions, documents, projects, volumes } from "./schema.js";
 
 export type ProjectRow = typeof projects.$inferSelect;
@@ -138,6 +147,124 @@ export function documentsWithCurrent(tx: Tx, projectId: string): DocumentWithCur
     .map(({ volumePosition: _volumePosition, ...record }) => record);
 }
 
+/** Build the body-free project-shell projection for execution-plan evidence. */
+export function buildDocumentSummariesQuery(tx: Tx, projectId: string) {
+  return tx
+    .select({
+      id: documents.id,
+      projectId: documents.projectId,
+      kind: documents.kind,
+      title: documents.title,
+      position: documents.position,
+      volumeId: documents.volumeId,
+      beatRef: documents.beatRef,
+      loreStatus: documents.loreStatus,
+      currentRevisionId: documents.currentRevisionId,
+      revisionSource: documentRevisions.source,
+      wordCount: documentRevisions.wordCount,
+      createdAt: documents.createdAt,
+      updatedAt: documents.updatedAt,
+      volumePosition: volumes.position,
+    })
+    .from(documents)
+    .leftJoin(
+      documentRevisions,
+      and(
+        eq(documents.currentRevisionId, documentRevisions.id),
+        eq(documentRevisions.documentId, documents.id),
+      ),
+    )
+    .leftJoin(volumes, eq(documents.volumeId, volumes.id))
+    .where(eq(documents.projectId, projectId));
+}
+
+/** Ordered shell summaries; body and revision metadata are never selected. */
+export function documentSummaries(tx: Tx, projectId: string): DocumentSummaryRecord[] {
+  return buildDocumentSummariesQuery(tx, projectId)
+    .all()
+    .map((row) => ({
+      ...row,
+      currentRevisionId: requiredCurrentRevisionId(row.currentRevisionId),
+      revisionSource: assertStoredRevisionSource(row.revisionSource),
+      wordCount: assertStoredRevisionWordCount(row.wordCount),
+    }))
+    .sort(compareReadingOrder)
+    .map(({ volumePosition: _volumePosition, ...record }) => record);
+}
+
+function requiredCurrentRevisionId(value: string | null): string {
+  if (value === null) throw new Error("Document has no current revision.");
+  return value;
+}
+
+/** Volumes of one project in their canonical reading order. */
+export function volumesInOrder(tx: Tx, projectId: string): VolumeRow[] {
+  return tx
+    .select()
+    .from(volumes)
+    .where(eq(volumes.projectId, projectId))
+    .orderBy(asc(volumes.position), asc(volumes.createdAt), asc(volumes.id))
+    .all() as VolumeRow[];
+}
+
+/** One project document with only its own current revision. */
+export function documentWithCurrent(
+  tx: Tx,
+  projectId: string,
+  documentId: string,
+): DocumentWithCurrent {
+  const row = tx
+    .select({ document: documents, revision: documentRevisions })
+    .from(documents)
+    .leftJoin(documentRevisions, eq(documents.currentRevisionId, documentRevisions.id))
+    .where(and(eq(documents.id, documentId), eq(documents.projectId, projectId)))
+    .get();
+  if (row === undefined) {
+    throw new NotFoundError(
+      `No document '${documentId}' exists in project '${projectId}': the id does not exist ` +
+        `there, or the document belongs to a different project.`,
+    );
+  }
+  return { ...row.document, currentRevision: row.revision };
+}
+
+/** Build the owner/project/document-scoped current projection for plan evidence. */
+export function buildScopedCurrentDocumentQuery(
+  tx: Tx,
+  scope: ProjectScope,
+  projectId: string,
+  documentId: string,
+) {
+  return tx
+    .select({ document: documents, revision: documentRevisions })
+    .from(documents)
+    .innerJoin(projects, eq(documents.projectId, projects.id))
+    .leftJoin(
+      documentRevisions,
+      and(
+        eq(documents.currentRevisionId, documentRevisions.id),
+        eq(documentRevisions.documentId, documents.id),
+      ),
+    )
+    .where(
+      and(eq(documents.id, documentId), eq(documents.projectId, projectId), scopeCondition(scope)),
+    );
+}
+
+/** One disclosure-safe current Document; every scoped miss has one boundary. */
+export function scopedCurrentDocument(
+  tx: Tx,
+  scope: ProjectScope,
+  projectId: string,
+  documentId: string,
+): DocumentWithCurrent {
+  const row = buildScopedCurrentDocumentQuery(tx, scope, projectId, documentId).get();
+  if (row === undefined || row.revision === null) {
+    throw new NotFoundError("Document not found.");
+  }
+  return { ...row.document, currentRevision: row.revision };
+}
+
 /** Append one immutable revision row (the sole revision write path). */
 export function insertRevision(
   tx: Tx,
@@ -159,6 +286,7 @@ export function insertRevision(
     contentMarkdown: input.contentMarkdown,
     metadataJson: input.metadataJson,
     source: input.source,
+    wordCount: revisionWordCount(input.contentMarkdown),
     createdAt: input.now,
   };
   tx.insert(documentRevisions).values(revision).run();

@@ -10,6 +10,7 @@ import {
 } from "../../src/contexts/ai/application/ports/text_generation.js";
 import { DocumentService } from "../../src/contexts/studio/application/document_service.js";
 import type { StudioStore } from "../../src/contexts/studio/application/ports/studio_store.js";
+import { scopeForPrincipal } from "../../src/contexts/studio/application/ports/studio_store.js";
 import { ProjectService } from "../../src/contexts/studio/application/project_service.js";
 import {
   type EditorialAssessment,
@@ -47,11 +48,10 @@ interface Harness {
 
 async function openHarness(): Promise<Harness> {
   const directory = await mkdtemp(join(tmpdir(), "novel-engine-review-service-"));
-  const studio = await openStudioDatabase(directory);
+  const studio = await openStudioDatabase(join(directory, "novel-engine.sqlite3"));
   const clock = monotonicClock();
   const store: StudioStore = new DrizzleStudioStore({
     database: studio.db,
-    dataDirectory: directory,
   });
   const auth = new AuthService({
     store: new DrizzleAuthStore(studio.db),
@@ -141,14 +141,22 @@ describe("ReviewService (#316 provider-driven review)", () => {
         providerFactory: factory,
       });
 
-      const first = await reviews.evaluateProject(harness.principal, project.id);
+      const firstEvaluation = await reviews.evaluateProject(harness.principal, project.id);
+      const first = harness.store.recordCompletedReviewJob(
+        scopeForPrincipal(harness.principal),
+        firstEvaluation,
+      ).assessment;
 
       expect(first.provider).toBe("mock");
       expect(first.model).toBe("static-review-model");
       expect(assessmentCodes(first)).toEqual(["warning:pacing"]);
       expect(first.issues[0]?.documentId).toBe(thin.id);
 
-      const second = await reviews.evaluateProject(harness.principal, project.id);
+      const secondEvaluation = await reviews.evaluateProject(harness.principal, project.id);
+      const second = harness.store.recordCompletedReviewJob(
+        scopeForPrincipal(harness.principal),
+        secondEvaluation,
+      ).assessment;
       const listed = reviews.listEditorialAssessments(harness.principal, project.id);
 
       expect(listed.map((assessment) => assessment.id)).toEqual([second.id, first.id]);

@@ -21,18 +21,62 @@ export function flakyProviderFactory(failures: { count: number }): TextGeneratio
           failures.count -= 1;
           throw new TextGenerationProviderError(`simulated provider failure ${provider}`);
         }
+        const content =
+          task.step === "editorial_review"
+            ? { findings: [] }
+            : { chapter_markdown: validProposalProse };
         return {
           step: task.step,
           provider,
           model: "recovered-model",
-          rawText: validProposalProse,
-          content: { chapter_markdown: validProposalProse },
+          rawText: JSON.stringify(content),
+          content,
           promptTokens: 3,
           completionTokens: 5,
         };
       },
     };
     return impl;
+  };
+}
+
+/** Fail early calls, then pause one valid review result until the test releases it. */
+export function deferredReviewFactory(failuresBeforeWait = 0): {
+  factory: TextGenerationProviderFactory;
+  started: Promise<void>;
+  succeed: () => void;
+} {
+  let failures = failuresBeforeWait;
+  let announceStarted: (() => void) | undefined;
+  let complete: (() => void) | undefined;
+  const started = new Promise<void>((resolve) => {
+    announceStarted = resolve;
+  });
+  const pending = new Promise<void>((resolve) => {
+    complete = resolve;
+  });
+  return {
+    factory: (provider) => ({
+      generateStructured: async () => {
+        if (failures > 0) {
+          failures -= 1;
+          throw new TextGenerationProviderError(`simulated provider failure ${provider}`);
+        }
+        announceStarted?.();
+        await pending;
+        return {
+          step: "editorial_review",
+          provider,
+          model: "deferred-review-model",
+          rawText: '{"findings":[]}',
+          content: { findings: [] },
+          promptTokens: null,
+          completionTokens: null,
+        };
+      },
+    }),
+    started,
+    succeed: () => complete?.(),
   };
 }
 
@@ -58,6 +102,37 @@ export function forceJobStatus(app: FastifyInstance, jobId: string, status: stri
   const database = app.studioDb?.db;
   if (database === undefined) throw new Error("Expected the real Studio database.");
   database.update(jobsTable).set({ status }).where(eq(jobsTable.id, jobId)).run();
+}
+
+/** Seed the failed proposal Job used by retry-admission tests. */
+export function seedRetryableProposal(
+  app: FastifyInstance,
+  projectId: string,
+  documentId: string,
+): string {
+  const id = "capacity-api-retry-fixture";
+  const now = new Date("2026-09-02T08:00:00.000Z");
+  studioDatabase(app)
+    .insert(jobsTable)
+    .values({
+      id,
+      project_id: projectId,
+      document_id: documentId,
+      kind: "proposal",
+      operation: "continue",
+      status: "failed",
+      provider: "mock",
+      model: "fixture-model",
+      request_json: '{"instruction":"","provider":"mock"}',
+      result_json: "{}",
+      error: "fixture failure",
+      created_at: now,
+      updated_at: now,
+      started_at: now,
+      finished_at: now,
+    })
+    .run();
+  return id;
 }
 
 /** The live studio database behind an app built with a data directory. */

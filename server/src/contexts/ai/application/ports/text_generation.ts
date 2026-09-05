@@ -23,11 +23,24 @@ export function isTextProviderName(value: string): value is TextProviderName {
   return (PROVIDER_NAMES as readonly string[]).includes(value);
 }
 
+/** Runtime contract for exact, non-negative usage accounting. */
+export function isSafeUsageToken(value: unknown): value is number {
+  return typeof value === "number" && Number.isSafeInteger(value) && value >= 0;
+}
+
 /** Raised when a provider cannot complete a request; job persistence records it. */
 export class TextGenerationProviderError extends Error {
   constructor(message: string) {
     super(message);
     this.name = "TextGenerationProviderError";
+  }
+}
+
+/** Internal control-flow signal for an application-owned stream cancellation. */
+export class TextGenerationCancelledError extends Error {
+  constructor() {
+    super("Text generation was cancelled.");
+    this.name = "TextGenerationCancelledError";
   }
 }
 

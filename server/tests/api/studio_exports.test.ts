@@ -11,7 +11,6 @@ import type {
   ExportArtifactRecord,
 } from "../../src/contexts/studio/application/ports/export_store.js";
 import { exports as exportArtifacts } from "../../src/contexts/studio/infrastructure/db/schema.js";
-import { DrizzleStudioStore } from "../../src/contexts/studio/infrastructure/drizzle_studio_store.js";
 import { FilesystemExportArtifactGateway } from "../../src/contexts/studio/infrastructure/export_artifact_files.js";
 import { ExportStorePart } from "../../src/contexts/studio/infrastructure/export_store_part.js";
 import type { Principal } from "../../src/shared/application/ports/auth.js";
@@ -101,11 +100,10 @@ describe("export artifact catalog and delivery", () => {
       const database = app.studioDb?.db;
       if (database === undefined) throw new Error("Expected the real Studio database.");
 
-      const ids = ["evidence markdown+%?", "evidence docx+%?", "evidence epub+%?"];
+      const ids = ["evidence-markdown", "evidence-docx", "evidence-epub"];
       let nextId = 0;
       const artifacts = new SnapshotArtifactService(
         new ExportStorePart(database),
-        new DrizzleStudioStore({ database, dataDirectory: directory }),
         new FilesystemExportArtifactGateway(directory),
         {
           now: clock,
@@ -117,13 +115,12 @@ describe("export artifact catalog and delivery", () => {
           },
         },
       );
-      const markdown = await artifacts.materializeSnapshotArtifact(
-        principal,
-        project.id,
-        "markdown",
-      );
-      const docx = await artifacts.materializeSnapshotArtifact(principal, project.id, "docx");
-      const epub = await artifacts.materializeSnapshotArtifact(principal, project.id, "epub");
+      const markdown = (await artifacts.recordCompletedExportJob(principal, project.id, "markdown"))
+        .artifact;
+      const docx = (await artifacts.recordCompletedExportJob(principal, project.id, "docx"))
+        .artifact;
+      const epub = (await artifacts.recordCompletedExportJob(principal, project.id, "epub"))
+        .artifact;
       const records = [markdown, docx, epub];
       expect(records.map((record) => record.id)).toEqual(ids);
 
@@ -216,12 +213,13 @@ describe("export artifact catalog and delivery", () => {
       const database = app.studioDb?.db;
       if (database === undefined) throw new Error("Expected the real Studio database.");
 
-      const completed = await new SnapshotArtifactService(
-        new ExportStorePart(database),
-        new DrizzleStudioStore({ database, dataDirectory: directory }),
-        new FilesystemExportArtifactGateway(directory),
-        { now: clock, newId: () => "completed-export-evidence" },
-      ).materializeSnapshotArtifact(principal, project.id, "markdown");
+      const completed = (
+        await new SnapshotArtifactService(
+          new ExportStorePart(database),
+          new FilesystemExportArtifactGateway(directory),
+          { now: clock, newId: () => "completed-export-evidence" },
+        ).recordCompletedExportJob(principal, project.id, "markdown")
+      ).artifact;
       const exportDirectory = join(directory, "exports", project.id);
       expect(
         database

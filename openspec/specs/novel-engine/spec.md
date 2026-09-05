@@ -21,7 +21,7 @@ change, then archive it into `openspec/changes/archive/`.
 Novel Engine is a self-hosted, single-author writing studio for long-form
 novel authoring: a TypeScript backend (Fastify, TypeBox, Drizzle) over an
 authoritative SQLite store, serving a React Studio frontend. One Owner works
-on one novel; guest sessions are isolated, disposable sandboxes.
+on one novel; the current product exposes no guest-session mode.
 
 The behavior specified here covers:
 
@@ -47,16 +47,39 @@ The behavior specified here covers:
   import, and a route-driven, editor-first, APG-compliant Studio UI.
 
 ## Requirements
+
 ### Requirement: One product and version authority
-The system MUST define Novel Engine as the only authoring product, MUST read
-the product version from the single workspace package manifest, and MUST
-define product behavior in the `novel-engine` capability specification.
+The server workspace package manifest MUST be the only editable
+machine-readable authority for the product name `Novel Engine` and its
+SemVer release version. Every other package manifest MUST omit product name
+and version declarations. The API version and setup surfaces, OpenAPI,
+operational CLI, Studio-visible identity, production frontend bundle, and
+structured server logs MUST derive the same name and version from that
+authority without an independent literal, override, or fallback. Missing,
+blank, or malformed authority values MUST fail startup or build rather than
+produce a fabricated identity. Product behavior MUST remain defined in the
+`novel-engine` capability specification.
 
 #### Scenario: Derived surfaces report the release version
-- **GIVEN** the workspace manifest declares version `0.4.0`
-- **WHEN** the API, Studio, logs, monitoring metadata, and OpenAPI are produced
-- **THEN** each surface reports `0.4.0`
-- **AND** none requires an independent version override
+- **GIVEN** the server manifest declares a valid product name and SemVer release version
+- **WHEN** the API, setup surface, OpenAPI, CLI, Studio, production bundle, and server logs are produced
+- **THEN** each surface reports the same manifest-derived name and version
+- **AND** none requires an independent identity override
+
+#### Scenario: Duplicate package authority is rejected
+- **GIVEN** any non-server package manifest declares a product name or version
+- **WHEN** repository SSOT validation runs
+- **THEN** validation fails and identifies the duplicate declaration
+
+#### Scenario: Invalid identity fails closed
+- **GIVEN** the server manifest omits the product name or declares a blank name or malformed SemVer version
+- **WHEN** the server starts or the Studio builds
+- **THEN** the operation fails before serving or producing a bundle
+
+#### Scenario: Studio and API identity cannot drift
+- **GIVEN** a production Studio bundle and a running API from the same workspace
+- **WHEN** their product identities are inspected
+- **THEN** the visible Studio name and version equal the API identity
 
 ### Requirement: Unified error envelope
 Every API error response MUST use a single error envelope with a stable
@@ -133,20 +156,42 @@ surface MUST NOT exist.
 - **THEN** the response is 404 under the unified error envelope
 
 ### Requirement: Health and version surface
+
 The API MUST expose a database-aware health check, liveness and readiness
 probes (`/health/ready` failing with 503 when not ready), and a version
 endpoint reporting the product version, the runtime identifier and version,
-the environment, and the build SHA.
+the environment, and the build SHA. When application persistence exists, the
+default readiness probe MUST execute a read-only check through the same live
+SQLite handle used by requests. An injected probe MAY replace it explicitly.
+The database-free walking skeleton MAY remain ready with no components, and
+liveness MUST remain independent of dependency state.
 
 #### Scenario: Readiness reflects the database
+
 - **GIVEN** the SQLite database is unreachable
 - **WHEN** `/health/ready` is requested
 - **THEN** the response is 503
 
 #### Scenario: Version reports the runtime
+
 - **GIVEN** the server runs on Node
 - **WHEN** `/version` is requested
 - **THEN** the payload reports the product version and a `runtime` field with the Node version
+
+#### Scenario: Default readiness uses the live SQLite handle
+
+- **GIVEN** the application opened its configured SQLite database and no probe
+  override was injected
+- **WHEN** `/health/ready` is requested
+- **THEN** the default probe performs a read-only check through that same handle
+- **AND** the response is 200 only while the check is healthy
+
+#### Scenario: Closed database is not ready but remains live
+
+- **GIVEN** the process remains alive but its SQLite handle is closed or unusable
+- **WHEN** liveness and readiness are requested
+- **THEN** `/health/ready` responds 503 with a stable database failure
+- **AND** `/health/live` remains 200
 
 ### Requirement: Request validation constraints
 The API MUST enforce the adjudicated request constraints: titles 1–240
@@ -359,13 +404,15 @@ by the system itself.
 - **THEN** startup succeeds without writing a backup
 
 ### Requirement: Restart recovery without invented leases
-On startup, every job left in the running state by a previous process MUST
-be marked interrupted, MUST carry the fixed restart error, and MUST record a
-job event naming the restart reason; the author MAY then explicitly retry
-such a job. The system MUST NOT introduce lease columns, leases with TTLs,
-heartbeats, lease renewal, worker registration, or any background executor
-to implement this recovery: "lease" exists only as narrative wording inside
-payload-visible strings, and jobs execute within the request lifecycle.
+On startup, every job left in the running state by a previous process MUST be
+marked interrupted, MUST carry the fixed restart error, and MUST record a job
+event naming the restart reason; the author MAY then explicitly retry such a
+job. Job-state recovery MUST NOT introduce lease columns, leases with TTLs,
+heartbeats, lease renewal, worker registration, or any background executor:
+"lease" exists only as narrative wording inside payload-visible strings, and
+jobs execute within the request lifecycle. The separate one-time pre-serve
+export reconciliation MUST run before job-state recovery and MUST NOT create a
+worker, lease, or scheduled cleanup path.
 
 #### Scenario: Running job is interrupted at restart
 - **GIVEN** a job is running when its process stops
@@ -377,9 +424,9 @@ payload-visible strings, and jobs execute within the request lifecycle.
 #### Scenario: Recovery uses no lease machinery
 - **GIVEN** the process stops at any point
 - **WHEN** the next startup restores a consistent state
-- **THEN** recovery performs only startup-time row updates and event inserts
-- **AND** no lease, heartbeat, renewal, or worker-registration mechanism
-  participates
+- **THEN** job-state recovery performs only startup-time row updates and event inserts
+- **AND** export publication reconciliation is a bounded pre-serve pass
+- **AND** no lease, heartbeat, renewal, worker-registration, or scheduled executor participates
 
 ### Requirement: Startup schema migration
 Schema changes MUST ship as migration files that form the single deployment
@@ -402,12 +449,14 @@ retained database.
 
 ### Requirement: Explicit AI proposals
 AI operations MUST produce proposals persisted on jobs and MUST NOT mutate
-documents until the author accepts the proposal. A proposal request MUST
-carry `operation`, `instruction`, and `base_revision_id`, and its job result
-MUST carry `proposal_markdown`, `base_revision_id`, and `accepted_revision_id`.
-Acceptance MUST be limited to completed jobs with a non-empty proposal, MUST
-be idempotent, and MUST write the accepted revision with source
-`ai-accepted` and `metadata.ai_job_id`.
+documents until the author accepts the proposal. A proposal request MUST carry
+`operation`, `instruction`, and `base_revision_id`, and its job result MUST
+carry `proposal_markdown`, `base_revision_id`, and `accepted_revision_id`.
+Acceptance MUST be limited to completed jobs with a non-empty proposal, MUST be
+idempotent under repeated or concurrent requests, and MUST write the accepted
+revision with source `ai-accepted` and `metadata.ai_job_id`. Creating and
+indexing that revision, advancing the document and project, and binding the
+job's `accepted_revision_id` MUST commit as one atomic operation.
 
 #### Scenario: Generation leaves the manuscript untouched
 - **GIVEN** a document currently points to revision A
@@ -432,6 +481,25 @@ be idempotent, and MUST write the accepted revision with source
 - **GIVEN** a proposal job that was already accepted
 - **WHEN** acceptance is requested again
 - **THEN** the job is returned unchanged with the same `accepted_revision_id`
+- **AND** exactly one accepted revision is created
+
+#### Scenario: Concurrent acceptance is idempotent
+- **GIVEN** two acceptance requests address the same completed proposal job
+- **WHEN** they run concurrently
+- **THEN** both converge on the same `accepted_revision_id`
+- **AND** exactly one accepted revision is created
+
+#### Scenario: Acceptance persistence failure rolls back every projection
+- **GIVEN** a completed proposal whose acceptance begins from a current base revision
+- **WHEN** any revision, document, project, FTS, or job-binding write fails
+- **THEN** none of the acceptance writes commit
+- **AND** the proposal remains safely retryable from the same base revision
+
+#### Scenario: A legacy split acceptance repairs its job binding
+- **GIVEN** an `ai-accepted` revision already records a proposal job's
+  `metadata.ai_job_id` but that job has no `accepted_revision_id`
+- **WHEN** acceptance is requested again
+- **THEN** the job is bound to that existing revision
 - **AND** no second revision is created
 
 ### Requirement: Server-mapped provider steps
@@ -565,16 +633,19 @@ otherwise.
 - **AND** without the override it uses the resolved dashscope model
 
 ### Requirement: Provider transient failure handling
-Both HTTP providers MUST share one retry policy with an identical retryable
-set: HTTP 429, 500, 502, 503, 504, transport timeout, and malformed JSON
-responses are retried up to the configured limit (default three retries with
-one-second spacing); every other error fails immediately without retry. Retry
-decisions MUST read structured error fields (status code, timeout,
-retryability), never substring matches on human-readable message text, and
-both HTTP providers MUST share the same retry module. Generation steps
-(`chapter_draft`, `chapter_revision`) MUST be granted a timeout floor of 180
-seconds, and the enclosing server request timeout MUST NOT be shorter than
-that floor.
+For synchronous structured generation calls, both HTTP providers MUST share
+one retry policy with an identical retryable set: HTTP 429, 500, 502, 503,
+504, transport timeout (including an absolute response deadline), and malformed
+JSON responses are retried up to the configured limit (default three total
+attempts, with one-second spacing between attempts); every other error fails
+immediately without retry. Retry decisions MUST read structured error fields
+(status code, timeout, retryability), never substring matches on
+human-readable message text, and both HTTP providers MUST share the same retry
+module. A retryable per-attempt deadline failure MUST NOT record the normal
+failed proposal outcome until the attempt budget is exhausted. Synchronous
+generation steps (`chapter_draft`, `chapter_revision`) MUST be granted a
+timeout floor of 180 seconds, and the enclosing server request timeout MUST
+NOT be shorter than that floor.
 
 #### Scenario: Transient error is retried
 - **GIVEN** the provider answers 429 once and then succeeds
@@ -585,18 +656,55 @@ that floor.
 #### Scenario: Persistent failure exhausts retries
 - **GIVEN** the provider answers 503 on every attempt
 - **WHEN** a proposal is requested
-- **THEN** the job fails with the provider error after the bounded retries
+- **THEN** the job fails with the provider error after three total attempts by default
 
 #### Scenario: Non-retryable failure is immediate
 - **GIVEN** the provider answers 401
 - **WHEN** a proposal is requested
-- **THEN** the job fails without any retry attempt
+- **THEN** the job fails after one attempt
 
 #### Scenario: Generation timeout floor
 - **GIVEN** a chapter revision generation on an HTTP provider
 - **WHEN** the request is dispatched
 - **THEN** the provider call is granted at least 180 seconds
 - **AND** the enclosing HTTP request does not time out sooner
+
+### Requirement: Untrusted Provider failure diagnostics boundary
+When an HTTP Provider response has a non-success HTTP status, its upstream
+response body MUST be treated as untrusted diagnostics. The adapter MUST
+cancel and discard that body without consuming its contents. The system MUST
+NOT copy body-derived text into application error messages, persisted job
+errors or event details, API payloads, SSE frames, author-visible text, or
+application logs. It MUST instead register a stable server-authored Provider
+failure before body cleanup, derived only from trusted local context and the
+normalized failure class or numeric HTTP status. Once registered, that status
+failure MUST remain authoritative if response cancellation rejects or exceeds
+the fixed one-second cleanup grace. An unexpected local error raised while
+constructing or registering the status failure MUST remain visible, MUST NOT be
+reclassified or retried from the upstream HTTP status, and MUST NOT gain
+body-derived diagnostic text. Discarding the body MUST NOT remove the
+structured status used by the Provider transient failure handling Requirement.
+
+#### Scenario: Persistent synchronous failure stays inside the boundary
+- **GIVEN** either HTTP Provider returns 503 with a body containing a unique sensitive marker on every attempt
+- **WHEN** a proposal exhausts the default attempt budget
+- **THEN** status 503 drives three total attempts
+- **AND** the failed job, event, and JSON payload use a stable server-authored error
+- **AND** no body-derived text or sensitive marker is persisted, logged, or returned
+
+#### Scenario: Non-retryable body stays private
+- **GIVEN** either HTTP Provider returns 401 with a body containing a unique sensitive marker
+- **WHEN** a proposal is requested
+- **THEN** exactly one attempt occurs
+- **AND** the failed job and public error use a stable server-authored message
+- **AND** no body-derived text or sensitive marker crosses the boundary
+
+#### Scenario: Streaming HTTP failure uses the same safe boundary
+- **GIVEN** a streaming HTTP Provider returns a non-success response whose body contains a unique sensitive marker
+- **WHEN** the proposal stream ends with a `PROVIDER_FAILED` frame and records a failed job
+- **THEN** the frame, job, and event use the stable server-authored message
+- **AND** no body-derived text or sensitive marker is persisted, logged, or returned
+- **AND** no proposal text or usage event is fabricated
 
 ### Requirement: Per-request provider lifecycle
 Providers MUST be constructed per request through the provider factory; the
@@ -616,14 +724,15 @@ provider holds MUST be released when its request ends, and no provider state
 - **THEN** no provider instance or outbound transport exists
 
 ### Requirement: Snapshot-bound deterministic review
-Every review MUST snapshot the project's current revisions (reason `review`)
-with the fixed summary text, and its issues MUST be computed from that
-snapshot. For chapter documents: fewer than 250 words MUST produce warning
-`thin_chapter` (message naming title and word count, the fixed suggestion,
-evidence `{word_count}`); empty content MUST produce blocker `empty_chapter`;
-both MAY fire on the same chapter. Non-chapter documents MUST be skipped, and
-issues MUST be ordered by severity then code. Word counting MUST use the one
-shared word definition wherever words are counted.
+Every completed review MUST snapshot the project's current revisions (reason
+`review`) with the fixed summary text, and its issues MUST be computed from the
+source later persisted as that snapshot. Failed reviews MUST NOT persist a
+review snapshot. For chapter documents: fewer than 250 words MUST produce
+warning `thin_chapter` (message naming title and word count, the fixed
+suggestion, evidence `{word_count}`); empty content MUST produce blocker
+`empty_chapter`; both MAY fire on the same chapter. Non-chapter documents MUST
+be skipped, and issues MUST be ordered by severity then code. Word counting
+MUST use the one shared word definition wherever words are counted.
 
 #### Scenario: Thin chapter is flagged
 - **GIVEN** a chapter whose current revision has 249 words by the shared word-count definition
@@ -647,14 +756,36 @@ shared word definition wherever words are counted.
 - **WHEN** the stored review is read
 - **THEN** its issues still reflect the snapshotted revisions
 
+#### Scenario: Upgrade removes only orphan review snapshots
+- **GIVEN** an earlier release left a `review` snapshot with no assessment
+- **WHEN** the database upgrades through the generated migration channel
+- **THEN** that snapshot and its snapshot-document rows are removed
+- **AND** completed-review and export snapshots remain intact
+
 ### Requirement: Snapshot-bound export with reuse
-Exports MUST be written from an immutable snapshot. The latest export-reason
-snapshot MUST be reused if and only if its revision map equals the current
-revision map over all documents; any divergence MUST create a new snapshot
-(reason `export`). Only chapter documents export; a project with zero
-chapters MUST be refused export with 422. All formats exported from one
-state MUST contain the same ordered chapter revisions, and each export MUST
-record its snapshot.
+Exports MUST be rendered from one read-only captured source and MUST NOT persist
+an export snapshot before rendering succeeds. The latest export-reason snapshot
+MUST be reused if and only if its complete ordered document projection equals
+the captured projection over every document: document id, revision id, kind,
+title, content, metadata, position, and array order. Any divergence, including
+a reorder that creates no revision, MUST create a new snapshot (reason
+`export`). When a projection match selects an existing snapshot, rendering MUST
+use that snapshot's stored document projection so the file and snapshot cannot
+disagree.
+Only chapter documents export; a project with zero chapters MUST be refused
+export with 422. All formats exported from one state MUST contain the same
+ordered chapter revisions, and each completed export MUST record its snapshot.
+
+On fresh success, source revalidation, snapshot reuse or creation, snapshot
+documents, artifact metadata, the completed job, and its completed event MUST
+commit in one immediate database transaction. On retry success, the same export
+evidence and the running retry's completed transition/event MUST commit in one
+immediate transaction. If database publication fails after file publication,
+the newly published file MUST be removed by identity-aware compensation; cleanup
+failure MUST be reported without masking the original error. A deleted captured
+source MUST NOT leave partial export evidence. An export retry MUST inherit the
+original format but capture a fresh immutable source for that retry attempt; its
+completed result MUST record that attempt's snapshot.
 
 #### Scenario: Unchanged project reuses the snapshot
 - **GIVEN** an export just completed
@@ -666,16 +797,59 @@ record its snapshot.
 - **WHEN** any document — chapter or not — is saved or added, and another export is requested
 - **THEN** a new snapshot with reason `export` is created and recorded
 
+#### Scenario: Reading-order change creates a new snapshot
+- **GIVEN** an export just completed for two chapters
+- **WHEN** the chapters are reordered without creating a new revision
+- **THEN** the next export records a new snapshot
+- **AND** its rendered chapter order equals the captured reading order
+
 #### Scenario: Export without chapters is refused
 - **GIVEN** a project contains only outline documents
 - **WHEN** an export is requested
 - **THEN** the response is 422 under the unified error envelope
-- **AND** no export file or record is created
+- **AND** no export file, snapshot, artifact record, or job is created
 
 #### Scenario: Formats agree on content
 - **GIVEN** a project with several chapters
 - **WHEN** markdown, DOCX, and EPUB exports are requested in the same state
 - **THEN** all three carry the same ordered chapter revisions from one snapshot
+
+#### Scenario: Fresh export completion is one outcome
+- **GIVEN** a rendered export file from a valid captured source
+- **WHEN** any snapshot, artifact, completed-job, or completed-event write fails
+- **THEN** none of those database writes commit
+- **AND** the newly published file is compensated without replacing the failure
+
+#### Scenario: Retry export completion is one outcome
+- **GIVEN** a running export retry and a rendered file from a valid source
+- **WHEN** its terminal database transition fails
+- **THEN** no new snapshot or artifact record commits
+- **AND** the retry remains running for restart recovery
+- **AND** the newly published file is compensated
+
+#### Scenario: Concurrent source deletion is failure-closed
+- **GIVEN** an export source is captured and one captured document is deleted before publication lands
+- **WHEN** the rendered outcome is finalized
+- **THEN** no partial snapshot or artifact evidence commits
+- **AND** a fresh request records a failed export job if the project still exists
+
+#### Scenario: Known publication failure is audited
+- **GIVEN** the artifact filesystem reports a classified operational write failure
+- **WHEN** a fresh export or export retry runs
+- **THEN** the request reports a failed terminal job with the stable publication error
+- **AND** no export snapshot, artifact record, or completed file is published
+
+#### Scenario: Unexpected export defect remains visible
+- **GIVEN** rendering or persistence raises an unclassified programming error
+- **WHEN** the export request fails
+- **THEN** the error remains an opaque server failure rather than a fabricated failed job
+- **AND** no partial export database evidence or completed file remains
+
+#### Scenario: Upgrade removes only orphan export snapshots
+- **GIVEN** an earlier release left an `export` snapshot with no artifact
+- **WHEN** the database upgrades through the generated migration channel
+- **THEN** that snapshot and its snapshot-document rows are removed
+- **AND** completed-export, review, and cross-snapshot review-issue evidence remains intact
 
 ### Requirement: Export format contracts
 The markdown export MUST be byte-stable: an `# {title}` header line, each
@@ -704,29 +878,194 @@ never a rich formatting conversion. EPUB chapters MUST be named
 
 ### Requirement: Project-scoped export artifacts
 Export files MUST live under the project-scoped directory
-`data/exports/<project_id>/` named by export id, MUST be written atomically
-(temporary file then replace), and each export record MUST capture its file
-path, byte size, and SHA-256 checksum. Deleting a project MUST also remove
-that project's export directory alongside its database rows, best-effort.
-The system MUST NOT run scheduled cleanup of export files for live projects,
-and export downloads MUST resolve strictly within the data root.
+`data/exports/<project_id>/` named by export id, and each export record MUST
+capture its canonical file path, byte size, and SHA-256 checksum. Before the
+database outcome commits, the filesystem MUST durably retain a unique stage
+file and versioned publication manifest. After both files are durable and
+before exposing the final, the system MUST persist a write-ahead cleanup intent
+containing the complete manifest and the exact stage/manifest device and inode
+identities without numeric precision loss. It MUST then expose the complete
+final through a no-clobber atomic link and MUST fsync the owning directories.
+The cleanup intent MUST authorize cleanup only for those identities and MUST
+NOT count as a completed artifact; the database artifact row remains the commit
+marker and discovery authority. Normal acknowledgement MUST remove the stage
+and manifest only after a fully synchronized commit and only while their
+captured identities still match, then clear the cleanup intent. Publication
+failure MUST NOT unlink a stage, manifest, or manifest temporary that the
+current attempt did not create, and replacements MUST be preserved. The
+cleanup intent MUST remain until managed files converge. A crash or
+acknowledgement failure MUST be
+reconciled once after migrations and before job-state recovery or request
+traffic.
+Compensation MUST fsync the owning directory immediately after quarantining a
+final path and before treating that quarantine as durable recovery evidence.
+
+The process MUST acquire exclusive, OS-enforced ownership of the data directory
+before backup, migration, reconciliation, or traffic and MUST hold ownership
+until its database closes. A competing API or maintenance process MUST fail
+before mutating backup, database, job, or export state. Ownership MUST be
+released automatically on process death and MUST NOT introduce a job lease,
+heartbeat, TTL, or stale-lock deletion protocol.
+
+Pre-serve reconciliation MUST use database authority and integrity evidence:
+an uncommitted final/stage/manifest set MUST be removed only when a matching
+cleanup intent and inode/integrity evidence prove ownership. A parseable
+manifest without that write-ahead intent MUST be preserved and MUST fail
+startup. Committed valid files MUST be kept, a missing committed final MUST be
+restored from a valid stage, and committed missing or mismatched evidence MUST
+fail startup without deleting audit rows. A `.rollback-*` quarantine whose
+cleanup intent plus stage/manifest proves the same inode and integrity evidence
+MAY be removed; without that proof it MUST be preserved and MUST fail startup
+for operator recovery. Cleanup intents MUST be cleared only after their file
+state has converged.
+Canonical-looking final files and legacy temporary files without a matching
+manifest/stage ownership proof MUST likewise be preserved and MUST fail
+startup; their names alone MUST NOT authorize deletion.
+Stage-only files and staging temporaries without either committed database
+integrity evidence or a parsed manifest hard-link identity MUST also be
+preserved and MUST fail startup. A manifest without a stage, final, or matching
+database artifact is likewise unproven and MUST be preserved.
+This pass MUST be idempotent, confined to the real data root, and MUST reject
+symlink or path-escape evidence. It is not scheduled cleanup of live projects;
+the system MUST NOT run such scheduled cleanup.
+
+Project deletion MUST acquire project-exclusive in-process ownership. If any
+project pipeline is active, deletion MUST return 409 without deleting database
+or filesystem state; while deletion holds ownership, new project pipelines MUST
+also return 409 before project-row resolution. A proposal remains active until
+its request-scoped provider cleanup finishes, for both synchronous and streaming
+delivery. The database cascade is the successful deletion boundary.
+Confined filesystem cleanup MUST run after commit; its failure MUST be reported
+without changing the 204 response, and the next pre-serve reconciliation MUST
+remove a directory whose project row and committed artifact evidence no longer
+exist. If an artifact commit marker still references a missing project row,
+startup MUST preserve the directory and fail closed. Export downloads MUST
+resolve strictly within the data root.
 
 #### Scenario: Atomic project-scoped write
 - **GIVEN** an export request
-- **WHEN** the file is written
-- **THEN** it appears complete at `data/exports/<project_id>/<export_id>.<ext>`
-- **AND** no partial or temporary file remains
+- **WHEN** its file reaches the final artifact path
+- **THEN** the path exposes only complete bytes at `data/exports/<project_id>/<export_id>.<ext>`
+- **AND** durable stage and manifest evidence can reconstruct every pre-acknowledgement crash window
+
+#### Scenario: File commit without database commit is removed at restart
+- **GIVEN** final, stage, and manifest files exist but no artifact row committed
+- **AND** a cleanup intent records the exact stage and manifest identities
+- **WHEN** the next startup reconciles before serving
+- **THEN** those uncommitted managed files are removed
+- **AND** the cleanup intent is cleared only after removal converges
+- **AND** no artifact or job evidence is fabricated
+
+#### Scenario: Pre-intent crash is preserved
+- **GIVEN** a stage or manifest became durable before its cleanup intent committed
+- **WHEN** the next startup reconciles before serving
+- **THEN** startup preserves the unproven files and fails for operator recovery
+- **AND** a parseable manifest or canonical filename alone does not authorize deletion
+
+#### Scenario: Database commit before acknowledgement is preserved
+- **GIVEN** an artifact row and valid final file committed but stage and manifest cleanup did not run
+- **WHEN** the next startup reconciles
+- **THEN** the final file and all database evidence remain
+- **AND** the recovery sidecars are removed
+
+#### Scenario: Missing committed final is restored
+- **GIVEN** an artifact row and valid durable stage exist but the final path is missing
+- **WHEN** the next startup reconciles
+- **THEN** the final path is restored from the verified stage before serving
+
+#### Scenario: Missing committed evidence fails closed
+- **GIVEN** an artifact row whose final and stage bytes are missing or disagree with recorded integrity evidence
+- **WHEN** the server starts
+- **THEN** startup fails before accepting traffic
+- **AND** the artifact, snapshot, job, and event audit rows remain unchanged
+
+#### Scenario: Rollback preserves replacements
+- **GIVEN** a database publication failure and another writer has replaced the final path
+- **WHEN** compensation runs
+- **THEN** compensation does not unlink or overwrite the replacement
+- **AND** any cleanup failure is reported without masking the database failure
+
+#### Scenario: Sidecar name collision preserves prior bytes
+- **GIVEN** a stage, manifest, or manifest-temporary path already exists
+- **WHEN** a publication attempt receives an exclusive-create or no-clobber collision
+- **THEN** failure cleanup preserves the prior path and bytes
+- **AND** only sidecars whose captured device/inode identity belongs to the attempt may be removed
+
+#### Scenario: Crash during rollback preserves an ambiguous quarantine
+- **GIVEN** compensation moved the current final path to `.rollback-*` and the process stopped before proving its identity
+- **WHEN** the next startup reconciles
+- **THEN** startup preserves the quarantine and fails before accepting traffic
+- **AND** no possible replacement bytes are deleted automatically
+
+#### Scenario: Proven publication quarantine is reconciled
+- **GIVEN** rollback stopped after moving the publication final to `.rollback-*`
+- **AND** a cleanup intent, valid manifest, and stage prove the quarantine is the same publication inode and bytes
+- **WHEN** the next startup reconciles
+- **THEN** the managed quarantine and uncommitted publication sidecars are removed
+
+#### Scenario: Final-only bytes are not proof of ownership
+- **GIVEN** a live project export directory contains a canonical-looking final or legacy temporary file
+- **AND** no valid manifest/stage inode and integrity evidence proves ownership
+- **WHEN** startup reconciliation examines the directory
+- **THEN** startup preserves the file and fails before accepting traffic
+
+#### Scenario: Staging names are not proof of ownership
+- **GIVEN** a live project's staging directory contains a stage-only file, temporary, or manifest-only file
+- **AND** no committed artifact evidence or parsed manifest hard-link proves ownership
+- **WHEN** startup reconciliation examines the staging directory
+- **THEN** startup preserves the file and fails before accepting traffic
+
+#### Scenario: A second process cannot race startup or publication
+- **GIVEN** one API or maintenance process owns a data directory
+- **WHEN** another process tries to open the same data directory
+- **THEN** the second process fails before backup or reconciliation mutates state
+- **AND** after the first database closes or its process dies, a later process may acquire ownership
+
+#### Scenario: Project deletion is exclusive
+- **GIVEN** an export, review, or proposal is active for a project
+- **WHEN** deletion is requested for that project
+- **THEN** deletion returns 409 and the project remains intact
+- **AND** after the active work finishes, deletion may acquire exclusive ownership
+
+#### Scenario: Deletion ownership rejects every arriving pipeline
+- **GIVEN** project deletion committed its database cascade and post-commit cleanup is still active
+- **WHEN** an export, review, retry, synchronous proposal, or streaming proposal arrives
+- **THEN** the new pipeline returns 409 for project deletion rather than 404
+
+#### Scenario: Proposal cleanup remains inside the active lifetime
+- **GIVEN** a synchronous or streaming proposal landed its terminal outcome
+- **AND** its request-scoped provider cleanup has not finished
+- **WHEN** project deletion is requested
+- **THEN** deletion returns 409 until provider cleanup finishes
 
 #### Scenario: Project deletion removes exports
-- **GIVEN** a project with completed exports
+- **GIVEN** a project with completed exports and no active project pipeline
 - **WHEN** the project is deleted
-- **THEN** the project's export records are removed
-- **AND** the `data/exports/<project_id>/` directory no longer exists
+- **THEN** the project's database rows commit their deletion atomically
+- **AND** its export directory is removed before the exclusive guard is released, or by the next startup after a reported cleanup failure
+
+#### Scenario: Post-commit cleanup failure converges
+- **GIVEN** the project database cascade committed and export-directory removal fails
+- **WHEN** deletion responds and the process later restarts
+- **THEN** deletion responds 204 and reports the cleanup failure once
+- **AND** pre-serve reconciliation removes the ownerless project directory
+
+#### Scenario: Contradictory database evidence is preserved
+- **GIVEN** an artifact commit marker references a project row that is missing
+- **WHEN** startup reconciliation finds that project's export directory
+- **THEN** startup preserves the directory and committed bytes
+- **AND** startup fails before accepting traffic
 
 #### Scenario: Downloads cannot escape the data root
-- **GIVEN** an export record whose stored path is tampered to point outside the data root
-- **WHEN** its download is requested
-- **THEN** the request is refused and no file outside the root is served
+- **GIVEN** an export path or project export leaf is a symlink or path-escape attempt
+- **WHEN** download, deletion, or startup reconciliation examines it
+- **THEN** no file outside the configured data root is read or deleted
+
+#### Scenario: Project cleanup detects parent replacement
+- **GIVEN** project deletion validated its export directory
+- **WHEN** the export root or project leaf is replaced before recursive cleanup
+- **THEN** cleanup fails closed before deleting the replacement tree
+- **AND** no path outside the configured data root is recursively removed
 
 ### Requirement: Synchronous job execution model
 Proposal, review, and export jobs MUST execute synchronously within their
@@ -989,6 +1328,7 @@ expand to exactly those development ports.
 - **AND** an origin at any other port is not
 
 ### Requirement: Environment configuration surface
+
 Configuration MUST be read from the `.env.local` file (not `.env`) plus the
 process environment, using the single prefix family `APP_`, `DB_`, `API_`,
 `SECURITY_`, `LLM_`, `LOG_`, `MONITORING_`, and `HEALTH_`. CORS origins MUST
@@ -997,35 +1337,66 @@ retired and MUST be ignored. Defaults without configuration: the SQLite
 store at `data/novel-engine.sqlite3`, host `0.0.0.0:8000`, and the
 authentication rate limit of five per minute.
 
+The fully resolved `DB_URL` path, including its basename, MUST be the one
+database-file authority for API startup, import, backup, doctor, schema checks,
+migration, reconciliation, and serving. Every downstream layer MUST preserve
+that basename and MUST NOT replace it with a default. If `DB_URL` uses a
+non-default basename and the default-name sibling exists in the same directory,
+whether or not the configured file also exists, every API or maintenance start
+MUST fail before backup, migration, reconciliation, import, or traffic; the
+system MUST NOT choose, move, merge, or silently fall back to either file.
+
 #### Scenario: Retired CORS alias names have no effect
+
 - **GIVEN** `CORS_ORIGINS` or `CORS_ALLOWED_ORIGINS` is set in the environment
 - **WHEN** settings load
 - **THEN** the value is ignored
 - **AND** `SECURITY_CORS_ORIGINS` remains the only recognized name
 
 #### Scenario: Defaults apply without configuration
+
 - **GIVEN** no environment configuration is provided
 - **WHEN** the server starts
 - **THEN** the database resolves to `data/novel-engine.sqlite3` on SQLite
 - **AND** the server binds `0.0.0.0:8000` with the five-per-minute authentication limit
 
 #### Scenario: The environment file is `.env.local`
+
 - **GIVEN** `.env.local` declares a setting such as the application environment
 - **WHEN** the server starts from the workspace root
 - **THEN** the declared value applies without shell exports
 
+#### Scenario: Custom SQLite basename remains one authority
+
+- **GIVEN** `DB_URL` names `data/author.sqlite3`
+- **WHEN** serve, import, doctor, and backup operate on the installation
+- **THEN** every operation addresses `data/author.sqlite3`
+- **AND** `data/novel-engine.sqlite3` is not created or inspected as a substitute
+
+#### Scenario: Legacy split-brain fails before mutation
+
+- **GIVEN** `DB_URL` uses a non-default basename and the default-name sibling
+  exists in the same directory, whether or not the configured file also exists
+- **WHEN** an API or maintenance command starts
+- **THEN** startup fails before backup, migration, reconciliation, import, or traffic
+- **AND** the failure identifies both the configured path and default sibling
+- **AND** no database is selected, moved, merged, or repaired implicitly
+
 ### Requirement: CLI operational surface
-The CLI MUST provide four commands. `serve` MUST back up the SQLite store
-before applying pending migrations, then start the API. `import` MUST take
-an explicit source path and owner, run as the owner principal without HTTP
-authentication, and print the imported project. `backup` MUST write a backup
-and print its path. `doctor` MUST report the version, database path,
-integrity check, journal mode, foreign-key enforcement, and owner status,
-exiting non-zero unless the integrity check passes and foreign keys are
-enabled.
+The CLI MUST provide four commands. Every command MUST establish the configured
+database authority and pass the legacy-sibling ambiguity gate before database
+backup, migration, reconciliation, import, or inspection. After that gate
+passes, `serve` MUST back up the SQLite store before applying pending
+migrations, then start the API. `import` MUST take an explicit source path and
+owner, run as the owner principal without HTTP authentication, and print the
+imported project. `backup` MUST write a backup and print its path. `doctor` MUST
+report the version, database path, integrity check, journal mode, foreign-key
+enforcement, and owner status, exiting non-zero unless the integrity check
+passes and foreign keys are enabled.
 
 #### Scenario: Serve backs up before migrating
-- **GIVEN** a database with pending migrations
+- **GIVEN** the database authority and ambiguity gate passes for a database with
+  pending migrations
 - **WHEN** `serve` runs
 - **THEN** a backup is written beneath the backups directory before migrations apply
 
@@ -1042,14 +1413,16 @@ enabled.
 - **AND** the exit code is non-zero
 
 ### Requirement: Entry flow session probe
-The Studio entry MUST probe the session on mount and take one of two paths:
-a valid session replaces navigation into the project library; otherwise a
-form renders — a unified setup and login form when the owner is
-unconfigured (single submit creates the owner and establishes the session),
-the login form when the owner exists. The form prefills the username
-`author`, enforces the ten-character password minimum, and switches
-autocomplete between new-password and current-password according to setup
-status.
+The Studio entry MUST probe the session on mount. A valid session MUST replace
+navigation into the project library. HTTP 401 MUST continue to setup-status and
+render the unified setup/login form. Network, timeout, contract, and server
+failures MUST remain on the entry surface with a readable error and working
+Retry action; they MUST NOT be interpreted as an unconfigured owner. The form
+prefills the username `author`, enforces the ten-character password minimum,
+switches autocomplete between new-password and current-password according to
+setup status, exposes exact pending state, and prevents duplicate submission.
+Unmount MUST abort cancellable bootstrap reads and late completions MUST neither
+publish state nor navigate.
 
 #### Scenario: Valid session skips to the library
 - **GIVEN** a valid session exists
@@ -1057,10 +1430,17 @@ status.
 - **THEN** navigation replaces into the project library without rendering the form
 
 #### Scenario: First-run single submit sets up and logs in
-- **GIVEN** no owner is configured
+- **GIVEN** the session probe returns HTTP 401 and no owner is configured
 - **WHEN** the author submits the unified form once with valid credentials
 - **THEN** the owner is created and the session established in one flow
 - **AND** navigation proceeds to the project library
+- **AND** duplicate activation cannot start a second setup or login request
+
+#### Scenario: Entry operational failure stays recoverable
+- **GIVEN** the session probe fails because of a network, timeout, contract, or server error
+- **WHEN** the entry page classifies the failure
+- **THEN** it does not request setup status or render a first-run form
+- **AND** it presents the readable failure with a working Retry action
 
 ### Requirement: In-memory document drafts
 Document drafts — content, title, and save state — MUST live only in
@@ -1151,18 +1531,6 @@ browser, revoking the object URL afterwards.
 - **THEN** the browser saves `Draft.md`
 - **AND** the filename was derived client-side rather than from a response header
 
-### Requirement: Silent project entry fallback
-The Studio MUST silently navigate back to the entry route when any of the
-initial project-load requests — session, project, reviews, or exports —
-fails for any reason, including authentication, not-found, server, network,
-or timeout failures; no error is surfaced.
-
-#### Scenario: Initial load failure returns to entry
-- **GIVEN** a studio route whose initial load requests fail
-- **WHEN** the failure occurs for any reason
-- **THEN** navigation replaces to the entry route
-- **AND** no error banner or message is displayed
-
 ### Requirement: Complete single-author Studio
 The system MUST provide project library, manuscript, outline, character, world,
 review, history, export, and settings surfaces.
@@ -1175,9 +1543,15 @@ review, history, export, and settings surfaces.
 
 ### Requirement: Route-driven project surfaces
 The Studio MUST expose review, history, export, and settings as distinct
-project-level routes and panels. History MUST contain revision history only;
-export MUST contain format selection, export status, and recent export results.
-Top-level navigation MUST NOT duplicate these actions in a second menu.
+project-level routes and panels. The URL MUST be the only owner of the visible
+Inspector selection: review, history, and export use their project path;
+Copilot, Jobs, and Usage use a validated query value on an authoring path, with
+Copilot as the query-free default. Clicking or keyboard-activating an Inspector
+tab MUST update the URL, and direct navigation, refresh, Back, and Forward MUST
+restore the same selected tab and panel. History MUST contain revision history
+only; export MUST contain format selection, export status, and recent export
+results. Contextual Lore editing MUST appear only with the authoring Copilot
+panel. Top-level navigation MUST NOT duplicate these actions in a second menu.
 
 #### Scenario: Navigate to export without changing history
 - **GIVEN** an author is viewing a project
@@ -1190,7 +1564,14 @@ Top-level navigation MUST NOT duplicate these actions in a second menu.
 - **GIVEN** a project has immutable revisions
 - **WHEN** the author navigates to the History route
 - **THEN** only revision history and revision actions are shown
-- **AND** no export form is required to inspect revisions
+- **AND** no export form or Lore status form is present
+
+#### Scenario: Inspector activation is URL-backed
+- **GIVEN** the author is on the Review route
+- **WHEN** the author clicks History or activates it with an Inspector arrow key
+- **THEN** the URL changes to the History route
+- **AND** History becomes the selected tab and visible panel
+- **AND** Back restores Review as the selected tab and visible panel
 
 ### Requirement: Editor-first responsive and touch layout
 The Studio MUST use an editor-first single-column layout from 821px through
@@ -1227,15 +1608,21 @@ selected tab.
 
 ### Requirement: Explicit asynchronous operation state
 The Studio MUST ensure review, AI proposal and acceptance, export, settings
-save, retry, reorder, document creation, and job refresh operations expose
-pending state,
-prevent duplicate submission while pending, and set an accessible busy or
-disabled state on the initiating control. Failures MUST remain readable and
-success MUST clear stale errors and refresh the affected data.
+save, retry, reorder, document creation, project creation, logout, and job
+refresh operations expose pending state and prevent duplicate submission while
+pending. Only the control that initiated an operation MUST expose its accessible
+busy state; related controls MAY be disabled to protect invariants but MUST
+retain their normal accessible names. When an operation settles, focus MUST
+return to its initiating control only when the author has not deliberately moved
+focus elsewhere. If the initiator disappears or becomes unavailable, focus MUST
+move to a stable, semantically related fallback. Failures MUST remain readable,
+and success MUST clear stale errors and refresh the affected data. A running
+whole-book operation MUST keep its Stop control reachable from every Inspector
+surface.
 
 #### Scenario: Duplicate submission guard
-- **GIVEN** an export operation is in progress
-- **WHEN** the author activates Export again
+- **GIVEN** a project creation or export operation is in progress
+- **WHEN** the author activates the initiating command again
 - **THEN** the second submission is ignored or prevented
 - **AND** the initiating control remains disabled and exposes its pending state
 
@@ -1243,8 +1630,31 @@ success MUST clear stale errors and refresh the affected data.
 - **GIVEN** a retryable operation fails
 - **WHEN** the failure is presented
 - **THEN** a readable error is retained and focus returns to the initiating
-  control
+  control when the author has not moved focus elsewhere
 - **AND** a subsequent retry can be initiated after pending state clears
+
+#### Scenario: Exact pending initiator
+- **GIVEN** an author starts adding a chapter while other add and reorder controls are visible
+- **WHEN** the request remains pending
+- **THEN** only the activated add control exposes an accessible busy state
+- **AND** duplicate or conflicting commands cannot start
+- **AND** unrelated controls are not announced as if they initiated the request
+
+#### Scenario: Focus does not override deliberate navigation
+- **GIVEN** an operation is pending and the author moves focus to another control
+- **WHEN** the operation settles
+- **THEN** the Studio leaves focus on the author's chosen control
+
+#### Scenario: Removed initiator has a stable focus fallback
+- **GIVEN** an operation removes or disables its initiating control when it settles
+- **WHEN** focus restoration runs
+- **THEN** focus moves to the nearest stable control for the same workflow
+- **AND** focus does not fall back to the document body
+
+#### Scenario: Whole-book stop remains reachable
+- **GIVEN** whole-book generation is running
+- **WHEN** the author switches to any Inspector surface
+- **THEN** current progress and Stop remain visible and keyboard reachable
 
 ### Requirement: Recoverable document save conflicts
 When a document save returns HTTP 409, the Studio MUST retain the local draft,
@@ -1324,43 +1734,152 @@ summary MUST cover every prior chapter in reading order.
 - **AND** the target chapter's manuscript follows the resident context
 
 ### Requirement: Keyword-triggered lore entries
-Character and world documents MUST serve as lore entries: the entry keys are
-the document title plus aliases declared in the document's metadata, and the
-entry content is the document's current markdown. When a key occurs in the
-resident context or the target manuscript, the entry MUST be injected into
-the prompt; lore entries without a key occurrence MUST be omitted.
+Character and world documents MUST serve as Lore entries whose keys are the
+trimmed document title plus normalized aliases. Lore lifecycle status MUST be
+the closed set `draft`, `stable`, and `deprecated`; new entries MUST default
+to `draft`, while entries created before lifecycle migration MUST remain
+`stable`. Only a non-empty `stable` entry whose key occurs in the resident
+context or target manuscript MAY enter a generation prompt. Matching `draft`
+and `deprecated` entries MUST be omitted completely.
+
+Every eligible match MUST first be represented by a visibly marked summary.
+The system MUST then promote entries to full current Markdown within a
+configurable character budget, prioritizing title hits before alias hits and
+preserving reading order for ties. A match that cannot be promoted MUST remain
+visible as its summary rather than being silently dropped. The default budget
+MUST be 4000 characters, and a valid positive environment override MUST apply
+to synchronous, streaming, retry, and whole-book generation through the same
+Lore assembly.
+
+#### Scenario: Draft and deprecated hits are omitted
+- **GIVEN** matching character or world entries are `draft` or `deprecated`
+- **WHEN** a proposal is generated
+- **THEN** neither entry contributes content or a summary to the prompt
 
 #### Scenario: Alias triggers injection
-- **GIVEN** a character document titled `Mara` declaring the alias `the archivist`
-- **WHEN** the target manuscript mentions `the archivist`
-- **THEN** the document's content is injected into the prompt
+- **GIVEN** a non-empty `stable` Lore entry whose alias occurs in the generation corpus
+- **AND** its full rendering fits within the configured budget
+- **WHEN** a proposal is generated
+- **THEN** the entry's current Markdown is injected into the prompt
+
+#### Scenario: Over-budget matches remain visible
+- **GIVEN** multiple matching `stable` entries cannot all expand within the configured budget
+- **WHEN** a proposal is generated
+- **THEN** every match appears as a visibly marked summary
+- **AND** only entries that fit are promoted to full Markdown
+
+#### Scenario: Promotion order is deterministic
+- **GIVEN** matching stable entries include both title and alias hits
+- **WHEN** the budget permits only some full-text promotions
+- **THEN** title hits are considered before alias hits
+- **AND** equal-rank entries retain project reading order
 
 #### Scenario: No key hit, no injection
-- **GIVEN** a world document whose keys never occur in the resident context or manuscript
-- **WHEN** a proposal is drafted
-- **THEN** that document's content is not injected
+- **GIVEN** no stable Lore key occurs in the resident context or target manuscript
+- **WHEN** a proposal is generated
+- **THEN** the prompt contains no Lore section
+
+#### Scenario: Existing Lore remains stable after migration
+- **GIVEN** a Lore entry predates the lifecycle migration
+- **WHEN** the migration completes
+- **THEN** the entry is `stable` and remains eligible for matching
+
+#### Scenario: Every generation path shares Lore assembly
+- **GIVEN** the same project revisions, generation corpus, and Lore budget
+- **WHEN** generation runs synchronously, by stream, by retry, or as part of a whole-book run
+- **THEN** each path applies the same lifecycle gate, matching, summaries, and promotion order
+
+### Requirement: Document-scoped Lore lifecycle editing
+The Studio MUST expose Lore lifecycle status editing only for active
+`character` and `world` documents. The editor MUST treat `draft`, `stable`,
+and `deprecated` as a closed set, MUST scope each unsaved selection and save
+operation to the active document identity, and MUST use the server-observed
+status as that document's saved baseline.
+
+#### Scenario: Switching Lore documents resets the editor identity
+- **GIVEN** document A has an unsaved Lore status selection
+- **AND** document B has a different saved Lore status
+- **WHEN** the author switches from A to B
+- **THEN** the editor immediately shows B's saved status
+- **AND** A's unsaved selection cannot be submitted for B
+
+#### Scenario: Lore save completion remains asynchronous
+- **GIVEN** the author submits a changed Lore status
+- **WHEN** the save request remains pending
+- **THEN** the editor remains in its pending state
+- **AND** completion-time focus restoration does not run yet
+- **WHEN** the save operation settles
+- **THEN** pending state clears
+- **AND** focus returns to the submitting control if that control is still mounted
+
+#### Scenario: Failed Lore save remains retryable
+- **GIVEN** the author submits a changed Lore status
+- **WHEN** the save fails
+- **THEN** the project retains the prior saved status
+- **AND** the attempted selection remains available for another submission
+- **AND** the failure is exposed through the Studio error surface
 
 ### Requirement: LLM editorial review
-A review MUST snapshot the project's current revisions (reason `review`) and
-MUST run the editorial review provider step over that snapshot, producing
+A review MUST read the project's current revisions as one ordered source and
+MUST run the editorial review provider step over that source, producing
 findings that each carry a severity (`blocker` or `warning`), a review
 dimension from the server-owned closed dimension set, a message, and a
-suggestion. Findings MUST be ordered by severity, then dimension, then
-document position. The review stays snapshot-bound: later edits MUST NOT
-rewrite recorded findings. A provider failure during review MUST produce a
-failed job under the existing terminal semantics and MUST NOT fabricate
-findings.
+suggestion. Findings MUST be ordered by severity, then dimension, then document
+position. A missing or non-array top-level `findings` value MUST be treated as
+a provider contract failure; invalid individual findings MAY be discarded by
+the closed vocabulary and source-document rules.
+
+Before provider success, the system MUST NOT persist a review snapshot. On
+fresh success, the `review` snapshot, snapshot documents, assessment, issues,
+completed job, and completed event MUST commit atomically. On retry success,
+the same review evidence and the running retry job's completed transition MUST
+commit atomically, and the job MUST record the successful provider model. The
+review stays snapshot-bound: later edits MUST NOT rewrite recorded findings. A
+known provider failure or concurrently deleted source MUST produce a failed job
+when the project still exists, MUST NOT fabricate findings, and MUST NOT leave
+an unreferenced review snapshot.
 
 #### Scenario: Dimensioned findings are reported
-- **GIVEN** a snapshot whose chapters contain pacing and continuity problems
-- **WHEN** a review runs
-- **THEN** each finding reports a dimension from the closed set with a severity, message, and suggestion
+- **GIVEN** a captured source whose chapters contain pacing and continuity problems
+- **WHEN** a review completes
+- **THEN** each retained finding reports a dimension from the closed set with a severity, message, and suggestion
+- **AND** the snapshot, assessment, issues, completed job, and event become visible together
 
 #### Scenario: Provider failure fails the job
 - **GIVEN** the editorial review provider step fails with a known provider error
 - **WHEN** the review request completes
 - **THEN** the job records status `failed` with the error
-- **AND** no findings are recorded for that review
+- **AND** no review snapshot, assessment, or finding is recorded
+
+#### Scenario: Provider envelope is failure-closed
+- **GIVEN** the provider returns a result whose top-level `findings` value is missing or is not an array
+- **WHEN** the result is validated
+- **THEN** the job records a provider contract failure
+- **AND** no empty successful assessment or review snapshot is recorded
+
+#### Scenario: Fresh completion rolls back as one outcome
+- **GIVEN** a valid evaluated review
+- **WHEN** any snapshot, assessment, issue, completed-job, or event write fails
+- **THEN** none of those writes commit
+- **AND** the source documents remain unblocked by review evidence
+
+#### Scenario: Retry completion rolls back as one outcome
+- **GIVEN** a running retry with a valid evaluated review
+- **WHEN** its terminal transition fails
+- **THEN** no new review snapshot, assessment, or issue commits
+- **AND** the retry remains running for restart recovery
+
+#### Scenario: Concurrent source deletion is failure-closed
+- **GIVEN** a review source is read and one captured document is deleted before the result lands
+- **WHEN** successful provider output is finalized
+- **THEN** no partial review evidence commits
+- **AND** the request records a failed review job if the project still exists
+
+#### Scenario: Later edits do not rewrite review history
+- **GIVEN** a review source is read and a captured chapter is subsequently edited
+- **WHEN** the valid provider result lands
+- **THEN** the completed review snapshot retains the originally captured revision
+- **AND** later reads return the original snapshot-bound findings
 
 ### Requirement: Project usage surface
 The API MUST expose `GET /api/projects/:projectId/usage` to the owner,
@@ -1374,12 +1893,14 @@ completion tokens, request count, and a per-model breakdown.
 - **AND** the per-model breakdown separates the two models
 
 ### Requirement: Whole-book generation loop
-The Studio MUST offer a whole-book generation mode driven by the frontend
-over the existing synchronous proposal and accept endpoints: it drafts a
-proposal for the next chapter needing one, accepts it automatically, and
-proceeds in reading order. The loop MUST be stoppable at any moment and
-resumable; already-accepted chapters MUST be preserved, and a stop MUST
-leave every completed chapter intact.
+The Studio MUST offer a whole-book generation mode driven by the frontend over
+the existing proposal and accept endpoints: it drafts a proposal for the next
+chapter needing one, accepts it automatically, and proceeds in reading order.
+The loop MUST be stoppable and resumable. Stop or a project-identity change
+MUST abort an in-flight proposal before it lands a job or usage event, MUST
+prevent any later chapter from starting, and MUST preserve every acceptance
+that already completed. An atomic acceptance already executing MAY complete;
+if it does, that chapter is counted as preserved completed work.
 
 #### Scenario: The loop advances chapter by chapter
 - **GIVEN** a project with an outline and one completed chapter
@@ -1387,9 +1908,11 @@ leave every completed chapter intact.
 - **THEN** each subsequent chapter receives a generated proposal that is accepted automatically in reading order
 
 #### Scenario: Stop preserves completed work
-- **GIVEN** the loop has accepted two chapters
+- **GIVEN** the loop has accepted two chapters and is drafting the next
 - **WHEN** the author stops the loop
-- **THEN** the two accepted chapters remain, and no further chapters are generated
+- **THEN** the two accepted chapters remain
+- **AND** the in-flight draft persists no job or usage event
+- **AND** no later chapter starts
 
 ### Requirement: Streaming proposal generation
 
@@ -1437,3 +1960,221 @@ mutates the manuscript until an explicit accept.
 - **AND** a failed proposal job with an empty proposal markdown is recorded
 - **AND** no usage event is recorded for the failed stream
 
+### Requirement: Recoverable project loading
+Initial Studio loading MUST classify failures rather than hiding every failure.
+An unauthenticated response MUST replace to the entry route; a missing project
+MUST replace to the project library; network, timeout, and server failures MUST
+retain the requested Studio URL and display a readable error with working Retry
+and Back to projects actions. Retry MUST expose pending state, prevent duplicate
+requests, and retain the recovery surface until it succeeds. Retry success MUST
+clear the stale error, publish one complete project, review, and export aggregate,
+and move focus to a stable Studio heading only when the author has not moved focus
+elsewhere.
+
+#### Scenario: Operational failure can be retried
+- **GIVEN** an initial project aggregate request fails with a network or server error
+- **WHEN** the failure is displayed and the author activates Retry
+- **THEN** the requested Studio URL is retained
+- **AND** a new complete aggregate request starts
+- **AND** Retry exposes pending state until that request settles
+- **AND** success replaces the error with the requested project
+
+#### Scenario: Authentication and absence navigate deliberately
+- **GIVEN** initial loading returns HTTP 401 or HTTP 404
+- **WHEN** the failure is classified
+- **THEN** 401 replaces to the entry route
+- **AND** 404 replaces to the project library
+
+### Requirement: Project-scoped Studio lifecycle
+The complete Studio workbench state MUST be owned by the current route
+`projectId`. When that identity changes, data and pending state from the prior
+project MUST become non-interactive immediately. Jobs, usage, search, drafts,
+revisions, proposals, whole-book progress, reviews, exports, settings, and
+errors MUST reset or remain keyed to their originating project. A late response
+from an earlier project or document MUST NOT overwrite the active document,
+surface, error, or revision baseline. Transports that support cancellation MUST
+be aborted when their owner changes. When a non-cancellable mutation has already
+committed, the Studio MUST reconcile that result into the originating
+project/document identity (or refresh it from the server) without applying it to
+the active document. Returning to that identity MUST use the committed revision
+as its baseline. A document switch MUST retain an edited local draft that has not
+yet been persisted.
+
+#### Scenario: Switching projects hides the previous aggregate immediately
+- **GIVEN** project A is visible and project B starts loading
+- **WHEN** the route project identity changes from A to B
+- **THEN** project A and its actions are no longer rendered
+- **AND** only project B may replace the loading state or publish a load error
+
+#### Scenario: Late document completion is discarded
+- **GIVEN** a save, restore, search, or proposal request belongs to an earlier project or document
+- **WHEN** it completes after the active identity changed
+- **THEN** its server result does not replace the active identity's draft, revision baseline, result list, or error state
+- **AND** a stale read response does not replace the current project aggregate
+
+#### Scenario: A committed inactive-document mutation is reconciled
+- **GIVEN** a save, restore, or proposal acceptance for document A commits after the author selects document B
+- **WHEN** the author later returns to document A
+- **THEN** document B was never overwritten by A's completion
+- **AND** document A reflects the committed server revision or a newer refreshed revision
+- **AND** the next save for A uses that revision as its base
+
+#### Scenario: An unpersisted draft survives document navigation
+- **GIVEN** the author edits document A and selects document B before the save debounce elapses
+- **WHEN** the author returns to document A
+- **THEN** A's local edited text remains present
+- **AND** B never displays or persists A's draft
+
+#### Scenario: An old export owner cannot trigger a download
+- **GIVEN** an export for project A is waiting for its artifact or download
+- **WHEN** the route switches to project B or the workbench unmounts
+- **THEN** every cancellable remaining request is aborted
+- **AND** no catalog, error, pending state, object URL, or synthetic download from A is published into B
+
+#### Scenario: A stale restore baseline remains recoverable
+- **GIVEN** a revision restore uses a base revision that changed while another document was active
+- **WHEN** the server rejects the restore with HTTP 409
+- **THEN** the Studio retains the local draft and marks it conflicted
+- **AND** refreshes the latest revision baseline without silently overwriting local text
+- **AND** a subsequent explicit restore retry uses that refreshed base revision
+
+### Requirement: Recoverable project-library loading
+The project library MUST verify the owner session before requesting its project
+list. HTTP 401 MUST replace navigation to entry. A project-list network,
+timeout, contract, or server failure MUST retain the library route and present a
+readable error with a working Retry action. Retry MUST supersede any prior read,
+expose pending state, and prevent duplicate requests. Unmount MUST abort
+cancellable reads, and late completions from an earlier attempt MUST neither
+replace the current list nor navigate.
+
+#### Scenario: Operational project-list failure can be retried
+- **GIVEN** the owner session is valid and the project list fails operationally
+- **WHEN** the failure is displayed and the author activates Retry
+- **THEN** the library route is retained
+- **AND** one new project-list request starts with accessible pending state
+- **AND** success replaces the error with the current ordered project list
+
+#### Scenario: Authentication failure returns to entry
+- **GIVEN** the library session probe returns HTTP 401
+- **WHEN** the failure is classified
+- **THEN** navigation replaces to the entry route
+- **AND** no project-list request starts
+
+#### Scenario: Library unmount cancels reads
+- **GIVEN** a session or project-list read is pending
+- **WHEN** the library unmounts
+- **THEN** the cancellable request is aborted
+- **AND** its later completion cannot publish state or navigate
+
+### Requirement: Bounded provider response lifecycle
+
+Every HTTP provider response MUST have one absolute deadline that starts before
+transport dispatch and covers connection establishment, response headers, and
+complete body consumption. Chapter draft and revision streams MUST receive the
+same effective timeout floor of 180 seconds as synchronous generation. The
+existing first-event and between-event silence budgets MUST remain additional
+ceilings and MUST NOT reset or extend the absolute deadline.
+
+An external abort MUST participate explicitly in dispatch, response-body, and
+stream-iteration waits, including when an injected transport or body ignores
+its signal. A pre-aborted request MUST NOT dispatch. The first timeout,
+cancellation, size, or transport cause MUST remain authoritative while reader
+and iterator cleanup is awaited without replacing that cause.
+
+The server MUST consume at most 8 MiB from one synchronous JSON response or one
+complete SSE response, at most 1 MiB from one SSE event, and at most 1,000,000
+Unicode code points of proposal markdown. A limit breach, deadline, or known
+body-read transport failure MUST become a stable server-authored Provider
+failure without upstream diagnostics. A retryable synchronous deadline MUST
+enter the existing Provider transient failure policy, and the normal failed
+proposal outcome MUST be recorded only if that attempt budget is exhausted. A
+started stream MUST end with the normal error frame. The system MUST NOT report
+usage, persist partial proposal text, retry a stream whose deltas may have
+escaped, or reclassify extractor and application programming errors. All
+response-body, reader, and iterator cleanup MUST settle or yield to the
+authoritative failure within a fixed one-second cleanup grace.
+
+#### Scenario: Absolute deadline covers response setup and body
+
+- **GIVEN** an HTTP provider stalls before returning headers or keeps sending
+  frames within the silence budget without completing
+- **WHEN** the effective provider deadline elapses
+- **THEN** the transport is aborted with the stable provider timeout
+- **AND** the deadline has not reset after any response byte or frame
+
+#### Scenario: External cancellation wins an uncooperative wait
+
+- **GIVEN** a request is already aborted or its external signal aborts while
+  an injected transport or response body ignores that signal
+- **WHEN** dispatch, body consumption, or stream iteration is waiting
+- **THEN** the wait stops without waiting for the provider deadline
+- **AND** a pre-aborted request performs no transport dispatch
+- **AND** no stream outcome is reported after cancellation, including after
+  the final delta or while iterator cleanup is running
+- **AND** reader and iterator cleanup cannot replace the cancellation cause
+
+#### Scenario: Failure response cleanup preserves HTTP status
+
+- **GIVEN** a non-success provider response whose body cancellation rejects or
+  never settles
+- **WHEN** synchronous or streaming generation rejects the response
+- **THEN** the HTTP status failure remains authoritative
+- **AND** body cleanup waits for at most one second
+
+#### Scenario: A response arriving after interruption is discarded
+
+- **GIVEN** an injected transport ignores cancellation and resolves a response
+  only after an external abort or absolute deadline has won dispatch
+- **WHEN** that late response becomes available
+- **THEN** its body is cancelled within the one-second cleanup grace
+- **AND** it cannot replace the authoritative interruption cause
+
+#### Scenario: Chapter stream receives the generation floor
+
+- **GIVEN** a chapter draft or revision stream and a configured timeout below
+  180 seconds
+- **WHEN** the HTTP provider request is dispatched
+- **THEN** its absolute deadline is at least 180 seconds
+- **AND** its configured silence budgets remain independent ceilings that cannot
+  extend the absolute deadline
+
+#### Scenario: Mid-body transport failure lands normally
+
+- **GIVEN** a successful HTTP response whose body fails while being read
+- **WHEN** the failure is a known fetch transport rejection
+- **THEN** it becomes a sanitized Provider failure
+- **AND** the proposal records a failed job and no usage event
+- **AND** a started proposal stream ends with its normal error frame
+
+#### Scenario: Synchronous response exceeds its byte budget
+
+- **GIVEN** a successful HTTP provider response whose JSON body exceeds 8 MiB
+- **WHEN** structured generation consumes the body
+- **THEN** generation fails immediately with a stable size-limit failure
+- **AND** the original response is consumed at most once
+
+#### Scenario: Stream event or total body exceeds its byte budget
+
+- **GIVEN** an HTTP provider stream whose single event exceeds 1 MiB or whose
+  total response exceeds 8 MiB
+- **WHEN** the shared SSE parser reaches the applicable boundary
+- **THEN** the upstream transport is aborted with a stable size-limit failure
+- **AND** no usage outcome or completed proposal is recorded
+
+#### Scenario: Mixed SSE newline boundaries preserve event bytes
+
+- **GIVEN** an SSE stream separates events with any combination matched by
+  `\r?\n\r?\n`, including a separator split across body chunks
+- **WHEN** the shared parser measures and emits an event
+- **THEN** the complete separator is excluded from the event byte count
+- **AND** an event of exactly 1 MiB is accepted while one byte more is rejected
+
+#### Scenario: Proposal markdown exceeds its semantic budget
+
+- **GIVEN** any provider returns more than 1,000,000 Unicode code points of
+  proposal markdown synchronously or across streamed deltas
+- **WHEN** the proposal application boundary receives that output
+- **THEN** the proposal fails before oversized text is persisted
+- **AND** a stream emits no further delta after the limit would be crossed
+- **AND** one astral character counts once even when its surrogate pair is
+  split across consecutive deltas

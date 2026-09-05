@@ -2,7 +2,14 @@ import type { Principal } from "../../../../shared/application/ports/auth.js";
 import type { StudioBeatStore } from "./beat_store.js";
 import type { StudioJobLedgerStore } from "./job_ledger_store.js";
 import type { StudioLoreStore } from "./lore_store.js";
+import type { DocumentSummaryRecord, ProjectShellRecord } from "./project_shell_records.js";
+import type { ProjectUpdateStore } from "./project_update_store.js";
+import type { ProposalAcceptanceStore } from "./proposal_acceptance_store.js";
+import type { ProposalContextStore } from "./proposal_context_store.js";
+import type { ReviewOutcomeStore } from "./review_outcome_store.js";
 import type { StudioVolumeStore } from "./volume_store.js";
+
+export type { DocumentSummaryRecord, ProjectShellRecord } from "./project_shell_records.js";
 
 /** Persistence-neutral row shapes handed to the application layer. */
 export interface ProjectRecord {
@@ -50,7 +57,56 @@ export interface RevisionRecord {
   contentMarkdown: string;
   metadataJson: string;
   source: string;
+  /** Nullable only while startup reconciliation upgrades an earlier database. */
+  wordCount: number | null;
   createdAt: Date;
+}
+
+/** Lightweight immutable History item; body and metadata remain server authority. */
+export interface RevisionSummaryRecord {
+  id: string;
+  documentId: string;
+  parentRevisionId: string | null;
+  revisionNumber: number;
+  source: string;
+  wordCount: number;
+  createdAt: Date;
+}
+
+/** The validated row budget of one bounded document revision page. */
+export type RevisionPageLimit = number & { readonly __revisionPageLimit: unique symbol };
+
+export const MIN_REVISION_PAGE_LIMIT = 1;
+export const MAX_REVISION_PAGE_LIMIT = 100;
+
+/** Validate and narrow a revision-page budget before persistence. */
+export function revisionPageLimit(value: number): RevisionPageLimit {
+  if (
+    !Number.isInteger(value) ||
+    value < MIN_REVISION_PAGE_LIMIT ||
+    value > MAX_REVISION_PAGE_LIMIT
+  ) {
+    throw new RangeError(
+      `Revision page limit must be an integer from ${MIN_REVISION_PAGE_LIMIT} through ${MAX_REVISION_PAGE_LIMIT}.`,
+    );
+  }
+  return value as RevisionPageLimit;
+}
+
+/** Persistence-neutral exclusive position in `(revision_number DESC, id DESC)` order. */
+export interface RevisionPageCursor {
+  readonly revisionNumber: number;
+  readonly id: string;
+}
+
+export interface RevisionPageInput {
+  readonly limit: RevisionPageLimit;
+  readonly cursor?: RevisionPageCursor | undefined;
+}
+
+export interface RevisionSummaryPage {
+  readonly revisions: RevisionSummaryRecord[];
+  readonly nextCursor: RevisionPageCursor | null;
 }
 
 /** A document together with its current revision, the list/save/read shape. */
@@ -69,68 +125,27 @@ export interface DocumentMatchRecord {
 export type {
   AddJobInput,
   AddUsageEventInput,
+  ClaimJobRetryInput,
   CompletedProposalUsageInput,
   CompleteJobWithUsageInput,
   JobEventRecord,
   JobRecord,
+  JobRetryClaim,
   MarkJobOutcomeInput,
   RecordCompletedProposalJobInput,
 } from "./job_records.js";
 
-/** A document/revision pair frozen into an immutable review snapshot. */
-export interface ReviewSnapshotDocument {
-  /** The source document identifier, retained for finding-to-snapshot mapping. */
-  documentId: string;
-  snapshotDocumentId: string;
-  revisionId: string;
-  kind: string;
-  title: string;
-  contentMarkdown: string;
-  metadataJson: string;
-  position: number;
-}
-
-/** A pure evaluator's finding, before the adapter serializes its evidence. */
-export interface EditorialIssueInput {
-  documentId: string;
-  severity: string;
-  code: string;
-  message: string;
-  suggestion: string;
-  evidence: Record<string, unknown>;
-}
-
-/** One persisted editorial issue, returned without exposing database rows. */
-export interface EditorialIssueRecord extends EditorialIssueInput {
-  id: string;
-  reviewId: string;
-  snapshotDocumentId: string;
-}
-
-/** A snapshot-bound editorial assessment and its stably ordered issues. */
-export interface EditorialAssessmentRecord {
-  id: string;
-  projectId: string;
-  snapshotId: string;
-  provider: string;
-  model: string;
-  summary: string;
-  createdAt: Date;
-  issues: EditorialIssueRecord[];
-}
-
-export interface CaptureReviewSnapshotInput {
-  now: Date;
-}
-
-export interface RecordSnapshotReviewInput {
-  snapshotId: string;
-  provider: string;
-  model: string;
-  summary: string;
-  now: Date;
-  issues: readonly EditorialIssueInput[];
-}
+/** Review-outcome types live in their focused port module; re-exported here. */
+export type {
+  EditorialAssessmentRecord,
+  EditorialIssueInput,
+  EditorialIssueRecord,
+  EvaluatedReview,
+  ReviewCompletionRecord,
+  ReviewSnapshotDocument,
+  ReviewSource,
+  ReviewSourceDocument,
+} from "./review_outcome_store.js";
 
 /**
  * Owner scoping of every project query: the single principal since #311
@@ -212,8 +227,12 @@ export interface AdvanceDocumentInput {
  */
 export interface StudioStore
   extends StudioVolumeStore,
+    ProjectUpdateStore,
     StudioBeatStore,
     StudioLoreStore,
+    ProposalContextStore,
+    ProposalAcceptanceStore,
+    ReviewOutcomeStore,
     StudioJobLedgerStore {
   addProject(
     scope: ProjectScope,
@@ -224,6 +243,7 @@ export interface StudioStore
   };
   findProjects(scope: ProjectScope): ProjectRecord[];
   findProject(scope: ProjectScope, projectId: string): ProjectRecord;
+  readProjectShell(scope: ProjectScope, projectId: string): ProjectShellRecord;
   /** Existing project of this principal carrying the given import hash, if any. */
   findProjectByImportHash(scope: ProjectScope, importHash: string): ProjectRecord | null;
   /**
@@ -241,6 +261,11 @@ export interface StudioStore
 
   findDocuments(scope: ProjectScope, projectId: string): DocumentWithCurrent[];
   findDocument(scope: ProjectScope, projectId: string, documentId: string): DocumentWithCurrent;
+  readCurrentDocument(
+    scope: ProjectScope,
+    projectId: string,
+    documentId: string,
+  ): DocumentWithCurrent;
   addDocument(scope: ProjectScope, projectId: string, input: AddDocumentInput): DocumentWithCurrent;
   advanceDocument(
     scope: ProjectScope,
@@ -254,7 +279,7 @@ export interface StudioStore
     projectId: string,
     documentIds: string[],
     now: Date,
-  ): DocumentWithCurrent[];
+  ): DocumentSummaryRecord[];
   /** Tail position for a kind; chapters position within their target volume. */
   nextPosition(
     scope: ProjectScope,
@@ -263,7 +288,12 @@ export interface StudioStore
     volumeId?: string | null,
   ): number;
 
-  findRevisions(scope: ProjectScope, projectId: string, documentId: string): RevisionRecord[];
+  findRevisionSummaries(
+    scope: ProjectScope,
+    projectId: string,
+    documentId: string,
+    input: RevisionPageInput,
+  ): RevisionSummaryPage;
   findRevision(
     scope: ProjectScope,
     projectId: string,
@@ -281,22 +311,4 @@ export interface StudioStore
     projectId: string,
     matchQuery: string,
   ): DocumentMatchRecord[];
-
-  /**
-   * Freeze current document content before evaluating it; review history can
-   * therefore never be rewritten by later author edits. The capture commits
-   * on its own so the (asynchronous) evaluation can run against immutable
-   * rows before the review record is persisted.
-   */
-  captureReviewSnapshot(
-    scope: ProjectScope,
-    projectId: string,
-    input: CaptureReviewSnapshotInput,
-  ): { snapshotId: string; documents: ReviewSnapshotDocument[] };
-  recordSnapshotReview(
-    scope: ProjectScope,
-    projectId: string,
-    input: RecordSnapshotReviewInput,
-  ): EditorialAssessmentRecord;
-  listEditorialAssessments(scope: ProjectScope, projectId: string): EditorialAssessmentRecord[];
 }

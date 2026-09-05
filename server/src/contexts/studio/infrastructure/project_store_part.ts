@@ -1,25 +1,27 @@
 import { randomUUID } from "node:crypto";
-import { rmSync } from "node:fs";
-import { join } from "node:path";
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, sql } from "drizzle-orm";
 
 import type { StudioSqliteDatabase } from "../../../shared/infrastructure/db/connection.js";
 import { jobs, usageEvents } from "../../../shared/infrastructure/db/schema.js";
+import type { ProjectUpdateInput } from "../application/ports/project_update_store.js";
 import type {
   AddImportedProjectInput,
   AddProjectInput,
   DocumentWithCurrent,
   ProjectScope,
 } from "../application/ports/studio_store.js";
+import { NotFoundError } from "../domain/exceptions.js";
 import { DEFAULT_LORE_STATUS } from "../domain/kinds.js";
 import { clearProjectDocumentIndex, refreshDocumentIndex } from "./db/document_search.js";
 import { documents, projects } from "./db/schema.js";
 import {
+  documentSummaries,
   documentsWithCurrent,
   insertRevision,
   type ProjectRow,
   scopeCondition,
   scopedProject,
+  volumesInOrder,
 } from "./db/studio_query_helpers.js";
 import { DEFAULT_VOLUME_TITLE, insertVolume } from "./volume_store_part.js";
 
@@ -27,15 +29,14 @@ import { DEFAULT_VOLUME_TITLE, insertVolume } from "./volume_store_part.js";
  * The project half of the Drizzle studio store (mirrors the Python
  * ProjectRepositoryMixin): creation with the seed document/revision in one
  * transaction, updated_at-descending lists, and deletion that cascades rows
- * and removes the project's export directory after the commit.
+ * in the same database transaction. Filesystem cleanup belongs to the
+ * application service because it cannot join SQLite's transaction.
  */
 export class ProjectStorePart {
   protected readonly db: StudioSqliteDatabase;
-  protected readonly dataDirectory: string;
 
-  constructor(db: StudioSqliteDatabase, dataDirectory: string) {
+  constructor(db: StudioSqliteDatabase) {
     this.db = db;
-    this.dataDirectory = dataDirectory;
   }
 
   addProject(scope: ProjectScope, input: AddProjectInput) {
@@ -117,12 +118,48 @@ export class ProjectStorePart {
       .select()
       .from(projects)
       .where(scopeCondition(scope))
-      .orderBy(desc(projects.updatedAt))
+      .orderBy(desc(projects.updatedAt), desc(projects.id))
       .all();
   }
 
   findProject(scope: ProjectScope, projectId: string): ProjectRow {
     return this.db.transaction((tx) => scopedProject(tx, scope, projectId));
+  }
+
+  updateProject(scope: ProjectScope, projectId: string, input: ProjectUpdateInput): ProjectRow {
+    if (
+      input.title === undefined &&
+      input.description === undefined &&
+      input.settingsJson === undefined
+    ) {
+      throw new RangeError("Project update requires at least one mutable field.");
+    }
+    const updated = this.db
+      .update(projects)
+      .set({
+        ...(input.title === undefined ? {} : { title: input.title }),
+        ...(input.description === undefined ? {} : { description: input.description }),
+        ...(input.settingsJson === undefined ? {} : { settingsJson: input.settingsJson }),
+        updatedAt: sql`max(${projects.updatedAt} + 1, ${input.now.getTime()})`,
+      })
+      .where(and(eq(projects.id, projectId), scopeCondition(scope)))
+      .returning()
+      .get();
+    if (updated === undefined) {
+      throw new NotFoundError("Project not found.");
+    }
+    return updated;
+  }
+
+  readProjectShell(scope: ProjectScope, projectId: string) {
+    return this.db.transaction((tx) => {
+      const project = scopedProject(tx, scope, projectId);
+      return {
+        project,
+        documents: documentSummaries(tx, project.id),
+        volumes: volumesInOrder(tx, project.id),
+      };
+    });
   }
 
   /** The principal-scoped idempotency probe: at most one row per (scope, hash). */
@@ -211,13 +248,12 @@ export class ProjectStorePart {
       const project = scopedProject(tx, scope, projectId);
       // The FTS table and the workflow jobs reference the project without a
       // cross-schema FK, so their rows leave explicitly in this same
-      // transaction; cascades remove documents and revisions, and the export
-      // tree belongs to the deleted project alone and goes after the commit.
+      // transaction; cascades remove documents and revisions. Export-file
+      // cleanup runs only after this database commit succeeds.
       clearProjectDocumentIndex(tx, project.id);
       tx.delete(usageEvents).where(eq(usageEvents.project_id, project.id)).run();
       tx.delete(jobs).where(eq(jobs.project_id, project.id)).run();
       tx.delete(projects).where(eq(projects.id, project.id)).run();
     });
-    rmSync(join(this.dataDirectory, "exports", projectId), { recursive: true, force: true });
   }
 }

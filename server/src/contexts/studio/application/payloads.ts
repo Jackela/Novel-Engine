@@ -1,21 +1,30 @@
 import { InvalidOperationError } from "../../../shared/domain/exceptions.js";
 import type { DocumentKind, LoreStatus, RevisionSource } from "../domain/kinds.js";
+import { assertStoredRevisionWordCount } from "../domain/revision_word_count.js";
 import { asLoreStatus, isLoreEntryKind } from "./lorebook.js";
 import type { ChapterBeatPayload } from "./payload_schemas/beat.js";
 import type { DocumentPayload, MatchResultPayload } from "./payload_schemas/document.js";
 import type { ExportArtifactPayload } from "./payload_schemas/export.js";
-import type { JobPayload } from "./payload_schemas/job.js";
+import {
+  JOB_SUMMARY_KINDS,
+  JOB_SUMMARY_OPERATIONS,
+  JOB_SUMMARY_STATUSES,
+  type JobPayload,
+  type JobSummaryPayload,
+} from "./payload_schemas/job.js";
 import type { LoreAliasPayload, LoreStatusPayload } from "./payload_schemas/lore.js";
 import type { ProjectPayload } from "./payload_schemas/project.js";
 import type { ReviewPayload, ReviewSeverity } from "./payload_schemas/review.js";
-import type { RevisionPayload } from "./payload_schemas/revision.js";
+import type { RevisionPayload, RevisionSummaryPayload } from "./payload_schemas/revision.js";
 import type { VolumePayload } from "./payload_schemas/volume.js";
 import type { ExportArtifactRecord } from "./ports/export_store.js";
+import type { JobSummaryRecord } from "./ports/job_records.js";
 import type {
   DocumentMatchRecord,
   DocumentWithCurrent,
   JobRecord,
   RevisionRecord,
+  RevisionSummaryRecord,
 } from "./ports/studio_store.js";
 import type { VolumeRecord } from "./ports/volume_store.js";
 import type { EditorialAssessment } from "./review_service.js";
@@ -27,10 +36,7 @@ import type { EditorialAssessment } from "./review_service.js";
  * schema are one shape by construction (#433, #440).
  */
 
-/** Mirror of the Python authority's \b[\w'-]+\b word counter (UNICODE-aware). */
-export function wordCount(markdown: string): number {
-  return markdown.match(/[\p{L}\p{N}_'-]+/gu)?.length ?? 0;
-}
+export { revisionWordCount as wordCount } from "../domain/revision_word_count.js";
 
 /** Parse stored JSON defensively: unreadable payloads collapse to `{}`. */
 export function safeLoadJson(value: string): Record<string, unknown> {
@@ -64,12 +70,8 @@ export interface ProjectPayloadInput {
   updatedAt: Date;
 }
 
-export function projectPayload(
-  project: ProjectPayloadInput,
-  documents?: DocumentWithCurrent[],
-  volumes?: VolumeRecord[],
-): ProjectPayload {
-  const payload: ProjectPayload = {
+export function projectPayload(project: ProjectPayloadInput): ProjectPayload {
+  return {
     id: project.id,
     title: project.title,
     description: project.description,
@@ -78,13 +80,6 @@ export function projectPayload(
     created_at: iso(project.createdAt),
     updated_at: iso(project.updatedAt),
   };
-  if (documents !== undefined) {
-    payload.documents = documents.map((document) => documentPayload(document));
-  }
-  if (volumes !== undefined) {
-    payload.volumes = volumes.map((volume) => volumePayload(volume));
-  }
-  return payload;
 }
 
 export function documentPayload(document: DocumentWithCurrent): DocumentPayload {
@@ -109,7 +104,7 @@ export function documentPayload(document: DocumentWithCurrent): DocumentPayload 
     content_markdown: revision.contentMarkdown,
     metadata: safeLoadJson(revision.metadataJson),
     revision_source: revision.source as RevisionSource,
-    word_count: wordCount(revision.contentMarkdown),
+    word_count: assertStoredRevisionWordCount(revision.wordCount),
     created_at: iso(document.createdAt),
     updated_at: iso(document.updatedAt),
   };
@@ -145,7 +140,20 @@ export function revisionPayload(revision: RevisionRecord): RevisionPayload {
     content_markdown: revision.contentMarkdown,
     metadata: safeLoadJson(revision.metadataJson),
     source: revision.source as RevisionSource,
-    word_count: wordCount(revision.contentMarkdown),
+    word_count: assertStoredRevisionWordCount(revision.wordCount),
+    created_at: iso(revision.createdAt),
+  };
+}
+
+/** Public History projection: no immutable body or metadata crosses this boundary. */
+export function revisionSummaryPayload(revision: RevisionSummaryRecord): RevisionSummaryPayload {
+  return {
+    id: revision.id,
+    document_id: revision.documentId,
+    parent_revision_id: revision.parentRevisionId,
+    revision_number: revision.revisionNumber,
+    source: revision.source as RevisionSource,
+    word_count: assertStoredRevisionWordCount(revision.wordCount),
     created_at: iso(revision.createdAt),
   };
 }
@@ -172,6 +180,41 @@ export function jobPayload(job: JobRecord): JobPayload {
       details: safeLoadJson(event.detailsJson),
       created_at: iso(event.createdAt),
     })),
+  };
+}
+
+function isJobSummaryKind(value: string): value is JobSummaryPayload["kind"] {
+  return JOB_SUMMARY_KINDS.some((candidate) => candidate === value);
+}
+
+function isJobSummaryOperation(value: string): value is JobSummaryPayload["operation"] {
+  return JOB_SUMMARY_OPERATIONS.some((candidate) => candidate === value);
+}
+
+function isJobSummaryStatus(value: string): value is JobSummaryPayload["status"] {
+  return JOB_SUMMARY_STATUSES.some((candidate) => candidate === value);
+}
+
+/** Serialize one lightweight history row without touching stored JSON bodies. */
+export function jobSummaryPayload(job: JobSummaryRecord): JobSummaryPayload {
+  if (!isJobSummaryKind(job.kind)) throw new Error("Stored Job has an unsupported kind.");
+  if (!isJobSummaryOperation(job.operation)) {
+    throw new Error("Stored Job has an unsupported operation.");
+  }
+  if (!isJobSummaryStatus(job.status)) throw new Error("Stored Job has an unsupported status.");
+  return {
+    id: job.id,
+    project_id: job.projectId,
+    document_id: job.documentId,
+    kind: job.kind,
+    operation: job.operation,
+    status: job.status,
+    provider: job.provider,
+    model: job.model,
+    error: job.error,
+    retry_of_job_id: job.retryOfJobId,
+    created_at: iso(job.createdAt),
+    updated_at: iso(job.updatedAt),
   };
 }
 

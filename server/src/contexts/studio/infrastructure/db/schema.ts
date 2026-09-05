@@ -100,6 +100,7 @@ export const documentRevisions = sqliteTable(
     contentMarkdown: text("content_markdown").notNull().default(""),
     metadataJson: text("metadata_json").notNull().default("{}"),
     source: text("source").notNull().default("author"),
+    wordCount: integer("word_count"),
     createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
   },
   (table) => [
@@ -233,4 +234,28 @@ export const exports = sqliteTable(
     index("idx_exports_project_created").on(table.projectId, table.createdAt),
     index("idx_exports_snapshot").on(table.snapshotId),
   ],
+);
+
+/** Durable authority for replaying an interrupted uncommitted-file cleanup. */
+export const exportPublicationCleanupIntents = sqliteTable(
+  "export_publication_cleanup_intents",
+  {
+    publicationId: text("publication_id").primaryKey(),
+    artifactId: text("artifact_id").notNull(),
+    projectId: text("project_id")
+      .notNull()
+      .references(() => projects.id, { onDelete: "cascade" }),
+    version: integer("version").notNull(),
+    format: text("format").notNull(),
+    relativePath: text("relative_path").notNull(),
+    stageFile: text("stage_file").notNull(),
+    stageDevice: text("stage_device").notNull(),
+    stageInode: text("stage_inode").notNull(),
+    manifestDevice: text("manifest_device").notNull(),
+    manifestInode: text("manifest_inode").notNull(),
+    sizeBytes: integer("size_bytes").notNull(),
+    checksumSha256: text("checksum_sha256").notNull(),
+    createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
+  },
+  (table) => [index("idx_export_cleanup_intents_project").on(table.projectId)],
 );

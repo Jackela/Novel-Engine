@@ -39,8 +39,11 @@ describe("projects surface", () => {
       expect(seed.kind).toBe("chapter");
       expect(seed.title).toBe("Chapter 1");
       expect(seed.position).toBe(1);
-      expect(seed.content_markdown).toBe("# Chapter 1\n\n");
       expect(seed.current_revision_id).toBeTruthy();
+      expect(seed.word_count).toBe(2);
+      expect(seed.revision_source).toBe("author");
+      expect(seed).not.toHaveProperty("content_markdown");
+      expect(seed).not.toHaveProperty("metadata");
 
       const revisions = await call(
         app,
@@ -105,6 +108,58 @@ describe("projects surface", () => {
       expect(response.statusCode).toBe(200);
       const listed = response.json().projects.map((project: { id: string }) => project.id);
       expect(listed).toEqual([older.id, newer.id]);
+    } finally {
+      await app.close();
+    }
+  });
+
+  it("breaks equal project update times by id for a stable total order", async () => {
+    const { app } = await buildStudioApp(monotonicClock());
+    try {
+      const jar = await ownerJar(app);
+      const seeded = await seedProject(app, jar, "Scope owner");
+      const db = app.studioDb?.db;
+      if (db === undefined) throw new Error("expected studio database handle");
+      const ownerId = db.select({ ownerId: projects.ownerId }).from(projects).get()?.ownerId;
+      if (ownerId === undefined) throw new Error("expected project owner");
+      const tiedAt = new Date("2026-01-01T00:00:00.000Z");
+      const lowerId = "00000000-0000-4000-8000-000000000001";
+      const higherId = "00000000-0000-4000-8000-000000000002";
+      db.update(projects)
+        .set({ updatedAt: new Date(0) })
+        .run();
+      db.insert(projects)
+        .values([
+          {
+            id: lowerId,
+            ownerId,
+            title: "Lower id",
+            description: "",
+            settingsJson: '{"provider":"mock"}',
+            importHash: null,
+            createdAt: tiedAt,
+            updatedAt: tiedAt,
+          },
+          {
+            id: higherId,
+            ownerId,
+            title: "Higher id",
+            description: "",
+            settingsJson: '{"provider":"mock"}',
+            importHash: null,
+            createdAt: tiedAt,
+            updatedAt: tiedAt,
+          },
+        ])
+        .run();
+
+      const response = await call(app, jar, "GET", "/api/projects");
+      expect(response.statusCode, response.body).toBe(200);
+      expect(response.json().projects.map((project: { id: string }) => project.id)).toEqual([
+        higherId,
+        lowerId,
+        seeded.id,
+      ]);
     } finally {
       await app.close();
     }

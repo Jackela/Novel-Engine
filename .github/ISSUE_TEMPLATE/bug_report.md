@@ -2,7 +2,7 @@
 name: Bug Report
 about: Report a Novel Engine authoring problem
 title: "[BUG] "
-labels: ["bug", "triage"]
+labels: ["bug", "needs-triage"]
 assignees: []
 ---
 

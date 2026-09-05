@@ -1,9 +1,9 @@
 import { FileText } from "lucide-react";
 
-import type { StudioDocument } from "@/app/types/studio";
+import type { DocumentSummary } from "@/app/types/studio";
 
 interface StudioDocumentRowProps {
-  document: StudioDocument;
+  document: DocumentSummary;
   isActive: boolean;
   onSelect: (documentId: string) => void;
 }
