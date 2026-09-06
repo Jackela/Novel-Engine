@@ -1,5 +1,48 @@
 # Validation evidence
 
+## Campaign completion evidence — 2026-09-06 (`ae93b9dc`)
+
+The orchestration campaign of 2026-09-05/06 closed every remaining open task
+of this change except the archive clause (5.4). Full record:
+[the campaign closeout](../../../docs/agents/orchestration-campaign-2026-09-06.md).
+
+- **1.5 closed** by PR #470 (`7db65414`): page-level proof that resume plan
+  construction requests zero sibling body reads and skips `ai-accepted`
+  chapters from shell summaries (mutation-verified).
+- **3.2 closed** by PR #471 (`95a88fed`): the request-ledger test (from
+  issue #465) exposed a real defect — navigate identity re-triggered the
+  full project bootstrap on every in-app navigation — fixed with a
+  project-identity-driven bootstrap plus ref-stabilized callbacks; the
+  ledger now proves one project read, one active-Document read, zero
+  sibling/inspector reads, with precise retry accounting.
+- **3.4 closed** by PR #469 (`1c958c76`): shared `useNarrowSummaryField`
+  field-intent epoch, frontend beat command wiring (`api.linkChapterBeat` +
+  `StudioBeatPanel`) sourcing the normalized requested value, and
+  revision-granularity stale rejection, proven by the narrow-matrix tests.
+- **4.1–4.4 and the browser halves of 5.1/5.2 closed** by PR #476
+  (`66a94a28`): eight authored TS-browser workflows (project-switch with
+  Draft discard and zero late PUTs, reorder, Review run, Export
+  failure/retry, cross-resource failure matrix, lazy coexistence, and
+  network-level Review/Export request isolation), bringing full-audit to
+  17 passed.
+- **5.1/5.2 (server and unit halves)** closed by the reruns recorded in the
+  sections below plus the campaign's final full validation on `ae93b9dc`:
+  server 211 files / 1321 tests, frontend 95 files / 518 tests, gates,
+  build, and strict OpenSpec 23/23 all green.
+- **5.3 closed**: four independent fixed-SHA reviews at `95a48d5f`
+  (Standards clean; Concurrency/Security clean; Architecture one P2 + P3s;
+  UX two P2s + P3s), with both P2 sets repaired in PR #482 (`0a65219f`) and
+  PR #483 (`ae93b9dc`) and bounded re-reviews returned clean (no P0-P2);
+  residual P3s are tracked in #478/#479. Defects found during the loop
+  (#471 navigation identity; export Load-older wiring inside #483) are
+  fixed on main.
+- **5.4 remains open**: canonical-spec merge/archive is a separate
+  deliberate decision gated on human acceptance, per the standing rule.
+
+Human acceptance remains `not run`; the
+[acceptance packet](../../../docs/agents/refactor-human-acceptance-2026-09-05.md)
+must be exercised by the Owner against the current candidate.
+
 ## Final integrated candidate evidence — 2026-09-05 (`13a4fed4`)
 
 The merged main commit `13a4fed4d9252d33793e3806a2e9565ec7618c3e` (squash

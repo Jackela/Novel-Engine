@@ -23,7 +23,7 @@
       positions are unchanged while its response contains summaries only and
       performs no response-time body/metadata hydration while retaining the
       required revision source.
-- [ ] 1.5 Add a whole-book resume failure proving summary
+- [x] 1.5 Add a whole-book resume failure proving summary
       `revision_source` skips currently `ai-accepted` chapters, retains
       `author`/`restore` chapters in reading order, and requests no sibling body
       merely to construct the plan.
@@ -52,7 +52,7 @@
 - [x] 3.1 Split strict frontend contract parsing/types into Project shell,
       Document summary, and complete Document; reject legacy body-bearing shell
       rows and summary-shaped current-document responses.
-- [ ] 3.2 Refactor project bootstrap to publish the shell first and fetch at
+- [x] 3.2 Refactor project bootstrap to publish the shell first and fetch at
       most the route-compatible active Document, with no sibling-body prefetch
       and readable independent shell/editor failure and Retry states.
 - [x] 3.3 Implement the one-active-owner accepted-document state machine:
@@ -61,7 +61,7 @@
       count subscribers, reject stale/aborted/late responses, notify every
       survivor while suppressing only the released subscriber/obsolete owner,
       and abort/clear shared bookkeeping only after the last owner releases it.
-- [ ] 3.4 Apply complete mutation responses causally to shell plus active body,
+- [x] 3.4 Apply complete mutation responses causally to shell plus active body,
       require the latest narrow Lore-status/beat payload to patch only its owned
       summary field after captured project/Document/intent-epoch validation,
       source `lore_status` from the response and normalized `beat_ref` from the
@@ -82,23 +82,23 @@
 
 ## 4. Lazy Inspector ownership
 
-- [ ] 4.1 Remove Review and Export reads from project bootstrap; activate only
+- [x] 4.1 Remove Review and Export reads from project bootstrap; activate only
       the route-selected panel, including direct navigation and Back/Forward,
       and prove selecting either never requests the other.
-- [ ] 4.2 Give shell, active Document, Review, and Export independent pending,
+- [x] 4.2 Give shell, active Document, Review, and Export independent pending,
       error, abort, stale-response, and Retry state so one failure preserves the
       other surfaces and no failure is rendered as an empty document/history.
-- [ ] 4.3 Route 401 from every project resource to Entry, shell 404 to the
+- [x] 4.3 Route 401 from every project resource to Entry, shell 404 to the
       project library, and current-Document 404 through one shell refresh to a
       route-compatible fallback or scoped inconsistency; keep only operational
       failures on local recovery surfaces.
-- [ ] 4.4 Preserve accessible Inspector selection, busy naming, retry focus,
+- [x] 4.4 Preserve accessible Inspector selection, busy naming, retry focus,
       deliberate focus movement, and Stop visibility while panels hydrate
       lazily.
 
 ## 5. Integrated evidence and release boundary
 
-- [ ] 5.1 Run project create/open, section fallback, document create/save/
+- [x] 5.1 Run project create/open, section fallback, document create/save/
       restore/accept/delete, lore/beat/volume placement, reorder, search,
       conflict, whole-book stop/resume source planning, reverse same-revision
       partial responses, body-revision churn,
@@ -106,12 +106,12 @@
       suppression/last-release abort, resource-specific 401/404 recovery,
       discard-versus-late-commit Draft navigation, shell/current-document
       authorization, query-budget buckets, and OpenAPI/type-drift regressions.
-- [ ] 5.2 Run server type-check/lint/arch/size/full tests, frontend
+- [x] 5.2 Run server type-check/lint/arch/size/full tests, frontend
       lint/format/type/unit/build, React diagnostics, strict OpenSpec, and
       TypeScript-backend Playwright project-open/switch/reorder/Review/Export/
       failure/retry/keyboard/Back/Forward workflows; record exact results and
       every skip.
-- [ ] 5.3 Obtain independent standards, architecture, concurrency/security,
+- [x] 5.3 Obtain independent standards, architecture, concurrency/security,
       and UX/accessibility reviews against one fixed SHA; repair findings and
       repeat until each fixed-SHA review is clean.
 - [ ] 5.4 Keep the change active until required CI is green, then merge it into
