@@ -183,20 +183,28 @@ describe("useStudioActions", () => {
 
   it("reorders documents and publishes the server ordering", async () => {
     // Given
-    const reordered = [
-      { ...note, position: 0 },
-      { ...chapterOne, position: 1 },
-    ];
+    const noteTwo = { ...note, id: "note-2", title: "Note Two", position: 2 };
+    const reordered = [chapterOne, { ...noteTwo, position: 1 }, { ...note, position: 2 }];
     vi.mocked(api.reorderDocuments).mockResolvedValue({ documents: reordered });
-    const harness = renderActions();
+    const harness = renderActions(
+      undefined,
+      projectWith([chapterOne, note, noteTwo], {
+        description: "Old description",
+        settings: { provider: "mock", temperature: 0.5 },
+      }),
+    );
 
     // When
     await act(async () => {
-      await harness.result().actions.moveDocument(note.id, -1);
+      await harness.result().actions.moveDocument(noteTwo.id, -1);
     });
 
     // Then
-    expect(api.reorderDocuments).toHaveBeenCalledWith(projectFixture.id, [note.id, chapterOne.id]);
+    expect(api.reorderDocuments).toHaveBeenCalledWith(projectFixture.id, [
+      chapterOne.id,
+      noteTwo.id,
+      note.id,
+    ]);
     expect(harness.result().project?.documents).toEqual(reordered);
   });
 

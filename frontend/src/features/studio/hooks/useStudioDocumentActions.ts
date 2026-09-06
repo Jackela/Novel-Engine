@@ -5,7 +5,11 @@ import { api } from "@/app/api";
 import type { DocumentKind, Project } from "@/app/types/studio";
 
 import { GROUPS } from "../studioConstants";
-import { mergeProjectDocumentOrder, summarizeDocument } from "./projectState";
+import {
+  mergeProjectDocumentOrder,
+  summarizeDocument,
+  swapReadingGroupNeighborIds,
+} from "./projectState";
 import { toErrorMessage } from "./toErrorMessage";
 import { usePendingAction } from "./usePendingAction";
 
@@ -121,24 +125,23 @@ export function useStudioDocumentActions<Owner extends DocumentActionsOwner>({
     async (documentId: string, direction: -1 | 1) => {
       const owner = currentOwner();
       if (!owner || !project || !beginMutation("moveDocument")) return;
-      const ordered = [...project.documents].sort((a, b) => a.position - b.position);
-      const index = ordered.findIndex((document) => document.id === documentId);
-      const target = index + direction;
-      const currentItem = ordered[index];
-      const targetItem = ordered[target];
-      if (index < 0 || target < 0 || target >= ordered.length || !currentItem || !targetItem) {
+      // Move within the displayed reading group (same volume for chapters,
+      // same kind otherwise); a flat position sort would swap cross-kind or
+      // cross-volume neighbors and persist as a no-op (#480).
+      const orderedIds = swapReadingGroupNeighborIds(
+        project.documents,
+        project.volumes,
+        documentId,
+        direction,
+      );
+      if (orderedIds === null) {
         finishMutation("moveDocument");
         return;
       }
       setMovingState({ projectId: owner.projectId, documentId, direction });
-      ordered[index] = targetItem;
-      ordered[target] = currentItem;
       publishError(owner, "moveDocument", null);
       try {
-        const response = await api.reorderDocuments(
-          project.id,
-          ordered.map((item) => item.id),
-        );
+        const response = await api.reorderDocuments(project.id, orderedIds);
         if (!isCurrentOwner(owner)) return;
         setProject((current) =>
           isCurrentOwner(owner) && current?.id === owner.projectId
