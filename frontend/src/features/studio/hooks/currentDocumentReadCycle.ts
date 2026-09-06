@@ -150,6 +150,11 @@ async function convergeAfterRead(
   }
 }
 
+/**
+ * Read one document against its expected revision, converging through a shell
+ * refresh whenever the store and the expectation disagree; every terminal
+ * outcome tells the caller exactly how to settle (publish, retry, navigate).
+ */
 export async function runCurrentDocumentReadCycle(
   key: CurrentDocumentReadKey,
   authority: ProjectShellReadAuthority,

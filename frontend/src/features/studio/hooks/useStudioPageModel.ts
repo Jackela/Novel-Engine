@@ -26,6 +26,11 @@ import { useStudioSearch } from "./useStudioSearch";
 
 type Nav = NavigateFunction;
 
+/**
+ * Compose the whole studio page behind one route-scoped model: the project
+ * shell, the active document with its draft, and every inspector family,
+ * each owning its own requests and error channels.
+ */
 export function useStudioPageModel(projectId: string, route: StudioRouteState, navigate: Nav) {
   const { inspector: routeInspector, section } = route;
   const [activeId, setActiveId] = useState<string | null>(null);

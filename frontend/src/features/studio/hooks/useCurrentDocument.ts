@@ -40,6 +40,11 @@ function sameKey(left: CurrentDocumentReadKey | null, right: CurrentDocumentRead
   );
 }
 
+/**
+ * Own the route document read: each accepted document matches the summary's
+ * expected revision exactly, and a keyed read lease keeps concurrent cycles
+ * from publishing over each other.
+ */
 export function useCurrentDocument(
   projectId: string,
   {
