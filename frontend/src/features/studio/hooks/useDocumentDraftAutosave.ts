@@ -114,17 +114,24 @@ export function useDocumentDraftAutosave({
       } catch (reason) {
         if (!isCurrentProject()) return;
         const isConflict = reason instanceof HttpError && reason.status === 409;
-        setCurrentSaveState(isConflict ? "conflict" : "error");
-        if (isCurrentOwner()) setError(toErrorMessage(reason, "Unable to save."));
-        if (isConflict) {
-          try {
-            await refreshLatestDocument(currentDocument.id);
-          } catch (refreshReason) {
-            if (isCurrentOwner()) {
-              setError(toErrorMessage(refreshReason, "Unable to refresh the latest document."));
-            }
-          }
+        if (!isConflict) {
+          setCurrentSaveState("error");
+          if (isCurrentOwner()) setError(toErrorMessage(reason, "Unable to save."));
+          return;
         }
+        // Land the winning body before publishing the conflict surface (#472):
+        // conflict actions refuse to start while this save still holds the
+        // saveInFlight lock, so an early "Save conflict" renders clickable
+        // buttons that silently swallow the discard click and strand the
+        // editor in conflict once the recovery tail settles.
+        let recoveryError: string | null = null;
+        try {
+          await refreshLatestDocument(currentDocument.id);
+        } catch (refreshReason) {
+          recoveryError = toErrorMessage(refreshReason, "Unable to refresh the latest document.");
+        }
+        setCurrentSaveState("conflict");
+        if (isCurrentOwner()) setError(recoveryError ?? toErrorMessage(reason, "Unable to save."));
       } finally {
         saveInFlightRef.current.delete(ownerKey);
         // Recheck a new lifecycle's Draft when the old request releases its
