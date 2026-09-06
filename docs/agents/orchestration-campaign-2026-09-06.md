@@ -62,13 +62,45 @@ gates ✓, server suite 211 files / 1321 tests ✓, frontend unit 95 files /
 `2026-09-05-bound-authoring-structure-capacity` (#477). Each keeps its own
 archive task open pending the standing archive gate.
 
+## Wave D — follow-up tickets delivered (2026-09-06, PRs #485–#489)
+
+The follow-up tickets opened by the review pass were themselves completed
+in a second wave, each merged after green required CI:
+
+- [#485](https://github.com/Jackela/Novel-Engine/pull/485) closed #480:
+  Move up/down empirically confirmed as a persistent no-op in mixed-kind
+  projects (4 failing baselines); neighbor computation now operates within
+  the displayed reading group, server reorder contract untouched.
+- [#486](https://github.com/Jackela/Novel-Engine/pull/486) closed #472:
+  the conflict-recovery flake's real mechanism was found by refuting the
+  original hypothesis — the conflict banner became clickable before the
+  409-recovery refresh settled while `loadLatest` silently returned under
+  the save lock, swallowing clicks; the conflict surface is now withheld
+  until recovery settles (red→green jsdom proof; studio-ts e2e 3× stable).
+- [#487](https://github.com/Jackela/Novel-Engine/pull/487) closed #478:
+  shared `resolveStateAction`, single `projectDocumentOwnerKey`, unified
+  lazy-inspector activation in the histories shell, `revision.source`
+  tightened to `assertStoredRevisionSource` (red→green), JSDoc pass, and a
+  falsifiable cross-document focus-guard test (mutation-verified).
+- [#488](https://github.com/Jackela/Novel-Engine/pull/488) closed #479:
+  five request builders consolidated behind `pageRequest` (uniform limit
+  validation and path encoding), keyset busy-race epoch guard, and the
+  exports wholesale-replace branch now preempts in-flight older reads (both
+  red→green).
+- [#489](https://github.com/Jackela/Novel-Engine/pull/489) closed #481:
+  new OpenSpec change `2026-09-06-navigator-document-placement-surfaces`
+  plus Navigator product surfaces for document deletion (inline
+  confirmation, focus discipline, snapshot-conflict envelope) and chapter
+  volume placement (causal shell patching per the #469 narrow-field
+  contract), with 26 unit tests and 4 new browser workflows (e2e 23
+  passed).
+
 ## Outstanding (deliberately not agent-doable)
 
 - Human acceptance packet (Owner-only; #457 item 4).
 - OpenSpec archive and release authorization (#457 item 5) — gated on human
   acceptance.
 - #386 DashScope live verification (needs key; paid calls forbidden).
-- Follow-ups: #472, #478, #479, #480, #481.
 
 ## Evidence conventions used
 
