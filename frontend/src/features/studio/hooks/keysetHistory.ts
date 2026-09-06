@@ -27,7 +27,8 @@ export function appendUniqueById<T>(
  * Merge one refreshed cursorless first page into a loaded catalog: prepend
  * and de-duplicate new summaries, preserve a loaded contiguous older tail
  * with its continuation, and replace the cache wholesale when the fresh page
- * exposes an unknown gap instead of splicing across it.
+ * exposes an unknown gap instead of splicing across it. `replacedWholesale`
+ * reports which branch ran so callers can preempt in-flight older reads.
  */
 export function mergeRefreshedKeysetFirstPage<T>(
   currentItems: readonly T[],
@@ -35,16 +36,19 @@ export function mergeRefreshedKeysetFirstPage<T>(
   refreshedItems: readonly T[],
   refreshedCursor: string | null,
   idOf: (item: T) => string,
-): { items: T[]; nextCursor: string | null } {
+): { items: T[]; nextCursor: string | null; replacedWholesale: boolean } {
   if (currentItems.length === 0 || refreshedCursor === null) {
-    return { items: [...refreshedItems], nextCursor: refreshedCursor };
+    return { items: [...refreshedItems], nextCursor: refreshedCursor, replacedWholesale: true };
   }
   const refreshedIds = new Set(refreshedItems.map(idOf));
   const hasOverlap = currentItems.some((item) => refreshedIds.has(idOf(item)));
-  if (!hasOverlap) return { items: [...refreshedItems], nextCursor: refreshedCursor };
+  if (!hasOverlap) {
+    return { items: [...refreshedItems], nextCursor: refreshedCursor, replacedWholesale: true };
+  }
   return {
     items: [...refreshedItems, ...currentItems.filter((item) => !refreshedIds.has(idOf(item)))],
     nextCursor: currentCursor,
+    replacedWholesale: false,
   };
 }
 
@@ -88,9 +92,11 @@ interface UseKeysetOlderPagesOptions<Page> {
 /**
  * One older-page traversal for a bounded keyset history. The traversal owns
  * its single in-flight request, its busy/error state, and two fixed
- * invariants: a superseded read still clears the busy flag it raised (the
- * cleanup lives in a `finally`, never behind a currency check), and a new
- * request always aborts the controller it replaces before installing its own.
+ * invariants: the busy flag is released only by the request that still owns
+ * the traversal epoch (`abortInFlight` resets busy itself when it supersedes
+ * one, so a superseded read's `finally` must not clear a successor's busy),
+ * and a new request always aborts the controller it replaces before
+ * installing its own.
  */
 export function useKeysetOlderPages<Page>(
   options: UseKeysetOlderPagesOptions<Page>,
@@ -172,9 +178,10 @@ export function useKeysetOlderPages<Page>(
         }
       } finally {
         if (requestRef.current === request) requestRef.current = null;
-        // Busy cleanup never depends on request currency: a superseded or
-        // aborted read still releases the busy flag it raised.
-        setBusy(false);
+        // Only the request that still owns the traversal epoch may release
+        // the busy flag: `abortInFlight` already reset busy when it aborted
+        // this read, so a superseded `finally` must not clear a successor's.
+        if (epochRef.current === request.epoch) setBusy(false);
       }
     })();
     requestRef.current = request;

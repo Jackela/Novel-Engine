@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, useEffect, useRef } from "react";
 
 import { api } from "@/app/api";
 import type { ExportsPage } from "@/app/apiWorkflowContract";
@@ -23,9 +23,12 @@ const EMPTY_PAGE: ExportsPage = { exports: [], next_cursor: null };
  * Merge one cursorless first-page refresh (#460): prepend and de-duplicate
  * new summaries, preserve a loaded contiguous older tail and its
  * continuation, and replace the cache when the fresh page exposes an
- * unknown gap instead of splicing across it.
+ * unknown gap instead of splicing across it (`replacedWholesale`, #479).
  */
-export function mergeRefreshedFirstPage(current: ExportsPage, refreshed: ExportsPage): ExportsPage {
+export function mergeRefreshedFirstPage(
+  current: ExportsPage,
+  refreshed: ExportsPage,
+): ExportsPage & { readonly replacedWholesale: boolean } {
   const merged = mergeRefreshedKeysetFirstPage(
     current.exports,
     current.next_cursor,
@@ -33,7 +36,11 @@ export function mergeRefreshedFirstPage(current: ExportsPage, refreshed: Exports
     refreshed.next_cursor,
     (item) => item.id,
   );
-  return { exports: merged.items, next_cursor: merged.nextCursor };
+  return {
+    exports: merged.items,
+    next_cursor: merged.nextCursor,
+    replacedWholesale: merged.replacedWholesale,
+  };
 }
 
 /**
@@ -75,11 +82,27 @@ export function useExportHistory({
     busyErrorMessage: "Unable to load older exports.",
   });
 
+  const abortInFlightOlder = olderPages.abortInFlight;
+  // The refresh path must decide its merge branch against the freshest
+  // loaded page while keeping a stable closure: an in-flight export outlives
+  // older-page commits, so the loaded page is mirrored into a ref instead of
+  // captured per render.
+  const dataRef = useRef(resource.data);
+  useEffect(() => {
+    dataRef.current = resource.data;
+  });
+
   const applyRefreshedFirstPage = useCallback(
     (page: ExportsPage): void => {
-      setData((current) => mergeRefreshedFirstPage(current, page));
+      const merged = mergeRefreshedFirstPage(dataRef.current, page);
+      // A wholesale replace discards the loaded tail: the in-flight older
+      // read it orphaned would stitch that tail back across the gap, so
+      // preempt it. The overlap branch keeps the tail contiguous and its
+      // older read a legal continuation (#479).
+      if (merged.replacedWholesale) abortInFlightOlder();
+      setData({ exports: merged.exports, next_cursor: merged.next_cursor });
     },
-    [setData],
+    [abortInFlightOlder, setData],
   );
 
   return {
