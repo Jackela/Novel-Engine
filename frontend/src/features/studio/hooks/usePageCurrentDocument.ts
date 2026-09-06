@@ -6,6 +6,11 @@ import type { DocumentSummary } from "@/app/types/studio";
 import type { ProjectShellReadAuthority } from "./projectShellReadAuthority";
 import { useCurrentDocument } from "./useCurrentDocument";
 
+/**
+ * Page adapter for `useCurrentDocument`: keeps session/project-loss
+ * navigation identity-stable so document reads never re-trigger on pathname
+ * changes (#465).
+ */
 export function usePageCurrentDocument(
   projectId: string,
   summary: DocumentSummary | null,

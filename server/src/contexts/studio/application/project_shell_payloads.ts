@@ -9,6 +9,7 @@ import { iso, type ProjectPayloadInput, projectPayload, volumePayload } from "./
 import type { DocumentSummaryRecord, DocumentWithCurrent } from "./ports/studio_store.js";
 import type { VolumeRecord } from "./ports/volume_store.js";
 
+/** The one-read shell envelope every project bootstrap consumes. */
 export function projectShellPayload(
   project: ProjectPayloadInput,
   documents: DocumentSummaryRecord[],
@@ -44,6 +45,7 @@ export function summarizeDocument(document: DocumentWithCurrent): DocumentSummar
   };
 }
 
+/** Serialize one shell summary; its revision facts arrive pre-validated by `summarizeDocument`. */
 export function documentSummaryPayload(document: DocumentSummaryRecord): DocumentSummaryPayload {
   return {
     id: document.id,

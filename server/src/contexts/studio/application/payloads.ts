@@ -1,5 +1,6 @@
 import { InvalidOperationError } from "../../../shared/domain/exceptions.js";
-import type { DocumentKind, LoreStatus, RevisionSource } from "../domain/kinds.js";
+import type { DocumentKind, LoreStatus } from "../domain/kinds.js";
+import { assertStoredRevisionSource } from "../domain/revision_source.js";
 import { assertStoredRevisionWordCount } from "../domain/revision_word_count.js";
 import { asLoreStatus, isLoreEntryKind } from "./lorebook.js";
 import type { ChapterBeatPayload } from "./payload_schemas/beat.js";
@@ -114,7 +115,7 @@ export function documentPayload(document: DocumentWithCurrent): DocumentPayload 
     current_revision_id: revision.id,
     content_markdown: revision.contentMarkdown,
     metadata: safeLoadJson(revision.metadataJson),
-    revision_source: revision.source as RevisionSource,
+    revision_source: assertStoredRevisionSource(revision.source),
     word_count: assertStoredRevisionWordCount(revision.wordCount),
     created_at: iso(document.createdAt),
     updated_at: iso(document.updatedAt),
@@ -150,7 +151,7 @@ export function revisionPayload(revision: RevisionRecord): RevisionPayload {
     revision_number: revision.revisionNumber,
     content_markdown: revision.contentMarkdown,
     metadata: safeLoadJson(revision.metadataJson),
-    source: revision.source as RevisionSource,
+    source: assertStoredRevisionSource(revision.source),
     word_count: assertStoredRevisionWordCount(revision.wordCount),
     created_at: iso(revision.createdAt),
   };
@@ -163,7 +164,7 @@ export function revisionSummaryPayload(revision: RevisionSummaryRecord): Revisio
     document_id: revision.documentId,
     parent_revision_id: revision.parentRevisionId,
     revision_number: revision.revisionNumber,
-    source: revision.source as RevisionSource,
+    source: assertStoredRevisionSource(revision.source),
     word_count: assertStoredRevisionWordCount(revision.wordCount),
     created_at: iso(revision.createdAt),
   };

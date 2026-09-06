@@ -2,15 +2,13 @@ import { useCallback, useEffect, useRef } from "react";
 
 import { api } from "@/app/api";
 import type { Review, ReviewSummary, ReviewsPage } from "@/app/types/studio";
-import type { InspectorTab } from "../studioConstants";
 import type { InspectorReviewModel } from "../studioInspectorTypes";
 
 import { appendUniqueById, useKeysetOlderPages } from "./keysetHistory";
 import { useLazyInspectorResource } from "./useLazyInspectorResource";
 
 interface UseReviewHistoryOptions {
-  readonly enabled: boolean;
-  readonly inspector: InspectorTab;
+  readonly active: boolean;
   readonly projectId: string;
   readonly recheckProject: (signal: AbortSignal) => Promise<boolean>;
   readonly onSessionLost: () => void;
@@ -40,17 +38,16 @@ export interface ReviewHistoryState {
 const EMPTY_PAGE: ReviewsPage = { reviews: [], next_cursor: null };
 
 /**
- * One URL-selected Review history: bounded first summary page, explicit older
- * traversal, and one lazy detail read of the newest assessment (#459).
+ * One Review history family member: bounded first summary page, explicit
+ * older traversal, and one lazy detail read of the newest assessment (#459).
+ * Activation arrives pre-derived from `useLazyInspectorHistories`.
  */
 export function useReviewHistory({
-  enabled,
-  inspector,
+  active,
   projectId,
   recheckProject,
   onSessionLost,
 }: UseReviewHistoryOptions): ReviewHistoryState {
-  const active = enabled && inspector === "review";
   const requestPage = useCallback(
     (signal: AbortSignal) => api.reviews(projectId, { signal }),
     [projectId],

@@ -1,3 +1,4 @@
+import { projectDocumentOwnerKey } from "./projectDocumentOwnerKey";
 import { combineErrorMessages, useOwnerKeyedErrors } from "./useOwnerKeyedErrors";
 
 const DOCUMENT_ERROR_SOURCES = ["draft", "proposal", "revision", "restore"] as const;
@@ -18,7 +19,7 @@ export function useStudioErrorChannels(
 ) {
   const projectErrors = useOwnerKeyedErrors(projectId, PROJECT_ERROR_SOURCES);
   const documentErrors = useOwnerKeyedErrors(
-    `${projectId}\u0000${documentId ?? ""}`,
+    projectDocumentOwnerKey(projectId, documentId),
     DOCUMENT_ERROR_SOURCES,
   );
   const projectErrorWithoutPanelActions = combineErrorMessages(

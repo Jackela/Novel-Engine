@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { HttpError } from "@/app/api";
 
+import { resolveStateAction } from "./resolveStateAction";
 import { toErrorMessage } from "./toErrorMessage";
 
 export type LazyResourcePhase = "idle" | "pending" | "success" | "failure";
@@ -29,10 +30,6 @@ interface UseLazyInspectorResourceOptions<T> {
   readonly onSessionLost: () => void;
   readonly missingResourceMessage: string;
   readonly loadErrorMessage: string;
-}
-
-function resolveStateAction<T>(current: T, action: SetStateAction<T>): T {
-  return typeof action === "function" ? (action as (value: T) => T)(current) : action;
 }
 
 /**

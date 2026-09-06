@@ -6,6 +6,7 @@ import { api, HttpError } from "@/app/api";
 import type { Project } from "@/app/types/studio";
 
 import type { ProjectShellReadCapture } from "./projectShellReadAuthority";
+import { resolveStateAction } from "./resolveStateAction";
 import { toErrorMessage } from "./toErrorMessage";
 
 const DEFAULT_LOAD_ERROR = "Unable to load the project. Please retry.";
@@ -30,10 +31,6 @@ interface ProjectLoadRequest {
   readonly controller: AbortController;
   readonly epoch: number;
   promise: Promise<void>;
-}
-
-function resolveStateAction<T>(current: T, action: SetStateAction<T>): T {
-  return typeof action === "function" ? (action as (value: T) => T)(current) : action;
 }
 
 /**

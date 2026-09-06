@@ -1,6 +1,8 @@
 import type { Dispatch, SetStateAction } from "react";
 import { useCallback, useMemo, useState } from "react";
 
+import { resolveStateAction } from "./resolveStateAction";
+
 type ErrorPublishers<Source extends string> = Record<
   Source,
   Dispatch<SetStateAction<string | null>>
@@ -9,13 +11,6 @@ type ErrorPublishers<Source extends string> = Record<
 export function combineErrorMessages(...messages: readonly (string | null)[]): string | null {
   const visible = messages.filter((message): message is string => Boolean(message));
   return visible.length > 0 ? visible.join(" ") : null;
-}
-
-function resolveError(
-  current: string | null,
-  action: SetStateAction<string | null>,
-): string | null {
-  return typeof action === "function" ? action(current) : action;
 }
 
 /**
@@ -38,7 +33,7 @@ export function useOwnerKeyedErrors<const Source extends string>(
     (source: Source, action: SetStateAction<string | null>) => {
       setErrorsByOwner((current) => {
         const currentSources = current.get(ownerKey) ?? new Map<Source, string>();
-        const nextError = resolveError(currentSources.get(source) ?? null, action);
+        const nextError = resolveStateAction(currentSources.get(source) ?? null, action);
         const nextSources = new Map(currentSources);
         if (nextError === null) nextSources.delete(source);
         else nextSources.set(source, nextError);

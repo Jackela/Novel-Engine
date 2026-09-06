@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import type { Project } from "@/app/types/studio";
 import type { InspectorTab } from "../studioConstants";
 import type { SettingsFormState } from "../studioInspectorTypes";
+import { resolveStateAction } from "./resolveStateAction";
 
 interface UseStudioInspectorStateArgs {
   readonly inspector: InspectorTab;
@@ -52,8 +53,7 @@ export function useStudioInspectorState({
 
   const setInspector = useCallback<Dispatch<SetStateAction<InspectorTab>>>(
     (nextInspector) => {
-      const next = typeof nextInspector === "function" ? nextInspector(inspector) : nextInspector;
-      onSelectInspector(next);
+      onSelectInspector(resolveStateAction(inspector, nextInspector));
     },
     [inspector, onSelectInspector],
   );
@@ -71,7 +71,7 @@ export function useStudioInspectorState({
           current.projectKey === currentProjectKey ? current.form : settingsFormFor(project);
         return {
           projectKey: currentProjectKey,
-          form: typeof nextForm === "function" ? nextForm(currentForm) : nextForm,
+          form: resolveStateAction(currentForm, nextForm),
         };
       });
     },

@@ -2,7 +2,7 @@ import type { Dispatch, SetStateAction } from "react";
 import { useCallback, useRef, useState } from "react";
 
 import type { Project } from "@/app/types/studio";
-
+import { projectDocumentOwnerKey } from "./projectDocumentOwnerKey";
 import { mergeProjectNarrowField, type NarrowSummaryPatch } from "./projectState";
 import { toErrorMessage } from "./toErrorMessage";
 
@@ -46,10 +46,6 @@ export interface UseNarrowSummaryFieldOptions<Owner extends NarrowFieldOwner, Va
   readonly patchFor: (value: Value) => NarrowSummaryPatch;
 }
 
-function lifecycleKey(projectId: string, documentId: string): string {
-  return `${projectId}\u0000${documentId}`;
-}
-
 export function useNarrowSummaryField<Owner extends NarrowFieldOwner, Value>({
   project,
   projectId,
@@ -68,7 +64,7 @@ export function useNarrowSummaryField<Owner extends NarrowFieldOwner, Value>({
     (documentId: string, requested: Value): Promise<void> => {
       const owner = currentOwner();
       if (!owner || !project) return Promise.resolve();
-      const key = lifecycleKey(owner.projectId, documentId);
+      const key = projectDocumentOwnerKey(owner.projectId, documentId);
       // Duplicate activation of the identical in-flight request is one
       // command; a changed requested value supersedes it as a newer intent.
       const existing = pendingRef.current.get(key);
@@ -144,7 +140,7 @@ export function useNarrowSummaryField<Owner extends NarrowFieldOwner, Value>({
 
   const lifecycleFor = useCallback(
     (documentId: string): NarrowFieldLifecycleState<Value> =>
-      lifecycle[lifecycleKey(projectId, documentId)] ?? {
+      lifecycle[projectDocumentOwnerKey(projectId, documentId)] ?? {
         isSaving: false,
         error: null,
         attempted: null,

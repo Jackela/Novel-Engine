@@ -34,8 +34,7 @@ function renderReviewHistory(active: boolean, projectId = "project-1") {
 
   function Probe(): null {
     current = useReviewHistory({
-      enabled: true,
-      inspector: active ? "review" : "copilot",
+      active,
       projectId,
       recheckProject,
       onSessionLost,
@@ -262,8 +261,7 @@ describe("useReviewHistory project boundaries", () => {
 
     function Probe(): null {
       current = useReviewHistory({
-        enabled: true,
-        inspector: "review",
+        active: true,
         projectId,
         recheckProject,
         onSessionLost,

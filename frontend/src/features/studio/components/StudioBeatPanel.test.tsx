@@ -135,6 +135,32 @@ describe("StudioBeatPanel (#466)", () => {
     expect(document.activeElement).toBe(inputB);
   });
 
+  it("keeps body focus when document A settles after the switch, with nothing focused", async () => {
+    const save = deferred<void>();
+    const content = (documentId: string) => (
+      <StudioBeatPanel documentId={documentId} beatRef={null} onLink={() => save.promise} />
+    );
+    const { container, root } = harness.mount(content("doc-1"));
+    const inputA = getByRole(container, "textbox", { name: "Beat title" }) as HTMLInputElement;
+    fireEvent.change(inputA, { target: { value: "The Harbor" } });
+    const linkButton = getByRole(container, "button", { name: "Link beat" });
+    linkButton.focus();
+    act(() => fireEvent.submit(linkButton));
+
+    // The Safari click-without-focus shape: the keyed remount for document B
+    // leaves focus on body, so only the same-document guard stops the settled
+    // command from programmatically focusing the new document's input.
+    act(() => root.render(content("doc-2")));
+    expect(document.activeElement).toBe(document.body);
+
+    await act(async () => {
+      save.resolve(undefined);
+      await save.promise;
+    });
+
+    expect(document.activeElement).toBe(document.body);
+  });
+
   it("announces failures assertively like every other error surface", () => {
     const container = render(
       <StudioBeatPanel

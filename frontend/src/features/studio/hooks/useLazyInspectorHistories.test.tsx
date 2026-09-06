@@ -17,6 +17,7 @@ vi.mock("@/app/api", async (importOriginal) => {
       ...actual.api,
       reviews: vi.fn<typeof actual.api.reviews>(),
       reviewDetail: vi.fn<typeof actual.api.reviewDetail>(),
+      exports: vi.fn<typeof actual.api.exports>(),
     },
   };
 });
@@ -79,6 +80,26 @@ describe("useLazyInspectorHistories", () => {
     mounted.select("review");
     await flushEffects();
     expect(api.reviews).toHaveBeenCalledOnce();
+  });
+
+  it("activates the Export family through the same shell gate", async () => {
+    vi.mocked(api.exports).mockResolvedValue({ exports: [], next_cursor: null });
+    const mounted = renderHistories();
+    await flushEffects();
+    expect(api.exports).not.toHaveBeenCalled();
+
+    mounted.select("export");
+    await flushEffects();
+    expect(api.exports).toHaveBeenCalledOnce();
+    expect(mounted.result().exportHistory.historyInitialized).toBe(true);
+
+    mounted.select("copilot");
+    await flushEffects();
+    expect(api.exports).toHaveBeenCalledOnce();
+
+    mounted.select("export");
+    await flushEffects();
+    expect(api.exports).toHaveBeenCalledOnce();
   });
 
   it("suppresses a late review result after leaving and reloads when the panel returns", async () => {

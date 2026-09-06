@@ -2,11 +2,11 @@ import { useState } from "react";
 import type { NavigateFunction } from "react-router-dom";
 
 import type { StudioRouteState } from "../studioRouteState";
+import { projectDocumentOwnerKey } from "./projectDocumentOwnerKey";
 import { buildStudioInspectorModel, buildStudioNavigatorProps } from "./studioPageModelView";
 import { useActiveDocument } from "./useActiveDocument";
 import { useDocumentDraft } from "./useDocumentDraft";
 import { useExportDownload } from "./useExportDownload";
-import { useExportHistory } from "./useExportHistory";
 import { useLazyInspectorHistories } from "./useLazyInspectorHistories";
 import { usePageCurrentDocument } from "./usePageCurrentDocument";
 import { reviewInspectorModel } from "./useReviewHistory";
@@ -26,6 +26,11 @@ import { useStudioSearch } from "./useStudioSearch";
 
 type Nav = NavigateFunction;
 
+/**
+ * Compose the whole studio page behind one route-scoped model: the project
+ * shell, the active document with its draft, and every inspector family,
+ * each owning its own requests and error channels.
+ */
 export function useStudioPageModel(projectId: string, route: StudioRouteState, navigate: Nav) {
   const { inspector: routeInspector, section } = route;
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -43,6 +48,8 @@ export function useStudioPageModel(projectId: string, route: StudioRouteState, n
     recheckProject,
   } = useStudioProject(projectId);
   const navigation = useStudioPageNavigation({ navigate, projectId, section, routeInspector });
+  // #478: every URL-selected inspector history family and its activation gate
+  // lives behind this shell; Export no longer bypasses it at the page model.
   const inspectorHistories = useLazyInspectorHistories({
     enabled: project !== null,
     inspector: routeInspector,
@@ -116,7 +123,7 @@ export function useStudioPageModel(projectId: string, route: StudioRouteState, n
     onSelectInspector: navigation.onSelectInspector,
   });
   const { restoringRevisionId, restoreRevision: onRestoreRevision } = useScopedRevisionRestore(
-    `${projectId}\u0000${activeDocument?.id ?? ""}`,
+    projectDocumentOwnerKey(projectId, activeDocument?.id ?? null),
     restoreRevision,
   );
   const { search, setSearch, isSearching, searchResults, runSearch } = useStudioSearch(
@@ -124,12 +131,7 @@ export function useStudioPageModel(projectId: string, route: StudioRouteState, n
     projectErrors.publishers.search,
   );
   const providers = useStudioProviders();
-  const exportHistory = useExportHistory({
-    active: project !== null && routeInspector === "export",
-    projectId,
-    recheckProject,
-    onSessionLost: navigation.onProjectResourceSessionLost,
-  });
+  const exportHistory = inspectorHistories.exportHistory;
   const exportDownload = useExportDownload(
     project,
     projectId,
