@@ -1,4 +1,4 @@
-import { type BrowserContext, expect, type Page, test } from "@playwright/test";
+import { type BrowserContext, expect, type Page, type Route, test } from "@playwright/test";
 
 import { createProject, typeChapter } from "../content_acceptance_helpers";
 
@@ -143,5 +143,60 @@ test.describe
       const historyRow = studio.locator(".studio-inspector__export-row");
       await expect(historyRow).toHaveCount(1);
       await expect(historyRow).toContainText("MARKDOWN");
+    });
+
+    // The Load older terminal page (#460) unmounts its own trigger, so focus
+    // must land on the section heading instead of falling to <body>.
+    test("export Load older terminal page lands focus on the history heading", async () => {
+      const projectId = await createProject(studio, "Export Paging Ledger");
+      await typeChapter(studio, "# Chapter 1\n\nThe harbor bell rang twice.");
+
+      const exportsPath = `**/api/projects/${projectId}/exports`;
+      const exportRow = (id: string, sizeBytes: number) => ({
+        id,
+        project_id: projectId,
+        snapshot_id: `snapshot-${id}`,
+        format: "markdown",
+        size_bytes: sizeBytes,
+        checksum_sha256: `checksum-${id}`,
+        created_at: "2026-09-01T10:00:00Z",
+        download_url: `/api/projects/${projectId}/exports/${id}/download`,
+      });
+      const fulfillPagedCatalog = async (handled: Route) => {
+        if (handled.request().method() !== "GET") {
+          await handled.fallback();
+          return;
+        }
+        // The cursor continuation repeats the opaque cursor the previous page
+        // carried. Two patterns are registered because a query string breaks
+        // a plain suffix glob: `${exportsPath}?*` for the continuation and
+        // `exportsPath` for the cursorless first read.
+        const cursor = new URL(handled.request().url()).searchParams.get("cursor");
+        await handled.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify(
+            cursor === null
+              ? { exports: [exportRow("export-recent", 2048)], next_cursor: "older-page" }
+              : { exports: [exportRow("export-older", 1024)], next_cursor: null },
+          ),
+        });
+      };
+      await studio.route(`${exportsPath}?*`, fulfillPagedCatalog);
+      await studio.route(exportsPath, fulfillPagedCatalog);
+
+      await studio.goto(`/projects/${projectId}/export`);
+      const historyHeading = studio.getByRole("heading", { name: "Export history" });
+      await expect(historyHeading).toBeVisible();
+      await expect(studio.locator(".studio-inspector__export-row")).toHaveCount(1);
+      await expect(studio.getByRole("button", { name: "Load older exports" })).toBeVisible();
+
+      await studio.getByRole("button", { name: "Load older exports" }).click();
+      await expect(studio.getByText("End of export history.")).toBeVisible();
+      await expect(studio.locator(".studio-inspector__export-row")).toHaveCount(2);
+      await expect(studio.getByRole("button", { name: "Load older exports" })).toHaveCount(0);
+      await expect(historyHeading).toBeFocused();
+
+      await studio.unroute(exportsPath);
     });
   });

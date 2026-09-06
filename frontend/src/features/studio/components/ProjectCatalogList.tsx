@@ -22,6 +22,9 @@ export function ProjectCatalogList({
   onOpenProject,
   onActivateOlder,
 }: ProjectCatalogListProps) {
+  // Mirrors the export/review/history terminal copy: a populated catalog with
+  // no continuation announces its end instead of going silent.
+  const isCatalogExhausted = projects.length > 0 && !hasOlderProjects && !olderError;
   return (
     <>
       {projects.map((project) => (
@@ -40,7 +43,7 @@ export function ProjectCatalogList({
           <time>{new Date(project.updated_at).toLocaleDateString()}</time>
         </button>
       ))}
-      {hasOlderProjects || olderError ? (
+      {hasOlderProjects || olderError || isCatalogExhausted ? (
         <div className="library__catalog-older">
           {olderError ? (
             <p aria-live="assertive" className="ui-form-error" role="alert">
@@ -58,6 +61,11 @@ export function ProjectCatalogList({
               {isLoadingOlder ? <Loader2 aria-hidden="true" className="ui-spin" /> : null}
               {isLoadingOlder ? "Loading older projects..." : "Load older projects"}
             </button>
+          ) : null}
+          {isCatalogExhausted ? (
+            <p className="library__catalog-end" role="status">
+              End of project catalog.
+            </p>
           ) : null}
         </div>
       ) : null}

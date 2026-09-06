@@ -98,6 +98,10 @@ export function StudioInspectorPanels({
           isLoadingHistory={model.export.isLoadingHistory}
           historyError={model.export.historyError}
           onRetryHistory={model.export.onRetryHistory}
+          hasOlderExports={model.export.hasOlderExports}
+          isLoadingOlderExports={model.export.isLoadingOlderExports}
+          olderExportsError={model.export.olderExportsError}
+          onLoadOlderExports={model.export.onLoadOlderExports}
           exportingFormat={model.export.exportingFormat}
           retryingFormat={model.export.retryingFormat}
           onExport={model.export.onExport}

@@ -89,7 +89,13 @@ export function StudioExportHistorySection({
           className="ui-command"
           disabled={isLoadingOlderExports || isLoadingHistory}
           onClick={(event) => {
-            void loadOlderWithFocusRestoration(event.currentTarget, onLoadOlderExports);
+            // The terminal page unmounts this button, so the section heading
+            // is the end-state landing zone.
+            void loadOlderWithFocusRestoration(
+              event.currentTarget,
+              onLoadOlderExports,
+              () => historyHeadingRef.current,
+            );
           }}
           type="button"
         >
