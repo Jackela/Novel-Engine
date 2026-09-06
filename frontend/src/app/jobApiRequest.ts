@@ -1,27 +1,24 @@
-export interface JobsRequestOptions extends RequestInit {
-  readonly cursor?: string;
-  readonly limit?: number;
-}
+import { apiPath, type PageRequestOptions, pageRequest } from "./pageRequest";
 
+/** Options for one bounded project-jobs page request. */
+export type JobsRequestOptions = PageRequestOptions;
+
+/** Build the project-jobs page request. */
 export function projectJobsRequest(
   projectId: string,
   options: JobsRequestOptions,
 ): readonly [path: string, init: RequestInit] {
-  const query = new URLSearchParams();
-  if (options.limit !== undefined) query.set("limit", String(options.limit));
-  if (options.cursor !== undefined) query.set("cursor", options.cursor);
-  const encoded = query.toString();
-  const { cursor: _cursor, limit: _limit, ...init } = options;
-  return [`/api/projects/${projectId}/jobs${encoded ? `?${encoded}` : ""}`, init];
+  return pageRequest(apiPath("projects", projectId, "jobs"), options, "Jobs page");
 }
 
+/** Build the idempotent job-retry request. */
 export function retryJobRequest(
   projectId: string,
   jobId: string,
   idempotencyKey: string,
 ): readonly [path: string, init: RequestInit] {
   return [
-    `/api/projects/${projectId}/jobs/${jobId}/retry`,
+    apiPath("projects", projectId, "jobs", jobId, "retry"),
     { method: "POST", headers: { "Idempotency-Key": idempotencyKey } },
   ];
 }

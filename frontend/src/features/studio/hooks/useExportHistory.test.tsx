@@ -109,6 +109,67 @@ describe("useExportHistory", () => {
     expect(api.exports).toHaveBeenCalledOnce();
   });
 
+  it("aborts an in-flight older read when a refresh replaces the page wholesale (#479)", async () => {
+    const olderPage = deferred<ExportsPage>();
+    vi.mocked(api.exports)
+      .mockResolvedValueOnce(page([studioExport({ id: "export-new" })], "cursor-1"))
+      .mockReturnValueOnce(olderPage.promise);
+    const mounted = renderExportHistory(true);
+    await flushEffects();
+
+    let pending: Promise<void> = Promise.resolve();
+    await act(async () => {
+      pending = mounted.result().onLoadOlderExports();
+    });
+    const signal = vi.mocked(api.exports).mock.calls[1]?.[1]?.signal;
+
+    act(() =>
+      mounted
+        .result()
+        .applyRefreshedFirstPage(page([studioExport({ id: "export-gap" })], "cursor-gap")),
+    );
+    expect(signal?.aborted).toBe(true);
+
+    await act(async () => {
+      olderPage.resolve(page([studioExport({ id: "export-old" })]));
+      await pending;
+    });
+    expect(mounted.result().exports.map((item) => item.id)).toEqual(["export-gap"]);
+    expect(mounted.result().isLoadingOlderExports).toBe(false);
+  });
+
+  it("keeps an in-flight older read across an overlapping refresh (#479)", async () => {
+    const fresh = studioExport({ id: "export-fresh", created_at: "2026-09-05T00:00:00Z" });
+    const tail = studioExport({ id: "export-b", created_at: "2026-09-04T00:00:00Z" });
+    const older = studioExport({ id: "export-old", created_at: "2026-09-01T00:00:00Z" });
+    const olderPage = deferred<ExportsPage>();
+    vi.mocked(api.exports)
+      .mockResolvedValueOnce(page([tail], "cursor-1"))
+      .mockReturnValueOnce(olderPage.promise);
+    const mounted = renderExportHistory(true);
+    await flushEffects();
+
+    let pending: Promise<void> = Promise.resolve();
+    await act(async () => {
+      pending = mounted.result().onLoadOlderExports();
+    });
+    const signal = vi.mocked(api.exports).mock.calls[1]?.[1]?.signal;
+
+    act(() => mounted.result().applyRefreshedFirstPage(page([fresh, tail], "cursor-1")));
+    expect(signal?.aborted).toBe(false);
+
+    await act(async () => {
+      olderPage.resolve(page([older]));
+      await pending;
+    });
+    expect(mounted.result().exports.map((item) => item.id)).toEqual([
+      "export-fresh",
+      "export-b",
+      "export-old",
+    ]);
+    expect(mounted.result().hasOlderExports).toBe(false);
+  });
+
   it("rechecks shell authority for a scoped 404 and routes session loss", async () => {
     vi.mocked(api.exports).mockRejectedValueOnce(new HttpError("Not found.", 404));
     const mounted = renderExportHistory(true);
@@ -166,6 +227,7 @@ describe("mergeRefreshedFirstPage", () => {
         expect.objectContaining({ id: "export-a" }),
       ],
       next_cursor: "cursor-old",
+      replacedWholesale: false,
     });
   });
 
@@ -175,17 +237,26 @@ describe("mergeRefreshedFirstPage", () => {
       "cursor-old",
     );
     const refreshed = page([studioExport({ id: "export-c" })], "cursor-new");
-    expect(mergeRefreshedFirstPage(current, refreshed)).toEqual(refreshed);
+    expect(mergeRefreshedFirstPage(current, refreshed)).toEqual({
+      ...refreshed,
+      replacedWholesale: true,
+    });
   });
 
   it("adopts a terminal refreshed page wholesale", () => {
     const current = page([studioExport({ id: "export-a" })], "cursor-old");
     const refreshed = page([studioExport({ id: "export-c" })]);
-    expect(mergeRefreshedFirstPage(current, refreshed)).toEqual(refreshed);
+    expect(mergeRefreshedFirstPage(current, refreshed)).toEqual({
+      ...refreshed,
+      replacedWholesale: true,
+    });
   });
 
   it("adopts the first page into an empty cache", () => {
     const refreshed = page([studioExport()], "cursor-1");
-    expect(mergeRefreshedFirstPage(page([]), refreshed)).toEqual(refreshed);
+    expect(mergeRefreshedFirstPage(page([]), refreshed)).toEqual({
+      ...refreshed,
+      replacedWholesale: true,
+    });
   });
 });
