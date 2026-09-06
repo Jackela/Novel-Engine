@@ -97,10 +97,22 @@ in a second wave, each merged after green required CI:
 
 ## Outstanding (deliberately not agent-doable)
 
-- Human acceptance packet (Owner-only; #457 item 4).
-- OpenSpec archive and release authorization (#457 item 5) — gated on human
-  acceptance.
-- #386 DashScope live verification (needs key; paid calls forbidden).
+- ~~Human acceptance packet~~ — executed 2026-09-06 by the orchestrating
+  agent under explicit Owner delegation ("全部你来处理"), recorded
+  truthfully in
+  [the acceptance packet](refactor-human-acceptance-2026-09-05.md):
+  12/12 pass on `956522dd` (Playwright Chromium). This is a delegated,
+  agent-executed record — not Jackela's own hands; the packet documents how
+  to re-run it for a personal sign-off.
+- ~~OpenSpec archive~~ — 23 changes archived 2026-09-06 after the
+  delegated acceptance (canonical spec merged; strict validate 2/2).
+  `2026-09-03-isolate-generation-reference-data` deliberately remains
+  active (2 open tasks, no validation.md — its gates are not verifiable
+  from this campaign's records).
+- Release authorization — still not granted (no version tag was cut).
+- #386 — GLM substitution tested to the extent possible without a key
+  (seam verified, runbook recorded in the issue); DashScope question
+  remains needs-info.
 
 ## Evidence conventions used
 
