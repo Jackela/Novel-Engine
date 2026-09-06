@@ -7,7 +7,6 @@ import { buildStudioInspectorModel, buildStudioNavigatorProps } from "./studioPa
 import { useActiveDocument } from "./useActiveDocument";
 import { useDocumentDraft } from "./useDocumentDraft";
 import { useExportDownload } from "./useExportDownload";
-import { useExportHistory } from "./useExportHistory";
 import { useLazyInspectorHistories } from "./useLazyInspectorHistories";
 import { usePageCurrentDocument } from "./usePageCurrentDocument";
 import { reviewInspectorModel } from "./useReviewHistory";
@@ -44,6 +43,8 @@ export function useStudioPageModel(projectId: string, route: StudioRouteState, n
     recheckProject,
   } = useStudioProject(projectId);
   const navigation = useStudioPageNavigation({ navigate, projectId, section, routeInspector });
+  // #478: every URL-selected inspector history family and its activation gate
+  // lives behind this shell; Export no longer bypasses it at the page model.
   const inspectorHistories = useLazyInspectorHistories({
     enabled: project !== null,
     inspector: routeInspector,
@@ -125,12 +126,7 @@ export function useStudioPageModel(projectId: string, route: StudioRouteState, n
     projectErrors.publishers.search,
   );
   const providers = useStudioProviders();
-  const exportHistory = useExportHistory({
-    active: project !== null && routeInspector === "export",
-    projectId,
-    recheckProject,
-    onSessionLost: navigation.onProjectResourceSessionLost,
-  });
+  const exportHistory = inspectorHistories.exportHistory;
   const exportDownload = useExportDownload(
     project,
     projectId,

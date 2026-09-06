@@ -95,3 +95,6 @@ export function useExportHistory({
     applyRefreshedFirstPage,
   };
 }
+
+/** The Export history family-member state owned by `useLazyInspectorHistories`. */
+export type ExportHistoryState = ReturnType<typeof useExportHistory>;

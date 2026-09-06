@@ -1,5 +1,6 @@
 import type { InspectorTab } from "../studioConstants";
 
+import { type ExportHistoryState, useExportHistory } from "./useExportHistory";
 import { type ReviewHistoryState, useReviewHistory } from "./useReviewHistory";
 
 interface UseLazyInspectorHistoriesOptions {
@@ -10,6 +11,11 @@ interface UseLazyInspectorHistoriesOptions {
   readonly onSessionLost: () => void;
 }
 
+/**
+ * Own every URL-selected Inspector history family. Activation for each member
+ * derives only here, from one gate: the project shell exists and the route
+ * selects that member's tab, so no family bypasses the shell or re-derives it.
+ */
 export function useLazyInspectorHistories({
   enabled,
   inspector,
@@ -18,14 +24,21 @@ export function useLazyInspectorHistories({
   onSessionLost,
 }: UseLazyInspectorHistoriesOptions): {
   review: ReviewHistoryState;
+  exportHistory: ExportHistoryState;
 } {
   const review = useReviewHistory({
-    enabled,
-    inspector,
+    active: enabled && inspector === "review",
     projectId,
     recheckProject,
     onSessionLost,
   });
 
-  return { review };
+  const exportHistory = useExportHistory({
+    active: enabled && inspector === "export",
+    projectId,
+    recheckProject,
+    onSessionLost,
+  });
+
+  return { review, exportHistory };
 }
