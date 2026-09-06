@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { NavigateFunction } from "react-router-dom";
 
 import type { StudioRouteState } from "../studioRouteState";
+import { projectDocumentOwnerKey } from "./projectDocumentOwnerKey";
 import { buildStudioInspectorModel, buildStudioNavigatorProps } from "./studioPageModelView";
 import { useActiveDocument } from "./useActiveDocument";
 import { useDocumentDraft } from "./useDocumentDraft";
@@ -116,7 +117,7 @@ export function useStudioPageModel(projectId: string, route: StudioRouteState, n
     onSelectInspector: navigation.onSelectInspector,
   });
   const { restoringRevisionId, restoreRevision: onRestoreRevision } = useScopedRevisionRestore(
-    `${projectId}\u0000${activeDocument?.id ?? ""}`,
+    projectDocumentOwnerKey(projectId, activeDocument?.id ?? null),
     restoreRevision,
   );
   const { search, setSearch, isSearching, searchResults, runSearch } = useStudioSearch(

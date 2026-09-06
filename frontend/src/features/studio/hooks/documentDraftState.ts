@@ -1,5 +1,7 @@
 import type { SaveState, StudioDocument } from "@/app/types/studio";
 
+import { projectDocumentOwnerKey } from "./projectDocumentOwnerKey";
+
 export interface DocumentDraftOwner {
   readonly key: string;
   readonly projectId: string;
@@ -59,7 +61,7 @@ export function createDocumentDraftOwner(
   projectId: string,
   documentId: string | null,
 ): DocumentDraftOwner {
-  const key = `${projectId}\u0000${documentId ?? ""}`;
+  const key = projectDocumentOwnerKey(projectId, documentId);
   return { key, projectId, documentId, token: Symbol(key) };
 }
 
