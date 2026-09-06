@@ -33,7 +33,14 @@ const note = chapter("note-1", {
   content_markdown: "",
   position: 1,
 });
-const project = projectWith([chapterOne, note], {
+const noteTwo = chapter("note-2", {
+  kind: "note",
+  title: "Note Two",
+  current_revision_id: "note-revision-2",
+  content_markdown: "",
+  position: 2,
+});
+const project = projectWith([chapterOne, note, noteTwo], {
   description: "Old description",
   settings: { provider: "mock", temperature: 0.5 },
 });
@@ -94,7 +101,7 @@ describe("useStudioActions concurrent aggregate publication", () => {
     let moving: Promise<void> = Promise.resolve();
 
     act(() => {
-      moving = view.result().actions.moveDocument(note.id, -1);
+      moving = view.result().actions.moveDocument(noteTwo.id, -1);
     });
     const committedChapter = {
       ...chapterOne,
@@ -102,21 +109,23 @@ describe("useStudioActions concurrent aggregate publication", () => {
       content_markdown: "Newer committed chapter",
       revision_source: "ai-accepted" as const,
     };
-    view.replaceProject({ ...project, documents: [committedChapter, note] });
+    view.replaceProject({ ...project, documents: [committedChapter, note, noteTwo] });
 
     await act(async () => {
       response.resolve({
         documents: [
-          { ...note, position: 0 },
           { ...chapterOne, position: 1 },
+          { ...noteTwo, position: 1 },
+          { ...note, position: 2 },
         ],
       });
       await moving;
     });
 
     expect(view.result().project?.documents).toEqual([
-      { ...note, position: 0 },
       { ...committedChapter, position: 1 },
+      { ...noteTwo, position: 1 },
+      { ...note, position: 2 },
     ]);
   });
 
