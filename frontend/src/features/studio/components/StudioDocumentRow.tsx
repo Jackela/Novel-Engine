@@ -1,4 +1,5 @@
 import { FileText } from "lucide-react";
+import type { Ref } from "react";
 
 import type { DocumentSummary } from "@/app/types/studio";
 
@@ -6,6 +7,8 @@ interface StudioDocumentRowProps {
   document: DocumentSummary;
   isActive: boolean;
   onSelect: (documentId: string) => void;
+  /** Row-button handle for neighbor focus fallbacks after deletion (#481). */
+  ref?: Ref<HTMLButtonElement>;
 }
 
 /**
@@ -14,7 +17,7 @@ interface StudioDocumentRowProps {
  * (`document.beat_ref`, a title soft link — never an ordinal), and — for
  * lore entries — the lifecycle status badge (`document.lore_status`, #444).
  */
-export function StudioDocumentRow({ document, isActive, onSelect }: StudioDocumentRowProps) {
+export function StudioDocumentRow({ document, isActive, onSelect, ref }: StudioDocumentRowProps) {
   // The row's accessible name stays the document title plus its meaningful
   // state (linked beat title, lore status); the ordinal and status badges
   // themselves are presentational, so assistive tech and role-based selectors
@@ -29,6 +32,7 @@ export function StudioDocumentRow({ document, isActive, onSelect }: StudioDocume
       aria-label={label}
       className={isActive ? "document-row document-row--active" : "document-row"}
       onClick={() => onSelect(document.id)}
+      ref={ref}
       type="button"
     >
       <FileText aria-hidden="true" />

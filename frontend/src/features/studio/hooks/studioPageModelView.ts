@@ -10,7 +10,7 @@ import type {
   StudioDocument,
   StudioJobSummary,
 } from "@/app/types/studio";
-
+import type { NavigatorRowCommands } from "../components/StudioNavigatorRowActions";
 import type { StudioNavigator } from "../StudioNavigator";
 import { isLoreEntryKind } from "../studioConstants";
 import type {
@@ -33,6 +33,31 @@ export interface StudioNavigatorModel
   extends Omit<NavigatorProps, "onNavigateSection" | "onCreateDocument" | "onMoveDocument"> {
   createDocument: (kind: DocumentKind) => void | Promise<void>;
   moveDocument: (documentId: string, direction: -1 | 1) => void | Promise<void>;
+}
+
+/** The #481 row-command surfaces `useStudioActions` exposes for the Navigator. */
+interface RowCommandActions {
+  readonly deleteDocument: (documentId: string) => void | Promise<void>;
+  readonly placeChapter: (documentId: string, volumeId: string) => void | Promise<void>;
+  readonly deletingDocument: { readonly documentId: string } | null;
+  readonly placingDocument: { readonly documentId: string; readonly volumeId: string } | null;
+  readonly deletionFor: (documentId: string) => { readonly error: string | null };
+  readonly placementFor: (documentId: string) => { readonly error: string | null };
+}
+
+/**
+ * Adapt the deletion/placement command hooks (#481) into the Navigator's
+ * `rowCommands` model: exact pending identities plus per-row inline errors.
+ */
+export function buildNavigatorRowCommands(actions: RowCommandActions): NavigatorRowCommands {
+  return {
+    onDeleteDocument: actions.deleteDocument,
+    onPlaceChapter: actions.placeChapter,
+    deletingDocument: actions.deletingDocument,
+    placingDocument: actions.placingDocument,
+    deletionErrorFor: (documentId) => actions.deletionFor(documentId).error,
+    placementErrorFor: (documentId) => actions.placementFor(documentId).error,
+  };
 }
 
 export function buildStudioNavigatorProps(
