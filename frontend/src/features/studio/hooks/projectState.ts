@@ -102,6 +102,52 @@ export interface NarrowFieldCapture {
   readonly revisionId: string;
 }
 
+/** The placement fields the volume-placement command owns exclusively (#481). */
+export interface DocumentPlacement {
+  readonly volumeId: string;
+  readonly position: number;
+  readonly updatedAt: string;
+}
+
+/**
+ * Patch only the placement-owned summary fields — never title, word count,
+ * or revision identity — and only while the captured revision still owns
+ * the shell row (#469/#481): a response outrun by a newer save or
+ * placement intent never overwrites newer authority.
+ */
+export function mergeProjectDocumentPlacement(
+  project: Project,
+  capture: NarrowFieldCapture,
+  placement: DocumentPlacement,
+): Project {
+  if (project.id !== capture.projectId) return project;
+  return {
+    ...project,
+    documents: project.documents.map((document) => {
+      if (document.id !== capture.documentId) return document;
+      if (document.current_revision_id !== capture.revisionId) return document;
+      return {
+        ...document,
+        volume_id: placement.volumeId,
+        position: placement.position,
+        updated_at: placement.updatedAt,
+      };
+    }),
+  };
+}
+
+/**
+ * Remove exactly one deleted document's summary row (#481); every other
+ * row, including a late duplicate removal, passes through unchanged.
+ */
+export function removeProjectDocument(project: Project, documentId: string): Project {
+  if (!project.documents.some((document) => document.id === documentId)) return project;
+  return {
+    ...project,
+    documents: project.documents.filter((document) => document.id !== documentId),
+  };
+}
+
 /**
  * Patch exactly one narrow summary field, and only while the captured
  * project/Document identity still owns the shell row at the same revision

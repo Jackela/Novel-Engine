@@ -3,7 +3,11 @@ import type { NavigateFunction } from "react-router-dom";
 
 import type { StudioRouteState } from "../studioRouteState";
 import { projectDocumentOwnerKey } from "./projectDocumentOwnerKey";
-import { buildStudioInspectorModel, buildStudioNavigatorProps } from "./studioPageModelView";
+import {
+  buildNavigatorRowCommands,
+  buildStudioInspectorModel,
+  buildStudioNavigatorProps,
+} from "./studioPageModelView";
 import { useActiveDocument } from "./useActiveDocument";
 import { useDocumentDraft } from "./useDocumentDraft";
 import { useExportDownload } from "./useExportDownload";
@@ -137,6 +141,21 @@ export function useStudioPageModel(projectId: string, route: StudioRouteState, n
     projectId,
     exportHistory.applyRefreshedFirstPage,
   );
+  const studioActions = useStudioActions({
+    project,
+    projectId,
+    setProject,
+    setReviewPage: inspectorHistories.review.setFirstPage,
+    setError,
+    errorPublishers: projectErrors.publishers,
+    setActiveId,
+    settingsForm,
+    setSettingsForm,
+    onSettingsSessionLost: navigation.onProjectResourceSessionLost,
+    onSettingsProjectMissing: navigation.onSettingsProjectMissing,
+    loadJobs,
+    isProposalActionGated: proposalAudit.isGated,
+  });
   const {
     createDocument,
     moveDocument,
@@ -155,21 +174,7 @@ export function useStudioPageModel(projectId: string, route: StudioRouteState, n
     isMovingDocument,
     creatingDocumentKind,
     movingDocument,
-  } = useStudioActions({
-    project,
-    projectId,
-    setProject,
-    setReviewPage: inspectorHistories.review.setFirstPage,
-    setError,
-    errorPublishers: projectErrors.publishers,
-    setActiveId,
-    settingsForm,
-    setSettingsForm,
-    onSettingsSessionLost: navigation.onProjectResourceSessionLost,
-    onSettingsProjectMissing: navigation.onSettingsProjectMissing,
-    loadJobs,
-    isProposalActionGated: proposalAudit.isGated,
-  });
+  } = studioActions;
 
   if (!project) return { project, viewProps: null, loadError, isLoading, retryLoad };
 
@@ -212,6 +217,9 @@ export function useStudioPageModel(projectId: string, route: StudioRouteState, n
           isMovingDocument,
           creatingDocumentKind,
           movingDocument,
+          // #481: the Navigator's per-row delete/placement commands with
+          // their exact pending identities and inline error surfaces.
+          rowCommands: buildNavigatorRowCommands(studioActions),
           wholeBook: buildWholeBookNavigatorModel(project, wholeBookLoop),
         },
         navigate,

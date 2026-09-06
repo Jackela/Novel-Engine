@@ -2,6 +2,8 @@ import { useCallback, useLayoutEffect, useRef } from "react";
 
 export type InspectorCommand = () => void | Promise<void>;
 export type CommandFocusFallback = () => HTMLElement | null;
+/** Trigger elements a command may originate from (#481 adds selects). */
+export type CommandTriggerElement = HTMLButtonElement | HTMLSelectElement;
 
 function canReceiveFocus(element: HTMLElement | null): element is HTMLElement {
   if (element === null || !element.isConnected) return false;
@@ -22,7 +24,7 @@ function canReceiveFocus(element: HTMLElement | null): element is HTMLElement {
  * command and its controlled pending state have completed.
  */
 export function useCommandFocusRestoration(isPending: boolean) {
-  const targetRef = useRef<HTMLButtonElement | null>(null);
+  const targetRef = useRef<CommandTriggerElement | null>(null);
   const fallbackRef = useRef<CommandFocusFallback | null>(null);
   const settledRef = useRef(false);
   const pendingRef = useRef(isPending);
@@ -61,7 +63,7 @@ export function useCommandFocusRestoration(isPending: boolean) {
 
   return useCallback(
     (
-      target: HTMLButtonElement,
+      target: CommandTriggerElement,
       command: InspectorCommand,
       fallback: CommandFocusFallback | null = null,
     ): void | Promise<void> => {

@@ -9,7 +9,9 @@ import { toErrorMessage } from "./toErrorMessage";
 import { usePendingAction } from "./usePendingAction";
 import { useProjectSettingsUpdate } from "./useProjectSettingsUpdate";
 import { useStudioBeatActions } from "./useStudioBeatActions";
+import { useStudioChapterPlacement } from "./useStudioChapterPlacement";
 import { useStudioDocumentActions } from "./useStudioDocumentActions";
+import { useStudioDocumentDeletion } from "./useStudioDocumentDeletion";
 import type { JobsFreshLoadInitiator } from "./useStudioJobs";
 import { useStudioLoreStatusActions } from "./useStudioLoreStatusActions";
 
@@ -127,6 +129,21 @@ export function useStudioActions({
     isCurrentOwner,
     publishError,
   });
+  const deletionActions = useStudioDocumentDeletion({
+    project,
+    projectId,
+    setProject,
+    setActiveId,
+    currentOwner,
+    isCurrentOwner,
+  });
+  const placementActions = useStudioChapterPlacement({
+    project,
+    projectId,
+    setProject,
+    currentOwner,
+    isCurrentOwner,
+  });
   const loreStatusActions = useStudioLoreStatusActions({
     project,
     projectId,
@@ -223,6 +240,12 @@ export function useStudioActions({
   return {
     createDocument: documentActions.createDocument,
     moveDocument: documentActions.moveDocument,
+    deleteDocument: deletionActions.deleteDocument,
+    deletionFor: deletionActions.deletionFor,
+    deletingDocument: deletionActions.deletingDocument,
+    placeChapter: placementActions.placeChapter,
+    placementFor: placementActions.placementFor,
+    placingDocument: placementActions.placingDocument,
     runReview,
     updateProjectSettings: settingsUpdate.updateProjectSettings,
     retryJob,

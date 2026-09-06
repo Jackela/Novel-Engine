@@ -185,7 +185,9 @@ test.describe
       ]);
 
       // The browser consumes the same projection: headers in the reordered
-      // volume sequence with Chapter 2 grouped under Volume Two.
+      // volume sequence with Chapter 2 grouped under Volume Two. The groups
+      // are scoped by their headers because #481's placement selects list the
+      // other volumes' titles as options, which would match `hasText` too.
       await studio.reload();
       const chapterGroup = studio.locator(".studio-nav__document-group", {
         has: studio.getByRole("button", { name: "Add Manuscript" }),
@@ -194,8 +196,12 @@ test.describe
         "Volume Two",
         "Default Volume",
       ]);
-      const volumeTwoGroup = chapterGroup.locator(".volume-group", { hasText: "Volume Two" });
-      const defaultGroup = chapterGroup.locator(".volume-group", { hasText: "Default Volume" });
+      const volumeTwoGroup = chapterGroup.locator(".volume-group").filter({
+        has: studio.locator(".studio-nav__volume-header", { hasText: "Volume Two" }),
+      });
+      const defaultGroup = chapterGroup.locator(".volume-group").filter({
+        has: studio.locator(".studio-nav__volume-header", { hasText: "Default Volume" }),
+      });
       await expect(
         volumeTwoGroup.getByRole("button", { name: "Chapter 2", exact: true }),
       ).toBeVisible();

@@ -1,21 +1,16 @@
-import { ChevronDown, Loader2, Plus, Search } from "lucide-react";
-import type { ComponentProps, FormEvent } from "react";
+import { ChevronDown, Loader2, Plus } from "lucide-react";
+import { type ComponentProps, type FormEvent, useState } from "react";
 
 import type { DocumentKind, Project } from "@/app/types/studio";
-
 import {
   type PendingDocumentMove,
   StudioNavigatorDocumentRows,
 } from "./components/StudioNavigatorDocumentRows";
+import type { NavigatorRowCommands } from "./components/StudioNavigatorRowActions";
+import { StudioNavigatorSearch } from "./components/StudioNavigatorSearch";
 import { StudioWholeBookControl } from "./components/StudioWholeBookControl";
 import { useCommandFocusRestoration } from "./hooks/useCommandFocusRestoration";
 import { GROUPS, SECTIONS } from "./studioConstants";
-
-interface SearchResult {
-  document_id: string;
-  title: string;
-  excerpt: string;
-}
 
 interface StudioNavigatorProps {
   project: Project;
@@ -23,7 +18,7 @@ interface StudioNavigatorProps {
   activeId: string | null;
   search: string;
   isSearching: boolean;
-  searchResults: SearchResult[];
+  searchResults: ComponentProps<typeof StudioNavigatorSearch>["searchResults"];
   onSearchChange: (value: string) => void;
   onSearchSubmit: (event: FormEvent) => void;
   onNavigateSection: (section: string) => void;
@@ -34,6 +29,8 @@ interface StudioNavigatorProps {
   isMovingDocument?: boolean;
   creatingDocumentKind?: DocumentKind | null;
   movingDocument?: PendingDocumentMove | null;
+  /** Per-row delete/placement commands (#481); absent renders neither. */
+  rowCommands?: NavigatorRowCommands | null;
   wholeBook?: ComponentProps<typeof StudioWholeBookControl>;
 }
 
@@ -54,11 +51,16 @@ export function StudioNavigator({
   isMovingDocument = false,
   creatingDocumentKind = null,
   movingDocument = null,
+  rowCommands = null,
   wholeBook,
 }: StudioNavigatorProps) {
+  const [confirmingDeleteId, setConfirmingDeleteId] = useState<string | null>(null);
   const createGroupBusy = isCreatingDocument || creatingDocumentKind !== null;
-  const moveGroupBusy = isMovingDocument || movingDocument !== null;
-  const documentMutationBusy = createGroupBusy || moveGroupBusy;
+  const rowCommandsBusy =
+    rowCommands !== null &&
+    (rowCommands.deletingDocument !== null || rowCommands.placingDocument !== null);
+  const documentMutationBusy =
+    createGroupBusy || isMovingDocument || movingDocument !== null || rowCommandsBusy;
   const runCreateWithFocusRestoration = useCommandFocusRestoration(documentMutationBusy);
   const showWholeBook =
     wholeBook !== undefined && (section === "manuscript" || wholeBook.phase.kind !== "idle");
@@ -75,6 +77,9 @@ export function StudioNavigator({
     movingDocument,
     onSelectDocument,
     onMoveDocument,
+    rowCommands,
+    confirmingDeleteId,
+    onConfirmingDeleteChange: setConfirmingDeleteId,
   };
 
   return (
@@ -102,46 +107,14 @@ export function StudioNavigator({
               </button>
             ))}
           </nav>
-          <form
-            aria-busy={isSearching}
-            className="studio-nav__search"
-            onSubmit={(event) => {
-              if (isSearching) {
-                event.preventDefault();
-                return;
-              }
-              onSearchSubmit(event);
-            }}
-          >
-            {isSearching ? (
-              <Loader2 aria-hidden="true" className="ui-spin" />
-            ) : (
-              <Search aria-hidden="true" />
-            )}
-            <input
-              aria-busy={isSearching}
-              aria-label="Search project"
-              onChange={(event) => onSearchChange(event.target.value)}
-              placeholder="Search documents"
-              readOnly={isSearching}
-              value={search}
-            />
-          </form>
-          {searchResults.length ? (
-            <section aria-label="Search results" className="studio-nav__search-results">
-              {searchResults.map((result) => (
-                <button
-                  aria-label={`Open ${result.title}`}
-                  key={result.document_id}
-                  onClick={() => onSelectDocument(result.document_id)}
-                  type="button"
-                >
-                  <strong>{result.title}</strong>
-                  <span>{result.excerpt}</span>
-                </button>
-              ))}
-            </section>
-          ) : null}
+          <StudioNavigatorSearch
+            isSearching={isSearching}
+            onSearchChange={onSearchChange}
+            onSearchSubmit={onSearchSubmit}
+            onSelectDocument={onSelectDocument}
+            search={search}
+            searchResults={searchResults}
+          />
           {showWholeBook ? <StudioWholeBookControl {...wholeBook} /> : null}
           <div className="studio-nav__tree">
             {visibleGroups.map(({ kind, label, icon: Icon }) => {
@@ -182,11 +155,15 @@ export function StudioNavigator({
                     volumes.map((volume) => (
                       <div className="volume-group" key={volume.id}>
                         <p className="studio-nav__volume-header">{volume.title}</p>
-                        <StudioNavigatorDocumentRows rows={inVolume(volume.id)} {...rowProps} />
+                        <StudioNavigatorDocumentRows
+                          rows={inVolume(volume.id)}
+                          volumes={volumes}
+                          {...rowProps}
+                        />
                       </div>
                     ))
                   ) : (
-                    <StudioNavigatorDocumentRows rows={documents} {...rowProps} />
+                    <StudioNavigatorDocumentRows rows={documents} volumes={volumes} {...rowProps} />
                   )}
                 </section>
               );
