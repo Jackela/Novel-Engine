@@ -137,3 +137,66 @@ LLM_PROVIDER=mock TS_E2E_DATA_DIR=/tmp/ne-wave3-old-data.gy4utn /tmp/ne-wave3-be
 Historical failure log: `/tmp/ne-wave3-old-red.out`. Retained trace:
 `/tmp/ne-wave3-before-daily-37313ea7/frontend/test-results/workflows-studio_usage-stu-44dc1-erver-totals-and-daily-rows-chromium/trace.zip`.
 These are local temporary artifacts, not committed release evidence.
+
+## Wave 4 — Git tracking and documentation
+
+- Baseline: `c0d814a1f7a42d784ae16227555f2e07f5cbc7eb`.
+- Candidate: `978821fe9901a8ca75b9ddbc9017e501a71d91c7`, tree
+  `0e4b840d4e39a5224c2687466ba406d310bb4ffa`.
+- Scope: `.gitignore` and 12 documentation files. No application, API,
+  database, dependency, workflow, or deployment behavior changed. Original
+  `AGENTS.md` edits and `.zcode/` work were excluded from the commit.
+- `.gitignore` decreased from 257 to 102 lines. Retired framework and one-off
+  report patterns were removed; documents and JSONL fixtures remain visible.
+  Environment secrets, application data, builds, dependencies, test outputs,
+  and SQLite WAL/SHM files remain excluded.
+- Added `docs/README.md` as the document index; expanded contribution guidance
+  on focused commits, lockfiles, generated contracts, local exclusions, and
+  evidence retention. Corrected setup/validation instructions, issue-template
+  session labels, and CI runbooks against current scripts and workflows.
+- Baseline inventory: 328 Markdown/text files, including 89 installed skill
+  files and 192 OpenSpec files (187 archived, 4 active-change, 1 canonical
+  specification). Installed skills and the forbidden historical audit were
+  excluded from content scanning. Active first-party guides were checked
+  against source; dated records retained their original meaning.
+- Final link scan covered 239 first-party Markdown/text files and 110
+  repository file/directory targets. It found and repaired 15 broken relative
+  evidence links in three archived OpenSpec validation records. Final result:
+  zero missing repository targets. Eleven existing absolute `/tmp` evidence
+  links are local artifacts; heading anchors and external network availability
+  were outside this scan.
+
+Verification ran locally on the staged candidate tree above, with unrelated
+user work still present; this is not clean isolated-checkout or hosted CI evidence.
+Logs and temporary replay scripts are under `/tmp/ne-repo-hygiene-20260908/`:
+
+| Executed command | Result | Evidence |
+| --- | --- | --- |
+| `python3 /tmp/ne-repo-hygiene-20260908/verify-ignore.py` | 45/45 cases: 25 ignored, 20 visible; 12 real old ignored paths still protected; zero tracked-but-ignored files | `ignore-verified.json` |
+| `python3 /tmp/ne-repo-hygiene-20260908/check-doc-links.py` | 239 files, 110 repository targets, zero missing after repair | `doc-links.out`; failures retained in `doc-links-before-repair.out` |
+| `pnpm --dir server gates` | All six gates passed; OpenAPI snapshot 1/1 | `server-gates.out` |
+| `pnpm spec:validate` | 2/2 passed | `spec-validate.out` |
+| `git diff --cached --check` | Passed before candidate commit | Local command result |
+
+Evidence corrections: the first agent link scan missed the archived links.
+The first ignore comparison copied the candidate into its supposed baseline
+and did not fail on mismatches; `ignore-matrix.out` is invalid evidence. The
+replacement verifier loads `.gitignore` from the fixed Git baseline and uses
+assertions; only `ignore-verified.json` supports the counts above.
+
+Luna performed implementation and separate Standards/Spec reviews; Astra
+reviewed the combined diff and evidence. Review concerns about single-worker
+ordering were resolved against the retained Wave 3 failure/default-pass logs:
+the documented full-suite hazard is real. Generic extension-based secret-risk
+claims had no repository evidence; JSONL visibility is intentional. Existing
+`.zcode/plans/` remains user work, with its tracking policy unchanged. The
+integrator found no remaining actionable defect in this documentation scope.
+
+Full product/browser tests and container checks were not rerun: this change
+affects documentation and ignore policy only. GitHub settings, push, merge,
+hosted CI, human acceptance, and release were not performed. Local `/tmp`
+artifacts have temporary retention and are not durable shared evidence.
+
+Guidance consulted: [Git ignore semantics](https://git-scm.com/docs/gitignore),
+[GitHub ignoring files](https://docs.github.com/en/get-started/git-basics/ignoring-files),
+and [GitHub repository practices](https://docs.github.com/en/repositories/creating-and-managing-repositories/best-practices-for-repositories).
