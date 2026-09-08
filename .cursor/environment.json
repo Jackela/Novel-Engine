@@ -1,0 +1,17 @@
+{
+  "name": "Novel Engine",
+  "install": "bash ./.cursor/install.sh",
+  "terminals": [
+    {
+      "name": "server",
+      "description": "Novel Engine serving the Studio SPA and JSON API on http://127.0.0.1:8000 (development, mock AI provider). Rebuild with `pnpm --dir server build` (and `pnpm --dir frontend build` for SPA changes), then restart this terminal.",
+      "command": "export NVM_DIR=\"$HOME/.nvm\"; . \"$NVM_DIR/nvm.sh\"; nvm use 24 >/dev/null; APP_ENVIRONMENT=development node server/dist/apps/cli/main.js serve --host 0.0.0.0 --port 8000"
+    }
+  ],
+  "ports": [
+    {
+      "name": "web",
+      "port": 8000
+    }
+  ]
+}
