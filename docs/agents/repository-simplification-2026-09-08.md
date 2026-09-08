@@ -76,3 +76,64 @@ This record is a documentation-only follow-up to the candidate above.
   existing `numberField` semantics remain authoritative.
 - Browser/CI/container/React Doctor checks were not rerun this wave. Final
   integration review and release authorization remain open.
+
+## Wave 3 evidence
+
+- Fixed baseline: `849fc0b3cb4a83bb28b9c26b66df90dc64761bc7`.
+- Candidate: `9bdc27d94e715697748330ba25eb2571e71a0f38`; scope is the new
+  `frontend/tests/e2e-ts/workflows/studio_usage.spec.ts` only. No product,
+  schema, dependency, or lockfile changes.
+- Frozen test file SHA-256:
+  `934552e9391240ee20abe15d5ffcb1f0bf3eaa77cc4c906f1c28a5e557a8ce79`.
+- The three planned browser scenarios are covered: initial zero usage then
+  real generation and daily UI; one exact usage-route 503 with retained data,
+  recovery, and focus; delayed real A response followed by stable zero-usage B
+  before and after releasing A.
+- Static checks passed: frontend lint, format, type-check, unit tests (104
+  files / 567 tests), OpenSpec validation, server size gate, frontend build,
+  and server build. Logs: `/tmp/ne-wave3-{lint,format-check,type-check,
+  test-unit,spec-validate,server-gate-sizes,frontend-build,server-build}.out`.
+- Targeted command with `LLM_PROVIDER=mock`, one worker, and Chromium passed
+  6 tests: `/tmp/ne-wave3-targeted-final.out`.
+- Historical proof was replayed against `37313ea7179d4d777bb1d378e78c18553bcd3d37`
+  using the same test file and dependency links; it exited 1 as expected:
+  1 pass / 1 fail because daily rows were expected at 30 but rendered 0.
+  Details and the retained old trace path are recorded in
+  `/tmp/ne-wave3-old-proof-verified.txt`; the old test file hash is identical.
+- Full E2E with `LLM_PROVIDER=mock` and one worker had 21 pass, 1 fail, and
+  4 not run due to existing owner-init ordering at `studio_content`; its trace
+  was lost on rerun. The corrected default run passed 26 tests in 42.9s:
+  `/tmp/ne-wave3-full-e2e-default.out`.
+- Independent Standards and Spec review: zero findings. Validation used the
+  shared working tree with user `AGENTS.md`/`.zcode/` excluded, not a clean
+  isolated SHA. No CI, container, human acceptance, push, or release evidence.
+
+Replay commands (repository root unless stated otherwise):
+
+```bash
+pnpm --dir frontend build
+pnpm --dir server build
+pnpm --dir frontend lint
+pnpm --dir frontend format:check
+pnpm --dir frontend type-check
+pnpm --dir frontend test:unit
+pnpm spec:validate
+pnpm --dir server gate:sizes
+LLM_PROVIDER=mock pnpm --dir frontend exec playwright test --config=playwright.ts.config.ts --workers=1 tests/e2e-ts/studio-ts.spec.ts tests/e2e-ts/workflows/studio_usage.spec.ts --project=chromium
+LLM_PROVIDER=mock pnpm --dir frontend test:e2e:ts --workers=1
+LLM_PROVIDER=mock pnpm --dir frontend test:e2e:ts
+```
+
+The penultimate command is the failed scheduling experiment, logged in
+`/tmp/ne-wave3-full-e2e.out`; only the final default-concurrency run passed.
+The historical checkout built its own frontend/server outputs with the same
+build commands above. From `/tmp/ne-wave3-before-daily-37313ea7/frontend`,
+the actual historical test command was:
+
+```bash
+LLM_PROVIDER=mock TS_E2E_DATA_DIR=/tmp/ne-wave3-old-data.gy4utn /tmp/ne-wave3-before-daily-37313ea7/frontend/node_modules/.bin/playwright test --config=playwright.ts.config.ts --workers=1 tests/e2e-ts/studio-ts.spec.ts tests/e2e-ts/workflows/studio_usage.spec.ts --project=chromium --grep 'owner setup, editing|renders empty usage'
+```
+
+Historical failure log: `/tmp/ne-wave3-old-red.out`. Retained trace:
+`/tmp/ne-wave3-before-daily-37313ea7/frontend/test-results/workflows-studio_usage-stu-44dc1-erver-totals-and-daily-rows-chromium/trace.zip`.
+These are local temporary artifacts, not committed release evidence.
