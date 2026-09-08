@@ -6,7 +6,7 @@ The merged main commit `13a4fed4d9252d33793e3806a2e9565ec7618c3e` (squash
 merge of [PR #456](https://github.com/Jackela/Novel-Engine/pull/456);
 tree-identical to review candidate `d532d261`, re-verified by empty
 `git diff --stat`) is the final integrated candidate. Full evidence lives in
-[the acceptance closeout](../../../docs/agents/acceptance-evidence-closeout-2026-09-05.md):
+[the acceptance closeout](../../../../docs/agents/acceptance-evidence-closeout-2026-09-05.md):
 
 - Task 4.3 is closed on `13a4fed4`: server type-check, lint (432 files),
   architecture, size (via gates, 621 files), full tests (202 files / 1273
@@ -32,7 +32,7 @@ tree-identical to review candidate `d532d261`, re-verified by empty
   by this section; its 4.4 row remains current.
 
 Human acceptance remains `not run`; use
-[the acceptance packet](../../../docs/agents/refactor-human-acceptance-2026-09-05.md).
+[the acceptance packet](../../../../docs/agents/refactor-human-acceptance-2026-09-05.md).
 
 ## Current closeout pointer — 2026-09-05
 
@@ -41,7 +41,7 @@ observations for their named phase candidates. The subsequent refactor handoff
 recorded 9/9 browser flows on `67c33992`; the new Draft repair candidate
 `b2019baec05485c9ae4aa930cdeb6e8dccba48ee` again passed all 9 flows, including
 Settings title/description/provider persistence. See
-[the exact-candidate evidence](../../../docs/agents/draft-selection-closeout-2026-09-05.md).
+[the exact-candidate evidence](../../../../docs/agents/draft-selection-closeout-2026-09-05.md).
 
 | Open task | Implementation / validation correspondence | Remaining closure condition |
 | --- | --- | --- |
@@ -49,7 +49,7 @@ Settings title/description/provider persistence. See
 | 4.4 | CI and canonical-spec/archive step, separately owned from shell work. | Remains open. No archive, merge, or release is authorized by local validation. |
 
 Human acceptance remains `not run`; the
-[acceptance packet](../../../docs/agents/refactor-human-acceptance-2026-09-05.md)
+[acceptance packet](../../../../docs/agents/refactor-human-acceptance-2026-09-05.md)
 includes Settings persistence, errors, busy state, and keyboard focus.
 
 ## Candidate

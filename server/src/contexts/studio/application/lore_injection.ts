@@ -23,11 +23,6 @@ export const DEFAULT_LOREBOOK_BUDGET_CHARACTERS = 4000;
 /** How much of an entry the prompt carries: the whole body or one summary line. */
 export type LoreInjectionMode = "full" | "summary";
 
-export interface PlannedLoreInjection {
-  readonly entry: LoreEntrySource;
-  readonly mode: LoreInjectionMode;
-}
-
 /** Deterministic work counters used to prove the planner's linear contract. */
 export interface LorePlanningInstrumentation {
   readonly onRepresentationPrepared: (mode: LoreInjectionMode) => void;
@@ -131,25 +126,6 @@ function prepareLorePlan(
     }
   }
   return { entries, modes };
-}
-
-/**
- * Plan the per-entry injection modes for one prompt: start with every entry
- * at its summary line, then walk the promotion order and upgrade an entry to
- * full text whenever the whole rendered section stays within the budget.
- * Summaries are the floor — an entry that never fits stays visible as a
- * summary line even when the budget cannot hold every summary.
- */
-export function planLoreInjections(
-  matched: readonly LoreMatch[],
-  budgetCharacters: number,
-  instrumentation?: LorePlanningInstrumentation,
-): PlannedLoreInjection[] {
-  const prepared = prepareLorePlan(matched, budgetCharacters, instrumentation);
-  return prepared.entries.map((entry, index) => ({
-    entry: entry.entry,
-    mode: prepared.modes[index] ?? "summary",
-  }));
 }
 
 function* iteratePreparedInjectionLines(

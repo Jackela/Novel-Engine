@@ -81,22 +81,6 @@ export function projectOutlineBeats(
   return splitOutlineBeats(revision.contentMarkdown);
 }
 
-/** A chapter's linked beat right now; dangling references resolve to null. */
-export function linkedChapterBeat(
-  store: StudioStore,
-  scope: ProjectScope,
-  projectId: string,
-  document: DocumentWithCurrent,
-): OutlineBeat | null {
-  const reference = document.beatRef;
-  if (reference === null || reference === "") {
-    return null;
-  }
-  return (
-    projectOutlineBeats(store, scope, projectId).find((beat) => beat.title === reference) ?? null
-  );
-}
-
 /** The read contract: `beat` is null when unlinked or when the beat vanished. */
 export function chapterBeatView(
   document: DocumentWithCurrent,

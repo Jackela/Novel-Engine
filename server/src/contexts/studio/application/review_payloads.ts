@@ -3,7 +3,6 @@ import type {
   ReviewSeverity,
   ReviewSummaryPayload,
 } from "./payload_schemas/review.js";
-import { dumpJson } from "./payloads.js";
 import type { ReviewSummaryRecord } from "./ports/review_outcome_store.js";
 import type { EditorialAssessment } from "./review_service.js";
 
@@ -12,19 +11,6 @@ import type { EditorialAssessment } from "./review_service.js";
  * crossed the file-size budget (#459 rebase onto #473/#474). Builders and
  * the TypeBox payload SSOT stay one shape by construction (#433, #440).
  */
-
-/** The review-job result payload shared by the bridge and the retry path. */
-export function reviewJobResultJson(assessment: {
-  id: string;
-  snapshotId: string;
-  summary: string;
-}): string {
-  return dumpJson({
-    review_id: assessment.id,
-    snapshot_id: assessment.snapshotId,
-    summary: assessment.summary,
-  });
-}
 
 /**
  * One stored editorial assessment for the review DETAIL surface (#459);

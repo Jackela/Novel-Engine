@@ -6,7 +6,7 @@ The merged main commit `13a4fed4d9252d33793e3806a2e9565ec7618c3e` (squash
 merge of [PR #456](https://github.com/Jackela/Novel-Engine/pull/456);
 tree-identical to review candidate `d532d261`, re-verified by empty
 `git diff --stat`) is the final integrated candidate. Full evidence lives in
-[the acceptance closeout](../../../docs/agents/acceptance-evidence-closeout-2026-09-05.md):
+[the acceptance closeout](../../../../docs/agents/acceptance-evidence-closeout-2026-09-05.md):
 
 - Local full rerun on `13a4fed4`, no skips: server gates (621-file size gate,
   19 llms-txt targets, migration channel, OpenAPI snapshot), type-check, lint
@@ -34,12 +34,12 @@ tree-identical to review candidate `d532d261`, re-verified by empty
   and 5.2 by this section; its 5.3 row remains current.
 
 Human acceptance remains `not run`; use
-[the acceptance packet](../../../docs/agents/refactor-human-acceptance-2026-09-05.md).
+[the acceptance packet](../../../../docs/agents/refactor-human-acceptance-2026-09-05.md).
 
 ## Current closeout pointer — 2026-09-05
 
 The phase records below retain their original SHAs and results. Later evidence
-is recorded in [Draft selection closeout](../../../docs/agents/draft-selection-closeout-2026-09-05.md)
+is recorded in [Draft selection closeout](../../../../docs/agents/draft-selection-closeout-2026-09-05.md)
 on code candidate `b2019baec05485c9ae4aa930cdeb6e8dccba48ee`.
 
 | Open task | Implementation / validation correspondence | Remaining closure condition |
@@ -49,7 +49,7 @@ on code candidate `b2019baec05485c9ae4aa930cdeb6e8dccba48ee`.
 | 5.3 | Required CI and canonical-spec/archive step. | Remains open. Record exact final PR SHA/check URLs; no archive or integration in this closeout. |
 
 No historical run is relabeled as a new-SHA run. Human acceptance remains
-`not run`; use [the acceptance packet](../../../docs/agents/refactor-human-acceptance-2026-09-05.md).
+`not run`; use [the acceptance packet](../../../../docs/agents/refactor-human-acceptance-2026-09-05.md).
 
 ## Fixed points
 

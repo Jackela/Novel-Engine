@@ -4,7 +4,7 @@
 
 The orchestration campaign of 2026-09-05/06 closed every remaining open task
 of this change except the archive clause (5.4). Full record:
-[the campaign closeout](../../../docs/agents/orchestration-campaign-2026-09-06.md).
+[the campaign closeout](../../../../docs/agents/orchestration-campaign-2026-09-06.md).
 
 - **1.5 closed** by PR #470 (`7db65414`): page-level proof that resume plan
   construction requests zero sibling body reads and skips `ai-accepted`
@@ -40,7 +40,7 @@ of this change except the archive clause (5.4). Full record:
   deliberate decision gated on human acceptance, per the standing rule.
 
 Human acceptance remains `not run`; the
-[acceptance packet](../../../docs/agents/refactor-human-acceptance-2026-09-05.md)
+[acceptance packet](../../../../docs/agents/refactor-human-acceptance-2026-09-05.md)
 must be exercised by the Owner against the current candidate.
 
 ## Final integrated candidate evidence — 2026-09-05 (`13a4fed4`)
@@ -49,7 +49,7 @@ The merged main commit `13a4fed4d9252d33793e3806a2e9565ec7618c3e` (squash
 merge of [PR #456](https://github.com/Jackela/Novel-Engine/pull/456);
 tree-identical to review candidate `d532d261`, re-verified by empty
 `git diff --stat`) is the final integrated candidate. Full evidence lives in
-[the acceptance closeout](../../../docs/agents/acceptance-evidence-closeout-2026-09-05.md):
+[the acceptance closeout](../../../../docs/agents/acceptance-evidence-closeout-2026-09-05.md):
 local full rerun with no skips (server 202 files / 1273 tests, frontend 84
 files / 464 tests, build, drift, React diagnostics 100, browser smoke 3 and
 full-audit 9 passed, strict OpenSpec 19/19), green required CI, and the
@@ -110,7 +110,7 @@ findings (ticketed; see the closeout):
 - 5.4 — open: archive step, separately gated.
 
 Human acceptance remains `not run`; use
-[the isolated acceptance packet](../../../docs/agents/refactor-human-acceptance-2026-09-05.md).
+[the isolated acceptance packet](../../../../docs/agents/refactor-human-acceptance-2026-09-05.md).
 
 ## Pre-merge Lore correction — 2026-09-05
 
@@ -121,7 +121,7 @@ failed on `b061e4df` and passed after the fix, preserving body identity,
 Revision, Markdown, and a single Document read through draft → stable → draft.
 The combined Lore suite passed 22 tests; independent Standards/Spec reviews
 closed this finding. See the
-[maintenance record](../../../docs/agents/repository-maintenance-2026-09-05.md)
+[maintenance record](../../../../docs/agents/repository-maintenance-2026-09-05.md)
 and [PR #456](https://github.com/Jackela/Novel-Engine/pull/456) for the final
 candidate SHA and full/CI evidence. Task 3.4 remains open for its other
 field-intent and beat scenarios; human acceptance remains separate.
@@ -130,7 +130,7 @@ field-intent and beat scenarios; human acceptance remains separate.
 
 Code candidate: `b2019baec05485c9ae4aa930cdeb6e8dccba48ee`; finding baseline:
 `52741fbf1872a80e398639cba68c05bbab6eaeb7`. The
-[Draft closeout record](../../../docs/agents/draft-selection-closeout-2026-09-05.md)
+[Draft closeout record](../../../../docs/agents/draft-selection-closeout-2026-09-05.md)
 contains the two failing regressions, 35 passing Draft tests, 463-test frontend
 full suite, 9-flow TS E2E pass, gates and independent bounded reviews.
 
@@ -150,7 +150,7 @@ full suite, 9-flow TS E2E pass, gates and independent bounded reviews.
 Historical records below are preserved rather than rewritten as current runs.
 The final PR must identify its own head SHA and actual required-CI URLs. Human
 acceptance is `not run`; use
-[the isolated acceptance packet](../../../docs/agents/refactor-human-acceptance-2026-09-05.md).
+[the isolated acceptance packet](../../../../docs/agents/refactor-human-acceptance-2026-09-05.md).
 
 ## Fixed points
 

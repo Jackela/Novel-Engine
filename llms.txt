@@ -4,6 +4,7 @@ A self-hosted writing studio: a TypeScript/Fastify + SQLite backend with a React
 
 ## Docs
 
+- [Documentation index](https://raw.githubusercontent.com/Jackela/Novel-Engine/main/docs/README.md): Entry points for current guides, source contracts, and historical evidence.
 - [README](https://raw.githubusercontent.com/Jackela/Novel-Engine/main/README.md): Project introduction, feature overview, and how to run Novel Engine.
 - [Quickstart](https://raw.githubusercontent.com/Jackela/Novel-Engine/main/openwiki/quickstart.md): Step-by-step setup guide to install, configure, and launch the studio locally.
 - [Architecture overview](https://raw.githubusercontent.com/Jackela/Novel-Engine/main/openwiki/architecture/overview.md): End-to-end tour of the TypeScript backend, bounded contexts, and runtime composition.
@@ -11,6 +12,7 @@ A self-hosted writing studio: a TypeScript/Fastify + SQLite backend with a React
 
 ## Optional
 
+- [Contributing](https://raw.githubusercontent.com/Jackela/Novel-Engine/main/CONTRIBUTING.md): Development setup, Git tracking policy, focused commits, and review expectations.
 - [CONTEXT.md](https://raw.githubusercontent.com/Jackela/Novel-Engine/main/CONTEXT.md): Domain vocabulary and canonical terms used across code, docs, and discussion.
 - [AGENTS.md](https://raw.githubusercontent.com/Jackela/Novel-Engine/main/AGENTS.md): Repository-wide instructions for AI coding agents working in this repo.
 - [CI gates](https://raw.githubusercontent.com/Jackela/Novel-Engine/main/docs/agents/ci-gates.md): Description of the QA gates and validation commands enforced in CI.

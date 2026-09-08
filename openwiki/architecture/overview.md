@@ -112,7 +112,7 @@ error-envelope semantics are product invariants.
 
 CI (`.github/workflows/ci.yml`) is the authoritative full gate:
 
-- The `validate` job (Node 22) installs locked pnpm dependencies, audits
+- The `validate` job (Node 24) installs locked pnpm dependencies, audits
   production dependency security, runs `pnpm --dir server gates` and
   `pnpm spec:validate`, then the full frontend suite (lint, format, type-check,
   unit tests, build), the generated API-types drift check, React static
@@ -122,22 +122,13 @@ CI (`.github/workflows/ci.yml`) is the authoritative full gate:
   `inject()` against hermetic temp data dirs). A dependent container job
   verifies fresh install, persistence across restart, and deep-link serving.
 
-The Node split is deliberate and current: product code targets Node 24 LTS
-(server runtime, `server` job), while the `validate` job and the CodeQL
-workflow still pin Node 22 for tooling. Treat both pins as facts of CI, not
-drift to fix casually.
-
-`pnpm --dir server gates` composes the five release gates: SSOT
-(`readWorkspaceVersion` against `server/package.json`), repo hygiene, file
-size limits, migration channel, and the OpenAPI snapshot.
+`pnpm --dir server gates` runs the repository policy and contract checks
+defined in `server/package.json` (SSOT, hygiene, file sizes, migration
+channel, llms-txt, and the OpenAPI snapshot).
 `pnpm spec:validate` validates the OpenSpec product specification
 (`openspec/`). CodeQL analyzes `javascript-typescript` only — the repository
 is single-language — on pushes and pull requests to `main`/`develop` plus a
 scheduled weekly run (`.github/workflows/codeql.yml`).
-
-After source changes, rerun the release-equivalent commands in
-`openwiki/quickstart.md` and wait for hosted `validate`, container, and CodeQL
-jobs before merge.
 
 ## Change guidance
 
