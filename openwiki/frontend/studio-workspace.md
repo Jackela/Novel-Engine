@@ -28,7 +28,7 @@ The keyed workbench makes the route `projectId` the lifecycle boundary: a projec
 
 **Primary sources:** `frontend/src/features/studio/hooks/useStudioProject.ts`, `useActiveDocument.ts`, `useStudioInspectorState.ts`, `useStudioActions.ts`.
 
-## Epic-era orchestration: whole-book loop, providers, and search
+## Studio orchestration: whole-book loop, providers, and search
 
 `StudioPage` delegates composition to `useStudioPageModel`, which wires the workspace hooks above plus the newer capabilities below and passes them to `StudioPageView`.
 

@@ -1,125 +1,14 @@
-# Local tooling artifacts
-.gemini/
-/.omo/
-codex/
-codql-annotations*.json
-.benchmarks/
-# Local/CI runtime outputs (not source of truth)
+# Shared local tooling and harness state
+.mimosa/
 /.codex-tmp/
-/.opencode/
-/artifacts/
+/.worktrees/
+/.playwright-mcp/
+/.playwright-cli/
 
-# Temporary files
-*_world_state.json
-*_REPORT.md
-!AUDIT_REPORT.md
-*_STATUS.md
-
-# Test reports (should not be committed)
-playwright-report/
-test-results/
-frontend/playwright-report/
-frontend/test-results/
-frontend/coverage/
-
-# IDE and Editor Files
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
-.cursorignore
-.cursorindexingignore
-
-# Node.js (Frontend)
-node_modules/
-.DS_Store
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-lerna-debug.log*
-.pnpm-debug.log*
-frontend/.lighthouseci/
-frontend/nm_backup_ci/
-frontend/node_modules_backup_ci/
-yarn.lock
-.npm
-.yarn/
-.pnp.*
-
-# Frontend Build Output
-frontend/dist/
-frontend/build/
-frontend/.next/
-frontend/out/
-frontend/.nuxt/
-frontend/.output/
-frontend/.vercel
-frontend/.netlify/
-
-# Database Files
-*.db
-*.db-shm
-*.db-wal
-*.sqlite
-*.sqlite3
-data/*.db*
-data/api_server.db*
-data/novel_engine.db*
-
-# Docker & Deployment
-.docker/
-docker-compose.override.yml
-.env.docker
-.env.k8s
-
-# Logs and Monitoring
-logs/
-*.log
-*.log.*
-*.jsonl
-*.jsonl.gz
-monitoring/logs/
-grafana/data/
-prometheus/data/
-
-# Temporary and Cache Files
-tmp/
-temp/
-.tmp/
-.temp/
-*.tmp
-*.temp
-.cache/
-.parcel-cache/
-
-# OS Files
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
-desktop.ini
-
-# Testing and Coverage
-test-results/
-playwright-report/
-junit-results.xml
-coverage/
-.nyc_output/
-screenshots/
-videos/
-test_artifacts/
-
-# Backup Files
-*.bak
-*.backup
-*~
-*.orig
-
-# Security and Secrets
+# Secrets and local environments
+.env*
+!.env.example
+!.env.local.template
 *.key
 *.pem
 *.crt
@@ -127,131 +16,87 @@ secrets/
 .secrets/
 vault/
 
-# Performance and Profiling
+# Dependencies and package-manager state
+node_modules/
+.pnpm-store/
+.pnpm-debug.log*
+.npm/
+.pnp.*
+
+# Build output and generated frontend assets
+frontend/dist/
+server/dist/
+frontend/build/
+*.tsbuildinfo
+server/tmp/
+frontend/tmp/
+
+# Browser, test, and coverage output
+playwright-report/
+test-results/
+coverage/
+.nyc_output/
+junit-results.xml
+screenshots/
+videos/
+test_artifacts/
+/reports/
+frontend/reports/
+
+# Application data and database sidecars
+/data/
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+*.sqlite3
+*.sqlite3-shm
+*.sqlite3-wal
+
+# Logs, caches, and temporary files
+logs/
+grafana/data/
+prometheus/data/
+*.log
+*.log.*
+tmp/
+temp/
+.tmp/
+.temp/
+*.tmp
+*.temp
+.cache/
 *.prof
 *.trace
 
-# Local Development
-.local/
-.dev/
-.development/
+# Editor and operating-system files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
 
-# Platform Specific
-platform/cache/
-platform/temp/
+# Local backup files
+*.bak
+*.backup
+*.orig
 
-# BMAD and Tool-Specific Directories
-.bmad-core/
-.cursor/rules/bmad/
-web-bundles/
-
-# Claude Code - ignore most but track skills for team sharing
+# Claude Code: share team skills and commands
 .claude/*
 !.claude/skills/
 !.claude/skills/**
 !.claude/commands/
 
-# Generated Data and Artifacts
-/personas/
-/quality/
-data/backups/
-/campaigns/
-
-# Analysis and Test Reports
-*_ANALYSIS.md
-test_campaign.md
-
-# Backup directories
-backup_configs_wave3/
-
-# Root-level temporary scripts (keep organized scripts in scripts/ dir)
-/final-dashboard-validation.js
-/inspect-current-app*.js
-
-# Temporary data files (now organized in reports/)
-world_state.json
-
-# Test results (organized in reports/test-results/)
-/reports/
-/reports/test-results/*.xml
-/reports/test-results/*.html
-/reports/test-results/*.json
-
-# Evidence/screenshots (organized in reports/evidence/)
-/reports/evidence/**/*.png
-/reports/evidence/**/*.jpg
-/reports/evidence/**/*.mp4
-frontend/reports/
-
-# Third-party tool configurations
-.specify/
-
-# Evaluation artifacts
-/evaluation/
-
-# Environments
-.env*
-!.env.example
-!.env.local.template
-
-# Runtime artifacts
+# Root-only generated scratch files
 /session_*.zip
-/data/
-.playwright-mcp/
-.playwright-cli/
-chrome-devtools-mcp-*.tgz
-frontend/test-results.json
-
-# Codemachine
-.codemachine/
-.codemachine/logs
-.codemachine/memory
-.codemachine/prompts
-.codemachine/agents
-.codemachine/template.json
-
-# Test Output Files (root level)
-test-results.xml
-test_report.json
-benchmark.json
-test.md
-test_log.md
-campaign_log.md
-
-# Temporary reports and documentation
-CLEANUP_COMPLETION_REPORT.md
-COMPREHENSIVE_STRESS_SCENARIO_TEST_REPORT.md
-DEPENDENCY_AUDIT_REPORT.md
-DOMAIN_PURITY_REPORT.md
-FINAL_ACCEPTANCE_RUN_REPORT.md
-FRONTEND_UI_REFACTORING_COMPLETE.md
-REFACTORING_SUMMARY.md
-VISUAL_DESIGN_REFACTORING_COMPLIANCE_REPORT.md
-PRODUCTION_READINESS_SCORECARD.json
-database_security_assessment.json
-security_assessment_report.json
-!.github/ISSUE_TEMPLATE/bug_report.md
-security_audit_report.json
-security_implementation_report.json
-
-# Test screenshots and artifacts
-aria-*.png
-FrontEndDesign.png
-mobile-quickactions-fix-validation-*.png
-
-/frontend/reports/
-/frontend/tmp/
-/frontend/junit-results.xml
-/frontend/test-results.json
-
-# Errant tool output (should never be committed)
-undefined:*/
-.worktrees/
-nul
-
-# Agent harness state
-.mimosa/
-
-# TS server build artifacts
-/server/dist/
-/server/tmp/
+/undefined:*/
+/nul

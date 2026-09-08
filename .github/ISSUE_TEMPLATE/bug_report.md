@@ -22,15 +22,17 @@ A clear and concise description of what you expected to happen.
 What actually happened.
 
 ## Screenshots / Logs
-If applicable, add screenshots or logs to help explain your problem.
+If applicable, add screenshots or logs to help explain your problem. Remove
+credentials and private manuscript content before sharing. For vulnerabilities,
+follow the [security policy](https://github.com/Jackela/Novel-Engine/blob/main/.github/SECURITY.md).
 
 ## Environment
  - OS: [e.g. Windows 11]
  - Browser [e.g. Chrome, Safari]
- - Version [e.g. 0.4.0]
+ - Version / commit [from `/version` or `git rev-parse HEAD`]
  - Node Version: [e.g. 24]
  - Install: [Docker Compose or local]
- - Session: [Owner or Guest]
+ - Session: [first-time setup, signed-in Owner, or signed out]
 
 ## Context
 Any other context about the problem here.

@@ -4,9 +4,14 @@ Novel Engine `0.6.0` is a self-hosted single-author novel writing IDE. SQLite is
 the content authority and Markdown is the document syntax. One Node.js process
 serves the Studio SPA and the JSON API.
 
+[Documentation](docs/README.md) · [Contributing](CONTRIBUTING.md) ·
+[Security](.github/SECURITY.md) · [License](LICENSE)
+
 ## First-Time Setup
 
-Prerequisites: Node.js 24 (LTS) and pnpm 11.
+Prerequisites: Node.js 24 and the pnpm version pinned in
+[`package.json`](package.json). For Windows setup and development mode, see
+the [quickstart](openwiki/quickstart.md).
 
 ```bash
 cp .env.example .env.local
@@ -45,7 +50,7 @@ Frontend-only variables live in `frontend/.env.example`:
 ## Docker
 
 ```bash
-set SECURITY_SECRET_KEY=replace-with-a-long-random-secret
+export SECURITY_SECRET_KEY='replace-with-a-long-random-secret'
 docker compose up --build
 ```
 
@@ -60,7 +65,6 @@ The healthcheck polls `/health/ready` inside the container.
 The operational CLI builds and runs through pnpm:
 
 ```bash
-pnpm --dir server cli -- --help
 pnpm --dir server cli serve
 pnpm --dir server cli doctor
 pnpm --dir server cli backup
@@ -97,10 +101,12 @@ pnpm --dir frontend test:unit
 pnpm --dir frontend build
 ```
 
-`make validate` and `just validate` wrap the same gates. CI is the
-authoritative full contract (`.github/workflows/ci.yml`): it additionally runs
+`make validate` and `just validate` cover a subset of checks. CI defines the
+full automated contract ([workflow](.github/workflows/ci.yml)): it additionally runs
 the API-types drift check, React static diagnostics, Playwright workflows
 against the TS backend, and a container persistence check.
+See [CI gates](docs/agents/ci-gates.md) for failure runbooks and the
+[quickstart](openwiki/quickstart.md#quick-validation) for browser prerequisites.
 
 ## Product Specification
 

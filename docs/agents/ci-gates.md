@@ -15,7 +15,7 @@ current commands from the pnpm package scripts and live workflows.
 | --- | --- | --- |
 | `CI` / Validate dependency security | `pnpm audit --audit-level high --prod` (production deps only) | The PR introduces or keeps a *production* dependency with a known high advisory |
 | `Dependency Audit` (scheduled, daily 03:17 UTC + manual dispatch) | Full audit including dev tooling; tracks failures in one reusable issue until green | A new upstream advisory affects any locked dependency, including dev-only paths |
-| `CI` / `validate` job | Dependency security; server SSOT/hygiene/OpenAPI gates, architecture, TypeScript, Biome, and full tests; strict OpenSpec; frontend Biome, TypeScript, unit tests, build, generated API-type drift, React diagnostics, and the browser workflow | One or more validation surfaces failed; inspect the failing step on that exact SHA |
+| `CI` / `validate` job | Dependency security; server SSOT, hygiene, size, migration, llms-txt, and OpenAPI gates, architecture, TypeScript, Biome, and full tests; strict OpenSpec; frontend Biome, TypeScript, unit tests, build, generated API-type drift, React diagnostics, and the browser workflow | One or more validation surfaces failed; inspect the failing step on that exact SHA |
 | `CI` / Validate React static diagnostics | `react-doctor` with **zero tolerance: warnings fail too**, not just errors | Any diagnostic, including `warning` severity (`unused-export`, `async-defer-await`, …) |
 | `CI` / Validate frontend | Biome check and format, TypeScript, Vitest, and Vite build | Conventional lint, format, type, test, or build failure |
 | `CI` / Check generated API types drift | regenerates `frontend/generated/api-types.ts` from `server/qa-baselines/openapi.current.json` and compares byte-identical | The committed generated types are stale — run `pnpm --dir frontend gen:api-types` |
@@ -36,8 +36,9 @@ Full-coverage auditing moved to the scheduled `Dependency Audit` workflow:
 2. Fix by adding or tightening an `overrides` entry in `pnpm-workspace.yaml`
    (see the precedent from #235: `undici`, `fast-uri`, `brace-expansion`,
    `postcss`, `nanoid`) and regenerating the lockfile
-   (`pnpm install` at the repo root). Note: `undici` must stay `<8` for
-   jsdom 29 compatibility.
+   (`pnpm install` at the repo root). The current `undici <8` override is a
+   workspace compatibility constraint; verify the current lockfile and
+   frontend package before changing it.
 3. Merge; the next scheduled run closes the tracking issue automatically once
    the audit is green.
 
@@ -50,8 +51,10 @@ same way.
 `Validate React static diagnostics` fails on any diagnostic count > 0,
 **including `warning` severity**. This is deliberate (both blocked PRs in
 2026-07 were warning-level: `unused-export`, `async-defer-await`). Fix the
-diagnostic in the code; do not add suppressions (the diff check also rejects
-`# type: ignore`-style suppressions).
+diagnostic in the code. If a narrowly scoped `react-doctor-disable-next-line`
+directive is necessary for an intentional pattern, keep it beside the code
+and document the reason; the workflow checks the reported diagnostic count and
+does not claim a blanket suppression ban.
 
 ## Runbook: OpenAPI baseline changes
 

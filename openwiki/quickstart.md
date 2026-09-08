@@ -34,7 +34,7 @@ For frontend-only development, run the backend above in one terminal and Vite in
 pnpm --dir frontend dev
 ```
 
-Vite listens on port **5173** and proxies `/api` to `VITE_API_PROXY_TARGET`, which defaults to `http://127.0.0.1:8000`; proxy request timeouts are five minutes (`frontend/vite.config.ts`, `frontend/.env.example`). Keep `VITE_API_BASE_URL` empty to use relative `/api` requests through that proxy. If it is set, the frontend sends requests to that explicit base URL instead (`frontend/src/app/config.ts`, `frontend/src/app/api.ts`).
+The `pnpm --dir frontend dev` command is the same in PowerShell and POSIX shells. Vite listens on port **5173** and proxies `/api` to `VITE_API_PROXY_TARGET`, which defaults to `http://127.0.0.1:8000`; proxy request timeouts are five minutes (`frontend/vite.config.ts`, `frontend/.env.example`). Keep `VITE_API_BASE_URL` empty to use relative `/api` requests through that proxy. If it is set, the frontend sends requests to that explicit base URL instead (`frontend/src/app/config.ts`, `frontend/src/app/api.ts`).
 
 ## First session
 
@@ -119,6 +119,12 @@ These endpoints and the doctor output are defined in `server/src/apps/api/app.ts
 
 ## Quick validation
 
+Before browser checks, select the deterministic provider: in PowerShell use
+`$env:LLM_PROVIDER = "mock"`; in macOS/Linux use `export LLM_PROVIDER=mock`.
+This process setting overrides a different provider selected in `.env.local`.
+Install the Chromium browser once with
+`pnpm --dir frontend exec playwright install chromium` if it is not available.
+
 For a focused local check after a frontend Studio change:
 
 ```powershell
@@ -126,10 +132,22 @@ pnpm --dir frontend lint
 pnpm --dir frontend type-check
 pnpm --dir frontend test:unit
 pnpm --dir frontend build
+pnpm --dir server build
 pnpm --dir frontend test:e2e:smoke
 ```
 
-The e2e suites start their own TS backend through the emitted CLI on a free loopback port, using a fresh temporary SQLite data directory and the mock LLM provider (`frontend/scripts/start-ts-e2e-stack.mjs`, `frontend/playwright.ts.config.ts`).
+The smoke command runs `frontend/tests/e2e-ts/studio-ts.spec.ts`, which creates
+the Owner against a fresh temporary test store. Include that file when running
+other workflows selectively. Both builds must be current: the harness starts
+the emitted server CLI and serves `frontend/dist` at `http://127.0.0.1:4274`.
+That port must be available (`frontend/scripts/start-ts-e2e-stack.mjs`,
+`frontend/playwright.ts.config.ts`).
+
+Run the full `pnpm --dir frontend test:e2e:ts` suite with its default worker
+concurrency: other files wait for the Owner setup workflow, so forcing a single
+worker can block that initialization. Copy failure traces from
+`frontend/test-results/` to a retained location before rerunning; Playwright
+cleans its previous output. A missing or partial run is not a pass.
 
 The Studio Playwright workflow is the browser validation surface for the 1440, 1024, 949, 900, 800, and 375px viewports. Its checks cover editor-first ordering, no horizontal overflow, route-specific Export/History surfaces, URL-backed APG tab keys plus Back/Forward restoration, visible busy/disabled states, and reduced-motion behavior (`frontend/tests/e2e-ts/`). Run results describe the checked candidate; they do not substitute for hosted CI or human acceptance.
 
@@ -144,7 +162,7 @@ pnpm --dir server gates
 
 `just validate` and `make validate` are available shortcuts, but they cover a subset of checks; neither is documented here as a complete project gate. Use the commands above or follow the CI workflow when reproducing its full validation sequence (`justfile`, `Makefile`, `.github/workflows/ci.yml`).
 
-For the release-equivalent local gate, run the same layers as CI:
+For the CI-aligned local gate, run the project checks that are reproducible on the workstation:
 
 ```powershell
 pnpm --dir server gates
@@ -158,7 +176,8 @@ pnpm --dir frontend format:check
 pnpm --dir frontend type-check
 pnpm --dir frontend test:unit
 pnpm --dir frontend build
+pnpm --dir server build
 pnpm --dir frontend test:e2e:ts
 ```
 
-CI additionally runs the API-types drift check, React Doctor, a container persistence/deep-link smoke, and CodeQL; inspect `.github/workflows/ci.yml` and `.github/workflows/codeql.yml` when reproducing hosted gates.
+Hosted CI additionally runs the API-types drift check, React Doctor, a container persistence/deep-link smoke, dependency security checks, and CodeQL; inspect `.github/workflows/ci.yml` and `.github/workflows/codeql.yml` when reproducing those hosted gates.
