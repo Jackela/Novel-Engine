@@ -161,4 +161,4 @@ pnpm --dir frontend build
 pnpm --dir frontend test:e2e:ts
 ```
 
-CI additionally runs the API-types drift check, React Doctor, a container persistence/deep-link smoke, and CodeQL; inspect `.github/workflows/ci.yml` and `.github/workflows/codeql.yml` when reproducing hosted gates. Treat any audit result as a baseline and rerun the full gate after source changes.
+CI additionally runs the API-types drift check, React Doctor, a container persistence/deep-link smoke, and CodeQL; inspect `.github/workflows/ci.yml` and `.github/workflows/codeql.yml` when reproducing hosted gates.
