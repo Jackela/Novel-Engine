@@ -25,6 +25,7 @@ import type {
   StudioJobSummary,
   StudioJobSummaryKind,
   StudioJobSummaryOperation,
+  UsageDailyBucket,
   UsageModelRow,
 } from "@/app/types/studio";
 
@@ -258,6 +259,16 @@ function parseUsageModelRow(value: unknown, label: string): UsageModelRow {
   };
 }
 
+function parseUsageDailyBucket(value: unknown, label: string): UsageDailyBucket {
+  const item = objectValue(value, label);
+  return {
+    date: stringField(item, "date", label),
+    request_count: numberField(item, "request_count", label),
+    prompt_tokens: numberField(item, "prompt_tokens", label),
+    completion_tokens: numberField(item, "completion_tokens", label),
+  };
+}
+
 export function parseUsage(value: unknown): ProjectUsage {
   const item = objectValue(value, "usage response");
   return {
@@ -268,6 +279,12 @@ export function parseUsage(value: unknown): ProjectUsage {
     per_model: arrayField(item, "per_model", "usage response", (entry, index) =>
       parseUsageModelRow(entry, `per_model[${index}]`),
     ),
+    daily:
+      item.daily === undefined
+        ? undefined
+        : arrayField(item, "daily", "usage response", (entry, index) =>
+            parseUsageDailyBucket(entry, `daily[${index}]`),
+          ),
   };
 }
 
