@@ -51,3 +51,28 @@ this was an invocation error, not intentional extra assurance.
   with the integrator/owner and must close on the final candidate before release.
 
 This record is a documentation-only follow-up to the candidate above.
+
+## Wave 2 evidence
+
+- Fixed baseline: `1617eeec5856ebc067dbd18b9b325cf6dd648947`.
+- Candidate: `c4c7b062b4b10b59b38fe887991e82981215afac`; commits `37313ea7`
+  (remove two dead helpers, 38 lines) and `c4c7b062` (daily usage parser fix,
+  17 production lines and 73 lines of regression tests).
+- Scope was limited to the two proven dead backend helpers and the frontend
+  usage contract boundary. No product-cut decisions or dependency changes.
+- Working-tree validation was not clean-SHA validation; user `AGENTS.md` and
+  `.zcode/` changes were excluded. No push or release action occurred.
+- Server baseline/targeted three-file review, type-check, lint, arch, gates,
+  and test evidence is recorded in `/tmp/wave2-server-*.log` (full run:
+  212 files, 1324 tests); lint retained the existing CookieJar warning.
+- Frontend evidence is in `/tmp/ne-usage-{unit,typecheck,build,api-types,server-sizes}.out`;
+  full frontend tests passed 104 files / 567 tests; corrected targeted usage
+  tests passed 5/5, with corrected lint/format logs.
+  The full frontend suite was not repeated after the assertion-only change.
+- The red run `/tmp/ne-usage-red.out` had three failures, including one
+  over-strict legacy optional-key assertion. The fix preserves normal daily
+  usage and rejects malformed responses. Stricter frontend safe-integer/date
+  checks were reviewed and deferred because backend canonical validation and
+  existing `numberField` semantics remain authoritative.
+- Browser/CI/container/React Doctor checks were not rerun this wave. Final
+  integration review and release authorization remain open.
