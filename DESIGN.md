@@ -1,7 +1,7 @@
 ---
 version: alpha
 name: Novel Engine
-description: Self-hosted writing studio — restrained neutral canvas, teal semantic accent, IBM Plex Sans product type over a serif writing surface.
+description: Self-hosted writing studio — frosted daylight glass. Translucent white chrome and floating cards blur a soft multi-hue gradient canvas; the editor keeps a calm opaque serif writing page; teal remains the single semantic accent.
 omitted:
   - section: spacing
     reason: "No named spacing token scale; spacing values are per-component in frontend/src/styles/"
@@ -12,11 +12,18 @@ colors:
   ink-soft: "#27272a"
   surface: "#ffffff"
   canvas: "#f7f8f8"
+  canvas-hint-teal: "#eef6f5"
+  canvas-hint-blue: "#e8eef8"
+  canvas-hint-violet: "#f3eef8"
+  surface-glass: "rgba(255, 255, 255, 0.62)"
+  surface-glass-strong: "rgba(255, 255, 255, 0.80)"
+  surface-glass-faint: "rgba(255, 255, 255, 0.45)"
   surface-muted: "#fafbfb"
   surface-panel: "#fcfcfc"
   surface-hover: "#f4f5f5"
   line-strong: "#bfc5c6"
   line: "#dfe2e3"
+  glass-border: "rgba(255, 255, 255, 0.65)"
   muted: "#4b5556"
   muted-soft: "#626a6b"
   muted-faint: "#697172"
@@ -40,7 +47,7 @@ typography:
     fontWeight: 600
 components:
   button:
-    backgroundColor: "{colors.surface}"
+    backgroundColor: "{colors.surface-glass-strong}"
     textColor: "{colors.ink-soft}"
     typography: "{typography.ui}"
     rounded: 6px
@@ -54,7 +61,7 @@ components:
   button-primary-hover:
     backgroundColor: "{colors.teal-hover}"
   button-icon:
-    backgroundColor: "{colors.surface}"
+    backgroundColor: "{colors.surface-glass-strong}"
     textColor: "{colors.ink-soft}"
     rounded: 6px
     height: 44px
@@ -74,20 +81,31 @@ Novel Engine is a self-hosted writing studio for drafting long-form fiction:
 a project library leading into a three-pane workspace (navigation, editor,
 inspector) for chapters, outlines, lore, reviews, and generated proposals.
 
-The interface is a restrained, high-contrast neutral canvas with teal as the
-single semantic accent. Dense panels, compact controls, and standard tabs are
-intentional: the UI serves an active writing workflow, so consistency and
-task visibility take priority over decorative surfaces.
+The visual language is frosted daylight glass: chrome panes and floating
+cards are translucent white surfaces that blur a soft multi-hue gradient
+canvas, while the editor keeps a calm, opaque serif writing page. Teal
+remains the single semantic accent. Dense panels, compact controls, and
+standard tabs are intentional: the UI serves an active writing workflow, so
+consistency and task visibility take priority over decorative surfaces.
 
 ## Colors
 
-- Neutral surfaces carry the interface; teal is reserved for semantic
-  meaning — primary actions, selection, focus, and positive state.
-- Shared CSS custom-property tokens are defined once in the `:root` block of
-  `frontend/src/styles/base.css`; components reuse those tokens instead of
-  introducing one-off colors.
-- Destructive and error states use the `danger` / `danger-soft` pair;
-  `muted` tones are for secondary text, never for interactive accents.
+- The canvas is a soft diagonal gradient blending the three hint tints
+  (teal, blue, violet) over `canvas`; glass surfaces frost whatever sits
+  behind them. Glass comes in three elevation tiers: `surface-glass-faint`
+  for ambient chrome, `surface-glass` for pane chrome, and
+  `surface-glass-strong` for floating cards and controls.
+- Teal is reserved for semantic meaning — primary actions, selection,
+  focus, and positive state. Destructive and error states use the
+  `danger` / `danger-soft` pair; `muted` tones are for secondary text,
+  never for interactive accents.
+- Shared CSS custom-property tokens are defined once in the `:root` block
+  of `frontend/src/styles/base.css`; components reuse those tokens instead
+  of introducing one-off colors. The gradient and glass alpha/blur tokens
+  live there too, so the entire material system is tunable from one block.
+- Text on glass must hold AA against the worst-case backdrop: verify
+  contrast over both the lightest and the darkest gradient stop using a
+  premultiplied approximation before shipping a new text/background pair.
 
 ## Typography
 
@@ -106,6 +124,9 @@ task visibility take priority over decorative surfaces.
   between a top bar and a status bar; the inspector hosts stacked tab
   panels and the editor column keeps a measure suited to long-form reading
   (centered, capped width).
+- The editor pane is the exception to glass: it renders an opaque
+  `surface` page so keystroke and scroll performance and long-form
+  readability never depend on blur recomputation.
 - Interactive controls share a uniform minimum target height (see the
   `button` and `input` components) so dense panels stay operable.
 - Below the compact breakpoint the panes collapse into a single scrolling
@@ -113,10 +134,14 @@ task visibility take priority over decorative surfaces.
 
 ## Shapes
 
-- Surfaces are separated by hairline borders, not drop shadows; the focus
-  ring is the only halo in the interface.
-- Controls use small radii; cards and panels sit slightly rounder than
-  controls.
+- Glass surfaces carry a 1px light border (`glass-border`) and a soft,
+  wide shadow (`glass-shadow` token in `base.css`); blur strength is two
+  tiers — 14px for pane chrome, 24px for floating cards — and never more.
+- Controls use small radii; floating cards sit rounder than controls.
+- Surfaces inside a glass pane never apply their own `backdrop-filter`:
+  one glass layer per stacking region (a Chromium limitation and a
+  performance rule). Sticky bars over scrolling content use translucent
+  fills without blur.
 
 ## Components
 
@@ -124,11 +149,12 @@ task visibility take priority over decorative surfaces.
   `ui-form-error`, `ui-spin`, `ui-brand`) and live in
   `frontend/src/styles/base.css`; feature styles use feature-prefixed
   BEM-ish blocks (`block__element--modifier`).
-- Buttons are `ui-command` with `--primary` and `--icon` modifiers; focus is
-  always visible — a solid teal outline for buttons and menus, a teal border
-  plus `focus-ring` halo for text inputs.
-- Icons inherit the shared svg defaults (uniform small size, narrow stroke)
-  and align to the adjacent text size.
+- Buttons are `ui-command` with `--primary` and `--icon` modifiers; their
+  translucent fill carries no blur of its own — the pane behind provides
+  the frost. Focus is always visible — a solid teal outline for buttons
+  and menus, a teal border plus `focus-ring` halo for text inputs.
+- Icons inherit the shared svg defaults (uniform small size, narrow
+  stroke) and align to the adjacent text size.
 
 ## Do's and Don'ts
 
@@ -136,6 +162,12 @@ task visibility take priority over decorative surfaces.
   on interactive controls.
 - Do keep motion limited to state feedback and respect
   `prefers-reduced-motion: reduce`.
+- Do honor `prefers-reduced-transparency: reduce` — the token block in
+  `base.css` raises glass alpha to near-opaque and disables blur in one
+  place; browsers without `backdrop-filter` fall back to solid surfaces
+  via the `@supports` block.
 - Don't introduce one-off colors — reuse the tokens in
   `frontend/src/styles/base.css`.
+- Don't apply `backdrop-filter` to the editor surface, to children of a
+  glass pane, or to sticky bars over scrolling content.
 - Don't add decorative motion or animated surfaces beyond state feedback.
