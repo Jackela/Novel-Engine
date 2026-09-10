@@ -11,6 +11,7 @@ import type {
   ProposalContextSource,
   ProposalContextStore,
 } from "../../src/contexts/studio/application/ports/proposal_context_store.js";
+import { ProposalGenerationPipeline } from "../../src/contexts/studio/application/proposal_pipeline.js";
 import { AiProposalService } from "../../src/contexts/studio/application/proposal_service.js";
 import {
   RECENT_TEXT_BEGIN,
@@ -191,11 +192,13 @@ function coherentHarness() {
   });
   return {
     service: new AiProposalService(
-      proposalContext,
-      jobs,
       proposalAcceptance,
-      providerFactory,
-      new InFlightOperationGuard(),
+      new ProposalGenerationPipeline(
+        proposalContext,
+        jobs,
+        providerFactory,
+        new InFlightOperationGuard(),
+      ),
     ),
     reads: () => reads,
     tasks,

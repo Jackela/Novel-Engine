@@ -18,6 +18,7 @@ import type { ProposalContextStore } from "./ports/proposal_context_store.js";
 import type { ReviewOutcomeStore } from "./ports/review_outcome_store.js";
 import type { StudioVolumeStore } from "./ports/volume_store.js";
 import { ProjectService } from "./project_service.js";
+import { ProposalGenerationPipeline } from "./proposal_pipeline.js";
 import { AiProposalService } from "./proposal_service.js";
 import { type ReviewProviderProvenance, ReviewService } from "./review_service.js";
 import { RevisionService } from "./revision_service.js";
@@ -83,6 +84,17 @@ export function createStudioServices(
   // One guard per app instance: it serializes identical in-flight pipeline
   // operations (#305) across the proposal and export/retry surfaces.
   const inFlight = new InFlightOperationGuard(options.operationCapacity);
+  // The proposal generation pipeline, constructed once: it owns the prompt
+  // and landing configuration (#445) and the execution sequence shared by the
+  // synchronous draft, the SSE twin, and the retry path.
+  const proposals = new ProposalGenerationPipeline(
+    persistence.proposalContext,
+    persistence.jobs,
+    options.providerFactory,
+    inFlight,
+    now,
+    options.loreBudgetCharacters,
+  );
   const documents = new DocumentService(persistence.documents, persistence.volumes, now);
   const reviewAssessments = new ReviewService(persistence.reviewOutcomes, {
     now,
@@ -102,28 +114,18 @@ export function createStudioServices(
     beats: new BeatAssociationService(persistence.documents, now),
     lore: new LoreAliasService(persistence.documents, persistence.lore, now),
     revisions: new RevisionService(persistence.documents, documents),
-    proposals: new AiProposalService(
-      persistence.proposalContext,
-      persistence.jobs,
-      persistence.proposalAcceptance,
-      options.providerFactory,
-      inFlight,
-      now,
-      options.loreBudgetCharacters,
-    ),
+    proposals: new AiProposalService(persistence.proposalAcceptance, proposals, now),
     reviewAssessments,
     artifacts,
     jobHistory: new JobHistoryService(
       persistence.jobs,
       persistence.reviewOutcomes,
-      persistence.proposalContext,
       reviewAssessments,
       artifacts,
       {
         now,
-        providerFactory: options.providerFactory,
         inFlight,
-        loreBudgetCharacters: options.loreBudgetCharacters,
+        proposals,
       },
     ),
     imports: new ImportService(persistence.projects, options.legacyWorkspaceReader, now),

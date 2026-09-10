@@ -10,7 +10,7 @@ import {
 import type { SnapshotArtifactService } from "./export_artifact_service.js";
 import { replayedExportCapacityError } from "./export_retry_capacity_outcome.js";
 import { replayedGenerationCapacityError } from "./generation_retry_capacity_outcome.js";
-import { JobRetryExecutor, type JobRetryExecutorOptions } from "./job_retry_executor.js";
+import { JobRetryExecutor } from "./job_retry_executor.js";
 import type { InFlightOperationGuard } from "./operation_in_flight.js";
 import type { JobPayload, JobSummaryPayload } from "./payload_schemas/job.js";
 import { dumpJson, jobPayload, jobSummaryPayload } from "./payloads.js";
@@ -18,22 +18,21 @@ import type { ExportArtifactFormat } from "./ports/export_store.js";
 import type { StudioJobLedgerStore } from "./ports/job_ledger_store.js";
 import type { JobPageCursor, JobPageInput } from "./ports/job_records.js";
 import type { ProjectUsageAggregate } from "./ports/project_usage.js";
-import type { ProposalContextStore } from "./ports/proposal_context_store.js";
 import type { EvaluatedReview, ReviewOutcomeStore } from "./ports/review_outcome_store.js";
 import type { ProjectScope } from "./ports/studio_store.js";
 import { scopeForPrincipal } from "./ports/studio_store.js";
+import type { ProposalGenerationPipeline } from "./proposal_pipeline.js";
 import type { ReviewService } from "./review_service.js";
 
 /** Honest provenance for the deterministic studio renderers (no AI model). */
 const STUDIO_EXPORTER_PROVIDER = "studio";
 
 export interface JobHistoryServiceOptions {
-  readonly now?: JobRetryExecutorOptions["now"];
-  readonly providerFactory: JobRetryExecutorOptions["providerFactory"];
+  readonly now?: (() => Date) | undefined;
   /** Serializes identical exports and retries (#305); shared with proposals. */
   readonly inFlight: InFlightOperationGuard;
-  /** Lorebook injection budget (#445); undefined keeps the adjudicated default. */
-  readonly loreBudgetCharacters?: JobRetryExecutorOptions["loreBudgetCharacters"];
+  /** Owns the proposal generation sequence shared with the proposal surface. */
+  readonly proposals: ProposalGenerationPipeline;
 }
 
 export interface JobHistoryPage {
@@ -59,7 +58,6 @@ export class JobHistoryService {
   constructor(
     jobs: StudioJobLedgerStore,
     reviewOutcomes: ReviewOutcomeStore,
-    proposalContext: ProposalContextStore,
     reviews: ReviewService,
     artifacts: SnapshotArtifactService,
     options: JobHistoryServiceOptions,
@@ -68,10 +66,9 @@ export class JobHistoryService {
     this.reviewOutcomes = reviewOutcomes;
     this.reviews = reviews;
     this.artifacts = artifacts;
-    this.retries = new JobRetryExecutor(jobs, reviewOutcomes, proposalContext, reviews, artifacts, {
+    this.retries = new JobRetryExecutor(jobs, reviewOutcomes, reviews, artifacts, {
       now: options.now,
-      providerFactory: options.providerFactory,
-      loreBudgetCharacters: options.loreBudgetCharacters,
+      proposals: options.proposals,
     });
     this.inFlight = options.inFlight;
     this.now = options.now ?? (() => new Date());

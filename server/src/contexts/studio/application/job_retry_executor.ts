@@ -1,8 +1,4 @@
-import {
-  type TextGenerationProvider,
-  TextGenerationProviderError,
-  type TextGenerationProviderFactory,
-} from "../../../contexts/ai/application/ports/text_generation.js";
+import { TextGenerationProviderError } from "../../../contexts/ai/application/ports/text_generation.js";
 import type { Principal } from "../../../shared/application/ports/auth.js";
 import { InvalidOperationError } from "../../../shared/domain/exceptions.js";
 import {
@@ -26,29 +22,17 @@ import {
 import { dumpJson, jobPayload, safeLoadJson } from "./payloads.js";
 import type { StudioJobLedgerStore } from "./ports/job_ledger_store.js";
 import type { JobRecord } from "./ports/job_records.js";
-import type { ProposalContextStore } from "./ports/proposal_context_store.js";
 import type { ReviewOutcomeStore } from "./ports/review_outcome_store.js";
 import type { ProjectScope } from "./ports/studio_store.js";
 import { scopeForPrincipal } from "./ports/studio_store.js";
-import {
-  buildProposalTask,
-  disposeProvider,
-  resolvedTokenCount,
-  validatedProposalOrThrow,
-} from "./proposal_landing.js";
-import {
-  admitTextProvider,
-  proposalRevisionFromContext,
-  proposalStepForOperation,
-} from "./proposal_pipeline.js";
-import { proposalRetryStaleBaseOutcome } from "./proposal_retry_base_outcome.js";
+import { admitTextProvider } from "./proposal_admission.js";
+import type { ProposalGenerationPipeline } from "./proposal_pipeline.js";
 import type { ReviewService } from "./review_service.js";
 
 export interface JobRetryExecutorOptions {
   readonly now?: (() => Date) | undefined;
-  readonly providerFactory: TextGenerationProviderFactory;
-  /** Lorebook injection budget (#445); undefined keeps the adjudicated default. */
-  readonly loreBudgetCharacters?: number | undefined;
+  /** Owns the proposal generation sequence and its prompt/landing configuration. */
+  readonly proposals: ProposalGenerationPipeline;
 }
 
 /**
@@ -57,20 +41,17 @@ export interface JobRetryExecutorOptions {
  * never mutates the original. Import jobs are refused outright.
  */
 export class JobRetryExecutor {
-  private readonly providerFactory: TextGenerationProviderFactory;
-  private readonly loreBudgetCharacters: number | undefined;
+  private readonly proposals: ProposalGenerationPipeline;
   private readonly now: () => Date;
 
   constructor(
     private readonly jobs: StudioJobLedgerStore,
     private readonly reviewOutcomes: ReviewOutcomeStore,
-    private readonly proposalContext: ProposalContextStore,
     private readonly reviews: ReviewService,
     private readonly artifacts: SnapshotArtifactService,
     options: JobRetryExecutorOptions,
   ) {
-    this.providerFactory = options.providerFactory;
-    this.loreBudgetCharacters = options.loreBudgetCharacters;
+    this.proposals = options.proposals;
     this.now = options.now ?? (() => new Date());
   }
 
@@ -182,77 +163,12 @@ export class JobRetryExecutor {
     retry: JobRecord,
     reportCleanupFailure: (failure: unknown) => void,
   ): Promise<Record<string, unknown>> {
-    const request = safeLoadJson(retry.requestJson);
-    const instruction = typeof request.instruction === "string" ? request.instruction : "";
-    const baseRevisionId =
-      typeof request.base_revision_id === "string" ? request.base_revision_id : null;
-    if (retry.documentId === null || baseRevisionId === null) {
-      throw new InvalidOperationError("Original AI job is missing its request context.");
-    }
-    // A stored operation without a provider step has lost its request context.
-    const step = proposalStepForOperation(retry.operation);
-    if (step === undefined) {
-      throw new InvalidOperationError("Original AI job is missing its request context.");
-    }
-    const providerName = admitTextProvider(retry.provider);
-    const context = this.proposalContext.readProposalContext(
-      scope,
-      retry.projectId,
-      retry.documentId,
+    // The full retry sequence — stored-request decoding, admission, the
+    // stale-base judgment, generation, and the landing on this reserved row —
+    // lives in the pipeline, shared with the synchronous draft and the stream.
+    return jobPayload(
+      await this.proposals.retry({ scope, retry, reportCleanupFailure, now: this.now }),
     );
-    const { revision } = proposalRevisionFromContext(context);
-    if (revision.id !== baseRevisionId) {
-      const outcome = proposalRetryStaleBaseOutcome(baseRevisionId, revision.id, this.now());
-      const failed = this.jobs.markJobOutcome(scope, retry.projectId, retry.id, outcome);
-      return jobPayload(failed);
-    }
-    let provider: TextGenerationProvider | undefined;
-    try {
-      const task = buildProposalTask(
-        step,
-        retry.operation,
-        instruction,
-        context,
-        this.loreBudgetCharacters,
-      );
-      provider = this.providerFactory(providerName);
-      // A retried generation is a proposal generation too (#314): it assembles
-      // the same resident context instead of the amnesiac historical shape.
-      const result = await provider.generateStructured(task);
-      const outcome = validatedProposalOrThrow(result);
-      const now = this.now();
-      // #392: the outcome transition and its usage event commit together.
-      return jobPayload(
-        this.jobs.markJobOutcomeWithUsage(scope, retry.projectId, retry.id, {
-          outcome: {
-            status: "completed",
-            model: result.model,
-            resultJson: dumpJson({
-              proposal_markdown: outcome.proposal,
-              base_revision_id: baseRevisionId,
-              accepted_revision_id: null,
-            }),
-            error: null,
-            eventDetailsJson: dumpJson({ proposal_only: true }),
-            now,
-          },
-          usage: {
-            provider: result.provider,
-            model: result.model,
-            promptTokens: resolvedTokenCount(result.promptTokens, instruction),
-            completionTokens: resolvedTokenCount(result.completionTokens, outcome.proposal),
-            requestEvidenceJson: dumpJson({
-              operation: retry.operation,
-              base_revision_id: baseRevisionId,
-            }),
-          },
-        }),
-      );
-    } finally {
-      if (provider !== undefined) {
-        await disposeProvider(provider, reportCleanupFailure);
-      }
-    }
   }
 
   private async reexecuteReviewJob(

@@ -5,7 +5,9 @@ import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { JobRetryExecutor } from "../../src/contexts/studio/application/job_retry_executor.js";
+import { InFlightOperationGuard } from "../../src/contexts/studio/application/operation_in_flight.js";
 import { scopeForPrincipal } from "../../src/contexts/studio/application/ports/studio_store.js";
+import { ProposalGenerationPipeline } from "../../src/contexts/studio/application/proposal_pipeline.js";
 import {
   createStudioServices,
   type StudioPersistence,
@@ -162,12 +164,17 @@ describe("keyed export retry capacity outcome", () => {
       const executor = new JobRetryExecutor(
         jobStore,
         reviewOutcomes,
-        proposalContext,
         services.reviewAssessments,
         services.artifacts,
         {
           now,
-          providerFactory,
+          proposals: new ProposalGenerationPipeline(
+            proposalContext,
+            jobStore,
+            providerFactory,
+            new InFlightOperationGuard(),
+            now,
+          ),
         },
       );
       await expect(

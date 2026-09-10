@@ -7,6 +7,7 @@ import type { StudioJobLedgerStore } from "../../src/contexts/studio/application
 import type { ProposalAcceptanceStore } from "../../src/contexts/studio/application/ports/proposal_acceptance_store.js";
 import type { ProposalContextStore } from "../../src/contexts/studio/application/ports/proposal_context_store.js";
 import type { DocumentWithCurrent } from "../../src/contexts/studio/application/ports/studio_store.js";
+import { ProposalGenerationPipeline } from "../../src/contexts/studio/application/proposal_pipeline.js";
 import { AiProposalService } from "../../src/contexts/studio/application/proposal_service.js";
 import { GenerationCapacityExceededError } from "../../src/contexts/studio/domain/exceptions.js";
 import type { Principal } from "../../src/shared/application/ports/auth.js";
@@ -92,11 +93,13 @@ function admissionHarness(): {
   };
   return {
     service: new AiProposalService(
-      proposalContext,
-      unusedJobs,
       unusedAcceptance,
-      providerFactory,
-      new InFlightOperationGuard(),
+      new ProposalGenerationPipeline(
+        proposalContext,
+        unusedJobs,
+        providerFactory,
+        new InFlightOperationGuard(),
+      ),
     ),
     factoryCalls: () => factoryCalls,
     generationCalls: () => generationCalls,

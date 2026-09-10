@@ -1,24 +1,12 @@
-import {
-  type TextGenerationProvider,
-  TextGenerationProviderError,
-  type TextGenerationProviderFactory,
-} from "../../../contexts/ai/application/ports/text_generation.js";
 import type { Principal } from "../../../shared/application/ports/auth.js";
-import type { InFlightOperationGuard } from "./operation_in_flight.js";
 import { jobPayload } from "./payloads.js";
-import {
-  buildProposalTask,
-  completedProposalJob,
-  disposeProvider,
-  failedProposalJob,
-  type ProviderCleanupFailureReporter,
-  validatedProposalOrThrow,
-} from "./proposal_landing.js";
-import {
-  admitProposalOperation,
-  buildProposalSeed,
-  proposalRevisionFromContext,
-} from "./proposal_pipeline.js";
+import type { ProposalAcceptanceStore } from "./ports/proposal_acceptance_store.js";
+import { scopeForPrincipal } from "./ports/studio_store.js";
+import type { ProposalGenerationRequest } from "./proposal_admission.js";
+import type { ProviderCleanupFailureReporter } from "./proposal_landing.js";
+import type { ProposalGenerationPipeline } from "./proposal_pipeline.js";
+import type { ProposalStreamSession } from "./proposal_streaming.js";
+import { streamProposal } from "./proposal_streaming.js";
 
 export {
   INVALID_PROPOSAL_PROSE,
@@ -27,13 +15,6 @@ export {
   SYSTEM_PROMPT,
 } from "./proposal_landing.js";
 
-import type { StudioJobLedgerStore } from "./ports/job_ledger_store.js";
-import type { ProposalAcceptanceStore } from "./ports/proposal_acceptance_store.js";
-import type { ProposalContextStore } from "./ports/proposal_context_store.js";
-import { scopeForPrincipal } from "./ports/studio_store.js";
-import type { ProposalStreamSession } from "./proposal_streaming.js";
-import { streamProposal } from "./proposal_streaming.js";
-
 export interface ProposalDraftInput {
   readonly operation: string;
   readonly instruction: string;
@@ -41,38 +22,41 @@ export interface ProposalDraftInput {
 }
 
 /**
- * The AI proposal pipeline: proposals are persisted on jobs and never touch
- * the manuscript until the author accepts one. Manuscript text crosses the
- * provider boundary only inside the untrusted JSON block, and every proposal
- * is sanitized through the single table-driven source before it is returned
- * or persisted.
+ * The AI proposal surface: proposals are persisted on jobs and never touch
+ * the manuscript until the author accepts one. The generation execution
+ * sequence lives in `ProposalGenerationPipeline`; this service is the thin
+ * adapter that decodes the request scope and wraps the landed job as the
+ * HTTP payload.
  */
 export class AiProposalService {
-  private readonly proposalContext: ProposalContextStore;
-  private readonly jobs: StudioJobLedgerStore;
   private readonly proposalAcceptance: ProposalAcceptanceStore;
-  private readonly providerFactory: TextGenerationProviderFactory;
-  private readonly inFlight: InFlightOperationGuard;
+  private readonly pipeline: ProposalGenerationPipeline;
   private readonly now: () => Date;
-  private readonly loreBudgetCharacters: number | undefined;
 
   constructor(
-    proposalContext: ProposalContextStore,
-    jobs: StudioJobLedgerStore,
     proposalAcceptance: ProposalAcceptanceStore,
-    providerFactory: TextGenerationProviderFactory,
-    inFlight: InFlightOperationGuard,
+    pipeline: ProposalGenerationPipeline,
     now: () => Date = () => new Date(),
-    /** Lorebook injection budget (#445); undefined keeps the adjudicated default. */
-    loreBudgetCharacters?: number | undefined,
   ) {
-    this.proposalContext = proposalContext;
-    this.jobs = jobs;
     this.proposalAcceptance = proposalAcceptance;
-    this.providerFactory = providerFactory;
-    this.inFlight = inFlight;
+    this.pipeline = pipeline;
     this.now = now;
-    this.loreBudgetCharacters = loreBudgetCharacters;
+  }
+
+  private generationRequest(
+    principal: Principal,
+    projectId: string,
+    documentId: string,
+    input: ProposalDraftInput,
+  ): ProposalGenerationRequest {
+    return {
+      scope: scopeForPrincipal(principal),
+      projectId,
+      documentId,
+      operation: input.operation,
+      instruction: input.instruction,
+      provider: input.provider,
+    };
   }
 
   /** Generate a proposal for a document's current revision and record it on a job. */
@@ -83,80 +67,20 @@ export class AiProposalService {
     input: ProposalDraftInput,
     reportCleanupFailure: ProviderCleanupFailureReporter,
   ): Promise<Record<string, unknown>> {
-    const scope = scopeForPrincipal(principal);
-    const { step, providerName } = admitProposalOperation(input.operation, input.provider);
-    const operation = input.operation;
-    const instruction = input.instruction;
-    // #305: the provider call runs before any job row exists, so identical
-    // concurrent submissions are deduplicated by the in-flight guard — the
-    // loser receives a 409 instead of running the work twice. Enter before
-    // resolving the revision so a committed deletion still owns the project
-    // throughout post-commit artifact cleanup rather than degrading to 404.
-    const inFlightTarget = {
-      projectId,
-      documentId,
-      operation,
-    };
-    const permit = this.inFlight.acquire(inFlightTarget);
-
-    let provider: TextGenerationProvider | undefined;
-
-    try {
-      const context = this.proposalContext.readProposalContext(scope, projectId, documentId);
-      const { revision } = proposalRevisionFromContext(context);
-      const seed = buildProposalSeed({
-        projectId: context.projectId,
-        documentId: context.target.id,
-        operation,
-        provider: providerName,
-        instruction,
-        baseRevisionId: revision.id,
-        now: this.now(),
-      });
-      try {
-        const task = buildProposalTask(
-          step,
-          operation,
-          instruction,
-          context,
-          this.loreBudgetCharacters,
-        );
-        provider = this.providerFactory(providerName);
-        const result = await provider.generateStructured(task);
-        const { proposal } = validatedProposalOrThrow(result);
-        return jobPayload(
-          completedProposalJob(this.jobs, scope, seed, revision.id, {
-            proposal,
-            provider: providerName,
-            model: result.model,
-            promptTokens: result.promptTokens,
-            completionTokens: result.completionTokens,
-            instruction,
-          }),
-        );
-      } catch (error) {
-        if (!(error instanceof TextGenerationProviderError)) {
-          throw error;
-        }
-        return jobPayload(failedProposalJob(this.jobs, scope, seed, revision.id, error.message));
-      }
-    } finally {
-      try {
-        if (provider !== undefined) {
-          await disposeProvider(provider, reportCleanupFailure);
-        }
-      } finally {
-        permit.release();
-      }
-    }
+    return jobPayload(
+      await this.pipeline.draft(
+        this.generationRequest(principal, projectId, documentId, input),
+        reportCleanupFailure,
+      ),
+    );
   }
 
   /**
-   * #308 streaming twin of `draftProposal`: identical validation, in-flight
-   * guarding, and job/usage landing, but the proposal markdown is handed
-   * over as deltas while the provider writes. Unconfigured providers and
-   * invalid input throw before any stream starts; a client abort persists
-   * nothing. See `proposal_streaming.ts` for the frame vocabulary.
+   * #308 streaming twin of `draftProposal`: identical execution sequence, but
+   * the proposal markdown is handed over as deltas while the provider writes.
+   * Unconfigured providers and invalid input throw before any stream starts;
+   * a client abort persists nothing. See `proposal_streaming.ts` for the
+   * frame vocabulary and the session-owned in-flight permit.
    */
   draftProposalStream(
     principal: Principal,
@@ -166,24 +90,14 @@ export class AiProposalService {
     reportCleanupFailure: ProviderCleanupFailureReporter,
     signal?: AbortSignal,
   ): ProposalStreamSession {
-    return streamProposal(
-      {
-        proposalContext: this.proposalContext,
-        jobs: this.jobs,
-        providerFactory: this.providerFactory,
-        inFlight: this.inFlight,
-        now: this.now,
-        loreBudgetCharacters: this.loreBudgetCharacters,
-      },
-      {
-        principal,
-        projectId,
-        documentId,
-        input,
-        reportCleanupFailure,
-        signal,
-      },
-    );
+    return streamProposal(this.pipeline, {
+      principal,
+      projectId,
+      documentId,
+      input,
+      reportCleanupFailure,
+      signal,
+    });
   }
 
   /**

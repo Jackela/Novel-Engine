@@ -7,6 +7,7 @@ import { SnapshotArtifactService } from "../../src/contexts/studio/application/e
 import { JobHistoryService } from "../../src/contexts/studio/application/job_history_service.js";
 import { InFlightOperationGuard } from "../../src/contexts/studio/application/operation_in_flight.js";
 import { scopeForPrincipal } from "../../src/contexts/studio/application/ports/studio_store.js";
+import { ProposalGenerationPipeline } from "../../src/contexts/studio/application/proposal_pipeline.js";
 import { ReviewService } from "../../src/contexts/studio/application/review_service.js";
 import {
   exports as exportArtifacts,
@@ -90,24 +91,29 @@ function exportHistory(
     new FilesystemExportArtifactGateway(harness.directory),
     { now: harness.now, newId: () => artifactId },
   );
+  const providerFactory = () => {
+    throw new Error("unexpected provider request");
+  };
   const reviews = new ReviewService(harness.parts.reviewOutcomes, {
     now: harness.now,
-    providerFactory: () => {
-      throw new Error("unexpected provider request");
-    },
+    providerFactory,
   });
+  const inFlight = new InFlightOperationGuard();
   return new JobHistoryService(
     harness.parts.jobs,
     harness.parts.reviewOutcomes,
-    harness.parts.proposalContext,
     reviews,
     artifacts,
     {
       now: harness.now,
-      providerFactory: () => {
-        throw new Error("unexpected provider request");
-      },
-      inFlight: new InFlightOperationGuard(),
+      inFlight,
+      proposals: new ProposalGenerationPipeline(
+        harness.parts.proposalContext,
+        harness.parts.jobs,
+        providerFactory,
+        inFlight,
+        harness.now,
+      ),
     },
   );
 }

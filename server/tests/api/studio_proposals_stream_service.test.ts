@@ -11,6 +11,7 @@ import {
 import { textProviderFactory } from "../../src/contexts/ai/infrastructure/providers/text_provider_factory.js";
 import { InFlightOperationGuard } from "../../src/contexts/studio/application/operation_in_flight.js";
 import { ProjectService } from "../../src/contexts/studio/application/project_service.js";
+import { ProposalGenerationPipeline } from "../../src/contexts/studio/application/proposal_pipeline.js";
 import { AiProposalService } from "../../src/contexts/studio/application/proposal_service.js";
 import type { ProposalStreamSession } from "../../src/contexts/studio/application/proposal_streaming.js";
 import { documentRevisions } from "../../src/contexts/studio/infrastructure/db/schema.js";
@@ -68,11 +69,8 @@ async function openProposalStreamHarness(
   await auth.configureOwner("streamer", "long-test-password");
   return {
     proposals: new AiProposalService(
-      proposalContext,
-      jobs,
       proposalAcceptance,
-      providerFactory,
-      inFlight,
+      new ProposalGenerationPipeline(proposalContext, jobs, providerFactory, inFlight, now),
       now,
     ),
     projects: new ProjectService(projects, volumes, now, { inFlight }),

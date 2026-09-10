@@ -8,6 +8,7 @@ import { JobHistoryService } from "../../src/contexts/studio/application/job_his
 import { InFlightOperationGuard } from "../../src/contexts/studio/application/operation_in_flight.js";
 import type { JobRecord } from "../../src/contexts/studio/application/ports/job_records.js";
 import type { ProjectScope } from "../../src/contexts/studio/application/ports/studio_store.js";
+import { ProposalGenerationPipeline } from "../../src/contexts/studio/application/proposal_pipeline.js";
 import { ReviewService } from "../../src/contexts/studio/application/review_service.js";
 import type { StudioPersistence } from "../../src/contexts/studio/application/studio_services.js";
 import { NotFoundError } from "../../src/contexts/studio/domain/exceptions.js";
@@ -36,10 +37,10 @@ function history(store: StudioPersistence, exportStore: ExportStorePart): JobHis
   const providerFactory = () => {
     throw new Error("unexpected provider request");
   };
+  const inFlight = new InFlightOperationGuard();
   return new JobHistoryService(
     store.jobs,
     store.reviewOutcomes,
-    store.proposalContext,
     new ReviewService(store.reviewOutcomes, { providerFactory }),
     new SnapshotArtifactService(exportStore, {
       async writeSnapshotArtifact() {
@@ -49,7 +50,15 @@ function history(store: StudioPersistence, exportStore: ExportStorePart): JobHis
         throw new Error("unexpected artifact read");
       },
     }),
-    { providerFactory, inFlight: new InFlightOperationGuard() },
+    {
+      inFlight,
+      proposals: new ProposalGenerationPipeline(
+        store.proposalContext,
+        store.jobs,
+        providerFactory,
+        inFlight,
+      ),
+    },
   );
 }
 
