@@ -19,12 +19,52 @@
   --danger: #b91c1c;
   --danger-soft: #fff1f2;
   --on-accent: #fff;
+  /* Frosted-glass material layer (ADR-0009); mirrors DESIGN.md colors. */
+  --canvas-hint-teal: #eef6f5;
+  --canvas-hint-blue: #e8eef8;
+  --canvas-hint-violet: #f3eef8;
+  --surface-glass: rgba(255, 255, 255, 0.62);
+  --surface-glass-strong: rgba(255, 255, 255, 0.8);
+  --surface-glass-faint: rgba(255, 255, 255, 0.45);
+  --glass-blur: 14px;
+  --glass-blur-strong: 24px;
+  --glass-border: rgba(255, 255, 255, 0.65);
+  --glass-shadow: 0 8px 32px rgba(23, 24, 27, 0.08);
+  --canvas-gradient: linear-gradient(
+    135deg,
+    var(--canvas-hint-teal) 0%,
+    var(--canvas-hint-blue) 38%,
+    var(--canvas-hint-violet) 68%,
+    var(--canvas-hint-teal) 100%
+  );
   font-family: "IBM Plex Sans Variable", system-ui, sans-serif;
   color: var(--ink);
-  background: var(--canvas);
+  background-color: var(--canvas);
+  background-image: var(--canvas-gradient);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   letter-spacing: 0;
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  :root {
+    --surface-glass: rgba(255, 255, 255, 0.97);
+    --surface-glass-strong: rgba(255, 255, 255, 0.99);
+    --surface-glass-faint: rgba(255, 255, 255, 0.97);
+    --glass-blur: 0px;
+    --glass-blur-strong: 0px;
+    --glass-border: #dfe2e3;
+    --glass-shadow: none;
+  }
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  :root {
+    --surface-glass: #fcfcfc;
+    --surface-glass-strong: #fff;
+    --surface-glass-faint: #fafbfb;
+    --glass-border: #dfe2e3;
+    --glass-shadow: none;
+  }
 }
 
 * {
@@ -73,8 +113,8 @@ svg {
 
 .ui-command,
 .ui-command--icon {
-  border: 1px solid #d9dcdf;
-  background: var(--surface);
+  border: 1px solid var(--glass-border);
+  background: var(--surface-glass-strong);
   color: var(--ink-soft);
   border-radius: 6px;
   display: inline-flex;
