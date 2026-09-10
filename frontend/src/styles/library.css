@@ -5,7 +5,7 @@
 }
 .library__header {
   height: 62px;
-  border-bottom: 1px solid #dfe2e3;
+  border-bottom: 1px solid var(--line);
   background: var(--surface);
   padding: 0 30px;
   display: flex;
@@ -63,7 +63,7 @@
 }
 .library-create {
   background: var(--surface);
-  border: 1px solid #dfe2e3;
+  border: 1px solid var(--line);
   border-radius: 7px;
   padding: 22px;
   display: grid;
@@ -89,7 +89,7 @@
   width: 100%;
   min-height: 88px;
   background: var(--surface);
-  border: 1px solid #dfe2e3;
+  border: 1px solid var(--line);
   border-radius: 7px;
   padding: 16px 18px;
   display: grid;
@@ -120,12 +120,12 @@
 }
 .library__project-row small,
 .library__project-row time {
-  color: #626a6b;
+  color: var(--muted-soft);
   font-size: 12px;
 }
 .library__catalog-end {
   margin: 4px 0 0;
-  color: #626a6b;
+  color: var(--muted-soft);
   font-size: 12px;
   text-align: center;
 }

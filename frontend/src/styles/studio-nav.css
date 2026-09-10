@@ -19,7 +19,7 @@
   align-items: center;
   gap: 12px;
   padding: 0 14px;
-  border-bottom: 1px solid #dfe2e3;
+  border-bottom: 1px solid var(--line);
   background: var(--surface);
   z-index: 3;
 }
@@ -38,7 +38,7 @@
 .studio-nav {
   grid-area: nav;
   min-width: 0;
-  border-right: 1px solid #dfe2e3;
+  border-right: 1px solid var(--line);
   overflow: auto;
   background: var(--surface-muted);
 }
@@ -126,7 +126,7 @@
 }
 .studio-nav__search-results button {
   min-height: 44px;
-  border: 1px solid #dfe2e3;
+  border: 1px solid var(--line);
   background: var(--surface);
   border-radius: 5px;
   padding: 9px;
@@ -144,7 +144,7 @@
 .whole-book {
   margin: 6px 12px 2px;
   padding: 10px;
-  border: 1px solid #dfe2e3;
+  border: 1px solid var(--line);
   border-radius: 5px;
   background: var(--surface);
   display: grid;
@@ -376,7 +376,7 @@
 }
 .document-row--active {
   background: var(--teal-soft);
-  color: #0f6862;
+  color: var(--teal-strong);
 }
 /* In-volume chapter ordinal badge (#376). */
 .document-row__ordinal {
@@ -392,6 +392,7 @@
 }
 .document-row--active .document-row__ordinal {
   background: #cfe4e2;
+  /* darker teal: --teal-strong fails AA (4.17:1) on #cfe4e2 */
   color: #0f6862;
 }
 /* Linked outline beat title (#376); rendered only when beat_ref is set. */
@@ -407,7 +408,7 @@
   font-weight: 400;
 }
 .document-row--active .document-row__beat {
-  color: #0f6862;
+  color: var(--teal-strong);
 }
 /* Lore lifecycle status badge (#444); rendered only on lore entries. */
 .document-row__lore-status {
@@ -429,6 +430,7 @@
 }
 .document-row__lore-status--stable {
   background: #cfe4e2;
+  /* darker teal: --teal-strong fails AA (4.17:1) on #cfe4e2 */
   color: #0f6862;
 }
 .document-row__lore-status--deprecated {

@@ -9,7 +9,7 @@
   display: grid;
   gap: 2px;
   padding: 10px;
-  border: 1px solid #dfe2e3;
+  border: 1px solid var(--line);
   border-radius: 5px;
   background: #fff;
   text-align: center;
@@ -31,7 +31,7 @@
 .usage__table th,
 .usage__table td {
   padding: 6px 7px;
-  border-bottom: 1px solid #dfe2e3;
+  border-bottom: 1px solid var(--line);
   text-align: left;
   font-variant-numeric: tabular-nums;
 }
@@ -87,7 +87,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 10px;
-  border: 1px solid #dfe2e3;
+  border: 1px solid var(--line);
   border-radius: 5px;
   background: #fff;
 }
@@ -128,7 +128,7 @@
   padding: 9px;
   color: #363b3c;
   text-decoration: none;
-  border: 1px solid #dfe2e3;
+  border: 1px solid var(--line);
   border-radius: 5px;
   background: var(--surface);
   font-size: 12px;

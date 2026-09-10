@@ -81,7 +81,7 @@
   align-items: center;
   gap: 12px;
   margin: 20px 0;
-  color: #626a6b;
+  color: var(--muted-soft);
   font-size: 12px;
 }
 .entry__divider::before,
@@ -94,6 +94,6 @@
 .entry footer {
   margin-top: 24px;
   text-align: center;
-  color: #626a6b;
+  color: var(--muted-soft);
   font-size: 12px;
 }

@@ -2,7 +2,7 @@
 .studio-inspector {
   grid-area: inspector;
   min-width: 0;
-  border-left: 1px solid #dfe2e3;
+  border-left: 1px solid var(--line);
   overflow: auto;
   background: var(--surface-panel);
 }
@@ -44,7 +44,7 @@
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   min-height: 88px;
-  border-bottom: 1px solid #dfe2e3;
+  border-bottom: 1px solid var(--line);
   background: var(--surface);
 }
 .studio-inspector__tab {
@@ -246,7 +246,7 @@
   line-height: 1.45;
 }
 .studio-inspector__review-issue small {
-  color: #697172;
+  color: var(--muted-faint);
   line-height: 1.4;
 }
 .studio-inspector__empty {
