@@ -11,7 +11,7 @@
   padding: 10px;
   border: 1px solid var(--line);
   border-radius: 5px;
-  background: #fff;
+  background: var(--surface-glass-strong);
   text-align: center;
 }
 .usage__total-card strong {
@@ -89,7 +89,7 @@
   padding: 10px;
   border: 1px solid var(--line);
   border-radius: 5px;
-  background: #fff;
+  background: var(--surface-glass-strong);
 }
 .studio-inspector__revision-list article > div {
   display: grid;
@@ -130,6 +130,6 @@
   text-decoration: none;
   border: 1px solid var(--line);
   border-radius: 5px;
-  background: var(--surface);
+  background: var(--surface-glass-strong);
   font-size: 12px;
 }

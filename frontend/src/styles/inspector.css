@@ -4,7 +4,9 @@
   min-width: 0;
   border-left: 1px solid var(--line);
   overflow: auto;
-  background: var(--surface-panel);
+  background: var(--surface-glass);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(var(--glass-blur));
 }
 .studio-inspector__disclosure {
   min-width: 0;
@@ -45,7 +47,7 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
   min-height: 88px;
   border-bottom: 1px solid var(--line);
-  background: var(--surface);
+  background: var(--surface-glass-strong);
 }
 .studio-inspector__tab {
   min-height: 44px;
@@ -192,7 +194,8 @@
   border: 1px solid #c8dedd;
   border-radius: 6px;
   overflow: hidden;
-  background: var(--surface);
+  background: var(--surface-glass-strong);
+  box-shadow: var(--glass-shadow);
 }
 .studio-inspector__proposal header {
   display: flex;
@@ -223,7 +226,7 @@
   border: 1px solid #d6a318;
   border-radius: 5px;
   padding: 10px 12px;
-  background: #fff;
+  background: var(--surface-glass-strong);
 }
 .studio-inspector__review-issue--blocker {
   border-color: #dc2626;

@@ -10,7 +10,6 @@
     "nav editor inspector" minmax(0, 1fr)
     "status status status" var(--bottom)
     / 294px minmax(430px, 1fr) 360px;
-  background: var(--surface);
   overflow: hidden;
 }
 .studio-topbar {
@@ -20,7 +19,9 @@
   gap: 12px;
   padding: 0 14px;
   border-bottom: 1px solid var(--line);
-  background: var(--surface);
+  background: var(--surface-glass);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(var(--glass-blur));
   z-index: 3;
 }
 .studio-topbar__project-title {
@@ -40,7 +41,9 @@
   min-width: 0;
   border-right: 1px solid var(--line);
   overflow: auto;
-  background: var(--surface-muted);
+  background: var(--surface-glass);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(var(--glass-blur));
 }
 .studio-nav__disclosure {
   min-height: 100%;
@@ -81,7 +84,7 @@
   border: 1px solid #d9ddde;
   border-radius: 5px;
   padding: 0 10px;
-  background: var(--surface);
+  background: var(--surface-glass-strong);
 }
 
 .studio-nav__sections {
@@ -127,7 +130,7 @@
 .studio-nav__search-results button {
   min-height: 44px;
   border: 1px solid var(--line);
-  background: var(--surface);
+  background: var(--surface-glass-strong);
   border-radius: 5px;
   padding: 9px;
   text-align: left;
@@ -146,7 +149,7 @@
   padding: 10px;
   border: 1px solid var(--line);
   border-radius: 5px;
-  background: var(--surface);
+  background: var(--surface-glass-strong);
   display: grid;
   gap: 8px;
 }
