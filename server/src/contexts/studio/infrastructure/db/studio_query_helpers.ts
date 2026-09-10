@@ -2,11 +2,8 @@ import { randomUUID } from "node:crypto";
 import { and, asc, eq } from "drizzle-orm";
 
 import type { StudioSqliteDatabase } from "../../../../shared/infrastructure/db/connection.js";
-import type {
-  DocumentSummaryRecord,
-  DocumentWithCurrent,
-  ProjectScope,
-} from "../../application/ports/studio_store.js";
+import type { DocumentSummaryRecord } from "../../application/ports/project_shell_records.js";
+import type { DocumentWithCurrent, ProjectScope } from "../../application/ports/studio_store.js";
 import { NotFoundError } from "../../domain/exceptions.js";
 import { assertStoredRevisionSource } from "../../domain/revision_source.js";
 import {

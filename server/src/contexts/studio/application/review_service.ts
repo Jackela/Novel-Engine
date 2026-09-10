@@ -6,14 +6,15 @@ import type {
 import { TextGenerationProviderError } from "../../../contexts/ai/application/ports/text_generation.js";
 import type { Principal } from "../../../shared/application/ports/auth.js";
 import { dumpJson, safeLoadJson } from "./payloads.js";
-import type { ReviewPageInput, ReviewSummaryPage } from "./ports/review_outcome_store.js";
-import {
-  type EditorialAssessmentRecord,
-  type EditorialIssueRecord,
-  type EvaluatedReview,
-  type StudioStore,
-  scopeForPrincipal,
-} from "./ports/studio_store.js";
+import type {
+  EditorialAssessmentRecord,
+  EditorialIssueRecord,
+  EvaluatedReview,
+  ReviewOutcomeStore,
+  ReviewPageInput,
+  ReviewSummaryPage,
+} from "./ports/review_outcome_store.js";
+import { scopeForPrincipal } from "./ports/studio_store.js";
 import {
   type ProviderCleanupFailureReporter as CleanupFailureReporter,
   disposeProvider,
@@ -82,12 +83,12 @@ const REVIEW_SYSTEM_PROMPT = [
  * job evidence are committed later by the atomic outcome store.
  */
 export class ReviewService {
-  private readonly store: StudioStore;
+  private readonly store: ReviewOutcomeStore;
   private readonly now: () => Date;
   private readonly provenance: ReviewProviderProvenance;
   private readonly providerFactory: TextGenerationProviderFactory;
 
-  constructor(store: StudioStore, options: ReviewServiceOptions) {
+  constructor(store: ReviewOutcomeStore, options: ReviewServiceOptions) {
     this.store = store;
     this.now = options.now ?? (() => new Date());
     const provenance = options.provenance ?? DEFAULT_PROVENANCE;

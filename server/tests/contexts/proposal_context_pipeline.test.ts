@@ -5,8 +5,12 @@ import type {
   TextGenerationTask,
 } from "../../src/contexts/ai/application/ports/text_generation.js";
 import { InFlightOperationGuard } from "../../src/contexts/studio/application/operation_in_flight.js";
-import type { ProposalContextSource } from "../../src/contexts/studio/application/ports/proposal_context_store.js";
-import type { StudioStore } from "../../src/contexts/studio/application/ports/studio_store.js";
+import type { StudioJobLedgerStore } from "../../src/contexts/studio/application/ports/job_ledger_store.js";
+import type { ProposalAcceptanceStore } from "../../src/contexts/studio/application/ports/proposal_acceptance_store.js";
+import type {
+  ProposalContextSource,
+  ProposalContextStore,
+} from "../../src/contexts/studio/application/ports/proposal_context_store.js";
 import { AiProposalService } from "../../src/contexts/studio/application/proposal_service.js";
 import {
   RECENT_TEXT_BEGIN,
@@ -161,15 +165,19 @@ function coherentHarness() {
   const legacyRead = () => {
     throw new Error("fresh proposal performed a legacy context read");
   };
-  const store = {
+  const proposalContext = {
     readProposalContext: () => {
       reads += 1;
       return source;
     },
-    findDocument: legacyRead,
-    findDocuments: legacyRead,
-    findVolumes: legacyRead,
-  } as unknown as StudioStore;
+  } as unknown as ProposalContextStore;
+  const jobs = {
+    addJob: legacyRead,
+    recordCompletedProposalJob: legacyRead,
+  } as unknown as StudioJobLedgerStore;
+  const proposalAcceptance = {
+    acceptCompletedProposal: legacyRead,
+  } as unknown as ProposalAcceptanceStore;
   const tasks: TextGenerationTask[] = [];
   const providerFactory: TextGenerationProviderFactory = () => ({
     async generateStructured(task) {
@@ -182,7 +190,13 @@ function coherentHarness() {
     },
   });
   return {
-    service: new AiProposalService(store, providerFactory, new InFlightOperationGuard()),
+    service: new AiProposalService(
+      proposalContext,
+      jobs,
+      proposalAcceptance,
+      providerFactory,
+      new InFlightOperationGuard(),
+    ),
     reads: () => reads,
     tasks,
   };

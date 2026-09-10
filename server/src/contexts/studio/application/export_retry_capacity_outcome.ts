@@ -5,7 +5,7 @@ import {
 } from "../domain/exceptions.js";
 import { isExportArtifactFormat } from "./export_artifact_identity.js";
 import { dumpJson, safeLoadJson } from "./payloads.js";
-import type { JobRecord, MarkJobOutcomeInput } from "./ports/studio_store.js";
+import type { JobRecord, MarkJobOutcomeInput } from "./ports/job_records.js";
 
 const CAPACITY_ERROR_CODE = "EXPORT_CAPACITY_EXCEEDED";
 const CAPACITY_ERROR_KEY = "capacity_error";

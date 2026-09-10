@@ -10,14 +10,16 @@ import {
 } from "../../src/contexts/ai/application/ports/text_generation.js";
 import { DocumentService } from "../../src/contexts/studio/application/document_service.js";
 import { reviewPageLimit } from "../../src/contexts/studio/application/ports/review_outcome_store.js";
-import type { StudioStore } from "../../src/contexts/studio/application/ports/studio_store.js";
 import { scopeForPrincipal } from "../../src/contexts/studio/application/ports/studio_store.js";
 import { ProjectService } from "../../src/contexts/studio/application/project_service.js";
 import {
   type EditorialAssessment,
   ReviewService,
 } from "../../src/contexts/studio/application/review_service.js";
-import { DrizzleStudioStore } from "../../src/contexts/studio/infrastructure/drizzle_studio_store.js";
+import { DocumentStorePart } from "../../src/contexts/studio/infrastructure/document_store_part.js";
+import { ProjectStorePart } from "../../src/contexts/studio/infrastructure/project_store_part.js";
+import { ReviewStorePart } from "../../src/contexts/studio/infrastructure/review_store_part.js";
+import { VolumeStorePart } from "../../src/contexts/studio/infrastructure/volume_store_part.js";
 import { AuthService } from "../../src/shared/application/auth_service.js";
 import type { Principal } from "../../src/shared/application/ports/auth.js";
 import { DrizzleAuthStore } from "../../src/shared/infrastructure/db/auth_store.js";
@@ -40,7 +42,7 @@ function assessmentCodes(assessment: EditorialAssessment): string[] {
 }
 
 interface Harness {
-  store: StudioStore;
+  reviewOutcomes: ReviewStorePart;
   projects: ProjectService;
   documents: DocumentService;
   principal: Principal;
@@ -51,9 +53,8 @@ async function openHarness(): Promise<Harness> {
   const directory = await mkdtemp(join(tmpdir(), "novel-engine-review-service-"));
   const studio = await openStudioDatabase(join(directory, "novel-engine.sqlite3"));
   const clock = monotonicClock();
-  const store: StudioStore = new DrizzleStudioStore({
-    database: studio.db,
-  });
+  const reviewOutcomes = new ReviewStorePart(studio.db);
+  const volumes = new VolumeStorePart(studio.db);
   const auth = new AuthService({
     store: new DrizzleAuthStore(studio.db),
     sessionSecret: "review-service-test-secret",
@@ -61,9 +62,9 @@ async function openHarness(): Promise<Harness> {
   });
   await auth.configureOwner("reviewer", "long-test-password");
   return {
-    store,
-    projects: new ProjectService(store, clock),
-    documents: new DocumentService(store, clock),
+    reviewOutcomes,
+    projects: new ProjectService(new ProjectStorePart(studio.db), volumes, clock),
+    documents: new DocumentService(new DocumentStorePart(studio.db), volumes, clock),
     principal: (await auth.createOwnerSession("reviewer", "long-test-password")).principal,
     cleanup: async () => {
       studio.close();
@@ -136,14 +137,14 @@ describe("ReviewService (#316 provider-driven review)", () => {
           },
         ],
       });
-      const reviews = new ReviewService(harness.store, {
+      const reviews = new ReviewService(harness.reviewOutcomes, {
         now: monotonicClock(),
         provenance: { provider: "mock", model: "deterministic-story-v1" },
         providerFactory: factory,
       });
 
       const firstEvaluation = await reviews.evaluateProject(harness.principal, project.id);
-      const first = harness.store.recordCompletedReviewJob(
+      const first = harness.reviewOutcomes.recordCompletedReviewJob(
         scopeForPrincipal(harness.principal),
         firstEvaluation,
       ).assessment;
@@ -154,7 +155,7 @@ describe("ReviewService (#316 provider-driven review)", () => {
       expect(first.issues[0]?.documentId).toBe(thin.id);
 
       const secondEvaluation = await reviews.evaluateProject(harness.principal, project.id);
-      const second = harness.store.recordCompletedReviewJob(
+      const second = harness.reviewOutcomes.recordCompletedReviewJob(
         scopeForPrincipal(harness.principal),
         secondEvaluation,
       ).assessment;
@@ -187,7 +188,7 @@ describe("ReviewService (#316 provider-driven review)", () => {
           },
         ],
       });
-      const reviews = new ReviewService(harness.store, {
+      const reviews = new ReviewService(harness.reviewOutcomes, {
         now: monotonicClock(),
         providerFactory: factory,
       });
@@ -205,7 +206,7 @@ describe("ReviewService (#316 provider-driven review)", () => {
       const project = harness.projects.newProject(harness.principal, {
         title: "Provider failure",
       }) as { id: string };
-      const reviews = new ReviewService(harness.store, {
+      const reviews = new ReviewService(harness.reviewOutcomes, {
         now: monotonicClock(),
         providerFactory: failingFactory(),
       });

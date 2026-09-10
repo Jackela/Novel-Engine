@@ -12,8 +12,9 @@ import {
 import { scopeForPrincipal } from "../../src/contexts/studio/application/ports/studio_store.js";
 import { ProjectService } from "../../src/contexts/studio/application/project_service.js";
 import { NotFoundError } from "../../src/contexts/studio/domain/exceptions.js";
-import { DrizzleStudioStore } from "../../src/contexts/studio/infrastructure/drizzle_studio_store.js";
 import { ExportStorePart } from "../../src/contexts/studio/infrastructure/export_store_part.js";
+import { ProjectStorePart } from "../../src/contexts/studio/infrastructure/project_store_part.js";
+import { VolumeStorePart } from "../../src/contexts/studio/infrastructure/volume_store_part.js";
 import { AuthService } from "../../src/shared/application/auth_service.js";
 import { DrizzleAuthStore } from "../../src/shared/infrastructure/db/auth_store.js";
 import { openStudioDatabase } from "../../src/shared/infrastructure/db/startup.js";
@@ -31,8 +32,11 @@ async function openHarness() {
   const directory = await mkdtemp(join(tmpdir(), "novel-engine-export-catalog-"));
   const studio = await openStudioDatabase(join(directory, "novel-engine.sqlite3"));
   const clock = monotonicClock();
-  const store = new DrizzleStudioStore({ database: studio.db });
-  const projects = new ProjectService(store, clock);
+  const projects = new ProjectService(
+    new ProjectStorePart(studio.db),
+    new VolumeStorePart(studio.db),
+    clock,
+  );
   const auth = new AuthService({
     store: new DrizzleAuthStore(studio.db),
     sessionSecret: "export-catalog-test-secret",

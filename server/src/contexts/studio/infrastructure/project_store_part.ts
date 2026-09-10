@@ -8,6 +8,7 @@ import type {
   ProjectPageInput,
 } from "../application/ports/project_catalog_store.js";
 import { projectPageLimit } from "../application/ports/project_catalog_store.js";
+import type { ProjectStore } from "../application/ports/project_store.js";
 import type { ProjectUpdateInput } from "../application/ports/project_update_store.js";
 import type {
   AddImportedProjectInput,
@@ -38,7 +39,7 @@ import { DEFAULT_VOLUME_TITLE, insertVolume } from "./volume_store_part.js";
  * in the same database transaction. Filesystem cleanup belongs to the
  * application service because it cannot join SQLite's transaction.
  */
-export class ProjectStorePart {
+export class ProjectStorePart implements ProjectStore {
   protected readonly db: StudioSqliteDatabase;
 
   constructor(db: StudioSqliteDatabase) {

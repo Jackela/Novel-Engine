@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { documentRevisions } from "../../src/contexts/studio/infrastructure/db/schema.js";
-import { DrizzleStudioStore } from "../../src/contexts/studio/infrastructure/drizzle_studio_store.js";
+import { DocumentStorePart } from "../../src/contexts/studio/infrastructure/document_store_part.js";
 import { encodeRevisionCursor } from "../../src/contexts/studio/interface/http/revision_cursor.js";
 import { studioDatabase } from "./job_test_helpers.js";
 import {
@@ -16,7 +16,7 @@ import {
 describe("revision pagination HTTP contract", () => {
   it("authenticates before query validation, then validates before scoped persistence", async () => {
     const { app } = await buildStudioApp();
-    const historyRead = vi.spyOn(DrizzleStudioStore.prototype, "findRevisionSummaries");
+    const historyRead = vi.spyOn(DocumentStorePart.prototype, "findRevisionSummaries");
     try {
       const projectId = "00000000-0000-4000-8000-000000000099";
       const documentId = "00000000-0000-4000-8000-000000000098";
@@ -96,7 +96,7 @@ describe("revision pagination HTTP contract", () => {
 
   it("rejects every invalid limit and repeated query key after authentication", async () => {
     const { app } = await buildStudioApp();
-    const historyRead = vi.spyOn(DrizzleStudioStore.prototype, "findRevisionSummaries");
+    const historyRead = vi.spyOn(DocumentStorePart.prototype, "findRevisionSummaries");
     try {
       const owner = await ownerJar(app);
       const project = await seedProject(app, owner, "Revision limits");

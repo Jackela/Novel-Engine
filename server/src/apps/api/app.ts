@@ -10,7 +10,6 @@ import type { ExportArtifactGateway } from "../../contexts/studio/application/ex
 import type { ExportOutcomeStore } from "../../contexts/studio/application/ports/export_store.js";
 import type { ProjectArtifactCleaner } from "../../contexts/studio/application/ports/project_artifact_cleaner.js";
 import { createStudioServices } from "../../contexts/studio/application/studio_services.js";
-import { DrizzleStudioStore } from "../../contexts/studio/infrastructure/drizzle_studio_store.js";
 import { FilesystemExportArtifactGateway } from "../../contexts/studio/infrastructure/export_artifact_files.js";
 import { DatabaseExportPublicationCleanupJournal } from "../../contexts/studio/infrastructure/export_publication_cleanup_journal.js";
 import { ExportStorePart } from "../../contexts/studio/infrastructure/export_store_part.js";
@@ -40,6 +39,7 @@ import {
   registerSpaServing,
 } from "../../shared/interface/http/spa_serving.js";
 import { type VersionInfo, versionRoutes } from "../../shared/interface/http/version_route.js";
+import { createStudioPersistence } from "../studio_persistence.js";
 import { closeAppAndRethrow } from "./app_lifecycle.js";
 import {
   CORS_ALLOWED_HEADERS,
@@ -194,33 +194,28 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
     const studioServices =
       persistence === undefined
         ? undefined
-        : createStudioServices(
-            new DrizzleStudioStore({
-              database: persistence.db.db,
-            }),
-            {
-              now: options.clock,
-              providerFactory: provider.providerFactory,
-              legacyWorkspaceReader: new FsLegacyWorkspaceReader(),
-              reviewProvenance: {
-                provider: provider.defaultProvider,
-                model: provider.reviewModel,
-              },
-              artifactStore:
-                options.exportStoreFactory?.(persistence.db.db) ??
-                new ExportStorePart(persistence.db.db),
-              artifactFiles:
-                options.exportArtifactGateway ??
-                new FilesystemExportArtifactGateway(persistence.dataDirectory, {
-                  cleanupJournal: new DatabaseExportPublicationCleanupJournal(persistence.db.db),
-                }),
-              projectArtifactCleaner:
-                options.projectArtifactCleaner ??
-                new FilesystemProjectArtifactCleaner(persistence.dataDirectory),
-              loreBudgetCharacters,
-              operationCapacity,
+        : createStudioServices(createStudioPersistence(persistence.db.db), {
+            now: options.clock,
+            providerFactory: provider.providerFactory,
+            legacyWorkspaceReader: new FsLegacyWorkspaceReader(),
+            reviewProvenance: {
+              provider: provider.defaultProvider,
+              model: provider.reviewModel,
             },
-          );
+            artifactStore:
+              options.exportStoreFactory?.(persistence.db.db) ??
+              new ExportStorePart(persistence.db.db),
+            artifactFiles:
+              options.exportArtifactGateway ??
+              new FilesystemExportArtifactGateway(persistence.dataDirectory, {
+                cleanupJournal: new DatabaseExportPublicationCleanupJournal(persistence.db.db),
+              }),
+            projectArtifactCleaner:
+              options.projectArtifactCleaner ??
+              new FilesystemProjectArtifactCleaner(persistence.dataDirectory),
+            loreBudgetCharacters,
+            operationCapacity,
+          });
 
     const versionInfo: VersionInfo = {
       version: productIdentity.version,

@@ -24,7 +24,11 @@ import {
   replayedGenerationCapacityError,
 } from "./generation_retry_capacity_outcome.js";
 import { dumpJson, jobPayload, safeLoadJson } from "./payloads.js";
-import type { JobRecord, ProjectScope, StudioStore } from "./ports/studio_store.js";
+import type { StudioJobLedgerStore } from "./ports/job_ledger_store.js";
+import type { JobRecord } from "./ports/job_records.js";
+import type { ProposalContextStore } from "./ports/proposal_context_store.js";
+import type { ReviewOutcomeStore } from "./ports/review_outcome_store.js";
+import type { ProjectScope } from "./ports/studio_store.js";
 import { scopeForPrincipal } from "./ports/studio_store.js";
 import {
   buildProposalTask,
@@ -49,27 +53,22 @@ export interface JobRetryExecutorOptions {
 
 /**
  * Executes the retry chain (#272): a failed or interrupted job is re-run as a
- * NEW job that starts `running` with a first event naming the original,
- * reaches a terminal state synchronously, and never mutates the original.
- * Import jobs are refused outright.
+ * NEW job that starts `running`, reaches a terminal state synchronously, and
+ * never mutates the original. Import jobs are refused outright.
  */
 export class JobRetryExecutor {
-  private readonly store: StudioStore;
-  private readonly reviews: ReviewService;
-  private readonly artifacts: SnapshotArtifactService;
   private readonly providerFactory: TextGenerationProviderFactory;
   private readonly loreBudgetCharacters: number | undefined;
   private readonly now: () => Date;
 
   constructor(
-    store: StudioStore,
-    reviews: ReviewService,
-    artifacts: SnapshotArtifactService,
+    private readonly jobs: StudioJobLedgerStore,
+    private readonly reviewOutcomes: ReviewOutcomeStore,
+    private readonly proposalContext: ProposalContextStore,
+    private readonly reviews: ReviewService,
+    private readonly artifacts: SnapshotArtifactService,
     options: JobRetryExecutorOptions,
   ) {
-    this.store = store;
-    this.reviews = reviews;
-    this.artifacts = artifacts;
     this.providerFactory = options.providerFactory;
     this.loreBudgetCharacters = options.loreBudgetCharacters;
     this.now = options.now ?? (() => new Date());
@@ -83,7 +82,7 @@ export class JobRetryExecutor {
     reportCleanupFailure: (failure: unknown) => void,
   ): Promise<Record<string, unknown>> {
     const scope = scopeForPrincipal(principal);
-    const replay = this.store.findJobRetry(scope, projectId, jobId, requestKey);
+    const replay = this.jobs.findJobRetry(scope, projectId, jobId, requestKey);
     if (replay !== null) {
       const capacityError =
         replayedExportCapacityError(replay) ?? replayedGenerationCapacityError(replay);
@@ -97,7 +96,7 @@ export class JobRetryExecutor {
         reportCleanupFailure,
       );
     }
-    const source = this.store.findJob(scope, projectId, jobId);
+    const source = this.jobs.findJob(scope, projectId, jobId);
     if (source.kind === "export") {
       return this.artifacts.withRendererPermit(projectId, () =>
         this.claimAndExecute(principal, scope, projectId, jobId, requestKey, reportCleanupFailure),
@@ -121,7 +120,7 @@ export class JobRetryExecutor {
     requestKey: string,
     reportCleanupFailure: (failure: unknown) => void,
   ): Promise<Record<string, unknown>> {
-    const claim = this.store.claimJobRetry(scope, {
+    const claim = this.jobs.claimJobRetry(scope, {
       projectId,
       sourceJobId: jobId,
       requestKey,
@@ -146,22 +145,15 @@ export class JobRetryExecutor {
       }
       throw new InvalidOperationError(`Unsupported job kind for retry: ${retry.kind}`);
     } catch (error) {
-      if (error instanceof ExportCapacityExceededError) {
-        this.store.markJobOutcome(
-          scope,
-          projectId,
-          retry.id,
-          exportRetryCapacityOutcome(retry, error, this.now()),
-        );
-        throw error;
-      }
-      if (error instanceof GenerationCapacityExceededError) {
-        this.store.markJobOutcome(
-          scope,
-          projectId,
-          retry.id,
-          generationRetryCapacityOutcome(retry, error, this.now()),
-        );
+      if (
+        error instanceof ExportCapacityExceededError ||
+        error instanceof GenerationCapacityExceededError
+      ) {
+        const outcome =
+          error instanceof ExportCapacityExceededError
+            ? exportRetryCapacityOutcome(retry, error, this.now())
+            : generationRetryCapacityOutcome(retry, error, this.now());
+        this.jobs.markJobOutcome(scope, projectId, retry.id, outcome);
         throw error;
       }
       if (
@@ -175,7 +167,7 @@ export class JobRetryExecutor {
         throw error;
       }
       return jobPayload(
-        this.store.markJobOutcome(scope, projectId, retry.id, {
+        this.jobs.markJobOutcome(scope, projectId, retry.id, {
           status: "failed",
           error: error.message,
           eventDetailsJson: dumpJson({ error: error.message }),
@@ -203,11 +195,15 @@ export class JobRetryExecutor {
       throw new InvalidOperationError("Original AI job is missing its request context.");
     }
     const providerName = admitTextProvider(retry.provider);
-    const context = this.store.readProposalContext(scope, retry.projectId, retry.documentId);
+    const context = this.proposalContext.readProposalContext(
+      scope,
+      retry.projectId,
+      retry.documentId,
+    );
     const { revision } = proposalRevisionFromContext(context);
     if (revision.id !== baseRevisionId) {
       const outcome = proposalRetryStaleBaseOutcome(baseRevisionId, revision.id, this.now());
-      const failed = this.store.markJobOutcome(scope, retry.projectId, retry.id, outcome);
+      const failed = this.jobs.markJobOutcome(scope, retry.projectId, retry.id, outcome);
       return jobPayload(failed);
     }
     let provider: TextGenerationProvider | undefined;
@@ -225,10 +221,9 @@ export class JobRetryExecutor {
       const result = await provider.generateStructured(task);
       const outcome = validatedProposalOrThrow(result);
       const now = this.now();
-      // #392: the outcome transition and its usage event commit together, so
-      // a retried proposal never completes without its usage-ledger row.
+      // #392: the outcome transition and its usage event commit together.
       return jobPayload(
-        this.store.markJobOutcomeWithUsage(scope, retry.projectId, retry.id, {
+        this.jobs.markJobOutcomeWithUsage(scope, retry.projectId, retry.id, {
           outcome: {
             status: "completed",
             model: result.model,
@@ -272,12 +267,13 @@ export class JobRetryExecutor {
     });
     try {
       return jobPayload(
-        this.store.completeReviewRetryJob(scope, retry.projectId, retry.id, evaluation).job,
+        this.reviewOutcomes.completeReviewRetryJob(scope, retry.projectId, retry.id, evaluation)
+          .job,
       );
     } catch (error) {
       if (!(error instanceof ReviewSourceInvalidatedError)) throw error;
       return jobPayload(
-        this.store.markJobOutcome(scope, retry.projectId, retry.id, {
+        this.jobs.markJobOutcome(scope, retry.projectId, retry.id, {
           status: "failed",
           model: evaluation.model,
           error: error.message,

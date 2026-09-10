@@ -15,13 +15,12 @@ import type { InFlightOperationGuard } from "./operation_in_flight.js";
 import type { JobPayload, JobSummaryPayload } from "./payload_schemas/job.js";
 import { dumpJson, jobPayload, jobSummaryPayload } from "./payloads.js";
 import type { ExportArtifactFormat } from "./ports/export_store.js";
+import type { StudioJobLedgerStore } from "./ports/job_ledger_store.js";
 import type { JobPageCursor, JobPageInput } from "./ports/job_records.js";
-import type {
-  EvaluatedReview,
-  ProjectScope,
-  ProjectUsageAggregate,
-  StudioStore,
-} from "./ports/studio_store.js";
+import type { ProjectUsageAggregate } from "./ports/project_usage.js";
+import type { ProposalContextStore } from "./ports/proposal_context_store.js";
+import type { EvaluatedReview, ReviewOutcomeStore } from "./ports/review_outcome_store.js";
+import type { ProjectScope } from "./ports/studio_store.js";
 import { scopeForPrincipal } from "./ports/studio_store.js";
 import type { ReviewService } from "./review_service.js";
 
@@ -49,7 +48,8 @@ export interface JobHistoryPage {
  * #268, and delegation of the retry chain to its executor.
  */
 export class JobHistoryService {
-  private readonly store: StudioStore;
+  private readonly jobs: StudioJobLedgerStore;
+  private readonly reviewOutcomes: ReviewOutcomeStore;
   private readonly reviews: ReviewService;
   private readonly artifacts: SnapshotArtifactService;
   private readonly retries: JobRetryExecutor;
@@ -57,15 +57,18 @@ export class JobHistoryService {
   private readonly now: () => Date;
 
   constructor(
-    store: StudioStore,
+    jobs: StudioJobLedgerStore,
+    reviewOutcomes: ReviewOutcomeStore,
+    proposalContext: ProposalContextStore,
     reviews: ReviewService,
     artifacts: SnapshotArtifactService,
     options: JobHistoryServiceOptions,
   ) {
-    this.store = store;
+    this.jobs = jobs;
+    this.reviewOutcomes = reviewOutcomes;
     this.reviews = reviews;
     this.artifacts = artifacts;
-    this.retries = new JobRetryExecutor(store, reviews, artifacts, {
+    this.retries = new JobRetryExecutor(jobs, reviewOutcomes, proposalContext, reviews, artifacts, {
       now: options.now,
       providerFactory: options.providerFactory,
       loreBudgetCharacters: options.loreBudgetCharacters,
@@ -80,7 +83,7 @@ export class JobHistoryService {
     projectId: string,
     input: JobPageInput,
   ): JobHistoryPage {
-    const page = this.store.collectProjectJobSummaries(
+    const page = this.jobs.collectProjectJobSummaries(
       scopeForPrincipal(principal),
       projectId,
       input,
@@ -91,7 +94,7 @@ export class JobHistoryService {
   /** One complete scoped Job; all known misses share the stable Job identity. */
   findProjectJob(principal: Principal, projectId: string, jobId: string): JobPayload {
     try {
-      return jobPayload(this.store.findJob(scopeForPrincipal(principal), projectId, jobId));
+      return jobPayload(this.jobs.findJob(scopeForPrincipal(principal), projectId, jobId));
     } catch (error) {
       if (!(error instanceof NotFoundError)) throw error;
       throw new NotFoundError("Job not found.");
@@ -100,7 +103,7 @@ export class JobHistoryService {
 
   /** The usage-ledger aggregation for the project surface (#317, #384). */
   aggregateProjectUsage(principal: Principal, projectId: string): ProjectUsageAggregate {
-    return this.store.aggregateProjectUsage(scopeForPrincipal(principal), projectId, this.now());
+    return this.jobs.aggregateProjectUsage(scopeForPrincipal(principal), projectId, this.now());
   }
 
   /** The terminal-Job bridge over a fresh editorial assessment. */
@@ -137,7 +140,7 @@ export class JobHistoryService {
       evaluation = await this.reviews.evaluateProject(principal, projectId, {
         reportCleanupFailure,
       });
-      const completed = this.store.recordCompletedReviewJob(scope, evaluation);
+      const completed = this.reviewOutcomes.recordCompletedReviewJob(scope, evaluation);
       return jobPayload(completed.job);
     } catch (error) {
       if (
@@ -147,7 +150,7 @@ export class JobHistoryService {
         throw error;
       }
       return jobPayload(
-        this.store.addJob(scope, {
+        this.jobs.addJob(scope, {
           projectId,
           documentId: null,
           kind: "review",
@@ -199,7 +202,7 @@ export class JobHistoryService {
           throw error;
         }
         return jobPayload(
-          this.store.addJob(scope, {
+          this.jobs.addJob(scope, {
             projectId,
             documentId: null,
             kind: "export",
@@ -236,7 +239,7 @@ export class JobHistoryService {
     // Project deletion removes persistence before artifact cleanup completes;
     // preserve its exclusive 409 boundary before any durable replay lookup.
     this.inFlight.assertProjectNotExclusive(projectId);
-    const replay = this.store.findJobRetry(
+    const replay = this.jobs.findJobRetry(
       scopeForPrincipal(principal),
       projectId,
       jobId,

@@ -9,8 +9,10 @@ import { revisionWordCount } from "../domain/revision_word_count.js";
 import { BoundedPromptWriter } from "./generation_capacity.js";
 import { loreEntriesFromDocuments } from "./lorebook.js";
 import { dumpJson } from "./payloads.js";
+import type { StudioJobLedgerStore } from "./ports/job_ledger_store.js";
+import type { JobRecord } from "./ports/job_records.js";
 import type { ProposalContextSource } from "./ports/proposal_context_store.js";
-import type { JobRecord, ProjectScope, StudioStore } from "./ports/studio_store.js";
+import type { ProjectScope } from "./ports/studio_store.js";
 import {
   buildProposalUserPrompt,
   residentContextSourceFromProposalContext,
@@ -199,7 +201,7 @@ export interface ProposalLanding {
 }
 
 export function completedProposalJob(
-  store: StudioStore,
+  jobs: StudioJobLedgerStore,
   scope: ProjectScope,
   seed: ProposalJobSeed,
   revisionId: string,
@@ -207,7 +209,7 @@ export function completedProposalJob(
 ): JobRecord {
   // #392: the job row and its usage event commit in one transaction so a
   // failure between the two writes can never strand a completed job.
-  return store.recordCompletedProposalJob(scope, {
+  return jobs.recordCompletedProposalJob(scope, {
     job: {
       projectId: seed.projectId,
       documentId: seed.documentId,
@@ -240,13 +242,13 @@ export function completedProposalJob(
 }
 
 export function failedProposalJob(
-  store: StudioStore,
+  jobs: StudioJobLedgerStore,
   scope: ProjectScope,
   seed: ProposalJobSeed,
   revisionId: string,
   message: string,
 ): JobRecord {
-  return store.addJob(scope, {
+  return jobs.addJob(scope, {
     projectId: seed.projectId,
     documentId: seed.documentId,
     kind: "proposal",

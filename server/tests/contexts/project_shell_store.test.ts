@@ -12,7 +12,9 @@ import {
   documents,
   projects,
 } from "../../src/contexts/studio/infrastructure/db/schema.js";
-import { DrizzleStudioStore } from "../../src/contexts/studio/infrastructure/drizzle_studio_store.js";
+import { DocumentStorePart } from "../../src/contexts/studio/infrastructure/document_store_part.js";
+import { ProjectStorePart } from "../../src/contexts/studio/infrastructure/project_store_part.js";
+import { VolumeStorePart } from "../../src/contexts/studio/infrastructure/volume_store_part.js";
 import { AuthService } from "../../src/shared/application/auth_service.js";
 import { DrizzleAuthStore } from "../../src/shared/infrastructure/db/auth_store.js";
 import { owners } from "../../src/shared/infrastructure/db/schema.js";
@@ -49,8 +51,12 @@ describe("project shell store seam", () => {
       const principal = (await auth.createOwnerSession("shell-owner", "long-test-password"))
         .principal;
       const scope = scopeForPrincipal(principal);
-      const store = new DrizzleStudioStore({ database: studio.db });
-      const created = store.addProject(scope, {
+      const store = {
+        projects: new ProjectStorePart(studio.db),
+        documents: new DocumentStorePart(studio.db),
+        volumes: new VolumeStorePart(studio.db),
+      };
+      const created = store.projects.addProject(scope, {
         title: "Store shell",
         description: "",
         settingsJson: "{}",
@@ -65,7 +71,7 @@ describe("project shell store seam", () => {
       const document = created.documents[0];
       if (document === undefined) throw new Error("expected seeded document");
 
-      const shell = store.readProjectShell(scope, created.project.id);
+      const shell = store.projects.readProjectShell(scope, created.project.id);
       expect(shell.project.id).toBe(created.project.id);
       expect(shell.volumes).toHaveLength(1);
       expect(shell.documents).toHaveLength(1);
@@ -77,7 +83,7 @@ describe("project shell store seam", () => {
         wordCount: 3,
       });
 
-      const current = store.readCurrentDocument(scope, created.project.id, document.id);
+      const current = store.documents.readCurrentDocument(scope, created.project.id, document.id);
       expect(current.currentRevision).toMatchObject({
         contentMarkdown: "one two 三四",
         metadataJson: '{"private":true}',
@@ -85,7 +91,7 @@ describe("project shell store seam", () => {
         wordCount: 3,
       });
 
-      const reordered = store.renumberDocuments(
+      const reordered = store.volumes.renumberDocuments(
         scope,
         created.project.id,
         [document.id],
@@ -112,8 +118,12 @@ describe("project shell store seam", () => {
       const principal = (await auth.createOwnerSession("integrity-owner", "long-test-password"))
         .principal;
       const scope = scopeForPrincipal(principal);
-      const store = new DrizzleStudioStore({ database: studio.db });
-      const created = store.addProject(scope, {
+      const store = {
+        projects: new ProjectStorePart(studio.db),
+        documents: new DocumentStorePart(studio.db),
+        volumes: new VolumeStorePart(studio.db),
+      };
+      const created = store.projects.addProject(scope, {
         title: "Scoped project",
         description: "",
         settingsJson: "{}",
@@ -185,12 +195,12 @@ describe("project shell store seam", () => {
         .where(eq(documents.id, document.id))
         .run();
 
-      expect(() => store.readProjectShell(scope, created.project.id)).toThrow(
+      expect(() => store.projects.readProjectShell(scope, created.project.id)).toThrow(
         RevisionSourceInvariantError,
       );
-      expect(() => store.readCurrentDocument(scope, created.project.id, document.id)).toThrow(
-        "Document not found.",
-      );
+      expect(() =>
+        store.documents.readCurrentDocument(scope, created.project.id, document.id),
+      ).toThrow("Document not found.");
     } finally {
       studio.close();
       await rm(directory, { recursive: true, force: true });

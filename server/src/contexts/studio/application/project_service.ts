@@ -7,12 +7,11 @@ import type { ProjectCatalogSummaryPayload } from "./payload_schemas/project.js"
 import { dumpJson, projectCatalogSummaryPayload, projectPayload } from "./payloads.js";
 import type { ProjectArtifactCleaner } from "./ports/project_artifact_cleaner.js";
 import type { ProjectPageCursor, ProjectPageInput } from "./ports/project_catalog_store.js";
+import type { DocumentSummaryRecord } from "./ports/project_shell_records.js";
+import type { ProjectStore } from "./ports/project_store.js";
 import type { ProjectUpdateInput } from "./ports/project_update_store.js";
-import {
-  type DocumentSummaryRecord,
-  type StudioStore,
-  scopeForPrincipal,
-} from "./ports/studio_store.js";
+import { scopeForPrincipal } from "./ports/studio_store.js";
+import type { StudioVolumeStore } from "./ports/volume_store.js";
 import { projectShellPayload, summarizeDocument } from "./project_shell_payloads.js";
 
 /** The adjudicated new-project seed (mirrors the Python authority). */
@@ -56,17 +55,20 @@ export interface ProjectCatalogPayloadPage {
 }
 
 export class ProjectService {
-  private readonly store: StudioStore;
+  private readonly store: ProjectStore;
+  private readonly volumes: StudioVolumeStore;
   private readonly now: () => Date;
   private readonly inFlight: InFlightOperationGuard;
   private readonly artifactCleaner: ProjectArtifactCleaner | undefined;
 
   constructor(
-    store: StudioStore,
+    store: ProjectStore,
+    volumes: StudioVolumeStore,
     now: () => Date = () => new Date(),
     options: ProjectServiceOptions = {},
   ) {
     this.store = store;
+    this.volumes = volumes;
     this.now = now;
     this.inFlight = options.inFlight ?? new InFlightOperationGuard();
     this.artifactCleaner = options.artifactCleaner;
@@ -100,7 +102,7 @@ export class ProjectService {
     return projectShellPayload(
       created.project,
       created.documents.map(summarizeDocument),
-      this.store.findVolumes(scope, created.project.id),
+      this.volumes.findVolumes(scope, created.project.id),
     );
   }
 

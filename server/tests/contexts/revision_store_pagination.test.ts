@@ -11,7 +11,8 @@ import {
   scopeForPrincipal,
 } from "../../src/contexts/studio/application/ports/studio_store.js";
 import { documentRevisions } from "../../src/contexts/studio/infrastructure/db/schema.js";
-import { DrizzleStudioStore } from "../../src/contexts/studio/infrastructure/drizzle_studio_store.js";
+import { DocumentStorePart } from "../../src/contexts/studio/infrastructure/document_store_part.js";
+import { ProjectStorePart } from "../../src/contexts/studio/infrastructure/project_store_part.js";
 import { buildRevisionSummariesQuery } from "../../src/contexts/studio/infrastructure/revision_page_queries.js";
 import { AuthService } from "../../src/shared/application/auth_service.js";
 import { DrizzleAuthStore } from "../../src/shared/infrastructure/db/auth_store.js";
@@ -34,7 +35,10 @@ async function openHarness() {
     }
   };
   try {
-    const store = new DrizzleStudioStore({ database: studio.db });
+    const store = {
+      projects: new ProjectStorePart(studio.db),
+      documents: new DocumentStorePart(studio.db),
+    };
     const now = new Date("2026-09-03T00:00:00.000Z");
     const auth = new AuthService({
       store: new DrizzleAuthStore(studio.db),
@@ -44,7 +48,7 @@ async function openHarness() {
     await auth.configureOwner("page-owner", "long-test-password");
     const principal = (await auth.createOwnerSession("page-owner", "long-test-password")).principal;
     const scope = scopeForPrincipal(principal);
-    const { project, documents } = store.addProject(scope, {
+    const { project, documents } = store.projects.addProject(scope, {
       title: "Revision page",
       description: "",
       settingsJson: "{}",
@@ -69,9 +73,13 @@ describe("document revision keyset pages", () => {
   it("returns at most the newest 50 lightweight summaries by default", async () => {
     const { cleanup, documentId, projectId, scope, store } = await openHarness();
     try {
-      let baseRevisionId = store.findDocument(scope, projectId, documentId).currentRevisionId;
+      let baseRevisionId = store.documents.findDocument(
+        scope,
+        projectId,
+        documentId,
+      ).currentRevisionId;
       for (let revisionNumber = 2; revisionNumber <= 51; revisionNumber += 1) {
-        const advanced = store.advanceDocument(scope, projectId, documentId, {
+        const advanced = store.documents.advanceDocument(scope, projectId, documentId, {
           contentMarkdown: `body ${revisionNumber}`,
           baseRevisionId,
           title: null,
@@ -82,7 +90,7 @@ describe("document revision keyset pages", () => {
         baseRevisionId = advanced.currentRevisionId;
       }
 
-      const page = store.findRevisionSummaries(scope, projectId, documentId, {
+      const page = store.documents.findRevisionSummaries(scope, projectId, documentId, {
         limit: revisionPageLimit(50),
       });
 
@@ -114,7 +122,7 @@ describe("document revision keyset pages", () => {
     try {
       for (const invalid of [0, 101, 1.5, Number.NaN]) {
         expect(() =>
-          store.findRevisionSummaries(scope, projectId, documentId, {
+          store.documents.findRevisionSummaries(scope, projectId, documentId, {
             limit: invalid as RevisionPageLimit,
           }),
         ).toThrow(RangeError);
@@ -127,9 +135,13 @@ describe("document revision keyset pages", () => {
   it("continues below a deleted boundary without admitting a concurrently newer revision", async () => {
     const { cleanup, documentId, projectId, scope, store, studio } = await openHarness();
     try {
-      let baseRevisionId = store.findDocument(scope, projectId, documentId).currentRevisionId;
+      let baseRevisionId = store.documents.findDocument(
+        scope,
+        projectId,
+        documentId,
+      ).currentRevisionId;
       for (let revisionNumber = 2; revisionNumber <= 5; revisionNumber += 1) {
-        const advanced = store.advanceDocument(scope, projectId, documentId, {
+        const advanced = store.documents.advanceDocument(scope, projectId, documentId, {
           contentMarkdown: `body ${revisionNumber}`,
           baseRevisionId,
           title: null,
@@ -140,7 +152,7 @@ describe("document revision keyset pages", () => {
         baseRevisionId = advanced.currentRevisionId;
       }
 
-      const first = store.findRevisionSummaries(scope, projectId, documentId, {
+      const first = store.documents.findRevisionSummaries(scope, projectId, documentId, {
         limit: revisionPageLimit(2),
       });
       expect(first.revisions.map((revision) => revision.revisionNumber)).toEqual([5, 4]);
@@ -151,7 +163,7 @@ describe("document revision keyset pages", () => {
         .delete(documentRevisions)
         .where(eq(documentRevisions.id, first.nextCursor.id))
         .run();
-      store.advanceDocument(scope, projectId, documentId, {
+      store.documents.advanceDocument(scope, projectId, documentId, {
         contentMarkdown: "body 6",
         baseRevisionId,
         title: null,
@@ -160,7 +172,7 @@ describe("document revision keyset pages", () => {
         now: new Date(6),
       });
 
-      const second = store.findRevisionSummaries(scope, projectId, documentId, {
+      const second = store.documents.findRevisionSummaries(scope, projectId, documentId, {
         limit: revisionPageLimit(2),
         cursor: first.nextCursor,
       });
@@ -169,7 +181,7 @@ describe("document revision keyset pages", () => {
       expect(second.nextCursor).not.toBeNull();
       if (second.nextCursor === null) throw new Error("Expected the terminal revision page.");
 
-      const terminal = store.findRevisionSummaries(scope, projectId, documentId, {
+      const terminal = store.documents.findRevisionSummaries(scope, projectId, documentId, {
         limit: revisionPageLimit(2),
         cursor: second.nextCursor,
       });
@@ -193,9 +205,12 @@ describe("document revision keyset pages", () => {
         schema: databaseSchema,
         logger: { logQuery: (query: string) => executedSql.push(query) },
       });
-      const store = new DrizzleStudioStore({ database: tracedDatabase });
+      const store = {
+        projects: new ProjectStorePart(tracedDatabase),
+        documents: new DocumentStorePart(tracedDatabase),
+      };
 
-      const page = store.findRevisionSummaries(scope, projectId, documentId, {
+      const page = store.documents.findRevisionSummaries(scope, projectId, documentId, {
         limit: revisionPageLimit(1),
       });
 

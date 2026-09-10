@@ -8,7 +8,8 @@ import {
   jobPageLimit,
 } from "../../src/contexts/studio/application/ports/job_records.js";
 import { scopeForPrincipal } from "../../src/contexts/studio/application/ports/studio_store.js";
-import { DrizzleStudioStore } from "../../src/contexts/studio/infrastructure/drizzle_studio_store.js";
+import { JobStorePart } from "../../src/contexts/studio/infrastructure/job_store_part.js";
+import { ProjectStorePart } from "../../src/contexts/studio/infrastructure/project_store_part.js";
 import { AuthService } from "../../src/shared/application/auth_service.js";
 import { DrizzleAuthStore } from "../../src/shared/infrastructure/db/auth_store.js";
 import { openStudioDatabase } from "../../src/shared/infrastructure/db/startup.js";
@@ -52,7 +53,10 @@ async function openHarness() {
   const directory = await mkdtemp(join(tmpdir(), "novel-engine-safe-usage-store-"));
   const studio = await openStudioDatabase(join(directory, "novel-engine.sqlite3"));
   const clock = monotonicClock();
-  const store = new DrizzleStudioStore({ database: studio.db });
+  const store = {
+    projects: new ProjectStorePart(studio.db),
+    jobs: new JobStorePart(studio.db),
+  };
   const auth = new AuthService({
     store: new DrizzleAuthStore(studio.db),
     sessionSecret: "safe-usage-test-secret",
@@ -61,7 +65,7 @@ async function openHarness() {
   await auth.configureOwner("ledger-owner", "long-test-password");
   const principal = (await auth.createOwnerSession("ledger-owner", "long-test-password")).principal;
   const scope = scopeForPrincipal(principal);
-  const { project } = store.addProject(scope, {
+  const { project } = store.projects.addProject(scope, {
     title: "Ledger",
     description: "",
     settingsJson: "{}",
@@ -77,7 +81,7 @@ describe("safe usage persistence", () => {
     const invalid = [Number.MAX_SAFE_INTEGER + 1, 1e308, Number.POSITIVE_INFINITY, -1, 1.5];
     for (const promptTokens of invalid) {
       expect(() =>
-        store.recordCompletedProposalJob(scope, {
+        store.jobs.recordCompletedProposalJob(scope, {
           job: completedJob(projectId, clock()),
           usage: { ...usage(), promptTokens },
         }),
@@ -85,26 +89,26 @@ describe("safe usage persistence", () => {
     }
     for (const completionTokens of invalid) {
       expect(() =>
-        store.recordCompletedProposalJob(scope, {
+        store.jobs.recordCompletedProposalJob(scope, {
           job: completedJob(projectId, clock()),
           usage: { ...usage(), completionTokens },
         }),
       ).toThrow("completion token count must be a non-negative safe integer");
     }
     expect(
-      store.collectProjectJobSummaries(scope, projectId, { limit: jobPageLimit(50) }).jobs,
+      store.jobs.collectProjectJobSummaries(scope, projectId, { limit: jobPageLimit(50) }).jobs,
     ).toEqual([]);
-    expect(store.aggregateProjectUsage(scope, projectId, clock()).requestCount).toBe(0);
+    expect(store.jobs.aggregateProjectUsage(scope, projectId, clock()).requestCount).toBe(0);
   });
 
   it("rejects unsafe usage and leaves the paired retry running", async () => {
     const { scope, clock, store, projectId } = await openHarness();
-    const running = store.addJob(scope, {
+    const running = store.jobs.addJob(scope, {
       ...completedJob(projectId, clock()),
       status: "running",
     });
     expect(() =>
-      store.markJobOutcomeWithUsage(scope, projectId, running.id, {
+      store.jobs.markJobOutcomeWithUsage(scope, projectId, running.id, {
         outcome: {
           status: "completed",
           model: "retry-model",
@@ -116,16 +120,16 @@ describe("safe usage persistence", () => {
         usage: { ...usage(), completionTokens: Number.MAX_SAFE_INTEGER + 1 },
       }),
     ).toThrow("completion token count must be a non-negative safe integer");
-    expect(store.findJob(scope, projectId, running.id)).toMatchObject({
+    expect(store.jobs.findJob(scope, projectId, running.id)).toMatchObject({
       status: "running",
       events: [{ status: "running" }],
     });
-    expect(store.aggregateProjectUsage(scope, projectId, clock()).requestCount).toBe(0);
+    expect(store.jobs.aggregateProjectUsage(scope, projectId, clock()).requestCount).toBe(0);
   });
 
   it("keeps per-model, project, and daily totals exact at the safe boundary", async () => {
     const { scope, clock, store, projectId } = await openHarness();
-    store.recordCompletedProposalJob(scope, {
+    store.jobs.recordCompletedProposalJob(scope, {
       job: completedJob(projectId, clock()),
       usage: {
         ...usage(),
@@ -133,11 +137,11 @@ describe("safe usage persistence", () => {
         completionTokens: Number.MAX_SAFE_INTEGER - 5,
       },
     });
-    store.recordCompletedProposalJob(scope, {
+    store.jobs.recordCompletedProposalJob(scope, {
       job: completedJob(projectId, clock(), "beta"),
       usage: { ...usage("beta"), promptTokens: 3, completionTokens: 5 },
     });
-    const result = store.aggregateProjectUsage(scope, projectId, clock());
+    const result = store.jobs.aggregateProjectUsage(scope, projectId, clock());
     expect(result).toMatchObject({
       requestCount: 2,
       promptTokens: Number.MAX_SAFE_INTEGER,
@@ -156,15 +160,15 @@ describe("safe usage persistence", () => {
 
   it("fails when one model's individually safe rows have an unsafe sum", async () => {
     const { scope, clock, store, projectId } = await openHarness();
-    store.recordCompletedProposalJob(scope, {
+    store.jobs.recordCompletedProposalJob(scope, {
       job: completedJob(projectId, clock()),
       usage: { ...usage(), promptTokens: Number.MAX_SAFE_INTEGER },
     });
-    store.recordCompletedProposalJob(scope, {
+    store.jobs.recordCompletedProposalJob(scope, {
       job: completedJob(projectId, clock()),
       usage: { ...usage(), promptTokens: 1 },
     });
-    expect(() => store.aggregateProjectUsage(scope, projectId, clock())).toThrow(
+    expect(() => store.jobs.aggregateProjectUsage(scope, projectId, clock())).toThrow(
       "prompt token count must be a non-negative safe integer",
     );
   });

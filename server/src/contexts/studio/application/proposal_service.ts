@@ -27,7 +27,9 @@ export {
   SYSTEM_PROMPT,
 } from "./proposal_landing.js";
 
-import type { StudioStore } from "./ports/studio_store.js";
+import type { StudioJobLedgerStore } from "./ports/job_ledger_store.js";
+import type { ProposalAcceptanceStore } from "./ports/proposal_acceptance_store.js";
+import type { ProposalContextStore } from "./ports/proposal_context_store.js";
 import { scopeForPrincipal } from "./ports/studio_store.js";
 import type { ProposalStreamSession } from "./proposal_streaming.js";
 import { streamProposal } from "./proposal_streaming.js";
@@ -46,21 +48,27 @@ export interface ProposalDraftInput {
  * or persisted.
  */
 export class AiProposalService {
-  private readonly store: StudioStore;
+  private readonly proposalContext: ProposalContextStore;
+  private readonly jobs: StudioJobLedgerStore;
+  private readonly proposalAcceptance: ProposalAcceptanceStore;
   private readonly providerFactory: TextGenerationProviderFactory;
   private readonly inFlight: InFlightOperationGuard;
   private readonly now: () => Date;
   private readonly loreBudgetCharacters: number | undefined;
 
   constructor(
-    store: StudioStore,
+    proposalContext: ProposalContextStore,
+    jobs: StudioJobLedgerStore,
+    proposalAcceptance: ProposalAcceptanceStore,
     providerFactory: TextGenerationProviderFactory,
     inFlight: InFlightOperationGuard,
     now: () => Date = () => new Date(),
     /** Lorebook injection budget (#445); undefined keeps the adjudicated default. */
     loreBudgetCharacters?: number | undefined,
   ) {
-    this.store = store;
+    this.proposalContext = proposalContext;
+    this.jobs = jobs;
+    this.proposalAcceptance = proposalAcceptance;
     this.providerFactory = providerFactory;
     this.inFlight = inFlight;
     this.now = now;
@@ -94,7 +102,7 @@ export class AiProposalService {
     let provider: TextGenerationProvider | undefined;
 
     try {
-      const context = this.store.readProposalContext(scope, projectId, documentId);
+      const context = this.proposalContext.readProposalContext(scope, projectId, documentId);
       const { revision } = proposalRevisionFromContext(context);
       const seed = buildProposalSeed({
         projectId: context.projectId,
@@ -117,7 +125,7 @@ export class AiProposalService {
         const result = await provider.generateStructured(task);
         const { proposal } = validatedProposalOrThrow(result);
         return jobPayload(
-          completedProposalJob(this.store, scope, seed, revision.id, {
+          completedProposalJob(this.jobs, scope, seed, revision.id, {
             proposal,
             provider: providerName,
             model: result.model,
@@ -130,7 +138,7 @@ export class AiProposalService {
         if (!(error instanceof TextGenerationProviderError)) {
           throw error;
         }
-        return jobPayload(failedProposalJob(this.store, scope, seed, revision.id, error.message));
+        return jobPayload(failedProposalJob(this.jobs, scope, seed, revision.id, error.message));
       }
     } finally {
       try {
@@ -160,7 +168,8 @@ export class AiProposalService {
   ): ProposalStreamSession {
     return streamProposal(
       {
-        store: this.store,
+        proposalContext: this.proposalContext,
+        jobs: this.jobs,
         providerFactory: this.providerFactory,
         inFlight: this.inFlight,
         now: this.now,
@@ -184,7 +193,7 @@ export class AiProposalService {
    */
   adoptProposal(principal: Principal, projectId: string, jobId: string): Record<string, unknown> {
     return jobPayload(
-      this.store.acceptCompletedProposal(
+      this.proposalAcceptance.acceptCompletedProposal(
         scopeForPrincipal(principal),
         projectId,
         jobId,

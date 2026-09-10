@@ -10,8 +10,8 @@ import {
   NotFoundError,
   OperationInFlightError,
 } from "../../src/contexts/studio/domain/exceptions.js";
-import { DrizzleStudioStore } from "../../src/contexts/studio/infrastructure/drizzle_studio_store.js";
 import { JobStorePart } from "../../src/contexts/studio/infrastructure/job_store_part.js";
+import { ProjectStorePart } from "../../src/contexts/studio/infrastructure/project_store_part.js";
 import { AuthService } from "../../src/shared/application/auth_service.js";
 import { DrizzleAuthStore } from "../../src/shared/infrastructure/db/auth_store.js";
 import { openStudioDatabase } from "../../src/shared/infrastructure/db/startup.js";
@@ -49,7 +49,10 @@ async function openHarness() {
   };
   try {
     const now = new Date("2026-09-02T00:00:00.000Z");
-    const store = new DrizzleStudioStore({ database: studio.db });
+    const store = {
+      projects: new ProjectStorePart(studio.db),
+      jobs: new JobStorePart(studio.db),
+    };
     const auth = new AuthService({
       store: new DrizzleAuthStore(studio.db),
       sessionSecret: "job-retry-key-test-secret",
@@ -59,7 +62,7 @@ async function openHarness() {
     const principal = (await auth.createOwnerSession("retry-owner", "long-test-password"))
       .principal;
     const scope = scopeForPrincipal(principal);
-    const { project } = store.addProject(scope, {
+    const { project } = store.projects.addProject(scope, {
       title: "Retry idempotency",
       description: "",
       settingsJson: "{}",
@@ -77,7 +80,7 @@ describe("durable job retry identity", () => {
   it("claims one running job and first event for one source and request key", async () => {
     const { cleanup, now, projectId, scope, store } = await openHarness();
     try {
-      const source = store.addJob(scope, failedJob(projectId, now));
+      const source = store.jobs.addJob(scope, failedJob(projectId, now));
       const input = {
         projectId,
         sourceJobId: source.id,
@@ -85,7 +88,7 @@ describe("durable job retry identity", () => {
         now,
       };
 
-      const claimed = store.claimJobRetry(scope, input);
+      const claimed = store.jobs.claimJobRetry(scope, input);
 
       expect(claimed.created).toBe(true);
       expect(claimed.job).toMatchObject({
@@ -95,7 +98,7 @@ describe("durable job retry identity", () => {
       });
       expect(claimed.job.events.map((event) => event.status)).toEqual(["running"]);
       expect(
-        store.collectProjectJobSummaries(scope, projectId, { limit: jobPageLimit(50) }).jobs,
+        store.jobs.collectProjectJobSummaries(scope, projectId, { limit: jobPageLimit(50) }).jobs,
       ).toHaveLength(2);
     } finally {
       await cleanup();
@@ -105,19 +108,19 @@ describe("durable job retry identity", () => {
   it("reports a running claim in flight without adding another job or event", async () => {
     const { cleanup, now, projectId, scope, store } = await openHarness();
     try {
-      const source = store.addJob(scope, failedJob(projectId, now));
+      const source = store.jobs.addJob(scope, failedJob(projectId, now));
       const input = {
         projectId,
         sourceJobId: source.id,
         requestKey: "retry-key-00000002",
         now,
       };
-      const first = store.claimJobRetry(scope, input);
+      const first = store.jobs.claimJobRetry(scope, input);
 
-      expect(() => store.claimJobRetry(scope, input)).toThrow(OperationInFlightError);
-      expect(store.findJob(scope, projectId, first.job.id).events).toHaveLength(1);
+      expect(() => store.jobs.claimJobRetry(scope, input)).toThrow(OperationInFlightError);
+      expect(store.jobs.findJob(scope, projectId, first.job.id).events).toHaveLength(1);
       expect(
-        store.collectProjectJobSummaries(scope, projectId, { limit: jobPageLimit(50) }).jobs,
+        store.jobs.collectProjectJobSummaries(scope, projectId, { limit: jobPageLimit(50) }).jobs,
       ).toHaveLength(2);
     } finally {
       await cleanup();
@@ -127,15 +130,15 @@ describe("durable job retry identity", () => {
   it("replays the exact terminal retry without adding evidence", async () => {
     const { cleanup, now, projectId, scope, store } = await openHarness();
     try {
-      const source = store.addJob(scope, failedJob(projectId, now));
+      const source = store.jobs.addJob(scope, failedJob(projectId, now));
       const input = {
         projectId,
         sourceJobId: source.id,
         requestKey: "retry-key-00000003",
         now,
       };
-      const first = store.claimJobRetry(scope, input);
-      const completed = store.markJobOutcome(scope, projectId, first.job.id, {
+      const first = store.jobs.claimJobRetry(scope, input);
+      const completed = store.jobs.markJobOutcome(scope, projectId, first.job.id, {
         status: "completed",
         resultJson: '{"proposal_markdown":"done"}',
         error: null,
@@ -143,11 +146,11 @@ describe("durable job retry identity", () => {
         now: new Date(now.getTime() + 1),
       });
 
-      const replay = store.claimJobRetry(scope, input);
+      const replay = store.jobs.claimJobRetry(scope, input);
 
       expect(replay).toEqual({ job: completed, created: false });
       expect(
-        store.collectProjectJobSummaries(scope, projectId, { limit: jobPageLimit(50) }).jobs,
+        store.jobs.collectProjectJobSummaries(scope, projectId, { limit: jobPageLimit(50) }).jobs,
       ).toHaveLength(2);
     } finally {
       await cleanup();
@@ -157,21 +160,21 @@ describe("durable job retry identity", () => {
   it("creates a distinct retry for a different request key", async () => {
     const { cleanup, now, projectId, scope, store } = await openHarness();
     try {
-      const source = store.addJob(scope, failedJob(projectId, now));
-      const first = store.claimJobRetry(scope, {
+      const source = store.jobs.addJob(scope, failedJob(projectId, now));
+      const first = store.jobs.claimJobRetry(scope, {
         projectId,
         sourceJobId: source.id,
         requestKey: "retry-key-00000004",
         now,
       });
-      store.markJobOutcome(scope, projectId, first.job.id, {
+      store.jobs.markJobOutcome(scope, projectId, first.job.id, {
         status: "failed",
         error: "retry failed",
         eventDetailsJson: '{"error":"retry failed"}',
         now: new Date(now.getTime() + 1),
       });
 
-      const second = store.claimJobRetry(scope, {
+      const second = store.jobs.claimJobRetry(scope, {
         projectId,
         sourceJobId: source.id,
         requestKey: "retry-key-00000005",
@@ -189,24 +192,24 @@ describe("durable job retry identity", () => {
   it("does not disclose or collide with a retry outside the scoped project", async () => {
     const { cleanup, now, projectId, scope, store } = await openHarness();
     try {
-      const source = store.addJob(scope, failedJob(projectId, now));
-      store.claimJobRetry(scope, {
+      const source = store.jobs.addJob(scope, failedJob(projectId, now));
+      store.jobs.claimJobRetry(scope, {
         projectId,
         sourceJobId: source.id,
         requestKey: "retry-key-00000006",
         now,
       });
-      const { project: otherProject } = store.addProject(scope, {
+      const { project: otherProject } = store.projects.addProject(scope, {
         title: "Other retry scope",
         description: "",
         settingsJson: "{}",
         seed: null,
         now,
       });
-      const otherSource = store.addJob(scope, failedJob(otherProject.id, now));
+      const otherSource = store.jobs.addJob(scope, failedJob(otherProject.id, now));
 
       expect(() =>
-        store.claimJobRetry(
+        store.jobs.claimJobRetry(
           { ownerId: "another-owner" },
           {
             projectId,
@@ -217,7 +220,7 @@ describe("durable job retry identity", () => {
         ),
       ).toThrow(NotFoundError);
       expect(() =>
-        store.claimJobRetry(scope, {
+        store.jobs.claimJobRetry(scope, {
           projectId: otherProject.id,
           sourceJobId: source.id,
           requestKey: "retry-key-00000006",
@@ -225,7 +228,7 @@ describe("durable job retry identity", () => {
         }),
       ).toThrow(NotFoundError);
       expect(
-        store.claimJobRetry(scope, {
+        store.jobs.claimJobRetry(scope, {
           projectId: otherProject.id,
           sourceJobId: otherSource.id,
           requestKey: "retry-key-00000006",
@@ -245,7 +248,7 @@ describe("durable job retry identity", () => {
       }
     }
     try {
-      const source = store.addJob(scope, failedJob(projectId, now));
+      const source = store.jobs.addJob(scope, failedJob(projectId, now));
       const input = {
         projectId,
         sourceJobId: source.id,
@@ -257,9 +260,9 @@ describe("durable job retry identity", () => {
         "simulated retry first-event failure",
       );
       expect(
-        store.collectProjectJobSummaries(scope, projectId, { limit: jobPageLimit(50) }).jobs,
+        store.jobs.collectProjectJobSummaries(scope, projectId, { limit: jobPageLimit(50) }).jobs,
       ).toHaveLength(1);
-      expect(store.claimJobRetry(scope, input).created).toBe(true);
+      expect(store.jobs.claimJobRetry(scope, input).created).toBe(true);
     } finally {
       await cleanup();
     }
@@ -269,18 +272,18 @@ describe("durable job retry identity", () => {
     const { cleanup, databasePath, now, projectId, scope, store, studio } = await openHarness();
     let reopened: Awaited<ReturnType<typeof openStudioDatabase>> | undefined;
     try {
-      const source = store.addJob(scope, failedJob(projectId, now));
+      const source = store.jobs.addJob(scope, failedJob(projectId, now));
       const input = {
         projectId,
         sourceJobId: source.id,
         requestKey: "retry-key-00000008",
         now,
       };
-      const running = store.claimJobRetry(scope, input);
+      const running = store.jobs.claimJobRetry(scope, input);
       studio.close();
 
       reopened = await openStudioDatabase(databasePath);
-      const restartedStore = new DrizzleStudioStore({ database: reopened.db });
+      const restartedStore = new JobStorePart(reopened.db);
       const replay = restartedStore.claimJobRetry(scope, input);
 
       expect(replay.created).toBe(false);

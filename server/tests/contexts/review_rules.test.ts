@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { ReviewSnapshotDocument } from "../../src/contexts/studio/application/ports/studio_store.js";
+import type { ReviewSnapshotDocument } from "../../src/contexts/studio/application/ports/review_outcome_store.js";
 import {
   chapterWordCounts,
   coerceEditorialFindings,

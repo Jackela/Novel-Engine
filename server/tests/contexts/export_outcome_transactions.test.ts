@@ -13,9 +13,12 @@ import {
   projectSnapshots,
   snapshotDocuments,
 } from "../../src/contexts/studio/infrastructure/db/schema.js";
-import { DrizzleStudioStore } from "../../src/contexts/studio/infrastructure/drizzle_studio_store.js";
 import { FilesystemExportArtifactGateway } from "../../src/contexts/studio/infrastructure/export_artifact_files.js";
 import { ExportStorePart } from "../../src/contexts/studio/infrastructure/export_store_part.js";
+import { JobStorePart } from "../../src/contexts/studio/infrastructure/job_store_part.js";
+import { ProjectStorePart } from "../../src/contexts/studio/infrastructure/project_store_part.js";
+import { ProposalContextStorePart } from "../../src/contexts/studio/infrastructure/proposal_context_store_part.js";
+import { ReviewStorePart } from "../../src/contexts/studio/infrastructure/review_store_part.js";
 import { AuthService } from "../../src/shared/application/auth_service.js";
 import { DrizzleAuthStore } from "../../src/shared/infrastructure/db/auth_store.js";
 import { jobEvents, jobs } from "../../src/shared/infrastructure/db/schema.js";
@@ -37,7 +40,12 @@ async function openHarness() {
   directories.push(directory);
   const database = await openStudioDatabase(join(directory, "novel-engine.sqlite3"));
   const now = clock();
-  const store = new DrizzleStudioStore({ database: database.db });
+  const parts = {
+    projects: new ProjectStorePart(database.db),
+    jobs: new JobStorePart(database.db),
+    reviewOutcomes: new ReviewStorePart(database.db),
+    proposalContext: new ProposalContextStorePart(database.db),
+  };
   const auth = new AuthService({
     store: new DrizzleAuthStore(database.db),
     sessionSecret: "export-outcome-test-secret",
@@ -47,7 +55,7 @@ async function openHarness() {
   const principal = (await auth.createOwnerSession("export-outcome-owner", "long-test-password"))
     .principal;
   const scope = scopeForPrincipal(principal);
-  const seeded = store.addProject(scope, {
+  const seeded = parts.projects.addProject(scope, {
     title: "Atomic export",
     description: "",
     settingsJson: "{}",
@@ -59,7 +67,7 @@ async function openHarness() {
     },
     now: now(),
   });
-  return { database, directory, now, principal, project: seeded.project, scope, store };
+  return { database, directory, now, parts, principal, project: seeded.project, scope };
 }
 
 function evidenceCounts(database: Awaited<ReturnType<typeof openHarness>>["database"]) {
@@ -82,19 +90,26 @@ function exportHistory(
     new FilesystemExportArtifactGateway(harness.directory),
     { now: harness.now, newId: () => artifactId },
   );
-  const reviews = new ReviewService(harness.store, {
+  const reviews = new ReviewService(harness.parts.reviewOutcomes, {
     now: harness.now,
     providerFactory: () => {
       throw new Error("unexpected provider request");
     },
   });
-  return new JobHistoryService(harness.store, reviews, artifacts, {
-    now: harness.now,
-    providerFactory: () => {
-      throw new Error("unexpected provider request");
+  return new JobHistoryService(
+    harness.parts.jobs,
+    harness.parts.reviewOutcomes,
+    harness.parts.proposalContext,
+    reviews,
+    artifacts,
+    {
+      now: harness.now,
+      providerFactory: () => {
+        throw new Error("unexpected provider request");
+      },
+      inFlight: new InFlightOperationGuard(),
     },
-    inFlight: new InFlightOperationGuard(),
-  });
+  );
 }
 
 describe("export outcome transactions", () => {

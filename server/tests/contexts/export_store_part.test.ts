@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { and, eq } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
-
+import { createStudioPersistence } from "../../src/apps/studio_persistence.js";
 import { DocumentService } from "../../src/contexts/studio/application/document_service.js";
 import { exportArtifactNames } from "../../src/contexts/studio/application/export_artifact_identity.js";
 import { SnapshotArtifactService } from "../../src/contexts/studio/application/export_artifact_service.js";
@@ -20,7 +20,6 @@ import {
 } from "../../src/contexts/studio/application/ports/studio_store.js";
 import { ProjectService } from "../../src/contexts/studio/application/project_service.js";
 import { projectSnapshots } from "../../src/contexts/studio/infrastructure/db/schema.js";
-import { DrizzleStudioStore } from "../../src/contexts/studio/infrastructure/drizzle_studio_store.js";
 import { ExportStorePart } from "../../src/contexts/studio/infrastructure/export_store_part.js";
 import { AuthService } from "../../src/shared/application/auth_service.js";
 import { InvalidOperationError } from "../../src/shared/domain/exceptions.js";
@@ -49,9 +48,9 @@ async function openHarness() {
   const directory = await mkdtemp(join(tmpdir(), "novel-engine-export-store-"));
   const studio = await openStudioDatabase(join(directory, "novel-engine.sqlite3"));
   const clock = monotonicClock();
-  const store = new DrizzleStudioStore({ database: studio.db });
-  const projects = new ProjectService(store, clock);
-  const documents = new DocumentService(store, clock);
+  const store = createStudioPersistence(studio.db);
+  const projects = new ProjectService(store.projects, store.volumes, clock);
+  const documents = new DocumentService(store.documents, store.volumes, clock);
   const auth = new AuthService({
     store: new DrizzleAuthStore(studio.db),
     sessionSecret: "export-store-test-secret",
@@ -184,7 +183,7 @@ describe("ExportStorePart", () => {
           }),
         ).toEqual({ artifacts: [], nextCursor: null });
         expect(
-          harness.store.collectProjectJobSummaries(harness.scope, projectId, {
+          harness.store.jobs.collectProjectJobSummaries(harness.scope, projectId, {
             limit: jobPageLimit(50),
           }).jobs,
         ).toEqual([]);
@@ -231,8 +230,12 @@ describe("ExportStorePart", () => {
         prepared(first, "artifact-first", "markdown", harness.clock()),
       ).artifact;
 
-      const source = harness.store.readReviewSource(harness.scope, projectId, harness.clock());
-      harness.store.recordCompletedReviewJob(harness.scope, {
+      const source = harness.store.reviewOutcomes.readReviewSource(
+        harness.scope,
+        projectId,
+        harness.clock(),
+      );
+      harness.store.reviewOutcomes.recordCompletedReviewJob(harness.scope, {
         source,
         provider: "mock",
         model: "deterministic-story-v1",

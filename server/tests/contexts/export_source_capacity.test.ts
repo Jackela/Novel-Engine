@@ -13,8 +13,8 @@ import {
   buildBoundedCurrentDocumentCountQuery,
   buildBoundedSnapshotDocumentCountQuery,
 } from "../../src/contexts/studio/infrastructure/db/export_source_capacity.js";
-import { DrizzleStudioStore } from "../../src/contexts/studio/infrastructure/drizzle_studio_store.js";
 import { ExportStorePart } from "../../src/contexts/studio/infrastructure/export_store_part.js";
+import { ProjectStorePart } from "../../src/contexts/studio/infrastructure/project_store_part.js";
 import { AuthService } from "../../src/shared/application/auth_service.js";
 import { DrizzleAuthStore } from "../../src/shared/infrastructure/db/auth_store.js";
 import { openStudioDatabase } from "../../src/shared/infrastructure/db/startup.js";
@@ -130,7 +130,7 @@ async function openHarness(title: string) {
   const directory = await mkdtemp(join(tmpdir(), "novel-engine-export-source-capacity-"));
   directories.push(directory);
   const database = await openStudioDatabase(join(directory, "novel-engine.sqlite3"));
-  const store = new DrizzleStudioStore({ database: database.db });
+  const projects = new ProjectStorePart(database.db);
   const auth = new AuthService({
     store: new DrizzleAuthStore(database.db),
     sessionSecret: "export-source-capacity-secret",
@@ -140,7 +140,7 @@ async function openHarness(title: string) {
   const principal = (await auth.createOwnerSession("export-capacity-owner", "long-test-password"))
     .principal;
   const scope = scopeForPrincipal(principal);
-  const seeded = store.addProject(scope, {
+  const seeded = projects.addProject(scope, {
     title,
     description: "",
     settingsJson: "{}",

@@ -10,12 +10,15 @@ import {
 } from "../../src/contexts/ai/application/ports/text_generation.js";
 import { textProviderFactory } from "../../src/contexts/ai/infrastructure/providers/text_provider_factory.js";
 import { InFlightOperationGuard } from "../../src/contexts/studio/application/operation_in_flight.js";
-import type { StudioStore } from "../../src/contexts/studio/application/ports/studio_store.js";
 import { ProjectService } from "../../src/contexts/studio/application/project_service.js";
 import { AiProposalService } from "../../src/contexts/studio/application/proposal_service.js";
 import type { ProposalStreamSession } from "../../src/contexts/studio/application/proposal_streaming.js";
 import { documentRevisions } from "../../src/contexts/studio/infrastructure/db/schema.js";
-import { DrizzleStudioStore } from "../../src/contexts/studio/infrastructure/drizzle_studio_store.js";
+import { JobStorePart } from "../../src/contexts/studio/infrastructure/job_store_part.js";
+import { ProjectStorePart } from "../../src/contexts/studio/infrastructure/project_store_part.js";
+import { ProposalAcceptanceStorePart } from "../../src/contexts/studio/infrastructure/proposal_acceptance_store_part.js";
+import { ProposalContextStorePart } from "../../src/contexts/studio/infrastructure/proposal_context_store_part.js";
+import { VolumeStorePart } from "../../src/contexts/studio/infrastructure/volume_store_part.js";
 import {
   ProposalStreamDrainTimeoutError,
   writeProposalStreamResponse,
@@ -51,9 +54,11 @@ async function openProposalStreamHarness(
   const directory = await mkdtemp(join(tmpdir(), "novel-engine-proposal-stream-"));
   const studio = await openStudioDatabase(join(directory, DATABASE_FILENAME));
   const now = (): Date => new Date();
-  const store: StudioStore = new DrizzleStudioStore({
-    database: studio.db,
-  });
+  const proposalContext = new ProposalContextStorePart(studio.db);
+  const jobs = new JobStorePart(studio.db);
+  const proposalAcceptance = new ProposalAcceptanceStorePart(studio.db);
+  const projects = new ProjectStorePart(studio.db);
+  const volumes = new VolumeStorePart(studio.db);
   const inFlight = new InFlightOperationGuard();
   const auth = new AuthService({
     store: new DrizzleAuthStore(studio.db),
@@ -62,8 +67,15 @@ async function openProposalStreamHarness(
   });
   await auth.configureOwner("streamer", "long-test-password");
   return {
-    proposals: new AiProposalService(store, providerFactory, inFlight, now),
-    projects: new ProjectService(store, now, { inFlight }),
+    proposals: new AiProposalService(
+      proposalContext,
+      jobs,
+      proposalAcceptance,
+      providerFactory,
+      inFlight,
+      now,
+    ),
+    projects: new ProjectService(projects, volumes, now, { inFlight }),
     principal: (await auth.createOwnerSession("streamer", "long-test-password")).principal,
     db: studio.db,
     cleanup: async () => {

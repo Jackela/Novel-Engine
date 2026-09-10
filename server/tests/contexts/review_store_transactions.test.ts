@@ -14,7 +14,9 @@ import {
   reviews,
   snapshotDocuments,
 } from "../../src/contexts/studio/infrastructure/db/schema.js";
-import { DrizzleStudioStore } from "../../src/contexts/studio/infrastructure/drizzle_studio_store.js";
+import { DocumentStorePart } from "../../src/contexts/studio/infrastructure/document_store_part.js";
+import { JobStorePart } from "../../src/contexts/studio/infrastructure/job_store_part.js";
+import { ProjectStorePart } from "../../src/contexts/studio/infrastructure/project_store_part.js";
 import { ReviewStorePart } from "../../src/contexts/studio/infrastructure/review_store_part.js";
 import { AuthService } from "../../src/shared/application/auth_service.js";
 import { DrizzleAuthStore } from "../../src/shared/infrastructure/db/auth_store.js";
@@ -46,7 +48,11 @@ async function openHarness() {
   directories.push(directory);
   const database = await openStudioDatabase(join(directory, "novel-engine.sqlite3"));
   const now = clock();
-  const store = new DrizzleStudioStore({ database: database.db });
+  const store = {
+    projects: new ProjectStorePart(database.db),
+    documents: new DocumentStorePart(database.db),
+    jobs: new JobStorePart(database.db),
+  };
   const auth = new AuthService({
     store: new DrizzleAuthStore(database.db),
     sessionSecret: "review-outcome-test-secret",
@@ -56,7 +62,7 @@ async function openHarness() {
   const principal = (await auth.createOwnerSession("review-outcome-owner", "long-test-password"))
     .principal;
   const scope = scopeForPrincipal(principal);
-  const seeded = store.addProject(scope, {
+  const seeded = store.projects.addProject(scope, {
     title: "Atomic review",
     description: "",
     settingsJson: "{}",
@@ -108,7 +114,7 @@ describe("review outcome transactions", () => {
     try {
       const sourceDocument = harness.evaluation.source.documents[0];
       if (sourceDocument === undefined) throw new Error("Expected a captured source document.");
-      const advanced = harness.store.advanceDocument(
+      const advanced = harness.store.documents.advanceDocument(
         harness.scope,
         harness.project.id,
         harness.document.id,
@@ -152,7 +158,7 @@ describe("review outcome transactions", () => {
         "simulated completed review event failure",
       );
       expect(evidenceCounts(harness.database.db)).toEqual(NO_REVIEW_ROWS);
-      harness.store.dropDocument(harness.scope, harness.project.id, harness.document.id);
+      harness.store.documents.dropDocument(harness.scope, harness.project.id, harness.document.id);
     } finally {
       harness.database.close();
     }
@@ -171,7 +177,7 @@ describe("review outcome transactions", () => {
         "simulated review insert failure",
       );
       expect(evidenceCounts(harness.database.db)).toEqual(NO_REVIEW_ROWS);
-      harness.store.dropDocument(harness.scope, harness.project.id, harness.document.id);
+      harness.store.documents.dropDocument(harness.scope, harness.project.id, harness.document.id);
     } finally {
       harness.database.close();
     }
@@ -203,7 +209,7 @@ describe("review outcome transactions", () => {
   it("rolls review evidence back when a retry transition fails", async () => {
     const harness = await openHarness();
     try {
-      const original = harness.store.addJob(harness.scope, {
+      const original = harness.store.jobs.addJob(harness.scope, {
         projectId: harness.project.id,
         documentId: null,
         kind: "review",
@@ -217,7 +223,7 @@ describe("review outcome transactions", () => {
         eventDetailsJson: "{}",
         now: harness.now(),
       });
-      const retry = harness.store.addJob(harness.scope, {
+      const retry = harness.store.jobs.addJob(harness.scope, {
         projectId: harness.project.id,
         documentId: null,
         kind: "review",
@@ -232,7 +238,7 @@ describe("review outcome transactions", () => {
         eventDetailsJson: JSON.stringify({ retry_of: original.id }),
         now: harness.now(),
       });
-      const retryBefore = harness.store.findJob(harness.scope, harness.project.id, retry.id);
+      const retryBefore = harness.store.jobs.findJob(harness.scope, harness.project.id, retry.id);
       class ExplodingRetryEventStore extends ReviewStorePart {
         protected override beforeRetryEventInsert(): never {
           throw new Error("simulated review retry event failure");
@@ -255,7 +261,7 @@ describe("review outcome transactions", () => {
         jobs: 2,
         events: 2,
       });
-      const retryAfter = harness.store.findJob(harness.scope, harness.project.id, retry.id);
+      const retryAfter = harness.store.jobs.findJob(harness.scope, harness.project.id, retry.id);
       expect(retryAfter).toMatchObject({
         status: "running",
         model: "",
@@ -264,7 +270,7 @@ describe("review outcome transactions", () => {
       });
       expect(retryAfter.updatedAt).toEqual(retryBefore.updatedAt);
       expect(retryAfter.events).toEqual(retryBefore.events);
-      harness.store.dropDocument(harness.scope, harness.project.id, harness.document.id);
+      harness.store.documents.dropDocument(harness.scope, harness.project.id, harness.document.id);
     } finally {
       harness.database.close();
     }
@@ -292,7 +298,7 @@ describe("review outcome transactions", () => {
         .set({ contentMarkdown: sourceDocument.contentMarkdown })
         .where(eq(documentRevisions.id, sourceDocument.revisionId))
         .run();
-      harness.store.dropDocument(harness.scope, harness.project.id, harness.document.id);
+      harness.store.documents.dropDocument(harness.scope, harness.project.id, harness.document.id);
       expect(() =>
         new ReviewStorePart(harness.database.db).recordCompletedReviewJob(
           harness.scope,

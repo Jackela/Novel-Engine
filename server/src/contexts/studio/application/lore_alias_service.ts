@@ -4,7 +4,8 @@ import { isLoreStatus, type LoreStatus } from "../domain/kinds.js";
 import { normalizeLoreAliases, parseLoreAliases } from "./lorebook.js";
 import type { LoreAliasPayload, LoreStatusPayload } from "./payload_schemas/lore.js";
 import { loreAliasPayload, loreStatusPayload } from "./payloads.js";
-import type { StudioStore } from "./ports/studio_store.js";
+import type { DocumentStore } from "./ports/document_store.js";
+import type { StudioLoreStore } from "./ports/lore_store.js";
 import { scopeForPrincipal } from "./ports/studio_store.js";
 
 /**
@@ -16,17 +17,23 @@ import { scopeForPrincipal } from "./ports/studio_store.js";
  * status. Neither write mints a revision.
  */
 export class LoreAliasService {
-  private readonly store: StudioStore;
+  private readonly documents: DocumentStore;
+  private readonly lore: StudioLoreStore;
   private readonly now: () => Date;
 
-  constructor(store: StudioStore, now: () => Date = () => new Date()) {
-    this.store = store;
+  constructor(documents: DocumentStore, lore: StudioLoreStore, now: () => Date = () => new Date()) {
+    this.documents = documents;
+    this.lore = lore;
     this.now = now;
   }
 
   /** The stored alias list of one document, normalized defensively on read. */
   listDocumentLoreAliases(principal: Principal, projectId: string, documentId: string): string[] {
-    const document = this.store.findDocument(scopeForPrincipal(principal), projectId, documentId);
+    const document = this.documents.findDocument(
+      scopeForPrincipal(principal),
+      projectId,
+      documentId,
+    );
     return normalizeLoreAliases(parseLoreAliases(document.loreAliasesJson));
   }
 
@@ -38,7 +45,7 @@ export class LoreAliasService {
     input: { aliases: readonly string[] },
   ): LoreAliasPayload {
     const normalized = normalizeLoreAliases(input.aliases);
-    this.store.setLoreAliases(scopeForPrincipal(principal), projectId, documentId, {
+    this.lore.setLoreAliases(scopeForPrincipal(principal), projectId, documentId, {
       aliases: normalized,
       now: this.now(),
     });
@@ -63,7 +70,7 @@ export class LoreAliasService {
       );
     }
     const status: LoreStatus = input.status;
-    this.store.setLoreStatus(scopeForPrincipal(principal), projectId, documentId, {
+    this.lore.setLoreStatus(scopeForPrincipal(principal), projectId, documentId, {
       status,
       now: this.now(),
     });

@@ -8,7 +8,10 @@ import type {
   TextGenerationProviderFactory,
 } from "../../src/contexts/ai/application/ports/text_generation.js";
 import { scopeForPrincipal } from "../../src/contexts/studio/application/ports/studio_store.js";
-import { createStudioServices } from "../../src/contexts/studio/application/studio_services.js";
+import {
+  createStudioServices,
+  type StudioPersistence,
+} from "../../src/contexts/studio/application/studio_services.js";
 import {
   OperationCapacityExceededError,
   OperationInFlightError,
@@ -18,8 +21,15 @@ import {
   projectSnapshots,
   reviews,
 } from "../../src/contexts/studio/infrastructure/db/schema.js";
-import { DrizzleStudioStore } from "../../src/contexts/studio/infrastructure/drizzle_studio_store.js";
+import { DocumentStorePart } from "../../src/contexts/studio/infrastructure/document_store_part.js";
 import { ExportStorePart } from "../../src/contexts/studio/infrastructure/export_store_part.js";
+import { JobStorePart } from "../../src/contexts/studio/infrastructure/job_store_part.js";
+import { LoreStorePart } from "../../src/contexts/studio/infrastructure/lore_store_part.js";
+import { ProjectStorePart } from "../../src/contexts/studio/infrastructure/project_store_part.js";
+import { ProposalAcceptanceStorePart } from "../../src/contexts/studio/infrastructure/proposal_acceptance_store_part.js";
+import { ProposalContextStorePart } from "../../src/contexts/studio/infrastructure/proposal_context_store_part.js";
+import { ReviewStorePart } from "../../src/contexts/studio/infrastructure/review_store_part.js";
+import { VolumeStorePart } from "../../src/contexts/studio/infrastructure/volume_store_part.js";
 import { AuthService } from "../../src/shared/application/auth_service.js";
 import { DrizzleAuthStore } from "../../src/shared/infrastructure/db/auth_store.js";
 import { jobEvents, jobs, usageEvents } from "../../src/shared/infrastructure/db/schema.js";
@@ -107,7 +117,17 @@ describe("Studio expensive-workflow capacity", () => {
     const directory = await mkdtemp(join(tmpdir(), "novel-engine-operation-capacity-"));
     directories.push(directory);
     const database = await openStudioDatabase(join(directory, "novel-engine.sqlite3"));
-    const store = new DrizzleStudioStore({ database: database.db });
+    const jobStore = new JobStorePart(database.db);
+    const store: StudioPersistence = {
+      projects: new ProjectStorePart(database.db),
+      documents: new DocumentStorePart(database.db),
+      volumes: new VolumeStorePart(database.db),
+      lore: new LoreStorePart(database.db),
+      jobs: jobStore,
+      reviewOutcomes: new ReviewStorePart(database.db),
+      proposalContext: new ProposalContextStorePart(database.db),
+      proposalAcceptance: new ProposalAcceptanceStorePart(database.db),
+    };
     const provider = deferredFirstProvider();
     let artifactWrites = 0;
     let projectCleanups = 0;
@@ -176,7 +196,7 @@ describe("Studio expensive-workflow capacity", () => {
       const scope = scopeForPrincipal(principal);
       const retryKinds = ["proposal", "review", "export"] as const;
       const retryJobs = retryKinds.map((kind) =>
-        store.addJob(scope, {
+        jobStore.addJob(scope, {
           projectId: secondProject.id,
           documentId: kind === "proposal" ? secondDocument.id : null,
           kind,

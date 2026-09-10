@@ -11,9 +11,9 @@ import {
   jobPageLimit,
 } from "../../src/contexts/studio/application/ports/job_records.js";
 import { scopeForPrincipal } from "../../src/contexts/studio/application/ports/studio_store.js";
-import { DrizzleStudioStore } from "../../src/contexts/studio/infrastructure/drizzle_studio_store.js";
 import { buildProjectJobSummariesQuery } from "../../src/contexts/studio/infrastructure/job_page_queries.js";
 import { JobStorePart } from "../../src/contexts/studio/infrastructure/job_store_part.js";
+import { ProjectStorePart } from "../../src/contexts/studio/infrastructure/project_store_part.js";
 import { AuthService } from "../../src/shared/application/auth_service.js";
 import { DrizzleAuthStore } from "../../src/shared/infrastructure/db/auth_store.js";
 import * as databaseSchema from "../../src/shared/infrastructure/db/schema.js";
@@ -53,7 +53,7 @@ async function openHarness() {
     }
   };
   try {
-    const store = new DrizzleStudioStore({ database: studio.db });
+    const store = { projects: new ProjectStorePart(studio.db) };
     const now = new Date("2026-09-02T00:00:00.000Z");
     const auth = new AuthService({
       store: new DrizzleAuthStore(studio.db),
@@ -63,7 +63,7 @@ async function openHarness() {
     await auth.configureOwner("page-owner", "long-test-password");
     const principal = (await auth.createOwnerSession("page-owner", "long-test-password")).principal;
     const scope = scopeForPrincipal(principal);
-    const { project } = store.addProject(scope, {
+    const { project } = store.projects.addProject(scope, {
       title: "Job page",
       description: "",
       settingsJson: "{}",
@@ -197,7 +197,7 @@ describe("project job keyset pages", () => {
         schema: databaseSchema,
         logger: { logQuery: (query: string) => executedSql.push(query) },
       });
-      const publicStore = new DrizzleStudioStore({ database: tracedDatabase });
+      const publicStore = new JobStorePart(tracedDatabase);
 
       const page = publicStore.collectProjectJobSummaries(scope, projectId, {
         limit: jobPageLimit(50),

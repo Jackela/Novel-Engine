@@ -1,8 +1,8 @@
 import type { Principal } from "../../../shared/application/ports/auth.js";
 import { InvalidOperationError } from "../../../shared/domain/exceptions.js";
 import { documentPayload, volumePayload } from "./payloads.js";
-import type { StudioStore } from "./ports/studio_store.js";
 import { scopeForPrincipal } from "./ports/studio_store.js";
+import type { StudioVolumeStore } from "./ports/volume_store.js";
 
 /**
  * Volume surface of the fixed two-level hierarchy (ADR-0005): CRUD with the
@@ -11,10 +11,10 @@ import { scopeForPrincipal } from "./ports/studio_store.js";
  * client methods (create/update/delete/reorder/move).
  */
 export class VolumeService {
-  private readonly store: StudioStore;
+  private readonly store: StudioVolumeStore;
   private readonly now: () => Date;
 
-  constructor(store: StudioStore, now: () => Date = () => new Date()) {
+  constructor(store: StudioVolumeStore, now: () => Date = () => new Date()) {
     this.store = store;
     this.now = now;
   }

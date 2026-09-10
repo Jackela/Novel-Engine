@@ -9,8 +9,8 @@ import {
 } from "../../src/contexts/studio/application/ports/job_records.js";
 import { scopeForPrincipal } from "../../src/contexts/studio/application/ports/studio_store.js";
 import { InvalidJobTransitionError } from "../../src/contexts/studio/domain/exceptions.js";
-import { DrizzleStudioStore } from "../../src/contexts/studio/infrastructure/drizzle_studio_store.js";
 import { JobStorePart } from "../../src/contexts/studio/infrastructure/job_store_part.js";
+import { ProjectStorePart } from "../../src/contexts/studio/infrastructure/project_store_part.js";
 import { AuthService } from "../../src/shared/application/auth_service.js";
 import { DrizzleAuthStore } from "../../src/shared/infrastructure/db/auth_store.js";
 import { openStudioDatabase } from "../../src/shared/infrastructure/db/startup.js";
@@ -59,7 +59,10 @@ async function openHarness() {
   const directory = await mkdtemp(join(tmpdir(), "novel-engine-job-store-tx-"));
   const studio = await openStudioDatabase(join(directory, "novel-engine.sqlite3"));
   const clock = monotonicClock();
-  const store = new DrizzleStudioStore({ database: studio.db });
+  const store = {
+    projects: new ProjectStorePart(studio.db),
+    jobs: new JobStorePart(studio.db),
+  };
   // Projects reference the owners table, so the harness registers a real owner.
   const auth = new AuthService({
     store: new DrizzleAuthStore(studio.db),
@@ -69,7 +72,7 @@ async function openHarness() {
   await auth.configureOwner("ledger-owner", "long-test-password");
   const principal = (await auth.createOwnerSession("ledger-owner", "long-test-password")).principal;
   const scope = scopeForPrincipal(principal);
-  const { project } = store.addProject(scope, {
+  const { project } = store.projects.addProject(scope, {
     title: "Ledger",
     description: "",
     settingsJson: "{}",
@@ -89,12 +92,12 @@ async function openHarness() {
 describe("atomic completed-proposal landing (#392)", () => {
   it("commits the job row and its usage event together", async () => {
     const { scope, clock, store, projectId } = await openHarness();
-    const job = store.recordCompletedProposalJob(scope, {
+    const job = store.jobs.recordCompletedProposalJob(scope, {
       job: completedJobInput(projectId, clock()),
       usage: usageInput(),
     });
     expect(job.status).toBe("completed");
-    const usage = store.aggregateProjectUsage(scope, projectId, new Date());
+    const usage = store.jobs.aggregateProjectUsage(scope, projectId, new Date());
     expect(usage.requestCount).toBe(1);
     expect(usage.promptTokens).toBe(3);
     expect(usage.completionTokens).toBe(5);
@@ -118,9 +121,9 @@ describe("atomic completed-proposal landing (#392)", () => {
 
     // The whole transaction rolled back: no job row, no usage event.
     expect(
-      store.collectProjectJobSummaries(scope, projectId, { limit: jobPageLimit(50) }).jobs,
+      store.jobs.collectProjectJobSummaries(scope, projectId, { limit: jobPageLimit(50) }).jobs,
     ).toEqual([]);
-    const usage = store.aggregateProjectUsage(scope, projectId, new Date());
+    const usage = store.jobs.aggregateProjectUsage(scope, projectId, new Date());
     expect(usage.requestCount).toBe(0);
   });
 });
@@ -129,11 +132,11 @@ describe("atomic retry completion with usage (#392)", () => {
   it("commits the outcome transition and its usage event together", async () => {
     const { scope, clock, store, projectId } = await openHarness();
     const tiedAt = clock();
-    const running = store.addJob(scope, {
+    const running = store.jobs.addJob(scope, {
       ...completedJobInput(projectId, tiedAt),
       status: "running",
     });
-    const done = store.markJobOutcomeWithUsage(scope, projectId, running.id, {
+    const done = store.jobs.markJobOutcomeWithUsage(scope, projectId, running.id, {
       outcome: {
         status: "completed",
         model: "retry-model",
@@ -147,16 +150,16 @@ describe("atomic retry completion with usage (#392)", () => {
     expect(done.status).toBe("completed");
     expect(done.model).toBe("retry-model");
     expect(done.events.map((event) => event.status)).toEqual(["running", "completed"]);
-    expect(store.findJob(scope, projectId, running.id).events.map((event) => event.status)).toEqual(
-      ["running", "completed"],
-    );
-    const usage = store.aggregateProjectUsage(scope, projectId, new Date());
+    expect(
+      store.jobs.findJob(scope, projectId, running.id).events.map((event) => event.status),
+    ).toEqual(["running", "completed"]);
+    const usage = store.jobs.aggregateProjectUsage(scope, projectId, new Date());
     expect(usage.requestCount).toBe(1);
   });
 
   it("rolls back both writes when the usage insert fails after the transition", async () => {
     const { scope, clock, store, jobs, db, projectId } = await openHarness();
-    const running = store.addJob(scope, {
+    const running = store.jobs.addJob(scope, {
       ...completedJobInput(projectId, clock()),
       status: "running",
     });
@@ -181,7 +184,7 @@ describe("atomic retry completion with usage (#392)", () => {
     ).toThrow("simulated ledger failure after the outcome transition");
 
     // The transition rolled back with the usage write: the job stays running.
-    expect(store.findJob(scope, projectId, running.id).status).toBe("running");
+    expect(store.jobs.findJob(scope, projectId, running.id).status).toBe("running");
     expect(jobs.aggregateProjectUsage(scope, projectId, new Date()).requestCount).toBe(0);
   });
 });
@@ -189,11 +192,11 @@ describe("atomic retry completion with usage (#392)", () => {
 describe("job transition guard (#392)", () => {
   it("allows a terminal outcome on a running job", async () => {
     const { scope, clock, store, projectId } = await openHarness();
-    const running = store.addJob(scope, {
+    const running = store.jobs.addJob(scope, {
       ...completedJobInput(projectId, clock()),
       status: "running",
     });
-    const done = store.markJobOutcome(scope, projectId, running.id, {
+    const done = store.jobs.markJobOutcome(scope, projectId, running.id, {
       status: "completed",
       error: null,
       eventDetailsJson: "{}",
@@ -204,9 +207,9 @@ describe("job transition guard (#392)", () => {
 
   it("refuses a second terminal outcome on an already-completed job", async () => {
     const { scope, clock, store, projectId } = await openHarness();
-    const completed = store.addJob(scope, completedJobInput(projectId, clock()));
+    const completed = store.jobs.addJob(scope, completedJobInput(projectId, clock()));
     expect(() =>
-      store.markJobOutcome(scope, projectId, completed.id, {
+      store.jobs.markJobOutcome(scope, projectId, completed.id, {
         status: "failed",
         error: "late failure",
         eventDetailsJson: "{}",
@@ -214,18 +217,18 @@ describe("job transition guard (#392)", () => {
       }),
     ).toThrow(InvalidJobTransitionError);
     // The refused transition left the original outcome untouched.
-    expect(store.findJob(scope, projectId, completed.id).status).toBe("completed");
+    expect(store.jobs.findJob(scope, projectId, completed.id).status).toBe("completed");
   });
 
   it("refuses an outcome on a failed job outside the retry chain", async () => {
     const { scope, clock, store, projectId } = await openHarness();
-    const failed = store.addJob(scope, {
+    const failed = store.jobs.addJob(scope, {
       ...completedJobInput(projectId, clock()),
       status: "failed",
       error: "first failure",
     });
     expect(() =>
-      store.markJobOutcome(scope, projectId, failed.id, {
+      store.jobs.markJobOutcome(scope, projectId, failed.id, {
         status: "completed",
         error: null,
         eventDetailsJson: "{}",
@@ -236,9 +239,9 @@ describe("job transition guard (#392)", () => {
 
   it("refuses the combined completion when the running job already settled", async () => {
     const { scope, clock, store, projectId } = await openHarness();
-    const completed = store.addJob(scope, completedJobInput(projectId, clock()));
+    const completed = store.jobs.addJob(scope, completedJobInput(projectId, clock()));
     expect(() =>
-      store.markJobOutcomeWithUsage(scope, projectId, completed.id, {
+      store.jobs.markJobOutcomeWithUsage(scope, projectId, completed.id, {
         outcome: {
           status: "completed",
           model: "retry-model",
@@ -250,7 +253,7 @@ describe("job transition guard (#392)", () => {
         usage: usageInput(),
       }),
     ).toThrow(InvalidJobTransitionError);
-    const usage = store.aggregateProjectUsage(scope, projectId, new Date());
+    const usage = store.jobs.aggregateProjectUsage(scope, projectId, new Date());
     expect(usage.requestCount).toBe(0);
   });
 });

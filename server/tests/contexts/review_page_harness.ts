@@ -4,7 +4,7 @@ import { join } from "node:path";
 
 import type { EvaluatedReview } from "../../src/contexts/studio/application/ports/review_outcome_store.js";
 import { scopeForPrincipal } from "../../src/contexts/studio/application/ports/studio_store.js";
-import { DrizzleStudioStore } from "../../src/contexts/studio/infrastructure/drizzle_studio_store.js";
+import { ProjectStorePart } from "../../src/contexts/studio/infrastructure/project_store_part.js";
 import { ReviewStorePart } from "../../src/contexts/studio/infrastructure/review_store_part.js";
 import { AuthService } from "../../src/shared/application/auth_service.js";
 import { DrizzleAuthStore } from "../../src/shared/infrastructure/db/auth_store.js";
@@ -21,9 +21,9 @@ export interface ReviewPageHarness {
   document: { id: string };
   now: () => Date;
   projectId: string;
+  projects: ProjectStorePart;
   reviewsStore: ReviewStorePart;
   scope: ReturnType<typeof scopeForPrincipal>;
-  store: DrizzleStudioStore;
 }
 
 /**
@@ -40,7 +40,7 @@ export async function openReviewPageHarness(): Promise<ReviewPageHarness> {
   try {
     let milliseconds = Date.parse("2026-09-05T00:00:00.000Z");
     const now = () => new Date(++milliseconds);
-    const store = new DrizzleStudioStore({ database: database.db });
+    const projects = new ProjectStorePart(database.db);
     const auth = new AuthService({
       store: new DrizzleAuthStore(database.db),
       sessionSecret: "review-page-test-secret",
@@ -50,7 +50,7 @@ export async function openReviewPageHarness(): Promise<ReviewPageHarness> {
     const principal = (await auth.createOwnerSession("review-page-owner", "long-test-password"))
       .principal;
     const scope = scopeForPrincipal(principal);
-    const seeded = store.addProject(scope, {
+    const seeded = projects.addProject(scope, {
       title: "Review page",
       description: "",
       settingsJson: "{}",
@@ -71,9 +71,9 @@ export async function openReviewPageHarness(): Promise<ReviewPageHarness> {
       document,
       now,
       projectId: seeded.project.id,
+      projects,
       reviewsStore,
       scope,
-      store,
     };
   } catch (error) {
     await cleanup();
@@ -113,7 +113,7 @@ export function recordReview(harness: ReviewPageHarness, index: number, complete
 
 /** Seed a foreign sibling project with one chapter for scope tests. */
 export function seedForeignProject(harness: ReviewPageHarness, title: string): { id: string } {
-  return harness.store.addProject(harness.scope, {
+  return harness.projects.addProject(harness.scope, {
     title,
     description: "",
     settingsJson: "{}",

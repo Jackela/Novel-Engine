@@ -5,7 +5,8 @@ import { describe, expect, it } from "vitest";
 
 import type { AddJobInput } from "../../src/contexts/studio/application/ports/job_records.js";
 import { scopeForPrincipal } from "../../src/contexts/studio/application/ports/studio_store.js";
-import { DrizzleStudioStore } from "../../src/contexts/studio/infrastructure/drizzle_studio_store.js";
+import { JobStorePart } from "../../src/contexts/studio/infrastructure/job_store_part.js";
+import { ProjectStorePart } from "../../src/contexts/studio/infrastructure/project_store_part.js";
 import { AuthService } from "../../src/shared/application/auth_service.js";
 import { InvalidOperationError } from "../../src/shared/domain/exceptions.js";
 import { DrizzleAuthStore } from "../../src/shared/infrastructure/db/auth_store.js";
@@ -39,7 +40,10 @@ async function openHarness() {
   };
   try {
     const now = new Date("2026-09-02T00:00:00.000Z");
-    const store = new DrizzleStudioStore({ database: database.db });
+    const store = {
+      projects: new ProjectStorePart(database.db),
+      jobs: new JobStorePart(database.db),
+    };
     const auth = new AuthService({
       store: new DrizzleAuthStore(database.db),
       sessionSecret: "job-retry-scope-test-secret",
@@ -48,7 +52,7 @@ async function openHarness() {
     await auth.configureOwner("retry-owner", "long-test-password");
     const session = await auth.createOwnerSession("retry-owner", "long-test-password");
     const scope = scopeForPrincipal(session.principal);
-    const { project } = store.addProject(scope, {
+    const { project } = store.projects.addProject(scope, {
       title: "Retry source scope",
       description: "",
       settingsJson: "{}",
@@ -66,16 +70,16 @@ describe("job retry source scope matrix", () => {
   it("treats one key as independent for different source Jobs in one project", async () => {
     const { cleanup, now, projectId, scope, store } = await openHarness();
     try {
-      const firstSource = store.addJob(scope, failedJob(projectId, "proposal", now));
-      const secondSource = store.addJob(scope, failedJob(projectId, "proposal", now));
+      const firstSource = store.jobs.addJob(scope, failedJob(projectId, "proposal", now));
+      const secondSource = store.jobs.addJob(scope, failedJob(projectId, "proposal", now));
 
-      const first = store.claimJobRetry(scope, {
+      const first = store.jobs.claimJobRetry(scope, {
         projectId,
         sourceJobId: firstSource.id,
         requestKey: "shared-source-key-0001",
         now,
       });
-      const second = store.claimJobRetry(scope, {
+      const second = store.jobs.claimJobRetry(scope, {
         projectId,
         sourceJobId: secondSource.id,
         requestKey: "shared-source-key-0001",
@@ -96,21 +100,21 @@ describe("job retry source scope matrix", () => {
   it.each(SUPPORTED_KINDS)("accepts a prior %s retry Job as a new source", async (kind) => {
     const { cleanup, now, projectId, scope, store } = await openHarness();
     try {
-      const fresh = store.addJob(scope, failedJob(projectId, kind, now));
-      const priorRetry = store.claimJobRetry(scope, {
+      const fresh = store.jobs.addJob(scope, failedJob(projectId, kind, now));
+      const priorRetry = store.jobs.claimJobRetry(scope, {
         projectId,
         sourceJobId: fresh.id,
         requestKey: `first-${kind}-retry-key`,
         now,
       });
-      const failedRetry = store.markJobOutcome(scope, projectId, priorRetry.job.id, {
+      const failedRetry = store.jobs.markJobOutcome(scope, projectId, priorRetry.job.id, {
         status: "failed",
         error: "prior retry failed",
         eventDetailsJson: '{"error":"prior retry failed"}',
         now: new Date(now.getTime() + 1),
       });
 
-      const nextRetry = store.claimJobRetry(scope, {
+      const nextRetry = store.jobs.claimJobRetry(scope, {
         projectId,
         sourceJobId: failedRetry.id,
         requestKey: `second-${kind}-retry-key`,
@@ -131,10 +135,10 @@ describe("job retry source scope matrix", () => {
   it("rejects an unsupported failed Job kind before reserving a retry", async () => {
     const { cleanup, now, projectId, scope, store } = await openHarness();
     try {
-      const unsupported = store.addJob(scope, failedJob(projectId, "maintenance", now));
+      const unsupported = store.jobs.addJob(scope, failedJob(projectId, "maintenance", now));
 
       expect(() =>
-        store.claimJobRetry(scope, {
+        store.jobs.claimJobRetry(scope, {
           projectId,
           sourceJobId: unsupported.id,
           requestKey: "unsupported-kind-key-0001",
@@ -142,7 +146,7 @@ describe("job retry source scope matrix", () => {
         }),
       ).toThrow(InvalidOperationError);
       expect(
-        store.findJobRetry(scope, projectId, unsupported.id, "unsupported-kind-key-0001"),
+        store.jobs.findJobRetry(scope, projectId, unsupported.id, "unsupported-kind-key-0001"),
       ).toBeNull();
     } finally {
       await cleanup();

@@ -10,7 +10,8 @@ import { InvalidOperationError } from "../../../shared/domain/exceptions.js";
 import type { InFlightOperationGuard, InFlightOperationPermit } from "./operation_in_flight.js";
 import type { ProposalStreamFramePayload } from "./payload_schemas/proposal_frame.js";
 import { jobPayload } from "./payloads.js";
-import type { StudioStore } from "./ports/studio_store.js";
+import type { StudioJobLedgerStore } from "./ports/job_ledger_store.js";
+import type { ProposalContextStore } from "./ports/proposal_context_store.js";
 import { scopeForPrincipal } from "./ports/studio_store.js";
 import {
   buildProposalTask,
@@ -37,7 +38,8 @@ import {
 export type ProposalStreamFrame = ProposalStreamFramePayload;
 
 export interface ProposalStreamDeps {
-  readonly store: StudioStore;
+  readonly proposalContext: ProposalContextStore;
+  readonly jobs: StudioJobLedgerStore;
   readonly providerFactory: TextGenerationProviderFactory;
   readonly inFlight: InFlightOperationGuard;
   readonly now: () => Date;
@@ -113,7 +115,7 @@ async function* streamProposalFrames(
   ownPermit(deps.inFlight.acquire(inFlightTarget));
   let provider: TextGenerationProvider | undefined;
   try {
-    const context = deps.store.readProposalContext(scope, projectId, documentId);
+    const context = deps.proposalContext.readProposalContext(scope, projectId, documentId);
     const { revision } = proposalRevisionFromContext(context);
     const seed = buildProposalSeed({
       projectId: context.projectId,
@@ -159,7 +161,7 @@ async function* streamProposalFrames(
       yield {
         type: "done",
         job: jobPayload(
-          completedProposalJob(deps.store, scope, seed, revision.id, {
+          completedProposalJob(deps.jobs, scope, seed, revision.id, {
             proposal,
             provider: providerName,
             model: reported?.model ?? "",
@@ -174,7 +176,7 @@ async function* streamProposalFrames(
       if (!(error instanceof TextGenerationProviderError)) {
         throw error;
       }
-      failedProposalJob(deps.store, scope, seed, revision.id, error.message);
+      failedProposalJob(deps.jobs, scope, seed, revision.id, error.message);
       yield { type: "error", error: { code: "PROVIDER_FAILED", message: error.message } };
     }
   } finally {

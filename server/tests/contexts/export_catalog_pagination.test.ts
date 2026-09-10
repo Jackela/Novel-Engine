@@ -14,9 +14,11 @@ import {
 import { scopeForPrincipal } from "../../src/contexts/studio/application/ports/studio_store.js";
 import { ProjectService } from "../../src/contexts/studio/application/project_service.js";
 import { NotFoundError } from "../../src/contexts/studio/domain/exceptions.js";
-import { DrizzleStudioStore } from "../../src/contexts/studio/infrastructure/drizzle_studio_store.js";
+import { DocumentStorePart } from "../../src/contexts/studio/infrastructure/document_store_part.js";
 import { buildProjectArtifactPageQuery } from "../../src/contexts/studio/infrastructure/export_page_queries.js";
 import { ExportStorePart } from "../../src/contexts/studio/infrastructure/export_store_part.js";
+import { ProjectStorePart } from "../../src/contexts/studio/infrastructure/project_store_part.js";
+import { VolumeStorePart } from "../../src/contexts/studio/infrastructure/volume_store_part.js";
 import { AuthService } from "../../src/shared/application/auth_service.js";
 import { DrizzleAuthStore } from "../../src/shared/infrastructure/db/auth_store.js";
 import {
@@ -35,8 +37,12 @@ async function openHarness(queryLogger?: { logQuery: (sql: string, params: unkno
     queryLogger,
   });
   const clock = monotonicClock();
-  const store = new DrizzleStudioStore({ database: studio.db });
-  const projects = new ProjectService(store, clock);
+  const store = {
+    projects: new ProjectStorePart(studio.db),
+    documents: new DocumentStorePart(studio.db),
+    volumes: new VolumeStorePart(studio.db),
+  };
+  const projects = new ProjectService(store.projects, store.volumes, clock);
   const auth = new AuthService({
     store: new DrizzleAuthStore(studio.db),
     sessionSecret: "export-page-test-secret",
@@ -66,9 +72,9 @@ async function openHarness(queryLogger?: { logQuery: (sql: string, params: unkno
 type Harness = Awaited<ReturnType<typeof openHarness>>;
 
 function seedDocuments(harness: Harness, projectId: string, count: number): void {
-  const volumeId = harness.store.findVolumes(harness.scope, projectId)[0]?.id ?? null;
+  const volumeId = harness.store.volumes.findVolumes(harness.scope, projectId)[0]?.id ?? null;
   for (let index = 2; index <= count; index += 1) {
-    harness.store.addDocument(harness.scope, projectId, {
+    harness.store.documents.addDocument(harness.scope, projectId, {
       kind: "chapter",
       title: `Chapter ${index}`,
       contentMarkdown: `Chapter ${index} body`,

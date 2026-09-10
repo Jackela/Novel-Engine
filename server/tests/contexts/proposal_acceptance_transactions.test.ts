@@ -7,7 +7,9 @@ import {
   revisionPageLimit,
   scopeForPrincipal,
 } from "../../src/contexts/studio/application/ports/studio_store.js";
-import { DrizzleStudioStore } from "../../src/contexts/studio/infrastructure/drizzle_studio_store.js";
+import { DocumentStorePart } from "../../src/contexts/studio/infrastructure/document_store_part.js";
+import { JobStorePart } from "../../src/contexts/studio/infrastructure/job_store_part.js";
+import { ProjectStorePart } from "../../src/contexts/studio/infrastructure/project_store_part.js";
 import { ProposalAcceptanceStorePart } from "../../src/contexts/studio/infrastructure/proposal_acceptance_store_part.js";
 import { AuthService } from "../../src/shared/application/auth_service.js";
 import { DrizzleAuthStore } from "../../src/shared/infrastructure/db/auth_store.js";
@@ -30,7 +32,11 @@ async function openHarness() {
   directories.push(directory);
   const database = await openStudioDatabase(join(directory, "novel-engine.sqlite3"));
   const now = clock();
-  const store = new DrizzleStudioStore({ database: database.db });
+  const store = {
+    projects: new ProjectStorePart(database.db),
+    documents: new DocumentStorePart(database.db),
+    jobs: new JobStorePart(database.db),
+  };
   const auth = new AuthService({
     store: new DrizzleAuthStore(database.db),
     sessionSecret: "proposal-acceptance-test-secret",
@@ -40,7 +46,7 @@ async function openHarness() {
   const principal = (await auth.createOwnerSession("acceptance-owner", "long-test-password"))
     .principal;
   const scope = scopeForPrincipal(principal);
-  const seeded = store.addProject(scope, {
+  const seeded = store.projects.addProject(scope, {
     title: "Atomic acceptance",
     description: "",
     settingsJson: "{}",
@@ -51,7 +57,7 @@ async function openHarness() {
   if (document?.currentRevision === null || document === undefined) {
     throw new Error("Expected a seeded document revision.");
   }
-  const job = store.addJob(scope, {
+  const job = store.jobs.addJob(scope, {
     projectId: seeded.project.id,
     documentId: document.id,
     kind: "proposal",
@@ -81,7 +87,7 @@ describe("proposal acceptance transaction", () => {
           throw new Error("simulated job binding failure");
         }
       }
-      const beforeProject = harness.store.findProject(harness.scope, harness.project.id);
+      const beforeProject = harness.store.projects.findProject(harness.scope, harness.project.id);
       const exploding = new ExplodingAcceptanceStore(harness.database.db);
 
       expect(() =>
@@ -94,7 +100,7 @@ describe("proposal acceptance transaction", () => {
       ).toThrow("simulated job binding failure");
 
       expect(
-        harness.store.findRevisionSummaries(
+        harness.store.documents.findRevisionSummaries(
           harness.scope,
           harness.project.id,
           harness.document.id,
@@ -104,21 +110,21 @@ describe("proposal acceptance transaction", () => {
         ).revisions,
       ).toHaveLength(1);
       expect(
-        harness.store.findDocument(harness.scope, harness.project.id, harness.document.id)
+        harness.store.documents.findDocument(harness.scope, harness.project.id, harness.document.id)
           .currentRevisionId,
       ).toBe(harness.document.currentRevisionId);
-      expect(harness.store.findProject(harness.scope, harness.project.id).updatedAt).toEqual(
-        beforeProject.updatedAt,
-      );
       expect(
-        harness.store.matchProjectDocuments(harness.scope, harness.project.id, '"new"'),
+        harness.store.projects.findProject(harness.scope, harness.project.id).updatedAt,
+      ).toEqual(beforeProject.updatedAt);
+      expect(
+        harness.store.documents.matchProjectDocuments(harness.scope, harness.project.id, '"new"'),
       ).toEqual([]);
       expect(
-        harness.store.matchProjectDocuments(harness.scope, harness.project.id, '"old"'),
+        harness.store.documents.matchProjectDocuments(harness.scope, harness.project.id, '"old"'),
       ).toHaveLength(1);
       expect(
         JSON.parse(
-          harness.store.findJob(harness.scope, harness.project.id, harness.job.id).resultJson,
+          harness.store.jobs.findJob(harness.scope, harness.project.id, harness.job.id).resultJson,
         ),
       ).toMatchObject({ accepted_revision_id: null });
     } finally {
@@ -181,7 +187,7 @@ describe("proposal acceptance transaction", () => {
         JSON.parse(first.resultJson).accepted_revision_id,
       );
       expect(
-        harness.store.findRevisionSummaries(
+        harness.store.documents.findRevisionSummaries(
           harness.scope,
           harness.project.id,
           harness.document.id,
@@ -199,7 +205,7 @@ describe("proposal acceptance transaction", () => {
   it("repairs a legacy split revision without creating another revision", async () => {
     const harness = await openHarness();
     try {
-      const split = harness.store.advanceDocument(
+      const split = harness.store.documents.advanceDocument(
         harness.scope,
         harness.project.id,
         harness.document.id,
@@ -221,7 +227,7 @@ describe("proposal acceptance transaction", () => {
 
       expect(JSON.parse(repaired.resultJson).accepted_revision_id).toBe(split.currentRevisionId);
       expect(
-        harness.store.findRevisionSummaries(
+        harness.store.documents.findRevisionSummaries(
           harness.scope,
           harness.project.id,
           harness.document.id,
@@ -238,14 +244,19 @@ describe("proposal acceptance transaction", () => {
   it("refuses to bind a mismatched legacy revision that only copies the job id", async () => {
     const harness = await openHarness();
     try {
-      harness.store.advanceDocument(harness.scope, harness.project.id, harness.document.id, {
-        contentMarkdown: "different prose",
-        baseRevisionId: harness.document.currentRevisionId,
-        title: null,
-        metadataJson: JSON.stringify({ ai_job_id: harness.job.id }),
-        source: "ai-accepted",
-        now: harness.now(),
-      });
+      harness.store.documents.advanceDocument(
+        harness.scope,
+        harness.project.id,
+        harness.document.id,
+        {
+          contentMarkdown: "different prose",
+          baseRevisionId: harness.document.currentRevisionId,
+          title: null,
+          metadataJson: JSON.stringify({ ai_job_id: harness.job.id }),
+          source: "ai-accepted",
+          now: harness.now(),
+        },
+      );
 
       expect(() =>
         new ProposalAcceptanceStorePart(harness.database.db).acceptCompletedProposal(
@@ -257,11 +268,11 @@ describe("proposal acceptance transaction", () => {
       ).toThrow("Document changed since the requested base revision.");
       expect(
         JSON.parse(
-          harness.store.findJob(harness.scope, harness.project.id, harness.job.id).resultJson,
+          harness.store.jobs.findJob(harness.scope, harness.project.id, harness.job.id).resultJson,
         ).accepted_revision_id,
       ).toBeNull();
       expect(
-        harness.store.findRevisionSummaries(
+        harness.store.documents.findRevisionSummaries(
           harness.scope,
           harness.project.id,
           harness.document.id,

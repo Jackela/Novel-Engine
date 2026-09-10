@@ -4,12 +4,22 @@ import { join } from "node:path";
 import { afterAll, describe, expect, it, vi } from "vitest";
 import { ImportService } from "../../src/contexts/studio/application/import_service.js";
 import { projectPageLimit } from "../../src/contexts/studio/application/ports/project_catalog_store.js";
-import { createStudioServices } from "../../src/contexts/studio/application/studio_services.js";
-import { DrizzleStudioStore } from "../../src/contexts/studio/infrastructure/drizzle_studio_store.js";
+import {
+  createStudioServices,
+  type StudioPersistence,
+} from "../../src/contexts/studio/application/studio_services.js";
+import { DocumentStorePart } from "../../src/contexts/studio/infrastructure/document_store_part.js";
 import { FilesystemExportArtifactGateway } from "../../src/contexts/studio/infrastructure/export_artifact_files.js";
 import { ExportStorePart } from "../../src/contexts/studio/infrastructure/export_store_part.js";
 import { FsLegacyWorkspaceReader } from "../../src/contexts/studio/infrastructure/fs_legacy_workspace_reader.js";
+import { JobStorePart } from "../../src/contexts/studio/infrastructure/job_store_part.js";
+import { LoreStorePart } from "../../src/contexts/studio/infrastructure/lore_store_part.js";
 import { FilesystemProjectArtifactCleaner } from "../../src/contexts/studio/infrastructure/project_artifact_files.js";
+import { ProjectStorePart } from "../../src/contexts/studio/infrastructure/project_store_part.js";
+import { ProposalAcceptanceStorePart } from "../../src/contexts/studio/infrastructure/proposal_acceptance_store_part.js";
+import { ProposalContextStorePart } from "../../src/contexts/studio/infrastructure/proposal_context_store_part.js";
+import { ReviewStorePart } from "../../src/contexts/studio/infrastructure/review_store_part.js";
+import { VolumeStorePart } from "../../src/contexts/studio/infrastructure/volume_store_part.js";
 import { AuthService } from "../../src/shared/application/auth_service.js";
 import type { Principal } from "../../src/shared/application/ports/auth.js";
 import { InvalidOperationError } from "../../src/shared/domain/exceptions.js";
@@ -35,7 +45,17 @@ async function buildServices() {
     store: new DrizzleAuthStore(database.db),
     sessionSecret: "unit-test-session-secret",
   });
-  const store = new DrizzleStudioStore({ database: database.db });
+  const projects = new ProjectStorePart(database.db);
+  const store: StudioPersistence = {
+    projects,
+    documents: new DocumentStorePart(database.db),
+    volumes: new VolumeStorePart(database.db),
+    lore: new LoreStorePart(database.db),
+    jobs: new JobStorePart(database.db),
+    reviewOutcomes: new ReviewStorePart(database.db),
+    proposalContext: new ProposalContextStorePart(database.db),
+    proposalAcceptance: new ProposalAcceptanceStorePart(database.db),
+  };
   const services = createStudioServices(store, {
     providerFactory: capturingFactory({}).factory,
     legacyWorkspaceReader: new FsLegacyWorkspaceReader(),
@@ -43,7 +63,7 @@ async function buildServices() {
     artifactFiles: new FilesystemExportArtifactGateway(directory),
     projectArtifactCleaner: new FilesystemProjectArtifactCleaner(directory),
   });
-  return { auth, services, store };
+  return { auth, services, projects };
 }
 
 async function ownerPrincipal(auth: AuthService): Promise<Principal> {
@@ -88,7 +108,7 @@ describe("legacy import service", () => {
   });
 
   it("finishes the filesystem read before the first store access", async () => {
-    const { auth, store } = await buildServices();
+    const { auth, projects } = await buildServices();
     const owner = await ownerPrincipal(auth);
     const source = legacySource();
     let releaseRead: (() => void) | undefined;
@@ -97,7 +117,7 @@ describe("legacy import service", () => {
     });
     let reachedRead = false;
     const service = new ImportService(
-      store,
+      projects,
       new FsLegacyWorkspaceReader({
         async afterFileOpen(path) {
           if (reachedRead || !path.endsWith("story.yaml")) return;
@@ -106,7 +126,7 @@ describe("legacy import service", () => {
         },
       }),
     );
-    const storeAccess = vi.spyOn(store, "findProjectByImportHash");
+    const storeAccess = vi.spyOn(projects, "findProjectByImportHash");
 
     const operation = service.importLegacyWorkspace(owner, source);
     await vi.waitFor(() => expect(reachedRead).toBe(true));
