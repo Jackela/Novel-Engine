@@ -11,14 +11,9 @@ import {
 } from "../domain/exceptions.js";
 import { isExportArtifactFormat } from "./export_artifact_identity.js";
 import type { SnapshotArtifactService } from "./export_artifact_service.js";
-import {
-  exportRetryCapacityOutcome,
-  replayedExportCapacityError,
-} from "./export_retry_capacity_outcome.js";
-import {
-  generationRetryCapacityOutcome,
-  replayedGenerationCapacityError,
-} from "./generation_retry_capacity_outcome.js";
+import { exportRetryCapacityOutcome } from "./export_retry_capacity_outcome.js";
+import { generationRetryCapacityOutcome } from "./generation_retry_capacity_outcome.js";
+import { replayedJobPayload } from "./job_replay_payload.js";
 import { dumpJson, jobPayload, safeLoadJson } from "./payloads.js";
 import type { StudioJobLedgerStore } from "./ports/job_ledger_store.js";
 import type { JobRecord } from "./ports/job_records.js";
@@ -65,9 +60,6 @@ export class JobRetryExecutor {
     const scope = scopeForPrincipal(principal);
     const replay = this.jobs.findJobRetry(scope, projectId, jobId, requestKey);
     if (replay !== null) {
-      const capacityError =
-        replayedExportCapacityError(replay) ?? replayedGenerationCapacityError(replay);
-      if (capacityError !== null) throw capacityError;
       return this.claimAndExecute(
         principal,
         scope,
@@ -108,10 +100,7 @@ export class JobRetryExecutor {
       now: this.now(),
     });
     if (!claim.created) {
-      const capacityError =
-        replayedExportCapacityError(claim.job) ?? replayedGenerationCapacityError(claim.job);
-      if (capacityError !== null) throw capacityError;
-      return jobPayload(claim.job);
+      return replayedJobPayload(claim.job);
     }
     const retry = claim.job;
     try {

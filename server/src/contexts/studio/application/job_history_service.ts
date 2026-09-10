@@ -8,8 +8,7 @@ import {
   ReviewSourceInvalidatedError,
 } from "../domain/exceptions.js";
 import type { SnapshotArtifactService } from "./export_artifact_service.js";
-import { replayedExportCapacityError } from "./export_retry_capacity_outcome.js";
-import { replayedGenerationCapacityError } from "./generation_retry_capacity_outcome.js";
+import { replayedJobPayload } from "./job_replay_payload.js";
 import { JobRetryExecutor } from "./job_retry_executor.js";
 import type { InFlightOperationGuard } from "./operation_in_flight.js";
 import type { JobPayload, JobSummaryPayload } from "./payload_schemas/job.js";
@@ -243,9 +242,6 @@ export class JobHistoryService {
       requestKey,
     );
     if (replay !== null) {
-      const capacityError =
-        replayedExportCapacityError(replay) ?? replayedGenerationCapacityError(replay);
-      if (capacityError !== null) throw capacityError;
       if (replay.status === "running") {
         throw new OperationInFlightError(projectId, null, `retry (${jobId})`, 1);
       }
@@ -256,7 +252,7 @@ export class JobHistoryService {
       ) {
         throw new Error(`Persisted retry Job has invalid status: ${replay.status}.`);
       }
-      return jobPayload(replay);
+      return replayedJobPayload(replay);
     }
     // #305: a retry runs real work after its running row is created, so a
     // double-fired retry of the same job is deduplicated like the pipelines.
