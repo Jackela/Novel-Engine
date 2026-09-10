@@ -33,6 +33,10 @@ colors:
   focus-ring: "#ccfbf1"
   danger: "#b91c1c"
   danger-soft: "#fff1f2"
+  danger-line: "#fecaca"
+  warn: "#d8a62a"
+  warn-soft: "#fdf6e3"
+  warn-ink: "#6b5410"
   on-accent: "#ffffff"
 typography:
   sans:

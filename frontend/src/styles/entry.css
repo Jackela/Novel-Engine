@@ -32,7 +32,7 @@
   line-height: 1.2;
 }
 .entry p {
-  color: #5f6668;
+  color: var(--muted-soft);
   line-height: 1.55;
 }
 .entry__form {
@@ -62,7 +62,7 @@
 .library-create input,
 .library-create textarea {
   width: 100%;
-  border: 1px solid #d7dcdd;
+  border: 1px solid var(--line);
   border-radius: 5px;
   padding: 10px 11px;
   outline: none;
@@ -91,7 +91,7 @@
   content: "";
   height: 1px;
   flex: 1;
-  background: #e5e7eb;
+  background: var(--line);
 }
 .entry footer {
   margin-top: 24px;

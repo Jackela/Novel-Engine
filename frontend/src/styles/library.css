@@ -22,7 +22,7 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  color: #5d6666;
+  color: var(--muted);
   font-size: 12px;
 }
 .library__content {
@@ -36,7 +36,7 @@
 }
 .library__heading p {
   margin: 7px 0 28px;
-  color: #687071;
+  color: var(--muted-soft);
 }
 .library__action-error {
   margin: -16px 0 24px;
@@ -83,7 +83,7 @@
   place-items: center;
   border-radius: 6px;
   color: var(--teal-strong);
-  background: #e8f7f5;
+  background: var(--teal-soft);
 }
 .library-create h2 {
   margin: 0;
