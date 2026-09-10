@@ -2,16 +2,16 @@ import { describe, expect, it } from "vitest";
 
 import type { TextGenerationTask } from "../../src/contexts/ai/application/ports/text_generation.js";
 import { TextGenerationProviderError } from "../../src/contexts/ai/application/ports/text_generation.js";
-import { parseDashscopeJsonObject } from "../../src/contexts/ai/infrastructure/providers/dashscope_json.js";
-import {
-  coercePayloadToSchema,
-  payloadFromResponseText,
-} from "../../src/contexts/ai/infrastructure/providers/dashscope_payload.js";
 import {
   extractDashscopeGenerationText,
   extractDashscopeResponsesText,
   resolveDashscopeTransport,
 } from "../../src/contexts/ai/infrastructure/providers/dashscope_protocol.js";
+import {
+  coercePayloadToSchema,
+  parseProviderJsonObject,
+  payloadFromResponseText,
+} from "../../src/contexts/ai/infrastructure/providers/provider_payload.js";
 
 const DASHSCOPE_API_PATH_SEGMENTS = {
   root: "api",
@@ -150,22 +150,22 @@ describe("dashscope response text extraction", () => {
 
 describe("dashscope JSON object parsing", () => {
   it("parses plain, fenced, and embedded JSON objects", () => {
-    expect(parseDashscopeJsonObject('{"a": 1}')).toEqual({ a: 1 });
-    expect(parseDashscopeJsonObject('```json\n{"a": 1}\n```')).toEqual({ a: 1 });
-    expect(parseDashscopeJsonObject('Sure! {"a": {"b": 2}} hope that helps')).toEqual({
+    expect(parseProviderJsonObject('{"a": 1}')).toEqual({ a: 1 });
+    expect(parseProviderJsonObject('```json\n{"a": 1}\n```')).toEqual({ a: 1 });
+    expect(parseProviderJsonObject('Sure! {"a": {"b": 2}} hope that helps')).toEqual({
       a: { b: 2 },
     });
-    expect(parseDashscopeJsonObject('[{"a": 1}, {"b": 2}]')).toEqual({ a: 1, b: 2 });
+    expect(parseProviderJsonObject('[{"a": 1}, {"b": 2}]')).toEqual({ a: 1, b: 2 });
   });
 
   it("brackets inside string literals do not confuse the fragment scanner", () => {
-    expect(parseDashscopeJsonObject('prefix {"a": "value } with bracket {"} suffix')).toEqual({
+    expect(parseProviderJsonObject('prefix {"a": "value } with bracket {"} suffix')).toEqual({
       a: "value } with bracket {",
     });
   });
 
   it("raises a provider error naming the non-object response", () => {
-    expect(() => parseDashscopeJsonObject("plain prose only")).toThrow(/not a JSON object/);
+    expect(() => parseProviderJsonObject("plain prose only")).toThrow(/not a JSON object/);
   });
 });
 
