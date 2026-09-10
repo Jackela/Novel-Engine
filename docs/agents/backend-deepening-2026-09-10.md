@@ -57,16 +57,57 @@ resident_context/lorebook assemblers) untouched.
   (`proposal_admission.ts`, `proposal_pipeline.ts:236,268`,
   `job_retry_executor.ts`); full validation re-run green.
 
+## B3 — Capacity replay recognition into a single exit (`930b07fe`, 2026-09-11)
+
+- Safety valve triggered honestly: placing recognition inside `jobPayload`
+  itself would flip GET `/jobs/:jobId` from 200 to 422 on capacity rows,
+  violating the spec's "complete Job detail" requirement. The exit is
+  therefore the dedicated `replayedJobPayload` (`job_replay_payload.ts`),
+  consumed by the three replay surfaces; the audit GET keeps plain
+  `jobPayload` with the split documented in JSDoc (reviewer verified
+  against spec.md L2757-2812 and L4910-4960).
+- Writer/recognizer now share `as const` key lists locked by `satisfies`
+  at compile time (reviewer verified TS2353/TS2741 on key drift); new
+  contract test `tests/contexts/job_replay_payload.test.ts` round-trips
+  real writer output through the exit (3 cases).
+- Equivalence proven per call site (reviewer: recognizer gates on
+  `status === "failed"`, rows are immutable post-failure, `claimJobRetry`
+  determinism via unique constraint); existing API tests unchanged,
+  including the byte-level `expect(replay.body).toBe(first.body)`.
+- Reviewer findings: two [P3] (fixture detail-shape mirror, retained
+  vendor-flavored naming) — both fixed by main agent before commit.
+
+## B4 — Shared provider payload parsing out of the dashscope namespace (`450712dd`)
+
+- Discovery: `dashscope_payload.ts` + `dashscope_json.ts` contained no
+  DashScope-specific logic at all — both deleted (git records
+  `provider_payload.ts` as a 56% rename); true vendor protocol remains in
+  `dashscope_protocol.ts`, untouched.
+- Neutral `provider_payload.ts` (188 code lines) now serves both adapters;
+  the inverted dependency (neutral `provider_json` importing vendor
+  modules) is gone — reviewer verified 134/134 normalized-line equality
+  with the deleted files and zero `dashscope_*` imports in neutral modules.
+- Reviewer [P3] (function name `parseDashscopeJsonObject` retained in a
+  neutral module) fixed pre-commit: renamed `parseProviderJsonObject`
+  (error message unchanged, preserving pure-move semantics; tests pin
+  only `/not a JSON object/`).
+- Validation on the final tree (both tickets + P3 fixes): type-check,
+  lint (0 errors), arch, 213 files / 1327 tests, gates exit 0, spec 2/2,
+  OpenAPI snapshot byte-identical.
+
 ## Skips and residuals
 
-- Candidates 3 (capacity replay recognition into the Job payload exit) and
-  4 (provider payload logic out of the dashscope namespace) remain
-  unimplemented — Worth exploring, queued as follow-ups.
+- Candidates 3 and 4 delivered as B3/B4 above.
 - Candidate 5 (payloads.ts utility relocation) Speculative — not planned.
 - `proposal_pipeline.ts` sits at 289/300 code lines; further sequence
   growth must continue the split.
+- Optional follow-ups surfaced by B3/B4: a dependency-cruiser rule locking
+  "neutral providers must not import vendor modules" (config write-set
+  exceeded the ticket); literal "recognize-by-default" exit form would
+  require an OpenSpec change plus a 422 declaration on the Job-detail
+  route.
 - Commits local on `main`, not pushed (PR #494 covers the frontend batch
-  only; these two commits will need a second PR when the owner asks).
+  only; the five backend commits B1–B4 + evidence await a second PR).
 - Process notes: one lint pipe-masking incident during B1 commit (ELIFECYCLE
   exit hidden by `tail`); caught and amended same-commit. flash implementer
   probe still pending a new session — both tickets ran on general-purpose.
