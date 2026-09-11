@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 
 import { api } from "@/app/api";
 import { productIdentity } from "@/app/productIdentity";
+import { ThemeSwitch } from "@/app/ThemeSwitch";
 
 import { ProjectCatalogList } from "./components/ProjectCatalogList";
 import { ProjectLibraryLoadState } from "./components/ProjectLibraryLoadState";
@@ -110,6 +111,7 @@ export function ProjectLibraryPage() {
           <BookOpen aria-hidden="true" /> {productIdentity.name}
         </div>
         <div className="library__header-actions">
+          <ThemeSwitch />
           <button
             aria-busy={operation === "logout" || undefined}
             aria-label="Sign out"

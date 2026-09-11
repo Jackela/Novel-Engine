@@ -1,10 +1,11 @@
-import { getByRole } from "@testing-library/dom";
+import { fireEvent, getByRole } from "@testing-library/dom";
 import { act } from "react";
 import { MemoryRouter, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { api, HttpError } from "@/app/api";
 import type { ProjectsPage } from "@/app/projectShellContract";
+import { THEME_STORAGE_KEY } from "@/app/theme";
 import type { Session } from "@/app/types/studio";
 import { project } from "@/test/factories";
 import { createMountHarness, deferred, flushEffects } from "@/test/harness";
@@ -72,6 +73,7 @@ function renderLibrary() {
 afterEach(() => {
   harness.cleanup();
   vi.resetAllMocks();
+  delete document.documentElement.dataset.theme;
 });
 
 describe("ProjectLibraryPage request lifecycle", () => {
@@ -232,5 +234,26 @@ describe("ProjectLibraryPage request lifecycle", () => {
     });
 
     expect(container.querySelector('[data-testid="location"]')?.textContent).toBe("/away");
+  });
+});
+
+describe("ProjectLibraryPage theme selection mount", () => {
+  it("mounts the theme switch in the header and persists a dark lock", () => {
+    const session = rejectableDeferred<Session>();
+    vi.mocked(api.session).mockReturnValue(session.promise);
+
+    const { container } = renderLibrary();
+
+    expect(container.querySelector(".library__header-actions .ui-theme-switch")).not.toBeNull();
+    const options = [
+      ...container.querySelectorAll<HTMLInputElement>('.ui-theme-switch input[type="radio"]'),
+    ];
+    expect(options.map((option) => option.value)).toEqual(["system", "light", "dark"]);
+
+    act(() => {
+      fireEvent.click(options[2]);
+    });
+    expect(window.localStorage.getItem(THEME_STORAGE_KEY)).toBe("dark");
+    expect(document.documentElement.dataset.theme).toBe("dark");
   });
 });
