@@ -4,6 +4,7 @@ import { MemoryRouter, Route, Routes, useLocation, useNavigate } from "react-rou
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { api, HttpError } from "@/app/api";
+import { THEME_STORAGE_KEY } from "@/app/theme";
 import type { Session } from "@/app/types/studio";
 import { createMountHarness, deferred, flushEffects } from "@/test/harness";
 
@@ -67,6 +68,7 @@ beforeEach(() => {
 afterEach(() => {
   harness.cleanup();
   vi.resetAllMocks();
+  delete document.documentElement.dataset.theme;
 });
 
 describe("EntryPage request lifecycle", () => {
@@ -340,5 +342,19 @@ describe("EntryPage request lifecycle", () => {
     });
 
     expect(container.querySelector('[data-testid="location"]')?.textContent).toBe("/away");
+  });
+});
+
+describe("EntryPage theme selection mount", () => {
+  it("mounts the theme switch in the entry panel and persists a dark lock", () => {
+    vi.mocked(api.session).mockReturnValue(deferred<Session>().promise);
+    const { container } = renderEntry();
+    const options = [
+      ...container.querySelectorAll<HTMLInputElement>(".entry__theme .ui-theme-switch input"),
+    ];
+    expect(options.map((option) => option.value)).toEqual(["system", "light", "dark"]);
+    act(() => fireEvent.click(options[2]));
+    expect(window.localStorage.getItem(THEME_STORAGE_KEY)).toBe("dark");
+    expect(document.documentElement.dataset.theme).toBe("dark");
   });
 });

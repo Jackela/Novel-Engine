@@ -110,7 +110,7 @@
   margin-bottom: 10px;
 }
 .library__project-row:hover {
-  border-color: #8dbab6;
+  border-color: var(--library-row-hover);
 }
 .library__project-row > svg {
   color: var(--teal-strong);
