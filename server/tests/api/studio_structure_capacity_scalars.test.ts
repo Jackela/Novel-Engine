@@ -11,7 +11,6 @@ import { jobs } from "../../src/shared/infrastructure/db/schema.js";
 import { studioDatabase } from "./job_test_helpers.js";
 import {
   buildStudioApp,
-  type CookieJar,
   call,
   draftProposal,
   getDocument,
