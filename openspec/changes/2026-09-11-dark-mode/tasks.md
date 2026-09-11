@@ -119,11 +119,15 @@ T2a owns `entry.css`, `library.css`, `EntryPage.tsx`,
       `pnpm --dir frontend test:e2e-ts -- theme_selection` green.
       (4 tests green standalone and in the full 30-test suite; evidence in
       `docs/agents/dark-mode-2026-09-11.md`.)
-- [ ] T3.2 Live-switch browser acceptance across all surfaces (entry →
+- [x] T3.2 Live-switch browser acceptance across all surfaces (entry →
       library → studio → editor → usage) in one session: no flash, no
       light-only surface, reduced-transparency and no-`backdrop-filter`
       emulations hold in dark. Acceptance: recorded browser run against a
-      local stack.
+      local stack. (Main-session run on the T3 candidate: system-light
+      default, instant dark lock, dark studio with opaque editor + dark
+      glass chrome + dark badge tokens, reload persistence, light lock,
+      return to system; fallback emulations pinned by the T1/T3.1 contract
+      and e2e assertions. Matrix in `docs/agents/dark-mode-2026-09-11.md`.)
 - [x] T3.3 Update root `DESIGN.md` per the `design.md` representation
       (frontmatter untouched, `## Dark theme values` appendix added) and run
       the gates. Acceptance: `npx @google/design.md lint DESIGN.md` 0
@@ -133,7 +137,7 @@ T2a owns `entry.css`, `library.css`, `EntryPage.tsx`,
       `status: accepted`. Acceptance: ADR status updated in the same
       series. (Accepted with an implementation-results section in the T3
       commit.)
-- [ ] T3.5 Run the full owning gates and record evidence:
+- [x] T3.5 Run the full owning gates and record evidence:
       `pnpm --dir frontend lint && pnpm --dir frontend format:check &&
       pnpm --dir frontend type-check && pnpm --dir frontend test:unit &&
       pnpm --dir frontend build`, plus `pnpm spec:validate` after the change
