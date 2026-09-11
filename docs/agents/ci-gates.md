@@ -24,6 +24,19 @@ current commands from the pnpm package scripts and live workflows.
 | `CI` / container | `docker build` + fresh install, persistence across restart, deep link, drizzle-migration table check | The production image fails to boot, persist, or serve the SPA |
 | `CodeQL` | javascript-typescript analysis over `server/` + `frontend/` | A CodeQL alert on the TS workspace |
 
+## CodeQL: the neutral default-setup check
+
+On pull requests a second "CodeQL" check with conclusion `neutral` may appear.
+It is created by the `github-advanced-security` app as the code-scanning
+marker for GitHub's *default setup*, which coexists with this repo's advanced
+setup (`.github/workflows/codeql.yml`: push and pull_request triggers on
+`main`/`develop` plus a weekly schedule). The real PR analysis is the
+`Analyze (javascript-typescript)` job in that workflow, which passes on every
+recent PR. The neutral check is therefore a benign byproduct of the two
+setups coexisting, not a coverage gap. To silence it, the Owner can disable
+default setup under Settings → Code security (manual UI action, not a
+workflow change).
+
 ## Runbook: dependency advisory flaps
 
 PR CI audits **production dependencies only**, so a newly published advisory on
