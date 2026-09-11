@@ -7,9 +7,19 @@
       name="description"
       content="__PRODUCT_NAME__ is a self-hosted, single-author writing IDE."
     />
-    <meta name="theme-color" content="#d9eee9" />
+    <meta name="theme-color" content="#d9eee9" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#122b28" media="(prefers-color-scheme: dark)" />
     <title>__PRODUCT_NAME__</title>
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <script>
+      var theme = null;
+      try {
+        theme = localStorage.getItem("novel_engine_theme");
+        if (theme === "light" || theme === "dark") {
+          document.documentElement.dataset.theme = theme;
+        }
+      } catch { /* storage unavailable: system path, CSS decides */ }
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </head>
   <body>
