@@ -175,3 +175,87 @@ consistency and task visibility take priority over decorative surfaces.
 - Don't apply `backdrop-filter` to the editor surface, to children of a
   glass pane, or to sticky bars over scrolling content.
 - Don't add decorative motion or animated surfaces beyond state feedback.
+
+## Dark theme values
+
+The product ships a second (dark) value set for the same tokens, per
+ADR-0010. The frontmatter above keeps the canonical light values (the
+`@google/design.md` alpha schema has no themes syntax); this appendix is the
+dark representation. Dark values live once per selector entry in
+`frontend/src/styles/base.css` and are mirrored here.
+
+### Selection contract
+
+- `<html>` carries `data-theme="dark"` or `data-theme="light"` only when an
+  explicit lock is stored; with no attribute the OS preference decides
+  through a pure-CSS `prefers-color-scheme` media entry — no JavaScript.
+- Dark values are declared in two selector contexts, kept literally equal by
+  a drift-guard unit test:
+  `[data-theme="dark"]` and
+  `@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) }`.
+- The user preference is tri-state (`system` / `light` / `dark`), persisted
+  in `localStorage` under `novel_engine_theme`; absent, invalid, or
+  unreadable storage always degrades silently to `system`.
+- A blocking inline script in `index.html` applies a stored lock to
+  `<html>` before the first painted frame (no flash); `system` does nothing.
+- `:root` declares `color-scheme: light`; both dark entries declare
+  `color-scheme: dark`, so native controls and scrollbars follow the theme.
+- The reduced-transparency and no-`backdrop-filter` fallback blocks each
+  carry dark twins (near-opaque dark fills, blur 0, solid borders, no
+  shadow), so the material fallback chain holds in both themes.
+
+### Dark token table
+
+| Token | Dark value | Notes |
+|---|---|---|
+| `ink` | `#e6eaeb` | Primary text; 12.2:1 on worst-case glass, 14.6:1 on the opaque editor |
+| `ink-soft` | `#c7ced0` | Strong secondary text, control labels (9.3:1) |
+| `surface` | `#15191a` | Opaque editor page, inputs |
+| `canvas` | `#101415` | Gradient base |
+| `canvas-hint-teal` | `#122b28` | Gradient stop 0/100% |
+| `canvas-hint-blue` | `#16232f` | Gradient stop 38% |
+| `canvas-hint-violet` | `#1e1a2e` | Gradient stop 68% |
+| `surface-glass` | `rgba(16, 20, 21, 0.62)` | Pane chrome frost; light alpha tiers unchanged |
+| `surface-glass-strong` | `rgba(22, 27, 28, 0.80)` | Floating cards, controls |
+| `surface-glass-faint` | `rgba(12, 16, 17, 0.45)` | Ambient chrome |
+| `surface-muted` | `#171c1d` | Subdued fills |
+| `surface-panel` | `#1a1f21` | Panel/card composite base |
+| `surface-hover` | `#252c2e` | Hover elevation |
+| `line-strong` | `#475355` | Strong hairlines |
+| `line` | `#2f383a` | Hairlines |
+| `glass-border` | `rgba(255, 255, 255, 0.14)` | Hairline highlight on dark glass |
+| `glass-shadow` | `0 8px 32px rgba(0, 0, 0, 0.45)` | Deeper shadow; non-text decoration |
+| `muted` | `#aeb9bb` | Secondary text, strongest tier (7.4:1) |
+| `muted-soft` | `#a2adb0` | Tertiary text (6.4:1) |
+| `muted-faint` | `#97a3a5` | Faint text, timestamps — floor pair, ≥5.5:1 target |
+| `teal-soft` | `#11312d` | Soft selected/active wash |
+| `teal-strong` | `#2dd4bf` | Accent: actions, selection, focus (7.9:1 on glass) |
+| `teal-hover` | `#5eead4` | Primary hover lightens (dark convention) |
+| `focus-ring` | `#113b36` | Focus halo, CM selection bg |
+| `danger` | `#f08c8c` | Error text/icons (6.2:1 on glass, 6.9:1 on `danger-soft`) |
+| `danger-soft` | `#381415` | Error wash |
+| `danger-line` | `#6f2c2e` | Error borders |
+| `warn` | `#e3b041` | Warning text/icons (7.4:1 on glass) |
+| `warn-soft` | `#322712` | Warning wash |
+| `warn-ink` | `#eed9a3` | Warning text on wash (10.5:1) |
+| `on-accent` | `#0b2f2a` | Dark teal ink on the brightened accent fill (7.7:1) |
+
+Dark `--canvas-gradient`: bright-source-over-dark radials —
+`rgba(45, 212, 191, 0.09)` teal top-left and `rgba(139, 122, 235, 0.09)`
+violet bottom-right — over the same hint-tint linear ramp. All text pairs
+hold AA 4.5:1 against the worst-case glass composite (unit-tested from
+`base.css`; floor pair `muted-faint` ≥5.5:1).
+
+Supplementary badge/row-hover tokens (declared alongside the table above in
+`base.css`; dark pairs unit-tested ≥4.5:1):
+
+| Token | Dark value | Notes |
+|---|---|---|
+| `badge-neutral-bg` / `badge-neutral-ink` | `#252c2e` / `#aeb9bb` | 7.07:1 |
+| `badge-active-bg` / `badge-active-ink` | `#11312d` / `#2dd4bf` | 7.52:1 |
+| `badge-deprecated-bg` / `badge-deprecated-ink` | `#381415` / `#f08c8c` | Danger-family pair, 6.91:1 |
+| `badge-draft-active-bg` / `badge-draft-active-ink` | `#2f383a` / `#c7ced0` | Active-row draft badge, 7.53:1 |
+| `library-row-hover` | `#3d7a73` | Row hover wash |
+
+Theme-invariant material tokens (`glass-blur` 14px, `glass-blur-strong`
+24px) stay in `:root` only — blur strength does not change with the theme.

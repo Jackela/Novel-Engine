@@ -1,7 +1,7 @@
 # Dual-theme token architecture: light `:root` baseline plus `data-theme` dark entries
 
 ---
-status: proposed
+status: accepted
 ---
 
 The Studio frontend renders both a light and a dark theme from the same
@@ -108,3 +108,36 @@ three tensions that dark mode now has to resolve:
   that the 72 behavioral requirements constrain no visual property remains
   true, and this ADR picks up the "separate future task" that record
   deferred.
+
+## Implementation results
+
+Accepted and shipped with the 2026-09-11 dark-mode campaign
+(`openspec/changes/2026-09-11-dark-mode/`, issue #509):
+
+- The dual entry landed exactly as decided: light tokens unchanged in
+  `:root`, dark values in `[data-theme="dark"]` plus the
+  `prefers-color-scheme` media entry, `color-scheme` flipped per entry, and
+  dark twins inside both fallback override blocks. The tri-state controller
+  (`frontend/src/app/theme.ts` + `ThemeSwitch.tsx`), the blocking pre-paint
+  script in `index.html`, and the split `theme-color` metas match the
+  decision text above.
+- The executable guards are `frontend/src/app/themeTokens.contract.test.ts`
+  (dark token drift guard: both dark entries and both fallback twins equal
+  after normalization; index.html bootstrap mirrors the theme module) and
+  `frontend/src/app/themeContrast.contract.test.ts` (dark contrast guard:
+  WCAG ratios computed from `base.css` for every canonical text/background
+  pair, AA ≥4.5:1 with the `muted-faint` floor pair ≥5.5:1). A Playwright
+  workflow (`frontend/tests/e2e-ts/theme_selection.spec.ts`) covers the
+  runtime contract: OS emulation, lock persistence across reload, light
+  lock under a dark OS with the attribute applied before first paint, and
+  live OS-following after returning to `system`.
+- The two recorded raw-color exceptions were absorbed as named tokens with
+  dark variants: the `studio-nav.css` badge family →
+  `--badge-neutral-*` / `--badge-active-*`, and the `library.css` row-hover
+  literal → `--library-row-hover`. The campaign's integration pass then
+  tokenized the remaining badge literals the ledger had not listed:
+  `--badge-deprecated-bg/ink` (light values `#f3e0dc` / `#8a4a3c`, dark
+  pair reusing the dark danger family at 6.91:1) and the active-row draft
+  variant `--badge-draft-active-bg/ink` (light `#d5dddd` / `#3d4647`, dark
+  `#2f383a` / `#c7ced0` at 7.53:1). `base.css` is now the only file with
+  raw colors.

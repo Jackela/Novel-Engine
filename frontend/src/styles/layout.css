@@ -3,7 +3,7 @@
   grid-area: status;
   border-top: 1px solid var(--line);
   background: var(--surface-glass-faint);
-  -webkit-backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(var(--glass-blur));
   backdrop-filter: blur(var(--glass-blur));
   display: flex;
   align-items: center;

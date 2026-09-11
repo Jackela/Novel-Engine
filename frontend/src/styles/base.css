@@ -32,6 +32,11 @@
   --badge-active-bg: #cfe4e2;
   /* darker teal: --teal-strong fails AA (4.17:1) on #cfe4e2 */
   --badge-active-ink: #0f6862;
+  --badge-deprecated-bg: #f3e0dc;
+  --badge-deprecated-ink: #8a4a3c;
+  /* draft badge on the active row (.document-row--active .…--draft) */
+  --badge-draft-active-bg: #d5dddd;
+  --badge-draft-active-ink: #3d4647;
   --library-row-hover: #8dbab6;
   /* Frosted-glass material layer (ADR-0009); mirrors DESIGN.md colors. */
   --canvas-hint-teal: #d9eee9;
@@ -98,6 +103,12 @@
   --badge-neutral-ink: #aeb9bb;
   --badge-active-bg: #11312d;
   --badge-active-ink: #2dd4bf;
+  /* deprecated reuses the dark danger pair (6.91:1); draft-active lifts one
+     neutral-ramp step with ink-soft ink (7.53:1) per elevated-dark rules. */
+  --badge-deprecated-bg: #381415;
+  --badge-deprecated-ink: #f08c8c;
+  --badge-draft-active-bg: #2f383a;
+  --badge-draft-active-ink: #c7ced0;
   --library-row-hover: #3d7a73;
   --canvas-hint-teal: #122b28;
   --canvas-hint-blue: #16232f;
@@ -149,6 +160,12 @@
     --badge-neutral-ink: #aeb9bb;
     --badge-active-bg: #11312d;
     --badge-active-ink: #2dd4bf;
+    /* deprecated reuses the dark danger pair (6.91:1); draft-active lifts one
+       neutral-ramp step with ink-soft ink (7.53:1) per elevated-dark rules. */
+    --badge-deprecated-bg: #381415;
+    --badge-deprecated-ink: #f08c8c;
+    --badge-draft-active-bg: #2f383a;
+    --badge-draft-active-ink: #c7ced0;
     --library-row-hover: #3d7a73;
     --canvas-hint-teal: #122b28;
     --canvas-hint-blue: #16232f;

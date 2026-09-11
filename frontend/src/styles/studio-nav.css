@@ -440,10 +440,12 @@
   color: var(--badge-active-ink);
 }
 .document-row__lore-status--deprecated {
-  background: #f3e0dc;
-  color: #8a4a3c;
+  /* --badge-deprecated-ink is a warmer rust than --danger for the
+     deprecation hue; both themes hold AA (light 5.28:1, dark 6.91:1). */
+  background: var(--badge-deprecated-bg);
+  color: var(--badge-deprecated-ink);
 }
 .document-row--active .document-row__lore-status--draft {
-  background: #d5dddd;
-  color: #3d4647;
+  background: var(--badge-draft-active-bg);
+  color: var(--badge-draft-active-ink);
 }

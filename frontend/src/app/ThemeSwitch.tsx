@@ -20,9 +20,9 @@ const OPTIONS: readonly {
   { value: "dark", label: "Dark", Icon: Moon },
 ] as const;
 
-function optionLabel(value: ThemePreference): string {
+function optionLabel(value: ThemePreference, systemScheme: "light" | "dark"): string {
   return value === "system"
-    ? `System (${resolveSystemScheme()})`
+    ? `System (${systemScheme})`
     : (OPTIONS.find((option) => option.value === value)?.label ?? value);
 }
 
@@ -34,12 +34,18 @@ function optionLabel(value: ThemePreference): string {
  */
 export function ThemeSwitch() {
   const [preference, setPreference] = useState<ThemePreference>(readThemePreference);
+  // The resolved OS scheme lives in its own state so the system label keeps
+  // reflecting reality across OS flips even while the stored preference is
+  // unchanged (setting the same preference alone would bail out of the
+  // re-render that refreshes the label).
+  const [systemScheme, setSystemScheme] = useState<"light" | "dark">(resolveSystemScheme);
 
   useEffect(() => {
     // Re-assert the stored choice once mounted: the inline head script only
     // covers pre-paint locks, while the theme-color metas need the module.
     applyTheme(readThemePreference());
     return onSystemThemeChange((stored) => {
+      setSystemScheme(resolveSystemScheme());
       setPreference(stored);
     });
   }, []);
@@ -69,7 +75,7 @@ export function ThemeSwitch() {
             }}
           />
           <Icon aria-hidden="true" />
-          <span>{optionLabel(value)}</span>
+          <span>{optionLabel(value, systemScheme)}</span>
         </label>
       ))}
     </fieldset>

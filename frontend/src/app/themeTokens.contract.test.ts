@@ -95,6 +95,10 @@ describe("pre-declared badge and row-hover tokens", () => {
     ["--badge-neutral-ink", ["#5a6465", "#aeb9bb"]],
     ["--badge-active-bg", ["#cfe4e2", "#11312d"]],
     ["--badge-active-ink", ["#0f6862", "#2dd4bf"]],
+    ["--badge-deprecated-bg", ["#f3e0dc", "#381415"]],
+    ["--badge-deprecated-ink", ["#8a4a3c", "#f08c8c"]],
+    ["--badge-draft-active-bg", ["#d5dddd", "#2f383a"]],
+    ["--badge-draft-active-ink", ["#3d4647", "#c7ced0"]],
     ["--library-row-hover", ["#8dbab6", "#3d7a73"]],
   ]);
 
