@@ -13,6 +13,9 @@ overrides:
   # core-utils only calls esbuild transform/transformSync, which are stable
   # across 0.25.x; align it with drizzle-kit's own esbuild ^0.25.4 (#462).
   "@esbuild-kit/core-utils>esbuild": ">=0.25.12 <0.26"
+  # @redocly/openapi-core pins js-yaml at exactly 4.3.1; force the patched
+  # 4.x line (GHSA-2883-xcg3-v3hh) (#493).
+  js-yaml: ">=4.3.2 <5"
   brace-expansion: ">=5.0.9 <6"
   fast-uri: ">=3.1.5 <5"
   nanoid: ">=3.3.18 <4"
