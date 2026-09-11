@@ -2,10 +2,10 @@ import type { Principal } from "../../../shared/application/ports/auth.js";
 import type { DocumentService } from "./document_service.js";
 import type { RevisionSummaryPayload } from "./payload_schemas/revision.js";
 import { revisionSummaryPayload, safeLoadJson } from "./payloads.js";
+import type { DocumentStore } from "./ports/document_store.js";
 import {
   type RevisionPageCursor,
   type RevisionPageInput,
-  type StudioStore,
   scopeForPrincipal,
 } from "./ports/studio_store.js";
 
@@ -20,10 +20,10 @@ export interface RevisionHistoryPage {
  * source "restore".
  */
 export class RevisionService {
-  private readonly store: StudioStore;
+  private readonly store: DocumentStore;
   private readonly documents: DocumentService;
 
-  constructor(store: StudioStore, documents: DocumentService) {
+  constructor(store: DocumentStore, documents: DocumentService) {
     this.store = store;
     this.documents = documents;
   }

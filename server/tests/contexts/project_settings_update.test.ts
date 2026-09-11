@@ -4,11 +4,10 @@ import { join } from "node:path";
 import { eq } from "drizzle-orm";
 import { afterEach, describe, expect, expectTypeOf, it } from "vitest";
 
+import type { ProjectStore } from "../../src/contexts/studio/application/ports/project_store.js";
 import type { ProjectUpdateInput } from "../../src/contexts/studio/application/ports/project_update_store.js";
-import type {
-  ProjectRecord,
-  StudioStore,
-} from "../../src/contexts/studio/application/ports/studio_store.js";
+import type { ProjectRecord } from "../../src/contexts/studio/application/ports/studio_store.js";
+import type { StudioVolumeStore } from "../../src/contexts/studio/application/ports/volume_store.js";
 import {
   ProjectService,
   type ProjectUpdateCommand,
@@ -18,7 +17,7 @@ import {
   NotFoundError,
 } from "../../src/contexts/studio/domain/exceptions.js";
 import { projects } from "../../src/contexts/studio/infrastructure/db/schema.js";
-import { DrizzleStudioStore } from "../../src/contexts/studio/infrastructure/drizzle_studio_store.js";
+import { ProjectStorePart } from "../../src/contexts/studio/infrastructure/project_store_part.js";
 import type { Principal } from "../../src/shared/application/ports/auth.js";
 import { owners } from "../../src/shared/infrastructure/db/schema.js";
 import { openStudioDatabase } from "../../src/shared/infrastructure/db/startup.js";
@@ -52,7 +51,7 @@ async function openHarness() {
       created_at: new Date(0),
     })
     .run();
-  const store = new DrizzleStudioStore({ database: studio.db });
+  const store = new ProjectStorePart(studio.db);
   const seeded = store.addProject(
     { ownerId: "owner-1" },
     {
@@ -88,8 +87,9 @@ describe("Project settings application boundary", () => {
         captured = { scope, projectId, input };
         return row;
       },
-    } as unknown as StudioStore;
-    const service = new ProjectService(store, () => {
+    } as unknown as ProjectStore;
+    const volumes = {} as unknown as StudioVolumeStore;
+    const service = new ProjectService(store, volumes, () => {
       nowCalls += 1;
       return new Date(1);
     });
@@ -121,8 +121,9 @@ describe("Project settings application boundary", () => {
         storeCalls += 1;
         throw new Error("store must not be called");
       },
-    } as unknown as StudioStore;
-    const service = new ProjectService(store, () => {
+    } as unknown as ProjectStore;
+    const volumes = {} as unknown as StudioVolumeStore;
+    const service = new ProjectService(store, volumes, () => {
       nowCalls += 1;
       return new Date();
     });

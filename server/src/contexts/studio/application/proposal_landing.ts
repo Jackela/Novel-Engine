@@ -9,8 +9,10 @@ import { revisionWordCount } from "../domain/revision_word_count.js";
 import { BoundedPromptWriter } from "./generation_capacity.js";
 import { loreEntriesFromDocuments } from "./lorebook.js";
 import { dumpJson } from "./payloads.js";
+import type { StudioJobLedgerStore } from "./ports/job_ledger_store.js";
+import type { CompletedProposalUsageInput, JobRecord } from "./ports/job_records.js";
 import type { ProposalContextSource } from "./ports/proposal_context_store.js";
-import type { JobRecord, ProjectScope, StudioStore } from "./ports/studio_store.js";
+import type { ProjectScope } from "./ports/studio_store.js";
 import {
   buildProposalUserPrompt,
   residentContextSourceFromProposalContext,
@@ -199,15 +201,20 @@ export interface ProposalLanding {
 }
 
 export function completedProposalJob(
-  store: StudioStore,
+  jobs: StudioJobLedgerStore,
   scope: ProjectScope,
   seed: ProposalJobSeed,
   revisionId: string,
   landing: ProposalLanding,
 ): JobRecord {
+  const { outcome, usage } = completedProposalLanding(landing, {
+    operation: seed.operation,
+    revisionId,
+    now: seed.now,
+  });
   // #392: the job row and its usage event commit in one transaction so a
   // failure between the two writes can never strand a completed job.
-  return store.recordCompletedProposalJob(scope, {
+  return jobs.recordCompletedProposalJob(scope, {
     job: {
       projectId: seed.projectId,
       documentId: seed.documentId,
@@ -215,16 +222,52 @@ export function completedProposalJob(
       operation: seed.operation,
       provider: seed.provider,
       status: "completed",
-      model: landing.model,
+      model: outcome.model,
       requestJson: seed.requestJson,
+      resultJson: outcome.resultJson,
+      error: null,
+      eventDetailsJson: outcome.eventDetailsJson,
+      now: seed.now,
+    },
+    usage,
+  });
+}
+
+/**
+ * The completed-proposal landing pieces every pipeline shares (#392): the
+ * fresh draft inserts a new job row while a retry transitions its reserved
+ * row, so both landings carry identical result/usage shapes by construction
+ * instead of by duplication. Structurally assignable to
+ * `CompleteJobWithUsageInput` for the retry transition.
+ */
+export interface CompletedProposalLanding {
+  readonly outcome: {
+    readonly status: "completed";
+    readonly model: string;
+    readonly resultJson: string;
+    readonly error: null;
+    readonly eventDetailsJson: string;
+    readonly now: Date;
+  };
+  readonly usage: CompletedProposalUsageInput;
+}
+
+export function completedProposalLanding(
+  landing: ProposalLanding,
+  evidence: { readonly operation: string; readonly revisionId: string; readonly now: Date },
+): CompletedProposalLanding {
+  return {
+    outcome: {
+      status: "completed",
+      model: landing.model,
       resultJson: dumpJson({
         proposal_markdown: landing.proposal,
-        base_revision_id: revisionId,
+        base_revision_id: evidence.revisionId,
         accepted_revision_id: null,
       }),
       error: null,
       eventDetailsJson: dumpJson({ proposal_only: true }),
-      now: seed.now,
+      now: evidence.now,
     },
     usage: {
       provider: landing.provider,
@@ -232,21 +275,21 @@ export function completedProposalJob(
       promptTokens: resolvedTokenCount(landing.promptTokens, landing.instruction),
       completionTokens: resolvedTokenCount(landing.completionTokens, landing.proposal),
       requestEvidenceJson: dumpJson({
-        operation: seed.operation,
-        base_revision_id: revisionId,
+        operation: evidence.operation,
+        base_revision_id: evidence.revisionId,
       }),
     },
-  });
+  };
 }
 
 export function failedProposalJob(
-  store: StudioStore,
+  jobs: StudioJobLedgerStore,
   scope: ProjectScope,
   seed: ProposalJobSeed,
   revisionId: string,
   message: string,
 ): JobRecord {
-  return store.addJob(scope, {
+  return jobs.addJob(scope, {
     projectId: seed.projectId,
     documentId: seed.documentId,
     kind: "proposal",

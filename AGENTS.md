@@ -77,15 +77,15 @@ Generated/runtime trees such as caches, `htmlcov/`, `frontend/coverage/`, `front
 - `AUDIT_REPORT_Linus.md`
 - `Makefile`, `justfile`
 
-Require separate human confirmation before changing root package/lock files, `README.md`, `compose.yaml`, or `Dockerfile`. Never introduce dependencies without explicit approval.
+Complete `README.md`, package script declarations, and corresponding lockfile synchronization when required by the explicit task. New dependencies, production deployment behavior (including behavior changes in `compose.yaml` or `Dockerfile`), and configuration changes outside the task require authorization for that scope. Reuse equivalent authorization already given in the conversation.
 
 ## CODING RED LINES
 
 - Never swallow unexpected errors; catch specific transport, parsing, value, or domain exceptions; programming errors must remain visible.
 - Never construct SQL/FTS5 expressions by string concatenation. Parameterize or apply strict token reduction.
-- Never delete existing `throw`, `assert`, `validate`, `sanitize`, `escape`, `auth`, or `permission` logic.
+- Preserve validation, authorization, sanitization, and error-handling guarantees. Replacing or moving their implementation requires relevant regression evidence.
 - Never introduce import-time database handles, Fastify app instances, or magic proxies; runtime wiring happens in composition roots.
-- Do not modify tests unless the finding explicitly requires it.
+- Modify tests as needed to complete the current task; never weaken assertions to conceal failures.
 - Keep functions small (file-size gate enforces limits); split orchestration.
 - React components should stay below 200 lines; split orchestration into hooks/components.
 
@@ -146,19 +146,13 @@ Before AI work, record `git status`, the relevant diff, and a fixed comparison S
 
 Audit findings in `AUDIT_REPORT_Linus.md` are read-only references. Match one finding, its stated location, and its fix direction; do not broaden scope merely because nearby cleanup is possible.
 
-### Issue tracker
-
-Issues and specs for this repo live as GitHub issues on `Jackela/Novel-Engine`.
-Tracker configuration, including the Wayfinding operations section, is
-`docs/agents/issue-tracker.md`; triage labels are `docs/agents/triage-labels.md`.
-
 ## Agent skills
 
 ### Issue tracker
 
-GitHub Issues in `Jackela/Novel-Engine` are the work tracker. Before creating,
+GitHub Issues in `Jackela/Novel-Engine` are the issue and spec tracker. Before creating,
 triaging, claiming, resolving, or mapping a ticket, read
-`docs/agents/issue-tracker.md`.
+`docs/agents/issue-tracker.md`, including its Wayfinding operations section.
 
 ### Triage labels
 
@@ -170,3 +164,9 @@ Use the five canonical triage roles mapped in
 This repository is single-context: use root `CONTEXT.md` for domain vocabulary
 and the relevant decision record in `docs/adr/` for architecture decisions.
 See `docs/agents/domain.md`.
+
+### Frontend work
+
+Any UI work under `frontend/` starts from root `DESIGN.md` (design-language
+source of truth) and routes through the `frontend-workflow` skill
+(`.agents/skills/frontend-workflow/SKILL.md`).

@@ -2,23 +2,22 @@ import { asc, eq, sql } from "drizzle-orm";
 import { InvalidOperationError } from "../../../shared/domain/exceptions.js";
 import type { StudioSqliteDatabase } from "../../../shared/infrastructure/db/connection.js";
 import { jobs, usageEvents } from "../../../shared/infrastructure/db/schema.js";
+import type { StudioJobLedgerStore } from "../application/ports/job_ledger_store.js";
 import {
+  type AddJobInput,
+  type AddUsageEventInput,
+  type ClaimJobRetryInput,
+  type CompleteJobWithUsageInput,
   type JobPageInput,
+  type JobRecord,
+  type JobRetryClaim,
   type JobSummaryPage,
   jobPageLimit,
+  type MarkJobOutcomeInput,
+  type RecordCompletedProposalJobInput,
 } from "../application/ports/job_records.js";
-import type {
-  AddJobInput,
-  AddUsageEventInput,
-  ClaimJobRetryInput,
-  CompleteJobWithUsageInput,
-  JobRecord,
-  JobRetryClaim,
-  MarkJobOutcomeInput,
-  ProjectScope,
-  ProjectUsageAggregate,
-  RecordCompletedProposalJobInput,
-} from "../application/ports/studio_store.js";
+import type { ProjectUsageAggregate } from "../application/ports/project_usage.js";
+import type { ProjectScope } from "../application/ports/studio_store.js";
 import {
   InvalidJobTransitionError,
   NotFoundError,
@@ -45,7 +44,7 @@ type JobRow = typeof jobs.$inferSelect;
  * plain column (the studio tables live in another schema module), so every
  * access re-verifies principal scoping through the projects table first.
  */
-export class JobStorePart {
+export class JobStorePart implements StudioJobLedgerStore {
   protected readonly db: StudioSqliteDatabase;
 
   constructor(db: StudioSqliteDatabase) {

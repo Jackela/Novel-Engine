@@ -79,6 +79,14 @@ module.exports = {
       from: { path: "^src/contexts/ai" },
       to: { path: "^src/contexts/studio" },
     },
+    {
+      name: "ai-providers-neutral-no-vendor",
+      comment:
+        "Neutral shared modules in the ai providers directory (provider_* prefix convention) must not import vendor/adapter modules; the dependency direction is always vendor → neutral (B4 follow-up, 2026-09-11).",
+      severity: "error",
+      from: { path: "^src/contexts/ai/infrastructure/providers/provider_[^/]+\\.ts$" },
+      to: { path: "^src/contexts/ai/infrastructure/providers/(?!provider_)[^/]+\\.ts$" },
+    },
   ],
   options: {
     // TypeScript 7 ships no JS compiler API yet (that lands with typescript@7.1),

@@ -4,8 +4,10 @@ import { isDocumentKind } from "../domain/kinds.js";
 import { assertSerializedCapacity } from "../domain/structure_capacity.js";
 import { buildFtsMatchQuery } from "./fts_match_query.js";
 import { documentMatchPayload, documentPayload, dumpJson } from "./payloads.js";
+import type { DocumentStore } from "./ports/document_store.js";
 import type { ProjectScope } from "./ports/studio_store.js";
-import { type StudioStore, scopeForPrincipal } from "./ports/studio_store.js";
+import { scopeForPrincipal } from "./ports/studio_store.js";
+import type { StudioVolumeStore } from "./ports/volume_store.js";
 import { documentSummaryPayload } from "./project_shell_payloads.js";
 
 /**
@@ -14,11 +16,17 @@ import { documentSummaryPayload } from "./project_shell_payloads.js";
  * revision conflict that carries the current revision id.
  */
 export class DocumentService {
-  private readonly store: StudioStore;
+  private readonly documents: DocumentStore;
+  private readonly volumes: StudioVolumeStore;
   private readonly now: () => Date;
 
-  constructor(store: StudioStore, now: () => Date = () => new Date()) {
-    this.store = store;
+  constructor(
+    documents: DocumentStore,
+    volumes: StudioVolumeStore,
+    now: () => Date = () => new Date(),
+  ) {
+    this.documents = documents;
+    this.volumes = volumes;
     this.now = now;
   }
 
@@ -40,15 +48,15 @@ export class DocumentService {
     // Chapters belong to exactly one volume (ADR-0005); an unassigned create
     // lands at the tail of the project's first volume in reading order.
     const targetVolumeId =
-      input.kind === "chapter" ? resolveFirstVolumeId(this.store, scope, projectId) : null;
+      input.kind === "chapter" ? resolveFirstVolumeId(this.volumes, scope, projectId) : null;
     const position =
       input.position === undefined || input.position === null
-        ? this.store.nextPosition(scope, projectId, input.kind, targetVolumeId)
+        ? this.documents.nextPosition(scope, projectId, input.kind, targetVolumeId)
         : input.position;
     const metadataJson = dumpJson(input.metadata ?? {});
     assertSerializedCapacity("document_metadata_bytes", metadataJson);
     return documentPayload(
-      this.store.addDocument(scope, projectId, {
+      this.documents.addDocument(scope, projectId, {
         kind: input.kind,
         title: input.title,
         contentMarkdown: input.contentMarkdown ?? "",
@@ -66,7 +74,7 @@ export class DocumentService {
     documentId: string,
   ): Record<string, unknown> {
     return documentPayload(
-      this.store.readCurrentDocument(scopeForPrincipal(principal), projectId, documentId),
+      this.documents.readCurrentDocument(scopeForPrincipal(principal), projectId, documentId),
     );
   }
 
@@ -94,7 +102,7 @@ export class DocumentService {
     const metadataJson = dumpJson(input.metadata ?? {});
     assertSerializedCapacity("document_metadata_bytes", metadataJson);
     return documentPayload(
-      this.store.advanceDocument(scopeForPrincipal(principal), projectId, documentId, {
+      this.documents.advanceDocument(scopeForPrincipal(principal), projectId, documentId, {
         contentMarkdown: input.contentMarkdown,
         baseRevisionId: input.baseRevisionId,
         title,
@@ -106,7 +114,7 @@ export class DocumentService {
   }
 
   removeDocument(principal: Principal, projectId: string, documentId: string): void {
-    this.store.dropDocument(scopeForPrincipal(principal), projectId, documentId);
+    this.documents.dropDocument(scopeForPrincipal(principal), projectId, documentId);
   }
 
   /**
@@ -123,7 +131,7 @@ export class DocumentService {
     if (matchQuery === null) {
       return [];
     }
-    return this.store
+    return this.documents
       .matchProjectDocuments(scopeForPrincipal(principal), projectId, matchQuery)
       .map((match) => documentMatchPayload(match));
   }
@@ -137,15 +145,19 @@ export class DocumentService {
     projectId: string,
     documentIds: string[],
   ): Record<string, unknown>[] {
-    return this.store
+    return this.volumes
       .renumberDocuments(scopeForPrincipal(principal), projectId, documentIds, this.now())
       .map(documentSummaryPayload);
   }
 }
 
 /** The project's first volume in reading order — the chapter-create target. */
-function resolveFirstVolumeId(store: StudioStore, scope: ProjectScope, projectId: string): string {
-  const [first] = store.findVolumes(scope, projectId);
+function resolveFirstVolumeId(
+  volumes: StudioVolumeStore,
+  scope: ProjectScope,
+  projectId: string,
+): string {
+  const [first] = volumes.findVolumes(scope, projectId);
   if (first === undefined) {
     throw new InvalidOperationError("A project must keep at least one volume.");
   }

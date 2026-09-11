@@ -2,7 +2,8 @@ import type { Principal } from "../../../shared/application/ports/auth.js";
 import { InvalidOperationError } from "../../../shared/domain/exceptions.js";
 import { dumpJson } from "./payloads.js";
 import type { LegacyWorkspace, LegacyWorkspaceReader } from "./ports/legacy_workspace_reader.js";
-import { type ProjectRecord, type StudioStore, scopeForPrincipal } from "./ports/studio_store.js";
+import type { ProjectStore } from "./ports/project_store.js";
+import { type ProjectRecord, scopeForPrincipal } from "./ports/studio_store.js";
 
 /** Imported projects keep the authoring-core default settings (Python parity). */
 const IMPORT_SETTINGS_JSON = dumpJson({ provider: "mock" });
@@ -22,12 +23,12 @@ export interface LegacyImportResult extends Record<string, unknown> {
  * the LegacyWorkspaceReader port; nothing here ever writes to the source.
  */
 export class ImportService {
-  private readonly store: StudioStore;
+  private readonly store: ProjectStore;
   private readonly reader: LegacyWorkspaceReader;
   private readonly now: () => Date;
 
   constructor(
-    store: StudioStore,
+    store: ProjectStore,
     reader: LegacyWorkspaceReader,
     now: () => Date = () => new Date(),
   ) {

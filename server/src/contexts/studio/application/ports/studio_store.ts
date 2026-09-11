@@ -1,16 +1,4 @@
 import type { Principal } from "../../../../shared/application/ports/auth.js";
-import type { StudioBeatStore } from "./beat_store.js";
-import type { StudioJobLedgerStore } from "./job_ledger_store.js";
-import type { StudioLoreStore } from "./lore_store.js";
-import type { ProjectCatalogStore } from "./project_catalog_store.js";
-import type { DocumentSummaryRecord, ProjectShellRecord } from "./project_shell_records.js";
-import type { ProjectUpdateStore } from "./project_update_store.js";
-import type { ProposalAcceptanceStore } from "./proposal_acceptance_store.js";
-import type { ProposalContextStore } from "./proposal_context_store.js";
-import type { ReviewOutcomeStore } from "./review_outcome_store.js";
-import type { StudioVolumeStore } from "./volume_store.js";
-
-export type { DocumentSummaryRecord, ProjectShellRecord } from "./project_shell_records.js";
 
 /** Persistence-neutral row shapes handed to the application layer. */
 export interface ProjectRecord {
@@ -122,45 +110,6 @@ export interface DocumentMatchRecord {
   excerpt: string;
 }
 
-/** Job-row shapes live in their own module (file-size split); re-exported. */
-export type {
-  AddJobInput,
-  AddUsageEventInput,
-  ClaimJobRetryInput,
-  CompletedProposalUsageInput,
-  CompleteJobWithUsageInput,
-  JobEventRecord,
-  JobRecord,
-  JobRetryClaim,
-  MarkJobOutcomeInput,
-  RecordCompletedProposalJobInput,
-} from "./job_records.js";
-
-/** Catalog-page types live in their focused port module; re-exported here. */
-export type {
-  ProjectCatalogPage,
-  ProjectCatalogSummaryRecord,
-  ProjectPageCursor,
-  ProjectPageInput,
-  ProjectPageLimit,
-} from "./project_catalog_store.js";
-
-/**
- * Review-outcome types live in their focused port module; re-exported here.
- * The #459 keyset-page types stay importable from `review_outcome_store.js`
- * only — the barrel crossed the file-size budget after #473/#474 landed.
- */
-export type {
-  EditorialAssessmentRecord,
-  EditorialIssueInput,
-  EditorialIssueRecord,
-  EvaluatedReview,
-  ReviewCompletionRecord,
-  ReviewSnapshotDocument,
-  ReviewSource,
-  ReviewSourceDocument,
-} from "./review_outcome_store.js";
-
 /**
  * Owner scoping of every project query: the single principal since #311
  * retired the guest.
@@ -168,13 +117,6 @@ export type {
 export interface ProjectScope {
   ownerId: string;
 }
-
-/** The aggregated usage-ledger types (#317, #384), shared with the HTTP surface. */
-export type {
-  ProjectUsageAggregate,
-  ProjectUsageBreakdownEntry,
-  ProjectUsageDailyBucket,
-} from "./project_usage.js";
 
 /** Derive the store scope from the authenticated owner principal. */
 export function scopeForPrincipal(principal: Principal): ProjectScope {
@@ -230,99 +172,4 @@ export interface AdvanceDocumentInput {
   metadataJson: string;
   source: string;
   now: Date;
-}
-
-/**
- * Persistence port of the authoring core. The application layer orchestrates
- * project, document, and revision behavior through this port; the Drizzle
- * store implements it transactionally in infrastructure. The volume surface
- * (ADR-0005) extends it from its own module, as do the beat association
- * (#313) and the lorebook aliases (#315).
- */
-export interface StudioStore
-  extends StudioVolumeStore,
-    ProjectUpdateStore,
-    StudioBeatStore,
-    StudioLoreStore,
-    ProposalContextStore,
-    ProposalAcceptanceStore,
-    ReviewOutcomeStore,
-    StudioJobLedgerStore,
-    ProjectCatalogStore {
-  addProject(
-    scope: ProjectScope,
-    input: AddProjectInput,
-  ): {
-    project: ProjectRecord;
-    documents: DocumentWithCurrent[];
-  };
-  findProject(scope: ProjectScope, projectId: string): ProjectRecord;
-  readProjectShell(scope: ProjectScope, projectId: string): ProjectShellRecord;
-  /** Existing project of this principal carrying the given import hash, if any. */
-  findProjectByImportHash(scope: ProjectScope, importHash: string): ProjectRecord | null;
-  /**
-   * Transactional legacy-import write: the project (with its import hash),
-   * one chapter document/revision per file, and the FTS rows commit together.
-   */
-  addImportedProject(
-    scope: ProjectScope,
-    input: AddImportedProjectInput,
-  ): {
-    project: ProjectRecord;
-    documents: DocumentWithCurrent[];
-  };
-  dropProject(scope: ProjectScope, projectId: string): void;
-
-  findDocuments(scope: ProjectScope, projectId: string): DocumentWithCurrent[];
-  findDocument(scope: ProjectScope, projectId: string, documentId: string): DocumentWithCurrent;
-  readCurrentDocument(
-    scope: ProjectScope,
-    projectId: string,
-    documentId: string,
-  ): DocumentWithCurrent;
-  addDocument(scope: ProjectScope, projectId: string, input: AddDocumentInput): DocumentWithCurrent;
-  advanceDocument(
-    scope: ProjectScope,
-    projectId: string,
-    documentId: string,
-    input: AdvanceDocumentInput,
-  ): DocumentWithCurrent;
-  dropDocument(scope: ProjectScope, projectId: string, documentId: string): void;
-  renumberDocuments(
-    scope: ProjectScope,
-    projectId: string,
-    documentIds: string[],
-    now: Date,
-  ): DocumentSummaryRecord[];
-  /** Tail position for a kind; chapters position within their target volume. */
-  nextPosition(
-    scope: ProjectScope,
-    projectId: string,
-    kind: string,
-    volumeId?: string | null,
-  ): number;
-
-  findRevisionSummaries(
-    scope: ProjectScope,
-    projectId: string,
-    documentId: string,
-    input: RevisionPageInput,
-  ): RevisionSummaryPage;
-  findRevision(
-    scope: ProjectScope,
-    projectId: string,
-    documentId: string,
-    revisionId: string,
-  ): RevisionRecord;
-
-  /**
-   * Run a pre-reduced MATCH expression against the project's FTS index.
-   * The expression must come from `buildFtsMatchQuery`; the store never
-   * reduces raw user input itself.
-   */
-  matchProjectDocuments(
-    scope: ProjectScope,
-    projectId: string,
-    matchQuery: string,
-  ): DocumentMatchRecord[];
 }

@@ -3,6 +3,7 @@ import { and, desc, eq } from "drizzle-orm";
 
 import { InvalidOperationError } from "../../../shared/domain/exceptions.js";
 import type { StudioSqliteDatabase } from "../../../shared/infrastructure/db/connection.js";
+import type { DocumentStore } from "../application/ports/document_store.js";
 import type {
   AddDocumentInput,
   AdvanceDocumentInput,
@@ -44,7 +45,7 @@ import { buildRevisionSummariesQuery } from "./revision_page_queries.js";
  * The document, revision, and FTS half of the Drizzle studio store. Every
  * mutation keeps the relational rows and the FTS5 index in one transaction.
  */
-export class DocumentStorePart {
+export class DocumentStorePart implements DocumentStore {
   protected readonly db: StudioSqliteDatabase;
 
   constructor(db: StudioSqliteDatabase) {

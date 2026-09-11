@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import { eq } from "drizzle-orm";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { projects } from "../../src/contexts/studio/infrastructure/db/schema.js";
-import { DrizzleStudioStore } from "../../src/contexts/studio/infrastructure/drizzle_studio_store.js";
+import { ProjectStorePart } from "../../src/contexts/studio/infrastructure/project_store_part.js";
 import { owners } from "../../src/shared/infrastructure/db/schema.js";
 import { cookieHeader } from "./auth_helpers.js";
 import { authHeaders, buildStudioApp, call, ownerJar, seedProject } from "./studio_helpers.js";
@@ -24,7 +24,7 @@ describe("Project settings PATCH validation and guards", () => {
       const db = app.studioDb?.db;
       if (db === undefined) throw new Error("expected database");
       const before = db.select().from(projects).where(eq(projects.id, project.id)).get();
-      const update = vi.spyOn(DrizzleStudioStore.prototype, "updateProject");
+      const update = vi.spyOn(ProjectStorePart.prototype, "updateProject");
       const bodies: unknown[] = [
         {},
         { unknown: true },
@@ -69,7 +69,7 @@ describe("Project settings PATCH validation and guards", () => {
       const jar = await ownerJar(app);
       const project = await seedProject(app, jar, "Guard order");
       const url = `/api/projects/${project.id}`;
-      const update = vi.spyOn(DrizzleStudioStore.prototype, "updateProject");
+      const update = vi.spyOn(ProjectStorePart.prototype, "updateProject");
 
       const anonymous = await app.inject({
         method: "PATCH",

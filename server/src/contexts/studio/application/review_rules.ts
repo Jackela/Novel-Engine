@@ -1,5 +1,5 @@
 import { revisionWordCount } from "../domain/revision_word_count.js";
-import type { EditorialIssueInput, ReviewSourceDocument } from "./ports/studio_store.js";
+import type { EditorialIssueInput, ReviewSourceDocument } from "./ports/review_outcome_store.js";
 
 /**
  * The server-owned closed review vocabulary (#316): the LLM may only report

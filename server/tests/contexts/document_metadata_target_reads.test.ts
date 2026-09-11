@@ -5,7 +5,10 @@ import { drizzle } from "drizzle-orm/better-sqlite3";
 import { describe, expect, it } from "vitest";
 
 import { scopeForPrincipal } from "../../src/contexts/studio/application/ports/studio_store.js";
-import { DrizzleStudioStore } from "../../src/contexts/studio/infrastructure/drizzle_studio_store.js";
+import { DocumentStorePart } from "../../src/contexts/studio/infrastructure/document_store_part.js";
+import { LoreStorePart } from "../../src/contexts/studio/infrastructure/lore_store_part.js";
+import { ProjectStorePart } from "../../src/contexts/studio/infrastructure/project_store_part.js";
+import { VolumeStorePart } from "../../src/contexts/studio/infrastructure/volume_store_part.js";
 import { AuthService } from "../../src/shared/application/auth_service.js";
 import { DrizzleAuthStore } from "../../src/shared/infrastructure/db/auth_store.js";
 import * as databaseSchema from "../../src/shared/infrastructure/db/schema.js";
@@ -17,7 +20,9 @@ describe("single-document metadata writes", () => {
     const studio = await openStudioDatabase(join(directory, "novel-engine.sqlite3"));
     try {
       const now = new Date("2026-09-03T00:00:00.000Z");
-      const setupStore = new DrizzleStudioStore({ database: studio.db });
+      const setupProjects = new ProjectStorePart(studio.db);
+      const setupDocuments = new DocumentStorePart(studio.db);
+      const setupVolumes = new VolumeStorePart(studio.db);
       const auth = new AuthService({
         store: new DrizzleAuthStore(studio.db),
         sessionSecret: "target-document-test-secret",
@@ -27,7 +32,7 @@ describe("single-document metadata writes", () => {
       const principal = (await auth.createOwnerSession("target-owner", "long-test-password"))
         .principal;
       const scope = scopeForPrincipal(principal);
-      const seeded = setupStore.addProject(scope, {
+      const seeded = setupProjects.addProject(scope, {
         title: "Target reads",
         description: "",
         settingsJson: "{}",
@@ -41,7 +46,7 @@ describe("single-document metadata writes", () => {
       });
       const chapter = seeded.documents[0];
       if (chapter === undefined) throw new Error("Expected the seeded chapter.");
-      const lore = setupStore.addDocument(scope, seeded.project.id, {
+      const lore = setupDocuments.addDocument(scope, seeded.project.id, {
         kind: "character",
         title: "Target lore",
         contentMarkdown: "Target lore body.",
@@ -50,7 +55,7 @@ describe("single-document metadata writes", () => {
         volumeId: null,
         now,
       });
-      setupStore.addDocument(scope, seeded.project.id, {
+      setupDocuments.addDocument(scope, seeded.project.id, {
         kind: "world",
         title: "Large unrelated sibling",
         contentMarkdown: "s".repeat(1_000_000),
@@ -59,7 +64,7 @@ describe("single-document metadata writes", () => {
         volumeId: null,
         now,
       });
-      const targetVolume = setupStore.addVolume(scope, seeded.project.id, {
+      const targetVolume = setupVolumes.addVolume(scope, seeded.project.id, {
         title: "Target volume",
         now,
       });
@@ -69,7 +74,9 @@ describe("single-document metadata writes", () => {
         schema: databaseSchema,
         logger: { logQuery: (query: string) => executedSql.push(query) },
       });
-      const store = new DrizzleStudioStore({ database: tracedDatabase });
+      const documents = new DocumentStorePart(tracedDatabase);
+      const loreKeys = new LoreStorePart(tracedDatabase);
+      const volumes = new VolumeStorePart(tracedDatabase);
 
       function expectOneTargetRevisionRead<T>(operation: () => T): T {
         executedSql.length = 0;
@@ -84,7 +91,7 @@ describe("single-document metadata writes", () => {
       }
 
       const beat = expectOneTargetRevisionRead(() =>
-        store.setBeatReference(scope, seeded.project.id, chapter.id, {
+        documents.setBeatReference(scope, seeded.project.id, chapter.id, {
           beatRef: "Opening",
           now,
         }),
@@ -96,7 +103,7 @@ describe("single-document metadata writes", () => {
       });
 
       const aliases = expectOneTargetRevisionRead(() =>
-        store.setLoreAliases(scope, seeded.project.id, lore.id, { aliases: ["keeper"], now }),
+        loreKeys.setLoreAliases(scope, seeded.project.id, lore.id, { aliases: ["keeper"], now }),
       );
       expect(aliases).toMatchObject({
         id: lore.id,
@@ -105,7 +112,7 @@ describe("single-document metadata writes", () => {
       });
 
       const status = expectOneTargetRevisionRead(() =>
-        store.setLoreStatus(scope, seeded.project.id, lore.id, { status: "stable", now }),
+        loreKeys.setLoreStatus(scope, seeded.project.id, lore.id, { status: "stable", now }),
       );
       expect(status).toMatchObject({
         id: lore.id,
@@ -114,7 +121,7 @@ describe("single-document metadata writes", () => {
       });
 
       const placed = expectOneTargetRevisionRead(() =>
-        store.placeDocumentInVolume(scope, seeded.project.id, chapter.id, {
+        volumes.placeDocumentInVolume(scope, seeded.project.id, chapter.id, {
           volumeId: targetVolume.id,
           now,
         }),

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { replayedGenerationCapacityError } from "../../src/contexts/studio/application/generation_retry_capacity_outcome.js";
-import type { JobRecord } from "../../src/contexts/studio/application/ports/studio_store.js";
+import type { JobRecord } from "../../src/contexts/studio/application/ports/job_records.js";
 
 const FIXED_PROMPT_LIMIT = 8_388_608;
 

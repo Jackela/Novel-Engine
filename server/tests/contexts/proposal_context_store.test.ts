@@ -6,8 +6,11 @@ import { describe, expect, it } from "vitest";
 import type { ProposalContextSource } from "../../src/contexts/studio/application/ports/proposal_context_store.js";
 import { scopeForPrincipal } from "../../src/contexts/studio/application/ports/studio_store.js";
 import { NotFoundError } from "../../src/contexts/studio/domain/exceptions.js";
-import { DrizzleStudioStore } from "../../src/contexts/studio/infrastructure/drizzle_studio_store.js";
+import { DocumentStorePart } from "../../src/contexts/studio/infrastructure/document_store_part.js";
+import { LoreStorePart } from "../../src/contexts/studio/infrastructure/lore_store_part.js";
+import { ProjectStorePart } from "../../src/contexts/studio/infrastructure/project_store_part.js";
 import { ProposalContextStorePart } from "../../src/contexts/studio/infrastructure/proposal_context_store_part.js";
+import { VolumeStorePart } from "../../src/contexts/studio/infrastructure/volume_store_part.js";
 import { AuthService } from "../../src/shared/application/auth_service.js";
 import { DrizzleAuthStore } from "../../src/shared/infrastructure/db/auth_store.js";
 import { openConnection } from "../../src/shared/infrastructure/db/connection.js";
@@ -38,7 +41,13 @@ describe("proposal context store", () => {
     const competing = openConnection(databasePath);
     try {
       const now = new Date("2026-09-03T01:00:00.000Z");
-      const setupStore = new DrizzleStudioStore({ database: studio.db });
+      const setupStore = {
+        projects: new ProjectStorePart(studio.db),
+        documents: new DocumentStorePart(studio.db),
+        volumes: new VolumeStorePart(studio.db),
+        lore: new LoreStorePart(studio.db),
+        proposalContext: new ProposalContextStorePart(studio.db),
+      };
       const auth = new AuthService({
         store: new DrizzleAuthStore(studio.db),
         sessionSecret: "proposal-context-test-secret",
@@ -48,7 +57,7 @@ describe("proposal context store", () => {
       const principal = (await auth.createOwnerSession("context-owner", "long-test-password"))
         .principal;
       const scope = scopeForPrincipal(principal);
-      const seeded = setupStore.addProject(scope, {
+      const seeded = setupStore.projects.addProject(scope, {
         title: "Coherent context",
         description: "",
         settingsJson: "{}",
@@ -61,22 +70,22 @@ describe("proposal context store", () => {
         now,
       });
       const target = seeded.documents[0];
-      const firstVolume = setupStore.findVolumes(scope, seeded.project.id)[0];
+      const firstVolume = setupStore.volumes.findVolumes(scope, seeded.project.id)[0];
       if (target === undefined || firstVolume === undefined) {
         throw new Error("Expected seeded target and volume.");
       }
       const targetId = target.id;
       const targetRevisionId = target.currentRevisionId;
       const firstVolumeId = firstVolume.id;
-      setupStore.setBeatReference(scope, seeded.project.id, targetId, {
+      setupStore.documents.setBeatReference(scope, seeded.project.id, targetId, {
         beatRef: "Beat A",
         now,
       });
-      const secondVolume = setupStore.addVolume(scope, seeded.project.id, {
+      const secondVolume = setupStore.volumes.addVolume(scope, seeded.project.id, {
         title: "Second",
         now,
       });
-      const sibling = setupStore.addDocument(scope, seeded.project.id, {
+      const sibling = setupStore.documents.addDocument(scope, seeded.project.id, {
         kind: "chapter",
         title: "Sibling",
         contentMarkdown: "Sibling A",
@@ -85,7 +94,7 @@ describe("proposal context store", () => {
         volumeId: secondVolume.id,
         now,
       });
-      const outline = setupStore.addDocument(scope, seeded.project.id, {
+      const outline = setupStore.documents.addDocument(scope, seeded.project.id, {
         kind: "outline",
         title: "Outline",
         contentMarkdown: "## Beat A\nOutline A",
@@ -94,7 +103,7 @@ describe("proposal context store", () => {
         volumeId: null,
         now,
       });
-      const lore = setupStore.addDocument(scope, seeded.project.id, {
+      const lore = setupStore.documents.addDocument(scope, seeded.project.id, {
         kind: "character",
         title: "Lore",
         contentMarkdown: "Lore A",
@@ -103,11 +112,11 @@ describe("proposal context store", () => {
         volumeId: null,
         now,
       });
-      setupStore.setLoreAliases(scope, seeded.project.id, lore.id, {
+      setupStore.lore.setLoreAliases(scope, seeded.project.id, lore.id, {
         aliases: ["alias-a"],
         now,
       });
-      setupStore.setLoreStatus(scope, seeded.project.id, lore.id, { status: "stable", now });
+      setupStore.lore.setLoreStatus(scope, seeded.project.id, lore.id, { status: "stable", now });
 
       let committed = false;
       class InterleavingProposalContextStore extends ProposalContextStorePart {
@@ -189,14 +198,22 @@ describe("proposal context store", () => {
       });
 
       expect(
-        setupStore.readProposalContext(scope, seeded.project.id, targetId).target.currentRevision
-          ?.contentMarkdown,
+        setupStore.proposalContext.readProposalContext(scope, seeded.project.id, targetId).target
+          .currentRevision?.contentMarkdown,
       ).toBe("Target B");
       expect(() =>
-        setupStore.readProposalContext({ ownerId: "foreign-owner" }, seeded.project.id, targetId),
+        setupStore.proposalContext.readProposalContext(
+          { ownerId: "foreign-owner" },
+          seeded.project.id,
+          targetId,
+        ),
       ).toThrow(NotFoundError);
       expect(() =>
-        setupStore.readProposalContext(scope, seeded.project.id, "missing-document"),
+        setupStore.proposalContext.readProposalContext(
+          scope,
+          seeded.project.id,
+          "missing-document",
+        ),
       ).toThrow(
         `No document 'missing-document' exists in project '${seeded.project.id}': the id does not exist there, or the document belongs to a different project.`,
       );

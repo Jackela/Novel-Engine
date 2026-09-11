@@ -2,7 +2,6 @@ import { randomBytes } from "node:crypto";
 import { textProviderFactory } from "../../contexts/ai/infrastructure/providers/text_provider_factory.js";
 import type { LegacyImportResult } from "../../contexts/studio/application/import_service.js";
 import { createStudioServices } from "../../contexts/studio/application/studio_services.js";
-import { DrizzleStudioStore } from "../../contexts/studio/infrastructure/drizzle_studio_store.js";
 import { FilesystemExportArtifactGateway } from "../../contexts/studio/infrastructure/export_artifact_files.js";
 import { DatabaseExportPublicationCleanupJournal } from "../../contexts/studio/infrastructure/export_publication_cleanup_journal.js";
 import { ExportStorePart } from "../../contexts/studio/infrastructure/export_store_part.js";
@@ -11,6 +10,7 @@ import { FilesystemProjectArtifactCleaner } from "../../contexts/studio/infrastr
 import { openReconciledStudioDatabase } from "../../contexts/studio/infrastructure/reconciled_studio_database.js";
 import { AuthService } from "../../shared/application/auth_service.js";
 import { DrizzleAuthStore } from "../../shared/infrastructure/db/auth_store.js";
+import { createStudioPersistence } from "../studio_persistence.js";
 
 export interface LegacyImportCommandInput {
   /** Exact database authority (backup → migrate → reconcile exports → recover jobs runs first). */
@@ -40,7 +40,7 @@ export async function runLegacyImportCommand(
       sessionSecret: randomBytes(32).toString("base64url"),
     });
     const principal = authService.localOwnerPrincipal(input.owner);
-    const services = createStudioServices(new DrizzleStudioStore({ database: database.db }), {
+    const services = createStudioServices(createStudioPersistence(database.db), {
       providerFactory: textProviderFactory({}),
       legacyWorkspaceReader: new FsLegacyWorkspaceReader(),
       // The import command never touches exports, but the service graph is

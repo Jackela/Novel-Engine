@@ -4,7 +4,8 @@ import { describe, expect, it, vi } from "vitest";
 import type { TextGenerationProviderFactory } from "../../src/contexts/ai/application/ports/text_generation.js";
 import { TextGenerationProviderError } from "../../src/contexts/ai/application/ports/text_generation.js";
 import { documents } from "../../src/contexts/studio/infrastructure/db/schema.js";
-import { DrizzleStudioStore } from "../../src/contexts/studio/infrastructure/drizzle_studio_store.js";
+import { JobStorePart } from "../../src/contexts/studio/infrastructure/job_store_part.js";
+import { ProposalContextStorePart } from "../../src/contexts/studio/infrastructure/proposal_context_store_part.js";
 import { jobEvents, jobs, usageEvents } from "../../src/shared/infrastructure/db/schema.js";
 import { studioDatabase } from "./job_test_helpers.js";
 import {
@@ -91,8 +92,8 @@ describe("proposal retry replay boundaries", () => {
       );
       expect(advanced.statusCode, advanced.body).toBe(200);
 
-      const capture = vi.spyOn(DrizzleStudioStore.prototype, "readProposalContext");
-      const claim = vi.spyOn(DrizzleStudioStore.prototype, "claimJobRetry");
+      const capture = vi.spyOn(ProposalContextStorePart.prototype, "readProposalContext");
+      const claim = vi.spyOn(JobStorePart.prototype, "claimJobRetry");
       const key = "stale-base-claim-race-key-0001";
       const first = await retry(app, owner, project.id, source.id, key);
       expect(first.statusCode, first.body).toBe(200);
@@ -100,7 +101,7 @@ describe("proposal retry replay boundaries", () => {
 
       // Model the lookup/claim interleave deterministically: the fast lookup
       // misses, while the claim transaction observes the terminal winner.
-      vi.spyOn(DrizzleStudioStore.prototype, "findJobRetry").mockReturnValueOnce(null);
+      vi.spyOn(JobStorePart.prototype, "findJobRetry").mockReturnValueOnce(null);
       const replay = await retry(app, owner, project.id, source.id, key);
 
       expect(replay.body).toBe(first.body);
@@ -141,7 +142,7 @@ describe("proposal retry replay boundaries", () => {
         .where(eq(documents.id, document.id))
         .run();
 
-      const capture = vi.spyOn(DrizzleStudioStore.prototype, "readProposalContext");
+      const capture = vi.spyOn(ProposalContextStorePart.prototype, "readProposalContext");
       const response = await retry(
         app,
         owner,

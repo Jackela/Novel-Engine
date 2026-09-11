@@ -18,12 +18,11 @@ import type { ProjectCatalogSummaryPayload, ProjectPayload } from "./payload_sch
 import type { RevisionPayload, RevisionSummaryPayload } from "./payload_schemas/revision.js";
 import type { VolumePayload } from "./payload_schemas/volume.js";
 import type { ExportArtifactRecord } from "./ports/export_store.js";
-import type { JobSummaryRecord } from "./ports/job_records.js";
+import type { JobRecord, JobSummaryRecord } from "./ports/job_records.js";
 import type { ProjectCatalogSummaryRecord } from "./ports/project_catalog_store.js";
 import type {
   DocumentMatchRecord,
   DocumentWithCurrent,
-  JobRecord,
   RevisionRecord,
   RevisionSummaryRecord,
 } from "./ports/studio_store.js";

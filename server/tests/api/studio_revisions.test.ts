@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { DrizzleStudioStore } from "../../src/contexts/studio/infrastructure/drizzle_studio_store.js";
+import { DocumentStorePart } from "../../src/contexts/studio/infrastructure/document_store_part.js";
 
 import {
   buildStudioApp,
@@ -130,7 +130,7 @@ describe("revision chain", () => {
       expect(historicSummary).not.toHaveProperty("content_markdown");
       expect(historicSummary).not.toHaveProperty("metadata");
 
-      const exactRevisionRead = vi.spyOn(DrizzleStudioStore.prototype, "findRevision");
+      const exactRevisionRead = vi.spyOn(DocumentStorePart.prototype, "findRevision");
       const restore = await call(
         app,
         jar,

@@ -3,8 +3,9 @@ import { InvalidOperationError } from "../../../shared/domain/exceptions.js";
 import { type OutlineBeat, splitOutlineBeats } from "./outline_beats.js";
 import type { ChapterBeatPayload } from "./payload_schemas/beat.js";
 import { chapterBeatPayload } from "./payloads.js";
+import type { DocumentStore } from "./ports/document_store.js";
 import type { DocumentWithCurrent, ProjectScope } from "./ports/studio_store.js";
-import { type StudioStore, scopeForPrincipal } from "./ports/studio_store.js";
+import { scopeForPrincipal } from "./ports/studio_store.js";
 
 /**
  * The chapter beat association surface (#313): a chapter links to at most one
@@ -14,10 +15,10 @@ import { type StudioStore, scopeForPrincipal } from "./ports/studio_store.js";
  * errors.
  */
 export class BeatAssociationService {
-  private readonly store: StudioStore;
+  private readonly store: DocumentStore;
   private readonly now: () => Date;
 
-  constructor(store: StudioStore, now: () => Date = () => new Date()) {
+  constructor(store: DocumentStore, now: () => Date = () => new Date()) {
     this.store = store;
     this.now = now;
   }
@@ -67,7 +68,7 @@ export class BeatAssociationService {
  * project without an outline has no beats.
  */
 export function projectOutlineBeats(
-  store: StudioStore,
+  store: DocumentStore,
   scope: ProjectScope,
   projectId: string,
 ): OutlineBeat[] {

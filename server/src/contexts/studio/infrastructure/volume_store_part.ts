@@ -2,11 +2,8 @@ import { randomUUID } from "node:crypto";
 import { asc, desc, eq } from "drizzle-orm";
 import { InvalidOperationError } from "../../../shared/domain/exceptions.js";
 import type { StudioSqliteDatabase } from "../../../shared/infrastructure/db/connection.js";
-import type {
-  DocumentSummaryRecord,
-  DocumentWithCurrent,
-  ProjectScope,
-} from "../application/ports/studio_store.js";
+import type { DocumentSummaryRecord } from "../application/ports/project_shell_records.js";
+import type { DocumentWithCurrent, ProjectScope } from "../application/ports/studio_store.js";
 import type {
   AddVolumeInput,
   AlterVolumeInput,

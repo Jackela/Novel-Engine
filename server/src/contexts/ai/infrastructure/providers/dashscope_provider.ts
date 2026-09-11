@@ -5,7 +5,6 @@ import type {
   TextGenerationStreamOptions,
   TextGenerationTask,
 } from "../../application/ports/text_generation.js";
-import { coercePayloadToSchema } from "./dashscope_payload.js";
 import {
   type DashscopeTransport,
   type DashscopeTransportMode,
@@ -33,6 +32,7 @@ import {
   structuredPayload,
   supportedStep,
 } from "./provider_json.js";
+import { coercePayloadToSchema } from "./provider_payload.js";
 import {
   dispatchProviderResponse,
   startProviderResponseDeadline,

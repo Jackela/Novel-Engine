@@ -6,7 +6,6 @@ import {
   type TextGenerationStreamOptions,
   type TextGenerationTask,
 } from "../../application/ports/text_generation.js";
-import { coercePayloadToSchema } from "./dashscope_payload.js";
 import {
   DEFAULT_PROVIDER_RETRY_POLICY,
   DEFAULT_PROVIDER_TIMEOUT_SECONDS,
@@ -31,6 +30,7 @@ import {
   structuredPayload,
   supportedStep,
 } from "./provider_json.js";
+import { coercePayloadToSchema } from "./provider_payload.js";
 import {
   dispatchProviderResponse,
   startProviderResponseDeadline,

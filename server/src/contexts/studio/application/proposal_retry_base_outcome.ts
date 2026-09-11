@@ -1,5 +1,5 @@
 import { dumpJson } from "./payloads.js";
-import type { MarkJobOutcomeInput } from "./ports/studio_store.js";
+import type { MarkJobOutcomeInput } from "./ports/job_records.js";
 
 export const PROPOSAL_RETRY_STALE_BASE_ERROR = "Proposal retry base revision is no longer current.";
 

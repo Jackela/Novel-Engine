@@ -3,10 +3,11 @@ import { describe, expect, it } from "vitest";
 import type { TextGenerationProviderFactory } from "../../src/contexts/ai/application/ports/text_generation.js";
 import { GENERATION_PROMPT_BYTE_LIMIT } from "../../src/contexts/studio/application/generation_capacity.js";
 import { InFlightOperationGuard } from "../../src/contexts/studio/application/operation_in_flight.js";
-import type {
-  DocumentWithCurrent,
-  StudioStore,
-} from "../../src/contexts/studio/application/ports/studio_store.js";
+import type { StudioJobLedgerStore } from "../../src/contexts/studio/application/ports/job_ledger_store.js";
+import type { ProposalAcceptanceStore } from "../../src/contexts/studio/application/ports/proposal_acceptance_store.js";
+import type { ProposalContextStore } from "../../src/contexts/studio/application/ports/proposal_context_store.js";
+import type { DocumentWithCurrent } from "../../src/contexts/studio/application/ports/studio_store.js";
+import { ProposalGenerationPipeline } from "../../src/contexts/studio/application/proposal_pipeline.js";
 import { AiProposalService } from "../../src/contexts/studio/application/proposal_service.js";
 import { GenerationCapacityExceededError } from "../../src/contexts/studio/domain/exceptions.js";
 import type { Principal } from "../../src/shared/application/ports/auth.js";
@@ -54,23 +55,27 @@ function admissionHarness(): {
   readonly generationCalls: () => number;
 } {
   const document = oversizedDocument();
-  const store = {
+  const proposalContext = {
     readProposalContext: () => ({
       projectId: document.projectId,
       target: document,
       documents: [document],
       volumes: [],
     }),
-    findDocument: () => {
-      throw new Error("fresh proposal must not use findDocument");
+  } as unknown as ProposalContextStore;
+  const unusedJobs = {
+    addJob: () => {
+      throw new Error("admission refusal must not record jobs");
     },
-    findDocuments: () => {
-      throw new Error("fresh proposal must not use findDocuments");
+    recordCompletedProposalJob: () => {
+      throw new Error("admission refusal must not record jobs");
     },
-    findVolumes: () => {
-      throw new Error("fresh proposal must not use findVolumes");
+  } as unknown as StudioJobLedgerStore;
+  const unusedAcceptance = {
+    acceptCompletedProposal: () => {
+      throw new Error("admission refusal must not accept proposals");
     },
-  } as unknown as StudioStore;
+  } as unknown as ProposalAcceptanceStore;
   let factoryCalls = 0;
   let generationCalls = 0;
   const providerFactory: TextGenerationProviderFactory = () => {
@@ -87,7 +92,15 @@ function admissionHarness(): {
     };
   };
   return {
-    service: new AiProposalService(store, providerFactory, new InFlightOperationGuard()),
+    service: new AiProposalService(
+      unusedAcceptance,
+      new ProposalGenerationPipeline(
+        proposalContext,
+        unusedJobs,
+        providerFactory,
+        new InFlightOperationGuard(),
+      ),
+    ),
     factoryCalls: () => factoryCalls,
     generationCalls: () => generationCalls,
   };

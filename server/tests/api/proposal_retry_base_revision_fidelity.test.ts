@@ -4,7 +4,9 @@ import type {
   TextGenerationTask,
 } from "../../src/contexts/ai/application/ports/text_generation.js";
 import { TextGenerationProviderError } from "../../src/contexts/ai/application/ports/text_generation.js";
-import { DrizzleStudioStore } from "../../src/contexts/studio/infrastructure/drizzle_studio_store.js";
+import { DocumentStorePart } from "../../src/contexts/studio/infrastructure/document_store_part.js";
+import { ProposalContextStorePart } from "../../src/contexts/studio/infrastructure/proposal_context_store_part.js";
+import { VolumeStorePart } from "../../src/contexts/studio/infrastructure/volume_store_part.js";
 import { jobEvents, jobs, usageEvents } from "../../src/shared/infrastructure/db/schema.js";
 import { studioDatabase } from "./job_test_helpers.js";
 import { validProposalProse } from "./proposal_test_helpers.js";
@@ -113,7 +115,7 @@ describe("proposal retry base revision fidelity", () => {
       const currentB = advanced.json().current_revision_id as string;
       expect(currentB).not.toBe(baseA);
 
-      const capture = vi.spyOn(DrizzleStudioStore.prototype, "readProposalContext");
+      const capture = vi.spyOn(ProposalContextStorePart.prototype, "readProposalContext");
       const first = await retry(app, owner, project.id, source.id, "stale-base-retry-key-0001");
       expect(first.statusCode, first.body).toBe(200);
       const stale = first.json<JobPayload>();
@@ -203,11 +205,11 @@ describe("proposal retry base revision fidelity", () => {
       );
       const source = original.json<JobPayload>();
 
-      const capture = vi.spyOn(DrizzleStudioStore.prototype, "readProposalContext");
+      const capture = vi.spyOn(ProposalContextStorePart.prototype, "readProposalContext");
       const legacyReads = [
-        vi.spyOn(DrizzleStudioStore.prototype, "findDocument"),
-        vi.spyOn(DrizzleStudioStore.prototype, "findDocuments"),
-        vi.spyOn(DrizzleStudioStore.prototype, "findVolumes"),
+        vi.spyOn(DocumentStorePart.prototype, "findDocument"),
+        vi.spyOn(DocumentStorePart.prototype, "findDocuments"),
+        vi.spyOn(VolumeStorePart.prototype, "findVolumes"),
       ];
       for (const legacyRead of legacyReads) {
         legacyRead.mockImplementation(() => {

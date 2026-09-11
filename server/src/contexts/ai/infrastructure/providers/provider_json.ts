@@ -4,13 +4,13 @@ import {
   TextGenerationProviderError,
   type TextGenerationTask,
 } from "../../application/ports/text_generation.js";
-import { payloadFromResponseText } from "./dashscope_payload.js";
 import {
   isJsonObject,
   malformedJsonFailure,
   type ProviderTransport,
   ProviderTransportError,
 } from "./provider_http.js";
+import { payloadFromResponseText } from "./provider_payload.js";
 import {
   boundedProviderResponseText,
   type ProviderResponseDeadline,

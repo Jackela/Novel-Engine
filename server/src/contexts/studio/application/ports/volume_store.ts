@@ -1,3 +1,4 @@
+import type { DocumentSummaryRecord } from "./project_shell_records.js";
 import type { DocumentWithCurrent, ProjectScope } from "./studio_store.js";
 
 /**
@@ -31,9 +32,9 @@ export interface PlaceDocumentInput {
 }
 
 /**
- * Volume-port of the authoring core. Kept as its own module so the authoring
- * StudioStore stays within its file-size budget; methods avoid stems that
- * collide with frontend client methods (create/update/delete/reorder/move).
+ * Volume-port of the authoring core. Kept as its own focused module; methods
+ * avoid stems that collide with frontend client methods
+ * (create/update/delete/reorder/move).
  */
 export interface StudioVolumeStore {
   /** Volumes of the project in reading order. */
@@ -66,4 +67,15 @@ export interface StudioVolumeStore {
     volumeIds: string[],
     now: Date,
   ): VolumeRecord[];
+  /**
+   * The authoring whole-set document reorder, projected onto volumes by the
+   * reading-order behavior this part owns (ADR-0005); it mutates only
+   * document positions.
+   */
+  renumberDocuments(
+    scope: ProjectScope,
+    projectId: string,
+    documentIds: string[],
+    now: Date,
+  ): DocumentSummaryRecord[];
 }

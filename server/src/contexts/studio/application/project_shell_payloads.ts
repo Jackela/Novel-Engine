@@ -6,7 +6,8 @@ import { asLoreStatus, isLoreEntryKind } from "./lorebook.js";
 import type { DocumentSummaryPayload } from "./payload_schemas/document.js";
 import type { ProjectShellPayload } from "./payload_schemas/project.js";
 import { iso, type ProjectPayloadInput, projectPayload, volumePayload } from "./payloads.js";
-import type { DocumentSummaryRecord, DocumentWithCurrent } from "./ports/studio_store.js";
+import type { DocumentSummaryRecord } from "./ports/project_shell_records.js";
+import type { DocumentWithCurrent } from "./ports/studio_store.js";
 import type { VolumeRecord } from "./ports/volume_store.js";
 
 /** The one-read shell envelope every project bootstrap consumes. */

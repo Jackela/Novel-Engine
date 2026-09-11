@@ -8,33 +8,30 @@ import {
   ReviewSourceInvalidatedError,
 } from "../domain/exceptions.js";
 import type { SnapshotArtifactService } from "./export_artifact_service.js";
-import { replayedExportCapacityError } from "./export_retry_capacity_outcome.js";
-import { replayedGenerationCapacityError } from "./generation_retry_capacity_outcome.js";
-import { JobRetryExecutor, type JobRetryExecutorOptions } from "./job_retry_executor.js";
+import { replayedJobPayload } from "./job_replay_payload.js";
+import { JobRetryExecutor } from "./job_retry_executor.js";
 import type { InFlightOperationGuard } from "./operation_in_flight.js";
 import type { JobPayload, JobSummaryPayload } from "./payload_schemas/job.js";
 import { dumpJson, jobPayload, jobSummaryPayload } from "./payloads.js";
 import type { ExportArtifactFormat } from "./ports/export_store.js";
+import type { StudioJobLedgerStore } from "./ports/job_ledger_store.js";
 import type { JobPageCursor, JobPageInput } from "./ports/job_records.js";
-import type {
-  EvaluatedReview,
-  ProjectScope,
-  ProjectUsageAggregate,
-  StudioStore,
-} from "./ports/studio_store.js";
+import type { ProjectUsageAggregate } from "./ports/project_usage.js";
+import type { EvaluatedReview, ReviewOutcomeStore } from "./ports/review_outcome_store.js";
+import type { ProjectScope } from "./ports/studio_store.js";
 import { scopeForPrincipal } from "./ports/studio_store.js";
+import type { ProposalGenerationPipeline } from "./proposal_pipeline.js";
 import type { ReviewService } from "./review_service.js";
 
 /** Honest provenance for the deterministic studio renderers (no AI model). */
 const STUDIO_EXPORTER_PROVIDER = "studio";
 
 export interface JobHistoryServiceOptions {
-  readonly now?: JobRetryExecutorOptions["now"];
-  readonly providerFactory: JobRetryExecutorOptions["providerFactory"];
+  readonly now?: (() => Date) | undefined;
   /** Serializes identical exports and retries (#305); shared with proposals. */
   readonly inFlight: InFlightOperationGuard;
-  /** Lorebook injection budget (#445); undefined keeps the adjudicated default. */
-  readonly loreBudgetCharacters?: JobRetryExecutorOptions["loreBudgetCharacters"];
+  /** Owns the proposal generation sequence shared with the proposal surface. */
+  readonly proposals: ProposalGenerationPipeline;
 }
 
 export interface JobHistoryPage {
@@ -49,7 +46,8 @@ export interface JobHistoryPage {
  * #268, and delegation of the retry chain to its executor.
  */
 export class JobHistoryService {
-  private readonly store: StudioStore;
+  private readonly jobs: StudioJobLedgerStore;
+  private readonly reviewOutcomes: ReviewOutcomeStore;
   private readonly reviews: ReviewService;
   private readonly artifacts: SnapshotArtifactService;
   private readonly retries: JobRetryExecutor;
@@ -57,18 +55,19 @@ export class JobHistoryService {
   private readonly now: () => Date;
 
   constructor(
-    store: StudioStore,
+    jobs: StudioJobLedgerStore,
+    reviewOutcomes: ReviewOutcomeStore,
     reviews: ReviewService,
     artifacts: SnapshotArtifactService,
     options: JobHistoryServiceOptions,
   ) {
-    this.store = store;
+    this.jobs = jobs;
+    this.reviewOutcomes = reviewOutcomes;
     this.reviews = reviews;
     this.artifacts = artifacts;
-    this.retries = new JobRetryExecutor(store, reviews, artifacts, {
+    this.retries = new JobRetryExecutor(jobs, reviewOutcomes, reviews, artifacts, {
       now: options.now,
-      providerFactory: options.providerFactory,
-      loreBudgetCharacters: options.loreBudgetCharacters,
+      proposals: options.proposals,
     });
     this.inFlight = options.inFlight;
     this.now = options.now ?? (() => new Date());
@@ -80,7 +79,7 @@ export class JobHistoryService {
     projectId: string,
     input: JobPageInput,
   ): JobHistoryPage {
-    const page = this.store.collectProjectJobSummaries(
+    const page = this.jobs.collectProjectJobSummaries(
       scopeForPrincipal(principal),
       projectId,
       input,
@@ -91,7 +90,7 @@ export class JobHistoryService {
   /** One complete scoped Job; all known misses share the stable Job identity. */
   findProjectJob(principal: Principal, projectId: string, jobId: string): JobPayload {
     try {
-      return jobPayload(this.store.findJob(scopeForPrincipal(principal), projectId, jobId));
+      return jobPayload(this.jobs.findJob(scopeForPrincipal(principal), projectId, jobId));
     } catch (error) {
       if (!(error instanceof NotFoundError)) throw error;
       throw new NotFoundError("Job not found.");
@@ -100,7 +99,7 @@ export class JobHistoryService {
 
   /** The usage-ledger aggregation for the project surface (#317, #384). */
   aggregateProjectUsage(principal: Principal, projectId: string): ProjectUsageAggregate {
-    return this.store.aggregateProjectUsage(scopeForPrincipal(principal), projectId, this.now());
+    return this.jobs.aggregateProjectUsage(scopeForPrincipal(principal), projectId, this.now());
   }
 
   /** The terminal-Job bridge over a fresh editorial assessment. */
@@ -137,7 +136,7 @@ export class JobHistoryService {
       evaluation = await this.reviews.evaluateProject(principal, projectId, {
         reportCleanupFailure,
       });
-      const completed = this.store.recordCompletedReviewJob(scope, evaluation);
+      const completed = this.reviewOutcomes.recordCompletedReviewJob(scope, evaluation);
       return jobPayload(completed.job);
     } catch (error) {
       if (
@@ -147,7 +146,7 @@ export class JobHistoryService {
         throw error;
       }
       return jobPayload(
-        this.store.addJob(scope, {
+        this.jobs.addJob(scope, {
           projectId,
           documentId: null,
           kind: "review",
@@ -199,7 +198,7 @@ export class JobHistoryService {
           throw error;
         }
         return jobPayload(
-          this.store.addJob(scope, {
+          this.jobs.addJob(scope, {
             projectId,
             documentId: null,
             kind: "export",
@@ -236,16 +235,13 @@ export class JobHistoryService {
     // Project deletion removes persistence before artifact cleanup completes;
     // preserve its exclusive 409 boundary before any durable replay lookup.
     this.inFlight.assertProjectNotExclusive(projectId);
-    const replay = this.store.findJobRetry(
+    const replay = this.jobs.findJobRetry(
       scopeForPrincipal(principal),
       projectId,
       jobId,
       requestKey,
     );
     if (replay !== null) {
-      const capacityError =
-        replayedExportCapacityError(replay) ?? replayedGenerationCapacityError(replay);
-      if (capacityError !== null) throw capacityError;
       if (replay.status === "running") {
         throw new OperationInFlightError(projectId, null, `retry (${jobId})`, 1);
       }
@@ -256,7 +252,7 @@ export class JobHistoryService {
       ) {
         throw new Error(`Persisted retry Job has invalid status: ${replay.status}.`);
       }
-      return jobPayload(replay);
+      return replayedJobPayload(replay);
     }
     // #305: a retry runs real work after its running row is created, so a
     // double-fired retry of the same job is deduplicated like the pipelines.
