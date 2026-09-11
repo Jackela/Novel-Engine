@@ -95,6 +95,18 @@ resident_context/lorebook assemblers) untouched.
   lint (0 errors), arch, 213 files / 1327 tests, gates exit 0, spec 2/2,
   OpenAPI snapshot byte-identical.
 
+## Rebase and PR record (2026-09-11)
+
+PR #494 (frontend batch) squash-merged as `7032f30e`; the eight backend
+commits were rebased onto it (`git rebase --onto origin/main 26c2f52d main`,
+zero conflicts). Post-rebase candidate re-validated: gates exit 0, 213
+files / 1327 tests, spec 2/2, frontend 567/567. Pushed as
+`backend-deepening` → PR #495. Final commit mapping: B1 `21f97927`, B2
+`c7da3f74`, evidence `f1451c97`, B3 `0414745f`, B4 `c29bbba6`, evidence
+wave-2 `6630795b`, AGENTS.md policy `099ecb14`, dep-cruiser rule
+`ai-providers-neutral-no-vendor` `0cb6717f` (bite proven: injected
+violation fails `pnpm arch` naming the rule; clean tree passes).
+
 ## Skips and residuals
 
 - Candidates 3 and 4 delivered as B3/B4 above.
