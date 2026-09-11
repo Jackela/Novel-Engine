@@ -381,22 +381,24 @@
   background: var(--teal-soft);
   color: var(--teal-strong);
 }
-/* In-volume chapter ordinal badge (#376). */
+/* In-volume chapter ordinal badge (#376); badge tokens carry the dark
+   variants (ADR-0010 raw-color discipline). */
 .document-row__ordinal {
   flex: none;
   min-width: 20px;
   padding: 1px 4px;
   border-radius: 4px;
-  background: #e2e8e8;
-  color: #5a6465;
+  background: var(--badge-neutral-bg);
+  color: var(--badge-neutral-ink);
   font-size: 11px;
   font-weight: 700;
   text-align: center;
 }
 .document-row--active .document-row__ordinal {
-  background: #cfe4e2;
-  /* darker teal: --teal-strong fails AA (4.17:1) on #cfe4e2 */
-  color: #0f6862;
+  background: var(--badge-active-bg);
+  /* --badge-active-ink is darker teal: --teal-strong fails AA (4.17:1) on
+     --badge-active-bg (11px text). */
+  color: var(--badge-active-ink);
 }
 /* Linked outline beat title (#376); rendered only when beat_ref is set. */
 .document-row__beat {
@@ -428,13 +430,14 @@
   margin-left: 6px;
 }
 .document-row__lore-status--draft {
-  background: #e2e8e8;
-  color: #5a6465;
+  background: var(--badge-neutral-bg);
+  color: var(--badge-neutral-ink);
 }
 .document-row__lore-status--stable {
-  background: #cfe4e2;
-  /* darker teal: --teal-strong fails AA (4.17:1) on #cfe4e2 */
-  color: #0f6862;
+  background: var(--badge-active-bg);
+  /* --badge-active-ink is darker teal: --teal-strong fails AA (4.17:1) on
+     --badge-active-bg (10px text). */
+  color: var(--badge-active-ink);
 }
 .document-row__lore-status--deprecated {
   background: #f3e0dc;
