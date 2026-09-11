@@ -1,6 +1,7 @@
 import { act, type ReactElement } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { THEME_STORAGE_KEY } from "@/app/theme";
 import { chapter, projectWith } from "@/test/factories";
 import { createMountHarness } from "@/test/harness";
 
@@ -77,6 +78,7 @@ function click(element: Element | null): void {
 
 afterEach(() => {
   harness.cleanup();
+  delete document.documentElement.dataset.theme;
 });
 
 const baseDocument = chapter("doc-1", {
@@ -305,6 +307,21 @@ describe("Studio split components", () => {
     click(container.querySelector('button[aria-label="Back to projects"]'));
     expect(back).toHaveBeenCalledTimes(1);
     expect(container.querySelector(".editor-export-menu")).toBeNull();
+  });
+
+  it("mounts the theme switch in the top bar and persists a lock from it (#506)", () => {
+    const container = render(<StudioTopbar project={baseProject} onBack={vi.fn()} />);
+
+    const options = [
+      ...container.querySelectorAll<HTMLInputElement>('.ui-theme-switch input[type="radio"]'),
+    ];
+    expect(options.map((option) => option.value)).toEqual(["system", "light", "dark"]);
+    expect(options[0].checked).toBe(true);
+
+    click(options[2]);
+    expect(window.localStorage.getItem(THEME_STORAGE_KEY)).toBe("dark");
+    expect(document.documentElement.dataset.theme).toBe("dark");
+    expect(options[2].closest(".ui-theme-switch__option")?.hasAttribute("data-checked")).toBe(true);
   });
 
   it("renders the build identity in the Studio status bar", () => {

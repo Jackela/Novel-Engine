@@ -2,6 +2,7 @@ import { BookOpen, ChevronLeft } from "lucide-react";
 import type { Ref } from "react";
 
 import { productIdentity } from "@/app/productIdentity";
+import { ThemeSwitch } from "@/app/ThemeSwitch";
 import type { Project } from "@/app/types/studio";
 
 interface StudioTopbarProps {
@@ -33,6 +34,7 @@ export function StudioTopbar({ project, onBack, headingRef }: StudioTopbarProps)
         {project.title}
       </h1>
       <div className="studio-topbar__spacer" />
+      <ThemeSwitch />
     </header>
   );
 }
