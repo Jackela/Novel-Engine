@@ -1,5 +1,65 @@
 # Changelog
 
+## 0.7.0
+
+Design-system and deepening pass: the Studio is restyled on a frosted-glass
+design language with aligned tokens and corrected font loading; Lore gains
+lifecycle status and progressive disclosure; large-project reads are bounded
+end to end; and the proposal pipeline is unified behind one serialized path
+with vendor-neutral provider payloads. No breaking changes.
+
+### Added
+
+- Frosted-glass Studio redesign: navigator, inspector, and editor chrome
+  restyled on the `DESIGN.md` design tokens with corrected font loading
+  (#494).
+- Lore lifecycle status (`draft` / `stable` / `deprecated`) surfaced in the
+  Studio inspector (#452), with progressive disclosure: matching entries
+  render as summaries first and promote to full text within a configurable
+  character budget (#453).
+- Navigator document deletion and chapter placement inside volumes (#489).
+- Configurable SSE stream budgets: first-byte and idle silence ceilings via
+  server configuration (#448).
+- In-repo agent skills for frontend work (`frontend-workflow`, React best
+  practices, web-design guidelines) routing UI changes through `DESIGN.md`
+  (#494).
+
+### Changed
+
+- Proposal pipeline unified: synchronous, streaming, keyed-retry, and
+  whole-book generation share one prompt assembly and job/usage landing;
+  the StudioStore application surface is narrowed and new dependency rules
+  are enforced by dep-cruiser (#495).
+- Large-project reads bounded: keyset pagination for the project catalog
+  (#473), review history (#475), and older-page traversal (#482); authoring
+  structure capacity capped (#477); export catalog reads bounded and
+  snapshot assembly batched (#474); Studio resource lifetimes refactored
+  (#456).
+- Toolchain moves to TypeScript 7 (#451); legacy CSS classes migrated to
+  BEM (#449); payload SSOT batch 2 (#450) and search state convention
+  (#447) consolidate frontend contracts.
+- Lore/beat causal-authority matrix completed (#469).
+
+### Fixed
+
+- Streaming proposals from JSON-mode providers (OpenAI-compatible,
+  DashScope) now unwrap the `chapter_markdown` wrapper before validation;
+  previously every real-provider stream failed with "not valid story
+  prose" (#496, #497).
+- Daily usage parsing (#492).
+- The conflict surface is withheld until 409 autosave recovery settles
+  (#486); documents move within their reading-group neighbors (#485);
+  command focus and end-state feedback restored across inspector surfaces
+  (#483); shell bootstrap is driven by project identity (#471);
+  Standards/UX hygiene batch (#487).
+- esbuild pinned to clear GHSA-67mh-4wv8-2f99 (#468).
+
+### Internal
+
+- TS-backend browser workflows authored (#476); whole-book resume proven
+  to read no sibling body (#470); Architecture P3 consistency batch
+  (#488); campaign evidence records (#484, #490, #491).
+
 ## 0.6.0
 
 Surfacing and hardening pass: usage, structure, and lore are now visible
