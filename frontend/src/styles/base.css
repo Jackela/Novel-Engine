@@ -1,5 +1,6 @@
 /* BEM-ish only: feature-prefixed blocks with block__element--modifier; no legacy flat classes (#442). */
 :root {
+  color-scheme: light;
   --ink: #18181b;
   --ink-soft: #27272a;
   --surface: #fff;
@@ -23,6 +24,15 @@
   --warn-soft: #fdf6e3;
   --warn-ink: #6b5410;
   --on-accent: #fff;
+  /* Badge family + row hover (design.md raw-color discipline): named
+     replacements for the studio-nav/library literals; dark variants live in
+     the dark entries below. */
+  --badge-neutral-bg: #e2e8e8;
+  --badge-neutral-ink: #5a6465;
+  --badge-active-bg: #cfe4e2;
+  /* darker teal: --teal-strong fails AA (4.17:1) on #cfe4e2 */
+  --badge-active-ink: #0f6862;
+  --library-row-hover: #8dbab6;
   /* Frosted-glass material layer (ADR-0009); mirrors DESIGN.md colors. */
   --canvas-hint-teal: #d9eee9;
   --canvas-hint-blue: #d7e3f7;
@@ -53,6 +63,114 @@
   letter-spacing: 0;
 }
 
+/* Dark theme (ADR-0010): dual entry. An explicit data-theme lock wins
+   ([data-theme="dark"] forces dark, [data-theme="light"] suppresses the
+   media entry below); no attribute means the OS decides with zero JS.
+   Values are the design.md draft table; the two blocks duplicate literals
+   by necessity (CSS has no token mixing) and are kept equal by the token
+   drift-guard test. */
+[data-theme="dark"] {
+  color-scheme: dark;
+  --ink: #e6eaeb;
+  --ink-soft: #c7ced0;
+  --surface: #15191a;
+  --canvas: #101415;
+  --surface-muted: #171c1d;
+  --surface-panel: #1a1f21;
+  --surface-hover: #252c2e;
+  --line-strong: #475355;
+  --line: #2f383a;
+  --muted: #aeb9bb;
+  --muted-soft: #a2adb0;
+  --muted-faint: #97a3a5;
+  --teal-soft: #11312d;
+  --teal-strong: #2dd4bf;
+  --teal-hover: #5eead4;
+  --focus-ring: #113b36;
+  --danger: #f08c8c;
+  --danger-soft: #381415;
+  --danger-line: #6f2c2e;
+  --warn: #e3b041;
+  --warn-soft: #322712;
+  --warn-ink: #eed9a3;
+  --on-accent: #0b2f2a;
+  --badge-neutral-bg: #252c2e;
+  --badge-neutral-ink: #aeb9bb;
+  --badge-active-bg: #11312d;
+  --badge-active-ink: #2dd4bf;
+  --library-row-hover: #3d7a73;
+  --canvas-hint-teal: #122b28;
+  --canvas-hint-blue: #16232f;
+  --canvas-hint-violet: #1e1a2e;
+  --surface-glass: rgba(16, 20, 21, 0.62);
+  --surface-glass-strong: rgba(22, 27, 28, 0.8);
+  --surface-glass-faint: rgba(12, 16, 17, 0.45);
+  --glass-border: rgba(255, 255, 255, 0.14);
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
+  --canvas-gradient:
+    radial-gradient(1100px 700px at 8% -10%, rgba(45, 212, 191, 0.09), transparent 60%),
+    radial-gradient(900px 650px at 105% 112%, rgba(139, 122, 235, 0.09), transparent 62%),
+    linear-gradient(
+      135deg,
+      var(--canvas-hint-teal) 0%,
+      var(--canvas-hint-blue) 38%,
+      var(--canvas-hint-violet) 68%,
+      var(--canvas-hint-teal) 100%
+    );
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --ink: #e6eaeb;
+    --ink-soft: #c7ced0;
+    --surface: #15191a;
+    --canvas: #101415;
+    --surface-muted: #171c1d;
+    --surface-panel: #1a1f21;
+    --surface-hover: #252c2e;
+    --line-strong: #475355;
+    --line: #2f383a;
+    --muted: #aeb9bb;
+    --muted-soft: #a2adb0;
+    --muted-faint: #97a3a5;
+    --teal-soft: #11312d;
+    --teal-strong: #2dd4bf;
+    --teal-hover: #5eead4;
+    --focus-ring: #113b36;
+    --danger: #f08c8c;
+    --danger-soft: #381415;
+    --danger-line: #6f2c2e;
+    --warn: #e3b041;
+    --warn-soft: #322712;
+    --warn-ink: #eed9a3;
+    --on-accent: #0b2f2a;
+    --badge-neutral-bg: #252c2e;
+    --badge-neutral-ink: #aeb9bb;
+    --badge-active-bg: #11312d;
+    --badge-active-ink: #2dd4bf;
+    --library-row-hover: #3d7a73;
+    --canvas-hint-teal: #122b28;
+    --canvas-hint-blue: #16232f;
+    --canvas-hint-violet: #1e1a2e;
+    --surface-glass: rgba(16, 20, 21, 0.62);
+    --surface-glass-strong: rgba(22, 27, 28, 0.8);
+    --surface-glass-faint: rgba(12, 16, 17, 0.45);
+    --glass-border: rgba(255, 255, 255, 0.14);
+    --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
+    --canvas-gradient:
+      radial-gradient(1100px 700px at 8% -10%, rgba(45, 212, 191, 0.09), transparent 60%),
+      radial-gradient(900px 650px at 105% 112%, rgba(139, 122, 235, 0.09), transparent 62%),
+      linear-gradient(
+        135deg,
+        var(--canvas-hint-teal) 0%,
+        var(--canvas-hint-blue) 38%,
+        var(--canvas-hint-violet) 68%,
+        var(--canvas-hint-teal) 100%
+      );
+  }
+}
+
 @media (prefers-reduced-transparency: reduce) {
   :root {
     --surface-glass: rgba(255, 255, 255, 0.97);
@@ -63,6 +181,28 @@
     --glass-border: #dfe2e3;
     --glass-shadow: none;
   }
+  /* Dark twin of the fallback chain (ADR-0010): near-opaque dark fills,
+     blur 0, solid borders, no shadow. */
+  [data-theme="dark"] {
+    --surface-glass: rgba(16, 20, 21, 0.97);
+    --surface-glass-strong: rgba(22, 27, 28, 0.99);
+    --surface-glass-faint: rgba(12, 16, 17, 0.97);
+    --glass-blur: 0px;
+    --glass-blur-strong: 0px;
+    --glass-border: #2f383a;
+    --glass-shadow: none;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --surface-glass: rgba(16, 20, 21, 0.97);
+      --surface-glass-strong: rgba(22, 27, 28, 0.99);
+      --surface-glass-faint: rgba(12, 16, 17, 0.97);
+      --glass-blur: 0px;
+      --glass-blur-strong: 0px;
+      --glass-border: #2f383a;
+      --glass-shadow: none;
+    }
+  }
 }
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   :root {
@@ -71,6 +211,24 @@
     --surface-glass-faint: #fafbfb;
     --glass-border: #dfe2e3;
     --glass-shadow: none;
+  }
+  /* Dark twin: opaque dark surfaces in both themes for no-backdrop-filter
+     browsers (ADR-0010). */
+  [data-theme="dark"] {
+    --surface-glass: #1a1f21;
+    --surface-glass-strong: #15191a;
+    --surface-glass-faint: #171c1d;
+    --glass-border: #2f383a;
+    --glass-shadow: none;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --surface-glass: #1a1f21;
+      --surface-glass-strong: #15191a;
+      --surface-glass-faint: #171c1d;
+      --glass-border: #2f383a;
+      --glass-shadow: none;
+    }
   }
 }
 
@@ -159,6 +317,69 @@ svg {
 .studio-inspector__error {
   color: var(--danger);
   font-size: 13px;
+}
+/* Theme selection (ADR-0010): three-state segmented control primitive on
+   native radios. Selected text uses --ink on --teal-soft (AA in both
+   themes); the global prefers-reduced-motion rule in layout.css already
+   collapses its transitions. */
+.ui-theme-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  margin: 0;
+  padding: 2px;
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  background: var(--surface-glass-strong);
+}
+.ui-theme-switch__legend {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.ui-theme-switch__option {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  position: relative;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 10px;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  transition:
+    background 0.15s,
+    color 0.15s;
+}
+.ui-theme-switch__input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+.ui-theme-switch__option:hover,
+.ui-theme-switch__option[data-checked] {
+  background: var(--surface-hover);
+  color: var(--ink-soft);
+}
+.ui-theme-switch__option[data-checked] {
+  background: var(--teal-soft);
+  color: var(--ink);
+}
+.ui-theme-switch__option[data-checked] svg {
+  color: var(--teal-strong);
+}
+.ui-theme-switch__option:has(.ui-theme-switch__input:focus-visible) {
+  outline: 2px solid var(--teal-strong);
+  outline-offset: 1px;
 }
 .ui-spin {
   animation: spin 1s linear infinite;

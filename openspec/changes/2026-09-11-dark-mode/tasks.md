@@ -14,31 +14,31 @@ T2a owns `entry.css`, `library.css`, `EntryPage.tsx`,
 
 ## T1: Dual-theme token and selection foundation
 
-- [ ] T1.1 Add the dark token set to `frontend/src/styles/base.css` as the
+- [x] T1.1 Add the dark token set to `frontend/src/styles/base.css` as the
       dual entry (`[data-theme="dark"]` plus
       `@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) }`),
       using the draft table in `design.md`; declare `color-scheme: light`
       on `:root` and `color-scheme: dark` in both dark entries. Acceptance:
       `pnpm --dir frontend test:unit -- theme` green.
-- [ ] T1.2 Add dark twins inside the existing
+- [x] T1.2 Add dark twins inside the existing
       `@media (prefers-reduced-transparency: reduce)` and
       `@supports not (backdrop-filter…)` override blocks (near-opaque dark
       fills, blur 0, solid borders, no shadow). Acceptance: CSSOM parse
       assertions in the token drift-guard test pass.
-- [ ] T1.3 Pre-declare the badge-family tokens (`--badge-neutral-bg`,
+- [x] T1.3 Pre-declare the badge-family tokens (`--badge-neutral-bg`,
       `--badge-neutral-ink`, `--badge-active-bg`, `--badge-active-ink`) and
       the project-row hover token (`--library-row-hover`) in `base.css`
       with light and dark values, so T2a/T2b replace literals without
       touching `base.css`. Acceptance: unit suite green; tokens present in
       both `:root` and both dark entries.
-- [ ] T1.4 Add the blocking inline theme script to `frontend/index.html`
+- [x] T1.4 Add the blocking inline theme script to `frontend/index.html`
       (stored `light`/`dark` lock applied to `documentElement.dataset.theme`
       before first paint; `system`/absent/unreadable does nothing) and split
       `theme-color` into two metas with `media` attributes
       (`#d9eee9` light, `#122b28` dark). Acceptance: `pnpm --dir frontend
       build` succeeds; manual load shows no first-paint flash in either OS
       emulation.
-- [ ] T1.5 Add the theme controller `frontend/src/app/theme.ts` (tri-state
+- [x] T1.5 Add the theme controller `frontend/src/app/theme.ts` (tri-state
       read/write of the `novel_engine_theme` localStorage key, silent
       fallback to `system` on any storage error, `matchMedia` listener that
       re-applies `data-theme` only while unlocked, `theme-color` override on
@@ -47,7 +47,7 @@ T2a owns `entry.css`, `library.css`, `EntryPage.tsx`,
       `base.css`) with unit tests covering lock persistence, OS-follow,
       light-under-dark-OS, and storage-failure fallback. Acceptance:
       `pnpm --dir frontend test:unit -- theme` green.
-- [ ] T1.6 Add the executable guards: a drift-guard test asserting the two
+- [x] T1.6 Add the executable guards: a drift-guard test asserting the two
       dark token blocks (and both dark fallback blocks) are equal after
       normalization, and a contrast test computing WCAG ratios from
       `base.css` values for the canonical text/background pairs, asserting
