@@ -29,8 +29,8 @@
 
 - [x] 3.1 Prove synchronous, SSE streaming, keyed retry, and whole-book
       generation all use the same system prompt and encoded context.
-- [ ] 3.2 Run resident/Lore/sanitization/proposal regressions and server
+- [x] 3.2 Run resident/Lore/sanitization/proposal regressions and server
       type-check, lint, architecture, size, full tests, and strict OpenSpec.
-- [ ] 3.3 Record fixed-SHA evidence and every skipped external or human gate;
+- [x] 3.3 Record fixed-SHA evidence and every skipped external or human gate;
       keep the change active until required CI is green, then merge the
       requirement into the canonical specification and archive it.
