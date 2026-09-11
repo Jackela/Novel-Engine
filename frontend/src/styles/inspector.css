@@ -2,9 +2,11 @@
 .studio-inspector {
   grid-area: inspector;
   min-width: 0;
-  border-left: 1px solid #dfe2e3;
+  border-left: 1px solid var(--line);
   overflow: auto;
-  background: var(--surface-panel);
+  background: var(--surface-glass);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(var(--glass-blur));
 }
 .studio-inspector__disclosure {
   min-width: 0;
@@ -17,7 +19,7 @@
   justify-content: space-between;
   padding: 0 14px;
   border-bottom: 1px solid var(--line);
-  color: #2f3839;
+  color: var(--ink-soft);
   font-size: 12px;
   font-weight: 700;
   cursor: pointer;
@@ -44,15 +46,15 @@
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   min-height: 88px;
-  border-bottom: 1px solid #dfe2e3;
-  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+  background: var(--surface-glass-strong);
 }
 .studio-inspector__tab {
   min-height: 44px;
   border: 0;
   border-bottom: 2px solid transparent;
   background: transparent;
-  color: #5f6667;
+  color: var(--muted-soft);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -70,7 +72,7 @@
 .studio-inspector__error {
   margin: 12px;
   padding: 10px;
-  border: 1px solid #fecaca;
+  border: 1px solid var(--danger-line);
   border-radius: 5px;
   background: var(--danger-soft);
 }
@@ -84,14 +86,14 @@
 .studio-inspector__panel > p,
 .studio-inspector__heading p {
   margin: 0 0 14px;
-  color: #4f595a;
+  color: var(--muted);
   font-size: 12px;
   line-height: 1.5;
 }
 .studio-inspector__panel textarea {
   width: 100%;
   resize: vertical;
-  border: 1px solid #d6dada;
+  border: 1px solid var(--line);
   border-radius: 5px;
   padding: 10px;
   outline: none;
@@ -113,13 +115,13 @@
   gap: 7px;
   margin: 12px 12px 0;
   padding: 12px;
-  border: 1px solid #d6dada;
+  border: 1px solid var(--line);
   border-radius: 5px;
-  background: #f4f7f7;
+  background: var(--surface-glass-strong);
 }
 .studio-lore-status .studio-inspector__settings-field select {
   width: 100%;
-  border: 1px solid #d7dcdd;
+  border: 1px solid var(--line);
   border-radius: 5px;
   padding: 10px 11px;
   outline: none;
@@ -132,7 +134,7 @@
 }
 .studio-lore-status__hint {
   margin: 0;
-  color: #4f595a;
+  color: var(--muted);
   font-size: 12px;
   line-height: 1.5;
 }
@@ -146,13 +148,13 @@
   gap: 7px;
   margin: 12px 12px 0;
   padding: 12px;
-  border: 1px solid #d6dada;
+  border: 1px solid var(--line);
   border-radius: 5px;
-  background: #f4f7f7;
+  background: var(--surface-glass-strong);
 }
 .studio-beat .studio-inspector__settings-field input {
   width: 100%;
-  border: 1px solid #d7dcdd;
+  border: 1px solid var(--line);
   border-radius: 5px;
   padding: 10px 11px;
   outline: none;
@@ -165,7 +167,7 @@
 }
 .studio-beat__hint {
   margin: 0;
-  color: #4f595a;
+  color: var(--muted);
   font-size: 12px;
   line-height: 1.5;
 }
@@ -175,10 +177,10 @@
 .studio-beat__error {
   margin: 0;
   padding: 8px 10px;
-  border: 1px solid #fecaca;
+  border: 1px solid var(--danger-line);
   border-radius: 5px;
   background: var(--danger-soft);
-  color: #8c2f26;
+  color: var(--danger);
   font-size: 12px;
   line-height: 1.5;
 }
@@ -189,16 +191,17 @@
 }
 .studio-inspector__proposal {
   margin-top: 17px;
-  border: 1px solid #c8dedd;
+  border: 1px solid var(--line);
   border-radius: 6px;
   overflow: hidden;
-  background: var(--surface);
+  background: var(--surface-glass-strong);
+  box-shadow: var(--glass-shadow);
 }
 .studio-inspector__proposal header {
   display: flex;
   justify-content: space-between;
   padding: 10px;
-  border-bottom: 1px solid #dfe8e7;
+  border-bottom: 1px solid var(--line);
   font-size: 12px;
 }
 .studio-inspector__proposal header span {
@@ -213,20 +216,20 @@
   font:
     12px / 1.55 ui-monospace,
     monospace;
-  background: #f4fbfa;
+  background: var(--surface-muted);
 }
 .studio-inspector__proposal .studio-inspector__actions {
   padding: 0 10px 10px;
 }
 .studio-inspector__review-issue {
   margin-top: 10px;
-  border: 1px solid #d6a318;
+  border: 1px solid var(--warn);
   border-radius: 5px;
   padding: 10px 12px;
-  background: #fff;
+  background: var(--surface-glass-strong);
 }
 .studio-inspector__review-issue--blocker {
-  border-color: #dc2626;
+  border-color: var(--danger);
 }
 .studio-inspector__review-issue--suggestion {
   border-color: var(--teal-strong);
@@ -238,7 +241,7 @@
   font-size: 12px;
 }
 .studio-inspector__review-issue header span {
-  color: #4f595a;
+  color: var(--muted);
 }
 .studio-inspector__review-issue p {
   margin: 8px 0 5px;
@@ -246,12 +249,12 @@
   line-height: 1.45;
 }
 .studio-inspector__review-issue small {
-  color: #697172;
+  color: var(--muted-faint);
   line-height: 1.4;
 }
 .studio-inspector__empty {
   padding: 18px;
-  border: 1px dashed #ced4d4;
+  border: 1px dashed var(--line);
   border-radius: 5px;
   text-align: center;
 }

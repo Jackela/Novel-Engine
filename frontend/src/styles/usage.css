@@ -9,9 +9,9 @@
   display: grid;
   gap: 2px;
   padding: 10px;
-  border: 1px solid #dfe2e3;
+  border: 1px solid var(--line);
   border-radius: 5px;
-  background: #fff;
+  background: var(--surface-glass-strong);
   text-align: center;
 }
 .usage__total-card strong {
@@ -19,7 +19,7 @@
   font-variant-numeric: tabular-nums;
 }
 .usage__total-card span {
-  color: #4f595a;
+  color: var(--muted);
   font-size: 10px;
 }
 .usage__table {
@@ -31,12 +31,12 @@
 .usage__table th,
 .usage__table td {
   padding: 6px 7px;
-  border-bottom: 1px solid #dfe2e3;
+  border-bottom: 1px solid var(--line);
   text-align: left;
   font-variant-numeric: tabular-nums;
 }
 .usage__table thead th {
-  color: #4f595a;
+  color: var(--muted);
   font-size: 10px;
   text-transform: uppercase;
 }
@@ -47,7 +47,7 @@
 }
 .usage__daily h3 {
   margin: 0 0 4px;
-  color: #4f595a;
+  color: var(--muted);
   font-size: 10px;
   text-transform: uppercase;
 }
@@ -60,19 +60,19 @@
   font-variant-numeric: tabular-nums;
 }
 .usage__daily-date {
-  color: #4f595a;
+  color: var(--muted);
 }
 .usage__daily-bar-track {
   display: block;
   height: 8px;
   border-radius: 4px;
-  background: #eef0f1;
+  background: var(--surface-hover);
 }
 .usage__daily-bar {
   display: block;
   height: 100%;
   border-radius: 4px;
-  background: #4f595a;
+  background: var(--muted);
 }
 .usage__daily-count {
   text-align: right;
@@ -87,9 +87,9 @@
   justify-content: space-between;
   align-items: center;
   padding: 10px;
-  border: 1px solid #dfe2e3;
+  border: 1px solid var(--line);
   border-radius: 5px;
-  background: #fff;
+  background: var(--surface-glass-strong);
 }
 .studio-inspector__revision-list article > div {
   display: grid;
@@ -102,7 +102,7 @@
 }
 .studio-inspector__revision-list time,
 .studio-inspector__revision-list small {
-  color: #4f595a;
+  color: var(--muted);
   font-size: 10px;
 }
 .studio-inspector__current-revision {
@@ -116,7 +116,7 @@
 }
 .studio-inspector__history-status {
   margin-top: 10px;
-  color: #4f595a;
+  color: var(--muted);
   font-size: 11px;
   text-align: center;
 }
@@ -126,10 +126,10 @@
   gap: 8px;
   margin-top: 7px;
   padding: 9px;
-  color: #363b3c;
+  color: var(--ink-soft);
   text-decoration: none;
-  border: 1px solid #dfe2e3;
+  border: 1px solid var(--line);
   border-radius: 5px;
-  background: var(--surface);
+  background: var(--surface-glass-strong);
   font-size: 12px;
 }

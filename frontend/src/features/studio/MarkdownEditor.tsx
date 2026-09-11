@@ -54,7 +54,8 @@ export function MarkdownEditor({ value, onChange }: MarkdownEditorProps) {
               if (update.docChanged) onChangeRef.current(update.state.doc.toString());
             }),
             editorView.EditorView.theme({
-              "&": { height: "100%", backgroundColor: "#fff" },
+              /* colors resolve from base.css tokens (ADR-0009) */
+              "&": { height: "100%", backgroundColor: "var(--surface)" },
               ".cm-scroller": {
                 fontFamily: 'ui-serif, Georgia, Cambria, "Times New Roman", Times, serif',
                 fontSize: "19px",
@@ -64,16 +65,16 @@ export function MarkdownEditor({ value, onChange }: MarkdownEditorProps) {
               ".cm-content": {
                 maxWidth: "72ch",
                 margin: "0 auto",
-                caretColor: "#0f766e",
+                caretColor: "var(--teal-strong)",
               },
               "&.cm-focused": {
-                outline: "3px solid #0f766e",
+                outline: "3px solid var(--teal-strong)",
                 outlineOffset: "-3px",
               },
               ".cm-gutters": { display: "none" },
               ".cm-activeLine": { backgroundColor: "transparent" },
               "&.cm-focused > .cm-scroller > .cm-selectionLayer .cm-selectionBackground": {
-                backgroundColor: "#ccfbf1",
+                backgroundColor: "var(--focus-ring)",
               },
             }),
           ],

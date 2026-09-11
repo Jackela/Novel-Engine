@@ -1,13 +1,15 @@
 /* BEM-ish only: feature-prefixed blocks with block__element--modifier; no legacy flat classes (#442). */
 .studio-statusbar {
   grid-area: status;
-  border-top: 1px solid #dfe2e3;
-  background: var(--surface-muted);
+  border-top: 1px solid var(--line);
+  background: var(--surface-glass-faint);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(var(--glass-blur));
   display: flex;
   align-items: center;
   gap: 20px;
   padding: 0 14px;
-  color: #636b6c;
+  color: var(--muted-soft);
   font-size: 11px;
 }
 .studio-statusbar span {
@@ -79,7 +81,7 @@ summary:focus-visible {
   }
   .studio-nav {
     border-right: 0;
-    border-bottom: 1px solid #dfe2e3;
+    border-bottom: 1px solid var(--line);
     overflow: visible;
   }
   .studio-editor {
@@ -87,7 +89,7 @@ summary:focus-visible {
   }
   .studio-inspector {
     border-left: 0;
-    border-top: 1px solid #dfe2e3;
+    border-top: 1px solid var(--line);
     overflow: visible;
   }
   .studio-inspector__disclosure {
@@ -128,7 +130,7 @@ summary:focus-visible {
   .studio-nav {
     max-height: none;
     border-right: 0;
-    border-bottom: 1px solid #dfe2e3;
+    border-bottom: 1px solid var(--line);
   }
   .studio-editor {
     min-height: 70vh;
@@ -141,7 +143,7 @@ summary:focus-visible {
   }
   .studio-inspector {
     border-left: 0;
-    border-top: 1px solid #dfe2e3;
+    border-top: 1px solid var(--line);
     min-height: 0;
   }
   .editor__header {

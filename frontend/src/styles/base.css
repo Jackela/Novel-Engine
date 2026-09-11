@@ -18,13 +18,60 @@
   --focus-ring: #ccfbf1;
   --danger: #b91c1c;
   --danger-soft: #fff1f2;
+  --danger-line: #fecaca;
+  --warn: #d8a62a;
+  --warn-soft: #fdf6e3;
+  --warn-ink: #6b5410;
   --on-accent: #fff;
-  font-family: "IBM Plex Sans", system-ui, sans-serif;
+  /* Frosted-glass material layer (ADR-0009); mirrors DESIGN.md colors. */
+  --canvas-hint-teal: #d9eee9;
+  --canvas-hint-blue: #d7e3f7;
+  --canvas-hint-violet: #e8def5;
+  --surface-glass: rgba(255, 255, 255, 0.62);
+  --surface-glass-strong: rgba(255, 255, 255, 0.8);
+  --surface-glass-faint: rgba(255, 255, 255, 0.45);
+  --glass-blur: 14px;
+  --glass-blur-strong: 24px;
+  --glass-border: rgba(255, 255, 255, 0.65);
+  --glass-shadow: 0 8px 32px rgba(23, 24, 27, 0.08);
+  --canvas-gradient:
+    radial-gradient(1100px 700px at 8% -10%, rgba(15, 118, 110, 0.16), transparent 60%),
+    radial-gradient(900px 650px at 105% 112%, rgba(109, 89, 214, 0.14), transparent 62%),
+    linear-gradient(
+      135deg,
+      var(--canvas-hint-teal) 0%,
+      var(--canvas-hint-blue) 38%,
+      var(--canvas-hint-violet) 68%,
+      var(--canvas-hint-teal) 100%
+    );
+  font-family: "IBM Plex Sans Variable", system-ui, sans-serif;
   color: var(--ink);
-  background: var(--canvas);
+  background-color: var(--canvas);
+  background-image: var(--canvas-gradient);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   letter-spacing: 0;
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  :root {
+    --surface-glass: rgba(255, 255, 255, 0.97);
+    --surface-glass-strong: rgba(255, 255, 255, 0.99);
+    --surface-glass-faint: rgba(255, 255, 255, 0.97);
+    --glass-blur: 0px;
+    --glass-blur-strong: 0px;
+    --glass-border: #dfe2e3;
+    --glass-shadow: none;
+  }
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  :root {
+    --surface-glass: #fcfcfc;
+    --surface-glass-strong: #fff;
+    --surface-glass-faint: #fafbfb;
+    --glass-border: #dfe2e3;
+    --glass-shadow: none;
+  }
 }
 
 * {
@@ -73,8 +120,8 @@ svg {
 
 .ui-command,
 .ui-command--icon {
-  border: 1px solid #d9dcdf;
-  background: var(--surface);
+  border: 1px solid var(--glass-border);
+  background: var(--surface-glass-strong);
   color: var(--ink-soft);
   border-radius: 6px;
   display: inline-flex;
