@@ -15,6 +15,11 @@
   backdrop-filter: blur(var(--glass-blur-strong));
   box-shadow: var(--glass-shadow);
 }
+.entry__theme {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 16px;
+}
 .entry__brand {
   display: flex;
   align-items: center;

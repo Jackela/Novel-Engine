@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 
 import { api } from "@/app/api";
 import { productIdentity, productLabel } from "@/app/productIdentity";
+import { ThemeSwitch } from "@/app/ThemeSwitch";
 
 import { toErrorMessage } from "./hooks/toErrorMessage";
 import { useCommandFocusRestoration } from "./hooks/useCommandFocusRestoration";
@@ -62,6 +63,9 @@ export function EntryPage() {
   return (
     <main className="entry">
       <section className="entry__panel">
+        <div className="entry__theme">
+          <ThemeSwitch />
+        </div>
         <div className="entry__brand">
           <BookOpen aria-hidden="true" />
           <span>{productIdentity.name}</span>
