@@ -35,6 +35,7 @@ import {
   dispatchProviderResponse,
   startProviderResponseDeadline,
 } from "./provider_response_lifecycle.js";
+import { createChapterMarkdownUnwrapper } from "./stream_json_unwrap.js";
 import { streamProviderTextDeltas } from "./streaming_generation.js";
 
 const DEFAULT_API_BASE = "https://api.openai.com/v1";
@@ -166,16 +167,20 @@ export class OpenAICompatibleTextProvider implements TextGenerationProvider {
   }
 
   /**
-   * #308 SSE passthrough: `stream=true` chat completions relayed as raw
-   * chapter-markdown deltas. Usage comes from the final chunk when the
-   * provider includes it (`stream_options.include_usage`); absent tokens
-   * stay null so the caller's word-count fallback applies.
+   * #308 SSE passthrough: `stream=true` chat completions relayed as
+   * chapter-markdown deltas. Under json_object mode the provider streams the
+   * wrapper JSON, so every delta runs through an incremental unwrapper that
+   * yields the unescaped `chapter_markdown` prose pieces (#496). Usage comes
+   * from the final chunk when the provider includes it
+   * (`stream_options.include_usage`); absent tokens stay null so the caller's
+   * word-count fallback applies.
    */
   async *generateStructuredStreaming(
     task: TextGenerationTask,
     options?: TextGenerationStreamOptions,
   ): AsyncGenerator<string, void, void> {
     const step = supportedStep(task.step);
+    const unwrapper = createChapterMarkdownUnwrapper();
     yield* streamProviderTextDeltas(
       {
         url: `${this.apiBase}/chat/completions`,
@@ -197,10 +202,11 @@ export class OpenAICompatibleTextProvider implements TextGenerationProvider {
         idleTimeoutMs: this.idleTimeoutMs,
       },
       (url, init) => this.dispatch(url, init ?? {}),
-      streamDeltaContent,
+      (data) => unwrapper.feed(streamDeltaContent(data) ?? ""),
       usageTokens,
       options,
     );
+    unwrapper.finish();
   }
 
   private async generateOnce(

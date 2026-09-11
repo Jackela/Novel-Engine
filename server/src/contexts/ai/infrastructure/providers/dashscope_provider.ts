@@ -37,6 +37,7 @@ import {
   dispatchProviderResponse,
   startProviderResponseDeadline,
 } from "./provider_response_lifecycle.js";
+import { createChapterMarkdownUnwrapper } from "./stream_json_unwrap.js";
 import { streamProviderTextDeltas } from "./streaming_generation.js";
 
 const DEFAULT_TRANSPORT_MODE: DashscopeTransportMode = "multimodal_generation";
@@ -121,9 +122,11 @@ export class DashScopeTextProvider implements TextGenerationProvider {
 
   /**
    * #308 SSE passthrough: native modes request `incremental_output` chunks
-   * and compatible mode relays OpenAI-style deltas; every text piece is
-   * yielded as a raw chapter-markdown delta. Usage comes from the final
-   * chunk when the provider includes it; absent tokens stay null.
+   * and compatible mode relays OpenAI-style deltas. Every mode requests
+   * json_object output, so each text piece runs through an incremental
+   * unwrapper that yields the unescaped `chapter_markdown` prose pieces
+   * (#496). Usage comes from the final chunk when the provider includes it;
+   * absent tokens stay null.
    */
   async *generateStructuredStreaming(
     task: TextGenerationTask,
@@ -131,6 +134,7 @@ export class DashScopeTextProvider implements TextGenerationProvider {
   ): AsyncGenerator<string, void, void> {
     const step = supportedStep(task.step);
     const apiBase = this.protocol.normalizeApiBase(this.apiBase);
+    const unwrapper = createChapterMarkdownUnwrapper();
     yield* streamProviderTextDeltas(
       {
         url: `${apiBase}${this.protocol.endpointPath()}`,
@@ -149,10 +153,11 @@ export class DashScopeTextProvider implements TextGenerationProvider {
         idleTimeoutMs: this.idleTimeoutMs,
       },
       (url, init) => this.dispatch(url, init ?? {}),
-      extractDashscopeIncrementalText,
+      (data) => unwrapper.feed(extractDashscopeIncrementalText(data) ?? ""),
       extractDashscopeUsageTokens,
       options,
     );
+    unwrapper.finish();
   }
 
   private async generateOnce(

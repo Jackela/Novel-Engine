@@ -150,14 +150,16 @@ describe("OpenAI-compatible adapter streaming", () => {
     });
   }
 
-  it("relays chat deltas, requests usage, and reports the final-chunk outcome", async () => {
+  it("unwraps json_object deltas into chapter-markdown prose and reports the outcome", async () => {
     const capture: CapturedRequest[] = [];
     const transport = scriptedTransport(
       [
         sseResponse([
           JSON.stringify({ choices: [{ delta: { role: "assistant", content: "" } }] }),
-          JSON.stringify({ choices: [{ delta: { content: "Night fell " } }] }),
-          JSON.stringify({ choices: [{ delta: { content: "over the harbor." } }] }),
+          JSON.stringify({
+            choices: [{ delta: { content: '{"chapter_markdown": "Night fell ' } }],
+          }),
+          JSON.stringify({ choices: [{ delta: { content: 'over the harbor."}' } }] }),
           JSON.stringify({ choices: [], usage: { prompt_tokens: 11, completion_tokens: 22 } }),
           "[DONE]",
         ]),
@@ -175,7 +177,7 @@ describe("OpenAI-compatible adapter streaming", () => {
       }),
     );
 
-    expect(streamed.deltas).toEqual(["Night fell ", "over the harbor."]);
+    expect(streamed.joined).toBe("Night fell over the harbor.");
     expect(outcome).toEqual({
       model: "server-selected-model",
       promptTokens: 11,
@@ -188,6 +190,32 @@ describe("OpenAI-compatible adapter streaming", () => {
     const body = JSON.parse(String(request.init.body)) as Record<string, unknown>;
     expect(body.stream).toBe(true);
     expect(body.stream_options).toEqual({ include_usage: true });
+  });
+
+  it("joins escape sequences that split across chunk boundaries", async () => {
+    const transport = scriptedTransport(
+      [
+        sseResponse([
+          JSON.stringify({ choices: [{ delta: { content: '{"chapter_markdown": "a\\' } }] }),
+          JSON.stringify({ choices: [{ delta: { content: 'n\\"b\\\\c" }' } }] }),
+        ]),
+      ],
+      [],
+    );
+    const streamed = await collected(
+      provider({ transport }).generateStructuredStreaming(chapterTask()),
+    );
+    expect(streamed.joined).toBe('a\n"b\\c');
+  });
+
+  it("fails the stream when the json_object payload lacks chapter_markdown", async () => {
+    const transport = scriptedTransport(
+      [sseResponse([JSON.stringify({ choices: [{ delta: { content: '{"other": "value"}' } }] })])],
+      [],
+    );
+    await expect(
+      collected(provider({ transport }).generateStructuredStreaming(chapterTask())),
+    ).rejects.toThrow(/chapter_markdown JSON contract/);
   });
 
   it("normalizes a non-OK stream response without retrying", async () => {
@@ -223,13 +251,17 @@ describe("DashScope adapter streaming", () => {
     });
   }
 
-  it("enables incremental native output and relays message-content deltas", async () => {
+  it("enables incremental native output and unwraps message-content deltas", async () => {
     const capture: CapturedRequest[] = [];
     const transport = scriptedTransport(
       [
         sseResponse([
-          JSON.stringify({ output: { choices: [{ message: { content: "The tide " } }] } }),
-          JSON.stringify({ output: { choices: [{ message: { content: "turned early." } }] } }),
+          JSON.stringify({
+            output: { choices: [{ message: { content: '{"chapter_markdown": "The tide ' } }] },
+          }),
+          JSON.stringify({
+            output: { choices: [{ message: { content: 'turned early."}' } }] },
+          }),
           JSON.stringify({
             output: { choices: [{ message: { content: "" }, finish_reason: "stop" }] },
             usage: { prompt_tokens: 7, completion_tokens: 9 },
@@ -249,7 +281,7 @@ describe("DashScope adapter streaming", () => {
       }),
     );
 
-    expect(streamed.deltas).toEqual(["The tide ", "turned early."]);
+    expect(streamed.joined).toBe("The tide turned early.");
     expect(outcome).toEqual({ model: "qwen3.5-flash", promptTokens: 7, completionTokens: 9 });
     const request = capture[0];
     if (request === undefined) throw new Error("Expected a captured request.");
@@ -260,11 +292,13 @@ describe("DashScope adapter streaming", () => {
     expect(body.parameters.incremental_output).toBe(true);
   });
 
-  it("keeps whitespace-bearing deltas untrimmed", async () => {
+  it("keeps whitespace-bearing chapter-markdown values untrimmed", async () => {
     const transport = scriptedTransport(
       [
         sseResponse([
-          JSON.stringify({ output: { choices: [{ message: { content: "  padded  " } }] } }),
+          JSON.stringify({
+            output: { choices: [{ message: { content: '{"chapter_markdown": "  padded  "}' } }] },
+          }),
         ]),
       ],
       [],

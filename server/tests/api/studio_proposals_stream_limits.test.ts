@@ -45,7 +45,9 @@ function failingBodyFactory(diagnostic: string): TextGenerationProviderFactory {
         if (reads === 1) {
           controller.enqueue(
             new TextEncoder().encode(
-              `data: ${JSON.stringify({ choices: [{ delta: { content: "# Chapter\nSafe start." } }] })}\n\n`,
+              `data: ${JSON.stringify({
+                choices: [{ delta: { content: '{"chapter_markdown": "# Chapter\\nSafe start.' } }],
+              })}\n\n`,
             ),
           );
           return;

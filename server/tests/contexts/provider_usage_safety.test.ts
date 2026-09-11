@@ -110,7 +110,7 @@ describe("provider usage safe-integer normalization", () => {
     const openaiOutcome = await streamOutcome(
       openai(
         sseResponse([
-          { choices: [{ delta: { content: "OpenAI prose." } }] },
+          { choices: [{ delta: { content: '{"chapter_markdown": "OpenAI prose."}' } }] },
           `{"choices":[],"usage":${usageJson(value)}}`,
           "[DONE]",
         ]),
@@ -126,7 +126,11 @@ describe("provider usage safe-integer normalization", () => {
     const dashscopeOutcome = await streamOutcome(
       dashscope(
         sseResponse([
-          { output: { choices: [{ message: { content: "DashScope prose." } }] } },
+          {
+            output: {
+              choices: [{ message: { content: '{"chapter_markdown": "DashScope prose."}' } }],
+            },
+          },
           `{"output":{"choices":[{"message":{"content":""},"finish_reason":"stop"}]},"usage":${usageJson(value)}}`,
         ]),
       ).generateStructuredStreaming(task, {
