@@ -144,6 +144,18 @@ const pairs: readonly Pair[] = [
     bg: surface("--badge-active-bg"),
     recorded: 7.52,
   },
+  {
+    name: "badge-deprecated-ink vs badge-deprecated-bg (T2b-finding dark twins)",
+    fg: textColor("--badge-deprecated-ink"),
+    bg: surface("--badge-deprecated-bg"),
+    recorded: 6.91,
+  },
+  {
+    name: "badge-draft-active-ink vs badge-draft-active-bg (T2b-finding dark twins)",
+    fg: textColor("--badge-draft-active-ink"),
+    bg: surface("--badge-draft-active-bg"),
+    recorded: 7.53,
+  },
 ];
 
 describe("dark contrast guard", () => {

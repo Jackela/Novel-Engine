@@ -40,6 +40,44 @@ describe("ThemeSwitch", () => {
     expect(options.map((option) => option.checked)).toEqual([true, false, false]);
   });
 
+  it("re-resolves the system label when the OS scheme flips while unlocked", () => {
+    let darkQueryMatches = true;
+    let changeHandler: (() => void) | undefined;
+    vi.stubGlobal("matchMedia", (query: string) => ({
+      get matches() {
+        return darkQueryMatches;
+      },
+      media: query,
+      addEventListener: (_type: string, listener: () => void) => {
+        changeHandler = listener;
+      },
+      removeEventListener: () => undefined,
+    }));
+
+    const container = harness.mount(<ThemeSwitch />).container;
+    const labels = () =>
+      [...container.querySelectorAll(".ui-theme-switch__option span")].map(
+        (span) => span.textContent,
+      );
+    expect(labels(), "initial render resolves the OS target").toEqual([
+      "System (dark)",
+      "Light",
+      "Dark",
+    ]);
+
+    act(() => {
+      darkQueryMatches = false;
+      changeHandler?.();
+    });
+
+    expect(labels(), "the system label follows the flip without any interaction").toEqual([
+      "System (light)",
+      "Light",
+      "Dark",
+    ]);
+    expect(queryOptions(container).map((option) => option.checked)).toEqual([true, false, false]);
+  });
+
   it("writes and applies the dark lock on activation", () => {
     const container = harness.mount(<ThemeSwitch />).container;
     const dark = queryOptions(container)[2];

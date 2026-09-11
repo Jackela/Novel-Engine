@@ -57,67 +57,82 @@ T2a owns `entry.css`, `library.css`, `EntryPage.tsx`,
 
 ## T2a: Entry and project library dark pass (blocked by T1)
 
-- [ ] T2a.1 Mount `ThemeSwitch` on `EntryPage` and `ProjectLibraryPage`;
+- [x] T2a.1 Mount `ThemeSwitch` on `EntryPage` and `ProjectLibraryPage`;
       replace the `.library__project-row:hover` `#8dbab6` literal with
       `var(--library-row-hover)` in `library.css`. Acceptance:
       `pnpm --dir frontend test:unit -- EntryPage ProjectLibraryPage` green.
-- [ ] T2a.2 Verify both surfaces auto-follow in light and dark (tokens only;
+      (Done in PR #511.)
+- [x] T2a.2 Verify both surfaces auto-follow in light and dark (tokens only;
       add dark fixes only where a literal proves necessary, staying inside
       the batch's file ownership). Acceptance: browser check on a running
       stack — entry panel and library rows render correctly in both themes.
+      (Done in PR #511; T3 e2e re-verifies the dark tokens on both
+      surfaces.)
 
 ## T2b: Studio navigation chrome dark pass (blocked by T1)
 
-- [ ] T2b.1 Mount `ThemeSwitch` in `StudioTopbar`; replace the
+- [x] T2b.1 Mount `ThemeSwitch` in `StudioTopbar`; replace the
       `studio-nav.css` badge-family literals (`#e2e8e8`, `#5a6465`,
       `#cfe4e2`, `#0f6862`) with the T1 badge tokens, preserving the
       in-file AA rationale as token comments. Acceptance:
       `pnpm --dir frontend test:unit -- StudioNavigator StudioTopbar`
-      green.
-- [ ] T2b.2 Verify navigator, badges, and top bar in both themes, including
+      green. (Done in PR #512.)
+- [x] T2b.2 Verify navigator, badges, and top bar in both themes, including
       the one-glass-layer rule intact. Acceptance: browser check — no blur
       nesting, badges AA in both themes per the T1 contrast test values.
+      (Done in PR #512; the finding it recorded — four unlisted badge
+      literals — is absorbed in T3.)
 
 ## T2c: Editor and inspector dark pass (blocked by T1)
 
-- [ ] T2c.1 Verify `editor.css` and `inspector.css` surfaces auto-follow;
+- [x] T2c.1 Verify `editor.css` and `inspector.css` surfaces auto-follow;
       fix any dark-specific issue within the batch's files only (expected:
       none — both files are token-only today). Acceptance:
       `pnpm --dir frontend test:unit -- Editor Inspector` green.
-- [ ] T2c.2 Verify the CodeMirror editor renders dark through the existing
+      (Done in PR #513; zero dark fixes needed, as expected.)
+- [x] T2c.2 Verify the CodeMirror editor renders dark through the existing
       token theme and stays opaque. Acceptance: browser check — CM text,
       caret, selection, and focus all follow the dark tokens; no
-      `backdrop-filter` on the editor surface.
+      `backdrop-filter` on the editor surface. (Done in PR #513; T3 e2e
+      re-verifies the opaque dark editor with no blur.)
 
 ## T2d: Layout shell and usage dark pass (blocked by T1)
 
-- [ ] T2d.1 Verify `layout.css` and `usage.css` surfaces auto-follow
+- [x] T2d.1 Verify `layout.css` and `usage.css` surfaces auto-follow
       (status bar, usage panel, grid shell); fix any dark-specific issue
       within the batch's files only. Acceptance:
       `pnpm --dir frontend test:unit -- Statusbar StudioPage` green.
-- [ ] T2d.2 Verify the compact single-column layout and usage panel in both
+      (Done as zero-diff verification — no PR; see the closing comment on
+      issue #508.)
+- [x] T2d.2 Verify the compact single-column layout and usage panel in both
       themes. Acceptance: browser check at the compact breakpoint — no
-      unreadable hairline or status text in either theme.
+      unreadable hairline or status text in either theme. (Done as
+      zero-diff verification — closing comment on issue #508; the finding
+      it recorded in `layout.css` is absorbed in T3.)
 
 ## T3: Integration, gates, and design SSOT (blocked by T2a–T2d)
 
-- [ ] T3.1 Add the Playwright theme workflow
+- [x] T3.1 Add the Playwright theme workflow
       `frontend/tests/e2e-ts/theme_selection.spec.ts`: select dark, reload,
       dark persists; select light under dark-OS emulation, light renders;
       reset to system, OS preference decides. Acceptance:
       `pnpm --dir frontend test:e2e-ts -- theme_selection` green.
+      (4 tests green standalone and in the full 30-test suite; evidence in
+      `docs/agents/dark-mode-2026-09-11.md`.)
 - [ ] T3.2 Live-switch browser acceptance across all surfaces (entry →
       library → studio → editor → usage) in one session: no flash, no
       light-only surface, reduced-transparency and no-`backdrop-filter`
       emulations hold in dark. Acceptance: recorded browser run against a
       local stack.
-- [ ] T3.3 Update root `DESIGN.md` per the `design.md` representation
+- [x] T3.3 Update root `DESIGN.md` per the `design.md` representation
       (frontmatter untouched, `## Dark theme values` appendix added) and run
       the gates. Acceptance: `npx @google/design.md lint DESIGN.md` 0
       errors; `npx @google/design.md diff` reviewed and recorded.
-- [ ] T3.4 Flip `docs/adr/0010-dual-theme-token-architecture.md` to
+      (Lint 0 errors; diff vs git HEAD additive-only, `regression: false`.)
+- [x] T3.4 Flip `docs/adr/0010-dual-theme-token-architecture.md` to
       `status: accepted`. Acceptance: ADR status updated in the same
-      series.
+      series. (Accepted with an implementation-results section in the T3
+      commit.)
 - [ ] T3.5 Run the full owning gates and record evidence:
       `pnpm --dir frontend lint && pnpm --dir frontend format:check &&
       pnpm --dir frontend type-check && pnpm --dir frontend test:unit &&
