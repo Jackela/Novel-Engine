@@ -4,7 +4,7 @@
 
 ## OVERVIEW
 
-Novel Engine is a self-hosted writing studio. Backend: Node.js 24, Fastify v5, TypeBox, Drizzle (better-sqlite3), SQLite. Frontend: React 19, Vite, TypeScript. Package manager: pnpm 11 (workspace: `frontend/` + `server/`). The Python stack is retired at git tag `python-final` (0.3.x); history is the archive.
+Novel Engine is a self-hosted writing studio. Backend: Node.js 24, Fastify v5, TypeBox, Drizzle (better-sqlite3), SQLite. Frontend: React 19, Vite, TypeScript. Package manager: pnpm 11 (workspace: `frontend/`, `server/`, `tools/api-types`). The Python stack is retired at git tag `python-final` (0.3.x); history is the archive.
 
 Domain vocabulary is defined in `CONTEXT.md`; use its canonical terms in code names, docs, and discussion.
 
@@ -17,10 +17,11 @@ server/                   # TS backend (ADR-0002): Fastify app, CLI, gates, Node
 │   ├── studio/           # Projects, documents, revisions, jobs, reviews, exports, volumes, lore, resident context, usage
 │   └── ai/               # Structured text generation: application services, provider HTTP routes, streaming adapters
 ├── src/shared/           # Cross-cutting domain and infrastructure
-├── scripts/qa/           # SSOT, hygiene, size, migration-channel, OpenAPI gates
+├── scripts/qa/           # SSOT, hygiene, size, migration-channel, OpenAPI, llms-txt gates
 ├── qa-baselines/         # Frozen OpenAPI snapshot (code-first, regenerated deliberately)
 └── drizzle/              # SQL migrations (FTS5 DDL hand-written inside migration files)
 frontend/                 # React application, generated API types, browser tests
+tools/api-types/          # Isolated openapi-typescript toolchain package (generated API types)
 openspec/                 # Canonical product specification (novel-engine capability)
 docs/adr/                 # Architecture decision records
 ```
@@ -57,7 +58,7 @@ Generated/runtime trees such as caches, `htmlcov/`, `frontend/coverage/`, `front
 | `loadServerConfig` | `server/src/shared/infrastructure/config/server_config.ts` | Env resolution + production startup guards |
 | `readWorkspaceVersion` | `server/src/shared/infrastructure/workspace_manifest.ts` | Release-version SSOT reader (server/package.json) |
 | `buildFtsMatchQuery` | `server/src/contexts/studio/application/fts_match_query.ts` | Strict token reduction before parameterized FTS5 MATCH |
-| `assembleResidentContext` | `server/src/contexts/studio/application/resident_context.ts:158` | Resident context assembler (ADR-0004 layer 1) feeding every proposal generation |
+| `assembleResidentContext` | `server/src/contexts/studio/application/resident_context.ts:136` | Resident context assembler (ADR-0004 layer 1) feeding every proposal generation |
 | `api` | `frontend/src/app/api.ts` | Shared HTTP client used by pages, hooks, and tests |
 | `StudioPage` | `frontend/src/features/studio/StudioPage.tsx` | Route-level UI composition shell |
 
@@ -88,6 +89,7 @@ Complete `README.md`, package script declarations, and corresponding lockfile sy
 - Modify tests as needed to complete the current task; never weaken assertions to conceal failures.
 - Keep functions small (file-size gate enforces limits); split orchestration.
 - React components should stay below 200 lines; split orchestration into hooks/components.
+- Comments are prose-style JSDoc with explicit failure semantics — this repo's documentation standard.
 
 ## PROJECT-SPECIFIC INVARIANTS
 

@@ -14,7 +14,7 @@ Selection lives in `matchLoreEntries` (`server/src/contexts/studio/application/l
 - **Lifecycle fails closed** — `draft` and `deprecated` entries are omitted before key matching. An unreadable stored status behaves as `draft`; write paths accept only the closed set.
 - **Order is deterministic** — `loreEntriesFromDocuments` filters the character/world entries from `ProposalContextSource.documents` without sorting them again. Equal-rank matches therefore retain the canonical composite order captured once by the Store.
 
-The resident side of the corpus is the **raw** view text (`residentMatchCorpus` in `server/src/contexts/studio/application/resident_context.ts`), not the sanitized render, so keyword hits stay identical regardless of render-time sanitization.
+The resident side of the corpus is the **raw** view text (`residentMatchCorpus` in `server/src/contexts/studio/application/resident_context_render.ts`), not the sanitized render, so keyword hits stay identical regardless of render-time sanitization.
 
 Lore content, aliases, lifecycle status, the outline, linked beat, prior chapters, and target revision all come from the same short `readProposalContext` SQLite snapshot. Prompt assembly derives Lore inputs purely from that captured value; it does not call the legacy per-document, per-volume, or per-Lore Store reads.
 
