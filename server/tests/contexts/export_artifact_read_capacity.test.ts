@@ -4,7 +4,7 @@ import { join } from "node:path";
 
 import { describe, expect, it } from "vitest";
 
-import type { ArtifactReadRequest } from "../../src/contexts/studio/application/export_artifact_service.js";
+import type { ArtifactReadRequest } from "../../src/contexts/studio/application/ports/artifact_gateway.js";
 import {
   EXPORT_CAPACITY_LIMITS,
   ExportCapacityExceededError,

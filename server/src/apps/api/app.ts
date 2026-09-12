@@ -4,7 +4,7 @@ import type { TypeBoxTypeProvider } from "@fastify/type-provider-typebox";
 import Fastify, { type FastifyInstance, type FastifyServerOptions } from "fastify";
 import type { TextGenerationProviderFactory } from "../../contexts/ai/application/ports/text_generation.js";
 import { providerCatalogRoutes } from "../../contexts/ai/interface/http/provider_routes.js";
-import type { ExportArtifactGateway } from "../../contexts/studio/application/export_artifact_service.js";
+import type { ExportArtifactGateway } from "../../contexts/studio/application/ports/artifact_gateway.js";
 import type { ExportOutcomeStore } from "../../contexts/studio/application/ports/export_store.js";
 import type { ProjectArtifactCleaner } from "../../contexts/studio/application/ports/project_artifact_cleaner.js";
 import { studioRoutes } from "../../contexts/studio/interface/http/studio_routes.js";

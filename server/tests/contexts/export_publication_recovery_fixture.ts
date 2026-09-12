@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 import { exportArtifactExtension } from "../../src/contexts/studio/application/export_artifact_identity.js";
-import type { ArtifactFileEvidence } from "../../src/contexts/studio/application/export_artifact_service.js";
+import type { ArtifactFileEvidence } from "../../src/contexts/studio/application/ports/artifact_gateway.js";
 import type { ExportArtifactFormat } from "../../src/contexts/studio/application/ports/export_store.js";
 import {
   exports as exportArtifacts,

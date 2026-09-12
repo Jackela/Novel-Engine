@@ -6,7 +6,7 @@ import type {
   ArtifactReadRequest,
   ArtifactWriteRequest,
   ExportArtifactGateway,
-} from "../application/export_artifact_service.js";
+} from "../application/ports/artifact_gateway.js";
 import {
   EXPORT_CAPACITY_LIMITS,
   ExportArtifactWriteError,
