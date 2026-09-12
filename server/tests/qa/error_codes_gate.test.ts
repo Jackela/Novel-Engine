@@ -44,9 +44,14 @@ const ERROR_CODES_FIXTURE = `export const ERROR_CODES = {\n  ALPHA: "ALPHA",\n  
 const ERROR_STATUS_FIXTURE = `export const ERROR_HTTP_STATUS = {\n  ALPHA: 401,\n  BETA: 422,\n} as const satisfies Record<ErrorCode, number>;\n`;
 const CATALOG_FIXTURE = `# Error codes\n\n| Code | HTTP | Meaning | Action |\n| --- | --- | --- | --- |\n| \`ALPHA\` | 401 | Meaning. | Act. |\n| \`BETA\` | 422 | Meaning. | Act. |\n`;
 
-async function writeCandidateFiles(root: string, catalog: string, statuses: string): Promise<void> {
+async function writeCandidateFiles(
+  root: string,
+  catalog: string,
+  statuses: string,
+  codes: string,
+): Promise<void> {
   await writeCandidate(root, "docs/agents/error-codes.md", catalog);
-  await writeCandidate(root, "server/src/shared/domain/error_codes.ts", ERROR_CODES_FIXTURE);
+  await writeCandidate(root, "server/src/shared/domain/error_codes.ts", codes);
   await writeCandidate(root, "server/src/shared/interface/http/error_envelope.ts", statuses);
 }
 
@@ -56,7 +61,7 @@ describe("error codes lockstep gate", () => {
 
     try {
       initializeGitRepository(root);
-      await writeCandidateFiles(root, CATALOG_FIXTURE, ERROR_STATUS_FIXTURE);
+      await writeCandidateFiles(root, CATALOG_FIXTURE, ERROR_STATUS_FIXTURE, ERROR_CODES_FIXTURE);
 
       const result = runGate(root);
 
@@ -84,16 +89,36 @@ describe("error codes lockstep gate", () => {
       expected: "maps `BETA` to HTTP 500, but ERROR_HTTP_STATUS declares 422",
     },
     {
+      drift: "duplicates a catalog row",
+      catalog: `${CATALOG_FIXTURE}| \`ALPHA\` | 500 | Meaning. | Act. |\n`,
+      expected: "duplicate catalog row for `ALPHA`",
+    },
+    {
       drift: "declares an HTTP status outside ERROR_CODES",
       statuses: ERROR_STATUS_FIXTURE.replace("  BETA: 422,", "  BETA: 422,\n  PHANTOM: 404,"),
       expected: "ERROR_HTTP_STATUS declares `PHANTOM`, which ERROR_CODES",
     },
-  ])("rejects a catalog that $drift", async ({ catalog, statuses, expected }) => {
+    {
+      drift: "has an unparsable entry in ERROR_CODES",
+      codes: ERROR_CODES_FIXTURE.replace('  BETA: "BETA",', '  BETA: "BETA", // legacy alias'),
+      expected: "contains an entry inside ERROR_CODES that the lockstep gate cannot parse",
+    },
+    {
+      drift: "omits an HTTP status for a declared code",
+      statuses: ERROR_STATUS_FIXTURE.replace("  BETA: 422,\n", ""),
+      expected: "no HTTP status for code `BETA`",
+    },
+  ])("rejects a catalog that $drift", async ({ catalog, statuses, codes, expected }) => {
     const root = await createQaRepository();
 
     try {
       initializeGitRepository(root);
-      await writeCandidateFiles(root, catalog ?? CATALOG_FIXTURE, statuses ?? ERROR_STATUS_FIXTURE);
+      await writeCandidateFiles(
+        root,
+        catalog ?? CATALOG_FIXTURE,
+        statuses ?? ERROR_STATUS_FIXTURE,
+        codes ?? ERROR_CODES_FIXTURE,
+      );
 
       const result = runGate(root);
 

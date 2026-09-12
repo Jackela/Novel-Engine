@@ -10,7 +10,8 @@ import { readTextLines, repoRoot, reportFailures } from "./common.mjs";
  * compile-locked via `satisfies`; the markdown side had no enforcement, so
  * this gate compares all three surfaces for exact set and status equality in
  * both directions. TS sources are parsed as text (same precedent as
- * check_ssot.mjs) with strict line matching: an unparsable entry fails closed.
+ * check_ssot.mjs) with strict line matching: an unparsable entry fails closed,
+ * as does a duplicated catalog row.
  */
 
 const CATALOG_DOC = "docs/agents/error-codes.md";
@@ -100,6 +101,10 @@ function parseCatalog(lines, failures) {
   for (const line of lines) {
     const match = CATALOG_ROW.exec(line);
     if (match === null) {
+      continue;
+    }
+    if (catalog.has(match[1])) {
+      failures.push(`${CATALOG_DOC} contains a duplicate catalog row for \`${match[1]}\``);
       continue;
     }
     catalog.set(match[1], Number(match[2]));
