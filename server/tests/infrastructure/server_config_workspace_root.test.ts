@@ -16,24 +16,28 @@ import {
  */
 const workspaceRootHarness = vi.hoisted(() => ({
   workspaceRoot: undefined as string | undefined,
+  // Stashed by the module mock factory so tests can assert on locator calls.
+  locateWorkspaceRoot: undefined as unknown as ReturnType<typeof vi.fn>,
 }));
 
 vi.mock("../../src/shared/infrastructure/workspace_manifest.js", async (importOriginal) => {
   const actual =
     await importOriginal<typeof import("../../src/shared/infrastructure/workspace_manifest.js")>();
+  workspaceRootHarness.locateWorkspaceRoot = vi.fn(() => {
+    if (workspaceRootHarness.workspaceRoot === undefined) {
+      return actual.locateWorkspaceRoot();
+    }
+    return workspaceRootHarness.workspaceRoot;
+  });
   return {
     ...actual,
-    locateWorkspaceRoot: () => {
-      if (workspaceRootHarness.workspaceRoot === undefined) {
-        return actual.locateWorkspaceRoot();
-      }
-      return workspaceRootHarness.workspaceRoot;
-    },
+    locateWorkspaceRoot: workspaceRootHarness.locateWorkspaceRoot,
   };
 });
 
 afterEach(() => {
   workspaceRootHarness.workspaceRoot = undefined;
+  workspaceRootHarness.locateWorkspaceRoot.mockClear();
 });
 
 async function makeWorkspace(): Promise<string> {
@@ -86,5 +90,7 @@ describe("workspace-root-anchored configuration defaults", () => {
 
     expect(config.port).toBe(8000);
     expect(config.databasePath).toBe(join(explicitWorkspace, "data", "novel-engine.sqlite3"));
+    // Fully-explicit inputs must not touch the workspace-root locator at all.
+    expect(workspaceRootHarness.locateWorkspaceRoot).not.toHaveBeenCalled();
   });
 });
