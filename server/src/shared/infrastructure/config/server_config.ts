@@ -1,7 +1,8 @@
 import { readFileSync, statSync } from "node:fs";
-import { dirname, resolve } from "node:path";
+import { dirname, join, resolve } from "node:path";
 
 import { DEFAULT_CORS_ORIGINS } from "../../domain/cors_contract.js";
+import { locateWorkspaceRoot } from "../workspace_manifest.js";
 import { ConfigurationError } from "./configuration_error.js";
 import { parseEnvFile } from "./env_file.js";
 import { type LlmServerConfig, loadLlmServerConfig } from "./provider_config.js";
@@ -60,9 +61,12 @@ export interface WorkflowCapacityConfig {
 export interface LoadServerConfigInput {
   /** Process-style variables; defaults to `process.env`. File values never win. */
   readonly env?: Record<string, string | undefined>;
-  /** `.env.local` location; defaults to `./.env.local`. `null` disables file loading. */
+  /**
+   * `.env.local` location; defaults to the workspace root's `.env.local`
+   * (independent of the current working directory). `null` disables file loading.
+   */
   readonly envFile?: string | null;
-  /** Base for relative SQLite paths; defaults to `process.cwd()`. */
+  /** Base for relative SQLite paths; defaults to the workspace root. */
   readonly workingDirectory?: string;
 }
 
@@ -78,7 +82,7 @@ export function loadServerConfig(input: LoadServerConfigInput = {}): ServerConfi
   if (!databaseUrl.startsWith("sqlite:///")) {
     throw new ConfigurationError("DB_URL must use the self-hosted SQLite store (sqlite:///…)");
   }
-  const workingDirectory = input.workingDirectory ?? process.cwd();
+  const workingDirectory = input.workingDirectory ?? locateWorkspaceRoot();
   const databasePath = resolve(workingDirectory, databaseUrl.slice("sqlite:///".length));
   const sessionSecret = secretFrom(stringFrom(env, "SECURITY_SECRET_KEY"));
   const maxActiveWorkflows = boundedIntegerFrom(
@@ -186,7 +190,9 @@ function secretFrom(rawSecret: string | undefined): string | undefined {
 
 function mergedEnvironment(input: LoadServerConfigInput): Map<string, string> {
   const merged = new Map<string, string>();
-  const envFile = input.envFile === undefined ? ENV_FILE_NAME : input.envFile;
+  // The workspace root resolves lazily so fully-explicit inputs never touch the locator.
+  const envFile =
+    input.envFile === undefined ? join(locateWorkspaceRoot(), ENV_FILE_NAME) : input.envFile;
   if (envFile !== null) {
     const contents = readOptionalEnvironmentFile(envFile);
     if (contents !== undefined) {

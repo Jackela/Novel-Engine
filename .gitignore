@@ -45,6 +45,7 @@ frontend/reports/
 
 # Application data and database sidecars
 /data/
+/server/data/
 *.db
 *.db-shm
 *.db-wal
