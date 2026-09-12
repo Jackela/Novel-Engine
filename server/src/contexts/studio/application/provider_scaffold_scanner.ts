@@ -13,7 +13,22 @@ import {
   skipWhitespace,
 } from "./provider_scaffold_reader.js";
 
+/**
+ * Pattern-scanner half of provider-scaffold detection (see
+ * `provider_scaffold.ts` for the split): decides whether freeform markdown
+ * carries the reserved `echo`/`result` provider keys, across four shapes —
+ * direct serialized JSON, JSON wrapped in quotes or backticks, bare line
+ * keys, and composite `{...}`/`[...]` regions. Escape sequences and quote
+ * delimiters are projected away first so decorated output still matches.
+ * The sanitization gate consumes this verdict to reject scaffolding that
+ * leaked into proposal prose.
+ *
+ * The nested key search is bounded by `walkLimits` and fails closed:
+ * exceeding a bound (or any scan budget) reports scaffolding instead of
+ * trusting unbounded input.
+ */
 type JsonNode = { value: unknown; depth: number; layers: number };
+/** Max string-wrapped JSON layers and worklist nodes; exceeded means scaffolding. */
 const walkLimits = { layers: 12, work: 512 };
 const isProviderKey = (key: string) => /^(echo|result)$/i.test(key);
 const isStructuralToken = (v: string) => isWhitespace(v) || /[{}[\]"'`:=,;+*.)-]/.test(v);
