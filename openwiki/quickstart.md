@@ -64,7 +64,7 @@ Copilot and whole-book generation use the SSE proposal stream. Stopping a draft 
 - `SECURITY_SECRET_KEY` and `SECURITY_CORS_ORIGINS`; production requires a non-default secret and explicit non-localhost CORS origins.
 - `SECURITY_RATE_LIMIT=5/minute` for the authentication endpoints.
 
-Configuration loads `.env.local` with process environment variables taking precedence (`server/src/shared/infrastructure/config/server_config.ts`). SQLite connections enable foreign keys and WAL mode (`server/src/shared/infrastructure/db/`).
+Configuration loads `.env.local` with process environment variables taking precedence (`server/src/shared/infrastructure/config/server_config.ts`). SQLite connections enable foreign keys and WAL mode (`server/src/shared/infrastructure/db/`). Both `.env.local` and the default SQLite `data/` path resolve against the workspace root (the checkout directory), not the current working directory.
 
 For a containerized deployment, set a real `SECURITY_SECRET_KEY` and run:
 

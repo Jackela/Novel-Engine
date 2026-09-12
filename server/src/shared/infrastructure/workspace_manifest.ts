@@ -49,6 +49,17 @@ export function readWorkspaceVersion(): string {
   return readProductIdentity().version;
 }
 
+/**
+ * The workspace checkout root: the directory that contains the server package
+ * directory. Configuration defaults anchor here (not to `process.cwd()`) so
+ * launching via `pnpm --dir server` from a subdirectory resolves the same
+ * `.env.local` and `data/` locations as launching from the checkout root.
+ */
+export function locateWorkspaceRoot(): string {
+  const serverPackageDirectory = dirname(locateWorkspaceManifest());
+  return dirname(serverPackageDirectory);
+}
+
 function locateWorkspaceManifest(): string {
   let directory = dirname(fileURLToPath(import.meta.url));
   for (let depth = 0; depth < SEARCH_DEPTH; depth += 1) {
