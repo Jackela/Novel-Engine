@@ -15,9 +15,6 @@ export const REVIEW_DIMENSIONS = [
 ] as const;
 export type ReviewDimension = (typeof REVIEW_DIMENSIONS)[number];
 
-export const REVIEW_SEVERITIES = ["blocker", "warning"] as const;
-export type ReviewSeverity = (typeof REVIEW_SEVERITIES)[number];
-
 const DIMENSION_SET: ReadonlySet<string> = new Set(REVIEW_DIMENSIONS);
 const SEVERITY_RANK: Readonly<Record<string, number>> = { blocker: 0, warning: 1 };
 
