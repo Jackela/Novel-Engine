@@ -1,4 +1,5 @@
 import { parseSession } from "./apiContract";
+import { isRecord } from "./typeGuards";
 import type { Session } from "./types/studio";
 
 const STORAGE_KEY = "novel_engine.retry_attempts.v1";
@@ -12,10 +13,6 @@ interface RetryAttemptRegistryState {
 
 function attemptScope(projectId: string, sourceJobId: string): string {
   return JSON.stringify([projectId, sourceJobId]);
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
 function readRegistry(): RetryAttemptRegistryState | null {
