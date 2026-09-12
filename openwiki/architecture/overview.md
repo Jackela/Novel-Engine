@@ -125,7 +125,7 @@ CI (`.github/workflows/ci.yml`) is the authoritative full gate:
 
 `pnpm --dir server gates` runs the repository policy and contract checks
 defined in `server/package.json` (SSOT, hygiene, file sizes, migration
-channel, llms-txt, and the OpenAPI snapshot).
+channel, llms-txt, error-codes, and the OpenAPI snapshot).
 `pnpm spec:validate` validates the OpenSpec product specification
 (`openspec/`). CodeQL analyzes `javascript-typescript` only — the repository
 is single-language — on pushes and pull requests to `main`/`develop` plus a
