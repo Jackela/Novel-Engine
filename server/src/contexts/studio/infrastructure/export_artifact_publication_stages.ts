@@ -9,7 +9,7 @@ import { constants } from "node:fs";
 import { link, lstat, mkdir, open, realpath } from "node:fs/promises";
 import { dirname, isAbsolute, relative, resolve, sep } from "node:path";
 
-import type { ArtifactFileEvidence } from "../application/export_artifact_service.js";
+import type { ArtifactFileEvidence } from "../application/ports/artifact_gateway.js";
 import { EXPORT_CAPACITY_LIMITS, ExportCapacityExceededError } from "../domain/exceptions.js";
 import {
   cleanupOwnedFile,

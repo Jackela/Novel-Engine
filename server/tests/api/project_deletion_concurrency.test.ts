@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import type { TextGenerationProviderFactory } from "../../src/contexts/ai/application/ports/text_generation.js";
-import type { ExportArtifactGateway } from "../../src/contexts/studio/application/export_artifact_service.js";
+import type { ExportArtifactGateway } from "../../src/contexts/studio/application/ports/artifact_gateway.js";
 import type { ProjectArtifactCleaner } from "../../src/contexts/studio/application/ports/project_artifact_cleaner.js";
 import { validProposalProse } from "./proposal_test_helpers.js";
 import { buildStudioApp, call, ownerJar, seedProject } from "./studio_helpers.js";
