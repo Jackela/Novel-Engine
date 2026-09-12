@@ -17,7 +17,7 @@ server/                   # TS backend (ADR-0002): Fastify app, CLI, gates, QA g
 │   ├── studio/           # Projects, documents, revisions, jobs, reviews, exports, volumes, lore, resident context, usage
 │   └── ai/               # Structured text generation: application services, provider HTTP routes, streaming adapters
 ├── src/shared/           # Cross-cutting domain and infrastructure
-├── scripts/qa/           # SSOT, hygiene, size, migration-channel, OpenAPI, llms-txt, error-codes gates
+├── scripts/qa/           # SSOT, hygiene, size, migration-channel, llms-txt, error-codes, OpenAPI gates
 ├── qa-baselines/         # Frozen OpenAPI snapshot (code-first, regenerated deliberately)
 └── drizzle/              # SQL migrations (FTS5 DDL hand-written inside migration files)
 frontend/                 # React application, generated API types, browser tests
