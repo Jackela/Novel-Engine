@@ -88,14 +88,18 @@ export interface TextGenerationStreamOptions {
 export interface TextGenerationProvider {
   /**
    * One structured completion. `content` is the parsed JSON object whose
-   * shape `task.responseSchema` fixes; `rawText` serializes that same
-   * payload (never a divergent text) for persistence. Usage counters are
-   * null whenever the provider response carries no usage evidence — the
-   * deterministic provider never reports any — and safe non-negative
-   * integers otherwise. Rejects with `TextGenerationProviderError` for
-   * every expected provider failure: unsupported step, transport, timeout,
-   * HTTP status, malformed or schema-invalid JSON. Anything else is a
-   * programming error and stays unnormalized.
+   * shape `task.responseSchema` fixes. `rawText` is a provider evidence
+   * and diagnostic field; no application code reads it — HTTP-backed
+   * providers (dashscope, openai_compatible) serialize that same `content`
+   * payload into it, while the deterministic provider stores the bare
+   * chapter markdown there and wraps it as `{ chapter_markdown }` inside
+   * `content`. Usage counters are null whenever the provider response
+   * carries no usage evidence — the deterministic provider never reports
+   * any — and safe non-negative integers otherwise. Rejects with
+   * `TextGenerationProviderError` for every expected provider failure:
+   * unsupported step, transport, timeout, HTTP status, malformed or
+   * schema-invalid JSON. Anything else is a programming error and stays
+   * unnormalized.
    */
   generateStructured(task: TextGenerationTask): Promise<TextGenerationResult>;
   /**

@@ -215,7 +215,11 @@ function isJobSummaryStatus(value: string): value is JobSummaryPayload["status"]
   return JOB_SUMMARY_STATUSES.some((candidate) => candidate === value);
 }
 
-/** Serialize one lightweight history row without touching stored JSON bodies. */
+/**
+ * Serialize one lightweight history row without touching stored JSON bodies.
+ * An unsupported stored kind, operation, or status throws a bare Error: a
+ * programming-error surface — the write path owns enum validity.
+ */
 export function jobSummaryPayload(job: JobSummaryRecord): JobSummaryPayload {
   if (!isJobSummaryKind(job.kind)) throw new Error("Stored Job has an unsupported kind.");
   if (!isJobSummaryOperation(job.operation)) {
