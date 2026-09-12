@@ -1,7 +1,5 @@
 import { randomBytes, randomUUID } from "node:crypto";
 import cookie from "@fastify/cookie";
-import cors from "@fastify/cors";
-import swagger from "@fastify/swagger";
 import type { TypeBoxTypeProvider } from "@fastify/type-provider-typebox";
 import Fastify, { type FastifyInstance, type FastifyServerOptions } from "fastify";
 import type { TextGenerationProviderFactory } from "../../contexts/ai/application/ports/text_generation.js";
@@ -9,16 +7,9 @@ import { providerCatalogRoutes } from "../../contexts/ai/interface/http/provider
 import type { ExportArtifactGateway } from "../../contexts/studio/application/export_artifact_service.js";
 import type { ExportOutcomeStore } from "../../contexts/studio/application/ports/export_store.js";
 import type { ProjectArtifactCleaner } from "../../contexts/studio/application/ports/project_artifact_cleaner.js";
-import { createStudioServices } from "../../contexts/studio/application/studio_services.js";
-import { FilesystemExportArtifactGateway } from "../../contexts/studio/infrastructure/export_artifact_files.js";
-import { DatabaseExportPublicationCleanupJournal } from "../../contexts/studio/infrastructure/export_publication_cleanup_journal.js";
-import { ExportStorePart } from "../../contexts/studio/infrastructure/export_store_part.js";
-import { FsLegacyWorkspaceReader } from "../../contexts/studio/infrastructure/fs_legacy_workspace_reader.js";
-import { FilesystemProjectArtifactCleaner } from "../../contexts/studio/infrastructure/project_artifact_files.js";
 import { studioRoutes } from "../../contexts/studio/interface/http/studio_routes.js";
 import { AuthService } from "../../shared/application/auth_service.js";
 import type { HealthProbe } from "../../shared/application/ports/health.js";
-import { DEFAULT_CORS_ORIGINS } from "../../shared/domain/cors_contract.js";
 import { assertStartupGuards } from "../../shared/infrastructure/config/server_config.js";
 import { DrizzleAuthStore } from "../../shared/infrastructure/db/auth_store.js";
 import type {
@@ -27,11 +18,7 @@ import type {
 } from "../../shared/infrastructure/db/connection.js";
 import { sqliteHealthProbe } from "../../shared/infrastructure/db/sqlite_health_probe.js";
 import type { StudioDatabase } from "../../shared/infrastructure/db/startup.js";
-import { clientIdentity } from "../../shared/infrastructure/rate_limit/client_identity.js";
-import { TokenBucketRateLimiter } from "../../shared/infrastructure/rate_limit/token_bucket.js";
 import { readProductIdentity } from "../../shared/infrastructure/workspace_manifest.js";
-import { authRoutes } from "../../shared/interface/http/auth_routes.js";
-import { corsAllowList } from "../../shared/interface/http/cors_policy.js";
 import { registerErrorEnvelope } from "../../shared/interface/http/error_envelope.js";
 import { healthRoutes } from "../../shared/interface/http/health_routes.js";
 import {
@@ -39,19 +26,16 @@ import {
   registerSpaServing,
 } from "../../shared/interface/http/spa_serving.js";
 import { type VersionInfo, versionRoutes } from "../../shared/interface/http/version_route.js";
-import { createStudioPersistence } from "../studio_persistence.js";
 import { closeAppAndRethrow } from "./app_lifecycle.js";
-import {
-  CORS_ALLOWED_HEADERS,
-  CORS_ALLOWED_METHODS,
-  CORS_EXPOSED_HEADERS,
-} from "./cors_registration_policy.js";
+import { registerAuthRoutes } from "./auth_registration.js";
+import { registerCors, resolveCorsOrigins } from "./cors_registration_policy.js";
 import {
   DEFAULT_HTTP_SERVER_POLICY,
   fastifyOptionsForHttpServerPolicy,
   type HttpServerPolicy,
   registerUndeclaredRequestBodyPolicy,
 } from "./http_server_policy.js";
+import { registerOpenApiDocument } from "./openapi_document_registration.js";
 import {
   type OperationCapacityAppOptions,
   resolveOperationCapacity,
@@ -60,6 +44,7 @@ import { openPersistence } from "./persistence.js";
 import { loggerWithProductIdentity } from "./product_logger.js";
 import { buildProviderRuntime, type ProviderApiKeys } from "./provider_runtime.js";
 import { correlationIdFrom, REQUEST_ID_HEADER } from "./request_correlation.js";
+import { assembleStudioServices } from "./studio_services_assembly.js";
 
 declare module "fastify" {
   interface FastifyInstance {
@@ -126,10 +111,6 @@ export interface AppOptions extends OperationCapacityAppOptions {
   httpServerPolicy?: HttpServerPolicy | undefined;
 }
 
-const DEFAULT_AUTH_RATE_LIMIT_PER_MINUTE = 5;
-/** Rate-limit buckets expire with the minute window that fills them. */
-const AUTH_RATE_LIMIT_KEY_TTL_SECONDS = 60;
-
 const emptyHealthProbe: HealthProbe = async () => ({ components: [] });
 
 /**
@@ -189,33 +170,10 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
             now: options.clock,
           });
     const provider = buildProviderRuntime(options.config, options);
-    const loreBudgetCharacters =
-      options.lorebookBudgetCharacters ?? options.config?.llm.lorebookBudgetCharacters;
     const studioServices =
       persistence === undefined
         ? undefined
-        : createStudioServices(createStudioPersistence(persistence.db.db), {
-            now: options.clock,
-            providerFactory: provider.providerFactory,
-            legacyWorkspaceReader: new FsLegacyWorkspaceReader(),
-            reviewProvenance: {
-              provider: provider.defaultProvider,
-              model: provider.reviewModel,
-            },
-            artifactStore:
-              options.exportStoreFactory?.(persistence.db.db) ??
-              new ExportStorePart(persistence.db.db),
-            artifactFiles:
-              options.exportArtifactGateway ??
-              new FilesystemExportArtifactGateway(persistence.dataDirectory, {
-                cleanupJournal: new DatabaseExportPublicationCleanupJournal(persistence.db.db),
-              }),
-            projectArtifactCleaner:
-              options.projectArtifactCleaner ??
-              new FilesystemProjectArtifactCleaner(persistence.dataDirectory),
-            loreBudgetCharacters,
-            operationCapacity,
-          });
+        : assembleStudioServices(persistence, options.config, provider, operationCapacity, options);
 
     const versionInfo: VersionInfo = {
       version: productIdentity.version,
@@ -230,63 +188,14 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
     registerErrorEnvelope(app);
 
     await app.register(cookie);
-    await app.register(swagger, {
-      openapi: {
-        info: {
-          title: `${productIdentity.name} API`,
-          version: versionInfo.version,
-          description: "Self-hosted writing studio API (TypeScript rewrite).",
-        },
-        components: {
-          securitySchemes: {
-            cookieAuth: {
-              type: "apiKey",
-              in: "cookie",
-              name: "novel_engine_session",
-            },
-          },
-        },
-      },
-      // Shared schemas land in components.schemas under their $id (e.g.
-      // ErrorEnvelope) instead of positional def-N names, keeping the frozen
-      // snapshot stable when shared-schema count changes.
-      refResolver: {
-        buildLocalReference: (json) => (typeof json.$id === "string" ? json.$id : `def-0`),
-      },
-    });
-    const corsOrigins = options.corsOrigins ?? options.config?.corsOrigins ?? DEFAULT_CORS_ORIGINS;
-    const allowList = corsAllowList(corsOrigins);
-    await app.register(cors, {
-      origin: allowList.allowAll ? true : allowList.origins,
-      credentials: true,
-      allowedHeaders: CORS_ALLOWED_HEADERS,
-      methods: CORS_ALLOWED_METHODS,
-      exposedHeaders: CORS_EXPOSED_HEADERS,
-      maxAge: 600,
-    });
-    const perMinute =
-      options.authRateLimitPerMinute ??
-      options.config?.authRateLimitPerMinute ??
-      DEFAULT_AUTH_RATE_LIMIT_PER_MINUTE;
-    await app.register(authRoutes, {
-      authService,
-      limiter: new TokenBucketRateLimiter({
-        ratePerSecond: perMinute / 60,
-        capacity: perMinute,
-        keyTtlSeconds: AUTH_RATE_LIMIT_KEY_TTL_SECONDS,
-      }),
-      productIdentity,
-      environment,
-      corsOrigins,
-      resolveClientIdentity: (request) =>
-        clientIdentity(
-          request.socket?.remoteAddress,
-          typeof request.headers["x-forwarded-for"] === "string"
-            ? request.headers["x-forwarded-for"]
-            : undefined,
-          options.trustedProxies ?? options.config?.trustedProxies ?? [],
-        ),
-    });
+    await registerOpenApiDocument(app, productIdentity, versionInfo);
+    const corsOrigins = resolveCorsOrigins(options);
+    await registerCors(app, corsOrigins);
+    await registerAuthRoutes(
+      app,
+      { authService, productIdentity, environment, corsOrigins },
+      options,
+    );
     await app.register(healthRoutes, {
       healthProbe:
         options.healthProbe ??
