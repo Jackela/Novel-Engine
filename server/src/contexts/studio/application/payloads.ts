@@ -69,6 +69,7 @@ export interface ProjectPayloadInput {
   updatedAt: Date;
 }
 
+/** The project read projection: settings JSON parsed defensively (malformed collapses to `{}`), nullable import hash, ISO timestamps. */
 export function projectPayload(project: ProjectPayloadInput): ProjectPayload {
   return {
     id: project.id,
@@ -93,6 +94,12 @@ export function projectCatalogSummaryPayload(
   };
 }
 
+/**
+ * The document read projection, flattening the current revision's content,
+ * metadata, and stored invariants. A document without a current revision has
+ * nothing to project — throw `InvalidOperationError` rather than publish a
+ * partial payload.
+ */
 export function documentPayload(document: DocumentWithCurrent): DocumentPayload {
   const revision = document.currentRevision;
   if (revision === null) {
@@ -142,6 +149,7 @@ export function documentMatchPayload(match: DocumentMatchRecord): MatchResultPay
   };
 }
 
+/** The full immutable revision projection; corrupt stored source or word count throws rather than publishing a placeholder. */
 export function revisionPayload(revision: RevisionRecord): RevisionPayload {
   return {
     id: revision.id,
@@ -169,6 +177,7 @@ export function revisionSummaryPayload(revision: RevisionSummaryRecord): Revisio
   };
 }
 
+/** The full job-detail projection: request/result JSON and the event history parsed defensively. */
 export function jobPayload(job: JobRecord): JobPayload {
   return {
     id: job.id,

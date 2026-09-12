@@ -10,7 +10,11 @@ import { writeProposalStreamResponse } from "./proposal_stream_response.js";
 import { structureCapacity422ResponseSchema } from "./structure_capacity_schemas.js";
 import { withAsyncStudioErrors, withStudioErrors } from "./studio_error_mapping.js";
 import { documentIdParams, jobIdParams, proposalCreateSchema } from "./studio_request_schemas.js";
-import { operationCapacityResponseSchema, operationInFlightSchema } from "./studio_schemas.js";
+import {
+  operationCapacityResponseSchema,
+  operationInFlightSchema,
+  revisionConflictSchema,
+} from "./studio_schemas.js";
 
 /**
  * The stream endpoint hijacks the reply and writes raw SSE frames, so its
@@ -147,6 +151,10 @@ export const proposalRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fa
         response: {
           200: jobResponseSchema,
           ...PROPOSAL_ERROR_RESPONSES,
+          // The recorded proposal base can go stale when the author saves
+          // after drafting; acceptance refuses with the shared conflict
+          // envelope instead of clobbering the newer revision.
+          409: revisionConflictSchema,
           // Accepting a proposal beyond the outline-beat budget refuses
           // permanently (#461).
           422: structureCapacity422ResponseSchema,
