@@ -178,9 +178,12 @@ describe("unified error envelope", () => {
         payload: "{not-json",
       });
 
-      expect([400, 422]).toContain(response.statusCode);
+      // Fastify's content-type-parser throws FST_ERR_CTP_INVALID_JSON_BODY (400) for
+      // malformed JSON; the envelope passes FST_ERR_* codes through verbatim
+      // (see registerErrorEnvelope), so both values are stable and asserted exactly.
+      expect(response.statusCode).toBe(400);
       const body = response.json();
-      expect(body.error.code).toBeTypeOf("string");
+      expect(body.error.code).toBe("FST_ERR_CTP_INVALID_JSON_BODY");
       expect(body.error).not.toHaveProperty("detail");
     } finally {
       await app.close();

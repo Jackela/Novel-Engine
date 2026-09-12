@@ -310,6 +310,7 @@ describe("proposal stream endpoint (#308)", () => {
         headers: { cookie: cookieHeader(jar) },
       });
       expect(csrfLess.statusCode).toBe(403);
+      expect(csrfLess.json().error.code).toBe("CSRF_TOKEN_MISSING");
 
       const logged = await loginOwner(app);
       void logged;
