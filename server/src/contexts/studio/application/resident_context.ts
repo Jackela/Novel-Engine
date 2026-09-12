@@ -10,7 +10,6 @@ import { formatAuthorInstruction, formatUntrustedManuscript } from "./sanitizati
 // the module's public API (ADR-0004 layer 1 consumers) stays unchanged.
 export {
   iterateResidentContextSections,
-  renderResidentContextSections,
   residentMatchCorpus,
 } from "./resident_context_render.js";
 

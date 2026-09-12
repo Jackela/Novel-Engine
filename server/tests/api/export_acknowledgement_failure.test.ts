@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type { ExportArtifactGateway } from "../../src/contexts/studio/application/export_artifact_service.js";
+import type { ExportArtifactGateway } from "../../src/contexts/studio/application/ports/artifact_gateway.js";
 import { buildStudioApp, call, ownerJar, seedProject } from "./studio_helpers.js";
 
 describe("export acknowledgement failure", () => {

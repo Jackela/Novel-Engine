@@ -2,10 +2,8 @@ import { EventEmitter } from "node:events";
 
 import { describe, expect, it, vi } from "vitest";
 
-import {
-  type ExportArtifactGateway,
-  SnapshotArtifactService,
-} from "../../src/contexts/studio/application/export_artifact_service.js";
+import { SnapshotArtifactService } from "../../src/contexts/studio/application/export_artifact_service.js";
+import type { ExportArtifactGateway } from "../../src/contexts/studio/application/ports/artifact_gateway.js";
 import type {
   ExportArtifactRecord,
   ExportOutcomeStore,
