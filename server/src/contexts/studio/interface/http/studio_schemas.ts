@@ -16,15 +16,11 @@ import type { JsonResponseSchema } from "./json_response_schema.js";
  * error envelopes stay hand-written JSON Schema.
  */
 
-export {
-  documentPayloadSchema as documentResponseSchema,
-  matchResultPayloadSchema as matchResultSchema,
-} from "../../application/payload_schemas/document.js";
+export { documentPayloadSchema as documentResponseSchema } from "../../application/payload_schemas/document.js";
 export {
   projectPayloadSchema as projectResponseSchema,
   projectShellPayloadSchema as projectShellResponseSchema,
 } from "../../application/payload_schemas/project.js";
-export { revisionPayloadSchema as revisionResponseSchema } from "../../application/payload_schemas/revision.js";
 
 export const documentListResponseSchema = Type.Object(
   { documents: Type.Array(documentSummaryPayloadSchema) },

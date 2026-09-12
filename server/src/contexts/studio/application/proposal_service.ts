@@ -8,13 +8,6 @@ import type { ProposalGenerationPipeline } from "./proposal_pipeline.js";
 import type { ProposalStreamSession } from "./proposal_streaming.js";
 import { streamProposal } from "./proposal_streaming.js";
 
-export {
-  INVALID_PROPOSAL_PROSE,
-  OPERATION_STEPS,
-  resolvedTokenCount,
-  SYSTEM_PROMPT,
-} from "./proposal_landing.js";
-
 /**
  * Author-authored generation request: the operation step, a freeform
  * instruction, and the named provider. The model stays server-owned and

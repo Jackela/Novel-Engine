@@ -40,9 +40,6 @@ export const proposalErrorFrameSchema = Type.Object(
   { additionalProperties: false },
 );
 
-/** In-stream failures carry the failed-job message; codes stay closed. */
-export type ProposalStreamError = Static<typeof proposalErrorFrameSchema>["error"];
-
 export const proposalStreamFrameSchema = Type.Union([
   proposalDeltaFrameSchema,
   proposalDoneFrameSchema,

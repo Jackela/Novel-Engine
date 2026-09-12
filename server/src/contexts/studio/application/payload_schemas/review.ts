@@ -31,8 +31,6 @@ export const reviewIssuePayloadSchema = Type.Object(
   { additionalProperties: false },
 );
 
-export type ReviewIssuePayload = Static<typeof reviewIssuePayloadSchema>;
-
 export const reviewPayloadSchema = Type.Object(
   {
     id: Type.String(),
