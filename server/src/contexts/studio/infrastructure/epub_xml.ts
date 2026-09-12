@@ -2,7 +2,7 @@ import type { EventEmitter } from "node:events";
 
 import JSZip from "jszip";
 
-import type { ArtifactChapter } from "../application/export_artifact_service.js";
+import type { ArtifactChapter } from "../application/ports/artifact_gateway.js";
 
 const xmlAllowedRanges = String.raw`\u0009\u000A\u000D\u0020-\uD7FF\uE000-\uFFFD\u{10000}-\u{10FFFF}`;
 const invalidXmlCharacters = new RegExp(`[^${xmlAllowedRanges}]`, "gu");

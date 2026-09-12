@@ -1,3 +1,13 @@
+/**
+ * The browser-facing CORS contract, registered once by the API composition
+ * root. Allowed request headers cover what routes actually read
+ * (`x-csrf-token`, `idempotency-key`, `x-request-id`, `content-type`) plus
+ * entries kept for browser/client compatibility. Exposed response headers
+ * are the non-simple ones
+ * browser code must be able to read: `x-request-id` is stamped on every
+ * response for correlation, and `retry-after` rides on rate-limited and
+ * capacity-exceeded error responses.
+ */
 import cors from "@fastify/cors";
 import type { FastifyInstance } from "fastify";
 import { DEFAULT_CORS_ORIGINS } from "../../shared/domain/cors_contract.js";

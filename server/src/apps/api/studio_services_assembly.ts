@@ -1,5 +1,5 @@
-import type { ExportArtifactGateway } from "../../contexts/studio/application/export_artifact_service.js";
 import type { OperationCapacityPolicy } from "../../contexts/studio/application/operation_in_flight.js";
+import type { ExportArtifactGateway } from "../../contexts/studio/application/ports/artifact_gateway.js";
 import type { ExportOutcomeStore } from "../../contexts/studio/application/ports/export_store.js";
 import type { ProjectArtifactCleaner } from "../../contexts/studio/application/ports/project_artifact_cleaner.js";
 import {

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import type * as A from "../../src/contexts/studio/application/export_artifact_service.js";
 import { SnapshotArtifactService } from "../../src/contexts/studio/application/export_artifact_service.js";
+import type * as A from "../../src/contexts/studio/application/ports/artifact_gateway.js";
 import type * as E from "../../src/contexts/studio/application/ports/export_store.js";
 import type { ProjectScope } from "../../src/contexts/studio/application/ports/studio_store.js";
 import { OperationCapacityExceededError } from "../../src/contexts/studio/domain/exceptions.js";
