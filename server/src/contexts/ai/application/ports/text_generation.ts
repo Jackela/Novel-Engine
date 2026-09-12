@@ -91,9 +91,10 @@ export interface TextGenerationProvider {
    * shape `task.responseSchema` fixes. `rawText` is a provider evidence
    * and diagnostic field; no application code reads it — HTTP-backed
    * providers (dashscope, openai_compatible) serialize that same `content`
-   * payload into it, while the deterministic provider stores the bare
-   * chapter markdown there and wraps it as `{ chapter_markdown }` inside
-   * `content`. Usage counters are null whenever the provider response
+   * payload into it, while the deterministic provider's chapter steps store
+   * the bare chapter markdown there and wrap it as `{ chapter_markdown }`
+   * inside `content` (its review step serializes `content` like the
+   * HTTP-backed providers). Usage counters are null whenever the provider response
    * carries no usage evidence — the deterministic provider never reports
    * any — and safe non-negative integers otherwise. Rejects with
    * `TextGenerationProviderError` for every expected provider failure:
