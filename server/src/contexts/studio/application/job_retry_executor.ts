@@ -50,6 +50,18 @@ export class JobRetryExecutor {
     this.now = options.now ?? (() => new Date());
   }
 
+  /**
+   * Entry point of the retry chain, invoked through `JobHistoryService`.
+   * The `requestKey` makes the claim idempotent: once a retry row is
+   * reserved for the source job, a replay waits for it to reach a
+   * terminal state and then replays the recorded payload without
+   * admitting new work — while the row is still running, the call is
+   * refused with an in-flight error. An export source re-renders under the
+   * project's renderer permit — the same single-renderer guard a first-run
+   * export holds, so a concurrent render is refused with a capacity error
+   * rather than racing — while already-reserved replays skip the permit
+   * because they never touch the renderer.
+   */
   async reexecuteProjectJob(
     principal: Principal,
     projectId: string,
