@@ -3,6 +3,7 @@ import {
   AppError,
   ERROR_CODES,
   ERROR_HTTP_STATUS,
+  type ErrorCode,
   INVALID_OPERATION_CODE,
   INVALID_OPERATION_STATUS_CODE,
 } from "../../../../shared/interface/http/error_envelope.js";
@@ -22,141 +23,168 @@ import {
 import { StructureCapacityExceededError } from "../../domain/structure_capacity.js";
 
 /**
+ * One translation rule of the studio failure table: match a known domain
+ * failure by its constructor and render the unified error envelope for it.
+ */
+interface ErrorEnvelopeMapping {
+  matches(error: unknown): boolean;
+  render(error: unknown): AppError;
+}
+
+/**
+ * Pair an error constructor with its envelope factory while keeping `error`
+ * narrowed to the matched class inside the factory.
+ */
+function errorMapping<E extends object>(
+  errorConstructor: abstract new (...args: never[]) => E,
+  toEnvelope: (error: E) => AppError,
+): ErrorEnvelopeMapping {
+  return {
+    matches: (error) => error instanceof errorConstructor,
+    render: (error) => toEnvelope(error as E),
+  };
+}
+
+/** Shared envelope for the fixed-budget capacity failures. */
+function capacityEnvelope(
+  code: ErrorCode,
+  error: Error & { resource: string; limit: number; observed: number },
+): AppError {
+  return new AppError({
+    statusCode: ERROR_HTTP_STATUS[code],
+    code,
+    message: error.message,
+    details: { resource: error.resource, limit: error.limit, observed: error.observed },
+  });
+}
+
+/** Constructor → envelope table for every known studio failure, in translation order. */
+const ERROR_ENVELOPE_MAPPINGS: readonly ErrorEnvelopeMapping[] = [
+  errorMapping(
+    InvalidProjectUpdateError,
+    (error) =>
+      new AppError({
+        statusCode: ERROR_HTTP_STATUS[ERROR_CODES.VALIDATION_ERROR],
+        code: ERROR_CODES.VALIDATION_ERROR,
+        message: "Request validation failed.",
+        details: {
+          errors: [{ field: "title", type: "minLength", message: error.message }],
+        },
+      }),
+  ),
+  errorMapping(
+    NotFoundError,
+    (error) =>
+      new AppError({
+        statusCode: 404,
+        code: ERROR_CODES.NOT_FOUND,
+        message: error.message,
+      }),
+  ),
+  errorMapping(
+    DuplicateVolumeError,
+    (error) =>
+      new AppError({
+        statusCode: 409,
+        code: ERROR_CODES.VOLUME_CONFLICT,
+        message: error.message,
+      }),
+  ),
+  errorMapping(
+    RevisionConflictError,
+    (error) =>
+      new AppError({
+        statusCode: 409,
+        code: ERROR_CODES.REVISION_CONFLICT,
+        message: error.message,
+        details: { current_revision_id: error.currentRevisionId },
+      }),
+  ),
+  errorMapping(
+    SnapshotConflict,
+    (error) =>
+      new AppError({
+        statusCode: 409,
+        code: ERROR_CODES.SNAPSHOT_CONFLICT,
+        message: error.message,
+      }),
+  ),
+  errorMapping(
+    DuplicateDocumentError,
+    (error) =>
+      new AppError({
+        statusCode: 409,
+        code: ERROR_CODES.DOCUMENT_CONFLICT,
+        message: error.message,
+      }),
+  ),
+  errorMapping(
+    OperationInFlightError,
+    (error) =>
+      new AppError({
+        statusCode: 409,
+        code: ERROR_CODES.OPERATION_IN_FLIGHT,
+        message: error.message,
+        details: {
+          project_id: error.projectId,
+          document_id: error.documentId,
+          operation: error.operation,
+        },
+        ...(error.retryAfterSeconds === undefined
+          ? {}
+          : { responseHeaders: { "retry-after": String(error.retryAfterSeconds) } }),
+      }),
+  ),
+  errorMapping(
+    OperationCapacityExceededError,
+    (error) =>
+      new AppError({
+        statusCode: ERROR_HTTP_STATUS[ERROR_CODES.OPERATION_CAPACITY_EXCEEDED],
+        code: ERROR_CODES.OPERATION_CAPACITY_EXCEEDED,
+        message: error.message,
+        details: {
+          scope: error.scope,
+          limit: error.limit,
+          in_flight: error.inFlight,
+          project_id: error.projectId,
+          retry_after_seconds: error.retryAfterSeconds,
+        },
+        responseHeaders: { "retry-after": String(error.retryAfterSeconds) },
+      }),
+  ),
+  errorMapping(ImportCapacityExceededError, (error) =>
+    capacityEnvelope(ERROR_CODES.IMPORT_CAPACITY_EXCEEDED, error),
+  ),
+  errorMapping(StructureCapacityExceededError, (error) =>
+    capacityEnvelope(ERROR_CODES.STRUCTURE_CAPACITY_EXCEEDED, error),
+  ),
+  errorMapping(ExportCapacityExceededError, (error) =>
+    capacityEnvelope(ERROR_CODES.EXPORT_CAPACITY_EXCEEDED, error),
+  ),
+  errorMapping(GenerationCapacityExceededError, (error) =>
+    capacityEnvelope(ERROR_CODES.GENERATION_CAPACITY_EXCEEDED, error),
+  ),
+  errorMapping(
+    InvalidOperationError,
+    (error) =>
+      new AppError({
+        statusCode: INVALID_OPERATION_STATUS_CODE,
+        code: INVALID_OPERATION_CODE,
+        message: error.message,
+      }),
+  ),
+];
+
+/**
  * Translate studio domain failures into the unified error envelope. Unknown
  * failures rethrow untouched: programming errors must stay visible and reach
  * the opaque 500 handler.
  */
 function toAppError(error: unknown): unknown {
-  if (error instanceof InvalidProjectUpdateError) {
-    return new AppError({
-      statusCode: ERROR_HTTP_STATUS[ERROR_CODES.VALIDATION_ERROR],
-      code: ERROR_CODES.VALIDATION_ERROR,
-      message: "Request validation failed.",
-      details: {
-        errors: [{ field: "title", type: "minLength", message: error.message }],
-      },
-    });
-  }
-  if (error instanceof NotFoundError) {
-    return new AppError({
-      statusCode: 404,
-      code: ERROR_CODES.NOT_FOUND,
-      message: error.message,
-    });
-  }
-  if (error instanceof DuplicateVolumeError) {
-    return new AppError({
-      statusCode: 409,
-      code: ERROR_CODES.VOLUME_CONFLICT,
-      message: error.message,
-    });
-  }
-  if (error instanceof RevisionConflictError) {
-    return new AppError({
-      statusCode: 409,
-      code: ERROR_CODES.REVISION_CONFLICT,
-      message: error.message,
-      details: { current_revision_id: error.currentRevisionId },
-    });
-  }
-  if (error instanceof SnapshotConflict) {
-    return new AppError({
-      statusCode: 409,
-      code: ERROR_CODES.SNAPSHOT_CONFLICT,
-      message: error.message,
-    });
-  }
-  if (error instanceof DuplicateDocumentError) {
-    return new AppError({
-      statusCode: 409,
-      code: ERROR_CODES.DOCUMENT_CONFLICT,
-      message: error.message,
-    });
-  }
-  if (error instanceof OperationInFlightError) {
-    return new AppError({
-      statusCode: 409,
-      code: ERROR_CODES.OPERATION_IN_FLIGHT,
-      message: error.message,
-      details: {
-        project_id: error.projectId,
-        document_id: error.documentId,
-        operation: error.operation,
-      },
-      ...(error.retryAfterSeconds === undefined
-        ? {}
-        : { responseHeaders: { "retry-after": String(error.retryAfterSeconds) } }),
-    });
-  }
-  if (error instanceof OperationCapacityExceededError) {
-    return new AppError({
-      statusCode: ERROR_HTTP_STATUS[ERROR_CODES.OPERATION_CAPACITY_EXCEEDED],
-      code: ERROR_CODES.OPERATION_CAPACITY_EXCEEDED,
-      message: error.message,
-      details: {
-        scope: error.scope,
-        limit: error.limit,
-        in_flight: error.inFlight,
-        project_id: error.projectId,
-        retry_after_seconds: error.retryAfterSeconds,
-      },
-      responseHeaders: { "retry-after": String(error.retryAfterSeconds) },
-    });
-  }
-  if (error instanceof ImportCapacityExceededError) {
-    return new AppError({
-      statusCode: ERROR_HTTP_STATUS[ERROR_CODES.IMPORT_CAPACITY_EXCEEDED],
-      code: ERROR_CODES.IMPORT_CAPACITY_EXCEEDED,
-      message: error.message,
-      details: {
-        resource: error.resource,
-        limit: error.limit,
-        observed: error.observed,
-      },
-    });
-  }
-  if (error instanceof StructureCapacityExceededError) {
-    return new AppError({
-      statusCode: ERROR_HTTP_STATUS[ERROR_CODES.STRUCTURE_CAPACITY_EXCEEDED],
-      code: ERROR_CODES.STRUCTURE_CAPACITY_EXCEEDED,
-      message: error.message,
-      details: {
-        resource: error.resource,
-        limit: error.limit,
-        observed: error.observed,
-      },
-    });
-  }
-  if (error instanceof ExportCapacityExceededError) {
-    return new AppError({
-      statusCode: ERROR_HTTP_STATUS[ERROR_CODES.EXPORT_CAPACITY_EXCEEDED],
-      code: ERROR_CODES.EXPORT_CAPACITY_EXCEEDED,
-      message: error.message,
-      details: {
-        resource: error.resource,
-        limit: error.limit,
-        observed: error.observed,
-      },
-    });
-  }
-  if (error instanceof GenerationCapacityExceededError) {
-    return new AppError({
-      statusCode: ERROR_HTTP_STATUS[ERROR_CODES.GENERATION_CAPACITY_EXCEEDED],
-      code: ERROR_CODES.GENERATION_CAPACITY_EXCEEDED,
-      message: error.message,
-      details: {
-        resource: error.resource,
-        limit: error.limit,
-        observed: error.observed,
-      },
-    });
-  }
-  if (error instanceof InvalidOperationError) {
-    return new AppError({
-      statusCode: INVALID_OPERATION_STATUS_CODE,
-      code: INVALID_OPERATION_CODE,
-      message: error.message,
-    });
+  for (const { matches, render } of ERROR_ENVELOPE_MAPPINGS) {
+    if (matches(error)) {
+      return render(error);
+    }
   }
   return error;
 }

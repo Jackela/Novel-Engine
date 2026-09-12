@@ -11,6 +11,12 @@ export interface OperationCapacityPolicy {
   readonly projectLimit: number;
 }
 
+/**
+ * The adjudicated default when the composition root injects no
+ * `operationCapacity`: at most 4 pipeline operations concurrently across the
+ * app instance, at most 2 of them per project. Counts are process-local —
+ * the guard only sees its own app instance's in-flight window (#305).
+ */
 export const DEFAULT_OPERATION_CAPACITY_POLICY: OperationCapacityPolicy = Object.freeze({
   applicationLimit: 4,
   projectLimit: 2,
@@ -60,6 +66,14 @@ export class InFlightOperationGuard {
     }
   }
 
+  /**
+   * Admit one pipeline operation, refusing in this order: a project-wide
+   * exclusive transition, then an identical in-flight target — both
+   * `OperationInFlightError` (409 face) — then the per-project limit and
+   * finally the application-wide limit, each `OperationCapacityExceededError`
+   * (503 face; `scope` names the exhausted bound). The returned permit
+   * frees both counters exactly once; repeat `release()` calls are no-ops.
+   */
   acquire(target: InFlightTarget): InFlightOperationPermit {
     this.assertProjectNotExclusive(target.projectId);
     const key = InFlightOperationGuard.keyFor(target);
