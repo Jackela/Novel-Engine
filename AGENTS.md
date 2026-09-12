@@ -11,13 +11,13 @@ Domain vocabulary is defined in `CONTEXT.md`; use its canonical terms in code na
 ## STRUCTURE
 
 ```text
-server/                   # TS backend (ADR-0002): Fastify app, CLI, gates, Node QA twins
+server/                   # TS backend (ADR-0002): Fastify app, CLI, gates, QA gate scripts
 ├── src/apps/             # api (buildApp factory) and cli composition roots
 ├── src/contexts/
 │   ├── studio/           # Projects, documents, revisions, jobs, reviews, exports, volumes, lore, resident context, usage
 │   └── ai/               # Structured text generation: application services, provider HTTP routes, streaming adapters
 ├── src/shared/           # Cross-cutting domain and infrastructure
-├── scripts/qa/           # SSOT, hygiene, size, migration-channel, OpenAPI, llms-txt gates
+├── scripts/qa/           # SSOT, hygiene, size, migration-channel, llms-txt, error-codes, OpenAPI gates
 ├── qa-baselines/         # Frozen OpenAPI snapshot (code-first, regenerated deliberately)
 └── drizzle/              # SQL migrations (FTS5 DDL hand-written inside migration files)
 frontend/                 # React application, generated API types, browser tests
@@ -42,11 +42,12 @@ Generated/runtime trees such as caches, `htmlcov/`, `frontend/coverage/`, `front
 | Change volumes/lore | `server/src/contexts/studio/interface/http/volume_routes.ts`, `server/src/contexts/studio/interface/http/lore_routes.ts` | Volume and lore entry HTTP behavior; services in `server/src/contexts/studio/application/volume_service.ts`, `lorebook.ts` |
 | Change usage reporting | `server/src/contexts/studio/interface/http/job_routes.ts` | `/api/projects/:projectId/usage`; aggregation via `jobHistory.aggregateProjectUsage` |
 | Change SSE streaming | `server/src/contexts/studio/interface/http/proposal_routes.ts` | `text/event-stream` proposal generation; stream orchestration in `server/src/contexts/studio/application/proposal_streaming.ts` |
+| Change revision history/restore | `server/src/contexts/studio/interface/http/revision_routes.ts` | Revision history and restore HTTP behavior; service in `server/src/contexts/studio/application/revision_service.ts` |
 | Change config/env | `server/src/shared/infrastructure/config/server_config.ts` | `.env.local` + process env; startup guards |
 | Change frontend API contract | `frontend/src/app/api.ts`, `frontend/src/app/types/studio.ts` | Derive from `frontend/generated/api-types.ts` (`pnpm --dir frontend gen:api-types`) |
 | Change Studio UI | `frontend/src/features/studio/` | Page shell, hooks, and panels |
 | Add backend coverage | `server/tests/` | vitest + Fastify `inject()`; hermetic temp data dirs |
-| Validate policy | `server/scripts/qa/`, `.github/workflows/ci.yml` | CI is the authoritative full gate; run twins via `pnpm --dir server gates` |
+| Validate policy | `server/scripts/qa/`, `.github/workflows/ci.yml` | CI is the authoritative full gate; run the gates via `pnpm --dir server gates` |
 
 ## CODE MAP
 
@@ -57,8 +58,9 @@ Generated/runtime trees such as caches, `htmlcov/`, `frontend/coverage/`, `front
 | `DrizzleStudioStore` | `server/src/contexts/studio/infrastructure/` | Persistence implementation used by API/CLI/tests |
 | `loadServerConfig` | `server/src/shared/infrastructure/config/server_config.ts` | Env resolution + production startup guards |
 | `readProductIdentity` | `server/src/shared/infrastructure/workspace_manifest.ts` | Release-version SSOT reader (server/package.json) |
+| `locateWorkspaceRoot` | `server/src/shared/infrastructure/workspace_manifest.ts` | Workspace-root locator anchoring `.env.local` and `data/` defaults independent of `process.cwd()` |
 | `buildFtsMatchQuery` | `server/src/contexts/studio/application/fts_match_query.ts` | Strict token reduction before parameterized FTS5 MATCH |
-| `assembleResidentContext` | `server/src/contexts/studio/application/resident_context.ts:136` | Resident context assembler (ADR-0004 layer 1) feeding every proposal generation |
+| `assembleResidentContext` | `server/src/contexts/studio/application/resident_context.ts:135` | Resident context assembler (ADR-0004 layer 1) feeding every proposal generation |
 | `api` | `frontend/src/app/api.ts` | Shared HTTP client used by pages, hooks, and tests |
 | `StudioPage` | `frontend/src/features/studio/StudioPage.tsx` | Route-level UI composition shell |
 
@@ -100,7 +102,7 @@ Complete `README.md`, package script declarations, and corresponding lockfile sy
 - Revisions and snapshots are immutable references. Exports must write from the exact snapshot revision set.
 - The OpenAPI baseline (`server/qa-baselines/openapi.current.json`) regenerates deliberately via `pnpm --dir server openapi:snapshot`; route-adding changes must regenerate it.
 - Frontend requests go through `frontend/src/app/api.ts`; keep CSRF, credentials, abort, and error-envelope semantics intact.
-- Product identity and API shape are enforced by SSOT, repo-hygiene, file-size, migration-channel, llms-txt, OpenAPI snapshot, and OpenSpec gates.
+- Product identity and API shape are enforced by SSOT, repo-hygiene, file-size, migration-channel, llms-txt, error-codes, OpenAPI snapshot, and OpenSpec gates.
 - Migrations generate only through `pnpm --dir server db:generate --name <semantic-slug>`; drizzle-kit splices the name verbatim into `NNNN_<slug>.sql` (it does not normalize it, so pass a kebab-case semantic name instead of its random codename). Never hand-edit `server/drizzle/meta/*`.
 
 ## WORKFLOW CONSTRAINTS

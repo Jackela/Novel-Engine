@@ -17,11 +17,6 @@ export interface HarnessSnapshot {
   readonly accepted: StudioDocument[];
 }
 
-export interface Deferred<T> {
-  readonly promise: Promise<T>;
-  resolve: (value: T) => void;
-}
-
 const harness = createMountHarness();
 
 export const deferred = sharedDeferred;

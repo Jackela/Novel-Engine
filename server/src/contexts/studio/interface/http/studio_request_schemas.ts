@@ -1,4 +1,4 @@
-import { type Static, Type } from "@fastify/type-provider-typebox";
+import { Type } from "@fastify/type-provider-typebox";
 import type { TextProviderName } from "../../../ai/application/ports/text_generation.js";
 import { PROVIDER_NAMES } from "../../../ai/application/ports/text_generation.js";
 import { DOCUMENT_KINDS, type DocumentKind } from "../../domain/kinds.js";
@@ -7,8 +7,7 @@ import { DOCUMENT_KINDS, type DocumentKind } from "../../domain/kinds.js";
  * TypeBox request schemas (params, querystring, body). Response schemas stay
  * in `studio_schemas.ts` and friends. The emitted JSON Schema here is
  * identical to the previous hand-written request schemas, so the OpenAPI
- * snapshot changes only by the newly documented path params; `Static` gives
- * handlers compile-time request types instead of `as` casts.
+ * snapshot changes only by the newly documented path params.
  *
  * Nullable fields use `Type.Unsafe` with `nullable: true` (the exact original
  * shape) rather than a `Type.Union` with `Type.Null()`: Fastify's coercing
@@ -61,8 +60,6 @@ export const projectUpdateSchema = Type.Object(
   },
   { additionalProperties: false, minProperties: 1 },
 );
-export type ProjectUpdateBody = Static<typeof projectUpdateSchema>;
-
 export const documentCreateSchema = Type.Object(
   {
     kind: Type.Unsafe<DocumentKind>({ type: "string", enum: [...DOCUMENT_KINDS] }),
@@ -73,8 +70,6 @@ export const documentCreateSchema = Type.Object(
   },
   { additionalProperties: false },
 );
-export type DocumentCreateBody = Static<typeof documentCreateSchema>;
-
 export const documentSaveSchema = Type.Object(
   {
     content_markdown: Type.String(),
