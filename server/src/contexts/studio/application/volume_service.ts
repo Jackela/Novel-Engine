@@ -37,7 +37,7 @@ export class VolumeService {
     return volumePayload(this.store.addVolume(scope, projectId, { title, now: this.now() }));
   }
 
-  /** Renames a volume; positions change only through the volume reorder. */
+  /** Renames a volume in place; this method does not touch positions. */
   retitleVolume(
     principal: Principal,
     projectId: string,
