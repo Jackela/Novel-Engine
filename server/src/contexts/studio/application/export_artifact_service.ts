@@ -1,3 +1,11 @@
+/**
+ * Export artifact orchestration contract: render one read-only export
+ * source, write the artifact file through the artifact gateway, then
+ * publish the discoverable outcome through the atomic export store.
+ * Filesystem compensation stays in this layer because SQLite cannot
+ * enlist the artifact file in its transaction.
+ */
+
 import { randomUUID } from "node:crypto";
 
 import type { Principal } from "../../../shared/application/ports/auth.js";
@@ -33,11 +41,6 @@ interface PreparedPublication {
   readonly file: ArtifactFileEvidence;
 }
 
-/**
- * Renders one read-only export source, then delegates discoverable outcome
- * publication to the atomic export store. Filesystem compensation remains
- * here because SQLite cannot enlist the artifact file in its transaction.
- */
 export class SnapshotArtifactService {
   private readonly now: () => Date;
   private readonly newId: () => string;

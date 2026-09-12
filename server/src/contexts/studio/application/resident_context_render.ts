@@ -65,8 +65,3 @@ export function* iterateResidentContextSections(view: ResidentContextView): Gene
     yield RECENT_TEXT_END;
   }
 }
-
-/** Compatibility materializer for callers that own an array-shaped boundary. */
-export function renderResidentContextSections(view: ResidentContextView): string[] {
-  return [...iterateResidentContextSections(view)];
-}
