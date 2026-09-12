@@ -664,6 +664,24 @@ export interface paths {
                         "application/json": components["schemas"]["ErrorEnvelope"];
                     };
                 };
+                /** @description Default Response */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error: {
+                                /** @enum {string} */
+                                code: "REVISION_CONFLICT";
+                                details: {
+                                    current_revision_id: string | null;
+                                };
+                                message: string;
+                            };
+                        };
+                    };
+                };
                 /** @description Invalid input or permanent authoring-structure capacity refusal with bounded evidence. */
                 422: {
                     headers: {
