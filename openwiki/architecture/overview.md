@@ -4,8 +4,9 @@ Novel Engine is a self-hosted, single-author writing studio. The backend is a
 TypeScript server on Node 24 LTS: Fastify v5 with the TypeBox type provider for
 HTTP, Drizzle ORM over better-sqlite3 for persistence, and SQLite as the
 content authority. The frontend is a React 19 + Vite application served by the
-same deployable. Code lives in a minimal pnpm workspace (`frontend/` +
-`server/`), and the server is organized into bounded contexts — `studio`
+same deployable. Code lives in a three-package pnpm workspace (`frontend/`,
+`server/`, `tools/api-types`), and the server is organized into bounded
+contexts — `studio`
 (authoring), `ai` (text generation), and the `shared` kernel — whose import
 boundaries are executable policy, not convention (`server/.dependency-cruiser.cjs`).
 The stack decision is recorded in ADR-0001 through ADR-0003; the product

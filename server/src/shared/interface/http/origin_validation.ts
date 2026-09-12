@@ -18,9 +18,9 @@ interface ParsedBrowserOrigin {
 }
 
 /**
- * Parse an Origin/Referer value with the same strictness as the Python gold
- * standard: null when the scheme is not HTTP(S), the authority is missing or
- * carries userinfo, or the port is malformed or out of range.
+ * Parse an Origin/Referer value strictly: null when the scheme is not
+ * HTTP(S), the authority is missing or carries userinfo, or the port is
+ * malformed or out of range.
  */
 function parseBrowserOrigin(value: string): ParsedBrowserOrigin | null {
   const match = value.match(ORIGIN_PATTERN);

@@ -4,10 +4,10 @@ import { owners } from "../../../../shared/infrastructure/db/schema.js";
 
 /**
  * The authoring core (#266): projects, documents, and immutable revisions —
- * the single authoring authority. Mirrors the Python gold standard
- * (infrastructure/models.py): the identity and revision-number unique
- * constraints, and cascade deletes. Pointer columns (current_revision_id)
- * stay plain text exactly like the gold standard.
+ * the single authoring authority. Identity and revision-number uniqueness is
+ * enforced with unique constraints, and deletes cascade to child rows.
+ * Pointer columns (current_revision_id) stay plain text instead of foreign
+ * keys.
  *
  * Import idempotency is per owner scope (#273): at most one row per
  * (owner_id, import_hash). The guest scoping column and its unique index

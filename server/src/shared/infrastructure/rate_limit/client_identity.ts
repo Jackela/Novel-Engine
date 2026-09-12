@@ -137,7 +137,7 @@ export function isTrustedProxy(host: string, trustedProxies: string[]): boolean 
     const prefix = Number(proxy.slice(slash + 1));
     if (network === null || !Number.isInteger(prefix) || prefix < 0 || prefix > network.bits) {
       // Not a parseable IP network (e.g. a host string containing slashes):
-      // fall back to comparing the whole entry, like the Python gold standard.
+      // fall back to comparing the whole entry as an exact string.
       if (host === proxy) {
         return true;
       }

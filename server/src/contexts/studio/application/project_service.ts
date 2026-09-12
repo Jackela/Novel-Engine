@@ -14,7 +14,7 @@ import { scopeForPrincipal } from "./ports/studio_store.js";
 import type { StudioVolumeStore } from "./ports/volume_store.js";
 import { projectShellPayload, summarizeDocument } from "./project_shell_payloads.js";
 
-/** The adjudicated new-project seed (mirrors the Python authority). */
+/** The adjudicated new-project seed: one "Chapter 1" document per new project. */
 const SEED_DOCUMENT_TITLE = "Chapter 1";
 const SEED_DOCUMENT_CONTENT = "# Chapter 1\n\n";
 const DEFAULT_SETTINGS = dumpJson({ provider: "mock" });
