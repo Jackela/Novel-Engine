@@ -21,33 +21,19 @@ import { DOCUMENT_KINDS, type DocumentKind } from "../../domain/kinds.js";
 const pathSegment = Type.String();
 
 export const projectIdParams = Type.Object({ projectId: pathSegment });
-export type ProjectIdParams = Static<typeof projectIdParams>;
-
 export const documentIdParams = Type.Object({
   projectId: pathSegment,
   documentId: pathSegment,
 });
-export type DocumentIdParams = Static<typeof documentIdParams>;
-
 export const revisionIdParams = Type.Object({
   projectId: pathSegment,
   documentId: pathSegment,
   revisionId: pathSegment,
 });
-export type RevisionIdParams = Static<typeof revisionIdParams>;
-
 export const volumeIdParams = Type.Object({ projectId: pathSegment, volumeId: pathSegment });
-export type VolumeIdParams = Static<typeof volumeIdParams>;
-
 export const jobIdParams = Type.Object({ projectId: pathSegment, jobId: pathSegment });
-export type JobIdParams = Static<typeof jobIdParams>;
-
 export const reviewIdParams = Type.Object({ projectId: pathSegment, reviewId: pathSegment });
-export type ReviewIdParams = Static<typeof reviewIdParams>;
-
 export const exportIdParams = Type.Object({ projectId: pathSegment, exportId: pathSegment });
-export type ExportIdParams = Static<typeof exportIdParams>;
-
 /** Free-form metadata object, byte-identical to the original JSON Schema. */
 const metadataObject = Type.Unsafe<Record<string, unknown>>({
   type: "object",
@@ -67,8 +53,6 @@ export const projectCreateSchema = Type.Object(
   },
   { additionalProperties: false },
 );
-export type ProjectCreateBody = Static<typeof projectCreateSchema>;
-
 export const projectUpdateSchema = Type.Object(
   {
     title: Type.Optional(Type.String({ minLength: 1, maxLength: 240 })),
@@ -100,14 +84,10 @@ export const documentSaveSchema = Type.Object(
   },
   { additionalProperties: false },
 );
-export type DocumentSaveBody = Static<typeof documentSaveSchema>;
-
 export const reorderSchema = Type.Object(
   { document_ids: Type.Array(Type.String(), { minItems: 1 }) },
   { additionalProperties: false },
 );
-export type ReorderBody = Static<typeof reorderSchema>;
-
 /**
  * The proposal request carries the frontend operation vocabulary and the
  * provider choice only — models are resolved server-side, never sent.
@@ -131,14 +111,10 @@ export const proposalCreateSchema = Type.Object(
   },
   { additionalProperties: false },
 );
-export type ProposalCreateBody = Static<typeof proposalCreateSchema>;
-
 export const restoreSchema = Type.Object(
   { base_revision_id: nullableString({}) },
   { additionalProperties: false },
 );
-export type RestoreBody = Static<typeof restoreSchema>;
-
 export const revisionListQuerySchema = Type.Object(
   {
     limit: Type.Optional(Type.Integer({ default: 50, minimum: 1, maximum: 100 })),
@@ -152,8 +128,6 @@ export const revisionListQuerySchema = Type.Object(
   },
   { additionalProperties: false },
 );
-export type RevisionListQuery = Static<typeof revisionListQuerySchema>;
-
 /** The bounded catalog read: `limit` defaults to 50 (missing → bounded page). */
 export const projectListQuerySchema = Type.Object(
   {
@@ -168,11 +142,8 @@ export const projectListQuerySchema = Type.Object(
   },
   { additionalProperties: false },
 );
-export type ProjectListQuery = Static<typeof projectListQuerySchema>;
-
 /** The full-text query string: `q` is required (missing → 422). */
 export const projectMatchQuerySchema = Type.Object(
   { q: Type.String() },
   { additionalProperties: false },
 );
-export type ProjectMatchQuery = Static<typeof projectMatchQuerySchema>;

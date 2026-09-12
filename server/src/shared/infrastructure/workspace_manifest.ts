@@ -14,10 +14,10 @@ export interface ProductIdentity {
 }
 
 /**
- * The server package manifest is the single release-version authority since
- * the cutover retired the Python tree: the SSOT gate pins the version there
- * and forbids declaring one in the frontend package, so every derived surface
- * (including the OpenAPI info block) reads it from this file.
+ * The server package manifest is the single release-version authority: the
+ * SSOT gate pins the version there and forbids declaring one in the frontend
+ * package, so every derived surface (including the OpenAPI info block) reads
+ * it from this file.
  */
 export function readProductIdentity(manifestPath = locateWorkspaceManifest()): ProductIdentity {
   const manifest: unknown = JSON.parse(readFileSync(manifestPath, "utf8"));
@@ -42,11 +42,6 @@ export function readProductIdentity(manifestPath = locateWorkspaceManifest()): P
     throw new Error(`workspace manifest ${manifestPath} must declare a valid SemVer release`);
   }
   return { name: record.productName, version: record.version };
-}
-
-/** Compatibility projection for callers that only render the release version. */
-export function readWorkspaceVersion(): string {
-  return readProductIdentity().version;
 }
 
 function locateWorkspaceManifest(): string {

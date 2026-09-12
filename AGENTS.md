@@ -56,7 +56,7 @@ Generated/runtime trees such as caches, `htmlcov/`, `frontend/coverage/`, `front
 | `runCli` | `server/src/apps/cli/main.ts` | Operational CLI: serve/import/backup/doctor |
 | `DrizzleStudioStore` | `server/src/contexts/studio/infrastructure/` | Persistence implementation used by API/CLI/tests |
 | `loadServerConfig` | `server/src/shared/infrastructure/config/server_config.ts` | Env resolution + production startup guards |
-| `readWorkspaceVersion` | `server/src/shared/infrastructure/workspace_manifest.ts` | Release-version SSOT reader (server/package.json) |
+| `readProductIdentity` | `server/src/shared/infrastructure/workspace_manifest.ts` | Release-version SSOT reader (server/package.json) |
 | `buildFtsMatchQuery` | `server/src/contexts/studio/application/fts_match_query.ts` | Strict token reduction before parameterized FTS5 MATCH |
 | `assembleResidentContext` | `server/src/contexts/studio/application/resident_context.ts:136` | Resident context assembler (ADR-0004 layer 1) feeding every proposal generation |
 | `api` | `frontend/src/app/api.ts` | Shared HTTP client used by pages, hooks, and tests |

@@ -35,7 +35,7 @@ import { type ReviewListOptions, reviewDetailPath, reviewsRequest } from "@/app/
 import { documentRevisionsRequest, type RevisionRequestOptions } from "@/app/revisionApiRequest";
 import type { DocumentKind, ExportFormat, LoreStatus, ProjectUpdateBody } from "@/app/types/studio";
 
-export { apiUrl, getCsrfToken, HttpError, readHttpError } from "@/app/httpClient";
+export { apiUrl, getCsrfToken, HttpError } from "@/app/httpClient";
 
 export const api = {
   setupStatus: (init?: RequestInit) => request("/api/setup", init, parseSetupStatus),
