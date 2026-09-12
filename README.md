@@ -10,7 +10,8 @@ serves the Studio SPA and the JSON API.
 ## First-Time Setup
 
 Prerequisites: Node.js 24 and the pnpm version pinned in
-[`package.json`](package.json). For Windows setup and development mode, see
+[`package.json`](package.json) — get pnpm via `corepack enable` or
+`npm install -g pnpm@11`. For Windows setup and development mode, see
 the [quickstart](openwiki/quickstart.md).
 
 ```bash
