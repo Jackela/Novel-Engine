@@ -33,11 +33,11 @@ import { buildProjectCatalogSummariesQuery } from "./project_page_queries.js";
 import { DEFAULT_VOLUME_TITLE, insertVolume } from "./volume_store_part.js";
 
 /**
- * The project half of the Drizzle studio store (mirrors the Python
- * ProjectRepositoryMixin): creation with the seed document/revision in one
- * transaction, updated_at-descending lists, and deletion that cascades rows
- * in the same database transaction. Filesystem cleanup belongs to the
- * application service because it cannot join SQLite's transaction.
+ * The project half of the Drizzle studio store: creation with the seed
+ * document/revision in one transaction, updated_at-descending lists, and
+ * deletion that cascades rows in the same database transaction. Filesystem
+ * cleanup belongs to the application service because it cannot join
+ * SQLite's transaction.
  */
 export class ProjectStorePart implements ProjectStore {
   protected readonly db: StudioSqliteDatabase;
