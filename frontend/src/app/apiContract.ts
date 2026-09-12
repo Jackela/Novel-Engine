@@ -11,7 +11,6 @@ import type {
 
 export {
   parseDocumentSummaries,
-  parseDocumentSummary,
   parseDocuments,
   parseProjectListItem,
   parseProjectShell,

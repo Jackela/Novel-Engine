@@ -5,7 +5,7 @@ import type {
   TextGenerationProvider,
   TextGenerationProviderFactory,
 } from "../../src/contexts/ai/application/ports/text_generation.js";
-import type { ExportArtifactGateway } from "../../src/contexts/studio/application/export_artifact_service.js";
+import type { ExportArtifactGateway } from "../../src/contexts/studio/application/ports/artifact_gateway.js";
 import {
   exports as exportArtifacts,
   exportPublicationCleanupIntents,

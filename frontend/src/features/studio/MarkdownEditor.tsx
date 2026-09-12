@@ -62,9 +62,8 @@ export function MarkdownEditor({ value, onChange }: MarkdownEditorProps) {
                 lineHeight: "1.8",
                 padding: "clamp(24px, 4vw, 34px) clamp(20px, 6vw, 54px) 80px",
               },
+              /* content width + centering live in styles/editor.css (SSOT) */
               ".cm-content": {
-                maxWidth: "72ch",
-                margin: "0 auto",
                 caretColor: "var(--teal-strong)",
               },
               "&.cm-focused": {

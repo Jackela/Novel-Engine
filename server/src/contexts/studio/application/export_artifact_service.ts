@@ -5,6 +5,7 @@ import { InvalidOperationError } from "../../../shared/domain/exceptions.js";
 import { EXPORT_CAPACITY_LIMITS, ExportCapacityExceededError } from "../domain/exceptions.js";
 import { ArtifactDownloadCapacity } from "./artifact_download_capacity.js";
 import { ExportRendererGuard } from "./export_renderer_guard.js";
+import type { ArtifactFileEvidence, ExportArtifactGateway } from "./ports/artifact_gateway.js";
 import type {
   ExportArtifactFormat,
   ExportArtifactPage,
@@ -15,51 +16,6 @@ import type {
   PreparedExportArtifact,
 } from "./ports/export_store.js";
 import { scopeForPrincipal } from "./ports/studio_store.js";
-
-/** One frozen chapter handed to the file-format adapter in snapshot order. */
-export interface ArtifactChapter {
-  readonly title: string;
-  readonly contentMarkdown: string;
-}
-
-/** Inputs for one atomic project-scoped artifact write. */
-export interface ArtifactWriteRequest {
-  readonly projectId: string;
-  readonly artifactId: string;
-  readonly format: ExportArtifactFormat;
-  readonly projectTitle: string;
-  readonly chapters: readonly ArtifactChapter[];
-}
-
-/** Integrity evidence returned only after the final file has been written. */
-export interface ArtifactFileEvidence {
-  readonly relativePath: string;
-  readonly sizeBytes: number;
-  readonly checksumSha256: string;
-  /** Removes durable recovery sidecars after the database commit marker exists. */
-  acknowledge(): Promise<void>;
-  /** Removes this publication after a later persistence failure. */
-  rollback(): Promise<void>;
-}
-
-/** The complete persisted evidence required for a safe artifact read. */
-export interface ArtifactReadRequest {
-  readonly projectId: string;
-  readonly artifactId: string;
-  readonly format: ExportArtifactFormat;
-  readonly relativePath: string;
-  readonly sizeBytes: number;
-  readonly checksumSha256: string;
-}
-
-/** Filesystem boundary for rendering and safe retrieval of export artifacts. */
-export interface ExportArtifactGateway {
-  writeSnapshotArtifact(
-    request: ArtifactWriteRequest,
-    reportCleanupFailure?: (failure: unknown) => void,
-  ): Promise<ArtifactFileEvidence>;
-  readArtifactBytes(request: ArtifactReadRequest): Promise<Buffer>;
-}
 
 export interface SnapshotArtifactServiceOptions {
   readonly now?: (() => Date) | undefined;
@@ -99,6 +55,15 @@ export class SnapshotArtifactService {
     this.downloadCapacity = options.downloadCapacity ?? new ArtifactDownloadCapacity();
   }
 
+  /**
+   * Renders the current export source and lands it as a new completed export
+   * job while holding the single app-wide renderer permit for the whole
+   * attempt. Capacity failures are permanent: bounded rendering throws
+   * ExportCapacityExceededError (HTTP 422) and a busy renderer throws
+   * OperationCapacityExceededError (HTTP 503, retry-after). The store record
+   * lands only after the artifact file is durable; a persistence failure rolls
+   * the file back without masking the store error.
+   */
   async recordCompletedExportJob(
     principal: Principal,
     projectId: string,
@@ -130,6 +95,12 @@ export class SnapshotArtifactService {
     );
   }
 
+  /**
+   * Runs `work` while holding the one renderer permit shared per app
+   * instance; the permit is always released, including when `work` rejects.
+   * Throws OperationCapacityExceededError (HTTP 503, retry-after) when
+   * another export render already owns the permit.
+   */
   async withRendererPermit<T>(projectId: string, work: () => Promise<T>): Promise<T> {
     const permit = this.rendererGuard.acquire(projectId);
     try {
@@ -139,6 +110,13 @@ export class SnapshotArtifactService {
     }
   }
 
+  /**
+   * Renders the current export source and completes one already-claimed retry
+   * job with the published artifact. Failure semantics mirror
+   * recordCompletedExportJob (permanent ExportCapacityExceededError 422, file
+   * rollback without masking the store error) except no renderer permit is
+   * taken; the caller serializes retries against the job lifecycle.
+   */
   async completeExportRetryJob(
     principal: Principal,
     projectId: string,
@@ -211,6 +189,15 @@ export class SnapshotArtifactService {
     return this.exportStore.listProjectArtifacts(scopeForPrincipal(principal), projectId, input);
   }
 
+  /**
+   * Reads one scope-checked artifact and hands its verified bytes to
+   * `consume` under a byte-weighted download permit. Rejects with
+   * ExportCapacityExceededError (HTTP 422) above
+   * EXPORT_CAPACITY_LIMITS.artifact_bytes, and with
+   * OperationCapacityExceededError (HTTP 503) when the app-local download
+   * pool cannot reserve the artifact's bytes. The permit is held until
+   * `consume` settles and always released.
+   */
   async withArtifactDelivery<T>(
     principal: Principal,
     projectId: string,

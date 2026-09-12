@@ -2,7 +2,7 @@ import { rm } from "node:fs/promises";
 import type { FastifyInstance } from "fastify";
 import { describe, expect, it, vi } from "vitest";
 
-import type { ExportArtifactGateway } from "../../src/contexts/studio/application/export_artifact_service.js";
+import type { ExportArtifactGateway } from "../../src/contexts/studio/application/ports/artifact_gateway.js";
 import { exports as exportRecords } from "../../src/contexts/studio/infrastructure/db/schema.js";
 import { ExportStorePart } from "../../src/contexts/studio/infrastructure/export_store_part.js";
 import { jobs } from "../../src/shared/infrastructure/db/schema.js";
