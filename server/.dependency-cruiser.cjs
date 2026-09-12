@@ -17,7 +17,9 @@ module.exports = {
       comment: "Domain layers never import application or infrastructure layers.",
       severity: "error",
       from: { path: "^src/(contexts/[^/]+|shared)/domain" },
-      to: { path: "^src/(contexts/[^/]+/(application|infrastructure)|shared/infrastructure)" },
+      to: {
+        path: "^src/(contexts/[^/]+/(application|infrastructure)|shared/(application|infrastructure))",
+      },
     },
     {
       name: "application-isolation",
@@ -58,10 +60,10 @@ module.exports = {
     {
       name: "ai-leaf-ports-only",
       comment:
-        "Audit gap closure: the ai context is a leaf provider module — code outside it may only import it through its application ports. The composition root (src/apps) is exempt, mirroring the Python authority whose runtime wires create_text_generation_provider directly.",
+        "Audit gap closure: the ai context is a leaf provider module — everything outside its application layer (infrastructure, interface, and any domain or root-level files) is invisible from outside; application-layer imports are narrowed to ports/ by ai-ports-only. The composition root (src/apps) is exempt, mirroring the Python authority whose runtime wires create_text_generation_provider directly.",
       severity: "error",
       from: { pathNot: ["^src/contexts/ai/", "^src/apps/"] },
-      to: { path: "^src/contexts/ai/(infrastructure|interface)" },
+      to: { path: "^src/contexts/ai/(?!application/)" },
     },
     {
       name: "ai-ports-only",
