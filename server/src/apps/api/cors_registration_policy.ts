@@ -18,7 +18,7 @@ export const CORS_ALLOWED_HEADERS = [
 
 export const CORS_ALLOWED_METHODS = ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"];
 
-export const CORS_EXPOSED_HEADERS = ["x-request-id", "x-total-count", "retry-after"];
+export const CORS_EXPOSED_HEADERS = ["x-request-id", "retry-after"];
 
 export interface CorsOriginsAppOptions {
   /** Browser origins allowed by the setup same-origin check (default: dev set). */
