@@ -108,6 +108,26 @@ describe("error codes lockstep gate", () => {
       statuses: ERROR_STATUS_FIXTURE.replace("  BETA: 422,\n", ""),
       expected: "no HTTP status for code `BETA`",
     },
+    {
+      drift: "has an unparsable entry in ERROR_HTTP_STATUS",
+      statuses: ERROR_STATUS_FIXTURE.replace("  BETA: 422,", "  BETA: 422, // legacy alias"),
+      expected: "contains an entry inside ERROR_HTTP_STATUS that the lockstep gate cannot parse",
+    },
+    {
+      drift: "deletes the ERROR_HTTP_STATUS declaration line",
+      statuses: ERROR_STATUS_FIXTURE.replace("export const ERROR_HTTP_STATUS = {\n", ""),
+      expected: "must declare `export const ERROR_HTTP_STATUS = {`",
+    },
+    {
+      drift: "leaves the ERROR_HTTP_STATUS block unclosed",
+      statuses: ERROR_STATUS_FIXTURE.replace("} as const satisfies", " as const satisfies"),
+      expected: "must close the `export const ERROR_HTTP_STATUS = {` block before end of file",
+    },
+    {
+      drift: "empties the ERROR_HTTP_STATUS declaration body",
+      statuses: ERROR_STATUS_FIXTURE.replace("  ALPHA: 401,\n  BETA: 422,\n", ""),
+      expected: "declares no HTTP statuses; the drift gate found nothing to check",
+    },
   ])("rejects a catalog that $drift", async ({ catalog, statuses, codes, expected }) => {
     const root = await createQaRepository();
 
