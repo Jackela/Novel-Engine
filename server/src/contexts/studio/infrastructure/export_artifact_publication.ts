@@ -1,4 +1,4 @@
-import type { ArtifactFileEvidence } from "../application/export_artifact_service.js";
+import type { ArtifactFileEvidence } from "../application/ports/artifact_gateway.js";
 import type { ExportArtifactFormat } from "../application/ports/export_store.js";
 import {
   buildPublicationEvidence,

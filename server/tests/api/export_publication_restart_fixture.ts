@@ -5,7 +5,7 @@ import { type AppOptions, buildApp } from "../../src/apps/api/app.js";
 import type {
   ArtifactFileEvidence,
   ExportArtifactGateway,
-} from "../../src/contexts/studio/application/export_artifact_service.js";
+} from "../../src/contexts/studio/application/ports/artifact_gateway.js";
 import {
   exportPublicationCleanupIntents,
   exports as exportRecords,
