@@ -110,6 +110,7 @@ export interface EvaluatedReview {
   readonly issues: readonly EditorialIssueInput[];
 }
 
+/** One completed review outcome returned from its atomic database command. */
 export interface ReviewCompletionRecord {
   readonly assessment: EditorialAssessmentRecord;
   readonly job: JobRecord;

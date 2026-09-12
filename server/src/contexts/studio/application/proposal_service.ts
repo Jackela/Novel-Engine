@@ -15,6 +15,11 @@ export {
   SYSTEM_PROMPT,
 } from "./proposal_landing.js";
 
+/**
+ * Author-authored generation request: the operation step, a freeform
+ * instruction, and the named provider. The model stays server-owned and
+ * never travels with the request.
+ */
 export interface ProposalDraftInput {
   readonly operation: string;
   readonly instruction: string;

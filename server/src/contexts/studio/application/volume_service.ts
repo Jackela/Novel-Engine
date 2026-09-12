@@ -19,12 +19,14 @@ export class VolumeService {
     this.now = now;
   }
 
+  /** The project's volumes in reading order. */
   listVolumes(principal: Principal, projectId: string): Record<string, unknown>[] {
     return this.store
       .findVolumes(scopeForPrincipal(principal), projectId)
       .map((volume) => volumePayload(volume));
   }
 
+  /** Appends a tail volume; duplicate titles are rejected by the store. */
   newVolume(
     principal: Principal,
     projectId: string,
@@ -35,6 +37,7 @@ export class VolumeService {
     return volumePayload(this.store.addVolume(scope, projectId, { title, now: this.now() }));
   }
 
+  /** Renames a volume; positions change only through the volume reorder. */
   retitleVolume(
     principal: Principal,
     projectId: string,
