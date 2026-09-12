@@ -26,6 +26,12 @@ export interface DocumentStore extends StudioBeatStore {
     documentId: string,
   ): DocumentWithCurrent;
   addDocument(scope: ProjectScope, projectId: string, input: AddDocumentInput): DocumentWithCurrent;
+  /**
+   * Appends one immutable revision and moves current to it. `input.baseRevisionId`
+   * must match the document's current revision id; a mismatch throws
+   * `RevisionConflictError` carrying that `currentRevisionId` (rendered as
+   * the 409 revision-conflict envelope) and writes nothing.
+   */
   advanceDocument(
     scope: ProjectScope,
     projectId: string,
