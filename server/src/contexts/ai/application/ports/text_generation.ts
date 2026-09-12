@@ -86,6 +86,17 @@ export interface TextGenerationStreamOptions {
 }
 
 export interface TextGenerationProvider {
+  /**
+   * One structured completion. `content` is the parsed JSON object whose
+   * shape `task.responseSchema` fixes; `rawText` serializes that same
+   * payload (never a divergent text) for persistence. Usage counters are
+   * null whenever the provider response carries no usage evidence — the
+   * deterministic provider never reports any — and safe non-negative
+   * integers otherwise. Rejects with `TextGenerationProviderError` for
+   * every expected provider failure: unsupported step, transport, timeout,
+   * HTTP status, malformed or schema-invalid JSON. Anything else is a
+   * programming error and stays unnormalized.
+   */
   generateStructured(task: TextGenerationTask): Promise<TextGenerationResult>;
   /**
    * Optional streaming capability (#308): yields raw chapter_markdown deltas
