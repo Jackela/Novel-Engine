@@ -3,7 +3,7 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { FastifyInstance } from "fastify";
 import { describe, expect, it, vi } from "vitest";
-import type { ExportArtifactGateway } from "../../src/contexts/studio/application/export_artifact_service.js";
+import type { ExportArtifactGateway } from "../../src/contexts/studio/application/ports/artifact_gateway.js";
 import { ExportArtifactWriteError } from "../../src/contexts/studio/domain/exceptions.js";
 import {
   exports as exportRecords,

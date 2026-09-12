@@ -1,11 +1,12 @@
 import type { TextGenerationProviderFactory } from "../../../contexts/ai/application/ports/text_generation.js";
 import { BeatAssociationService } from "./beat_association_service.js";
 import { DocumentService } from "./document_service.js";
-import { type ExportArtifactGateway, SnapshotArtifactService } from "./export_artifact_service.js";
+import { SnapshotArtifactService } from "./export_artifact_service.js";
 import { ImportService } from "./import_service.js";
 import { JobHistoryService } from "./job_history_service.js";
 import { LoreAliasService } from "./lore_alias_service.js";
 import { InFlightOperationGuard, type OperationCapacityPolicy } from "./operation_in_flight.js";
+import type { ExportArtifactGateway } from "./ports/artifact_gateway.js";
 import type { DocumentStore } from "./ports/document_store.js";
 import type { ExportOutcomeStore } from "./ports/export_store.js";
 import type { StudioJobLedgerStore } from "./ports/job_ledger_store.js";

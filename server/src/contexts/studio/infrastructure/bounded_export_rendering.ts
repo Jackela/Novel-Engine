@@ -6,7 +6,7 @@ import { Document, HeadingLevel, Packer, Paragraph } from "docx";
 import type {
   ArtifactChapter,
   ArtifactWriteRequest,
-} from "../application/export_artifact_service.js";
+} from "../application/ports/artifact_gateway.js";
 import type { ExportArtifactFormat } from "../application/ports/export_store.js";
 import { EXPORT_CAPACITY_LIMITS, ExportCapacityExceededError } from "../domain/exceptions.js";
 import { epubStream, plainText, xmlSafeText } from "./epub_xml.js";

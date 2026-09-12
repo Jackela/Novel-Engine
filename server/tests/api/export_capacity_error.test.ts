@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { buildApp } from "../../src/apps/api/app.js";
-import type { ExportArtifactGateway } from "../../src/contexts/studio/application/export_artifact_service.js";
+import type { ExportArtifactGateway } from "../../src/contexts/studio/application/ports/artifact_gateway.js";
 import {
   EXPORT_CAPACITY_LIMITS,
   EXPORT_CAPACITY_RESOURCES,
