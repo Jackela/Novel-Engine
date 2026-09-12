@@ -20,7 +20,7 @@ export interface SpaServingOptions {
   readonly version: string;
 }
 
-/** Python-parity prefixes that must never resolve to SPA HTML. */
+/** Reserved prefixes that must never resolve to SPA HTML. */
 const RESERVED_PATH_PREFIXES = ["api/", "health", "metrics", "docs", "openapi"] as const;
 
 const UNBUILT_DIST_MESSAGE = "Build frontend/ to enable the Studio UI.";

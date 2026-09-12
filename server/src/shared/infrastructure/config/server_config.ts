@@ -22,10 +22,10 @@ const MAX_ACTIVE_WORKFLOWS = 1024;
 export const DEFAULT_MAX_ACTIVE_WORKFLOWS = 4;
 export const DEFAULT_MAX_ACTIVE_WORKFLOWS_PER_PROJECT = 2;
 
-// Assembled like the Python sentinel so no credential-shaped literal ships in source.
+// Sentinel default assembled from harmless words so no credential-shaped literal ships in source.
 export const DEFAULT_SECRET_KEY = ["change-me", "in-production", "32-char-long"].join("-");
 
-/** Minimum usable secret length, mirroring the Python field constraint. */
+/** Minimum usable secret length; explicit values shorter than this fail validation. */
 const MIN_SECRET_LENGTH = 16;
 
 const ENVIRONMENTS = ["development", "testing", "staging", "production"] as const;
@@ -167,9 +167,9 @@ function assertCapacityValue(name: string, value: number): void {
 }
 
 /**
- * Normalize the session secret like the Python gold standard: unset, empty,
- * or the default value rotate (or refuse, per the production guards), while
- * an explicitly short-but-real value fails validation everywhere.
+ * Normalize the session secret: unset, empty, or the default value rotate
+ * (or refuse, per the production guards), while an explicitly short-but-real
+ * value fails validation everywhere.
  */
 function secretFrom(rawSecret: string | undefined): string | undefined {
   const trimmed = rawSecret?.trim() ?? "";
@@ -222,7 +222,7 @@ function isMissingFileError(error: unknown): boolean {
   return typeof error === "object" && error !== null && "code" in error && error.code === "ENOENT";
 }
 
-/** Case-insensitive lookup, mirroring the Python settings' behavior. */
+/** Case-insensitive lookup: merged environment keys are stored lowercased. */
 function stringFrom(env: Map<string, string>, key: string): string | undefined {
   return env.get(key.toLowerCase());
 }

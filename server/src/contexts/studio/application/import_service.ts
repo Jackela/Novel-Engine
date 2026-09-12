@@ -5,7 +5,7 @@ import type { LegacyWorkspace, LegacyWorkspaceReader } from "./ports/legacy_work
 import type { ProjectStore } from "./ports/project_store.js";
 import { type ProjectRecord, scopeForPrincipal } from "./ports/studio_store.js";
 
-/** Imported projects keep the authoring-core default settings (Python parity). */
+/** Imported projects keep the authoring-core default settings (the mock provider). */
 const IMPORT_SETTINGS_JSON = dumpJson({ provider: "mock" });
 
 export interface LegacyImportResult extends Record<string, unknown> {
@@ -95,7 +95,7 @@ function legacyImportResult(
   };
 }
 
-/** The fixed summary of what an import would create (Python preview parity). */
+/** The fixed summary of what a dry-run import preview would create. */
 function legacyPreviewPayload(workspace: LegacyWorkspace): Record<string, unknown> {
   return {
     source: workspace.source,

@@ -17,10 +17,9 @@ import {
  * grow through generated migrations from here.
  */
 /**
- * The auth spine (#265): the owners table mirrors the Python gold standard
- * (models.py Owner) — one owner per store, unique username, bcrypt hash —
- * and sessions.owner_id gains its adjudicated owners(id) foreign key with
- * cascade delete.
+ * The auth spine (#265): exactly one owner per store with a unique username
+ * and a bcrypt password hash, and sessions.owner_id gains its adjudicated
+ * owners(id) foreign key with cascade delete.
  */
 export const owners = sqliteTable("owners", {
   id: text("id").primaryKey(),

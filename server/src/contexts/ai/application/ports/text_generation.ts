@@ -1,8 +1,8 @@
 /**
- * Text generation contract used by narrative workflows (TS twin of the
- * Python authority's text_generation_port). The step vocabulary is CLOSED:
- * the application layer maps frontend operations to provider steps at this
- * boundary, and providers reject every other step instead of echoing it.
+ * Text generation contract used by narrative workflows. The step vocabulary
+ * is CLOSED: the application layer maps frontend operations to provider
+ * steps at this boundary, and providers reject every other step instead of
+ * echoing it.
  */
 
 /** The closed provider-step vocabulary at the port boundary. */
