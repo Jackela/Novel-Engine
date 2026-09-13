@@ -8,6 +8,7 @@ import {
   ReviewSourceInvalidatedError,
 } from "../domain/exceptions.js";
 import type { SnapshotArtifactService } from "./export_artifact_service.js";
+import { failedJobInput } from "./failed_job_input.js";
 import { replayedJobPayload } from "./job_replay_payload.js";
 import { JobRetryExecutor } from "./job_retry_executor.js";
 import type { InFlightOperationGuard } from "./operation_in_flight.js";
@@ -146,20 +147,21 @@ export class JobHistoryService {
         throw error;
       }
       return jobPayload(
-        this.jobs.addJob(scope, {
-          projectId,
-          documentId: null,
-          kind: "review",
-          operation: "review",
-          status: "failed",
-          provider: evaluation?.provider ?? this.reviews.providerName,
-          model: evaluation?.model ?? "",
-          requestJson: dumpJson({}),
-          resultJson: dumpJson({ review_id: null, snapshot_id: null, summary: "", issues: [] }),
-          error: error.message,
-          eventDetailsJson: dumpJson({ error: error.message }),
-          now: this.now(),
-        }),
+        this.jobs.addJob(
+          scope,
+          failedJobInput({
+            projectId,
+            documentId: null,
+            kind: "review",
+            operation: "review",
+            provider: evaluation?.provider ?? this.reviews.providerName,
+            model: evaluation?.model ?? "",
+            requestJson: dumpJson({}),
+            resultJson: dumpJson({ review_id: null, snapshot_id: null, summary: "", issues: [] }),
+            error: error.message,
+            now: this.now(),
+          }),
+        ),
       );
     }
   }
@@ -198,25 +200,26 @@ export class JobHistoryService {
           throw error;
         }
         return jobPayload(
-          this.jobs.addJob(scope, {
-            projectId,
-            documentId: null,
-            kind: "export",
-            operation: "export",
-            status: "failed",
-            provider: STUDIO_EXPORTER_PROVIDER,
-            model: "",
-            requestJson: dumpJson({ format }),
-            resultJson: dumpJson({
-              export_id: null,
-              snapshot_id: null,
-              format,
-              download_url: null,
+          this.jobs.addJob(
+            scope,
+            failedJobInput({
+              projectId,
+              documentId: null,
+              kind: "export",
+              operation: "export",
+              provider: STUDIO_EXPORTER_PROVIDER,
+              model: "",
+              requestJson: dumpJson({ format }),
+              resultJson: dumpJson({
+                export_id: null,
+                snapshot_id: null,
+                format,
+                download_url: null,
+              }),
+              error: error.message,
+              now: this.now(),
             }),
-            error: error.message,
-            eventDetailsJson: dumpJson({ error: error.message }),
-            now: this.now(),
-          }),
+          ),
         );
       }
     } finally {
