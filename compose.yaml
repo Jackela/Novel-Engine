@@ -1,11 +1,14 @@
 services:
   novel-engine:
     build: .
+    restart: unless-stopped
     ports:
       - "8000:8000"
     environment:
       APP_ENVIRONMENT: production
-      SECURITY_SECRET_KEY: ${SECURITY_SECRET_KEY:?Set SECURITY_SECRET_KEY}
+      # Empty by default so the container entrypoint can bootstrap a secret
+      # into the persistent volume; an explicitly exported value always wins.
+      SECURITY_SECRET_KEY: ${SECURITY_SECRET_KEY:-}
       SECURITY_CORS_ORIGINS: ${SECURITY_CORS_ORIGINS:-https://app.example.com}
       DB_URL: sqlite:///./data/novel-engine.sqlite3
       LLM_PROVIDER: ${LLM_PROVIDER:-mock}

@@ -61,16 +61,44 @@ Frontend-only variables live in `frontend/.env.example`:
 
 ## Docker
 
+Docker is the recommended way to run Novel Engine. First get the code: clone
+this repository, or download it via the **Code** → **Download ZIP** button on
+GitHub and unzip it. Then, from the folder containing `compose.yaml` (the
+first start builds the image and can take a few minutes):
+
 ```bash
-export SECURITY_SECRET_KEY='replace-with-a-long-random-secret'
-docker compose up --build
+docker compose up -d
 ```
 
-PowerShell users can use `$env:SECURITY_SECRET_KEY="replace-with-a-long-random-secret"`.
-Docker Compose defaults `LLM_PROVIDER` to `mock`; set `LLM_PROVIDER`,
-`DASHSCOPE_API_KEY`, or `LLM_API_KEY` explicitly to use a real provider.
+Open `http://localhost:8000` in Chrome or Firefox and create the Owner
+account on the setup screen, then log in. Safari works but has a known
+rendering limitation in the frosted-glass visual style, so Chrome or Firefox
+is recommended. No secret or other manual configuration is needed: on first
+start the container generates a session secret into the `novel-engine-data`
+volume, and because that volume persists, sessions keep working across
+restarts. A healthcheck polls `/health/ready` inside the container.
 
-The healthcheck polls `/health/ready` inside the container.
+The container runs with `restart: unless-stopped`, so it comes back on its
+own after a crash or a machine reboot (unless you stopped it yourself). To
+bring the studio up again after stopping it, run `docker compose up -d` in
+the same folder.
+
+If port 8000 is already taken by another application, create a
+`compose.override.yaml` next to `compose.yaml` with this content and restart
+with `docker compose up -d`; the studio then listens on port 8001:
+
+```yaml
+services:
+  novel-engine:
+    ports:
+      - "8001:8000"
+```
+
+Your novels live in the `novel-engine-data` named volume: `docker compose
+down` keeps it, `docker compose down -v` deletes it (permanently). The
+built-in `mock` AI provider works out of the box; to generate real AI
+proposals, set `LLM_PROVIDER` and its API key variable — see
+[Configuration](#configuration).
 
 ## Commands
 
