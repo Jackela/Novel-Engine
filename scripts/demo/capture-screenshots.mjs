@@ -18,9 +18,10 @@
  * - DEMO_USERNAME   Owner username; when unset the login form's stored default is used.
  * - DEMO_PASSWORD   Owner password; REQUIRED — no default is ever assumed.
  *
- * Dependencies resolve from the `frontend` workspace (`playwright` is already
- * its devDependency); no additional install is needed beyond
- * `pnpm --dir frontend install` and `pnpm --dir frontend exec playwright install`.
+ * Dependencies resolve from the `frontend` workspace (`@playwright/test` is
+ * already a frontend devDependency and re-exports the `chromium` driver); no
+ * additional install is needed beyond `pnpm --dir frontend install` and
+ * `pnpm --dir frontend exec playwright install` for the browser binaries.
  *
  * Usage: `node scripts/demo/capture-screenshots.mjs`
  */
@@ -28,7 +29,7 @@
 import { mkdirSync } from "node:fs";
 import { createRequire } from "node:module";
 import { join } from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
 const repoRoot = fileURLToPath(new URL("../..", import.meta.url));
 const outputDirectory = join(repoRoot, "docs", "screenshots");
@@ -36,10 +37,22 @@ const baseUrl = (process.env.DEMO_BASE_URL ?? "http://localhost:8000").replace(/
 const username = process.env.DEMO_USERNAME;
 const password = process.env.DEMO_PASSWORD;
 
-/** Resolve Playwright from the frontend workspace without a root dependency. */
-function loadPlaywright() {
-  const requireFromFrontend = createRequire(new URL("../frontend/package.json", import.meta.url));
-  return requireFromFrontend("playwright");
+/**
+ * Resolve Playwright from the frontend workspace without a root dependency.
+ * pnpm's strict layout only hoists direct dependencies, so the loader binds
+ * `@playwright/test` (the declared devDependency), which re-exports `chromium`.
+ */
+export function loadPlaywright() {
+  const requireFromFrontend = createRequire(
+    new URL("../../frontend/package.json", import.meta.url),
+  );
+  const playwrightTest = requireFromFrontend("@playwright/test");
+  if (typeof playwrightTest.chromium?.launch !== "function") {
+    throw new Error(
+      "Playwright chromium driver not found; run `pnpm --dir frontend install` first.",
+    );
+  }
+  return { chromium: playwrightTest.chromium };
 }
 
 function fail(message) {
@@ -62,16 +75,30 @@ async function capture(browser) {
     console.log(`captured ${path}`);
   };
 
-  // Entry page: wait generously — the target server may still be starting up.
+  // Entry page. A fresh instance shows the owner-setup form instead of the
+  // login form, and the login heading would never appear there — probe the
+  // setup heading briefly first (as the e2e login fallback does) so a fresh
+  // instance fails fast with guidance instead of a bare 60s timeout.
   await page.goto(baseUrl, { waitUntil: "domcontentloaded" });
-  await page.getByRole("heading", { name: "Open your writing studio" }).waitFor({
-    timeout: 60_000,
-  });
-  if (await page.getByRole("button", { name: "Create owner" }).isVisible()) {
+  let freshInstance = false;
+  try {
+    await page.getByRole("heading", { name: "Create the local owner" }).waitFor({
+      timeout: 5_000,
+    });
+    freshInstance = true;
+  } catch {
+    // Setup heading never appeared: the instance already has an owner and
+    // should present the login form below.
+  }
+  if (freshInstance) {
     throw new Error(
       "This instance has no owner yet. Complete the first-run setup in a browser first (see examples/demo-workspace/README.md), then rerun.",
     );
   }
+  // Login form: wait generously — the target server may still be starting up.
+  await page.getByRole("heading", { name: "Open your writing studio" }).waitFor({
+    timeout: 60_000,
+  });
   await shoot("01-login.png");
 
   // Sign in and land on the project library.
@@ -140,7 +167,14 @@ async function main() {
   }
 }
 
-main().catch((error) => {
-  console.error("[capture-screenshots] failed:", error instanceof Error ? error.message : error);
-  process.exit(1);
-});
+// Same direct-execution pattern as server/src/apps/cli/main.ts: importing
+// this module (e.g. to verify loadPlaywright in isolation) has no side
+// effects; only a direct `node scripts/demo/capture-screenshots.mjs` runs.
+const invokedDirectly =
+  process.argv[1] !== undefined && import.meta.url === pathToFileURL(process.argv[1]).href;
+if (invokedDirectly) {
+  main().catch((error) => {
+    console.error("[capture-screenshots] failed:", error instanceof Error ? error.message : error);
+    process.exit(1);
+  });
+}
