@@ -33,7 +33,7 @@ export class ProposalAcceptanceStorePart implements ProposalAcceptanceStore {
           job.kind !== "proposal" ||
           job.document_id === null
         ) {
-          throw proposalNotFound(jobId, projectId);
+          throw proposalNotFound(jobId);
         }
         if (job.status !== "completed") {
           throw new InvalidOperationError("Only a completed proposal can be accepted.");
@@ -145,9 +145,6 @@ function storedObject(value: string): Record<string, unknown> {
   return {};
 }
 
-function proposalNotFound(jobId: string, projectId: string): NotFoundError {
-  return new NotFoundError(
-    `No AI proposal job '${jobId}' exists in project '${projectId}': the id does not ` +
-      "exist there, or the job belongs to a different project.",
-  );
+function proposalNotFound(jobId: string): NotFoundError {
+  return new NotFoundError(`Proposal job not found: ${jobId}.`);
 }

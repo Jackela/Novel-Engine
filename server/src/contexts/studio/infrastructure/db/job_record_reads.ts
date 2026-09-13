@@ -35,7 +35,7 @@ function toJobRecord(job: JobRow, events: JobEventRow[]): JobRecord {
 
 export function jobWithEvents(tx: Tx, jobId: string): JobRecord {
   const job = tx.select().from(jobs).where(eq(jobs.id, jobId)).get();
-  if (job === undefined) throw new NotFoundError("Job not found.");
+  if (job === undefined) throw new NotFoundError(`Job not found: ${jobId}.`);
   const events = tx
     .select()
     .from(jobEvents)

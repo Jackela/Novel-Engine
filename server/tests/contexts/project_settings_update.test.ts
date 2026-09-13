@@ -173,13 +173,13 @@ describe("Project settings store boundary", () => {
   it("normalizes missing and foreign Project ids to one not-found error", async () => {
     const { seeded, store, studio } = await openHarness();
     try {
-      const update = (ownerId: string, projectId: string) =>
-        store.updateProject({ ownerId }, projectId, { title: "Hidden", now: new Date() });
-      for (const operation of [
-        () => update("owner-1", "missing"),
-        () => update("foreign-owner", seeded.id),
-      ]) {
-        expect(operation).toThrowError(new NotFoundError("Project not found."));
+      for (const [ownerId, projectId] of [
+        ["owner-1", "missing"],
+        ["foreign-owner", seeded.id],
+      ] as const) {
+        expect(() =>
+          store.updateProject({ ownerId }, projectId, { title: "Hidden", now: new Date() }),
+        ).toThrowError(new NotFoundError(`Project not found: ${projectId}.`));
       }
       expect(store.findProject({ ownerId: "owner-1" }, seeded.id).title).toBe("Initial");
     } finally {

@@ -117,10 +117,17 @@ describe("project-scoped job detail", () => {
         "/api/projects/missing-project/jobs/missing-job",
       );
 
-      for (const response of [missingJob, crossProject, missingProject]) {
+      // Unknown and cross-scope ids stay indistinguishable: every miss
+      // renders the same code plus a message echoing the requested job id.
+      const scopedMisses = [
+        { response: missingJob, jobId: "missing-job" },
+        { response: crossProject, jobId: foreignJob.id },
+        { response: missingProject, jobId: "missing-job" },
+      ];
+      for (const { response, jobId } of scopedMisses) {
         expect(response.statusCode, response.body).toBe(404);
         expect(response.json()).toEqual({
-          error: { code: "NOT_FOUND", message: "Job not found." },
+          error: { code: "NOT_FOUND", message: `Job not found: ${jobId}.` },
         });
       }
     } finally {

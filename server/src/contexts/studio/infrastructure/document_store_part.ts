@@ -235,7 +235,7 @@ export class DocumentStorePart implements DocumentStore {
         )
         .get();
       if (row === undefined) {
-        throw new NotFoundError("Revision not found.");
+        throw new NotFoundError(`Revision not found: ${revisionId}.`);
       }
       return row.revision;
     });

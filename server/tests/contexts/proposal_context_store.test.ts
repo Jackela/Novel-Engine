@@ -214,9 +214,7 @@ describe("proposal context store", () => {
           seeded.project.id,
           "missing-document",
         ),
-      ).toThrow(
-        `No document 'missing-document' exists in project '${seeded.project.id}': the id does not exist there, or the document belongs to a different project.`,
-      );
+      ).toThrow("Document not found: missing-document.");
     } finally {
       competing.raw.close();
       studio.close();

@@ -200,7 +200,7 @@ describe("project shell store seam", () => {
       );
       expect(() =>
         store.documents.readCurrentDocument(scope, created.project.id, document.id),
-      ).toThrow("Document not found.");
+      ).toThrow(`Document not found: ${document.id}.`);
     } finally {
       studio.close();
       await rm(directory, { recursive: true, force: true });

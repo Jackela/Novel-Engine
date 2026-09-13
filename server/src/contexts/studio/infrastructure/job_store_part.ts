@@ -228,7 +228,7 @@ export class JobStorePart implements StudioJobLedgerStore {
   private scopedJob(tx: Tx, projectId: string, jobId: string): JobRow {
     const job = tx.select().from(jobs).where(eq(jobs.id, jobId)).get();
     if (job === undefined || job.project_id !== projectId) {
-      throw new NotFoundError("Job not found.");
+      throw new NotFoundError(`Job not found: ${jobId}.`);
     }
     return job;
   }

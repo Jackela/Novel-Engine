@@ -114,7 +114,7 @@ export class VolumeStorePart implements StudioVolumeStore {
       // following one. Tail positions continue after the survivor's chapters.
       const survivor = index > 0 ? ordered[index - 1] : ordered[index + 1];
       if (survivor === undefined) {
-        throw new NotFoundError("Surviving volume not found.");
+        throw new NotFoundError(`Surviving volume not found while deleting volume ${doomed.id}.`);
       }
       // The merge itself is a chapter-capacity write: refuse it before any
       // orphan moves (#461).
@@ -189,7 +189,7 @@ export class VolumeStorePart implements StudioVolumeStore {
       return volumeIds.map((id, orderIndex) => {
         const volume = updated.find((candidate) => candidate.id === id);
         if (volume === undefined) {
-          throw new NotFoundError("Volume not found.");
+          throw new NotFoundError(`Volume not found: ${id}.`);
         }
         // Position and timestamp restate what this transaction just wrote.
         return { ...volume, position: orderIndex + 1, updatedAt: now };

@@ -82,7 +82,7 @@ describe("current revision pointer integrity", () => {
       );
       expect(current.statusCode, current.body).toBe(404);
       expect(current.json()).toEqual({
-        error: { code: "NOT_FOUND", message: "Document not found." },
+        error: { code: "NOT_FOUND", message: `Document not found: ${document.id}.` },
       });
 
       const shell = await call(app, owner, "GET", `/api/projects/${project.id}`);
