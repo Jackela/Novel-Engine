@@ -33,6 +33,15 @@ export interface StudioServicesAssemblyOptions {
   lorebookBudgetCharacters?: number | undefined;
 }
 
+export interface StudioServicesAssemblyInputs {
+  /** Resolved operational configuration from loadServerConfig. */
+  readonly config?: ServerConfig | undefined;
+  provider: ProviderRuntime;
+  operationCapacity?: OperationCapacityPolicy | undefined;
+  /** Test seams and budget overrides (the same shape AppOptions re-exports). */
+  options: StudioServicesAssemblyOptions;
+}
+
 /**
  * Private assembly of the Studio service container for the composition root:
  * one store part per narrow port plus the export/artifact boundaries, with
@@ -40,11 +49,9 @@ export interface StudioServicesAssemblyOptions {
  */
 export function assembleStudioServices(
   persistence: PersistenceHandles,
-  config: ServerConfig | undefined,
-  provider: ProviderRuntime,
-  operationCapacity: OperationCapacityPolicy | undefined,
-  options: StudioServicesAssemblyOptions,
+  inputs: StudioServicesAssemblyInputs,
 ): StudioServices {
+  const { config, provider, operationCapacity, options } = inputs;
   const loreBudgetCharacters =
     options.lorebookBudgetCharacters ?? config?.llm.lorebookBudgetCharacters;
   return createStudioServices(createStudioPersistence(persistence.db.db), {
