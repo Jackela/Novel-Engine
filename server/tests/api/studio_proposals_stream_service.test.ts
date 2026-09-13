@@ -14,7 +14,11 @@ import { ProjectService } from "../../src/contexts/studio/application/project_se
 import { ProposalGenerationPipeline } from "../../src/contexts/studio/application/proposal_pipeline.js";
 import { AiProposalService } from "../../src/contexts/studio/application/proposal_service.js";
 import type { ProposalStreamSession } from "../../src/contexts/studio/application/proposal_streaming.js";
-import { documentRevisions } from "../../src/contexts/studio/infrastructure/db/schema.js";
+import {
+  documentRevisions,
+  jobs,
+  usageEvents,
+} from "../../src/contexts/studio/infrastructure/db/schema.js";
 import { JobStorePart } from "../../src/contexts/studio/infrastructure/job_store_part.js";
 import { ProjectStorePart } from "../../src/contexts/studio/infrastructure/project_store_part.js";
 import { ProposalAcceptanceStorePart } from "../../src/contexts/studio/infrastructure/proposal_acceptance_store_part.js";
@@ -28,7 +32,6 @@ import { AuthService } from "../../src/shared/application/auth_service.js";
 import type { Principal } from "../../src/shared/application/ports/auth.js";
 import { DrizzleAuthStore } from "../../src/shared/infrastructure/db/auth_store.js";
 import { DATABASE_FILENAME } from "../../src/shared/infrastructure/db/backup.js";
-import { jobs, usageEvents } from "../../src/shared/infrastructure/db/schema.js";
 import {
   openStudioDatabase,
   type StudioDatabase,

@@ -10,6 +10,7 @@ import {
   NotFoundError,
   OperationInFlightError,
 } from "../../src/contexts/studio/domain/exceptions.js";
+import { recoverInterruptedJobs } from "../../src/contexts/studio/infrastructure/db/job_recovery.js";
 import { JobStorePart } from "../../src/contexts/studio/infrastructure/job_store_part.js";
 import { ProjectStorePart } from "../../src/contexts/studio/infrastructure/project_store_part.js";
 import { AuthService } from "../../src/shared/application/auth_service.js";
@@ -282,7 +283,9 @@ describe("durable job retry identity", () => {
       const running = store.jobs.claimJobRetry(scope, input);
       studio.close();
 
-      reopened = await openStudioDatabase(databasePath);
+      reopened = await openStudioDatabase(databasePath, {
+        recoverJobs: recoverInterruptedJobs,
+      });
       const restartedStore = new JobStorePart(reopened.db);
       const replay = restartedStore.claimJobRetry(scope, input);
 

@@ -1,8 +1,7 @@
 import { asc, eq } from "drizzle-orm";
-
-import { jobEvents, jobs } from "../../../../shared/infrastructure/db/schema.js";
 import type { JobRecord } from "../../application/ports/job_records.js";
 import { NotFoundError } from "../../domain/exceptions.js";
+import { jobEvents, jobs } from "./schema.js";
 import type { Tx } from "./studio_query_helpers.js";
 
 type JobRow = typeof jobs.$inferSelect;

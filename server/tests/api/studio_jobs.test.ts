@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import {
   jobEvents as jobEventsTable,
   jobs as jobsTable,
-} from "../../src/shared/infrastructure/db/schema.js";
+} from "../../src/contexts/studio/infrastructure/db/schema.js";
 import { firstDocument, studioDatabase } from "./job_test_helpers.js";
 import {
   buildStudioApp,

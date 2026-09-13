@@ -263,3 +263,10 @@ export const exportPublicationCleanupIntents = sqliteTable(
   },
   (table) => [index("idx_export_cleanup_intents_project").on(table.projectId)],
 );
+
+/**
+ * The synchronous-jobs audit and usage-accounting tables (#534): defined in
+ * ./job_usage_tables.ts to keep this authoring core within its size budget,
+ * and re-exported here so the studio schema stays the single import surface.
+ */
+export { jobEvents, jobs, usageEvents } from "./job_usage_tables.js";

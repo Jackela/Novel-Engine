@@ -6,8 +6,7 @@ import {
   STRUCTURE_CAPACITY_LIMITS,
   StructureCapacityExceededError,
 } from "../../src/contexts/studio/domain/structure_capacity.js";
-import { documentRevisions } from "../../src/contexts/studio/infrastructure/db/schema.js";
-import { jobs } from "../../src/shared/infrastructure/db/schema.js";
+import { documentRevisions, jobs } from "../../src/contexts/studio/infrastructure/db/schema.js";
 import { studioDatabase } from "./job_test_helpers.js";
 import {
   buildStudioApp,
