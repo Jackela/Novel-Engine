@@ -1,5 +1,5 @@
 import type { Dispatch, MutableRefObject, SetStateAction } from "react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback } from "react";
 
 import { HttpError } from "@/app/api";
 import type { Project, SaveState, StudioDocument } from "@/app/types/studio";
@@ -9,9 +9,10 @@ import type {
   DraftSnapshot,
   ReconcileCommittedDocument,
 } from "./documentDraftState";
-import { mergeProjectDocument } from "./projectState";
 import { toErrorMessage } from "./toErrorMessage";
-import { loadLatestDocument, restoreDocumentRevision } from "./useDocumentDraftAutosave";
+import { useAbortableDocumentRefresh } from "./useAbortableDocumentRefresh";
+import { useConflictActionGate } from "./useConflictActionGate";
+import { restoreDocumentRevision } from "./useDocumentDraftAutosave";
 
 interface DraftSnapshotRef {
   readonly current: DraftSnapshot;
@@ -51,29 +52,11 @@ interface UseDocumentDraftActionsArgs {
   readonly setRestoreError: Dispatch<SetStateAction<string | null>>;
 }
 
-interface ConflictActionState {
-  readonly ownerToken: DocumentDraftOwner["token"];
-  readonly pending: boolean;
-}
-
-function abortOwnerRequests(
-  requests: Map<DocumentDraftOwner["token"], Set<AbortController>>,
-  ownerToken: DocumentDraftOwner["token"],
-): void {
-  const controllers = requests.get(ownerToken);
-  if (!controllers) return;
-  for (const controller of controllers) controller.abort();
-  requests.delete(ownerToken);
-}
-
-function abortAllRequests(requests: Map<DocumentDraftOwner["token"], Set<AbortController>>): void {
-  for (const ownerToken of requests.keys()) abortOwnerRequests(requests, ownerToken);
-}
-
 /**
  * Owns the explicit conflict and restore commands for one project/document
- * identity. It is the only layer that starts abortable aggregate refreshes;
- * callers supply guarded state publications and draft persistence.
+ * identity. The abortable refresh registry and the conflict-action pending
+ * gate live in dedicated state hooks; this facade composes them into the
+ * guarded command surface.
  */
 export function useDocumentDraftActions({
   activeDocument,
@@ -95,57 +78,16 @@ export function useDocumentDraftActions({
   setError,
   setRestoreError,
 }: UseDocumentDraftActionsArgs) {
-  const requestControllersRef = useRef(
-    new Map<DocumentDraftOwner["token"], Set<AbortController>>(),
-  );
-  const [conflictActionState, setConflictActionState] = useState<ConflictActionState>({
-    ownerToken: owner.token,
-    pending: false,
+  const { refreshLatestDocument } = useAbortableDocumentRefresh({
+    owner,
+    projectId,
+    isCurrentOwner,
+    isCurrentProject,
+    loadedRevision,
+    setProject,
   });
-  const isConflictActionPending =
-    conflictActionState.ownerToken === owner.token && conflictActionState.pending;
-
-  useEffect(
-    () => () => {
-      abortOwnerRequests(requestControllersRef.current, owner.token);
-    },
-    [owner.token],
-  );
-  useEffect(() => () => abortAllRequests(requestControllersRef.current), []);
-
-  const refreshLatestDocument = useCallback(
-    async (documentId: string): Promise<StudioDocument | null> => {
-      if (!isCurrentProject(owner) || documentId !== owner.documentId) return null;
-      const controller = new AbortController();
-      const ownerControllers =
-        requestControllersRef.current.get(owner.token) ?? new Set<AbortController>();
-      ownerControllers.add(controller);
-      requestControllersRef.current.set(owner.token, ownerControllers);
-      try {
-        const document = await loadLatestDocument(projectId, documentId, controller.signal);
-        if (!isCurrentProject(owner) || controller.signal.aborted) return null;
-        if (isCurrentOwner(owner)) loadedRevision.current = document.current_revision_id;
-        setProject((current) =>
-          isCurrentProject(owner) && current?.id === owner.projectId
-            ? mergeProjectDocument(current, document)
-            : current,
-        );
-        return document;
-      } finally {
-        ownerControllers.delete(controller);
-        if (ownerControllers.size === 0) requestControllersRef.current.delete(owner.token);
-      }
-    },
-    [isCurrentOwner, isCurrentProject, loadedRevision, owner, projectId, setProject],
-  );
-
-  const finishConflictAction = useCallback(() => {
-    if (!isCurrentOwner(owner)) return;
-    setConflictActionState({ ownerToken: owner.token, pending: false });
-    if (conflictActionPendingRef.current === owner.token) {
-      conflictActionPendingRef.current = null;
-    }
-  }, [conflictActionPendingRef, isCurrentOwner, owner]);
+  const { beginConflictAction, finishConflictAction, isConflictActionPending } =
+    useConflictActionGate({ owner, isCurrentOwner, conflictActionPendingRef });
 
   const loadLatest = useCallback(async () => {
     if (
@@ -157,8 +99,7 @@ export function useDocumentDraftActions({
       return;
     }
     if (saveTimerRef.current) window.clearTimeout(saveTimerRef.current);
-    setConflictActionState({ ownerToken: owner.token, pending: true });
-    conflictActionPendingRef.current = owner.token;
+    beginConflictAction();
     try {
       const latestDocument = await refreshLatestDocument(activeDocument.id);
       if (!latestDocument || !isCurrentOwner(owner)) return;
@@ -176,6 +117,7 @@ export function useDocumentDraftActions({
   }, [
     activeDocument,
     applyDocument,
+    beginConflictAction,
     conflictActionPendingRef,
     finishConflictAction,
     isCurrentOwner,
@@ -198,8 +140,7 @@ export function useDocumentDraftActions({
       return;
     }
     if (saveTimerRef.current) window.clearTimeout(saveTimerRef.current);
-    setConflictActionState({ ownerToken: owner.token, pending: true });
-    conflictActionPendingRef.current = owner.token;
+    beginConflictAction();
     saveInFlightRef.current.add(owner.key);
     const { draft, editVersion, titleDraft } = draftRef.current;
     try {
@@ -226,6 +167,7 @@ export function useDocumentDraftActions({
     }
   }, [
     activeDocument,
+    beginConflictAction,
     conflictActionPendingRef,
     draftRef,
     finishConflictAction,
