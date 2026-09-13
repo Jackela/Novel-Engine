@@ -23,7 +23,10 @@ const childScript = `
 `;
 const holdingChildScript = `
   import { acquireDataDirectoryLock } from ${JSON.stringify(lockModuleUrl)};
-  acquireDataDirectoryLock(process.argv.at(-1));
+  // Hold the lock object for the process lifetime: a discarded handle can be
+  // garbage-collected, and better-sqlite3 closes collected databases, which
+  // would silently release the ownership this process must keep holding.
+  globalThis.__heldDataDirectoryLock = acquireDataDirectoryLock(process.argv.at(-1));
   process.stdout.write("locked\\n");
   setInterval(() => undefined, 1_000);
 `;

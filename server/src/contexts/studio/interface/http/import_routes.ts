@@ -10,6 +10,7 @@ import {
 } from "../../../../shared/interface/http/error_envelope.js";
 import type { JsonResponseSchema } from "./json_response_schema.js";
 import { requireServices, type StudioRoutesOptions } from "./project_routes.js";
+import { authedWriteResponses } from "./route_responses.js";
 import { withAsyncStudioErrors } from "./studio_error_mapping.js";
 
 const legacyPreviewRequestSchema = Type.Object(
@@ -83,15 +84,10 @@ export const importRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fast
       ],
       schema: {
         body: legacyPreviewRequestSchema,
-        response: {
+        response: authedWriteResponses({
           200: legacyPreviewResponseSchema,
-          // Local-owner gate, scope misses, and the database-free mode.
-          401: errorEnvelopeResponse,
-          403: errorEnvelopeResponse,
-          404: errorEnvelopeResponse,
           422: legacyPreview422ResponseSchema,
-          503: errorEnvelopeResponse,
-        },
+        }),
       },
     },
     async (request) => {
