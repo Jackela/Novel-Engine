@@ -4,18 +4,12 @@ import type { TypeBoxTypeProvider } from "@fastify/type-provider-typebox";
 import Fastify, { type FastifyInstance, type FastifyServerOptions } from "fastify";
 import type { TextGenerationProviderFactory } from "../../contexts/ai/application/ports/text_generation.js";
 import { providerCatalogRoutes } from "../../contexts/ai/interface/http/provider_routes.js";
-import type { ExportArtifactGateway } from "../../contexts/studio/application/ports/artifact_gateway.js";
-import type { ExportOutcomeStore } from "../../contexts/studio/application/ports/export_store.js";
-import type { ProjectArtifactCleaner } from "../../contexts/studio/application/ports/project_artifact_cleaner.js";
 import { studioRoutes } from "../../contexts/studio/interface/http/studio_routes.js";
 import { AuthService } from "../../shared/application/auth_service.js";
 import type { HealthProbe } from "../../shared/application/ports/health.js";
 import { assertStartupGuards } from "../../shared/infrastructure/config/server_config.js";
 import { DrizzleAuthStore } from "../../shared/infrastructure/db/auth_store.js";
-import type {
-  StudioQueryLogger,
-  StudioSqliteDatabase,
-} from "../../shared/infrastructure/db/connection.js";
+import type { StudioQueryLogger } from "../../shared/infrastructure/db/connection.js";
 import { sqliteHealthProbe } from "../../shared/infrastructure/db/sqlite_health_probe.js";
 import type { StudioDatabase } from "../../shared/infrastructure/db/startup.js";
 import { readProductIdentity } from "../../shared/infrastructure/workspace_manifest.js";
@@ -27,8 +21,12 @@ import {
 } from "../../shared/interface/http/spa_serving.js";
 import { type VersionInfo, versionRoutes } from "../../shared/interface/http/version_route.js";
 import { closeAppAndRethrow } from "./app_lifecycle.js";
-import { registerAuthRoutes } from "./auth_registration.js";
-import { registerCors, resolveCorsOrigins } from "./cors_registration_policy.js";
+import { type AuthRegistrationOptions, registerAuthRoutes } from "./auth_registration.js";
+import {
+  type CorsOriginsAppOptions,
+  registerCors,
+  resolveCorsOrigins,
+} from "./cors_registration_policy.js";
 import {
   DEFAULT_HTTP_SERVER_POLICY,
   fastifyOptionsForHttpServerPolicy,
@@ -44,7 +42,10 @@ import { openPersistence } from "./persistence.js";
 import { loggerWithProductIdentity } from "./product_logger.js";
 import { buildProviderRuntime, type ProviderApiKeys } from "./provider_runtime.js";
 import { correlationIdFrom, REQUEST_ID_HEADER } from "./request_correlation.js";
-import { assembleStudioServices } from "./studio_services_assembly.js";
+import {
+  assembleStudioServices,
+  type StudioServicesAssemblyOptions,
+} from "./studio_services_assembly.js";
 
 declare module "fastify" {
   interface FastifyInstance {
@@ -53,7 +54,11 @@ declare module "fastify" {
   }
 }
 
-export interface AppOptions extends OperationCapacityAppOptions {
+export interface AppOptions
+  extends AuthRegistrationOptions,
+    CorsOriginsAppOptions,
+    OperationCapacityAppOptions,
+    StudioServicesAssemblyOptions {
   logger?: FastifyServerOptions["logger"];
   healthProbe?: HealthProbe | undefined;
   environment?: string | undefined;
@@ -73,26 +78,12 @@ export interface AppOptions extends OperationCapacityAppOptions {
    * each restart.
    */
   sessionSecret?: string | undefined;
-  /** Browser origins allowed by the setup same-origin check (default: dev set). */
-  corsOrigins?: string[] | undefined;
-  /** Trusted proxy IPs/CIDRs/hosts for rate-limit client identity (default: none). */
-  trustedProxies?: string[] | undefined;
-  /** Auth endpoint rate limit in requests per minute (default: five). */
-  authRateLimitPerMinute?: number | undefined;
-  /** Injectable time source for the session lifecycle (tests). */
-  clock?: (() => Date) | undefined;
   /**
    * Per-request AI provider factory override (tests inject capturing
    * providers). The default builds providers from `providerApiKeys`; HTTP
    * providers without a key fail explicitly — the mock is never a fallback.
    */
   textProviderFactory?: TextGenerationProviderFactory | undefined;
-  /** Injectable export persistence factory for transaction/failure tests. */
-  exportStoreFactory?: ((database: StudioSqliteDatabase) => ExportOutcomeStore) | undefined;
-  /** Injectable artifact filesystem boundary for publication/failure tests. */
-  exportArtifactGateway?: ExportArtifactGateway | undefined;
-  /** Injectable post-commit project artifact cleanup boundary for tests. */
-  projectArtifactCleaner?: ProjectArtifactCleaner | undefined;
   /** Credentials for the HTTP providers; absent keys leave them unconfigured. */
   providerApiKeys?: ProviderApiKeys | undefined;
   /**
@@ -102,11 +93,6 @@ export interface AppOptions extends OperationCapacityAppOptions {
    * API-only and the root explains the missing build.
    */
   spaDistDirectory?: string | undefined;
-  /**
-   * Lorebook injection budget in characters (#445). Falls back to the
-   * configured `LLM_LOREBOOK_BUDGET_CHARACTERS`, then the adjudicated default.
-   */
-  lorebookBudgetCharacters?: number | undefined;
   /** Injectable finite request-receipt thresholds for real-socket tests. */
   httpServerPolicy?: HttpServerPolicy | undefined;
 }
@@ -173,7 +159,12 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
     const studioServices =
       persistence === undefined
         ? undefined
-        : assembleStudioServices(persistence, options.config, provider, operationCapacity, options);
+        : assembleStudioServices(persistence, {
+            config: options.config,
+            provider,
+            operationCapacity,
+            options,
+          });
 
     const versionInfo: VersionInfo = {
       version: productIdentity.version,
