@@ -4,14 +4,17 @@ import {
   TextGenerationProviderError,
   type TextGenerationTask,
 } from "../../application/ports/text_generation.js";
-import { payloadFromResponseText } from "./dashscope_payload.js";
 import {
   isJsonObject,
   malformedJsonFailure,
   type ProviderTransport,
   ProviderTransportError,
-  readableResponse,
 } from "./provider_http.js";
+import { payloadFromResponseText } from "./provider_payload.js";
+import {
+  boundedProviderResponseText,
+  type ProviderResponseDeadline,
+} from "./provider_response_lifecycle.js";
 
 /** Shared system prompt channel: the JSON-only schema contract, verbatim. */
 export function buildSystemContent(task: TextGenerationTask): string {
@@ -33,9 +36,14 @@ export function supportedStep(step: string): ProviderStep {
   return step;
 }
 
-export async function responseJsonObject(response: Response, context: string): Promise<JsonObject> {
+export async function responseJsonObject(
+  response: Response,
+  context: string,
+  deadline?: ProviderResponseDeadline | undefined,
+): Promise<JsonObject> {
   try {
-    const data: unknown = await readableResponse(response).json();
+    const text = await boundedProviderResponseText(response, context, deadline);
+    const data: unknown = JSON.parse(text);
     if (!isJsonObject(data)) throw malformedJsonFailure(context);
     return data;
   } catch (error) {

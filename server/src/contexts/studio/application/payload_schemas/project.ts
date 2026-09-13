@@ -1,14 +1,11 @@
 import { type Static, Type } from "@fastify/type-provider-typebox";
 import { freeFormObject, nullableString } from "./common.js";
-import { documentPayloadSchema } from "./document.js";
+import { documentSummaryPayloadSchema } from "./document.js";
 import { volumePayloadSchema } from "./volume.js";
 
 /**
- * Project payload (#433 SSOT): the list form emitted by `projectPayload`
- * without optional arguments, and the detail form (nested `documents` and
- * `volumes`) emitted when both are supplied. Both share the flat properties
- * exactly as the previous hand-written schemas did; only the detail form
- * marks the nested arrays required.
+ * Project payload SSOT: the catalog row contains only project scalars, while
+ * the shell adds required structural document summaries and volumes.
  */
 const projectProperties = {
   id: Type.String(),
@@ -20,24 +17,34 @@ const projectProperties = {
   updated_at: Type.String(),
 } as const;
 
-export const projectPayloadSchema = Type.Object(
+export const projectPayloadSchema = Type.Object(projectProperties, { additionalProperties: false });
+
+export type ProjectPayload = Static<typeof projectPayloadSchema>;
+
+/**
+ * Lightweight catalog row (#458): the list read carries only the scalars the
+ * library renders; settings/import metadata stay on the shell/detail payload.
+ */
+export const projectCatalogSummaryPayloadSchema = Type.Object(
   {
-    ...projectProperties,
-    documents: Type.Optional(Type.Array(documentPayloadSchema)),
-    volumes: Type.Optional(Type.Array(volumePayloadSchema)),
+    id: Type.String(),
+    title: Type.String(),
+    description: Type.String(),
+    created_at: Type.String({ format: "date-time" }),
+    updated_at: Type.String({ format: "date-time" }),
   },
   { additionalProperties: false },
 );
 
-export type ProjectPayload = Static<typeof projectPayloadSchema>;
+export type ProjectCatalogSummaryPayload = Static<typeof projectCatalogSummaryPayloadSchema>;
 
-export const projectDetailPayloadSchema = Type.Object(
+export const projectShellPayloadSchema = Type.Object(
   {
     ...projectProperties,
-    documents: Type.Array(documentPayloadSchema),
+    documents: Type.Array(documentSummaryPayloadSchema),
     volumes: Type.Array(volumePayloadSchema),
   },
   { additionalProperties: false },
 );
 
-export type ProjectDetailPayload = Static<typeof projectDetailPayloadSchema>;
+export type ProjectShellPayload = Static<typeof projectShellPayloadSchema>;

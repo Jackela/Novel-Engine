@@ -1,76 +1,49 @@
-import { asc, count, desc, eq, inArray, sum } from "drizzle-orm";
-
+import { eq } from "drizzle-orm";
+import { InvalidOperationError } from "../../../shared/domain/exceptions.js";
 import type { StudioSqliteDatabase } from "../../../shared/infrastructure/db/connection.js";
-import { jobEvents, jobs, usageEvents } from "../../../shared/infrastructure/db/schema.js";
-import type {
-  AddJobInput,
-  AddUsageEventInput,
-  CompleteJobWithUsageInput,
-  JobRecord,
-  MarkJobOutcomeInput,
-  ProjectScope,
-  ProjectUsageAggregate,
-  RecordCompletedProposalJobInput,
-} from "../application/ports/studio_store.js";
-import { InvalidJobTransitionError, NotFoundError } from "../domain/exceptions.js";
+import type { StudioJobLedgerStore } from "../application/ports/job_ledger_store.js";
+import {
+  type AddJobInput,
+  type AddUsageEventInput,
+  type ClaimJobRetryInput,
+  type CompleteJobWithUsageInput,
+  type JobPageInput,
+  type JobRecord,
+  type JobRetryClaim,
+  type JobSummaryPage,
+  jobPageLimit,
+  type MarkJobOutcomeInput,
+  type RecordCompletedProposalJobInput,
+} from "../application/ports/job_records.js";
+import type { ProjectUsageAggregate } from "../application/ports/project_usage.js";
+import type { ProjectScope } from "../application/ports/studio_store.js";
+import {
+  InvalidJobTransitionError,
+  NotFoundError,
+  OperationInFlightError,
+} from "../domain/exceptions.js";
+import { jobWithEvents } from "./db/job_record_reads.js";
+import { findRetryJobByKey, insertRetryClaim } from "./db/job_retry_claim.js";
 import {
   applyJobOutcome,
   insertJobAndEvent,
   writeUsageEvent as writeUsageEventRow,
 } from "./db/job_writes.js";
+import { jobs } from "./db/schema.js";
 import { type ProjectRow, scopedProject, type Tx } from "./db/studio_query_helpers.js";
-import { dailyUsageBuckets } from "./db/usage_daily_buckets.js";
+import { projectUsageAggregate } from "./db/usage_aggregation.js";
+import { buildProjectJobSummariesQuery } from "./job_page_queries.js";
+
+export { jobWithEvents };
 
 type JobRow = typeof jobs.$inferSelect;
-type JobEventRow = typeof jobEvents.$inferSelect;
-
-function toJobRecord(job: JobRow, events: JobEventRow[]): JobRecord {
-  return {
-    id: job.id,
-    projectId: job.project_id,
-    documentId: job.document_id,
-    kind: job.kind,
-    operation: job.operation,
-    status: job.status,
-    provider: job.provider,
-    model: job.model,
-    requestJson: job.request_json,
-    resultJson: job.result_json,
-    error: job.error,
-    retryOfJobId: job.retry_of_job_id,
-    createdAt: job.created_at,
-    updatedAt: job.updated_at,
-    events: events.map((event) => ({
-      id: event.id,
-      jobId: event.job_id,
-      status: event.status,
-      detailsJson: event.details_json,
-      createdAt: event.created_at,
-    })),
-  };
-}
-
-function jobWithEvents(tx: Tx, jobId: string): JobRecord {
-  const job = tx.select().from(jobs).where(eq(jobs.id, jobId)).get();
-  if (job === undefined) {
-    throw new NotFoundError("Job not found.");
-  }
-  const events = tx
-    .select()
-    .from(jobEvents)
-    .where(eq(jobEvents.job_id, jobId))
-    .orderBy(asc(jobEvents.created_at))
-    .all();
-  return toJobRecord(job, events);
-}
-
 /**
  * The workflow half of the Drizzle studio store: proposal jobs with their
  * event trail and the usage accounting rows. Jobs reference projects by a
  * plain column (the studio tables live in another schema module), so every
  * access re-verifies principal scoping through the projects table first.
  */
-export class JobStorePart {
+export class JobStorePart implements StudioJobLedgerStore {
   protected readonly db: StudioSqliteDatabase;
 
   constructor(db: StudioSqliteDatabase) {
@@ -83,6 +56,45 @@ export class JobStorePart {
       const jobId = insertJobAndEvent(tx, input);
       return jobWithEvents(tx, jobId);
     });
+  }
+
+  findJobRetry(
+    scope: ProjectScope,
+    projectId: string,
+    sourceJobId: string,
+    requestKey: string,
+  ): JobRecord | null {
+    return this.db.transaction((tx) => {
+      scopedProject(tx, scope, projectId);
+      const retry = findRetryJobByKey(tx, projectId, sourceJobId, requestKey);
+      return retry === undefined ? null : jobWithEvents(tx, retry.id);
+    });
+  }
+
+  claimJobRetry(scope: ProjectScope, input: ClaimJobRetryInput): JobRetryClaim {
+    return this.db.transaction(
+      (tx) => {
+        scopedProject(tx, scope, input.projectId);
+        const existing = findRetryJobByKey(
+          tx,
+          input.projectId,
+          input.sourceJobId,
+          input.requestKey,
+        );
+        if (existing !== undefined) return this.replayRetryClaim(tx, existing);
+
+        const source = this.scopedJob(tx, input.projectId, input.sourceJobId);
+        this.assertRetryableSource(source);
+        const claimed = insertRetryClaim(tx, source, input.requestKey, input.now, (jobId) =>
+          this.beforeRetryClaimEventInsert(tx, jobId),
+        );
+        if (claimed.created) return { job: jobWithEvents(tx, claimed.jobId), created: true };
+        const winner = findRetryJobByKey(tx, input.projectId, input.sourceJobId, input.requestKey);
+        if (winner === undefined) throw new Error("Retry idempotency winner disappeared.");
+        return this.replayRetryClaim(tx, winner);
+      },
+      { behavior: "immediate" },
+    );
   }
 
   addUsageEvent(scope: ProjectScope, input: AddUsageEventInput): void {
@@ -139,88 +151,44 @@ export class JobStorePart {
   }
 
   /**
-   * The usage-ledger aggregation (#317): totals over the project's usage
-   * events plus a per-model breakdown, read inside a scoped transaction.
-   * `daily` (#384) adds the trailing-30-UTC-day buckets relative to `now`.
+   * The usage-ledger aggregation (#317, #384): the scoped transaction and
+   * safe folding live in `db/usage_aggregation.ts`.
    */
   aggregateProjectUsage(scope: ProjectScope, projectId: string, now: Date): ProjectUsageAggregate {
     return this.db.transaction((tx) => {
       scopedProject(tx, scope, projectId);
-      const rows = tx
-        .select({
-          model: usageEvents.model,
-          requests: count(),
-          promptTokens: sum(usageEvents.prompt_tokens),
-          completionTokens: sum(usageEvents.completion_tokens),
-        })
-        .from(usageEvents)
-        .where(eq(usageEvents.project_id, projectId))
-        .groupBy(usageEvents.model)
-        .orderBy(asc(usageEvents.model))
-        .all();
-      const perModel = rows.map((row) => ({
-        model: row.model,
-        requests: row.requests,
-        promptTokens: Number(row.promptTokens ?? 0),
-        completionTokens: Number(row.completionTokens ?? 0),
-      }));
-      const daily = dailyUsageBuckets(tx, projectId, now);
-      return {
-        projectId,
-        requestCount: perModel.reduce((total, entry) => total + entry.requests, 0),
-        promptTokens: perModel.reduce((total, entry) => total + entry.promptTokens, 0),
-        completionTokens: perModel.reduce((total, entry) => total + entry.completionTokens, 0),
-        perModel,
-        daily,
-      };
+      return projectUsageAggregate(tx, projectId, now);
     });
   }
 
   findJob(scope: ProjectScope, projectId: string, jobId: string): JobRecord {
     return this.db.transaction((tx) => {
       const project: ProjectRow = scopedProject(tx, scope, projectId);
-      const job = tx.select().from(jobs).where(eq(jobs.id, jobId)).get();
-      if (job === undefined || job.project_id !== project.id) {
-        throw new NotFoundError("Job not found.");
-      }
+      const job = this.scopedJob(tx, project.id, jobId);
       return jobWithEvents(tx, job.id);
     });
   }
 
-  /**
-   * The audit-trail listing: jobs newest first, and within each job the
-   * events newest first (the OpenSpec listing contract).
-   */
-  collectProjectJobs(scope: ProjectScope, projectId: string): JobRecord[] {
+  /** The audit index: newest summaries first, with complete bodies read separately. */
+  collectProjectJobSummaries(
+    scope: ProjectScope,
+    projectId: string,
+    input: JobPageInput,
+  ): JobSummaryPage {
+    const limit = jobPageLimit(input.limit);
     return this.db.transaction((tx) => {
       const project: ProjectRow = scopedProject(tx, scope, projectId);
-      const rows = tx
-        .select()
-        .from(jobs)
-        .where(eq(jobs.project_id, project.id))
-        .orderBy(desc(jobs.created_at))
-        .all();
-      if (rows.length === 0) {
-        return [];
+      const rows = buildProjectJobSummariesQuery(tx, project.id, { ...input, limit }).all();
+      const returnedRows = rows.slice(0, limit);
+      if (returnedRows.length === 0) {
+        return { jobs: [], nextCursor: null };
       }
-      const events = tx
-        .select()
-        .from(jobEvents)
-        .where(
-          inArray(
-            jobEvents.job_id,
-            rows.map((row) => row.id),
-          ),
-        )
-        .orderBy(desc(jobEvents.created_at))
-        .all();
-      const eventsByJob = new Map<string, JobEventRow[]>();
-      for (const event of events) {
-        const bucket = eventsByJob.get(event.job_id) ?? [];
-        bucket.push(event);
-        eventsByJob.set(event.job_id, bucket);
-      }
-      return rows.map((row) => toJobRecord(row, eventsByJob.get(row.id) ?? []));
+      const boundary = returnedRows.at(-1);
+      const nextCursor =
+        rows.length > limit && boundary !== undefined
+          ? { createdAtMs: boundary.createdAt.getTime(), id: boundary.id }
+          : null;
+      return { jobs: returnedRows, nextCursor };
     });
   }
 
@@ -250,13 +218,19 @@ export class JobStorePart {
     jobId: string,
     attemptedStatus: string,
   ): void {
-    const job = tx.select().from(jobs).where(eq(jobs.id, jobId)).get();
-    if (job === undefined || job.project_id !== projectId) {
-      throw new NotFoundError("Job not found.");
-    }
+    const job = this.scopedJob(tx, projectId, jobId);
     if (job.status !== "running" && job.status !== "pending") {
       throw new InvalidJobTransitionError(jobId, job.status, attemptedStatus);
     }
+  }
+
+  /** One job lookup guarded by the already-verified project scope. */
+  private scopedJob(tx: Tx, projectId: string, jobId: string): JobRow {
+    const job = tx.select().from(jobs).where(eq(jobs.id, jobId)).get();
+    if (job === undefined || job.project_id !== projectId) {
+      throw new NotFoundError(`Job not found: ${jobId}.`);
+    }
+    return job;
   }
 
   /**
@@ -268,24 +242,37 @@ export class JobStorePart {
     writeUsageEventRow(tx, input);
   }
 
-  setJobResult(
-    scope: ProjectScope,
-    projectId: string,
-    jobId: string,
-    resultJson: string,
-    now: Date,
-  ): JobRecord {
-    return this.db.transaction((tx) => {
-      scopedProject(tx, scope, projectId);
-      const job = tx.select().from(jobs).where(eq(jobs.id, jobId)).get();
-      if (job === undefined || job.project_id !== projectId) {
-        throw new NotFoundError("Job not found.");
-      }
-      tx.update(jobs)
-        .set({ result_json: resultJson, updated_at: now })
-        .where(eq(jobs.id, jobId))
-        .run();
-      return jobWithEvents(tx, jobId);
-    });
+  /** Failure-injection seam proving the retry row and first event stay atomic. */
+  protected beforeRetryClaimEventInsert(_tx: Tx, _jobId: string): void {}
+
+  private replayRetryClaim(tx: Tx, retry: JobRow): JobRetryClaim {
+    if (retry.status === "running") {
+      throw new OperationInFlightError(
+        retry.project_id,
+        null,
+        `retry (${String(retry.retry_of_job_id)})`,
+        1,
+      );
+    }
+    if (
+      retry.status !== "completed" &&
+      retry.status !== "failed" &&
+      retry.status !== "interrupted"
+    ) {
+      throw new Error(`Persisted retry Job has invalid status: ${retry.status}.`);
+    }
+    return { job: jobWithEvents(tx, retry.id), created: false };
+  }
+
+  private assertRetryableSource(source: JobRow): void {
+    if (source.status !== "failed" && source.status !== "interrupted") {
+      throw new InvalidOperationError("Only failed or interrupted jobs may be retried.");
+    }
+    if (source.kind === "import") {
+      throw new InvalidOperationError("Import jobs cannot be retried.");
+    }
+    if (source.kind !== "proposal" && source.kind !== "review" && source.kind !== "export") {
+      throw new InvalidOperationError(`Unsupported job kind for retry: ${source.kind}`);
+    }
   }
 }

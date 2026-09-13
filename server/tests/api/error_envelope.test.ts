@@ -81,6 +81,29 @@ describe("unified error envelope", () => {
     }
   });
 
+  it("emits a controlled Retry-After header from an AppError", async () => {
+    const app = await buildQuietApp();
+
+    try {
+      app.get("/test/capacity", async () => {
+        throw new AppError({
+          statusCode: 503,
+          code: "OPERATION_CAPACITY_EXCEEDED",
+          message: "Studio operation capacity is exhausted.",
+          responseHeaders: { "retry-after": "5" },
+        });
+      });
+
+      const response = await app.inject({ method: "GET", url: "/test/capacity" });
+
+      expect(response.statusCode).toBe(503);
+      expect(response.headers["retry-after"]).toBe("5");
+      expect(response.json().error.code).toBe("OPERATION_CAPACITY_EXCEEDED");
+    } finally {
+      await app.close();
+    }
+  });
+
   it("hides unhandled failures behind an opaque 500 with an error_id", async () => {
     const app = await buildQuietApp();
 
@@ -155,9 +178,12 @@ describe("unified error envelope", () => {
         payload: "{not-json",
       });
 
-      expect([400, 422]).toContain(response.statusCode);
+      // Fastify's content-type-parser throws FST_ERR_CTP_INVALID_JSON_BODY (400) for
+      // malformed JSON; the envelope passes FST_ERR_* codes through verbatim
+      // (see registerErrorEnvelope), so both values are stable and asserted exactly.
+      expect(response.statusCode).toBe(400);
       const body = response.json();
-      expect(body.error.code).toBeTypeOf("string");
+      expect(body.error.code).toBe("FST_ERR_CTP_INVALID_JSON_BODY");
       expect(body.error).not.toHaveProperty("detail");
     } finally {
       await app.close();

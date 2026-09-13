@@ -20,13 +20,15 @@ interface ProviderCredentials {
   readonly openaiCompatible?: string | undefined;
 }
 
+/** Inputs for the provider catalog: configured default, model settings, and credential presence. */
 export interface ProviderCatalogOptions {
   readonly defaultProvider: TextProviderName;
   readonly settings: LlmModelSettings;
   readonly credentials: ProviderCredentials;
 }
 
-export interface ProviderCatalogEntry {
+/** One provider's server-owned facts as the catalog endpoint exposes them. */
+interface ProviderCatalogEntry {
   readonly provider: TextProviderName;
   readonly configured: boolean;
   readonly model: string;

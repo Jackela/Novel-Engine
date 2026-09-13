@@ -1,5 +1,6 @@
 import { AlertCircle, Check, Loader2 } from "lucide-react";
 
+import { productLabel } from "@/app/productIdentity";
 import type { SaveState, StudioDocument } from "@/app/types/studio";
 
 interface StudioStatusbarProps {
@@ -34,7 +35,7 @@ export function StudioStatusbar({
       <span>Revision {loadedRevisionId?.slice(0, 8) ?? "none"}</span>
       <span className="studio-statusbar__spacer" />
       <span>{activeDocument?.word_count ?? 0} words</span>
-      <span>Novel Engine {__APP_VERSION__}</span>
+      <span>{productLabel}</span>
     </footer>
   );
 }

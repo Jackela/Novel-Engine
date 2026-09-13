@@ -95,7 +95,7 @@ function parseIPv6(text: string): bigint | null {
 }
 
 /** Parse an IPv4 or IPv6 literal; IPv4-mapped IPv6 compares as its IPv4 value. */
-export function parseIpAddress(text: string): ParsedAddress | null {
+function parseIpAddress(text: string): ParsedAddress | null {
   const v4 = parseIPv4(text);
   if (v4 !== null) {
     return { value: v4, bits: 32 };
@@ -137,7 +137,7 @@ export function isTrustedProxy(host: string, trustedProxies: string[]): boolean 
     const prefix = Number(proxy.slice(slash + 1));
     if (network === null || !Number.isInteger(prefix) || prefix < 0 || prefix > network.bits) {
       // Not a parseable IP network (e.g. a host string containing slashes):
-      // fall back to comparing the whole entry, like the Python gold standard.
+      // fall back to comparing the whole entry as an exact string.
       if (host === proxy) {
         return true;
       }

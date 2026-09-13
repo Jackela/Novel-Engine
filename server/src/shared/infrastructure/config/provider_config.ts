@@ -1,7 +1,7 @@
 import { ConfigurationError } from "./configuration_error.js";
 
-export const LLM_PROVIDERS = ["mock", "dashscope", "openai_compatible"] as const;
-export const DASHSCOPE_TRANSPORT_MODES = [
+const LLM_PROVIDERS = ["mock", "dashscope", "openai_compatible"] as const;
+const DASHSCOPE_TRANSPORT_MODES = [
   "text_generation",
   "multimodal_generation",
   "responses",

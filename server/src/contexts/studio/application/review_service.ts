@@ -1,15 +1,20 @@
 import type {
+  TextGenerationProvider,
   TextGenerationProviderFactory,
   TextProviderName,
 } from "../../../contexts/ai/application/ports/text_generation.js";
+import { TextGenerationProviderError } from "../../../contexts/ai/application/ports/text_generation.js";
 import type { Principal } from "../../../shared/application/ports/auth.js";
 import { dumpJson, safeLoadJson } from "./payloads.js";
-import {
-  type EditorialAssessmentRecord,
-  type EditorialIssueRecord,
-  type StudioStore,
-  scopeForPrincipal,
-} from "./ports/studio_store.js";
+import type {
+  EditorialAssessmentRecord,
+  EditorialIssueRecord,
+  EvaluatedReview,
+  ReviewOutcomeStore,
+  ReviewPageInput,
+  ReviewSummaryPage,
+} from "./ports/review_outcome_store.js";
+import { scopeForPrincipal } from "./ports/studio_store.js";
 import {
   type ProviderCleanupFailureReporter as CleanupFailureReporter,
   disposeProvider,
@@ -18,7 +23,7 @@ import { chapterWordCounts, coerceEditorialFindings, THIN_CHAPTER_WORDS } from "
 import { formatUntrustedManuscript } from "./sanitization.js";
 
 /** The adjudicated summary of a deterministic, non-mutating editorial pass. */
-export const EDITORIAL_SUMMARY = "Editorial checks completed without modifying the manuscript.";
+const EDITORIAL_SUMMARY = "Editorial checks completed without modifying the manuscript.";
 
 /** Server-owned provenance; callers never supply a provider model. */
 export interface ReviewProviderProvenance {
@@ -27,7 +32,7 @@ export interface ReviewProviderProvenance {
 }
 
 /** Stable application DTO, deliberately independent of database row shapes. */
-export interface EditorialAssessmentIssue {
+interface EditorialAssessmentIssue {
   readonly id: string;
   readonly documentId: string;
   readonly severity: string;
@@ -49,11 +54,16 @@ export interface EditorialAssessment {
   readonly issues: readonly EditorialAssessmentIssue[];
 }
 
-export interface ReviewServiceOptions {
+interface ReviewServiceOptions {
   readonly now?: (() => Date) | undefined;
   readonly provenance?: ReviewProviderProvenance | undefined;
   /** Per-request provider factory; the composition root injects the concrete one. */
   readonly providerFactory: TextGenerationProviderFactory;
+}
+
+interface ReviewEvaluationOptions {
+  readonly provider?: TextProviderName | undefined;
+  readonly reportCleanupFailure?: CleanupFailureReporter | undefined;
 }
 
 const DEFAULT_PROVENANCE: ReviewProviderProvenance = {
@@ -68,20 +78,17 @@ const REVIEW_SYSTEM_PROMPT = [
 ].join(" ");
 
 /**
- * Evaluates immutable manuscript snapshots through the editorial_review
- * provider step (#316). The snapshot commits before the asynchronous
- * provider call; a provider failure propagates so the terminal-job bridge
- * records a failed job, and no findings are fabricated. The service never
- * passes a client-supplied model through to persistence and never edits
- * live content.
+ * Evaluates one point-in-time manuscript source through the editorial_review
+ * provider step (#316). The source read is non-mutating; durable snapshot and
+ * job evidence are committed later by the atomic outcome store.
  */
 export class ReviewService {
-  private readonly store: StudioStore;
+  private readonly store: ReviewOutcomeStore;
   private readonly now: () => Date;
   private readonly provenance: ReviewProviderProvenance;
   private readonly providerFactory: TextGenerationProviderFactory;
 
-  constructor(store: StudioStore, options: ReviewServiceOptions) {
+  constructor(store: ReviewOutcomeStore, options: ReviewServiceOptions) {
     this.store = store;
     this.now = options.now ?? (() => new Date());
     const provenance = options.provenance ?? DEFAULT_PROVENANCE;
@@ -94,18 +101,19 @@ export class ReviewService {
     return this.provenance.provider;
   }
 
-  /** Capture, assess through the provider, and persist one visible project. */
+  /** Read and evaluate one visible project without persisting review evidence. */
   async evaluateProject(
     principal: Principal,
     projectId: string,
-    reportCleanupFailure?: CleanupFailureReporter,
-  ): Promise<EditorialAssessment> {
+    options: ReviewEvaluationOptions = {},
+  ): Promise<EvaluatedReview> {
     const scope = scopeForPrincipal(principal);
-    const captured = this.store.captureReviewSnapshot(scope, projectId, { now: this.now() });
-    const provider: TextProviderName = this.provenance.provider;
-    const taskProvider = this.providerFactory(provider);
+    const source = this.store.readReviewSource(scope, projectId, this.now());
+    const provider = options.provider ?? this.provenance.provider;
+    let taskProvider: TextGenerationProvider | undefined;
     try {
-      const chapters = chapterWordCounts(captured.documents);
+      taskProvider = this.providerFactory(provider);
+      const chapters = chapterWordCounts(source.documents);
       const result = await taskProvider.generateStructured({
         step: "editorial_review",
         systemPrompt: REVIEW_SYSTEM_PROMPT,
@@ -137,29 +145,47 @@ export class ReviewService {
           ),
         },
       });
-      const issues = coerceEditorialFindings(
-        safeLoadJson(dumpJson(result.content)),
-        captured.documents,
-      );
-      const recorded = this.store.recordSnapshotReview(scope, projectId, {
-        snapshotId: captured.snapshotId,
-        provider: result.provider,
+      const payload = safeLoadJson(dumpJson(result.content));
+      if (!Array.isArray(payload.findings)) {
+        throw new TextGenerationProviderError(
+          "Review provider response must contain a findings array.",
+        );
+      }
+      return {
+        source,
+        // Provider identity is selected by the server; an adapter response
+        // cannot relabel the audit trail even if it violates its typed port.
+        provider,
         model: result.model,
         summary: EDITORIAL_SUMMARY,
-        now: this.now(),
-        issues,
-      });
-      return editorialAssessment(recorded);
+        completedAt: this.now(),
+        issues: coerceEditorialFindings(payload, source.documents),
+      };
     } finally {
-      await disposeProvider(taskProvider, reportCleanupFailure);
+      if (taskProvider !== undefined) {
+        await disposeProvider(taskProvider, options.reportCleanupFailure);
+      }
     }
   }
 
-  /** List stored assessments without reevaluating newer live revisions. */
-  listEditorialAssessments(principal: Principal, projectId: string): EditorialAssessment[] {
-    return this.store
-      .listEditorialAssessments(scopeForPrincipal(principal), projectId)
-      .map(editorialAssessment);
+  /** One bounded newest-first summary page; ordered issues live on the detail read. */
+  collectProjectReviewSummaries(
+    principal: Principal,
+    projectId: string,
+    input: ReviewPageInput,
+  ): ReviewSummaryPage {
+    return this.store.collectProjectReviewSummaries(scopeForPrincipal(principal), projectId, input);
+  }
+
+  /** One complete scoped assessment without reevaluating newer live revisions. */
+  findEditorialAssessment(
+    principal: Principal,
+    projectId: string,
+    reviewId: string,
+  ): EditorialAssessment {
+    return editorialAssessment(
+      this.store.findProjectReview(scopeForPrincipal(principal), projectId, reviewId),
+    );
   }
 }
 

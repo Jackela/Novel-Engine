@@ -90,7 +90,7 @@ const API_SURFACE_FORBIDDEN = [
   },
 ];
 const API_SURFACE_PATHS =
-  /^(?:src\/apps\/api\/|server\/src\/apps\/api\/|frontend\/src\/app\/types\/studio\.ts$)/;
+  /^(?:src\/apps\/api\/|server\/src\/apps\/api\/|server\/src\/contexts\/[^/]+\/interface\/http\/|server\/src\/shared\/interface\/http\/|frontend\/src\/app\/types\/studio\.ts$)/;
 
 function shouldSkip(relativePath) {
   if (SKIP_PATHS.has(relativePath) || relativePath.startsWith("openspec/changes/archive/")) {

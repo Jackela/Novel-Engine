@@ -6,7 +6,7 @@ import type { AuthStore, Principal } from "./ports/auth.js";
 
 /** Owner sessions last 30 days (the lazy-expiry contract validates against it). */
 const OWNER_TTL_MS = 30 * 24 * 60 * 60 * 1000;
-/** Cost factor matching the Python gold standard's gensalt() default. */
+/** Bcrypt cost factor 12: the adjudicated security/latency tradeoff for login hashing. */
 const BCRYPT_ROUNDS = 12;
 
 let dummyHashMemo: Promise<string> | undefined;
@@ -27,7 +27,7 @@ function utf8ByteLength(value: string): number {
   return new TextEncoder().encode(value).length;
 }
 
-export interface AuthServiceOptions {
+interface AuthServiceOptions {
   store: AuthStore;
   sessionSecret: string;
   now?: (() => Date) | undefined;

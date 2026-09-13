@@ -19,15 +19,8 @@ const NATIVE_GENERATION_PATH_SEGMENTS = [
   "multimodal-generation",
   "generation",
 ] as const;
-const COMPATIBLE_RESPONSES_PATH_SEGMENTS = [
-  "api",
-  "v2",
-  "apps",
-  "protocols",
-  "compatible-mode",
-  "v1",
-  "responses",
-] as const;
+/** Official OpenAI-compatible Responses path (#502): default base plus endpoint suffix. */
+const RESPONSES_DEFAULT_PATH_SEGMENTS = ["compatible-mode", "v1", "responses"] as const;
 
 function expectedEndpoint(origin: string, pathSegments: readonly string[]): string {
   return new URL(pathSegments.join("/"), `${origin}/`).toString();
@@ -59,14 +52,15 @@ function generationBody(content: unknown, usage?: Record<string, number>): Recor
 
 /** Records every request and answers from a script (Response or Error); optional per-call behavior. */
 function scriptedTransport(
-  script: Array<Response | Error>,
+  script: Array<Response | Error | (() => Response | Error)>,
   capture: CapturedRequest[],
 ): ProviderTransport {
   let call = 0;
   return (url, init) => {
     capture.push({ url: String(url), init: init ?? {} });
-    const answer = script[Math.min(call, script.length - 1)];
+    const scripted = script[Math.min(call, script.length - 1)];
     call += 1;
+    const answer = typeof scripted === "function" ? scripted() : scripted;
     if (answer instanceof Error) {
       return Promise.reject(answer);
     }
@@ -94,9 +88,7 @@ describe("dashscope adapter request shape", () => {
 
     expect(capture).toHaveLength(1);
     const [request] = capture;
-    if (request === undefined) {
-      throw new Error("Expected a captured DashScope request.");
-    }
+    if (request === undefined) throw new Error("Expected a captured DashScope request.");
     expect(request.url).toBe(expectedEndpoint(DASHSCOPE_ORIGIN, NATIVE_GENERATION_PATH_SEGMENTS));
     expect(new Headers(request.init.headers).get("authorization")).toBe("Bearer sk-dashscope-test");
     const body = JSON.parse(String(request.init.body));
@@ -131,7 +123,25 @@ describe("dashscope adapter request shape", () => {
     expect(prose.content.chapter_markdown).toBe("Just a plain prose chapter.");
   });
 
-  it("honors a custom base and the responses transport mode", async () => {
+  it("posts responses-mode requests to the official compatible-mode path by default", async () => {
+    const capture: CapturedRequest[] = [];
+    const transport = scriptedTransport(
+      [
+        jsonResponse(200, {
+          output: [{ type: "message", content: [{ text: '{"chapter_markdown": "resp"}' }] }],
+        }),
+      ],
+      capture,
+    );
+    await provider({ transport, transportMode: "responses" }).generateStructured(
+      chapterTask("chapter_draft"),
+    );
+    const [request] = capture;
+    if (request === undefined) throw new Error("Expected a captured DashScope request.");
+    expect(request.url).toBe(expectedEndpoint(DASHSCOPE_ORIGIN, RESPONSES_DEFAULT_PATH_SEGMENTS));
+  });
+
+  it("honors a custom base verbatim with the responses transport mode", async () => {
     const capture: CapturedRequest[] = [];
     const transport = scriptedTransport(
       [
@@ -147,12 +157,8 @@ describe("dashscope adapter request shape", () => {
       apiBase: "https://proxy.example.com/x",
     }).generateStructured(chapterTask("chapter_draft"));
     const [request] = capture;
-    if (request === undefined) {
-      throw new Error("Expected a captured DashScope request.");
-    }
-    expect(request.url).toBe(
-      expectedEndpoint("https://proxy.example.com", COMPATIBLE_RESPONSES_PATH_SEGMENTS),
-    );
+    if (request === undefined) throw new Error("Expected a captured DashScope request.");
+    expect(request.url).toBe("https://proxy.example.com/x/responses");
   });
 });
 
@@ -180,10 +186,10 @@ describe("dashscope adapter transient failure handling", () => {
   it("fails with the provider error after bounded 503 retries", async () => {
     const capture: CapturedRequest[] = [];
     const attempt = provider({
-      transport: scriptedTransport([jsonResponse(503, "unavailable")], capture),
+      transport: scriptedTransport([() => jsonResponse(503, "unavailable")], capture),
     }).generateStructured(chapterTask("chapter_draft"));
     await expect(attempt).rejects.toThrow(
-      /DashScope generation failed for step 'chapter_draft': 503 unavailable/,
+      "DashScope generation failed for step 'chapter_draft': provider returned HTTP 503.",
     );
     expect(capture).toHaveLength(3);
   });
@@ -193,7 +199,9 @@ describe("dashscope adapter transient failure handling", () => {
     const attempt = provider({
       transport: scriptedTransport([jsonResponse(401, "bad key")], capture),
     }).generateStructured(chapterTask("chapter_draft"));
-    await expect(attempt).rejects.toThrow(/401 bad key/);
+    await expect(attempt).rejects.toThrow(
+      "DashScope generation failed for step 'chapter_draft': provider returned HTTP 401.",
+    );
     expect(capture).toHaveLength(1);
   });
 
@@ -209,29 +217,31 @@ describe("dashscope adapter transient failure handling", () => {
   it("retries malformed JSON responses and fails after the bound", async () => {
     const capture: CapturedRequest[] = [];
     const attempt = provider({
-      transport: scriptedTransport([jsonResponse(200, "not json {{{")], capture),
+      transport: scriptedTransport([() => jsonResponse(200, "not json {{{")], capture),
     }).generateStructured(chapterTask("chapter_draft"));
     await expect(attempt).rejects.toThrow(/invalid JSON/);
     expect(capture).toHaveLength(3);
   });
 
-  it("rethrows a post-dispatch programming error without retrying", async () => {
+  it("rethrows a post-read programming error without retrying", async () => {
     const capture: CapturedRequest[] = [];
     const programmingError = new TypeError("response parser programming error");
-    const response = {
-      ok: true,
-      status: 200,
-      text: async () => "",
-      json: async () => {
-        throw programmingError;
-      },
-    } as unknown as Response;
-    const attempt = provider({
-      transport: scriptedTransport([response], capture),
-    }).generateStructured(chapterTask("chapter_draft"));
+    const decode = vi.spyOn(TextDecoder.prototype, "decode").mockImplementation(() => {
+      throw programmingError;
+    });
+    try {
+      const attempt = provider({
+        transport: scriptedTransport(
+          [jsonResponse(200, generationBody('{"chapter_markdown":"draft"}'))],
+          capture,
+        ),
+      }).generateStructured(chapterTask("chapter_draft"));
 
-    await expect(attempt).rejects.toBe(programmingError);
-    expect(capture).toHaveLength(1);
+      await expect(attempt).rejects.toBe(programmingError);
+      expect(capture).toHaveLength(1);
+    } finally {
+      decode.mockRestore();
+    }
   });
 
   it("fails immediately when the response shape lacks choices", async () => {
@@ -263,17 +273,19 @@ describe("dashscope generation timeout floor", () => {
           );
         });
       };
-      const generation = provider({ transport, timeoutSeconds: 30 }).generateStructured(
-        chapterTask("chapter_revision"),
-      );
+      const generation = provider({
+        transport,
+        timeoutSeconds: 30,
+        retry: { maxAttempts: 1, delayMs: 0, sleep: async () => {} },
+      }).generateStructured(chapterTask("chapter_revision"));
+      const settled = expect(generation).rejects.toThrow(/timed out after 180s/);
 
       expect(requestDispatched).toBe(true);
       await vi.advanceTimersByTimeAsync(179_999);
       expect(abortFired).toBe(false);
       await vi.advanceTimersByTimeAsync(1);
       expect(abortFired).toBe(true);
-      const result = await generation;
-      expect(result.content.chapter_markdown).toBe("late");
+      await settled;
     } finally {
       vi.useRealTimers();
     }
@@ -293,13 +305,16 @@ describe("dashscope generation timeout floor", () => {
           );
         });
       };
-      const generation = provider({ transport, timeoutSeconds: 30 }).generateStructured({
-        ...chapterTask("editorial_review"),
-      });
+      const generation = provider({
+        transport,
+        timeoutSeconds: 30,
+        retry: { maxAttempts: 1, delayMs: 0, sleep: async () => {} },
+      }).generateStructured({ ...chapterTask("editorial_review") });
+      const settled = expect(generation).rejects.toThrow(/timed out after 30s/);
       await vi.advanceTimersByTimeAsync(29_999);
       expect(transportCalls).toBe(1);
       await vi.advanceTimersByTimeAsync(1);
-      await generation;
+      await settled;
     } finally {
       vi.useRealTimers();
     }

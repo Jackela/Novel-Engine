@@ -3,7 +3,7 @@ import { act } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { ProviderInfo } from "@/app/types/studio";
-import { createMountHarness } from "@/test/harness";
+import { createMountHarness, deferred } from "@/test/harness";
 
 import { StudioSettingsPanel } from "./StudioSettingsPanel";
 
@@ -83,6 +83,27 @@ describe("StudioSettingsPanel", () => {
     expect(onUpdateSettings).toHaveBeenCalledTimes(1);
   });
 
+  it("freezes every editable setting while a save is pending", () => {
+    const container = render(<StudioSettingsPanel {...baseProps} isSaving />);
+
+    expect(getByRole(container, "textbox", { name: "Title" })).toBeDisabled();
+    expect(getByRole(container, "textbox", { name: "Description" })).toBeDisabled();
+    expect(getByRole(container, "combobox", { name: "Provider" })).toBeDisabled();
+    expect(getByRole(container, "button", { name: "Saving…" })).toBeDisabled();
+  });
+
+  it("keeps a save failure in the form and associates it with the form", () => {
+    const container = render(
+      <StudioSettingsPanel {...baseProps} error="Persistence unavailable. Try again." />,
+    );
+
+    const alert = getByRole(container, "alert");
+    const form = container.querySelector("form");
+    expect(alert).toHaveTextContent("Persistence unavailable. Try again.");
+    expect(form).toHaveAttribute("aria-describedby", alert.id);
+    expect(getByRole(container, "button", { name: "Save settings" })).toBeEnabled();
+  });
+
   it("restores focus to the save button after the update completes", async () => {
     const onUpdateSettings = vi.fn(async (event: React.FormEvent) => {
       event.preventDefault();
@@ -101,5 +122,28 @@ describe("StudioSettingsPanel", () => {
     });
 
     expect(document.activeElement).toBe(saveButton);
+  });
+
+  it("does not override focus the author moved during the update", async () => {
+    const completion = deferred<void>();
+    const onUpdateSettings = vi.fn(async (event: React.FormEvent) => {
+      event.preventDefault();
+      await completion.promise;
+    });
+    const container = render(
+      <StudioSettingsPanel {...baseProps} onUpdateSettings={onUpdateSettings} />,
+    );
+    const saveButton = getByRole(container, "button", { name: "Save settings" });
+    const provider = getByRole(container, "combobox", { name: "Provider" });
+    saveButton.focus();
+
+    act(() => fireEvent.submit(saveButton));
+    provider.focus();
+    await act(async () => {
+      completion.resolve(undefined);
+      await completion.promise;
+    });
+
+    expect(document.activeElement).toBe(provider);
   });
 });

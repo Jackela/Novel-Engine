@@ -105,7 +105,7 @@ describe("volume backfill migration", () => {
     }
 
     // Phase three — the restart pipeline accepts the upgraded store unchanged.
-    const restarted: StudioDatabase = await openStudioDatabase(directory);
+    const restarted: StudioDatabase = await openStudioDatabase(join(directory, DATABASE_FILENAME));
     try {
       expect(restarted.raw.prepare("SELECT COUNT(*) AS count FROM volumes").get()).toEqual({
         count: 2,

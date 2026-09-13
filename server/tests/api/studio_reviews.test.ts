@@ -1,7 +1,10 @@
 import cookie from "@fastify/cookie";
 import Fastify, { type FastifyInstance } from "fastify";
 import { describe, expect, it } from "vitest";
-
+import type {
+  ReviewPageInput,
+  ReviewSummaryPage,
+} from "../../src/contexts/studio/application/ports/review_outcome_store.js";
 import type { EditorialAssessment } from "../../src/contexts/studio/application/review_service.js";
 import type { StudioServices } from "../../src/contexts/studio/application/studio_services.js";
 import { NotFoundError } from "../../src/contexts/studio/domain/exceptions.js";
@@ -97,12 +100,17 @@ class ReviewServiceDouble {
     return assessmentFor(projectId);
   }
 
-  listEditorialAssessments(_principal: unknown, projectId: string): EditorialAssessment[] {
+  collectProjectReviewSummaries(
+    _principal: unknown,
+    projectId: string,
+    _input: ReviewPageInput,
+  ): ReviewSummaryPage {
     this.listedProjectIds.push(projectId);
     if (projectId === "missing-project") {
       throw new NotFoundError("Project does not exist.");
     }
-    return [assessmentFor(projectId)];
+    const { issues, ...summary } = assessmentFor(projectId);
+    return { reviews: [{ ...summary, issueCount: issues.length }], nextCursor: null };
   }
 }
 
@@ -198,7 +206,7 @@ async function buildReviewRouteApp(): Promise<{
 }
 
 describe("review HTTP surface", () => {
-  it("answers POST with the terminal review job and lists assessments", async () => {
+  it("answers POST with the terminal review job", async () => {
     const { app, reviewService, jobHistory, session } = await buildReviewRouteApp();
     try {
       const headers = {
@@ -226,21 +234,7 @@ describe("review HTTP surface", () => {
       });
       expect(job.events[0].details).toEqual({ review_id: "review-1" });
       expect(jobHistory.recordedReviewProjectIds).toEqual(["project-1"]);
-
-      const listed = await app.inject({
-        method: "GET",
-        url: "/api/projects/project-1/reviews",
-        headers: { cookie: sessionCookies(session) },
-      });
-
-      expect(listed.statusCode, listed.body).toBe(200);
-      expect(listed.json().reviews).toHaveLength(1);
-      expect(listed.json().reviews[0]).toMatchObject({
-        project_id: "project-1",
-        created_at: "2026-08-24T12:34:56.000Z",
-      });
-      expect(listed.json().reviews[0].issues[0].document_id).toBe("document-1");
-      expect(reviewService.listedProjectIds).toEqual(["project-1"]);
+      expect(reviewService.listedProjectIds).toEqual([]);
     } finally {
       await app.close();
     }

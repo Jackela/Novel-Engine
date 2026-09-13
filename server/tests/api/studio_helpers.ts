@@ -30,27 +30,26 @@ export function monotonicClock(): () => Date {
   };
 }
 
-export interface StudioTestApp {
-  app: FastifyInstance;
-  directory: string;
-}
-
 /** Extra buildApp overrides used by the workflow tests (provider seams). */
-export interface StudioAppOverrides {
+export interface StudioAppOverrides
+  extends Pick<AppOptions, "databaseQueryLogger" | "operationCapacity" | "projectArtifactCleaner"> {
   textProviderFactory?: NonNullable<Parameters<typeof buildApp>[0]>["textProviderFactory"];
+  exportStoreFactory?: AppOptions["exportStoreFactory"];
+  exportArtifactGateway?: AppOptions["exportArtifactGateway"];
   config?: AppOptions["config"];
   lorebookBudgetCharacters?: AppOptions["lorebookBudgetCharacters"];
+  logger?: AppOptions["logger"];
 }
 
 /** Build the app with a real SQLite file and the studio surface mounted. */
 export async function buildStudioApp(
   clock?: () => Date,
   overrides: StudioAppOverrides = {},
-): Promise<StudioTestApp> {
+): Promise<{ app: FastifyInstance; directory: string }> {
   const directory = await mkdtemp(join(tmpdir(), "novel-engine-studio-"));
   const app = await buildApp({
     logger: false,
-    dataDirectory: directory,
+    databasePath: join(directory, "novel-engine.sqlite3"),
     sessionSecret: TEST_SESSION_SECRET,
     clock,
     ...overrides,
@@ -83,8 +82,9 @@ export async function call(
   method: HttpMethod,
   url: string,
   payload?: Record<string, unknown>,
+  requestHeaders?: Record<string, string>,
 ): Promise<InjectedResponse> {
-  const headers = authHeaders(jar);
+  const headers = { ...authHeaders(jar), ...requestHeaders };
   return payload === undefined
     ? app.inject({ method, url, headers })
     : app.inject({ method, url, payload, headers });
@@ -114,7 +114,7 @@ export async function seedProject(
   return response.json();
 }
 
-export interface DocumentPayload {
+export interface DocumentSummaryPayload {
   id: string;
   project_id: string;
   kind: string;
@@ -126,12 +126,15 @@ export interface DocumentPayload {
   /** Lore lifecycle status (#444); null for non-lore kinds. */
   lore_status?: string | null;
   current_revision_id: string;
-  content_markdown: string;
-  metadata: Record<string, unknown>;
-  revision_source: string;
+  revision_source: "author" | "ai-accepted" | "restore";
   word_count: number;
   created_at: string;
   updated_at: string;
+}
+
+export interface DocumentPayload extends DocumentSummaryPayload {
+  content_markdown: string;
+  metadata: Record<string, unknown>;
 }
 
 export interface RevisionPayload {
@@ -139,8 +142,6 @@ export interface RevisionPayload {
   document_id: string;
   parent_revision_id: string | null;
   revision_number: number;
-  content_markdown: string;
-  metadata: Record<string, unknown>;
   source: string;
   word_count: number;
   created_at: string;
@@ -162,7 +163,7 @@ export async function getProject(
   app: FastifyInstance,
   jar: CookieJar,
   projectId: string,
-): Promise<{ id: string; documents: DocumentPayload[] }> {
+): Promise<{ id: string; documents: DocumentSummaryPayload[] }> {
   const response = await call(app, jar, "GET", `/api/projects/${projectId}`);
   expect(response.statusCode, response.body).toBe(200);
   return response.json();
@@ -172,25 +173,27 @@ export async function listDocuments(
   app: FastifyInstance,
   jar: CookieJar,
   projectId: string,
-): Promise<DocumentPayload[]> {
+): Promise<DocumentSummaryPayload[]> {
   return (await getProject(app, jar, projectId)).documents;
 }
 
-export async function listRevisions(
+/** Read one complete accepted current Document from the scoped resource. */
+export async function getDocument(
   app: FastifyInstance,
   jar: CookieJar,
   projectId: string,
   documentId: string,
-): Promise<RevisionPayload[]> {
+): Promise<DocumentPayload> {
   const response = await call(
     app,
     jar,
     "GET",
-    `/api/projects/${projectId}/documents/${documentId}/revisions`,
+    `/api/projects/${projectId}/documents/${documentId}`,
   );
   expect(response.statusCode, response.body).toBe(200);
-  return response.json().revisions;
+  return response.json();
 }
+export { listRevisions } from "./revision_history_test_helper.js";
 
 export interface JobEventPayload {
   id: string;

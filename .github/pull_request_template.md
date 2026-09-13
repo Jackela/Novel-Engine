@@ -1,24 +1,33 @@
-## Summary
+## Change
 
-- product behavior changed:
-- canonical OpenSpec requirement:
+- Product behavior changed:
+- Canonical requirement or decision owner:
+- Fixed baseline SHA:
+- Candidate SHA validated:
+- Diff scope:
 
-## Validation
+## Evidence
 
-- [ ] `pnpm --dir server gates`
-- [ ] `pnpm --dir server type-check`
-- [ ] `pnpm --dir server lint`
-- [ ] `pnpm --dir server test`
-- [ ] `pnpm spec:validate`
-- [ ] `pnpm --dir frontend type-check`
-- [ ] `pnpm --dir frontend test:unit`
-- [ ] `pnpm --dir frontend build`
-- [ ] Relevant Studio flow verified in Chromium
-- [ ] OpenAPI baseline regenerated if routes changed (`pnpm --dir server openapi:snapshot`)
+Record completed evidence, not planned checks. Follow
+`docs/agents/change-evidence.md`; resolve the current commands from package
+scripts and workflows instead of copying a command checklist into this
+template.
 
-## Data and Compatibility
+| Level | Exact command or human flow executed | Result and evidence |
+| --- | --- | --- |
+| targeted |  |  |
+| local-full |  |  |
+| CI-required |  |  |
+| human-acceptance |  |  |
 
-- [ ] SQLite migration and backup behavior reviewed
-- [ ] Revision, snapshot, or export semantics are covered by tests
-- [ ] No retired workspace, Knowledge, RPG Character, or writing CLI surface returned
-- [ ] Public API changes are represented in `openspec/specs/novel-engine/spec.md`
+## Skips and residual risk
+
+| Expected evidence not completed | Reason | Risk owner and closure condition |
+| --- | --- | --- |
+|  |  |  |
+
+## Data and compatibility
+
+- Migration, backup, revision, snapshot, or export impact:
+- Public API and generated-contract impact:
+- Compatibility boundary:

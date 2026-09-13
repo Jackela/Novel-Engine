@@ -1,69 +1,41 @@
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import { api, HttpError } from "@/app/api";
-import type { Project, Review, StudioExport } from "@/app/types/studio";
-
-import { toErrorMessage } from "./toErrorMessage";
-
-const DEFAULT_LOAD_ERROR = "Unable to load the project. Please retry.";
+import { useProjectShellLoad } from "./useProjectShellLoad";
+import { useProjectShellState } from "./useProjectShellState";
 
 /**
- * #390 request lifecycle: the project aggregate loads under an abortable
- * signal owned by the loading effect. A stale load (project switched or the
- * page unmounted) is discarded instead of overwriting the current state, and
- * the loader never swallows a real failure — only a missing project (404)
- * redirects back to the project list; every other error surfaces as a
- * readable load error state.
+ * Compose the route-scoped project model behind one contract: the bounded
+ * shell state with its read authority (`useProjectShellState`) and the
+ * bootstrap/retry load lifecycle that feeds it (`useProjectShellLoad`). Both
+ * hold `navigate` behind refs updated in effects, because react-router
+ * re-creates it on every pathname change and identity-stable callbacks must
+ * never replay reads on same-project navigations (#465).
  */
 export function useStudioProject(projectId: string) {
   const navigate = useNavigate();
-  const [project, setProject] = useState<Project | null>(null);
-  const [reviews, setReviews] = useState<Review[]>([]);
-  const [exports, setExports] = useState<StudioExport[]>([]);
-  const [error, setError] = useState<string | null>(null);
-  const [loadError, setLoadError] = useState<string | null>(null);
+  const [lifecycle] = useState(() => Symbol("studio lifecycle"));
 
-  const loadProject = useCallback(
-    async (signal: AbortSignal) => {
-      try {
-        const [nextProject, reviewResponse, exportResponse] = await Promise.all([
-          api.project(projectId, { signal }),
-          api.reviews(projectId, { signal }),
-          api.exports(projectId, { signal }),
-        ]);
-        setLoadError(null);
-        setProject(nextProject);
-        setReviews(reviewResponse.reviews);
-        setExports(exportResponse.exports);
-      } catch (reason) {
-        // Stale load (project switched or unmounted): discard, never publish.
-        if (signal.aborted) return;
-        if (reason instanceof HttpError && reason.status === 404) {
-          navigate("/", { replace: true });
-          return;
-        }
-        setLoadError(toErrorMessage(reason, DEFAULT_LOAD_ERROR));
-      }
-    },
-    [navigate, projectId],
-  );
-
-  useEffect(() => {
-    const controller = new AbortController();
-    void loadProject(controller.signal);
-    return () => controller.abort();
-  }, [loadProject]);
+  const shell = useProjectShellState(projectId, navigate);
+  const { loadError, isLoading, retryLoad } = useProjectShellLoad(projectId, {
+    navigate,
+    isActiveProject: shell.isActiveProject,
+    setError: shell.setError,
+    beginShellLoad: shell.beginShellLoad,
+    commitLoadedShell: shell.commitLoadedShell,
+  });
 
   return {
-    project,
-    setProject,
-    reviews,
-    setReviews,
-    exports,
-    setExports,
-    error,
-    setError,
+    project: shell.project,
+    setProject: shell.setProject,
+    captureProjectShellRead: shell.captureProjectShellRead,
+    publishProjectShellRead: shell.publishProjectShellRead,
+    recheckProject: shell.recheckProject,
+    error: shell.error,
+    setError: shell.setError,
     loadError,
+    isLoading,
+    retryLoad,
+    lifecycle,
   };
 }

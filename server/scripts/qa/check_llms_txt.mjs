@@ -1,12 +1,13 @@
-import { execFileSync } from "node:child_process";
+import { existsSync } from "node:fs";
+import { join } from "node:path";
 
-import { readTextLines, repoRoot, reportFailures } from "./common.mjs";
+import { listRepoFiles, readTextLines, repoRoot, reportFailures } from "./common.mjs";
 
 /**
  * Link drift gate for the root llms.txt. Every link must point at
  * https://raw.githubusercontent.com/Jackela/Novel-Engine/main/<path> and the
- * referenced path must exist at git HEAD, so the published index never
- * rots when files move or get renamed.
+ * referenced path must exist in the current tracked or untracked candidate,
+ * so local validation observes the same files an agent is about to deliver.
  */
 
 const EXPECTED_PREFIX = "https://raw.githubusercontent.com/Jackela/Novel-Engine/main/";
@@ -27,18 +28,14 @@ function extractTargets(lines) {
   return targets;
 }
 
-function pathExistsAtHead(root, relativePath) {
-  try {
-    execFileSync("git", ["cat-file", "-e", `HEAD:${relativePath}`], { cwd: root, stdio: "ignore" });
-    return true;
-  } catch {
-    return false;
-  }
+function pathExistsInCandidate(root, candidateFiles, relativePath) {
+  return candidateFiles.has(relativePath) && existsSync(join(root, relativePath));
 }
 
 const root = repoRoot();
 const lines = readTextLines(`${root}/llms.txt`);
 const targets = extractTargets(lines);
+const candidateFiles = new Set(listRepoFiles(root));
 const failures = [];
 
 if (targets.length === 0) {
@@ -48,11 +45,15 @@ if (targets.length === 0) {
 for (const { url, path } of targets) {
   if (path === null) {
     failures.push(`llms.txt link must start with ${EXPECTED_PREFIX}, got ${url}`);
-  } else if (!pathExistsAtHead(root, path)) {
-    failures.push(`llms.txt link target missing from git HEAD: ${url} (path: ${path})`);
+  } else if (!pathExistsInCandidate(root, candidateFiles, path)) {
+    failures.push(
+      `llms.txt link target missing from the current candidate: ${url} (path: ${path})`,
+    );
   }
 }
 
 if (reportFailures("llms-txt", failures)) {
-  console.log(`[llms-txt] clean: ${targets.length} link targets verified against git HEAD`);
+  console.log(
+    `[llms-txt] clean: ${targets.length} link targets verified against the current candidate`,
+  );
 }

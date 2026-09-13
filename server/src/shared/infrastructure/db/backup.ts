@@ -4,7 +4,7 @@ import { basename, dirname, join } from "node:path";
 import Database from "better-sqlite3";
 
 export const DATABASE_FILENAME = "novel-engine.sqlite3";
-export const BACKUPS_DIRECTORY = "backups";
+const BACKUPS_DIRECTORY = "backups";
 
 /**
  * Write a consistent online backup of a non-empty SQLite database under

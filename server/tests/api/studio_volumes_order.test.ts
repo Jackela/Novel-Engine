@@ -137,14 +137,7 @@ describe("volume reading order", () => {
         format: "markdown",
       });
       expect(exportJob.statusCode, exportJob.body).toBe(201);
-      const jobId = (exportJob.json() as { id: string }).id;
-
-      const jobsResponse = await call(app, jar, "GET", `/api/projects/${project.id}/jobs`);
-      expect(jobsResponse.statusCode).toBe(200);
-      const job = (
-        jobsResponse.json().jobs as Array<{ id: string; result: Record<string, unknown> }>
-      ).find((entry) => entry.id === jobId);
-      const artifactId = job?.result.export_id;
+      const artifactId = (exportJob.json() as { result: { export_id?: string } }).result.export_id;
       expect(artifactId).toEqual(expect.any(String));
 
       const download = await call(

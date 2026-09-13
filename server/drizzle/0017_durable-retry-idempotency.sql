@@ -1,0 +1,2 @@
+ALTER TABLE `jobs` ADD `retry_idempotency_key` text;--> statement-breakpoint
+CREATE UNIQUE INDEX `uq_jobs_retry_idempotency` ON `jobs` (`project_id`,`retry_of_job_id`,`retry_idempotency_key`) WHERE "jobs"."retry_idempotency_key" is not null;

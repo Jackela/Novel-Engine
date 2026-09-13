@@ -3,10 +3,11 @@
 Reference for what each CI gate enforces and what to do when it goes red.
 The authoritative definition of every gate is the workflow files under
 `.github/workflows/`; this document explains behavior and response playbooks.
+Record validation status using [Change Evidence](change-evidence.md).
 
-Since the #277 cutover the tree is TypeScript-only (pnpm workspace
-`frontend/` + `server/`); the Python gates and the `python-freeze` guard
-were retired with the Python tree (git tag `python-final`).
+Since the #277 cutover the tree is TypeScript-only. The Python tree at tag
+`python-final` is history, not a current validation twin or fallback. Resolve
+current commands from the pnpm package scripts and live workflows.
 
 ## Gate inventory
 
@@ -14,14 +15,28 @@ were retired with the Python tree (git tag `python-final`).
 | --- | --- | --- |
 | `CI` / Validate dependency security | `pnpm audit --audit-level high --prod` (production deps only) | The PR introduces or keeps a *production* dependency with a known high advisory |
 | `Dependency Audit` (scheduled, daily 03:17 UTC + manual dispatch) | Full audit including dev tooling; tracks failures in one reusable issue until green | A new upstream advisory affects any locked dependency, including dev-only paths |
-| `CI` / Validate SSOT, hygiene, and OpenSpec | `pnpm --dir server gates` + `pnpm spec:validate` | Version/identity drift (release version authority is `server/package.json`), forbidden residues, file-size budget breach, migration-channel violations, llms.txt link drift (a raw URL whose path is missing from git HEAD, or a link not matching the expected raw URL shape), OpenAPI snapshot drift, or invalid OpenSpec deltas |
+| `CI` / `validate` job | Dependency security; server SSOT, hygiene, size, migration, llms-txt, error-codes, and OpenAPI gates, architecture, TypeScript, Biome, and full tests; strict OpenSpec; frontend Biome, TypeScript, unit tests, build, generated API-type drift, React diagnostics, and the browser workflow | One or more validation surfaces failed; inspect the failing step on that exact SHA |
 | `CI` / Validate React static diagnostics | `react-doctor` with **zero tolerance: warnings fail too**, not just errors | Any diagnostic, including `warning` severity (`unused-export`, `async-defer-await`, …) |
-| `CI` / Validate frontend | eslint `--max-warnings=0`, prettier, tsc, vitest, vite build | Conventional test/lint/type failures |
+| `CI` / Validate frontend | Biome check and format, TypeScript, Vitest, and Vite build | Conventional lint, format, type, test, or build failure |
 | `CI` / Check generated API types drift | regenerates `frontend/generated/api-types.ts` from `server/qa-baselines/openapi.current.json` and compares byte-identical | The committed generated types are stale — run `pnpm --dir frontend gen:api-types` |
 | `CI` / Validate Studio workflow against the TS backend | Playwright (`playwright.ts.config.ts`) against the emitted CLI serving `frontend/dist` | A browser-level Studio workflow or content-acceptance assertion broke |
-| `CI` (server job) / gates, architecture, types, tests | Node QA gates, dependency-cruiser, `tsc --strict`, Biome, vitest with Fastify `inject()` | A `server/` module breaks layering or a conventional test/lint/type failure |
+| `CI` / `server` job | Duplicate server gates, dependency-cruiser, TypeScript, Biome, and Vitest validation retained as defense in depth | A server contract or conventional check failed independently of the `validate` job |
+| `gate:error-codes` (server package script, part of `pnpm --dir server gates`) | `docs/agents/error-codes.md` catalog rows stay in lockstep with `ERROR_CODES` and `ERROR_HTTP_STATUS`: the code set and every HTTP status must match exactly in both directions | The error-code catalog drifted from the TS sources; align the docs table or the TS declarations (the diff message names the offending code) |
 | `CI` / container | `docker build` + fresh install, persistence across restart, deep link, drizzle-migration table check | The production image fails to boot, persist, or serve the SPA |
 | `CodeQL` | javascript-typescript analysis over `server/` + `frontend/` | A CodeQL alert on the TS workspace |
+
+## CodeQL: the neutral default-setup check
+
+On pull requests a second "CodeQL" check with conclusion `neutral` may appear.
+It is created by the `github-advanced-security` app as the code-scanning
+marker for GitHub's *default setup*, which coexists with this repo's advanced
+setup (`.github/workflows/codeql.yml`: push and pull_request triggers on
+`main`/`develop` plus a weekly schedule). The real PR analysis is the
+`Analyze (javascript-typescript)` job in that workflow, which passes on every
+recent PR. The neutral check is therefore a benign byproduct of the two
+setups coexisting, not a coverage gap. To silence it, the Owner can disable
+default setup under Settings → Code security (manual UI action, not a
+workflow change).
 
 ## Runbook: dependency advisory flaps
 
@@ -35,8 +50,9 @@ Full-coverage auditing moved to the scheduled `Dependency Audit` workflow:
 2. Fix by adding or tightening an `overrides` entry in `pnpm-workspace.yaml`
    (see the precedent from #235: `undici`, `fast-uri`, `brace-expansion`,
    `postcss`, `nanoid`) and regenerating the lockfile
-   (`pnpm install` at the repo root). Note: `undici` must stay `<8` for
-   jsdom 29 compatibility.
+   (`pnpm install` at the repo root). The current `undici <8` override is a
+   workspace compatibility constraint; verify the current lockfile and
+   frontend package before changing it.
 3. Merge; the next scheduled run closes the tracking issue automatically once
    the audit is green.
 
@@ -49,8 +65,10 @@ same way.
 `Validate React static diagnostics` fails on any diagnostic count > 0,
 **including `warning` severity**. This is deliberate (both blocked PRs in
 2026-07 were warning-level: `unused-export`, `async-defer-await`). Fix the
-diagnostic in the code; do not add suppressions (the diff check also rejects
-`# type: ignore`-style suppressions).
+diagnostic in the code. If a narrowly scoped `react-doctor-disable-next-line`
+directive is necessary for an intentional pattern, keep it beside the code
+and document the reason; the workflow checks the reported diagnostic count and
+does not claim a blanket suppression ban.
 
 ## Runbook: OpenAPI baseline changes
 
@@ -91,14 +109,12 @@ behavior, **not a gate malfunction**. Baselines must be regenerated
 deliberately (with review evidence) whenever the file changes; see the
 failure hint printed by the gate itself.
 
-### At-limit watch list
+### Current size evidence
 
-These files sit exactly at the 300-line limit — any growth turns the gate
-red, so prefer splitting them proactively:
-
-- `server/tests/api/studio_proposals.test.ts`
-- `server/src/contexts/studio/application/provider_scaffold.ts`
-- `server/src/contexts/studio/application/ports/studio_store.ts`
+Do not maintain an at-limit file list in documentation: it is an instantaneous
+cache of repository state. Read the current checker output and inspect the
+candidate file before editing. A clean historical run does not prove that a
+later candidate remains within budget.
 
 ## Dependabot status
 

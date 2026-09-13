@@ -4,10 +4,10 @@ import { owners } from "../../../../shared/infrastructure/db/schema.js";
 
 /**
  * The authoring core (#266): projects, documents, and immutable revisions —
- * the single authoring authority. Mirrors the Python gold standard
- * (infrastructure/models.py): the identity and revision-number unique
- * constraints, and cascade deletes. Pointer columns (current_revision_id)
- * stay plain text exactly like the gold standard.
+ * the single authoring authority. Identity and revision-number uniqueness is
+ * enforced with unique constraints, and deletes cascade to child rows.
+ * Pointer columns (current_revision_id) stay plain text instead of foreign
+ * keys.
  *
  * Import idempotency is per owner scope (#273): at most one row per
  * (owner_id, import_hash). The guest scoping column and its unique index
@@ -27,7 +27,11 @@ export const projects = sqliteTable(
     createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
     updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
   },
-  (table) => [uniqueIndex("uq_project_owner_import_hash").on(table.ownerId, table.importHash)],
+  (table) => [
+    uniqueIndex("uq_project_owner_import_hash").on(table.ownerId, table.importHash),
+    // The catalog keyset range (#458): owner-scoped (updated_at, id) order.
+    index("idx_projects_owner_updated_id").on(table.ownerId, table.updatedAt, table.id),
+  ],
 );
 
 /**
@@ -100,6 +104,7 @@ export const documentRevisions = sqliteTable(
     contentMarkdown: text("content_markdown").notNull().default(""),
     metadataJson: text("metadata_json").notNull().default("{}"),
     source: text("source").notNull().default("author"),
+    wordCount: integer("word_count"),
     createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
   },
   (table) => [
@@ -181,7 +186,7 @@ export const reviews = sqliteTable(
     createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
   },
   (table) => [
-    index("idx_reviews_project_created").on(table.projectId, table.createdAt),
+    index("idx_reviews_project_created_id").on(table.projectId, table.createdAt, table.id),
     index("idx_reviews_snapshot").on(table.snapshotId),
   ],
 );
@@ -230,7 +235,38 @@ export const exports = sqliteTable(
     createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
   },
   (table) => [
-    index("idx_exports_project_created").on(table.projectId, table.createdAt),
+    index("idx_exports_project_created_id").on(table.projectId, table.createdAt, table.id),
     index("idx_exports_snapshot").on(table.snapshotId),
   ],
 );
+
+/** Durable authority for replaying an interrupted uncommitted-file cleanup. */
+export const exportPublicationCleanupIntents = sqliteTable(
+  "export_publication_cleanup_intents",
+  {
+    publicationId: text("publication_id").primaryKey(),
+    artifactId: text("artifact_id").notNull(),
+    projectId: text("project_id")
+      .notNull()
+      .references(() => projects.id, { onDelete: "cascade" }),
+    version: integer("version").notNull(),
+    format: text("format").notNull(),
+    relativePath: text("relative_path").notNull(),
+    stageFile: text("stage_file").notNull(),
+    stageDevice: text("stage_device").notNull(),
+    stageInode: text("stage_inode").notNull(),
+    manifestDevice: text("manifest_device").notNull(),
+    manifestInode: text("manifest_inode").notNull(),
+    sizeBytes: integer("size_bytes").notNull(),
+    checksumSha256: text("checksum_sha256").notNull(),
+    createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
+  },
+  (table) => [index("idx_export_cleanup_intents_project").on(table.projectId)],
+);
+
+/**
+ * The synchronous-jobs audit and usage-accounting tables (#534): defined in
+ * ./job_usage_tables.ts to keep this authoring core within its size budget,
+ * and re-exported here so the studio schema stays the single import surface.
+ */
+export { jobEvents, jobs, usageEvents } from "./job_usage_tables.js";

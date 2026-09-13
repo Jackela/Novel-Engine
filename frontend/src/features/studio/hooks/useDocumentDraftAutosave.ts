@@ -1,52 +1,56 @@
-import { type Dispatch, type MutableRefObject, type SetStateAction, useEffect } from "react";
+import {
+  type Dispatch,
+  type MutableRefObject,
+  type SetStateAction,
+  useEffect,
+  useState,
+} from "react";
 
 import { api, HttpError } from "@/app/api";
-import type { Project, SaveState, StudioDocument } from "@/app/types/studio";
+import type { SaveState, StudioDocument } from "@/app/types/studio";
 
+import type { DraftSnapshot, PersistedDraft } from "./documentDraftState";
 import { toErrorMessage } from "./toErrorMessage";
 
-interface DraftRefValue {
-  readonly draft: string;
-  readonly titleDraft: string;
-  readonly activeDocument: StudioDocument | null;
-}
-
-interface PersistedDraft {
-  readonly documentId: string;
-  readonly draft: string;
-  readonly titleDraft: string;
-}
-
 interface AutosaveOptions {
+  readonly ownerKey: string;
+  readonly ownerToken: symbol;
+  readonly isCurrentOwner: () => boolean;
+  readonly isCurrentProject: () => boolean;
   readonly activeDocument: StudioDocument | null;
   readonly draft: string;
   readonly titleDraft: string;
   readonly saveState: SaveState;
-  readonly draftRef: MutableRefObject<DraftRefValue>;
-  readonly lastPersistedDraft: MutableRefObject<PersistedDraft | null>;
+  readonly draftRef: MutableRefObject<DraftSnapshot>;
+  readonly persistedDraftsRef: MutableRefObject<Map<string, PersistedDraft>>;
   readonly loadedRevision: MutableRefObject<string | null>;
   readonly saveStateRef: MutableRefObject<SaveState>;
-  readonly conflictActionPendingRef: MutableRefObject<boolean>;
+  readonly conflictActionPendingRef: MutableRefObject<symbol | null>;
   readonly saveTimerRef: MutableRefObject<number | null>;
-  readonly saveInFlightRef: MutableRefObject<boolean>;
+  readonly saveInFlightRef: MutableRefObject<Set<string>>;
   readonly persistDraft: (
     document: StudioDocument,
     content: string,
     title: string,
     baseRevisionId: string,
-  ) => Promise<StudioDocument>;
-  readonly refreshLatestDocument: (documentId: string) => Promise<StudioDocument>;
+    editVersion: number,
+  ) => Promise<StudioDocument | null>;
+  readonly refreshLatestDocument: (documentId: string) => Promise<StudioDocument | null>;
   readonly setCurrentSaveState: (nextSaveState: SaveState) => void;
   readonly setError: Dispatch<SetStateAction<string | null>>;
 }
 
 export function useDocumentDraftAutosave({
+  ownerKey,
+  ownerToken,
+  isCurrentOwner,
+  isCurrentProject,
   activeDocument,
   draft,
   titleDraft,
   saveState,
   draftRef,
-  lastPersistedDraft,
+  persistedDraftsRef,
   loadedRevision,
   saveStateRef,
   conflictActionPendingRef,
@@ -57,11 +61,13 @@ export function useDocumentDraftAutosave({
   setCurrentSaveState,
   setError,
 }: AutosaveOptions): void {
+  const [pendingAutosaves, setPendingAutosaves] = useState<ReadonlySet<string>>(() => new Set());
+  const isAutosavePending = pendingAutosaves.has(ownerKey);
   useEffect(() => {
     if (!activeDocument) return;
-    const persisted = lastPersistedDraft.current;
+    const persisted = persistedDraftsRef.current.get(ownerKey);
     if (
-      persisted?.documentId === activeDocument.id &&
+      persisted?.ownerKey === ownerKey &&
       persisted.draft === draft &&
       persisted.titleDraft === titleDraft
     ) {
@@ -74,7 +80,14 @@ export function useDocumentDraftAutosave({
       setCurrentSaveState("idle");
       return;
     }
-    if (saveStateRef.current === "conflict" || conflictActionPendingRef.current) return;
+    if (
+      saveStateRef.current === "conflict" ||
+      saveStateRef.current === "error" ||
+      isAutosavePending ||
+      conflictActionPendingRef.current === ownerToken
+    ) {
+      return;
+    }
     setCurrentSaveState("saving");
     if (saveTimerRef.current) window.clearTimeout(saveTimerRef.current);
     saveTimerRef.current = window.setTimeout(async () => {
@@ -82,26 +95,52 @@ export function useDocumentDraftAutosave({
         draft: currentDraft,
         titleDraft: currentTitle,
         activeDocument: currentDocument,
+        editVersion,
       } = draftRef.current;
-      if (!currentDocument) return;
-      if (saveInFlightRef.current) return;
-      saveInFlightRef.current = true;
+      if (!currentDocument || draftRef.current.ownerToken !== ownerToken || !isCurrentOwner()) {
+        return;
+      }
+      if (saveInFlightRef.current.has(ownerKey)) return;
+      saveInFlightRef.current.add(ownerKey);
+      setPendingAutosaves((current) => new Set(current).add(ownerKey));
       try {
         await persistDraft(
           currentDocument,
           currentDraft,
           currentTitle,
           loadedRevision.current ?? currentDocument.current_revision_id,
+          editVersion,
         );
       } catch (reason) {
+        if (!isCurrentProject()) return;
         const isConflict = reason instanceof HttpError && reason.status === 409;
-        setCurrentSaveState(isConflict ? "conflict" : "error");
-        setError(toErrorMessage(reason, "Unable to save."));
-        if (isConflict) {
-          void refreshLatestDocument(currentDocument.id).catch(() => undefined);
+        if (!isConflict) {
+          setCurrentSaveState("error");
+          if (isCurrentOwner()) setError(toErrorMessage(reason, "Unable to save."));
+          return;
         }
+        // Land the winning body before publishing the conflict surface (#472):
+        // conflict actions refuse to start while this save still holds the
+        // saveInFlight lock, so an early "Save conflict" renders clickable
+        // buttons that silently swallow the discard click and strand the
+        // editor in conflict once the recovery tail settles.
+        let recoveryError: string | null = null;
+        try {
+          await refreshLatestDocument(currentDocument.id);
+        } catch (refreshReason) {
+          recoveryError = toErrorMessage(refreshReason, "Unable to refresh the latest document.");
+        }
+        setCurrentSaveState("conflict");
+        if (isCurrentOwner()) setError(recoveryError ?? toErrorMessage(reason, "Unable to save."));
       } finally {
-        saveInFlightRef.current = false;
+        saveInFlightRef.current.delete(ownerKey);
+        // Recheck a new lifecycle's Draft when the old request releases its
+        // lock, even when that request's error must remain invisible.
+        setPendingAutosaves((current) => {
+          const next = new Set(current);
+          next.delete(ownerKey);
+          return next;
+        });
       }
     }, 1500);
     return () => {
@@ -109,15 +148,20 @@ export function useDocumentDraftAutosave({
     };
   }, [
     activeDocument,
+    ownerKey,
+    ownerToken,
+    isCurrentOwner,
+    isCurrentProject,
     draft,
     titleDraft,
     saveState,
+    isAutosavePending,
     persistDraft,
     refreshLatestDocument,
     setCurrentSaveState,
     setError,
     draftRef,
-    lastPersistedDraft,
+    persistedDraftsRef,
     loadedRevision,
     saveStateRef,
     conflictActionPendingRef,
@@ -138,11 +182,9 @@ export function restoreDocumentRevision(
 export async function loadLatestDocument(
   projectId: string,
   documentId: string,
-): Promise<{ readonly project: Project; readonly document: StudioDocument }> {
-  const project = await api.project(projectId);
-  const document = project.documents?.find((candidate) => candidate.id === documentId);
-  if (!document) throw new Error("The document is no longer available.");
-  return { project, document };
+  signal?: AbortSignal,
+): Promise<StudioDocument> {
+  return api.document(projectId, documentId, { signal });
 }
 
 export function saveDocumentDraft(

@@ -1,129 +1,133 @@
 import type { Dispatch, SetStateAction } from "react";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef } from "react";
 
-import { streamProposal } from "@/app/proposalStream";
-import type { Project, StudioDocument, StudioJob } from "@/app/types/studio";
-import type { InspectorTab } from "@/features/studio/studioConstants";
+import type { Project, StudioDocument } from "@/app/types/studio";
 
-import { acceptProposalAndRefresh } from "./acceptProposalAndRefresh";
-import { toErrorMessage } from "./toErrorMessage";
 import { usePendingAction } from "./usePendingAction";
+import { useProposalAcceptance } from "./useProposalAcceptance";
+import { PROPOSAL_KEYS, useProposalStreamSession } from "./useProposalStreamSession";
+import type { ProposalAuditControl } from "./useStudioJobs";
 
-interface DocumentProposal {
-  readonly documentId: string;
-  readonly job: StudioJob;
-}
+const INACTIVE_PROPOSAL_AUDIT: ProposalAuditControl = {
+  status: "idle",
+  audit: async () => false,
+  clear: () => undefined,
+  epoch: () => 0,
+  isGated: () => false,
+};
 
-const PROPOSAL_KEYS = ["proposal", "accept"] as const;
-
-type ProposalKey = (typeof PROPOSAL_KEYS)[number];
-
+/**
+ * Facade for the proposal workspace: composes the stream session (generation
+ * and landed job) with the acceptance landing flow behind the pre-split
+ * return shape, and owns the shared request ledger plus owner-key
+ * reconciliation both sub-hooks coordinate through.
+ */
 export function useStudioProposal(
   projectId: string,
   activeDocument: StudioDocument | null,
   project: Project | null,
   setProject: Dispatch<SetStateAction<Project | null>>,
-  setInspector: Dispatch<SetStateAction<InspectorTab>>,
   setError: Dispatch<SetStateAction<string | null>>,
   loadJobs: () => void,
-  onAccepted: (document: StudioDocument) => void,
+  captureAcceptedDocument: (documentId: string) => ((document: StudioDocument) => void) | undefined,
+  proposalAudit: ProposalAuditControl = INACTIVE_PROPOSAL_AUDIT,
 ) {
-  const [proposalState, setProposalState] = useState<DocumentProposal | null>(null);
-  const [instruction, setInstruction] = useState("");
-  const { pending, begin, finish } = usePendingAction<ProposalKey>(PROPOSAL_KEYS);
-  // #308: the in-flight streamed markdown lands in the proposal preview only;
-  // the manuscript is touched by acceptProposal, never by the stream itself.
-  const [streaming, setStreaming] = useState<{
-    documentId: string;
-    text: string;
-  } | null>(null);
-  const streamController = useRef<AbortController | null>(null);
+  const { pending, begin, finish } = usePendingAction(PROPOSAL_KEYS);
   const activeDocumentId = activeDocument?.id ?? null;
-  const proposal = proposalState?.documentId === activeDocumentId ? proposalState.job : null;
-  const streamingText = streaming?.documentId === activeDocumentId ? streaming.text : null;
+  const ownerKey = `${projectId}\u0000${activeDocumentId ?? ""}`;
+  const ownerKeyRef = useRef(ownerKey);
+  const projectIdRef = useRef<string | null>(projectId);
+  const requestEpochRef = useRef(0);
+  const currentAuditEpoch = proposalAudit.epoch();
 
-  const setProposal = useCallback<Dispatch<SetStateAction<StudioJob | null>>>(
-    (nextProposal) => {
-      setProposalState((current) => {
-        const currentProposal = current?.documentId === activeDocumentId ? current.job : null;
-        const next =
-          typeof nextProposal === "function" ? nextProposal(currentProposal) : nextProposal;
-        return next && activeDocumentId ? { documentId: activeDocumentId, job: next } : null;
-      });
-    },
-    [activeDocumentId],
+  const isCurrentRequest = useCallback(
+    (requestOwnerKey: string, requestEpoch: number) =>
+      ownerKeyRef.current === requestOwnerKey && requestEpochRef.current === requestEpoch,
+    [],
   );
 
-  const runProposal = useCallback(
-    async (operation: "continue" | "rewrite") => {
-      if (!activeDocument || !project || !begin("proposal")) return;
-      setError(null);
-      const controller = new AbortController();
-      streamController.current = controller;
-      setStreaming({ documentId: activeDocument.id, text: "" });
-      try {
-        const nextProposal = await streamProposal({
-          projectId,
-          documentId: activeDocument.id,
-          operation,
-          instruction,
-          provider: String(project.settings.provider ?? "mock"),
-          signal: controller.signal,
-          onDelta: (text) =>
-            setStreaming((current) =>
-              current === null
-                ? current
-                : { documentId: current.documentId, text: current.text + text },
-            ),
-        });
-        setProposalState({ documentId: activeDocument.id, job: nextProposal });
-        setInspector("copilot");
-      } catch (reason) {
-        if (!controller.signal.aborted) {
-          setError(toErrorMessage(reason, "Unable to create proposal."));
-        }
-      } finally {
-        streamController.current = null;
-        setStreaming(null);
-        finish("proposal");
-      }
-    },
-    [activeDocument, begin, finish, project, projectId, instruction, setError, setInspector],
-  );
-
-  const stopProposal = useCallback(() => {
-    streamController.current?.abort();
+  const nextRequestEpoch = useCallback(() => {
+    const requestEpoch = requestEpochRef.current + 1;
+    requestEpochRef.current = requestEpoch;
+    return requestEpoch;
   }, []);
 
-  const acceptProposal = useCallback(async () => {
-    if (!proposal || !activeDocument || !begin("accept")) return;
-    setError(null);
-    try {
-      await acceptProposalAndRefresh({
-        projectId,
-        proposalId: proposal.id,
-        documentId: activeDocument.id,
-        setProject,
-        onAccepted,
-        loadJobs,
-      });
-      setProposalState(null);
-    } catch (reason) {
-      setError(toErrorMessage(reason, "Unable to accept proposal."));
-    } finally {
-      finish("accept");
-    }
-  }, [
-    activeDocument,
-    begin,
-    finish,
-    loadJobs,
-    onAccepted,
-    projectId,
+  const isProjectLive = useCallback(
+    (candidateProjectId: string) => projectIdRef.current === candidateProjectId,
+    [],
+  );
+
+  const {
     proposal,
+    setProposal,
+    clearCurrentProposal,
+    instruction,
+    setInstruction,
+    runProposal,
+    stopProposal,
+    streamingText,
+    unknownAttemptOperation,
+    reconcileOwnerState,
+    detachStream,
+  } = useProposalStreamSession({
+    projectId,
+    activeDocument,
+    project,
+    ownerKey,
+    activeDocumentId,
+    currentAuditEpoch,
+    proposalAudit,
+    setError,
+    pending: { begin, finish },
+    isCurrentRequest,
+    nextRequestEpoch,
+    isProjectLive,
+  });
+
+  const { acceptProposal, detachAccept } = useProposalAcceptance({
+    projectId,
+    activeDocument,
+    ownerKey,
+    proposal,
+    proposalAudit,
     setError,
     setProject,
-  ]);
+    loadJobs,
+    captureAcceptedDocument,
+    pending: { begin, finish },
+    isCurrentRequest,
+    nextRequestEpoch,
+    isProjectLive,
+    clearCurrentProposal,
+  });
+
+  useEffect(() => {
+    ownerKeyRef.current = ownerKey;
+    reconcileOwnerState(ownerKey);
+    finish("proposal");
+    finish("accept");
+
+    return () => {
+      requestEpochRef.current += 1;
+      detachStream(ownerKey);
+    };
+  }, [detachStream, finish, ownerKey, reconcileOwnerState]);
+
+  useEffect(() => {
+    projectIdRef.current = projectId;
+    return () => {
+      if (projectIdRef.current === projectId) projectIdRef.current = null;
+      detachAccept(projectId);
+    };
+  }, [detachAccept, projectId]);
+
+  const proposalOutcomeUnknown = proposalAudit.status !== "idle";
+  const proposalActionsGated = proposalAudit.isGated();
+
+  const retryProposalAudit = useCallback(async (): Promise<boolean> => {
+    if (proposalAudit.status !== "audit_failed") return false;
+    return proposalAudit.audit();
+  }, [proposalAudit]);
 
   return {
     proposal,
@@ -137,5 +141,10 @@ export function useStudioProposal(
     pending,
     isRunningProposal: pending.proposal,
     isAcceptingProposal: pending.accept,
+    proposalOutcomeUnknown,
+    proposalAuditStatus: proposalAudit.status,
+    proposalActionsGated,
+    unknownAttemptOperation,
+    retryProposalAudit,
   };
 }

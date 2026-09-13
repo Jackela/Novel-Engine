@@ -1,4 +1,5 @@
 import { type Static, Type } from "@fastify/type-provider-typebox";
+import { EXPORT_ARTIFACT_FORMATS } from "../export_artifact_identity.js";
 import type { ExportArtifactFormat } from "../ports/export_store.js";
 
 /**
@@ -14,7 +15,7 @@ export const exportArtifactPayloadSchema = Type.Object(
     snapshot_id: Type.String(),
     format: Type.Unsafe<ExportArtifactFormat>({
       type: "string",
-      enum: ["markdown", "docx", "epub"],
+      enum: [...EXPORT_ARTIFACT_FORMATS],
     }),
     size_bytes: Type.Integer({ minimum: 0 }),
     checksum_sha256: Type.String({ pattern: "^[a-f0-9]{64}$" }),

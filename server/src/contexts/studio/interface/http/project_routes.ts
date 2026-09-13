@@ -7,17 +7,30 @@ import {
   ERROR_CODES,
   errorEnvelopeResponse,
 } from "../../../../shared/interface/http/error_envelope.js";
+import { projectPageLimit } from "../../application/ports/project_catalog_store.js";
+import { scopeForPrincipal } from "../../application/ports/studio_store.js";
+import { projectUpdateCommand } from "../../application/project_service.js";
 import type { StudioServices } from "../../application/studio_services.js";
-import { withStudioErrors } from "./studio_error_mapping.js";
+import {
+  decodeProjectCatalogCursor,
+  encodeProjectCatalogCursor,
+} from "./project_catalog_cursor.js";
+import { projectUpdateRawKeyGuard } from "./project_update_raw_keys.js";
+import { structureCapacity422ResponseSchema } from "./structure_capacity_schemas.js";
+import { withAsyncStudioErrors, withStudioErrors } from "./studio_error_mapping.js";
 import {
   projectCreateSchema,
   projectIdParams,
+  projectListQuerySchema,
   projectMatchQuerySchema,
+  projectUpdateSchema,
 } from "./studio_request_schemas.js";
 import {
   matchListResponseSchema,
-  projectDetailResponseSchema,
+  operationInFlightSchema,
   projectListResponseSchema,
+  projectResponseSchema,
+  projectShellResponseSchema,
 } from "./studio_schemas.js";
 
 export interface StudioRoutesOptions {
@@ -39,7 +52,7 @@ export function requireServices(options: StudioRoutesOptions): StudioServices {
   return options.services;
 }
 
-/** Project surface: create with seeding, list (updated_at DESC), detail, delete. */
+/** Project surface: create with seeding, bounded list (updated_at DESC), detail, delete. */
 export const projectRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fastify, options) => {
   const app = fastify.withTypeProvider<TypeBoxTypeProvider>();
   const guard = principalGuard(options.authService);
@@ -47,19 +60,65 @@ export const projectRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fas
   app.get(
     "/api/projects",
     {
-      preHandler: [guard],
+      // Authentication deliberately precedes schema/cursor validation so an
+      // anonymous malformed query cannot probe this owner-scoped surface.
+      preValidation: [guard],
       schema: {
+        querystring: projectListQuerySchema,
         response: {
           200: projectListResponseSchema,
           401: errorEnvelopeResponse,
+          422: errorEnvelopeResponse,
+          503: errorEnvelopeResponse,
+        },
+      },
+    },
+    async (request) => {
+      const ownerId = scopeForPrincipal(requirePrincipal(request)).ownerId;
+      const cursor =
+        request.query.cursor === undefined
+          ? undefined
+          : decodeProjectCatalogCursor(request.query.cursor, ownerId);
+      return withStudioErrors(() => {
+        const page = requireServices(options).projects.listProjects(requirePrincipal(request), {
+          limit: projectPageLimit(request.query.limit ?? 50),
+          ...(cursor === undefined ? {} : { cursor }),
+        });
+        return {
+          projects: page.projects,
+          next_cursor: encodeProjectCatalogCursor(ownerId, page.nextCursor),
+        };
+      });
+    },
+  );
+
+  app.patch(
+    "/api/projects/:projectId",
+    {
+      preValidation: [guard, projectUpdateRawKeyGuard],
+      schema: {
+        params: projectIdParams,
+        body: projectUpdateSchema,
+        response: {
+          200: projectResponseSchema,
+          401: errorEnvelopeResponse,
+          403: errorEnvelopeResponse,
+          404: errorEnvelopeResponse,
+          // Oversized settings JSON refuses permanently (#461).
+          422: structureCapacity422ResponseSchema,
+          500: errorEnvelopeResponse,
           503: errorEnvelopeResponse,
         },
       },
     },
     async (request) =>
-      withStudioErrors(() => ({
-        projects: requireServices(options).projects.listProjects(requirePrincipal(request)),
-      })),
+      withStudioErrors(() =>
+        requireServices(options).projects.updateProject(
+          requirePrincipal(request),
+          request.params.projectId,
+          projectUpdateCommand(request.body),
+        ),
+      ),
   );
 
   app.post(
@@ -69,7 +128,7 @@ export const projectRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fas
       schema: {
         body: projectCreateSchema,
         response: {
-          201: projectDetailResponseSchema,
+          201: projectShellResponseSchema,
           401: errorEnvelopeResponse,
           403: errorEnvelopeResponse,
           422: errorEnvelopeResponse,
@@ -96,7 +155,7 @@ export const projectRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fas
       schema: {
         params: projectIdParams,
         response: {
-          200: projectDetailResponseSchema,
+          200: projectShellResponseSchema,
           401: errorEnvelopeResponse,
           404: errorEnvelopeResponse,
           503: errorEnvelopeResponse,
@@ -106,7 +165,7 @@ export const projectRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fas
     async (request) =>
       withStudioErrors(
         () =>
-          requireServices(options).projects.projectDetail(
+          requireServices(options).projects.projectShell(
             requirePrincipal(request),
             request.params.projectId,
           ).payload,
@@ -150,15 +209,23 @@ export const projectRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fas
           401: errorEnvelopeResponse,
           403: errorEnvelopeResponse,
           404: errorEnvelopeResponse,
+          409: operationInFlightSchema,
           503: errorEnvelopeResponse,
         },
       },
     },
     async (request, reply) => {
-      withStudioErrors(() =>
+      const reportCleanupFailure = (failure: unknown): void => {
+        request.log.error(
+          { err: failure, errorId: request.id, project_artifact_cleanup_failed: true },
+          "project artifact cleanup failed",
+        );
+      };
+      await withAsyncStudioErrors(() =>
         requireServices(options).projects.removeProject(
           requirePrincipal(request),
           request.params.projectId,
+          reportCleanupFailure,
         ),
       );
       reply.status(204);

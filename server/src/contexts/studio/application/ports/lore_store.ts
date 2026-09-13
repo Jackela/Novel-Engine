@@ -1,5 +1,6 @@
 import type { LoreStatus } from "../../domain/kinds.js";
-import type { DocumentWithCurrent, ProjectScope } from "./studio_store.js";
+import type { DocumentWithCurrent } from "./document_store.js";
+import type { ProjectScope } from "./studio_store.js";
 
 /** The alias write (#315): the normalized key list of one lore entry. */
 export interface SetLoreAliasesInput {
@@ -14,13 +15,12 @@ export interface SetLoreStatusInput {
 }
 
 /**
- * Lorebook-port of the authoring core (#315), kept in its own module so the
- * authoring StudioStore stays within its file-size budget. Method names avoid
- * stems shared with frontend client methods. Aliases and lifecycle status are
- * DOCUMENT-level state: revision metadata is replaced wholesale by ordinary
- * saves, so prompt keys and gating state must live outside revisions to
- * survive them — no revision is minted here and immutable history stays
- * untouched.
+ * Lorebook-port of the authoring core (#315), kept in its own focused module.
+ * Method names avoid stems shared with frontend client methods. Aliases and
+ * lifecycle status are DOCUMENT-level state: revision metadata is replaced
+ * wholesale by ordinary saves, so prompt keys and gating state must live
+ * outside revisions to survive them — no revision is minted here and
+ * immutable history stays untouched.
  */
 export interface StudioLoreStore {
   /**

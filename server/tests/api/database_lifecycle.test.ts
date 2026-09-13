@@ -6,7 +6,8 @@ import { eq } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
 
 import { buildApp } from "../../src/apps/api/app.js";
-import { jobs, sessions } from "../../src/shared/infrastructure/db/schema.js";
+import { jobs } from "../../src/contexts/studio/infrastructure/db/schema.js";
+import { sessions } from "../../src/shared/infrastructure/db/schema.js";
 import { openStudioDatabase } from "../../src/shared/infrastructure/db/startup.js";
 
 async function makeDataDirectory(): Promise<string> {
@@ -28,7 +29,8 @@ describe("database lifecycle at the app seam", () => {
   it("opens the database before serving and releases it on close", async () => {
     const directory = await makeDataDirectory();
 
-    const app = await buildApp({ logger: false, dataDirectory: directory });
+    const databasePath = join(directory, "novel-engine.sqlite3");
+    const app = await buildApp({ logger: false, databasePath });
     try {
       expect(app.studioDb).toBeDefined();
       const response = await app.inject({ method: "GET", url: "/health/live" });
@@ -37,7 +39,7 @@ describe("database lifecycle at the app seam", () => {
       await app.close();
     }
 
-    const reopened = await openStudioDatabase(directory);
+    const reopened = await openStudioDatabase(databasePath);
     reopened.close();
   });
 
@@ -45,7 +47,8 @@ describe("database lifecycle at the app seam", () => {
     const directory = await makeDataDirectory();
     const started = new Date("2026-08-18T10:00:00.000Z");
 
-    const first = await buildApp({ logger: false, dataDirectory: directory });
+    const databasePath = join(directory, "novel-engine.sqlite3");
+    const first = await buildApp({ logger: false, databasePath });
     try {
       const db = first.studioDb;
       expect(db).toBeDefined();
@@ -74,7 +77,7 @@ describe("database lifecycle at the app seam", () => {
       await first.close();
     }
 
-    const second = await buildApp({ logger: false, dataDirectory: directory });
+    const second = await buildApp({ logger: false, databasePath });
     try {
       const db = second.studioDb;
       const restoredSessions = await db?.db

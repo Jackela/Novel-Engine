@@ -4,23 +4,24 @@
 
 ## OVERVIEW
 
-Novel Engine 0.4.0 is a self-hosted writing studio. Backend: Node.js 24, Fastify v5, TypeBox, Drizzle (better-sqlite3), SQLite. Frontend: React 19, Vite, TypeScript. Package manager: pnpm 11 (workspace: `frontend/` + `server/`). The Python stack is retired at git tag `python-final` (0.3.x); history is the archive.
+Novel Engine is a self-hosted writing studio. Backend: Node.js 24, Fastify v5, TypeBox, Drizzle (better-sqlite3), SQLite. Frontend: React 19, Vite, TypeScript. Package manager: pnpm 11 (workspace: `frontend/`, `server/`, `tools/api-types`). The Python stack is retired at git tag `python-final` (0.3.x); history is the archive.
 
 Domain vocabulary is defined in `CONTEXT.md`; use its canonical terms in code names, docs, and discussion.
 
 ## STRUCTURE
 
 ```text
-server/                   # TS backend (ADR-0002): Fastify app, CLI, gates, Node QA twins
+server/                   # TS backend (ADR-0002): Fastify app, CLI, gates, QA gate scripts
 ├── src/apps/             # api (buildApp factory) and cli composition roots
 ├── src/contexts/
 │   ├── studio/           # Projects, documents, revisions, jobs, reviews, exports, volumes, lore, resident context, usage
 │   └── ai/               # Structured text generation: application services, provider HTTP routes, streaming adapters
 ├── src/shared/           # Cross-cutting domain and infrastructure
-├── scripts/qa/           # SSOT, hygiene, size, migration-channel, OpenAPI gates
+├── scripts/qa/           # SSOT, hygiene, size, migration-channel, llms-txt, error-codes, OpenAPI gates
 ├── qa-baselines/         # Frozen OpenAPI snapshot (code-first, regenerated deliberately)
 └── drizzle/              # SQL migrations (FTS5 DDL hand-written inside migration files)
 frontend/                 # React application, generated API types, browser tests
+tools/api-types/          # Isolated openapi-typescript toolchain package (generated API types)
 openspec/                 # Canonical product specification (novel-engine capability)
 docs/adr/                 # Architecture decision records
 ```
@@ -41,11 +42,12 @@ Generated/runtime trees such as caches, `htmlcov/`, `frontend/coverage/`, `front
 | Change volumes/lore | `server/src/contexts/studio/interface/http/volume_routes.ts`, `server/src/contexts/studio/interface/http/lore_routes.ts` | Volume and lore entry HTTP behavior; services in `server/src/contexts/studio/application/volume_service.ts`, `lorebook.ts` |
 | Change usage reporting | `server/src/contexts/studio/interface/http/job_routes.ts` | `/api/projects/:projectId/usage`; aggregation via `jobHistory.aggregateProjectUsage` |
 | Change SSE streaming | `server/src/contexts/studio/interface/http/proposal_routes.ts` | `text/event-stream` proposal generation; stream orchestration in `server/src/contexts/studio/application/proposal_streaming.ts` |
+| Change revision history/restore | `server/src/contexts/studio/interface/http/revision_routes.ts` | Revision history and restore HTTP behavior; service in `server/src/contexts/studio/application/revision_service.ts` |
 | Change config/env | `server/src/shared/infrastructure/config/server_config.ts` | `.env.local` + process env; startup guards |
 | Change frontend API contract | `frontend/src/app/api.ts`, `frontend/src/app/types/studio.ts` | Derive from `frontend/generated/api-types.ts` (`pnpm --dir frontend gen:api-types`) |
 | Change Studio UI | `frontend/src/features/studio/` | Page shell, hooks, and panels |
 | Add backend coverage | `server/tests/` | vitest + Fastify `inject()`; hermetic temp data dirs |
-| Validate policy | `server/scripts/qa/`, `.github/workflows/ci.yml` | CI is the authoritative full gate; run twins via `pnpm --dir server gates` |
+| Validate policy | `server/scripts/qa/`, `.github/workflows/ci.yml` | CI is the authoritative full gate; run the gates via `pnpm --dir server gates` |
 
 ## CODE MAP
 
@@ -55,9 +57,10 @@ Generated/runtime trees such as caches, `htmlcov/`, `frontend/coverage/`, `front
 | `runCli` | `server/src/apps/cli/main.ts` | Operational CLI: serve/import/backup/doctor |
 | `DrizzleStudioStore` | `server/src/contexts/studio/infrastructure/` | Persistence implementation used by API/CLI/tests |
 | `loadServerConfig` | `server/src/shared/infrastructure/config/server_config.ts` | Env resolution + production startup guards |
-| `readWorkspaceVersion` | `server/src/shared/infrastructure/workspace_manifest.ts` | Release-version SSOT reader (server/package.json) |
+| `readProductIdentity` | `server/src/shared/infrastructure/workspace_manifest.ts` | Release-version SSOT reader (server/package.json) |
+| `locateWorkspaceRoot` | `server/src/shared/infrastructure/workspace_manifest.ts` | Workspace-root locator anchoring `.env.local` and `data/` defaults independent of `process.cwd()` |
 | `buildFtsMatchQuery` | `server/src/contexts/studio/application/fts_match_query.ts` | Strict token reduction before parameterized FTS5 MATCH |
-| `assembleResidentContext` | `server/src/contexts/studio/application/resident_context.ts:158` | Resident context assembler (ADR-0004 layer 1) feeding every proposal generation |
+| `assembleResidentContext` | `server/src/contexts/studio/application/resident_context.ts:135` | Resident context assembler (ADR-0004 layer 1) feeding every proposal generation |
 | `api` | `frontend/src/app/api.ts` | Shared HTTP client used by pages, hooks, and tests |
 | `StudioPage` | `frontend/src/features/studio/StudioPage.tsx` | Route-level UI composition shell |
 
@@ -77,17 +80,26 @@ Generated/runtime trees such as caches, `htmlcov/`, `frontend/coverage/`, `front
 - `AUDIT_REPORT_Linus.md`
 - `Makefile`, `justfile`
 
-Require separate human confirmation before changing root package/lock files, `README.md`, `compose.yaml`, or `Dockerfile`. Never introduce dependencies without explicit approval.
+Complete `README.md`, package script declarations, and corresponding lockfile synchronization when required by the explicit task. New dependencies, production deployment behavior (including behavior changes in `compose.yaml` or `Dockerfile`), and configuration changes outside the task require authorization for that scope. Reuse equivalent authorization already given in the conversation.
 
 ## CODING RED LINES
 
 - Never swallow unexpected errors; catch specific transport, parsing, value, or domain exceptions; programming errors must remain visible.
 - Never construct SQL/FTS5 expressions by string concatenation. Parameterize or apply strict token reduction.
-- Never delete existing `throw`, `assert`, `validate`, `sanitize`, `escape`, `auth`, or `permission` logic.
+- Preserve validation, authorization, sanitization, and error-handling guarantees. Replacing or moving their implementation requires relevant regression evidence.
 - Never introduce import-time database handles, Fastify app instances, or magic proxies; runtime wiring happens in composition roots.
-- Do not modify tests unless the finding explicitly requires it.
+- Modify tests as needed to complete the current task; never weaken assertions to conceal failures.
 - Keep functions small (file-size gate enforces limits); split orchestration.
 - React components should stay below 200 lines; split orchestration into hooks/components.
+- Comments are prose-style JSDoc with explicit failure semantics — this repo's documentation standard.
+
+## NAMING CONVENTIONS
+
+These naming rules apply to new code; existing mismatches are tracked in #536.
+
+- Name a new file after its primary export (file name = class/function name).
+- Modules in one subsystem share one prefix family; do not mint a second prefix for the same family.
+- Orchestration-layer suffixes are fixed by role: `*_service` for capability facades, `*_pipeline` for generation flows, `*_executor` for job re-execution. Pick the existing sibling's suffix; do not invent a new one for the same role.
 
 ## PROJECT-SPECIFIC INVARIANTS
 
@@ -98,7 +110,7 @@ Require separate human confirmation before changing root package/lock files, `RE
 - Revisions and snapshots are immutable references. Exports must write from the exact snapshot revision set.
 - The OpenAPI baseline (`server/qa-baselines/openapi.current.json`) regenerates deliberately via `pnpm --dir server openapi:snapshot`; route-adding changes must regenerate it.
 - Frontend requests go through `frontend/src/app/api.ts`; keep CSRF, credentials, abort, and error-envelope semantics intact.
-- Product identity and API shape are enforced by SSOT, repo-hygiene, file-size, migration-channel, llms-txt, OpenAPI snapshot, and OpenSpec gates.
+- Product identity and API shape are enforced by SSOT, repo-hygiene, file-size, migration-channel, llms-txt, error-codes, OpenAPI snapshot, and OpenSpec gates.
 - Migrations generate only through `pnpm --dir server db:generate --name <semantic-slug>`; drizzle-kit splices the name verbatim into `NNNN_<slug>.sql` (it does not normalize it, so pass a kebab-case semantic name instead of its random codename). Never hand-edit `server/drizzle/meta/*`.
 
 ## WORKFLOW CONSTRAINTS
@@ -115,6 +127,7 @@ Require separate human confirmation before changing root package/lock files, `RE
 - Keep evidence replayable. Report exact commands, browser/API flows, or skipped checks with reasons.
 - Validate through the surface that owns the change: service/API tests for backend behavior, browser workflows for UI behavior, import/spec/SSOT gates for contracts.
 - Treat generated outputs, caches, local evidence, and ignored agent configuration as harness state, not product architecture.
+- Use `docs/agents/change-evidence.md` for evidence levels, fixed-SHA records, skips, human gates, and multi-agent write-set ownership.
 
 ## VALIDATION
 
@@ -137,27 +150,21 @@ pnpm --dir frontend build
 pnpm spec:validate
 ```
 
-CI additionally runs the API-types drift check, React static diagnostics, Playwright workflows against the TS backend, and a container persistence check. `make validate` / `just validate` wrap a subset; consult `.github/workflows/ci.yml` for the full contract.
+CI additionally runs the API-types drift check, React static diagnostics, Playwright workflows against the TS backend, and a container persistence check. `make validate` / `just validate` wrap a subset and are not CI-completion evidence; consult `.github/workflows/ci.yml` for the full contract.
 
 ## GIT / AUDIT
 
-Before AI work use `just snapshot` (or a deliberate snapshot commit). After work use `just check` and `just validate`. `just panic` is the emergency rollback path and must not be invoked casually.
+Before AI work, record `git status`, the relevant diff, and a fixed comparison SHA. Create a deliberate path-scoped snapshot commit only when every staged file belongs to the task. The legacy `just snapshot` stages the whole worktree and `just panic` performs destructive recovery; agents MUST NOT run either against user work. After work, inspect the complete diff and run the owning package scripts and applicable validation surfaces listed above, recording actual results and skips through `docs/agents/change-evidence.md`.
 
 Audit findings in `AUDIT_REPORT_Linus.md` are read-only references. Match one finding, its stated location, and its fix direction; do not broaden scope merely because nearby cleanup is possible.
-
-### Issue tracker
-
-Issues and specs for this repo live as GitHub issues on `Jackela/Novel-Engine`.
-Tracker configuration, including the Wayfinding operations section, is
-`docs/agents/issue-tracker.md`; triage labels are `docs/agents/triage-labels.md`.
 
 ## Agent skills
 
 ### Issue tracker
 
-GitHub Issues in `Jackela/Novel-Engine` are the work tracker. Before creating,
+GitHub Issues in `Jackela/Novel-Engine` are the issue and spec tracker. Before creating,
 triaging, claiming, resolving, or mapping a ticket, read
-`docs/agents/issue-tracker.md`.
+`docs/agents/issue-tracker.md`, including its Wayfinding operations section.
 
 ### Triage labels
 
@@ -169,3 +176,9 @@ Use the five canonical triage roles mapped in
 This repository is single-context: use root `CONTEXT.md` for domain vocabulary
 and the relevant decision record in `docs/adr/` for architecture decisions.
 See `docs/agents/domain.md`.
+
+### Frontend work
+
+Any UI work under `frontend/` starts from root `DESIGN.md` (design-language
+source of truth) and routes through the `frontend-workflow` skill
+(`.agents/skills/frontend-workflow/SKILL.md`).

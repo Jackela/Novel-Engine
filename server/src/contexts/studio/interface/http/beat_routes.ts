@@ -14,7 +14,7 @@ import { documentIdParams } from "./studio_request_schemas.js";
  * the live beat, or null when unlinked/vanished — under its HTTP-surface
  * name.
  */
-export const chapterBeatResponseSchema = chapterBeatPayloadSchema;
+const chapterBeatResponseSchema = chapterBeatPayloadSchema;
 
 // A beat title links; explicit null clears the association. `nullable: true`
 // keeps Fastify's coercing AJV from turning the null into "".

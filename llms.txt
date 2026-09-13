@@ -4,24 +4,36 @@ A self-hosted writing studio: a TypeScript/Fastify + SQLite backend with a React
 
 ## Docs
 
+- [Documentation index](https://raw.githubusercontent.com/Jackela/Novel-Engine/main/docs/README.md): Entry points for current guides, source contracts, and historical evidence.
 - [README](https://raw.githubusercontent.com/Jackela/Novel-Engine/main/README.md): Project introduction, feature overview, and how to run Novel Engine.
 - [Quickstart](https://raw.githubusercontent.com/Jackela/Novel-Engine/main/openwiki/quickstart.md): Step-by-step setup guide to install, configure, and launch the studio locally.
 - [Architecture overview](https://raw.githubusercontent.com/Jackela/Novel-Engine/main/openwiki/architecture/overview.md): End-to-end tour of the TypeScript backend, bounded contexts, and runtime composition.
+- [Streaming and the whole-book loop](https://raw.githubusercontent.com/Jackela/Novel-Engine/main/openwiki/architecture/streaming-and-whole-book.md): How the SSE proposal stream and the chapter-by-chapter whole-book loop ride on one proposal pipeline.
+- [Lorebook](https://raw.githubusercontent.com/Jackela/Novel-Engine/main/openwiki/architecture/lorebook.md): Keyword-triggered lore injection: entry keys, substring matching, lifecycle gating, and deterministic ordering.
+- [Volumes and beats](https://raw.githubusercontent.com/Jackela/Novel-Engine/main/openwiki/architecture/volumes-and-beats.md): The fixed two-level volume hierarchy and per-chapter beat linkage as separate dimensions.
+- [Resident context](https://raw.githubusercontent.com/Jackela/Novel-Engine/main/openwiki/architecture/resident-context.md): The deterministic layer-1 context always assembled ahead of every generation.
+- [Usage](https://raw.githubusercontent.com/Jackela/Novel-Engine/main/openwiki/architecture/usage.md): The per-project token usage ledger with cumulative totals and a trailing 30-day window.
 - [Product specification](https://raw.githubusercontent.com/Jackela/Novel-Engine/main/openspec/specs/novel-engine/spec.md): Canonical OpenSpec capability specification for Novel Engine.
 
 ## Optional
 
+- [Contributing](https://raw.githubusercontent.com/Jackela/Novel-Engine/main/CONTRIBUTING.md): Development setup, Git tracking policy, focused commits, and review expectations.
 - [CONTEXT.md](https://raw.githubusercontent.com/Jackela/Novel-Engine/main/CONTEXT.md): Domain vocabulary and canonical terms used across code, docs, and discussion.
 - [AGENTS.md](https://raw.githubusercontent.com/Jackela/Novel-Engine/main/AGENTS.md): Repository-wide instructions for AI coding agents working in this repo.
 - [CI gates](https://raw.githubusercontent.com/Jackela/Novel-Engine/main/docs/agents/ci-gates.md): Description of the QA gates and validation commands enforced in CI.
 - [Issue tracker](https://raw.githubusercontent.com/Jackela/Novel-Engine/main/docs/agents/issue-tracker.md): Conventions for using GitHub Issues as the work tracker.
 - [Triage labels](https://raw.githubusercontent.com/Jackela/Novel-Engine/main/docs/agents/triage-labels.md): The five canonical triage labels and how to apply them.
-- [Error codes](https://raw.githubusercontent.com/Jackela/Novel-Engine/main/docs/agents/error-codes.md): Catalog of stable API error codes with HTTP status, meaning, and the suggested agent action for each.
+- [Error codes](https://raw.githubusercontent.com/Jackela/Novel-Engine/main/docs/agents/error-codes.md): Catalog of stable API error codes with HTTP status, meaning, and the suggested agent action for each, kept in lockstep with the TS sources by gate:error-codes.
 - [ADR-0001: TypeScript greenfield rewrite](https://raw.githubusercontent.com/Jackela/Novel-Engine/main/docs/adr/0001-typescript-greenfield-rewrite.md): Decision to retire the Python stack and rewrite in TypeScript.
 - [ADR-0002: TS backend stack](https://raw.githubusercontent.com/Jackela/Novel-Engine/main/docs/adr/0002-ts-backend-stack.md): Choice of Fastify v5, TypeBox, and Drizzle over better-sqlite3.
 - [ADR-0003: Cutover execution](https://raw.githubusercontent.com/Jackela/Novel-Engine/main/docs/adr/0003-cutover-execution.md): How the Python-to-TypeScript cutover was planned and executed.
 - [ADR-0004: Two-layer generation context](https://raw.githubusercontent.com/Jackela/Novel-Engine/main/docs/adr/0004-two-layer-generation-context.md): Design of the two-layer AI generation context model.
 - [ADR-0005: Fixed two-level hierarchy](https://raw.githubusercontent.com/Jackela/Novel-Engine/main/docs/adr/0005-fixed-two-level-hierarchy.md): Decision to fix the work structure at two hierarchy levels.
+- [ADR-0006: Lore lifecycle gating](https://raw.githubusercontent.com/Jackela/Novel-Engine/main/docs/adr/0006-lore-lifecycle-gating.md): Only stable lore entries are admitted to keyword-triggered injection; draft and deprecated entries are skipped.
+- [ADR-0007: Recoverable export publication](https://raw.githubusercontent.com/Jackela/Novel-Engine/main/docs/adr/0007-recoverable-export-publication.md): A recoverable file-first export protocol across SQLite and the filesystem.
+- [ADR-0008: Bounded project shell and explicit current-document resource](https://raw.githubusercontent.com/Jackela/Novel-Engine/main/docs/adr/0008-bounded-project-shell-current-document.md): Project open returns a bounded shell plus one explicit current document instead of full document payloads.
+- [ADR-0009: Frosted-glass design language](https://raw.githubusercontent.com/Jackela/Novel-Engine/main/docs/adr/0009-frosted-glass-design-language.md): A frosted-glass visual language implemented purely in the plain-CSS custom-property token layer.
+- [ADR-0010: Dual-theme token architecture](https://raw.githubusercontent.com/Jackela/Novel-Engine/main/docs/adr/0010-dual-theme-token-architecture.md): Light and dark themes render from one CSS custom-property system with data-theme attribute selection.
 - [OpenAPI snapshot](https://raw.githubusercontent.com/Jackela/Novel-Engine/main/server/qa-baselines/openapi.current.json): Frozen code-first OpenAPI snapshot used as the API contract baseline. A running server also serves the equivalent live document at `/openapi.json` (registered in `server/src/apps/api/app.ts`); the snapshot is regenerated deliberately via `pnpm --dir server openapi:snapshot`, so drift between the two means it is time to re-snapshot.
 - [Changelog](https://raw.githubusercontent.com/Jackela/Novel-Engine/main/CHANGELOG.md): Release history and notable changes per version.
 - [Design notes](https://raw.githubusercontent.com/Jackela/Novel-Engine/main/DESIGN.md): Product design rationale and direction.

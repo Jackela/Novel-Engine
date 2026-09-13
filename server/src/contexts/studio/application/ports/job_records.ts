@@ -1,7 +1,9 @@
 /** Job-row shapes for the synchronous jobs model (#268/#272). */
 
+import { pageLimit } from "./page_limit.js";
+
 /** One durable job-event trail entry. */
-export interface JobEventRecord {
+interface JobEventRecord {
   id: string;
   jobId: string;
   status: string;
@@ -28,6 +30,56 @@ export interface JobRecord {
   events: JobEventRecord[];
 }
 
+/** Lightweight project-history item; complete audit bodies live on JobRecord. */
+export interface JobSummaryRecord {
+  id: string;
+  projectId: string;
+  documentId: string | null;
+  kind: string;
+  operation: string;
+  status: string;
+  provider: string;
+  model: string;
+  error: string | null;
+  retryOfJobId: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+/** The validated row budget of one bounded project-job history page. */
+export type JobPageLimit = number & { readonly __jobPageLimit: unique symbol };
+
+/** Inclusive application/store boundary for one page of job history. */
+const MIN_JOB_PAGE_LIMIT = 1;
+const MAX_JOB_PAGE_LIMIT = 100;
+
+/** Validate and narrow a transport/application number before it reaches persistence. */
+export function jobPageLimit(value: number): JobPageLimit {
+  return pageLimit<JobPageLimit>(value, {
+    min: MIN_JOB_PAGE_LIMIT,
+    max: MAX_JOB_PAGE_LIMIT,
+    subject: "Job",
+  });
+}
+
+/** Persistence-neutral exclusive position in `(created_at DESC, id DESC)` order. */
+export interface JobPageCursor {
+  readonly createdAtMs: number;
+  readonly id: string;
+}
+
+/** One typed keyset request; the first page omits its exclusive cursor. */
+export interface JobPageInput {
+  readonly limit: JobPageLimit;
+  readonly cursor?: JobPageCursor | undefined;
+}
+
+/** One bounded page and the exclusive position required to continue it. */
+export interface JobSummaryPage {
+  readonly jobs: JobSummaryRecord[];
+  readonly nextCursor: JobPageCursor | null;
+}
+
 export interface AddJobInput {
   projectId: string;
   documentId: string | null;
@@ -44,6 +96,20 @@ export interface AddJobInput {
   /** The retried predecessor; null for first-run jobs (#272 retry chain). */
   retryOfJobId?: string | null;
   now: Date;
+}
+
+/** One durable retry-attempt reservation request. */
+export interface ClaimJobRetryInput {
+  readonly projectId: string;
+  readonly sourceJobId: string;
+  readonly requestKey: string;
+  readonly now: Date;
+}
+
+/** The authoritative retry Job and whether this request reserved it. */
+export interface JobRetryClaim {
+  readonly job: JobRecord;
+  readonly created: boolean;
 }
 
 /** A terminal (or failed) outcome transition appended to a running job. */

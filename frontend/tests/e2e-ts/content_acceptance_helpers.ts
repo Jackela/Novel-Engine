@@ -6,6 +6,13 @@ import { inflateRawSync } from "node:zlib";
 
 import { expect, type Page } from "@playwright/test";
 
+export {
+  type ChapterDocument,
+  createProject,
+  studioChapters,
+  typeChapter,
+} from "./project_document_helpers";
+
 /**
  * #276 content-level acceptance helpers. Two SSOT rules drive this module:
  *
@@ -217,47 +224,6 @@ function readStoredEntry(
     throw new Error(`ZIP entry ${name} uses unsupported compression method ${method}.`);
   }
   return inflateRawSync(data);
-}
-
-export interface ChapterDocument {
-  id: string;
-  kind: string;
-  title: string;
-  position: number;
-  current_revision_id: string;
-  content_markdown: string;
-  revision_source: string;
-}
-
-export async function createProject(page: Page, title: string): Promise<string> {
-  await page.goto("/");
-  await page.getByLabel("Title").fill(title);
-  await page.getByRole("button", { name: /create project/i }).click();
-  await expect(page).toHaveURL(/\/projects\/([^/]+)\/manuscript/);
-  return page.url().match(/\/projects\/([^/]+)\/manuscript/)?.[1] ?? "";
-}
-
-export async function typeChapter(page: Page, markdown: string): Promise<void> {
-  const editor = page.locator(".cm-content");
-  await editor.click();
-  // ControlOrMeta resolves to the platform's select-all chord: CodeMirror maps
-  // Mod-A to selectAll, so the typed chapter REPLACES the seed content (a
-  // plain Control+A on macOS only moves to the line start).
-  await page.keyboard.press("ControlOrMeta+a");
-  await page.keyboard.type(markdown);
-  await expect(page.locator(".studio-editor .editor__save-state")).toHaveText(/saved/i, {
-    timeout: 15_000,
-  });
-}
-
-export async function studioChapters(page: Page, projectId: string): Promise<ChapterDocument[]> {
-  // The project payload embeds its documents (#246 dropped the list route).
-  const response = await page.request.get(`/api/projects/${projectId}`);
-  expect(response.status(), await response.text()).toBe(200);
-  const body = (await response.json()) as { documents: ChapterDocument[] };
-  return body.documents
-    .filter((document) => document.kind === "chapter")
-    .sort((left, right) => left.position - right.position);
 }
 
 export async function exportThroughUi(

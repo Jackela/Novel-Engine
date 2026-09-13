@@ -1,6 +1,8 @@
+import type { EventEmitter } from "node:events";
+
 import JSZip from "jszip";
 
-import type { ArtifactChapter } from "../application/export_artifact_service.js";
+import type { ArtifactChapter } from "../application/ports/artifact_gateway.js";
 
 const xmlAllowedRanges = String.raw`\u0009\u000A\u000D\u0020-\uD7FF\uE000-\uFFFD\u{10000}-\u{10FFFF}`;
 const invalidXmlCharacters = new RegExp(`[^${xmlAllowedRanges}]`, "gu");
@@ -13,7 +15,7 @@ const XML_ESCAPES: Record<string, string> = {
   "'": "&apos;",
 };
 
-export function escapeXml(value: string): string {
+function escapeXml(value: string): string {
   return value.replace(invalidXmlCharacters, "").replace(/[&<>"']/g, (character) => {
     return XML_ESCAPES[character] ?? character;
   });
@@ -34,11 +36,11 @@ export function plainText(markdown: string): string {
     .trim();
 }
 
-export async function epubBytes(
+export function epubStream(
   title: string,
   artifactId: string,
   chapters: readonly ArtifactChapter[],
-): Promise<Buffer> {
+): EventEmitter {
   const zip = new JSZip();
   const chapterFiles = chapters.map(
     (_chapter, index) => `chapter-${String(index + 1).padStart(3, "0")}.xhtml`,
@@ -54,7 +56,7 @@ export async function epubBytes(
   zip.file("OEBPS/nav.xhtml", navigationXhtml(title, chapters, chapterFiles));
   zip.file("OEBPS/toc.ncx", tableOfContents(title, chapters, chapterFiles));
   zip.file("OEBPS/content.opf", packageDocument(title, artifactId, chapterFiles));
-  return zip.generateAsync({ type: "nodebuffer", compression: "DEFLATE" });
+  return zip.generateNodeStream({ type: "nodebuffer", compression: "DEFLATE" });
 }
 
 function chapterXhtml(chapter: ArtifactChapter): string {

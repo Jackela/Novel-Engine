@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import type { TextGenerationTask } from "../../src/contexts/ai/application/ports/text_generation.js";
 import { TextGenerationProviderError } from "../../src/contexts/ai/application/ports/text_generation.js";
-import { SYSTEM_PROMPT } from "../../src/contexts/studio/application/proposal_service.js";
+import { SYSTEM_PROMPT } from "../../src/contexts/studio/application/proposal_landing.js";
 import { chapterDigest } from "../../src/contexts/studio/application/resident_context.js";
 import {
   AUTHOR_INSTRUCTION_BEGIN,
@@ -317,6 +317,8 @@ describe("resident context assembly in proposal prompts (#314)", () => {
         jar,
         "POST",
         `/api/projects/${projectId}/jobs/${failed.json().id}/retry`,
+        undefined,
+        { "idempotency-key": "resident-prompt-retry-0001" },
       );
       expect(retry.statusCode, retry.body).toBe(200);
       expect(retry.json().status).toBe("completed");

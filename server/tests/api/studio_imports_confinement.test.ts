@@ -7,7 +7,8 @@ import { makeLegacyWorkspace } from "../legacy_workspace_fixtures.js";
 import { anonymousCall, buildStudioApp, call, monotonicClock, ownerJar } from "./studio_helpers.js";
 
 const CONFINEMENT_MESSAGE = "Web imports must name a workspace directory under data/imports.";
-const NOT_FOUND_MESSAGE = "Import workspace not found under data/imports.";
+const importNotFoundMessage = (source: string) =>
+  `Import workspace not found under data/imports: ${source}.`;
 
 describe("web import confinement and guards", () => {
   it("is owner-only: unauthenticated requests are rejected before the source is resolved", async () => {
@@ -74,7 +75,7 @@ describe("web import confinement and guards", () => {
       expect(response.statusCode, response.body).toBe(404);
       const error = response.json().error;
       expect(error.code).toBe("NOT_FOUND");
-      expect(error.message).toBe(NOT_FOUND_MESSAGE);
+      expect(error.message).toBe(importNotFoundMessage("sneaky"));
     } finally {
       await app.close();
     }
@@ -90,7 +91,7 @@ describe("web import confinement and guards", () => {
       for (const source of ["missing-workspace", "not-a-directory"]) {
         const response = await call(app, jar, "POST", "/api/imports/preview", { source });
         expect(response.statusCode, `${source}: ${response.body}`).toBe(404);
-        expect(response.json().error.message).toBe(NOT_FOUND_MESSAGE);
+        expect(response.json().error.message).toBe(importNotFoundMessage(source));
       }
     } finally {
       await app.close();

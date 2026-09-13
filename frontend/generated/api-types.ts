@@ -75,7 +75,7 @@ export interface paths {
                         "application/json": components["schemas"]["ErrorEnvelope"];
                     };
                 };
-                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                /** @description Request validation, invalid legacy structure, or import capacity rejection. IMPORT_CAPACITY_EXCEEDED carries only resource, limit, and observed details. */
                 422: {
                     headers: {
                         [name: string]: unknown;
@@ -110,7 +110,10 @@ export interface paths {
         };
         get: {
             parameters: {
-                query?: never;
+                query?: {
+                    limit?: number;
+                    cursor?: string;
+                };
                 header?: never;
                 path?: never;
                 cookie?: never;
@@ -124,52 +127,30 @@ export interface paths {
                     };
                     content: {
                         "application/json": {
+                            next_cursor: string | null;
                             projects: {
+                                /** Format: date-time */
                                 created_at: string;
                                 description: string;
-                                documents?: {
-                                    beat_ref: string | null;
-                                    content_markdown: string;
-                                    created_at: string;
-                                    current_revision_id: string;
-                                    id: string;
-                                    /** @enum {string} */
-                                    kind: "chapter" | "outline" | "character" | "world" | "note";
-                                    /** @enum {string|null} */
-                                    lore_status: "draft" | "stable" | "deprecated" | null;
-                                    metadata: {
-                                        [key: string]: unknown;
-                                    };
-                                    position: number;
-                                    project_id: string;
-                                    /** @enum {string} */
-                                    revision_source: "author" | "ai-accepted" | "restore";
-                                    title: string;
-                                    updated_at: string;
-                                    volume_id: string | null;
-                                    word_count: number;
-                                }[];
                                 id: string;
-                                import_hash: string | null;
-                                settings: {
-                                    [key: string]: unknown;
-                                };
                                 title: string;
+                                /** Format: date-time */
                                 updated_at: string;
-                                volumes?: {
-                                    created_at: string;
-                                    id: string;
-                                    position: number;
-                                    project_id: string;
-                                    title: string;
-                                    updated_at: string;
-                                }[];
                             }[];
                         };
                     };
                 };
                 /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
                 401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                422: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -217,7 +198,6 @@ export interface paths {
                             description: string;
                             documents: {
                                 beat_ref: string | null;
-                                content_markdown: string;
                                 created_at: string;
                                 current_revision_id: string;
                                 id: string;
@@ -225,9 +205,6 @@ export interface paths {
                                 kind: "chapter" | "outline" | "character" | "world" | "note";
                                 /** @enum {string|null} */
                                 lore_status: "draft" | "stable" | "deprecated" | null;
-                                metadata: {
-                                    [key: string]: unknown;
-                                };
                                 position: number;
                                 project_id: string;
                                 /** @enum {string} */
@@ -328,7 +305,6 @@ export interface paths {
                             description: string;
                             documents: {
                                 beat_ref: string | null;
-                                content_markdown: string;
                                 created_at: string;
                                 current_revision_id: string;
                                 id: string;
@@ -336,9 +312,6 @@ export interface paths {
                                 kind: "chapter" | "outline" | "character" | "world" | "note";
                                 /** @enum {string|null} */
                                 lore_status: "draft" | "stable" | "deprecated" | null;
-                                metadata: {
-                                    [key: string]: unknown;
-                                };
                                 position: number;
                                 project_id: string;
                                 /** @enum {string} */
@@ -442,6 +415,26 @@ export interface paths {
                         "application/json": components["schemas"]["ErrorEnvelope"];
                     };
                 };
+                /** @description Default Response */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error: {
+                                /** @enum {string} */
+                                code: "OPERATION_IN_FLIGHT";
+                                details: {
+                                    document_id: string | null;
+                                    operation: string;
+                                    project_id: string;
+                                };
+                                message: string;
+                            };
+                        };
+                    };
+                };
                 /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
                 503: {
                     headers: {
@@ -455,7 +448,135 @@ export interface paths {
         };
         options?: never;
         head?: never;
-        patch?: never;
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    projectId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        description?: string;
+                        settings?: {
+                            [key: string]: unknown;
+                        };
+                        title?: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            created_at: string;
+                            description: string;
+                            id: string;
+                            import_hash: string | null;
+                            settings: {
+                                [key: string]: unknown;
+                            };
+                            title: string;
+                            updated_at: string;
+                        };
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Invalid input or permanent authoring-structure capacity refusal with bounded evidence. */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error: {
+                                /** @enum {string} */
+                                code: "INVALID_OPERATION";
+                                message: string;
+                            };
+                        } | {
+                            error: {
+                                /** @enum {string} */
+                                code: "STRUCTURE_CAPACITY_EXCEEDED";
+                                details: {
+                                    limit: number;
+                                    observed: number;
+                                    /** @enum {string} */
+                                    resource: "project_documents" | "project_volumes" | "volume_chapters" | "project_settings_bytes" | "document_metadata_bytes" | "outline_beats";
+                                };
+                                /** @enum {string} */
+                                message: "Authoring structure capacity exceeded.";
+                            };
+                        } | {
+                            error: {
+                                /** @enum {string} */
+                                code: "VALIDATION_ERROR";
+                                details: {
+                                    errors: {
+                                        field: string;
+                                        message: string;
+                                        type: string;
+                                    }[];
+                                };
+                                /** @enum {string} */
+                                message: "Request validation failed.";
+                            };
+                        };
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+            };
+        };
         trace?: never;
     };
     "/api/projects/{projectId}/ai-proposals/{jobId}/accept": {
@@ -543,13 +664,64 @@ export interface paths {
                         "application/json": components["schemas"]["ErrorEnvelope"];
                     };
                 };
-                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                /** @description Default Response */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error: {
+                                /** @enum {string} */
+                                code: "REVISION_CONFLICT";
+                                details: {
+                                    current_revision_id: string | null;
+                                };
+                                message: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Invalid input or permanent authoring-structure capacity refusal with bounded evidence. */
                 422: {
                     headers: {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["ErrorEnvelope"];
+                        "application/json": {
+                            error: {
+                                /** @enum {string} */
+                                code: "INVALID_OPERATION";
+                                message: string;
+                            };
+                        } | {
+                            error: {
+                                /** @enum {string} */
+                                code: "STRUCTURE_CAPACITY_EXCEEDED";
+                                details: {
+                                    limit: number;
+                                    observed: number;
+                                    /** @enum {string} */
+                                    resource: "project_documents" | "project_volumes" | "volume_chapters" | "project_settings_bytes" | "document_metadata_bytes" | "outline_beats";
+                                };
+                                /** @enum {string} */
+                                message: "Authoring structure capacity exceeded.";
+                            };
+                        } | {
+                            error: {
+                                /** @enum {string} */
+                                code: "VALIDATION_ERROR";
+                                details: {
+                                    errors: {
+                                        field: string;
+                                        message: string;
+                                        type: string;
+                                    }[];
+                                };
+                                /** @enum {string} */
+                                message: "Request validation failed.";
+                            };
+                        };
                     };
                 };
                 /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
@@ -675,13 +847,46 @@ export interface paths {
                         };
                     };
                 };
-                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                /** @description Invalid input or permanent authoring-structure capacity refusal with bounded evidence. */
                 422: {
                     headers: {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["ErrorEnvelope"];
+                        "application/json": {
+                            error: {
+                                /** @enum {string} */
+                                code: "INVALID_OPERATION";
+                                message: string;
+                            };
+                        } | {
+                            error: {
+                                /** @enum {string} */
+                                code: "STRUCTURE_CAPACITY_EXCEEDED";
+                                details: {
+                                    limit: number;
+                                    observed: number;
+                                    /** @enum {string} */
+                                    resource: "project_documents" | "project_volumes" | "volume_chapters" | "project_settings_bytes" | "document_metadata_bytes" | "outline_beats";
+                                };
+                                /** @enum {string} */
+                                message: "Authoring structure capacity exceeded.";
+                            };
+                        } | {
+                            error: {
+                                /** @enum {string} */
+                                code: "VALIDATION_ERROR";
+                                details: {
+                                    errors: {
+                                        field: string;
+                                        message: string;
+                                        type: string;
+                                    }[];
+                                };
+                                /** @enum {string} */
+                                message: "Request validation failed.";
+                            };
+                        };
                     };
                 };
                 /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
@@ -735,7 +940,6 @@ export interface paths {
                         "application/json": {
                             documents: {
                                 beat_ref: string | null;
-                                content_markdown: string;
                                 created_at: string;
                                 current_revision_id: string;
                                 id: string;
@@ -743,9 +947,6 @@ export interface paths {
                                 kind: "chapter" | "outline" | "character" | "world" | "note";
                                 /** @enum {string|null} */
                                 lore_status: "draft" | "stable" | "deprecated" | null;
-                                metadata: {
-                                    [key: string]: unknown;
-                                };
                                 position: number;
                                 project_id: string;
                                 /** @enum {string} */
@@ -819,7 +1020,77 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    projectId: string;
+                    documentId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            beat_ref: string | null;
+                            content_markdown: string;
+                            created_at: string;
+                            current_revision_id: string;
+                            id: string;
+                            /** @enum {string} */
+                            kind: "chapter" | "outline" | "character" | "world" | "note";
+                            /** @enum {string|null} */
+                            lore_status: "draft" | "stable" | "deprecated" | null;
+                            metadata: {
+                                [key: string]: unknown;
+                            };
+                            position: number;
+                            project_id: string;
+                            /** @enum {string} */
+                            revision_source: "author" | "ai-accepted" | "restore";
+                            title: string;
+                            updated_at: string;
+                            volume_id: string | null;
+                            word_count: number;
+                        };
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+            };
+        };
         put: {
             parameters: {
                 query?: never;
@@ -918,13 +1189,46 @@ export interface paths {
                         };
                     };
                 };
-                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                /** @description Invalid input or permanent authoring-structure capacity refusal with bounded evidence. */
                 422: {
                     headers: {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["ErrorEnvelope"];
+                        "application/json": {
+                            error: {
+                                /** @enum {string} */
+                                code: "INVALID_OPERATION";
+                                message: string;
+                            };
+                        } | {
+                            error: {
+                                /** @enum {string} */
+                                code: "STRUCTURE_CAPACITY_EXCEEDED";
+                                details: {
+                                    limit: number;
+                                    observed: number;
+                                    /** @enum {string} */
+                                    resource: "project_documents" | "project_volumes" | "volume_chapters" | "project_settings_bytes" | "document_metadata_bytes" | "outline_beats";
+                                };
+                                /** @enum {string} */
+                                message: "Authoring structure capacity exceeded.";
+                            };
+                        } | {
+                            error: {
+                                /** @enum {string} */
+                                code: "VALIDATION_ERROR";
+                                details: {
+                                    errors: {
+                                        field: string;
+                                        message: string;
+                                        type: string;
+                                    }[];
+                                };
+                                /** @enum {string} */
+                                message: "Request validation failed.";
+                            };
+                        };
                     };
                 };
                 /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
@@ -1136,22 +1440,83 @@ export interface paths {
                         };
                     };
                 };
-                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                /** @description Invalid proposal input or permanent generation-capacity refusal. */
                 422: {
                     headers: {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["ErrorEnvelope"];
+                        "application/json": {
+                            error: {
+                                /** @enum {string} */
+                                code: "INVALID_OPERATION";
+                                message: string;
+                            };
+                        } | {
+                            error: {
+                                /** @enum {string} */
+                                code: "GENERATION_CAPACITY_EXCEEDED";
+                                details: {
+                                    /** @enum {integer} */
+                                    limit: 8388608;
+                                    /** @enum {integer} */
+                                    observed: 8388609;
+                                    /** @enum {string} */
+                                    resource: "prompt_bytes";
+                                };
+                                /** @enum {string} */
+                                message: "Generation capacity exceeded.";
+                            };
+                        } | {
+                            error: {
+                                /** @enum {string} */
+                                code: "VALIDATION_ERROR";
+                                details: {
+                                    errors: {
+                                        field: string;
+                                        message: string;
+                                        type: string;
+                                    }[];
+                                };
+                                /** @enum {string} */
+                                message: "Request validation failed.";
+                            };
+                        };
                     };
                 };
-                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                /** @description Workflow capacity exhaustion or unavailable persistence. */
                 503: {
                     headers: {
+                        /** @description Optional integer-seconds hint emitted only for workflow capacity exhaustion. */
+                        "Retry-After"?: number;
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["ErrorEnvelope"];
+                        "application/json": {
+                            error: {
+                                /** @enum {string} */
+                                code: "OPERATION_CAPACITY_EXCEEDED";
+                                details: {
+                                    in_flight: number;
+                                    limit: number;
+                                    project_id: string;
+                                    retry_after_seconds: number;
+                                    /** @enum {string} */
+                                    scope: "project" | "application";
+                                };
+                                /** @enum {string} */
+                                message: "Studio operation capacity is exhausted.";
+                            };
+                        } | {
+                            error: {
+                                /** @enum {string} */
+                                code: "SERVICE_UNAVAILABLE";
+                                details?: {
+                                    [key: string]: unknown;
+                                };
+                                message: string;
+                            };
+                        };
                     };
                 };
             };
@@ -1253,22 +1618,83 @@ export interface paths {
                         };
                     };
                 };
-                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                /** @description Invalid proposal input or permanent generation-capacity refusal. */
                 422: {
                     headers: {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["ErrorEnvelope"];
+                        "application/json": {
+                            error: {
+                                /** @enum {string} */
+                                code: "INVALID_OPERATION";
+                                message: string;
+                            };
+                        } | {
+                            error: {
+                                /** @enum {string} */
+                                code: "GENERATION_CAPACITY_EXCEEDED";
+                                details: {
+                                    /** @enum {integer} */
+                                    limit: 8388608;
+                                    /** @enum {integer} */
+                                    observed: 8388609;
+                                    /** @enum {string} */
+                                    resource: "prompt_bytes";
+                                };
+                                /** @enum {string} */
+                                message: "Generation capacity exceeded.";
+                            };
+                        } | {
+                            error: {
+                                /** @enum {string} */
+                                code: "VALIDATION_ERROR";
+                                details: {
+                                    errors: {
+                                        field: string;
+                                        message: string;
+                                        type: string;
+                                    }[];
+                                };
+                                /** @enum {string} */
+                                message: "Request validation failed.";
+                            };
+                        };
                     };
                 };
-                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                /** @description Workflow capacity exhaustion or unavailable persistence. */
                 503: {
                     headers: {
+                        /** @description Optional integer-seconds hint emitted only for workflow capacity exhaustion. */
+                        "Retry-After"?: number;
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["ErrorEnvelope"];
+                        "application/json": {
+                            error: {
+                                /** @enum {string} */
+                                code: "OPERATION_CAPACITY_EXCEEDED";
+                                details: {
+                                    in_flight: number;
+                                    limit: number;
+                                    project_id: string;
+                                    retry_after_seconds: number;
+                                    /** @enum {string} */
+                                    scope: "project" | "application";
+                                };
+                                /** @enum {string} */
+                                message: "Studio operation capacity is exhausted.";
+                            };
+                        } | {
+                            error: {
+                                /** @enum {string} */
+                                code: "SERVICE_UNAVAILABLE";
+                                details?: {
+                                    [key: string]: unknown;
+                                };
+                                message: string;
+                            };
+                        };
                     };
                 };
             };
@@ -1671,7 +2097,10 @@ export interface paths {
         };
         get: {
             parameters: {
-                query?: never;
+                query?: {
+                    limit?: number;
+                    cursor?: string;
+                };
                 header?: never;
                 path: {
                     projectId: string;
@@ -1688,14 +2117,12 @@ export interface paths {
                     };
                     content: {
                         "application/json": {
+                            next_cursor: string | null;
                             revisions: {
-                                content_markdown: string;
+                                /** Format: date-time */
                                 created_at: string;
                                 document_id: string;
                                 id: string;
-                                metadata: {
-                                    [key: string]: unknown;
-                                };
                                 parent_revision_id: string | null;
                                 revision_number: number;
                                 /** @enum {string} */
@@ -1716,6 +2143,15 @@ export interface paths {
                 };
                 /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
                 404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                422: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -1845,13 +2281,46 @@ export interface paths {
                         };
                     };
                 };
-                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                /** @description Invalid input or permanent authoring-structure capacity refusal with bounded evidence. */
                 422: {
                     headers: {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["ErrorEnvelope"];
+                        "application/json": {
+                            error: {
+                                /** @enum {string} */
+                                code: "INVALID_OPERATION";
+                                message: string;
+                            };
+                        } | {
+                            error: {
+                                /** @enum {string} */
+                                code: "STRUCTURE_CAPACITY_EXCEEDED";
+                                details: {
+                                    limit: number;
+                                    observed: number;
+                                    /** @enum {string} */
+                                    resource: "project_documents" | "project_volumes" | "volume_chapters" | "project_settings_bytes" | "document_metadata_bytes" | "outline_beats";
+                                };
+                                /** @enum {string} */
+                                message: "Authoring structure capacity exceeded.";
+                            };
+                        } | {
+                            error: {
+                                /** @enum {string} */
+                                code: "VALIDATION_ERROR";
+                                details: {
+                                    errors: {
+                                        field: string;
+                                        message: string;
+                                        type: string;
+                                    }[];
+                                };
+                                /** @enum {string} */
+                                message: "Request validation failed.";
+                            };
+                        };
                     };
                 };
                 /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
@@ -1954,13 +2423,46 @@ export interface paths {
                         "application/json": components["schemas"]["ErrorEnvelope"];
                     };
                 };
-                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                /** @description Invalid input or permanent authoring-structure capacity refusal with bounded evidence. */
                 422: {
                     headers: {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["ErrorEnvelope"];
+                        "application/json": {
+                            error: {
+                                /** @enum {string} */
+                                code: "INVALID_OPERATION";
+                                message: string;
+                            };
+                        } | {
+                            error: {
+                                /** @enum {string} */
+                                code: "STRUCTURE_CAPACITY_EXCEEDED";
+                                details: {
+                                    limit: number;
+                                    observed: number;
+                                    /** @enum {string} */
+                                    resource: "project_documents" | "project_volumes" | "volume_chapters" | "project_settings_bytes" | "document_metadata_bytes" | "outline_beats";
+                                };
+                                /** @enum {string} */
+                                message: "Authoring structure capacity exceeded.";
+                            };
+                        } | {
+                            error: {
+                                /** @enum {string} */
+                                code: "VALIDATION_ERROR";
+                                details: {
+                                    errors: {
+                                        field: string;
+                                        message: string;
+                                        type: string;
+                                    }[];
+                                };
+                                /** @enum {string} */
+                                message: "Request validation failed.";
+                            };
+                        };
                     };
                 };
                 /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
@@ -1990,7 +2492,10 @@ export interface paths {
         };
         get: {
             parameters: {
-                query?: never;
+                query?: {
+                    limit?: number;
+                    cursor?: string;
+                };
                 header?: never;
                 path: {
                     projectId: string;
@@ -2018,6 +2523,7 @@ export interface paths {
                                 size_bytes: number;
                                 snapshot_id: string;
                             }[];
+                            next_cursor: string | null;
                         };
                     };
                 };
@@ -2032,6 +2538,15 @@ export interface paths {
                 };
                 /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
                 404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                422: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -2153,22 +2668,81 @@ export interface paths {
                         };
                     };
                 };
-                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                /** @description Invalid export precondition or permanent export-capacity outcome with bounded evidence. */
                 422: {
                     headers: {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["ErrorEnvelope"];
+                        "application/json": {
+                            error: {
+                                /** @enum {string} */
+                                code: "INVALID_OPERATION";
+                                message: string;
+                            };
+                        } | {
+                            error: {
+                                /** @enum {string} */
+                                code: "EXPORT_CAPACITY_EXCEEDED";
+                                details: {
+                                    limit: number;
+                                    observed: number;
+                                    /** @enum {string} */
+                                    resource: "source_documents" | "source_bytes" | "artifact_bytes" | "manifest_bytes";
+                                };
+                                /** @enum {string} */
+                                message: "Export capacity exceeded.";
+                            };
+                        } | {
+                            error: {
+                                /** @enum {string} */
+                                code: "VALIDATION_ERROR";
+                                details: {
+                                    errors: {
+                                        field: string;
+                                        message: string;
+                                        type: string;
+                                    }[];
+                                };
+                                /** @enum {string} */
+                                message: "Request validation failed.";
+                            };
+                        };
                     };
                 };
-                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                /** @description Workflow capacity exhaustion or unavailable persistence. */
                 503: {
                     headers: {
+                        /** @description Optional integer-seconds hint emitted only for workflow capacity exhaustion. */
+                        "Retry-After"?: number;
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["ErrorEnvelope"];
+                        "application/json": {
+                            error: {
+                                /** @enum {string} */
+                                code: "OPERATION_CAPACITY_EXCEEDED";
+                                details: {
+                                    in_flight: number;
+                                    limit: number;
+                                    project_id: string;
+                                    retry_after_seconds: number;
+                                    /** @enum {string} */
+                                    scope: "project" | "application";
+                                };
+                                /** @enum {string} */
+                                message: "Studio operation capacity is exhausted.";
+                            };
+                        } | {
+                            error: {
+                                /** @enum {string} */
+                                code: "SERVICE_UNAVAILABLE";
+                                details?: {
+                                    [key: string]: unknown;
+                                };
+                                message: string;
+                            };
+                        };
                     };
                 };
             };
@@ -2210,37 +2784,79 @@ export interface paths {
                         "text/markdown; charset=utf-8": string;
                     };
                 };
-                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                /** @description Default Response */
                 401: {
                     headers: {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/epub+zip": components["schemas"]["ErrorEnvelope"];
-                        "application/vnd.openxmlformats-officedocument.wordprocessingml.document": components["schemas"]["ErrorEnvelope"];
-                        "text/markdown; charset=utf-8": components["schemas"]["ErrorEnvelope"];
+                        "application/json": components["schemas"]["ErrorEnvelope"];
                     };
                 };
-                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                /** @description Default Response */
                 404: {
                     headers: {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/epub+zip": components["schemas"]["ErrorEnvelope"];
-                        "application/vnd.openxmlformats-officedocument.wordprocessingml.document": components["schemas"]["ErrorEnvelope"];
-                        "text/markdown; charset=utf-8": components["schemas"]["ErrorEnvelope"];
+                        "application/json": components["schemas"]["ErrorEnvelope"];
                     };
                 };
-                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
-                503: {
+                /** @description Permanent artifact download capacity refusal with bounded evidence. */
+                422: {
                     headers: {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/epub+zip": components["schemas"]["ErrorEnvelope"];
-                        "application/vnd.openxmlformats-officedocument.wordprocessingml.document": components["schemas"]["ErrorEnvelope"];
-                        "text/markdown; charset=utf-8": components["schemas"]["ErrorEnvelope"];
+                        "application/json": {
+                            error: {
+                                /** @enum {string} */
+                                code: "EXPORT_CAPACITY_EXCEEDED";
+                                details: {
+                                    limit: number;
+                                    observed: number;
+                                    /** @enum {string} */
+                                    resource: "artifact_bytes";
+                                };
+                                /** @enum {string} */
+                                message: "Export capacity exceeded.";
+                            };
+                        };
+                    };
+                };
+                /** @description Workflow capacity exhaustion or unavailable persistence. */
+                503: {
+                    headers: {
+                        /** @description Optional integer-seconds hint emitted only for workflow capacity exhaustion. */
+                        "Retry-After"?: number;
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error: {
+                                /** @enum {string} */
+                                code: "OPERATION_CAPACITY_EXCEEDED";
+                                details: {
+                                    in_flight: number;
+                                    limit: number;
+                                    project_id: string;
+                                    retry_after_seconds: number;
+                                    /** @enum {string} */
+                                    scope: "project" | "application";
+                                };
+                                /** @enum {string} */
+                                message: "Studio operation capacity is exhausted.";
+                            };
+                        } | {
+                            error: {
+                                /** @enum {string} */
+                                code: "SERVICE_UNAVAILABLE";
+                                details?: {
+                                    [key: string]: unknown;
+                                };
+                                message: string;
+                            };
+                        };
                     };
                 };
             };
@@ -2262,7 +2878,10 @@ export interface paths {
         };
         get: {
             parameters: {
-                query?: never;
+                query?: {
+                    limit?: number;
+                    cursor?: string;
+                };
                 header?: never;
                 path: {
                     projectId: string;
@@ -2279,34 +2898,25 @@ export interface paths {
                     content: {
                         "application/json": {
                             jobs: {
+                                /** Format: date-time */
                                 created_at: string;
                                 document_id: string | null;
                                 error: string | null;
-                                /** @description Chronological trail (oldest first) on a single job payload; the jobs LIST endpoint is the spec-mandated newest-first surface. */
-                                events: {
-                                    created_at: string;
-                                    details: {
-                                        [key: string]: unknown;
-                                    };
-                                    id: string;
-                                    status: string;
-                                }[];
                                 id: string;
-                                kind: string;
+                                /** @enum {string} */
+                                kind: "proposal" | "review" | "export" | "import";
                                 model: string;
-                                operation: string;
+                                /** @enum {string} */
+                                operation: "continue" | "rewrite" | "generate" | "review" | "export" | "import";
                                 project_id: string;
                                 provider: string;
-                                request: {
-                                    [key: string]: unknown;
-                                };
-                                result: {
-                                    [key: string]: unknown;
-                                };
                                 retry_of_job_id: string | null;
-                                status: string;
+                                /** @enum {string} */
+                                status: "pending" | "running" | "completed" | "failed" | "interrupted";
+                                /** Format: date-time */
                                 updated_at: string;
                             }[];
+                            next_cursor: string | null;
                         };
                     };
                 };
@@ -2321,6 +2931,117 @@ export interface paths {
                 };
                 /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
                 404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/projects/{projectId}/jobs/{jobId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    projectId: string;
+                    jobId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            created_at: string;
+                            document_id: string | null;
+                            error: string | null;
+                            /** @description Chronological trail (oldest first) on a single job payload; the jobs LIST endpoint is the spec-mandated newest-first surface. */
+                            events: {
+                                created_at: string;
+                                details: {
+                                    [key: string]: unknown;
+                                };
+                                id: string;
+                                status: string;
+                            }[];
+                            id: string;
+                            kind: string;
+                            model: string;
+                            operation: string;
+                            project_id: string;
+                            provider: string;
+                            request: {
+                                [key: string]: unknown;
+                            };
+                            result: {
+                                [key: string]: unknown;
+                            };
+                            retry_of_job_id: string | null;
+                            status: string;
+                            updated_at: string;
+                        };
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                422: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -2359,7 +3080,9 @@ export interface paths {
         post: {
             parameters: {
                 query?: never;
-                header?: never;
+                header: {
+                    "idempotency-key": string;
+                };
                 path: {
                     projectId: string;
                     jobId: string;
@@ -2432,9 +3155,11 @@ export interface paths {
                         "application/json": components["schemas"]["ErrorEnvelope"];
                     };
                 };
-                /** @description Default Response */
+                /** @description The retry attempt with this idempotency key is still running. */
                 409: {
                     headers: {
+                        /** @description Wait one second before replaying this same retry attempt. */
+                        "Retry-After"?: 1;
                         [name: string]: unknown;
                     };
                     content: {
@@ -2452,22 +3177,96 @@ export interface paths {
                         };
                     };
                 };
-                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                /** @description Invalid retry input or permanent export/generation capacity outcome. */
                 422: {
                     headers: {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["ErrorEnvelope"];
+                        "application/json": {
+                            error: {
+                                /** @enum {string} */
+                                code: "INVALID_OPERATION";
+                                message: string;
+                            };
+                        } | {
+                            error: {
+                                /** @enum {string} */
+                                code: "EXPORT_CAPACITY_EXCEEDED";
+                                details: {
+                                    limit: number;
+                                    observed: number;
+                                    /** @enum {string} */
+                                    resource: "source_documents" | "source_bytes" | "artifact_bytes" | "manifest_bytes";
+                                };
+                                /** @enum {string} */
+                                message: "Export capacity exceeded.";
+                            };
+                        } | {
+                            error: {
+                                /** @enum {string} */
+                                code: "GENERATION_CAPACITY_EXCEEDED";
+                                details: {
+                                    /** @enum {integer} */
+                                    limit: 8388608;
+                                    /** @enum {integer} */
+                                    observed: 8388609;
+                                    /** @enum {string} */
+                                    resource: "prompt_bytes";
+                                };
+                                /** @enum {string} */
+                                message: "Generation capacity exceeded.";
+                            };
+                        } | {
+                            error: {
+                                /** @enum {string} */
+                                code: "VALIDATION_ERROR";
+                                details: {
+                                    errors: {
+                                        field: string;
+                                        message: string;
+                                        type: string;
+                                    }[];
+                                };
+                                /** @enum {string} */
+                                message: "Request validation failed.";
+                            };
+                        };
                     };
                 };
-                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                /** @description Workflow capacity exhaustion or unavailable persistence. */
                 503: {
                     headers: {
+                        /** @description Optional integer-seconds hint emitted only for workflow capacity exhaustion. */
+                        "Retry-After"?: number;
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["ErrorEnvelope"];
+                        "application/json": {
+                            error: {
+                                /** @enum {string} */
+                                code: "OPERATION_CAPACITY_EXCEEDED";
+                                details: {
+                                    in_flight: number;
+                                    limit: number;
+                                    project_id: string;
+                                    retry_after_seconds: number;
+                                    /** @enum {string} */
+                                    scope: "project" | "application";
+                                };
+                                /** @enum {string} */
+                                message: "Studio operation capacity is exhausted.";
+                            };
+                        } | {
+                            error: {
+                                /** @enum {string} */
+                                code: "SERVICE_UNAVAILABLE";
+                                details?: {
+                                    [key: string]: unknown;
+                                };
+                                message: string;
+                            };
+                        };
                     };
                 };
             };
@@ -2487,7 +3286,10 @@ export interface paths {
         };
         get: {
             parameters: {
-                query?: never;
+                query?: {
+                    limit?: number;
+                    cursor?: string;
+                };
                 header?: never;
                 path: {
                     projectId: string;
@@ -2503,22 +3305,12 @@ export interface paths {
                     };
                     content: {
                         "application/json": {
+                            next_cursor: string | null;
                             reviews: {
                                 /** Format: date-time */
                                 created_at: string;
                                 id: string;
-                                issues: {
-                                    code: string;
-                                    document_id: string;
-                                    evidence: {
-                                        [key: string]: unknown;
-                                    };
-                                    id: string;
-                                    message: string;
-                                    /** @enum {string} */
-                                    severity: "blocker" | "warning" | "suggestion";
-                                    suggestion: string;
-                                }[];
+                                issue_count: number;
                                 model: string;
                                 project_id: string;
                                 provider: string;
@@ -2539,6 +3331,15 @@ export interface paths {
                 };
                 /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
                 404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                422: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -2633,8 +3434,138 @@ export interface paths {
                         "application/json": components["schemas"]["ErrorEnvelope"];
                     };
                 };
+                /** @description Default Response */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error: {
+                                /** @enum {string} */
+                                code: "OPERATION_IN_FLIGHT";
+                                details: {
+                                    document_id: string | null;
+                                    operation: string;
+                                    project_id: string;
+                                };
+                                message: string;
+                            };
+                        };
+                    };
+                };
                 /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
                 422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Workflow capacity exhaustion or unavailable persistence. */
+                503: {
+                    headers: {
+                        /** @description Optional integer-seconds hint emitted only for workflow capacity exhaustion. */
+                        "Retry-After"?: number;
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error: {
+                                /** @enum {string} */
+                                code: "OPERATION_CAPACITY_EXCEEDED";
+                                details: {
+                                    in_flight: number;
+                                    limit: number;
+                                    project_id: string;
+                                    retry_after_seconds: number;
+                                    /** @enum {string} */
+                                    scope: "project" | "application";
+                                };
+                                /** @enum {string} */
+                                message: "Studio operation capacity is exhausted.";
+                            };
+                        } | {
+                            error: {
+                                /** @enum {string} */
+                                code: "SERVICE_UNAVAILABLE";
+                                details?: {
+                                    [key: string]: unknown;
+                                };
+                                message: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/projects/{projectId}/reviews/{reviewId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    projectId: string;
+                    reviewId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** Format: date-time */
+                            created_at: string;
+                            id: string;
+                            issues: {
+                                code: string;
+                                document_id: string;
+                                evidence: {
+                                    [key: string]: unknown;
+                                };
+                                id: string;
+                                message: string;
+                                /** @enum {string} */
+                                severity: "blocker" | "warning" | "suggestion";
+                                suggestion: string;
+                            }[];
+                            model: string;
+                            project_id: string;
+                            provider: string;
+                            snapshot_id: string;
+                            summary: string;
+                        };
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -2653,6 +3584,8 @@ export interface paths {
                 };
             };
         };
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -2963,13 +3896,46 @@ export interface paths {
                         };
                     };
                 };
-                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                /** @description Invalid input or permanent authoring-structure capacity refusal with bounded evidence. */
                 422: {
                     headers: {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["ErrorEnvelope"];
+                        "application/json": {
+                            error: {
+                                /** @enum {string} */
+                                code: "INVALID_OPERATION";
+                                message: string;
+                            };
+                        } | {
+                            error: {
+                                /** @enum {string} */
+                                code: "STRUCTURE_CAPACITY_EXCEEDED";
+                                details: {
+                                    limit: number;
+                                    observed: number;
+                                    /** @enum {string} */
+                                    resource: "project_documents" | "project_volumes" | "volume_chapters" | "project_settings_bytes" | "document_metadata_bytes" | "outline_beats";
+                                };
+                                /** @enum {string} */
+                                message: "Authoring structure capacity exceeded.";
+                            };
+                        } | {
+                            error: {
+                                /** @enum {string} */
+                                code: "VALIDATION_ERROR";
+                                details: {
+                                    errors: {
+                                        field: string;
+                                        message: string;
+                                        type: string;
+                                    }[];
+                                };
+                                /** @enum {string} */
+                                message: "Request validation failed.";
+                            };
+                        };
                     };
                 };
                 /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
@@ -3237,13 +4203,46 @@ export interface paths {
                         "application/json": components["schemas"]["ErrorEnvelope"];
                     };
                 };
-                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                /** @description Invalid input or permanent authoring-structure capacity refusal with bounded evidence. */
                 422: {
                     headers: {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["ErrorEnvelope"];
+                        "application/json": {
+                            error: {
+                                /** @enum {string} */
+                                code: "INVALID_OPERATION";
+                                message: string;
+                            };
+                        } | {
+                            error: {
+                                /** @enum {string} */
+                                code: "STRUCTURE_CAPACITY_EXCEEDED";
+                                details: {
+                                    limit: number;
+                                    observed: number;
+                                    /** @enum {string} */
+                                    resource: "project_documents" | "project_volumes" | "volume_chapters" | "project_settings_bytes" | "document_metadata_bytes" | "outline_beats";
+                                };
+                                /** @enum {string} */
+                                message: "Authoring structure capacity exceeded.";
+                            };
+                        } | {
+                            error: {
+                                /** @enum {string} */
+                                code: "VALIDATION_ERROR";
+                                details: {
+                                    errors: {
+                                        field: string;
+                                        message: string;
+                                        type: string;
+                                    }[];
+                                };
+                                /** @enum {string} */
+                                message: "Request validation failed.";
+                            };
+                        };
                     };
                 };
                 /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
@@ -3533,6 +4532,7 @@ export interface paths {
                     };
                     content: {
                         "application/json": {
+                            name: string;
                             owner_configured: boolean;
                             version: string;
                         };

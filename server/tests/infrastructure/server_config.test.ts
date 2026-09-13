@@ -9,6 +9,7 @@ import {
   loadServerConfig,
   type ServerConfig,
 } from "../../src/shared/infrastructure/config/server_config.js";
+import { locateWorkspaceRoot } from "../../src/shared/infrastructure/workspace_manifest.js";
 import { fixtureApiKey } from "../credential_fixtures.js";
 
 /** A usable secret generated per run — never a credential literal in source. */
@@ -74,6 +75,14 @@ describe("environment configuration surface", () => {
     ]);
     expect(config.trustedProxies).toEqual([]);
     expect(config.authRateLimitPerMinute).toBe(5);
+  });
+
+  it("anchors default database paths to the workspace root, not the working directory", () => {
+    const config = load({}) as ServerConfig;
+
+    const workspaceRoot = locateWorkspaceRoot();
+    expect(config.databasePath).toBe(join(workspaceRoot, "data", "novel-engine.sqlite3"));
+    expect(config.dataDirectory).toBe(join(workspaceRoot, "data"));
   });
 
   it("gives process provider settings precedence over .env.local values", async () => {

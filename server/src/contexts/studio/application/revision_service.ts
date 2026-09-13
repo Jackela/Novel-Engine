@@ -1,7 +1,18 @@
 import type { Principal } from "../../../shared/application/ports/auth.js";
 import type { DocumentService } from "./document_service.js";
-import { revisionPayload, safeLoadJson } from "./payloads.js";
-import { type StudioStore, scopeForPrincipal } from "./ports/studio_store.js";
+import type { RevisionSummaryPayload } from "./payload_schemas/revision.js";
+import { revisionSummaryPayload, safeLoadJson } from "./payloads.js";
+import type {
+  DocumentStore,
+  RevisionPageCursor,
+  RevisionPageInput,
+} from "./ports/document_store.js";
+import { scopeForPrincipal } from "./ports/studio_store.js";
+
+interface RevisionHistoryPage {
+  readonly revisions: RevisionSummaryPayload[];
+  readonly nextCursor: RevisionPageCursor | null;
+}
 
 /**
  * Revision history and restore. Restores never mutate history: the historic
@@ -9,10 +20,10 @@ import { type StudioStore, scopeForPrincipal } from "./ports/studio_store.js";
  * source "restore".
  */
 export class RevisionService {
-  private readonly store: StudioStore;
+  private readonly store: DocumentStore;
   private readonly documents: DocumentService;
 
-  constructor(store: StudioStore, documents: DocumentService) {
+  constructor(store: DocumentStore, documents: DocumentService) {
     this.store = store;
     this.documents = documents;
   }
@@ -21,10 +32,18 @@ export class RevisionService {
     principal: Principal,
     projectId: string,
     documentId: string,
-  ): Record<string, unknown>[] {
-    return this.store
-      .findRevisions(scopeForPrincipal(principal), projectId, documentId)
-      .map((revision) => revisionPayload(revision));
+    input: RevisionPageInput,
+  ): RevisionHistoryPage {
+    const page = this.store.findRevisionSummaries(
+      scopeForPrincipal(principal),
+      projectId,
+      documentId,
+      input,
+    );
+    return {
+      revisions: page.revisions.map((revision) => revisionSummaryPayload(revision)),
+      nextCursor: page.nextCursor,
+    };
   }
 
   replayRevision(

@@ -13,14 +13,14 @@ import type { FastifyInstance, FastifyReply } from "fastify";
  * index.html fallback, or the unbuilt-dist notice.
  */
 
-export interface SpaServingOptions {
+interface SpaServingOptions {
   /** Directory holding the built SPA contents (frontend/dist). */
   readonly distDirectory: string;
   readonly productName: string;
   readonly version: string;
 }
 
-/** Python-parity prefixes that must never resolve to SPA HTML. */
+/** Reserved prefixes that must never resolve to SPA HTML. */
 const RESERVED_PATH_PREFIXES = ["api/", "health", "metrics", "docs", "openapi"] as const;
 
 const UNBUILT_DIST_MESSAGE = "Build frontend/ to enable the Studio UI.";

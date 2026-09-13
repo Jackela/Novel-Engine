@@ -4,8 +4,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { api, HttpError } from "@/app/api";
 import type { Project } from "@/app/types/studio";
 import { chapter, projectWith, revision } from "@/test/factories";
-import { createMountHarness, flushMicrotasks } from "@/test/harness";
+import { createMountHarness, deferred, flushMicrotasks } from "@/test/harness";
 
+import { summarizeDocument } from "./projectState";
 import { useDocumentDraft } from "./useDocumentDraft";
 
 vi.mock("@/app/api", async (importOriginal) => {
@@ -15,6 +16,7 @@ vi.mock("@/app/api", async (importOriginal) => {
     ...actual,
     api: {
       ...actual.api,
+      document: vi.fn<typeof actual.api.document>(),
       project: vi.fn<typeof actual.api.project>(),
       revisions: vi.fn<typeof actual.api.revisions>(),
       restoreRevision: vi.fn<typeof actual.api.restoreRevision>(),
@@ -37,7 +39,7 @@ const activeDocument = chapter("document-1", {
   title: "Chapter One",
   current_revision_id: "revision-1",
   content_markdown: "Original draft",
-  revision_source: "manual",
+  revision_source: "author",
   word_count: 2,
 });
 
@@ -47,7 +49,6 @@ const initialProject = projectWith([activeDocument], {
 
 const initialRevision = revision("revision-1", {
   document_id: activeDocument.id,
-  content_markdown: activeDocument.content_markdown,
   word_count: 2,
 });
 
@@ -62,7 +63,7 @@ const savedRevision = revision("revision-2", {
   document_id: activeDocument.id,
   parent_revision_id: initialRevision.id,
   revision_number: 2,
-  content_markdown: savedDocument.content_markdown,
+  word_count: 2,
 });
 
 const latestDocument = {
@@ -70,12 +71,6 @@ const latestDocument = {
   current_revision_id: "revision-3",
   content_markdown: "Server latest draft",
   updated_at: "2026-08-27T00:02:00Z",
-};
-
-const latestProject = {
-  ...initialProject,
-  documents: [latestDocument],
-  updated_at: latestDocument.updated_at,
 };
 
 const overwrittenDocument = {
@@ -143,8 +138,11 @@ describe("useDocumentDraft", () => {
   it("autosaves an edited draft and exposes the saved project and refreshed revisions", async () => {
     // Given
     vi.mocked(api.revisions)
-      .mockResolvedValueOnce({ revisions: [initialRevision] })
-      .mockResolvedValueOnce({ revisions: [savedRevision, initialRevision] });
+      .mockResolvedValueOnce({ revisions: [initialRevision], next_cursor: "older-initial" })
+      .mockResolvedValueOnce({
+        revisions: [savedRevision, initialRevision],
+        next_cursor: "older-after-save",
+      });
     vi.mocked(api.saveDocument).mockResolvedValue(savedDocument);
     const hook = renderDocumentDraftHook();
     await flushMicrotasks();
@@ -164,16 +162,60 @@ describe("useDocumentDraft", () => {
     });
     expect(api.saveDocument).toHaveBeenCalledTimes(1);
     expect(hook.result().hook.saveState).toBe("saved");
-    expect(hook.result().project?.documents).toEqual([savedDocument]);
+    expect(hook.result().project?.documents).toEqual([summarizeDocument(savedDocument)]);
     expect(hook.result().hook.revisions).toEqual([savedRevision, initialRevision]);
+    expect(api.revisions).toHaveBeenCalledTimes(2);
+    expect(vi.mocked(api.revisions).mock.calls[1]?.[2]).toEqual(
+      expect.objectContaining({ limit: 50, signal: expect.any(AbortSignal) }),
+    );
+    expect(vi.mocked(api.revisions).mock.calls[1]?.[2]).not.toHaveProperty("cursor");
+  });
+
+  it("keeps restore pending for exactly one cursorless first-page refresh", async () => {
+    const refresh = deferred<{
+      revisions: (typeof initialRevision)[];
+      next_cursor: string | null;
+    }>();
+    const restoredDocument = {
+      ...activeDocument,
+      current_revision_id: "revision-restored",
+      content_markdown: "Restored draft",
+    };
+    vi.mocked(api.revisions)
+      .mockResolvedValueOnce({ revisions: [initialRevision], next_cursor: "older-initial" })
+      .mockReturnValueOnce(refresh.promise);
+    vi.mocked(api.restoreRevision).mockResolvedValue(restoredDocument);
+    const hook = renderDocumentDraftHook();
+    await flushMicrotasks();
+
+    let settled = false;
+    const restore = hook.result().hook.restoreRevision("revision-old");
+    restore.then(() => {
+      settled = true;
+    });
+    await flushMicrotasks();
+    expect(settled).toBe(false);
+
+    await act(async () => {
+      refresh.resolve({ revisions: [savedRevision, initialRevision], next_cursor: "older-after" });
+      await restore;
+    });
+
+    expect(settled).toBe(true);
+    expect(api.revisions).toHaveBeenCalledTimes(2);
+    expect(vi.mocked(api.revisions).mock.calls[1]?.[2]).toEqual(
+      expect.objectContaining({ limit: 50, signal: expect.any(AbortSignal) }),
+    );
+    expect(vi.mocked(api.revisions).mock.calls[1]?.[2]).not.toHaveProperty("cursor");
   });
 
   it("reports a revision conflict when autosave receives an HTTP 409 response", async () => {
     // Given
     vi.mocked(api.revisions).mockResolvedValue({
       revisions: [initialRevision],
+      next_cursor: null,
     });
-    vi.mocked(api.project).mockResolvedValue(latestProject);
+    vi.mocked(api.document).mockResolvedValue(latestDocument);
     vi.mocked(api.saveDocument).mockRejectedValue(new HttpError("revision conflict", 409));
     const hook = renderDocumentDraftHook();
     await flushMicrotasks();
@@ -188,15 +230,16 @@ describe("useDocumentDraft", () => {
     expect(hook.result().hook.saveState).toBe("conflict");
     expect(hook.result().error).toBe("revision conflict");
     expect(hook.result().hook.draft).toBe("Conflicting draft");
-    expect(hook.result().project?.documents).toEqual([latestDocument]);
+    expect(hook.result().project?.documents).toEqual([summarizeDocument(latestDocument)]);
   });
 
   it("loads the latest document and discards the local draft after a conflict", async () => {
     // Given
     vi.mocked(api.revisions).mockResolvedValue({
       revisions: [initialRevision],
+      next_cursor: null,
     });
-    vi.mocked(api.project).mockResolvedValue(latestProject);
+    vi.mocked(api.document).mockResolvedValue(latestDocument);
     vi.mocked(api.saveDocument).mockRejectedValue(new HttpError("revision conflict", 409));
     const hook = renderDocumentDraftHook();
     await flushMicrotasks();
@@ -212,7 +255,11 @@ describe("useDocumentDraft", () => {
     });
 
     // Then
-    expect(api.project).toHaveBeenCalledWith(activeDocument.project_id);
+    expect(api.document).toHaveBeenCalledWith(
+      activeDocument.project_id,
+      activeDocument.id,
+      expect.objectContaining({ signal: expect.any(AbortSignal) }),
+    );
     expect(hook.result().hook.draft).toBe(latestDocument.content_markdown);
     expect(hook.result().hook.titleDraft).toBe(latestDocument.title);
     expect(hook.result().hook.saveState).toBe("idle");
@@ -224,8 +271,9 @@ describe("useDocumentDraft", () => {
     // Given
     vi.mocked(api.revisions).mockResolvedValue({
       revisions: [initialRevision],
+      next_cursor: null,
     });
-    vi.mocked(api.project).mockResolvedValue(latestProject);
+    vi.mocked(api.document).mockResolvedValue(latestDocument);
     vi.mocked(api.saveDocument)
       .mockRejectedValueOnce(new HttpError("revision conflict", 409))
       .mockResolvedValueOnce(overwrittenDocument);

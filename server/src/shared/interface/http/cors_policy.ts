@@ -1,6 +1,6 @@
 import { LOCALHOST_CORS_PORTS } from "../../domain/cors_contract.js";
 
-export interface CorsAllowList {
+interface CorsAllowList {
   /** True for a configured bare `*` — reflect any origin (non-production only). */
   readonly allowAll: boolean;
   /** Concrete origins with localhost wildcards materialized to the dev ports. */
@@ -8,9 +8,9 @@ export interface CorsAllowList {
 }
 
 /**
- * Materialize configured CORS origins the way the Python gold standard does:
- * `http://localhost:*`-style entries expand to exactly the development ports
- * from the shared SSOT; every other entry passes through lowercased.
+ * Materialize configured CORS origins: `http://localhost:*`-style entries
+ * expand to exactly the development ports from the shared SSOT; every other
+ * entry passes through lowercased.
  */
 export function corsAllowList(configured: string[]): CorsAllowList {
   const origins: string[] = [];

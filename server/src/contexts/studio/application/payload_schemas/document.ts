@@ -45,6 +45,35 @@ export const documentPayloadSchema = Type.Object(
 
 export type DocumentPayload = Static<typeof documentPayloadSchema>;
 
+/** Project-shell/reorder row: structural identity without accepted body data. */
+export const documentSummaryPayloadSchema = Type.Object(
+  {
+    id: Type.String(),
+    project_id: Type.String(),
+    kind: Type.Unsafe<DocumentKind>({ type: "string", enum: [...DOCUMENT_KINDS] }),
+    title: Type.String(),
+    position: Type.Integer(),
+    volume_id: nullableString,
+    beat_ref: nullableString,
+    lore_status: Type.Unsafe<LoreStatus | null>({
+      type: "string",
+      enum: [...LORE_STATUSES],
+      nullable: true,
+    }),
+    current_revision_id: Type.String(),
+    revision_source: Type.Unsafe<RevisionSource>({
+      type: "string",
+      enum: [...REVISION_SOURCES],
+    }),
+    word_count: Type.Integer({ minimum: 0 }),
+    created_at: Type.String(),
+    updated_at: Type.String(),
+  },
+  { additionalProperties: false },
+);
+
+export type DocumentSummaryPayload = Static<typeof documentSummaryPayloadSchema>;
+
 /** One ranked full-text hit: identifier, title, plain-text excerpt. */
 export const matchResultPayloadSchema = Type.Object(
   {

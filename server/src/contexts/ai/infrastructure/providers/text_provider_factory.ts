@@ -12,13 +12,13 @@ import {
 } from "./openai_compatible_provider.js";
 import { UnconfiguredTextProvider } from "./unconfigured_provider.js";
 
-export interface ProviderCredentials {
+interface ProviderCredentials {
   readonly dashscope?: string | undefined;
   readonly openaiCompatible?: string | undefined;
 }
 
 /** Server-owned HTTP adapter settings; credentials and models stay outside request payloads. */
-export interface ProviderAdapterOptions {
+interface ProviderAdapterOptions {
   readonly dashscope?: Omit<DashScopeTextProviderOptions, "apiKey" | "model"> | undefined;
   readonly openaiCompatible?:
     | Omit<OpenAICompatibleTextProviderOptions, "apiKey" | "model">
@@ -30,13 +30,13 @@ export interface TextProviderFactoryConfiguration {
   readonly adapterOptions?: ProviderAdapterOptions | undefined;
 }
 
-export interface TextProviderFactoryOptions extends TextProviderFactoryConfiguration {
+interface TextProviderFactoryOptions extends TextProviderFactoryConfiguration {
   readonly provider: TextProviderName;
   readonly apiKeys: ProviderCredentials;
 }
 
 /** The message family for an HTTP provider selected without credentials. */
-export function missingCredentialMessage(provider: TextProviderName): string {
+function missingCredentialMessage(provider: TextProviderName): string {
   return provider === "dashscope"
     ? "DASHSCOPE_API_KEY is required when provider is dashscope"
     : "LLM_API_KEY is required when provider is openai_compatible";

@@ -1,50 +1,72 @@
-import type { ComponentProps } from "react";
-import { useCallback, useState } from "react";
 import type { NavigateFunction } from "react-router-dom";
 
-import type { StudioDocument } from "@/app/types/studio";
-
-import type { StudioPageView } from "../StudioPageView";
-import { buildStudioNavigatorProps } from "./studioPageModelView";
-import { useActiveDocument } from "./useActiveDocument";
-import { useDocumentDraft } from "./useDocumentDraft";
+import type { StudioRouteState } from "../studioRouteState";
+import {
+  buildNavigatorRowCommands,
+  buildStudioInspectorModel,
+  buildStudioNavigatorProps,
+} from "./studioPageModelView";
 import { useExportDownload } from "./useExportDownload";
+import { useLazyInspectorHistories } from "./useLazyInspectorHistories";
+import { usePageActiveDocument } from "./usePageActiveDocument";
+import { usePageDocumentDraft } from "./usePageDocumentDraft";
+import { reviewInspectorModel } from "./useReviewHistory";
 import { useStudioActions } from "./useStudioActions";
+import { useStudioErrorChannels } from "./useStudioErrorChannels";
+import { useStudioGeneration } from "./useStudioGeneration";
 import { useStudioInspectorState } from "./useStudioInspectorState";
-import { useStudioJobs } from "./useStudioJobs";
+import {
+  buildInspectorPending,
+  buildWholeBookNavigatorModel,
+  useStudioPageNavigation,
+} from "./useStudioPageNavigation";
 import { useStudioProject } from "./useStudioProject";
-import { useStudioProposal } from "./useStudioProposal";
 import { useStudioProviders } from "./useStudioProviders";
 import { useStudioSearch } from "./useStudioSearch";
-import { useWholeBookLoop } from "./useWholeBookLoop";
-import { wholeBookPlan } from "./wholeBookPlan";
 
-type StudioViewProps = ComponentProps<typeof StudioPageView>;
+type Nav = NavigateFunction;
 
-export function useStudioPageModel(
-  projectId: string,
-  section: string,
-  navigate: NavigateFunction,
-): {
-  project: StudioViewProps["project"] | null;
-  viewProps: StudioViewProps | null;
-  loadError: string | null;
-} {
-  const [activeId, setActiveId] = useState<string | null>(null);
-  const [restoringRevisionId, setRestoringRevisionId] = useState<string | null>(null);
+/**
+ * Compose the whole studio page behind one route-scoped model: the project
+ * shell, the active document with its draft, and every inspector family,
+ * each owning its own requests and error channels.
+ */
+export function useStudioPageModel(projectId: string, route: StudioRouteState, navigate: Nav) {
+  const { inspector: routeInspector, section } = route;
   const {
     project,
     setProject,
-    reviews,
-    setReviews,
-    exports,
-    setExports,
     error,
     setError,
     loadError,
+    isLoading,
+    retryLoad,
+    lifecycle,
+    captureProjectShellRead,
+    publishProjectShellRead,
+    recheckProject,
   } = useStudioProject(projectId);
-  const activeDocument = useActiveDocument(project, section, activeId);
-  const visibleActiveId = activeDocument?.id ?? activeId;
+  const navigation = useStudioPageNavigation({ navigate, projectId, section, routeInspector });
+  // #478: every URL-selected inspector history family and its activation gate
+  // lives behind this shell; Export no longer bypasses it at the page model.
+  const inspectorHistories = useLazyInspectorHistories({
+    enabled: project !== null,
+    inspector: routeInspector,
+    projectId,
+    recheckProject,
+    onSessionLost: navigation.onProjectResourceSessionLost,
+  });
+  const { activeId, setActiveId, activeSummary, currentDocument, activeDocument } =
+    usePageActiveDocument({
+      projectId,
+      project,
+      section,
+      lifecycle,
+      shellReadAuthority: { captureProjectShellRead, publishProjectShellRead },
+      navigate,
+    });
+  const { projectErrors, documentErrors, visibleError, visibleErrorWithoutSettings } =
+    useStudioErrorChannels(projectId, activeSummary?.id ?? null, error);
   const {
     draft,
     setDraft,
@@ -53,74 +75,79 @@ export function useStudioPageModel(
     saveState,
     loadedRevision,
     revisions,
-    resetFor,
-    restoreRevision,
+    historyInitialized,
+    hasOlderRevisions,
+    isLoadingOlder,
+    isLoadingHistory,
+    loadOlderRevisions,
+    captureAcceptance,
+    restoringRevisionId,
+    onRestoreRevision,
     isConflictActionPending,
     loadLatest,
     retryOverwrite,
-  } = useDocumentDraft(activeDocument, projectId, setProject, setError);
-  const { jobs, loadJobs, isLoading: isLoadingJobs } = useStudioJobs(projectId, setError);
-  const { inspector, setInspector, settingsForm, setSettingsForm } = useStudioInspectorState({
-    section,
-    project,
-    loadJobs,
+  } = usePageDocumentDraft({
+    projectId,
+    activeDocument,
+    selectedDocumentId: activeSummary?.id ?? null,
+    setProject,
+    draftError: documentErrors.publishers.draft,
+    revisionError: documentErrors.publishers.revision,
+    restoreError: documentErrors.publishers.restore,
   });
-  const onProposalAccepted = useCallback(
-    (document: StudioDocument) => resetFor(document, "saved"),
-    [resetFor],
-  );
-  const onRestoreRevision = useCallback(
-    async (revisionId: string) => {
-      setRestoringRevisionId(revisionId);
-      try {
-        await restoreRevision(revisionId);
-      } finally {
-        setRestoringRevisionId(null);
-      }
-    },
-    [restoreRevision],
-  );
-  const {
-    proposal,
-    setProposal,
-    instruction,
-    setInstruction,
-    runProposal,
-    stopProposal,
-    streamingText,
-    acceptProposal,
-    isRunningProposal,
-    isAcceptingProposal,
-  } = useStudioProposal(
+  const generation = useStudioGeneration({
     projectId,
     activeDocument,
     project,
     setProject,
-    setInspector,
-    setError,
+    setProposalError: documentErrors.publishers.proposal,
+    setJobsError: projectErrors.publishers.jobs,
+    captureAcceptance,
+  });
+  const {
+    jobs,
     loadJobs,
-    onProposalAccepted,
-  );
+    loadOlderJobs,
+    hasOlderJobs,
+    isLoading: isLoadingJobs,
+    loadingInitiator: jobsLoadingInitiator,
+    proposalAudit,
+    proposalAuditGated,
+    copilot,
+    wholeBookLoop,
+  } = generation;
+  const { inspector, setInspector, settingsForm, setSettingsForm } = useStudioInspectorState({
+    inspector: routeInspector,
+    project,
+    loadJobs,
+    onSelectInspector: navigation.onSelectInspector,
+  });
   const { search, setSearch, isSearching, searchResults, runSearch } = useStudioSearch(
     projectId,
-    setError,
+    projectErrors.publishers.search,
   );
-  // #318 whole-book loop: reuses the copilot accept refresh path so the
-  // editor cache resets whenever the loop accepts the active document.
-  const wholeBookLoop = useWholeBookLoop({
-    projectId,
-    provider: String(project?.settings.provider ?? "mock"),
-    setProject,
-    loadJobs,
-    onAccepted: onProposalAccepted,
-  });
   const providers = useStudioProviders();
-  const { exportProject, exportingFormat, failedFormat } = useExportDownload(
+  const exportHistory = inspectorHistories.exportHistory;
+  const exportDownload = useExportDownload(
     project,
     projectId,
-    setExports,
-    setError,
+    exportHistory.applyRefreshedFirstPage,
   );
+  const studioActions = useStudioActions({
+    project,
+    projectId,
+    setProject,
+    setReviewPage: inspectorHistories.review.setFirstPage,
+    setError,
+    errorPublishers: projectErrors.publishers,
+    setActiveId,
+    settingsForm,
+    setSettingsForm,
+    onSettingsSessionLost: navigation.onProjectResourceSessionLost,
+    onSettingsProjectMissing: navigation.onSettingsProjectMissing,
+    loadJobs,
+    isProposalActionGated: proposalAudit.isGated,
+  });
   const {
     createDocument,
     moveDocument,
@@ -128,47 +155,40 @@ export function useStudioPageModel(
     updateProjectSettings,
     retryJob,
     changeLoreStatus,
+    loreStatusFor,
+    linkBeat,
+    beatFor,
     isRunningReview,
     isUpdatingSettings,
     isRetryingJob,
     retryingJobId,
     isCreatingDocument,
     isMovingDocument,
-    isChangingLoreStatus,
-  } = useStudioActions({
-    project,
-    projectId,
-    setProject,
-    setReviews,
-    setError,
-    setActiveId,
-    setInspector,
-    settingsForm,
-    loadJobs,
-  });
+    creatingDocumentKind,
+    movingDocument,
+  } = studioActions;
 
-  if (!project) return { project, viewProps: null, loadError };
+  if (!project) return { project, viewProps: null, loadError, isLoading, retryLoad };
 
-  const latestReview = reviews[0] ?? null;
-  const inspectorPending = {
-    proposal: {
-      running: isRunningProposal,
-      accepting: isAcceptingProposal,
-    },
-    review: isRunningReview,
+  const inspectorPending = buildInspectorPending({
+    copilot,
+    isRunningReview,
     jobs: {
-      loading: isLoadingJobs,
-      retrying: isRetryingJob,
+      isLoading: isLoadingJobs,
+      loadingInitiator: jobsLoadingInitiator,
+      isRetrying: isRetryingJob,
+      retryGated: proposalAuditGated,
       retryingJobId,
     },
-    settings: isUpdatingSettings,
-    loreStatus: isChangingLoreStatus,
-    history: { restoringRevisionId },
-  };
+    isUpdatingSettings,
+    restoringRevisionId,
+  });
 
   return {
     project,
     loadError,
+    isLoading,
+    retryLoad,
     viewProps: {
       project,
       onBack: () => navigate("/projects"),
@@ -176,7 +196,7 @@ export function useStudioPageModel(
         {
           project,
           section,
-          activeId: visibleActiveId,
+          activeId: activeSummary?.id ?? activeId,
           search,
           isSearching,
           searchResults,
@@ -187,12 +207,12 @@ export function useStudioPageModel(
           moveDocument,
           isCreatingDocument,
           isMovingDocument,
-          wholeBook: {
-            phase: wholeBookLoop.phase,
-            remaining: wholeBookPlan(project).length,
-            onStart: () => void wholeBookLoop.start(wholeBookPlan(project)),
-            onStop: () => wholeBookLoop.stop(),
-          },
+          creatingDocumentKind,
+          movingDocument,
+          // #481: the Navigator's per-row delete/placement commands with
+          // their exact pending identities and inline error surfaces.
+          rowCommands: buildNavigatorRowCommands(studioActions),
+          wholeBook: buildWholeBookNavigatorModel(project, wholeBookLoop),
         },
         navigate,
       ),
@@ -201,68 +221,65 @@ export function useStudioPageModel(
         draft,
         titleDraft,
         saveState,
-        error,
+        error: documentErrors.error,
         isConflictActionPending,
         onDraftChange: setDraft,
         onTitleChange: setTitleDraft,
         onLoadLatest: loadLatest,
         onRetryOverwrite: retryOverwrite,
+        isLoadingDocument: currentDocument.isLoading,
+        documentLoadError: currentDocument.error,
+        onRetryDocument: currentDocument.retry,
       },
       inspector: {
-        error,
+        error: inspector === "settings" ? visibleErrorWithoutSettings : visibleError,
         inspector,
         setInspector,
         pending: inspectorPending,
         // #412: per-tab groups assembled once here instead of a forwarded
         // props corridor through StudioPageView -> Inspector -> Panels.
-        model: {
-          copilot: {
-            instruction,
-            proposal,
-            streamingText,
-            onRunProposal: (operation) => void runProposal(operation),
-            onAcceptProposal: () => void acceptProposal(),
-            onStopProposal: () => stopProposal(),
-            setInstruction,
-            setProposal,
+        model: buildStudioInspectorModel({
+          projectId,
+          copilot,
+          jobs: {
+            jobs,
+            hasOlderJobs,
+            onLoadJobs: () => loadJobs("refresh"),
+            onLoadOlderJobs: loadOlderJobs,
+            onRetryJob: retryJob,
           },
-          export: {
-            exports,
-            exportingFormat,
-            failedFormat,
-            errorForExport: section === "export" ? error : null,
-            onExport: (format) => void exportProject(format),
-            onRetryExport: (format) => void exportProject(format),
-          },
-          review: {
-            latestReview,
-            onRunReview: () => void runReview(),
-          },
+          export: { ...exportDownload, history: exportHistory },
+          review: reviewInspectorModel(
+            inspectorHistories.review,
+            projectErrors.errors.review,
+            runReview,
+          ),
           history: {
             revisions,
             loadedRevisionId: loadedRevision.current,
-            onRestoreRevision: (revisionId) => void onRestoreRevision(revisionId),
+            historyInitialized,
+            hasOlderRevisions,
+            isLoadingOlder,
+            isLoadingHistory,
+            onLoadOlderRevisions: loadOlderRevisions,
+            onRestoreRevision,
           },
-          jobs: {
-            jobs,
-            onLoadJobs: () => void loadJobs(),
-            onRetryJob: (jobId) => void retryJob(jobId),
-          },
-          usage: { projectId },
           settings: {
             settingsForm,
             providers,
+            error: projectErrors.errors.settings,
             onUpdateSettings: updateProjectSettings,
             setSettingsForm,
           },
-          loreStatus: {
-            // #444: document-scoped gate; null renders no panel at all.
-            document: activeDocument,
-            onStatusChange: (loreStatus) => {
-              if (activeDocument) void changeLoreStatus(activeDocument.id, loreStatus);
-            },
+          narrowCommands: {
+            activeSummary,
+            activeDocument,
+            changeLoreStatus,
+            loreStatusFor,
+            linkBeat,
+            beatFor,
           },
-        },
+        }),
       },
       statusbar: {
         activeDocument,

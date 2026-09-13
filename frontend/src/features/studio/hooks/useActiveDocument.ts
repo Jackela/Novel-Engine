@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 
-import type { DocumentKind, Project, StudioDocument } from "@/app/types/studio";
+import type { DocumentKind, DocumentSummary, Project } from "@/app/types/studio";
 
 function documentKindForSection(section: string): DocumentKind | null {
   switch (section) {
@@ -19,7 +19,7 @@ export function useActiveDocument(
   project: Project | null,
   section: string,
   activeId: string | null,
-): StudioDocument | null {
+): DocumentSummary | null {
   return useMemo(() => {
     const documents = project?.documents ?? [];
     const activeDocument = documents.find((document) => document.id === activeId) ?? null;

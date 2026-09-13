@@ -9,4 +9,5 @@ import { afterEach, vi } from "vitest";
 afterEach(() => {
   vi.restoreAllMocks();
   window.localStorage.clear();
+  window.sessionStorage.clear();
 });

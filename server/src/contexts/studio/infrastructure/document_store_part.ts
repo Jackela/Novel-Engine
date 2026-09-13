@@ -1,5 +1,4 @@
-import { randomUUID } from "node:crypto";
-import { and, asc, desc, eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 
 import { InvalidOperationError } from "../../../shared/domain/exceptions.js";
 import type { StudioSqliteDatabase } from "../../../shared/infrastructure/db/connection.js";
@@ -7,37 +6,40 @@ import type {
   AddDocumentInput,
   AdvanceDocumentInput,
   DocumentMatchRecord,
+  DocumentStore,
   DocumentWithCurrent,
-  ProjectScope,
-} from "../application/ports/studio_store.js";
-import {
-  DuplicateDocumentError,
-  NotFoundError,
-  RevisionConflictError,
-  SnapshotConflict,
-} from "../domain/exceptions.js";
-import { DEFAULT_LORE_STATUS } from "../domain/kinds.js";
-import {
-  clearDocumentIndex,
-  matchDocumentIndex,
-  refreshDocumentIndex,
-} from "./db/document_search.js";
+  RevisionPageInput,
+  RevisionSummaryPage,
+} from "../application/ports/document_store.js";
+import { revisionPageLimit } from "../application/ports/document_store.js";
+import type { ProjectScope } from "../application/ports/studio_store.js";
+import { DuplicateDocumentError, NotFoundError, SnapshotConflict } from "../domain/exceptions.js";
+import { assertStoredRevisionWordCount } from "../domain/revision_word_count.js";
+import { advanceDocumentInTransaction } from "./db/document_revision_writes.js";
+import { clearDocumentIndex, matchDocumentIndex } from "./db/document_search.js";
+import { seedDocumentInTransaction } from "./db/document_seed_writes.js";
 import { documentRevisions, documents, projects, snapshotDocuments } from "./db/schema.js";
 import {
+  assertOutlineBeatCapacity,
+  assertProjectDocumentCapacity,
+  assertVolumeChapterCapacity,
+} from "./db/structure_capacity_checks.js";
+import {
   documentsWithCurrent,
-  insertRevision,
+  documentWithCurrent,
   isUniqueViolation,
   type RevisionRow,
+  scopedCurrentDocument,
   scopedDocument,
   scopedProject,
-  type Tx,
 } from "./db/studio_query_helpers.js";
+import { buildRevisionSummariesQuery } from "./revision_page_queries.js";
 
 /**
  * The document, revision, and FTS half of the Drizzle studio store. Every
  * mutation keeps the relational rows and the FTS5 index in one transaction.
  */
-export class DocumentStorePart {
+export class DocumentStorePart implements DocumentStore {
   protected readonly db: StudioSqliteDatabase;
 
   constructor(db: StudioSqliteDatabase) {
@@ -58,57 +60,39 @@ export class DocumentStorePart {
     });
   }
 
+  readCurrentDocument(
+    scope: ProjectScope,
+    projectId: string,
+    documentId: string,
+  ): DocumentWithCurrent {
+    return this.db.transaction((tx) => scopedCurrentDocument(tx, scope, projectId, documentId));
+  }
+
   addDocument(scope: ProjectScope, projectId: string, input: AddDocumentInput) {
     try {
       return this.db.transaction((tx) => {
         const project = scopedProject(tx, scope, projectId);
-        const document: typeof documents.$inferInsert = {
-          id: randomUUID(),
+        // Capacity refusals precede every insert: no row, revision, index
+        // entry, or project timestamp survives an over-budget create (#461).
+        assertProjectDocumentCapacity(tx, project.id);
+        if (input.kind === "chapter" && input.volumeId !== null) {
+          assertVolumeChapterCapacity(tx, input.volumeId);
+        }
+        assertOutlineBeatCapacity(input.kind, input.contentMarkdown);
+        const seeded = seedDocumentInTransaction(tx, {
           projectId: project.id,
+          volumeId: input.volumeId,
           kind: input.kind,
           title: input.title,
           position: input.position,
-          volumeId: input.volumeId,
-          currentRevisionId: null,
-          createdAt: input.now,
-          updatedAt: input.now,
-        };
-        tx.insert(documents).values(document).run();
-        const revision = insertRevision(tx, {
-          documentId: document.id,
-          parentRevisionId: null,
-          revisionNumber: 1,
           contentMarkdown: input.contentMarkdown,
           metadataJson: input.metadataJson,
-          source: "author",
+          revisionSource: "author",
           now: input.now,
-        });
-        tx.update(documents)
-          .set({ currentRevisionId: revision.id, updatedAt: input.now })
-          .where(eq(documents.id, document.id))
-          .run();
-        refreshDocumentIndex(tx, {
-          documentId: document.id,
-          projectId: project.id,
-          title: input.title,
-          content: input.contentMarkdown,
+          touchDocumentUpdatedAt: true,
         });
         tx.update(projects).set({ updatedAt: input.now }).where(eq(projects.id, project.id)).run();
-        return {
-          id: document.id,
-          projectId: project.id,
-          kind: input.kind,
-          title: input.title,
-          position: input.position,
-          volumeId: input.volumeId,
-          beatRef: null,
-          loreAliasesJson: "[]",
-          loreStatus: DEFAULT_LORE_STATUS,
-          currentRevisionId: revision.id,
-          createdAt: input.now,
-          updatedAt: input.now,
-          currentRevision: revision,
-        };
+        return seeded;
       });
     } catch (error) {
       if (isUniqueViolation(error)) {
@@ -124,49 +108,9 @@ export class DocumentStorePart {
     documentId: string,
     input: AdvanceDocumentInput,
   ): DocumentWithCurrent {
-    return this.db.transaction((tx) => {
-      const project = scopedProject(tx, scope, projectId);
-      const document = scopedDocument(tx, scope, projectId, documentId);
-      if (document.currentRevisionId !== input.baseRevisionId) {
-        throw new RevisionConflictError(document.currentRevisionId);
-      }
-      const current = tx
-        .select()
-        .from(documentRevisions)
-        .where(eq(documentRevisions.id, document.currentRevisionId ?? ""))
-        .get();
-      if (current === undefined) {
-        throw new NotFoundError("Current revision not found.");
-      }
-      const revision = insertRevision(tx, {
-        documentId: document.id,
-        parentRevisionId: document.currentRevisionId,
-        revisionNumber: current.revisionNumber + 1,
-        contentMarkdown: input.contentMarkdown,
-        metadataJson: input.metadataJson,
-        source: input.source,
-        now: input.now,
-      });
-      const title = input.title ?? document.title;
-      tx.update(documents)
-        .set({ currentRevisionId: revision.id, title, updatedAt: input.now })
-        .where(eq(documents.id, document.id))
-        .run();
-      refreshDocumentIndex(tx, {
-        documentId: document.id,
-        projectId: project.id,
-        title,
-        content: input.contentMarkdown,
-      });
-      tx.update(projects).set({ updatedAt: input.now }).where(eq(projects.id, project.id)).run();
-      return {
-        ...document,
-        title,
-        currentRevisionId: revision.id,
-        updatedAt: input.now,
-        currentRevision: revision,
-      };
-    });
+    return this.db.transaction((tx) =>
+      advanceDocumentInTransaction(tx, scope, projectId, documentId, input),
+    );
   }
 
   dropDocument(scope: ProjectScope, projectId: string, documentId: string): void {
@@ -203,13 +147,7 @@ export class DocumentStorePart {
         .where(eq(documents.id, document.id))
         .run();
       tx.update(projects).set({ updatedAt: input.now }).where(eq(projects.id, project.id)).run();
-      const [updated] = documentsWithCurrent(tx, project.id).filter(
-        (candidate) => candidate.id === document.id,
-      );
-      if (updated === undefined) {
-        throw new NotFoundError("Document not found.");
-      }
-      return updated;
+      return documentWithCurrent(tx, project.id, document.id);
     });
   }
 
@@ -251,19 +189,28 @@ export class DocumentStorePart {
     return (rows[0]?.position ?? 0) + 1;
   }
 
-  findRevisions(scope: ProjectScope, projectId: string, documentId: string): RevisionRow[] {
+  findRevisionSummaries(
+    scope: ProjectScope,
+    projectId: string,
+    documentId: string,
+    input: RevisionPageInput,
+  ): RevisionSummaryPage {
+    const limit = revisionPageLimit(input.limit);
     return this.db.transaction((tx) => {
       scopedDocument(tx, scope, projectId, documentId);
-      return tx
-        .select({ revision: documentRevisions })
-        .from(documentRevisions)
-        .innerJoin(documents, eq(documentRevisions.documentId, documents.id))
-        .where(
-          and(eq(documentRevisions.documentId, documentId), eq(documents.projectId, projectId)),
-        )
-        .orderBy(asc(documentRevisions.revisionNumber))
-        .all()
-        .map((row) => row.revision);
+      const rows = buildRevisionSummariesQuery(tx, documentId, { ...input, limit }).all();
+      const revisions = rows.slice(0, limit).map((row) => ({
+        ...row,
+        wordCount: assertStoredRevisionWordCount(row.wordCount),
+      }));
+      const boundary = revisions.at(-1);
+      return {
+        revisions,
+        nextCursor:
+          rows.length > limit && boundary !== undefined
+            ? { revisionNumber: boundary.revisionNumber, id: boundary.id }
+            : null,
+      };
     });
   }
 
@@ -288,25 +235,9 @@ export class DocumentStorePart {
         )
         .get();
       if (row === undefined) {
-        throw new NotFoundError("Revision not found.");
+        throw new NotFoundError(`Revision not found: ${revisionId}.`);
       }
       return row.revision;
     });
   }
-}
-
-function documentWithCurrent(tx: Tx, projectId: string, documentId: string): DocumentWithCurrent {
-  const row = tx
-    .select({ document: documents, revision: documentRevisions })
-    .from(documents)
-    .leftJoin(documentRevisions, eq(documents.currentRevisionId, documentRevisions.id))
-    .where(and(eq(documents.id, documentId), eq(documents.projectId, projectId)))
-    .get();
-  if (row === undefined) {
-    throw new NotFoundError(
-      `No document '${documentId}' exists in project '${projectId}': the id does not exist ` +
-        `there, or the document belongs to a different project.`,
-    );
-  }
-  return { ...row.document, currentRevision: row.revision };
 }

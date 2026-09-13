@@ -107,6 +107,10 @@ A deterministic Markdown, DOCX, or EPUB artifact written from a snapshot.
 **Import**:
 The one-time, read-only ingestion of a legacy file workspace.
 
+**Search**:
+The FTS5 full-text retrieval over one project's documents; queries are
+reduced to strict tokens before they reach a parameterized MATCH.
+
 ### Actors and access
 
 **Owner**:

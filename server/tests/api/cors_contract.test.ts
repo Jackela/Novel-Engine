@@ -53,6 +53,9 @@ describe("CORS origin contract", () => {
     expect(response.statusCode).toBe(200);
     expect(response.headers["access-control-allow-origin"]).toBe("http://localhost:4173");
     expect(response.headers["access-control-allow-credentials"]).toBe("true");
+    expect(String(response.headers["access-control-expose-headers"])).toBe(
+      "x-request-id, retry-after",
+    );
     await app.close();
   });
 

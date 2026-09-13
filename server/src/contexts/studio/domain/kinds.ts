@@ -1,4 +1,4 @@
-/** The closed set of authoring document kinds (mirrors the Python authority). */
+/** The closed set of authoring document kinds. */
 export const DOCUMENT_KINDS = ["chapter", "outline", "character", "world", "note"] as const;
 
 export type DocumentKind = (typeof DOCUMENT_KINDS)[number];

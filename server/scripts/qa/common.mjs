@@ -25,11 +25,16 @@ export function repoRoot() {
 
 /** Tracked + untracked (not ignored) files, relative to the repo root. */
 export function listRepoFiles(root) {
-  const output = execFileSync("git", ["ls-files", "--cached", "--others", "--exclude-standard"], {
-    cwd: root,
-    encoding: "utf8",
-  });
-  return output.split("\n").filter(Boolean);
+  const runLsFiles = (...args) =>
+    execFileSync("git", ["ls-files", ...args, "-z"], {
+      cwd: root,
+      encoding: "utf8",
+    })
+      .split("\0")
+      .filter(Boolean);
+  const candidates = runLsFiles("--cached", "--others", "--exclude-standard");
+  const deleted = new Set(runLsFiles("--deleted"));
+  return candidates.filter((relativePath) => !deleted.has(relativePath));
 }
 
 /**
@@ -60,13 +65,9 @@ export function scanRootFiles(root, relativePath, skipDirectories) {
   return found;
 }
 
-/** File lines; undecodable or unreadable files behave as empty. */
+/** File lines; read failures are fatal so gates cannot silently skip candidates. */
 export function readTextLines(absolutePath) {
-  try {
-    return readFileSync(absolutePath, "utf8").split(/\r?\n/);
-  } catch {
-    return [];
-  }
+  return readFileSync(absolutePath, "utf8").split(/\r?\n/);
 }
 
 export function fileSuffix(relativePath) {

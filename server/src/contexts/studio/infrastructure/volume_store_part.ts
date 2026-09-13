@@ -2,7 +2,9 @@ import { randomUUID } from "node:crypto";
 import { asc, desc, eq } from "drizzle-orm";
 import { InvalidOperationError } from "../../../shared/domain/exceptions.js";
 import type { StudioSqliteDatabase } from "../../../shared/infrastructure/db/connection.js";
-import type { DocumentWithCurrent, ProjectScope } from "../application/ports/studio_store.js";
+import type { DocumentWithCurrent } from "../application/ports/document_store.js";
+import type { DocumentSummaryRecord } from "../application/ports/project_shell_records.js";
+import type { ProjectScope } from "../application/ports/studio_store.js";
 import type {
   AddVolumeInput,
   AlterVolumeInput,
@@ -13,13 +15,20 @@ import type {
 import { DuplicateVolumeError, NotFoundError } from "../domain/exceptions.js";
 import { documents, projects, volumes } from "./db/schema.js";
 import {
-  documentsWithCurrent,
+  assertMergedVolumeChapterCapacity,
+  assertProjectVolumeCapacity,
+  assertVolumeChapterCapacity,
+} from "./db/structure_capacity_checks.js";
+import {
+  documentSummaries,
+  documentWithCurrent,
   isUniqueViolation,
   scopedDocument,
   scopedProject,
   scopedVolume,
   type Tx,
   type VolumeRow,
+  volumesInOrder,
 } from "./db/studio_query_helpers.js";
 import { projectOrderOntoVolumes } from "./db/volume_projection.js";
 
@@ -39,7 +48,7 @@ export class VolumeStorePart implements StudioVolumeStore {
   findVolumes(scope: ProjectScope, projectId: string): VolumeRecord[] {
     return this.db.transaction((tx) => {
       const project = scopedProject(tx, scope, projectId);
-      return volumeRowsInOrder(tx, project.id);
+      return volumesInOrder(tx, project.id);
     });
   }
 
@@ -47,6 +56,7 @@ export class VolumeStorePart implements StudioVolumeStore {
     try {
       return this.db.transaction((tx) => {
         const project = scopedProject(tx, scope, projectId);
+        assertProjectVolumeCapacity(tx, project.id);
         const position = nextVolumePosition(tx, project.id);
         const row = insertVolume(tx, {
           projectId: project.id,
@@ -93,7 +103,7 @@ export class VolumeStorePart implements StudioVolumeStore {
     this.db.transaction((tx) => {
       const project = scopedProject(tx, scope, projectId);
       const doomed = scopedVolume(tx, scope, projectId, volumeId);
-      const ordered = volumeRowsInOrder(tx, project.id);
+      const ordered = volumesInOrder(tx, project.id);
       if (ordered.length <= 1) {
         throw new InvalidOperationError(
           "A project must keep at least one volume; create another before deleting this one.",
@@ -105,8 +115,11 @@ export class VolumeStorePart implements StudioVolumeStore {
       // following one. Tail positions continue after the survivor's chapters.
       const survivor = index > 0 ? ordered[index - 1] : ordered[index + 1];
       if (survivor === undefined) {
-        throw new NotFoundError("Surviving volume not found.");
+        throw new NotFoundError(`Surviving volume not found while deleting volume ${doomed.id}.`);
       }
+      // The merge itself is a chapter-capacity write: refuse it before any
+      // orphan moves (#461).
+      assertMergedVolumeChapterCapacity(tx, survivor.id, doomed.id);
       const orphans = tx
         .select()
         .from(documents)
@@ -137,19 +150,14 @@ export class VolumeStorePart implements StudioVolumeStore {
       if (document.kind !== "chapter") {
         throw new InvalidOperationError("Only chapters belong to volumes.");
       }
+      assertVolumeChapterCapacity(tx, target.id, { excludingDocumentId: document.id });
       const position = tailPosition(tx, target.id) + 1;
       tx.update(documents)
         .set({ volumeId: target.id, position, updatedAt: input.now })
         .where(eq(documents.id, document.id))
         .run();
       touchProject(tx, projectId, input.now);
-      const [placed] = documentsWithCurrent(tx, projectId).filter(
-        (candidate) => candidate.id === document.id,
-      );
-      if (placed === undefined) {
-        throw new NotFoundError("Document not found.");
-      }
-      return placed;
+      return documentWithCurrent(tx, projectId, document.id);
     });
   }
 
@@ -161,7 +169,7 @@ export class VolumeStorePart implements StudioVolumeStore {
   ): VolumeRecord[] {
     return this.db.transaction((tx) => {
       scopedProject(tx, scope, projectId);
-      const existing = volumeRowsInOrder(tx, projectId);
+      const existing = volumesInOrder(tx, projectId);
       const byId = new Map(existing.map((volume) => [volume.id, volume]));
       const unique = new Set(volumeIds);
       if (
@@ -178,11 +186,11 @@ export class VolumeStorePart implements StudioVolumeStore {
           .run();
       }
       touchProject(tx, projectId, now);
-      const updated = volumeRowsInOrder(tx, projectId);
+      const updated = volumesInOrder(tx, projectId);
       return volumeIds.map((id, orderIndex) => {
         const volume = updated.find((candidate) => candidate.id === id);
         if (volume === undefined) {
-          throw new NotFoundError("Volume not found.");
+          throw new NotFoundError(`Volume not found: ${id}.`);
         }
         // Position and timestamp restate what this transaction just wrote.
         return { ...volume, position: orderIndex + 1, updatedAt: now };
@@ -196,7 +204,7 @@ export class VolumeStorePart implements StudioVolumeStore {
     projectId: string,
     documentIds: string[],
     now: Date,
-  ): DocumentWithCurrent[] {
+  ): DocumentSummaryRecord[] {
     return this.db.transaction((tx) => {
       const project = scopedProject(tx, scope, projectId);
       const rows = tx
@@ -205,19 +213,9 @@ export class VolumeStorePart implements StudioVolumeStore {
         .where(eq(documents.projectId, project.id))
         .all();
       projectOrderOntoVolumes(tx, rows, documentIds, project.id, now);
-      return documentsWithCurrent(tx, project.id);
+      return documentSummaries(tx, project.id);
     });
   }
-}
-
-/** Volumes of one project already in reading order. */
-function volumeRowsInOrder(tx: Tx, projectId: string): VolumeRow[] {
-  return tx
-    .select()
-    .from(volumes)
-    .where(eq(volumes.projectId, projectId))
-    .orderBy(asc(volumes.position), asc(volumes.createdAt), asc(volumes.id))
-    .all() as VolumeRow[];
 }
 
 function nextVolumePosition(tx: Tx, projectId: string): number {
@@ -269,7 +267,7 @@ function touchProject(tx: Tx, projectId: string, now: Date): void {
 
 /** Close position gaps left by a removal so order stays dense and stable. */
 function renumberVolumesAfterRemoval(tx: Tx, projectId: string): void {
-  const ordered = volumeRowsInOrder(tx, projectId);
+  const ordered = volumesInOrder(tx, projectId);
   for (const [index, volume] of ordered.entries()) {
     if (volume.position !== index + 1) {
       tx.update(volumes)

@@ -13,16 +13,19 @@ import {
   SESSION_COOKIE,
 } from "./session_cookies.js";
 
-export type ClientIdentityResolver = (request: {
+type ClientIdentityResolver = (request: {
   socket?: { remoteAddress?: string | undefined } | undefined;
   headers: Record<string, unknown>;
 }) => string;
 
-export interface AuthRoutesOptions {
+interface AuthRoutesOptions {
   /** Absent while the app is database-free; auth surfaces then answer 503. */
   authService?: AuthService | undefined;
   limiter: RateLimiter;
-  version: string;
+  productIdentity: {
+    readonly name: string;
+    readonly version: string;
+  };
   environment: string;
   corsOrigins: string[];
   resolveClientIdentity: ClientIdentityResolver;
@@ -104,9 +107,10 @@ export const authRoutes: FastifyPluginAsync<AuthRoutesOptions> = async (app, opt
             type: "object",
             properties: {
               owner_configured: { type: "boolean" },
+              name: { type: "string" },
               version: { type: "string" },
             },
-            required: ["owner_configured", "version"],
+            required: ["owner_configured", "name", "version"],
           },
           // Rate limiting guards both first-contact paths regardless of method.
           429: errorEnvelopeResponse,
@@ -116,7 +120,8 @@ export const authRoutes: FastifyPluginAsync<AuthRoutesOptions> = async (app, opt
     },
     async () => ({
       owner_configured: requireService(options).ownerExists(),
-      version: options.version,
+      name: options.productIdentity.name,
+      version: options.productIdentity.version,
     }),
   );
 

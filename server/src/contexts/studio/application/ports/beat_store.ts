@@ -1,15 +1,16 @@
-import type { DocumentWithCurrent, ProjectScope } from "./studio_store.js";
+import type { DocumentWithCurrent } from "./document_store.js";
+import type { ProjectScope } from "./studio_store.js";
 
 /** The association write (#313): a beat title or an explicit null to clear. */
-export interface SetBeatReferenceInput {
+interface SetBeatReferenceInput {
   beatRef: string | null;
   now: Date;
 }
 
 /**
- * Beat-port of the authoring core (#313), kept in its own module so the
- * authoring StudioStore stays within its file-size budget. Method names avoid
- * stems shared with frontend client methods (create/update/delete/move).
+ * Beat-port of the authoring core (#313), kept in its own focused module.
+ * Method names avoid stems shared with frontend client methods
+ * (create/update/delete/move).
  */
 export interface StudioBeatStore {
   /**

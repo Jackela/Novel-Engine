@@ -1,221 +1,149 @@
-import type { Dispatch, FormEvent, SetStateAction } from "react";
-import { useCallback, useState } from "react";
+import type { Dispatch, SetStateAction } from "react";
 
-import { api } from "@/app/api";
-import type { DocumentKind, LoreStatus, Project, Review } from "@/app/types/studio";
-
-import { GROUPS, type InspectorTab } from "../studioConstants";
-
-import { toErrorMessage } from "./toErrorMessage";
-import { usePendingAction } from "./usePendingAction";
+import type { Project, ReviewsPage } from "@/app/types/studio";
+import type { SettingsFormState } from "../studioInspectorTypes";
+import { useProjectSettingsUpdate } from "./useProjectSettingsUpdate";
+import type { StudioActionErrorPublishers } from "./useStudioActionOwner";
+import { useStudioActionOwner } from "./useStudioActionOwner";
+import { useStudioBeatActions } from "./useStudioBeatActions";
+import { useStudioChapterPlacement } from "./useStudioChapterPlacement";
+import { useStudioDocumentActions } from "./useStudioDocumentActions";
+import { useStudioDocumentDeletion } from "./useStudioDocumentDeletion";
+import { useStudioJobActions } from "./useStudioJobActions";
+import type { JobsFreshLoadInitiator } from "./useStudioJobs";
+import { useStudioLoreStatusActions } from "./useStudioLoreStatusActions";
 
 interface UseStudioActionsOptions {
   project: Project | null;
   projectId: string;
   setProject: Dispatch<SetStateAction<Project | null>>;
-  setReviews: Dispatch<SetStateAction<Review[]>>;
+  setReviewPage: (page: ReviewsPage) => void;
   setError: Dispatch<SetStateAction<string | null>>;
+  errorPublishers?: Partial<StudioActionErrorPublishers>;
   setActiveId: Dispatch<SetStateAction<string | null>>;
-  setInspector: Dispatch<SetStateAction<InspectorTab>>;
-  settingsForm: { title: string; description: string; provider: string };
-  loadJobs: () => Promise<void>;
+  settingsForm: SettingsFormState;
+  setSettingsForm?: Dispatch<SetStateAction<SettingsFormState>>;
+  onSettingsSessionLost?: () => void;
+  onSettingsProjectMissing?: () => void;
+  loadJobs: (initiator?: JobsFreshLoadInitiator) => Promise<void>;
+  isProposalActionGated?: () => boolean;
 }
 
-const ACTION_KEYS = [
-  "createDocument",
-  "moveDocument",
-  "runReview",
-  "updateSettings",
-  "retryJob",
-  "changeLoreStatus",
-] as const;
+const PROPOSAL_ACTIONS_UNGATED = () => false;
 
-type ActionKey = (typeof ACTION_KEYS)[number];
-
+/**
+ * Composition facade over the studio action domains: one mounted owner per
+ * project generation, one sub-hook per state domain, and the flat action
+ * surface pinned by the page model and its tests.
+ */
 export function useStudioActions({
   project,
   projectId,
   setProject,
-  setReviews,
+  setReviewPage,
   setError,
+  errorPublishers,
   setActiveId,
-  setInspector,
   settingsForm,
+  setSettingsForm,
+  onSettingsSessionLost,
+  onSettingsProjectMissing,
   loadJobs,
+  isProposalActionGated = PROPOSAL_ACTIONS_UNGATED,
 }: UseStudioActionsOptions) {
-  const { pending, begin, finish } = usePendingAction<ActionKey>(ACTION_KEYS);
-  const [retryingJobId, setRetryingJobId] = useState<string | null>(null);
+  const { currentOwner, isCurrentOwner, publishError, clearSharedError } = useStudioActionOwner({
+    projectId,
+    setError,
+    errorPublishers,
+  });
 
-  const createDocument = useCallback(
-    async (kind: DocumentKind) => {
-      if (!project || !begin("createDocument")) return;
-      const count = project.documents?.filter((document) => document.kind === kind).length ?? 0;
-      const label = GROUPS.find((group) => group.kind === kind)?.label ?? "Document";
-      setError(null);
-      try {
-        const document = await api.createDocument(project.id, {
-          kind,
-          title: kind === "chapter" ? `Chapter ${count + 1}` : `${label} ${count + 1}`,
-          content_markdown: kind === "chapter" ? `# Chapter ${count + 1}\n\n` : "",
-        });
-        setProject((current) =>
-          current
-            ? {
-                ...current,
-                documents: [...(current.documents ?? []), document],
-              }
-            : current,
-        );
-        setActiveId(document.id);
-      } catch (reason) {
-        setError(toErrorMessage(reason, "Unable to create document."));
-      } finally {
-        finish("createDocument");
-      }
-    },
-    [begin, finish, project, setActiveId, setError, setProject],
-  );
-
-  const moveDocument = useCallback(
-    async (documentId: string, direction: -1 | 1) => {
-      if (!project?.documents || !begin("moveDocument")) return;
-      const ordered = [...project.documents].sort((a, b) => a.position - b.position);
-      const index = ordered.findIndex((document) => document.id === documentId);
-      const target = index + direction;
-      if (index < 0 || target < 0 || target >= ordered.length) {
-        finish("moveDocument");
-        return;
-      }
-      const currentItem = ordered[index];
-      const targetItem = ordered[target];
-      if (!currentItem || !targetItem) {
-        finish("moveDocument");
-        return;
-      }
-      ordered[index] = targetItem;
-      ordered[target] = currentItem;
-      setError(null);
-      try {
-        const response = await api.reorderDocuments(
-          project.id,
-          ordered.map((item) => item.id),
-        );
-        setProject((current) =>
-          current ? { ...current, documents: response.documents } : current,
-        );
-      } catch (reason) {
-        setError(toErrorMessage(reason, "Unable to reorder documents."));
-      } finally {
-        finish("moveDocument");
-      }
-    },
-    [begin, finish, project, setError, setProject],
-  );
-
-  const runReview = useCallback(async () => {
-    if (!begin("runReview")) return;
-    setError(null);
-    try {
-      // The synchronous job contract (#272): the response is the terminal
-      // review job; the assessment list is refreshed afterwards.
-      const job = await api.createReview(projectId);
-      if (job.status !== "completed") {
-        throw new Error(job.error ?? "Unable to run review.");
-      }
-      const response = await api.reviews(projectId);
-      setReviews(response.reviews);
-      setInspector("review");
-    } catch (reason) {
-      setError(toErrorMessage(reason, "Unable to run review."));
-    } finally {
-      finish("runReview");
-    }
-  }, [begin, finish, projectId, setError, setInspector, setReviews]);
-
-  const updateProjectSettings = useCallback(
-    async (event: FormEvent) => {
-      event.preventDefault();
-      if (!project || !begin("updateSettings")) return;
-      setError(null);
-      try {
-        const updated = await api.updateProject(project.id, {
-          title: settingsForm.title,
-          description: settingsForm.description,
-          settings: { ...project.settings, provider: settingsForm.provider },
-        });
-        setProject(updated);
-        setError(null);
-      } catch (reason) {
-        setError(toErrorMessage(reason, "Unable to update project."));
-      } finally {
-        finish("updateSettings");
-      }
-    },
-    [begin, finish, project, settingsForm, setError, setProject],
-  );
-
-  const retryJob = useCallback(
-    async (jobId: string) => {
-      if (!begin("retryJob")) return;
-      setRetryingJobId(jobId);
-      setError(null);
-      try {
-        await api.retryJob(projectId, jobId);
-        await loadJobs();
-      } catch (reason) {
-        setError(toErrorMessage(reason, "Unable to retry job."));
-      } finally {
-        setRetryingJobId(null);
-        finish("retryJob");
-      }
-    },
-    [begin, finish, projectId, loadJobs, setError],
-  );
-
-  /**
-   * Lore lifecycle status change (#444, ADR-0006): a revision-free document
-   * write; the response envelope patches the project's document list in
-   * place so navigator badges and the selector reflect the new gate.
-   */
-  const changeLoreStatus = useCallback(
-    async (documentId: string, loreStatus: LoreStatus) => {
-      if (!project || !begin("changeLoreStatus")) return;
-      setError(null);
-      try {
-        const { lore_status } = await api.saveLoreStatus(project.id, documentId, loreStatus);
-        setProject((current) =>
-          current
-            ? {
-                ...current,
-                documents: (current.documents ?? []).map((document) =>
-                  document.id === documentId ? { ...document, lore_status } : document,
-                ),
-              }
-            : current,
-        );
-      } catch (reason) {
-        setError(toErrorMessage(reason, "Unable to update the lore status."));
-      } finally {
-        finish("changeLoreStatus");
-      }
-    },
-    [begin, finish, project, setError, setProject],
-  );
+  const documentActions = useStudioDocumentActions({
+    project,
+    projectId,
+    setProject,
+    setActiveId,
+    currentOwner,
+    isCurrentOwner,
+    publishError,
+  });
+  const deletionActions = useStudioDocumentDeletion({
+    project,
+    projectId,
+    setProject,
+    setActiveId,
+    currentOwner,
+    isCurrentOwner,
+  });
+  const placementActions = useStudioChapterPlacement({
+    project,
+    projectId,
+    setProject,
+    currentOwner,
+    isCurrentOwner,
+  });
+  const loreStatusActions = useStudioLoreStatusActions({
+    project,
+    projectId,
+    setProject,
+    currentOwner,
+    isCurrentOwner,
+    clearSharedError,
+  });
+  const beatActions = useStudioBeatActions({
+    project,
+    projectId,
+    setProject,
+    currentOwner,
+    isCurrentOwner,
+    clearSharedError,
+  });
+  const settingsUpdate = useProjectSettingsUpdate({
+    project,
+    projectId,
+    settingsForm,
+    setProject,
+    setSettingsForm,
+    setSettingsError: errorPublishers?.settings ?? setError,
+    onSessionLost: onSettingsSessionLost,
+    onProjectMissing: onSettingsProjectMissing,
+  });
+  const jobActions = useStudioJobActions({
+    projectId,
+    currentOwner,
+    isCurrentOwner,
+    publishError,
+    setReviewPage,
+    loadJobs,
+    isProposalActionGated,
+  });
 
   return {
-    createDocument,
-    moveDocument,
-    runReview,
-    updateProjectSettings,
-    retryJob,
-    changeLoreStatus,
-    pending,
-    isCreatingDocument: pending.createDocument,
-    isMovingDocument: pending.moveDocument,
-    isRunningReview: pending.runReview,
-    isUpdatingSettings: pending.updateSettings,
-    isRetryingJob: pending.retryJob,
-    retryingJobId,
-    isChangingLoreStatus: pending.changeLoreStatus,
+    createDocument: documentActions.createDocument,
+    moveDocument: documentActions.moveDocument,
+    deleteDocument: deletionActions.deleteDocument,
+    deletionFor: deletionActions.deletionFor,
+    deletingDocument: deletionActions.deletingDocument,
+    placeChapter: placementActions.placeChapter,
+    placementFor: placementActions.placementFor,
+    placingDocument: placementActions.placingDocument,
+    runReview: jobActions.runReview,
+    updateProjectSettings: settingsUpdate.updateProjectSettings,
+    retryJob: jobActions.retryJob,
+    changeLoreStatus: loreStatusActions.changeLoreStatus,
+    loreStatusFor: loreStatusActions.loreStatusFor,
+    linkBeat: beatActions.linkBeat,
+    beatFor: beatActions.beatFor,
+    pending: {
+      ...documentActions.pending,
+      ...jobActions.pending,
+    },
+    creatingDocumentKind: documentActions.creatingDocumentKind,
+    movingDocument: documentActions.movingDocument,
+    isCreatingDocument: documentActions.isCreatingDocument,
+    isMovingDocument: documentActions.isMovingDocument,
+    isRunningReview: jobActions.pending.runReview,
+    isUpdatingSettings: settingsUpdate.isUpdatingSettings,
+    isRetryingJob: jobActions.pending.retryJob,
+    retryingJobId: jobActions.retryingJobId,
   };
 }

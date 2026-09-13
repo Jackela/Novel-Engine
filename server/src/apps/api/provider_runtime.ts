@@ -25,7 +25,7 @@ export interface ProviderRuntime {
   reviewModel: string;
 }
 
-export interface ProviderRuntimeInputs {
+interface ProviderRuntimeInputs {
   /**
    * Per-request AI provider factory override (tests inject capturing
    * providers). The default builds providers from `providerApiKeys`; HTTP

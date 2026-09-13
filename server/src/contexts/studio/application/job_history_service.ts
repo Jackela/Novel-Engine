@@ -1,24 +1,43 @@
 import { TextGenerationProviderError } from "../../../contexts/ai/application/ports/text_generation.js";
 import type { Principal } from "../../../shared/application/ports/auth.js";
+import {
+  ExportArtifactWriteError,
+  ExportSourceInvalidatedError,
+  NotFoundError,
+  OperationInFlightError,
+  ReviewSourceInvalidatedError,
+} from "../domain/exceptions.js";
 import type { SnapshotArtifactService } from "./export_artifact_service.js";
-import { JobRetryExecutor, type JobRetryExecutorOptions } from "./job_retry_executor.js";
+import { failedJobInput } from "./failed_job_input.js";
+import { replayedJobPayload } from "./job_replay_payload.js";
+import { JobRetryExecutor } from "./job_retry_executor.js";
 import type { InFlightOperationGuard } from "./operation_in_flight.js";
-import { dumpJson, exportJobResultJson, jobPayload, reviewJobResultJson } from "./payloads.js";
-import type { ExportArtifactFormat, ExportArtifactRecord } from "./ports/export_store.js";
-import type { ProjectScope, ProjectUsageAggregate, StudioStore } from "./ports/studio_store.js";
+import type { JobPayload, JobSummaryPayload } from "./payload_schemas/job.js";
+import { dumpJson, jobPayload, jobSummaryPayload } from "./payloads.js";
+import type { ExportArtifactFormat } from "./ports/export_store.js";
+import type { StudioJobLedgerStore } from "./ports/job_ledger_store.js";
+import type { JobPageCursor, JobPageInput } from "./ports/job_records.js";
+import type { ProjectUsageAggregate } from "./ports/project_usage.js";
+import type { EvaluatedReview, ReviewOutcomeStore } from "./ports/review_outcome_store.js";
+import type { ProjectScope } from "./ports/studio_store.js";
 import { scopeForPrincipal } from "./ports/studio_store.js";
+import type { ProposalGenerationPipeline } from "./proposal_pipeline.js";
 import type { ReviewService } from "./review_service.js";
 
 /** Honest provenance for the deterministic studio renderers (no AI model). */
 const STUDIO_EXPORTER_PROVIDER = "studio";
 
-export interface JobHistoryServiceOptions {
-  readonly now?: JobRetryExecutorOptions["now"];
-  readonly providerFactory: JobRetryExecutorOptions["providerFactory"];
+interface JobHistoryServiceOptions {
+  readonly now?: (() => Date) | undefined;
   /** Serializes identical exports and retries (#305); shared with proposals. */
   readonly inFlight: InFlightOperationGuard;
-  /** Lorebook injection budget (#445); undefined keeps the adjudicated default. */
-  readonly loreBudgetCharacters?: JobRetryExecutorOptions["loreBudgetCharacters"];
+  /** Owns the proposal generation sequence shared with the proposal surface. */
+  readonly proposals: ProposalGenerationPipeline;
+}
+
+interface JobHistoryPage {
+  readonly jobs: JobSummaryPayload[];
+  readonly nextCursor: JobPageCursor | null;
 }
 
 /**
@@ -28,7 +47,8 @@ export interface JobHistoryServiceOptions {
  * #268, and delegation of the retry chain to its executor.
  */
 export class JobHistoryService {
-  private readonly store: StudioStore;
+  private readonly jobs: StudioJobLedgerStore;
+  private readonly reviewOutcomes: ReviewOutcomeStore;
   private readonly reviews: ReviewService;
   private readonly artifacts: SnapshotArtifactService;
   private readonly retries: JobRetryExecutor;
@@ -36,33 +56,51 @@ export class JobHistoryService {
   private readonly now: () => Date;
 
   constructor(
-    store: StudioStore,
+    jobs: StudioJobLedgerStore,
+    reviewOutcomes: ReviewOutcomeStore,
     reviews: ReviewService,
     artifacts: SnapshotArtifactService,
     options: JobHistoryServiceOptions,
   ) {
-    this.store = store;
+    this.jobs = jobs;
+    this.reviewOutcomes = reviewOutcomes;
     this.reviews = reviews;
     this.artifacts = artifacts;
-    this.retries = new JobRetryExecutor(store, reviews, artifacts, {
+    this.retries = new JobRetryExecutor(jobs, reviewOutcomes, reviews, artifacts, {
       now: options.now,
-      providerFactory: options.providerFactory,
-      loreBudgetCharacters: options.loreBudgetCharacters,
+      proposals: options.proposals,
     });
     this.inFlight = options.inFlight;
     this.now = options.now ?? (() => new Date());
   }
 
-  /** The audit listing: newest job first, each event stream newest first. */
-  collectProjectJobs(principal: Principal, projectId: string): Array<Record<string, unknown>> {
-    return this.store
-      .collectProjectJobs(scopeForPrincipal(principal), projectId)
-      .map((job) => jobPayload(job));
+  /** The lightweight audit listing: newest summary first, with no nested bodies. */
+  collectProjectJobSummaries(
+    principal: Principal,
+    projectId: string,
+    input: JobPageInput,
+  ): JobHistoryPage {
+    const page = this.jobs.collectProjectJobSummaries(
+      scopeForPrincipal(principal),
+      projectId,
+      input,
+    );
+    return { jobs: page.jobs.map((job) => jobSummaryPayload(job)), nextCursor: page.nextCursor };
+  }
+
+  /** One complete scoped Job; all known misses share the stable Job identity. */
+  findProjectJob(principal: Principal, projectId: string, jobId: string): JobPayload {
+    try {
+      return jobPayload(this.jobs.findJob(scopeForPrincipal(principal), projectId, jobId));
+    } catch (error) {
+      if (!(error instanceof NotFoundError)) throw error;
+      throw new NotFoundError(`Job not found: ${jobId}.`);
+    }
   }
 
   /** The usage-ledger aggregation for the project surface (#317, #384). */
   aggregateProjectUsage(principal: Principal, projectId: string): ProjectUsageAggregate {
-    return this.store.aggregateProjectUsage(scopeForPrincipal(principal), projectId, this.now());
+    return this.jobs.aggregateProjectUsage(scopeForPrincipal(principal), projectId, this.now());
   }
 
   /** The terminal-Job bridge over a fresh editorial assessment. */
@@ -80,11 +118,11 @@ export class JobHistoryService {
       documentId: null,
       operation: "review",
     };
-    this.inFlight.enter(inFlightTarget);
+    const permit = this.inFlight.acquire(inFlightTarget);
     try {
       return await this.recordReviewJobInner(principal, scope, projectId, reportCleanupFailure);
     } finally {
-      this.inFlight.exit(inFlightTarget);
+      permit.release();
     }
   }
 
@@ -94,46 +132,36 @@ export class JobHistoryService {
     projectId: string,
     reportCleanupFailure?: (failure: unknown) => void,
   ): Promise<Record<string, unknown>> {
+    let evaluation: EvaluatedReview | undefined;
     try {
-      const assessment = await this.reviews.evaluateProject(
-        principal,
-        projectId,
+      evaluation = await this.reviews.evaluateProject(principal, projectId, {
         reportCleanupFailure,
-      );
-      const job = this.store.addJob(scope, {
-        projectId,
-        documentId: null,
-        kind: "review",
-        operation: "review",
-        status: "completed",
-        provider: assessment.provider,
-        model: assessment.model,
-        requestJson: dumpJson({}),
-        resultJson: reviewJobResultJson(assessment),
-        error: null,
-        eventDetailsJson: dumpJson({ review_id: assessment.id }),
-        now: this.now(),
       });
-      return jobPayload(job);
+      const completed = this.reviewOutcomes.recordCompletedReviewJob(scope, evaluation);
+      return jobPayload(completed.job);
     } catch (error) {
-      if (!(error instanceof TextGenerationProviderError)) {
+      if (
+        !(error instanceof TextGenerationProviderError) &&
+        !(error instanceof ReviewSourceInvalidatedError)
+      ) {
         throw error;
       }
       return jobPayload(
-        this.store.addJob(scope, {
-          projectId,
-          documentId: null,
-          kind: "review",
-          operation: "review",
-          status: "failed",
-          provider: this.reviews.providerName,
-          model: "",
-          requestJson: dumpJson({}),
-          resultJson: dumpJson({ review_id: null, snapshot_id: null, summary: "", issues: [] }),
-          error: error.message,
-          eventDetailsJson: dumpJson({ error: error.message }),
-          now: this.now(),
-        }),
+        this.jobs.addJob(
+          scope,
+          failedJobInput({
+            projectId,
+            documentId: null,
+            kind: "review",
+            operation: "review",
+            provider: evaluation?.provider ?? this.reviews.providerName,
+            model: evaluation?.model ?? "",
+            requestJson: dumpJson({}),
+            resultJson: dumpJson({ review_id: null, snapshot_id: null, summary: "", issues: [] }),
+            error: error.message,
+            now: this.now(),
+          }),
+        ),
       );
     }
   }
@@ -143,6 +171,7 @@ export class JobHistoryService {
     principal: Principal,
     projectId: string,
     format: ExportArtifactFormat,
+    reportCleanupFailure?: (failure: unknown) => void,
   ): Promise<Record<string, unknown>> {
     const scope = scopeForPrincipal(principal);
     // #305: the artifact write runs before the terminal job row exists;
@@ -153,28 +182,49 @@ export class JobHistoryService {
       documentId: null,
       operation: `export (${format})`,
     };
-    this.inFlight.enter(inFlightTarget);
-    let artifact: ExportArtifactRecord;
+    const permit = this.inFlight.acquire(inFlightTarget);
     try {
-      artifact = await this.artifacts.materializeSnapshotArtifact(principal, projectId, format);
+      try {
+        const completed = await this.artifacts.recordCompletedExportJob(
+          principal,
+          projectId,
+          format,
+          { reportCleanupFailure },
+        );
+        return jobPayload(completed.job);
+      } catch (error) {
+        if (
+          !(error instanceof ExportArtifactWriteError) &&
+          !(error instanceof ExportSourceInvalidatedError)
+        ) {
+          throw error;
+        }
+        return jobPayload(
+          this.jobs.addJob(
+            scope,
+            failedJobInput({
+              projectId,
+              documentId: null,
+              kind: "export",
+              operation: "export",
+              provider: STUDIO_EXPORTER_PROVIDER,
+              model: "",
+              requestJson: dumpJson({ format }),
+              resultJson: dumpJson({
+                export_id: null,
+                snapshot_id: null,
+                format,
+                download_url: null,
+              }),
+              error: error.message,
+              now: this.now(),
+            }),
+          ),
+        );
+      }
     } finally {
-      this.inFlight.exit(inFlightTarget);
+      permit.release();
     }
-    const job = this.store.addJob(scope, {
-      projectId,
-      documentId: null,
-      kind: "export",
-      operation: "export",
-      status: "completed",
-      provider: STUDIO_EXPORTER_PROVIDER,
-      model: "",
-      requestJson: dumpJson({ format }),
-      resultJson: exportJobResultJson(projectId, artifact),
-      error: null,
-      eventDetailsJson: dumpJson({ export_id: artifact.id }),
-      now: this.now(),
-    });
-    return jobPayload(job);
   }
 
   /** Retry a failed/interrupted job; see JobRetryExecutor for the contract. */
@@ -182,8 +232,31 @@ export class JobHistoryService {
     principal: Principal,
     projectId: string,
     jobId: string,
+    requestKey: string,
     reportCleanupFailure: (failure: unknown) => void,
   ): Promise<Record<string, unknown>> {
+    // Project deletion removes persistence before artifact cleanup completes;
+    // preserve its exclusive 409 boundary before any durable replay lookup.
+    this.inFlight.assertProjectNotExclusive(projectId);
+    const replay = this.jobs.findJobRetry(
+      scopeForPrincipal(principal),
+      projectId,
+      jobId,
+      requestKey,
+    );
+    if (replay !== null) {
+      if (replay.status === "running") {
+        throw new OperationInFlightError(projectId, null, `retry (${jobId})`, 1);
+      }
+      if (
+        replay.status !== "completed" &&
+        replay.status !== "failed" &&
+        replay.status !== "interrupted"
+      ) {
+        throw new Error(`Persisted retry Job has invalid status: ${replay.status}.`);
+      }
+      return replayedJobPayload(replay);
+    }
     // #305: a retry runs real work after its running row is created, so a
     // double-fired retry of the same job is deduplicated like the pipelines.
     const inFlightTarget = {
@@ -191,16 +264,17 @@ export class JobHistoryService {
       documentId: null,
       operation: `retry (${jobId})`,
     };
-    this.inFlight.enter(inFlightTarget);
+    const permit = this.inFlight.acquire(inFlightTarget);
     try {
       return await this.retries.reexecuteProjectJob(
         principal,
         projectId,
         jobId,
+        requestKey,
         reportCleanupFailure,
       );
     } finally {
-      this.inFlight.exit(inFlightTarget);
+      permit.release();
     }
   }
 }

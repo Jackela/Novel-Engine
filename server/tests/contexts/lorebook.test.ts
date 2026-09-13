@@ -189,7 +189,6 @@ describe("resident match corpus (#315 corpus equals the assembled resident view)
     const source: ResidentContextSource = {
       outlineMarkdown: "## The Storm\nSable watches the harbour.",
       linkedBeat: { title: "The Storm", content: "Rain floods the harbour." },
-      volumes: [{ id: "vol-a" }],
       chapters: [chapter({ id: "one", position: 1, contentMarkdown: "Ends beside Cadera." })],
       targetDocumentId: "target",
     };
@@ -206,7 +205,7 @@ describe("resident match corpus (#315 corpus equals the assembled resident view)
   });
 });
 
-describe("lorebook section rendering (#315 trusted-context layout)", () => {
+describe("lorebook section rendering (#315 reference-data layout)", () => {
   it("renders nothing when no entry matched", () => {
     expect(renderLoreSection([])).toEqual([]);
     expect(
@@ -232,7 +231,7 @@ describe("lorebook section rendering (#315 trusted-context layout)", () => {
     expect(rendered).toContain("Mara keeps");
     expect(rendered.indexOf("### Mara")).toBeLessThan(rendered.indexOf("### Sable"));
     expect(rendered).toContain("### Sable");
-    // The section carries its own trusted-context markers.
+    // The section carries its own reference-data markers.
     expect(sections[0]).toBe("");
     expect(sections.some((line) => line === LOREBOOK_BEGIN)).toBe(true);
     expect(sections.at(-1)).toBe(LOREBOOK_END);
@@ -252,7 +251,6 @@ describe("proposal prompt composition (#315 lore between resident context and ma
     return {
       outlineMarkdown: null,
       linkedBeat: null,
-      volumes: [],
       chapters: [],
       targetDocumentId: "target",
       ...overrides,

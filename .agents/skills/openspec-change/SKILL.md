@@ -5,7 +5,7 @@ description: Run a product change through this repository's OpenSpec workflow â€
 
 # OpenSpec change workflow
 
-`openspec/specs/novel-studio/spec.md` is the product single source of truth.
+`openspec/specs/novel-engine/spec.md` is the product single source of truth.
 Behavior changes land as OpenSpec change folders before or alongside the code
 that implements them.
 

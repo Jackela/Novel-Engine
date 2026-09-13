@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
 import { listRepoFiles, readTextLines, repoRoot, reportFailures } from "./common.mjs";
@@ -85,10 +85,43 @@ function migrationChannelFailures(root) {
     failures.push(`${JOURNAL_PATH}: journal lists no migrations — the channel is empty`);
     return failures;
   }
-  for (const entry of entries) {
-    const migrationPath = join(MIGRATIONS_DIRECTORY, `${entry.tag}.sql`);
-    if (typeof entry.tag !== "string" || !existsSync(join(root, migrationPath))) {
+  const journalTags = new Set();
+  for (let position = 0; position < entries.length; position += 1) {
+    const entry = entries[position];
+    if (entry.idx !== position) {
+      failures.push(
+        `${JOURNAL_PATH}: journal entry at position ${position} must have idx ${position}, got ${JSON.stringify(entry.idx)}`,
+      );
+    }
+    if (typeof entry.tag !== "string") {
       failures.push(`${JOURNAL_PATH}: journal entry ${JSON.stringify(entry.tag)} has no .sql file`);
+      continue;
+    }
+    const expectedPrefix = `${String(position).padStart(4, "0")}_`;
+    if (!entry.tag.startsWith(expectedPrefix)) {
+      failures.push(
+        `${JOURNAL_PATH}: journal tag ${JSON.stringify(entry.tag)} must start with ${expectedPrefix}`,
+      );
+    }
+    if (journalTags.has(entry.tag)) {
+      failures.push(`${JOURNAL_PATH}: duplicate journal tag ${JSON.stringify(entry.tag)}`);
+    } else {
+      journalTags.add(entry.tag);
+    }
+    const migrationPath = join(MIGRATIONS_DIRECTORY, `${entry.tag}.sql`);
+    if (!existsSync(join(root, migrationPath))) {
+      failures.push(`${JOURNAL_PATH}: journal entry ${JSON.stringify(entry.tag)} has no .sql file`);
+    }
+  }
+  for (const entry of readdirSync(join(root, MIGRATIONS_DIRECTORY), { withFileTypes: true })) {
+    if (!entry.isFile() || !entry.name.endsWith(".sql")) {
+      continue;
+    }
+    const tag = entry.name.slice(0, -".sql".length);
+    if (!journalTags.has(tag)) {
+      failures.push(
+        `${MIGRATIONS_DIRECTORY}/${entry.name}: migration SQL is not referenced by the journal`,
+      );
     }
   }
   return failures;

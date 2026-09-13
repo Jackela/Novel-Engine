@@ -1,13 +1,15 @@
 /* BEM-ish only: feature-prefixed blocks with block__element--modifier; no legacy flat classes (#442). */
 .studio-statusbar {
   grid-area: status;
-  border-top: 1px solid #dfe2e3;
-  background: var(--surface-muted);
+  border-top: 1px solid var(--line);
+  background: var(--surface-glass-faint);
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  backdrop-filter: blur(var(--glass-blur));
   display: flex;
   align-items: center;
   gap: 20px;
   padding: 0 14px;
-  color: #636b6c;
+  color: var(--muted-soft);
   font-size: 11px;
 }
 .studio-statusbar span {
@@ -29,6 +31,11 @@ select:focus-visible,
 summary:focus-visible {
   outline: 3px solid var(--teal-strong);
   outline-offset: 2px;
+}
+
+.studio:focus-visible {
+  outline: 3px solid var(--teal-strong);
+  outline-offset: -3px;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -72,12 +79,9 @@ summary:focus-visible {
     flex-wrap: wrap;
     padding: 10px;
   }
-  .studio-topbar__project-title {
-    display: none;
-  }
   .studio-nav {
     border-right: 0;
-    border-bottom: 1px solid #dfe2e3;
+    border-bottom: 1px solid var(--line);
     overflow: visible;
   }
   .studio-editor {
@@ -85,14 +89,11 @@ summary:focus-visible {
   }
   .studio-inspector {
     border-left: 0;
-    border-top: 1px solid #dfe2e3;
+    border-top: 1px solid var(--line);
     overflow: visible;
   }
   .studio-inspector__disclosure {
     min-height: 0;
-  }
-  .studio-inspector__summary {
-    display: flex;
   }
   .editor__header {
     padding-inline: 18px;
@@ -126,13 +127,10 @@ summary:focus-visible {
   .studio-topbar .ui-brand {
     font-size: 15px;
   }
-  .studio-topbar__project-title {
-    display: none;
-  }
   .studio-nav {
     max-height: none;
     border-right: 0;
-    border-bottom: 1px solid #dfe2e3;
+    border-bottom: 1px solid var(--line);
   }
   .studio-editor {
     min-height: 70vh;
@@ -145,7 +143,7 @@ summary:focus-visible {
   }
   .studio-inspector {
     border-left: 0;
-    border-top: 1px solid #dfe2e3;
+    border-top: 1px solid var(--line);
     min-height: 0;
   }
   .editor__header {

@@ -23,3 +23,19 @@ export const revisionPayloadSchema = Type.Object(
 );
 
 export type RevisionPayload = Static<typeof revisionPayloadSchema>;
+
+/** Lightweight immutable History entry; restore resolves its body by id server-side. */
+export const revisionSummaryPayloadSchema = Type.Object(
+  {
+    id: Type.String(),
+    document_id: Type.String(),
+    parent_revision_id: nullableString,
+    revision_number: Type.Integer({ minimum: 1 }),
+    source: Type.Unsafe<RevisionSource>({ type: "string", enum: [...REVISION_SOURCES] }),
+    word_count: Type.Integer({ minimum: 0 }),
+    created_at: Type.String({ format: "date-time" }),
+  },
+  { additionalProperties: false },
+);
+
+export type RevisionSummaryPayload = Static<typeof revisionSummaryPayloadSchema>;

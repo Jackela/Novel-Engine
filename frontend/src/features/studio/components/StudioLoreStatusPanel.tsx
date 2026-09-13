@@ -1,20 +1,16 @@
-import type { FormEvent } from "react";
-import { useRef, useState } from "react";
+import type { FormEvent, RefObject } from "react";
+import { useCallback, useLayoutEffect, useRef, useState } from "react";
 
-import type { LoreStatus, StudioDocument } from "@/app/types/studio";
-
-import { isLoreEntryKind } from "../studioConstants";
-
-const LORE_STATUS_OPTIONS: Array<{ value: LoreStatus; label: string }> = [
-  { value: "draft", label: "Draft (not injected)" },
-  { value: "stable", label: "Stable (injected)" },
-  { value: "deprecated", label: "Deprecated (not injected)" },
-];
+import { LORE_STATUS_OPTIONS } from "@/app/loreStatus";
+import type { LoreStatus } from "@/app/types/studio";
+import { useCommandFocusRestoration } from "../hooks/useCommandFocusRestoration";
 
 interface StudioLoreStatusPanelProps {
-  document: StudioDocument | null;
+  documentId: string;
+  savedStatus: LoreStatus;
+  attemptedStatus?: LoreStatus | null;
   isSaving?: boolean;
-  onStatusChange: (status: LoreStatus) => void | Promise<void>;
+  onSubmit: (status: LoreStatus) => Promise<void>;
 }
 
 /**
@@ -24,28 +20,74 @@ interface StudioLoreStatusPanelProps {
  * entries join generation prompts.
  */
 export function StudioLoreStatusPanel({
-  document,
+  documentId,
+  savedStatus,
+  attemptedStatus = null,
   isSaving = false,
-  onStatusChange,
+  onSubmit,
 }: StudioLoreStatusPanelProps) {
   const saveButtonRef = useRef<HTMLButtonElement>(null);
-  // Remounted per document via `key`; the saved status stays the source of
-  // truth while the select drafts the next value.
-  const [selectedStatus, setSelectedStatus] = useState<LoreStatus>(
-    document?.lore_status ?? "draft",
+  const selectRef = useRef<HTMLSelectElement>(null);
+  const activeDocumentIdRef = useRef(documentId);
+  const runWithFocusRestoration = useCommandFocusRestoration(isSaving);
+
+  useLayoutEffect(() => {
+    activeDocumentIdRef.current = documentId;
+  }, [documentId]);
+
+  const submitWithFocusRestoration = useCallback(
+    (trigger: HTMLButtonElement, status: LoreStatus) => {
+      const originDocumentId = documentId;
+      void runWithFocusRestoration(
+        trigger,
+        () => onSubmit(status),
+        () => (activeDocumentIdRef.current === originDocumentId ? selectRef.current : null),
+      );
+    },
+    [documentId, onSubmit, runWithFocusRestoration],
   );
 
-  if (document === null || !isLoreEntryKind(document.kind)) {
-    return null;
-  }
+  // The keyed form resets local selection at the document boundary, while the
+  // persistent owner above can resolve a returning document's semantic target.
+  return (
+    <LoreStatusEntryForm
+      key={documentId}
+      savedStatus={savedStatus}
+      attemptedStatus={attemptedStatus}
+      isSaving={isSaving}
+      onSubmit={submitWithFocusRestoration}
+      saveButtonRef={saveButtonRef}
+      selectRef={selectRef}
+    />
+  );
+}
 
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+interface LoreStatusEntryFormProps {
+  readonly savedStatus: LoreStatus;
+  readonly attemptedStatus: LoreStatus | null;
+  readonly isSaving: boolean;
+  readonly onSubmit: (trigger: HTMLButtonElement, status: LoreStatus) => void;
+  readonly saveButtonRef: RefObject<HTMLButtonElement | null>;
+  readonly selectRef: RefObject<HTMLSelectElement | null>;
+}
+
+function LoreStatusEntryForm({
+  savedStatus,
+  attemptedStatus,
+  isSaving,
+  onSubmit,
+  saveButtonRef,
+  selectRef,
+}: LoreStatusEntryFormProps) {
+  const [selectedStatus, setSelectedStatus] = useState<LoreStatus>(attemptedStatus ?? savedStatus);
+
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    try {
-      await onStatusChange(selectedStatus);
-    } finally {
-      saveButtonRef.current?.focus();
+    const saveButton = saveButtonRef.current;
+    if (saveButton === null) {
+      return;
     }
+    onSubmit(saveButton, selectedStatus);
   };
 
   return (
@@ -61,6 +103,7 @@ export function StudioLoreStatusPanel({
           aria-label="Lore status"
           disabled={isSaving}
           onChange={(event) => setSelectedStatus(event.target.value as LoreStatus)}
+          ref={selectRef}
           value={selectedStatus}
         >
           {LORE_STATUS_OPTIONS.map((option) => (
@@ -77,7 +120,7 @@ export function StudioLoreStatusPanel({
         <button
           aria-busy={isSaving}
           className="ui-command ui-command--primary"
-          disabled={isSaving || selectedStatus === document.lore_status}
+          disabled={isSaving || selectedStatus === savedStatus}
           ref={saveButtonRef}
           type="submit"
         >

@@ -5,12 +5,17 @@ import { join } from "node:path";
 import Database from "better-sqlite3";
 import { describe, expect, it } from "vitest";
 
+import { acquireDataDirectoryLock } from "../../src/shared/infrastructure/db/data_directory_lock.js";
 import { openStudioDatabase } from "../../src/shared/infrastructure/db/startup.js";
 
 const DATABASE_FILENAME = "novel-engine.sqlite3";
 
 async function makeDataDirectory(): Promise<string> {
   return mkdtemp(join(tmpdir(), "novel-engine-persistence-"));
+}
+
+function defaultDatabasePath(directory: string): string {
+  return join(directory, DATABASE_FILENAME);
 }
 
 function tableNames(database: Database.Database): string[] {
@@ -21,10 +26,171 @@ function tableNames(database: Database.Database): string[] {
 }
 
 describe("startup pipeline", () => {
+  it("closes a data-directory ownership handle idempotently", async () => {
+    const directory = await makeDataDirectory();
+    const ownership = acquireDataDirectoryLock(directory);
+
+    ownership.close();
+    expect(() => ownership.close()).not.toThrow();
+
+    const reacquired = acquireDataDirectoryLock(directory);
+    reacquired.close();
+  });
+
+  it("owns one data directory before backup or recovery work begins", async () => {
+    const directory = await makeDataDirectory();
+    const first = await openStudioDatabase(defaultDatabasePath(directory));
+    let blockedHookRan = false;
+    try {
+      await expect(
+        openStudioDatabase(defaultDatabasePath(directory), {
+          beforeJobRecovery: () => {
+            blockedHookRan = true;
+          },
+        }),
+      ).rejects.toThrow(/already owned by another Novel Engine process/i);
+      expect(blockedHookRan).toBe(false);
+      await expect(readdir(join(directory, "backups"))).rejects.toThrow();
+    } finally {
+      first.close();
+    }
+
+    let reopenedHookRan = false;
+    const reopened = await openStudioDatabase(defaultDatabasePath(directory), {
+      beforeJobRecovery: () => {
+        reopenedHookRan = true;
+      },
+    });
+    try {
+      expect(reopenedHookRan).toBe(true);
+    } finally {
+      reopened.close();
+    }
+  });
+
+  it("releases data-directory ownership when startup recovery fails", async () => {
+    const directory = await makeDataDirectory();
+
+    await expect(
+      openStudioDatabase(defaultDatabasePath(directory), {
+        beforeJobRecovery: () => {
+          throw new Error("simulated recovery failure");
+        },
+      }),
+    ).rejects.toThrow("simulated recovery failure");
+
+    const reopened = await openStudioDatabase(defaultDatabasePath(directory));
+    reopened.close();
+  });
+
+  it("retries partial connection cleanup before releasing directory ownership", async () => {
+    const directory = await makeDataDirectory();
+    const databasePath = join(directory, DATABASE_FILENAME);
+    const originalPragma = Database.prototype.pragma;
+    const originalClose = Database.prototype.close;
+    let contentCloseAttempts = 0;
+    Database.prototype.pragma = function pragmaWithInitializationFailure(source, options) {
+      if (this.name === databasePath && source === "foreign_keys = ON") {
+        throw new Error("simulated pragma initialization failure");
+      }
+      return originalPragma.call(this, source, options);
+    };
+    Database.prototype.close = function closeWithOneInitializationFailure() {
+      if (this.name === databasePath) {
+        contentCloseAttempts += 1;
+        if (contentCloseAttempts === 1) {
+          throw new Error("simulated partial connection close failure");
+        }
+      }
+      return originalClose.call(this);
+    };
+
+    let failure: unknown;
+    try {
+      failure = await openStudioDatabase(defaultDatabasePath(directory)).catch(
+        (error: unknown) => error,
+      );
+    } finally {
+      Database.prototype.pragma = originalPragma;
+      Database.prototype.close = originalClose;
+    }
+
+    expect(failure).toBeInstanceOf(AggregateError);
+    expect((failure as AggregateError).errors).toEqual([
+      expect.objectContaining({ message: "simulated pragma initialization failure" }),
+      expect.objectContaining({ message: "simulated partial connection close failure" }),
+    ]);
+    expect(contentCloseAttempts).toBe(2);
+    const reacquired = acquireDataDirectoryLock(directory);
+    reacquired.close();
+  });
+
+  it("keeps ownership when the content database cannot close and retries in order", async () => {
+    const directory = await makeDataDirectory();
+    const studio = await openStudioDatabase(defaultDatabasePath(directory));
+    const closeContentDatabase = studio.raw.close.bind(studio.raw);
+    let closeAttempts = 0;
+    studio.raw.close = () => {
+      closeAttempts += 1;
+      if (closeAttempts === 1) throw new Error("simulated content close failure");
+      return closeContentDatabase();
+    };
+
+    try {
+      expect(() => studio.close()).toThrow("simulated content close failure");
+      expect(() => acquireDataDirectoryLock(directory)).toThrow(
+        /already owned by another Novel Engine process/i,
+      );
+
+      expect(() => studio.close()).not.toThrow();
+      expect(closeAttempts).toBe(2);
+      const reacquired = acquireDataDirectoryLock(directory);
+      reacquired.close();
+    } finally {
+      studio.close();
+    }
+  });
+
+  it("retries ownership release without closing the content database twice", async () => {
+    const directory = await makeDataDirectory();
+    const studio = await openStudioDatabase(defaultDatabasePath(directory));
+    const closeContentDatabase = studio.raw.close.bind(studio.raw);
+    let contentCloseAttempts = 0;
+    studio.raw.close = () => {
+      contentCloseAttempts += 1;
+      return closeContentDatabase();
+    };
+
+    const originalClose = Database.prototype.close;
+    let failOwnershipClose = true;
+    Database.prototype.close = function closeWithOneOwnershipFailure() {
+      if (failOwnershipClose && this.name.endsWith(".novel-engine-ownership.sqlite3")) {
+        failOwnershipClose = false;
+        throw new Error("simulated ownership close failure");
+      }
+      return originalClose.call(this);
+    };
+    try {
+      expect(() => studio.close()).toThrow("simulated ownership close failure");
+      expect(contentCloseAttempts).toBe(1);
+      expect(() => acquireDataDirectoryLock(directory)).toThrow(
+        /already owned by another Novel Engine process/i,
+      );
+
+      expect(() => studio.close()).not.toThrow();
+      expect(contentCloseAttempts).toBe(1);
+      const reacquired = acquireDataDirectoryLock(directory);
+      reacquired.close();
+    } finally {
+      Database.prototype.close = originalClose;
+      studio.close();
+    }
+  });
+
   it("bootstraps a missing database cleanly without writing a backup", async () => {
     const directory = await makeDataDirectory();
 
-    const studio = await openStudioDatabase(directory);
+    const studio = await openStudioDatabase(defaultDatabasePath(directory));
     try {
       const tables = tableNames(studio.raw);
       expect(tables).toContain("sessions");
@@ -41,11 +207,11 @@ describe("startup pipeline", () => {
   it("enforces the adjudicated connection PRAGMAs", async () => {
     const directory = await makeDataDirectory();
 
-    const studio = await openStudioDatabase(directory);
+    const studio = await openStudioDatabase(defaultDatabasePath(directory));
     try {
       expect(studio.raw.pragma("journal_mode", { simple: true })).toBe("wal");
       expect(studio.raw.pragma("foreign_keys", { simple: true })).toBe(1);
-      expect(studio.raw.pragma("synchronous", { simple: true })).toBe(1);
+      expect(studio.raw.pragma("synchronous", { simple: true })).toBe(2);
     } finally {
       studio.close();
     }
@@ -60,7 +226,7 @@ describe("startup pipeline", () => {
     preRelease.prepare("INSERT INTO pre_rewrite_marker (id) VALUES (?)").run("kept-content");
     preRelease.close();
 
-    const studio = await openStudioDatabase(directory);
+    const studio = await openStudioDatabase(defaultDatabasePath(directory));
     try {
       expect(tableNames(studio.raw)).toContain("sessions");
     } finally {
@@ -91,7 +257,7 @@ describe("startup pipeline", () => {
     existing.exec("INSERT INTO sessions VALUES (7)");
     existing.close();
 
-    await expect(openStudioDatabase(directory)).rejects.toThrow();
+    await expect(openStudioDatabase(defaultDatabasePath(directory))).rejects.toThrow();
 
     const after = new Database(databasePath);
     try {
@@ -106,7 +272,7 @@ describe("startup pipeline", () => {
     const directory = await makeDataDirectory();
     await writeFile(join(directory, DATABASE_FILENAME), "");
 
-    const studio = await openStudioDatabase(directory);
+    const studio = await openStudioDatabase(defaultDatabasePath(directory));
     try {
       expect(tableNames(studio.raw)).toContain("sessions");
     } finally {
@@ -119,7 +285,7 @@ describe("startup pipeline", () => {
   it("creates the hand-written FTS5 placeholder virtual table", async () => {
     const directory = await makeDataDirectory();
 
-    const studio = await openStudioDatabase(directory);
+    const studio = await openStudioDatabase(defaultDatabasePath(directory));
     try {
       const ddl = studio.raw
         .prepare("SELECT sql FROM sqlite_master WHERE name = 'document_search'")

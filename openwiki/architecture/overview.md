@@ -4,8 +4,9 @@ Novel Engine is a self-hosted, single-author writing studio. The backend is a
 TypeScript server on Node 24 LTS: Fastify v5 with the TypeBox type provider for
 HTTP, Drizzle ORM over better-sqlite3 for persistence, and SQLite as the
 content authority. The frontend is a React 19 + Vite application served by the
-same deployable. Code lives in a minimal pnpm workspace (`frontend/` +
-`server/`), and the server is organized into bounded contexts — `studio`
+same deployable. Code lives in a three-package pnpm workspace (`frontend/`,
+`server/`, `tools/api-types`), and the server is organized into bounded
+contexts — `studio`
 (authoring), `ai` (text generation), and the `shared` kernel — whose import
 boundaries are executable policy, not convention (`server/.dependency-cruiser.cjs`).
 The stack decision is recorded in ADR-0001 through ADR-0003; the product
@@ -112,7 +113,7 @@ error-envelope semantics are product invariants.
 
 CI (`.github/workflows/ci.yml`) is the authoritative full gate:
 
-- The `validate` job (Node 22) installs locked pnpm dependencies, audits
+- The `validate` job (Node 24) installs locked pnpm dependencies, audits
   production dependency security, runs `pnpm --dir server gates` and
   `pnpm spec:validate`, then the full frontend suite (lint, format, type-check,
   unit tests, build), the generated API-types drift check, React static
@@ -122,22 +123,13 @@ CI (`.github/workflows/ci.yml`) is the authoritative full gate:
   `inject()` against hermetic temp data dirs). A dependent container job
   verifies fresh install, persistence across restart, and deep-link serving.
 
-The Node split is deliberate and current: product code targets Node 24 LTS
-(server runtime, `server` job), while the `validate` job and the CodeQL
-workflow still pin Node 22 for tooling. Treat both pins as facts of CI, not
-drift to fix casually.
-
-`pnpm --dir server gates` composes the five release gates: SSOT
-(`readWorkspaceVersion` against `server/package.json`), repo hygiene, file
-size limits, migration channel, and the OpenAPI snapshot.
+`pnpm --dir server gates` runs the repository policy and contract checks
+defined in `server/package.json` (SSOT, hygiene, file sizes, migration
+channel, llms-txt, error-codes, and the OpenAPI snapshot).
 `pnpm spec:validate` validates the OpenSpec product specification
 (`openspec/`). CodeQL analyzes `javascript-typescript` only — the repository
 is single-language — on pushes and pull requests to `main`/`develop` plus a
 scheduled weekly run (`.github/workflows/codeql.yml`).
-
-After source changes, rerun the release-equivalent commands in
-`openwiki/quickstart.md` and wait for hosted `validate`, container, and CodeQL
-jobs before merge.
 
 ## Change guidance
 

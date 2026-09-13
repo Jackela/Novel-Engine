@@ -1,8 +1,13 @@
+import { readFileSync } from "node:fs";
 import type { FastifyInstance } from "fastify";
 import { describe, expect, it } from "vitest";
 
 import { owners } from "../../src/shared/infrastructure/db/schema.js";
 import { buildAuthApp, OWNER_PASSWORD, OWNER_USERNAME, setupOwner } from "./auth_helpers.js";
+
+const productManifest = JSON.parse(
+  readFileSync(new URL("../../package.json", import.meta.url), "utf8"),
+) as { productName: string; version: string };
 
 async function ownerCount(app: FastifyInstance): Promise<number> {
   const rows = await app.studioDb?.db.select().from(owners);
@@ -10,15 +15,16 @@ async function ownerCount(app: FastifyInstance): Promise<number> {
 }
 
 describe("owner setup", () => {
-  it("reports first-run status with the workspace version", async () => {
+  it("reports first-run status with the manifest product identity", async () => {
     const { app } = await buildAuthApp();
     try {
       const response = await app.inject({ method: "GET", url: "/api/setup" });
       expect(response.statusCode).toBe(200);
-      const body = response.json();
-      expect(body.owner_configured).toBe(false);
-      expect(typeof body.version).toBe("string");
-      expect(body.version.length).toBeGreaterThan(0);
+      expect(response.json()).toEqual({
+        owner_configured: false,
+        name: productManifest.productName,
+        version: productManifest.version,
+      });
     } finally {
       await app.close();
     }

@@ -1,3 +1,7 @@
+import { mkdtemp } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+
 import { describe, expect, it } from "vitest";
 
 import { buildApp } from "../../src/apps/api/app.js";
@@ -119,6 +123,48 @@ describe("health surface", () => {
 
       expect(detailed.statusCode).toBe(200);
       expect(detailed.json().components).toEqual({});
+      expect(ready.statusCode).toBe(200);
+      expect(ready.json()).toEqual({ status: "ready" });
+    } finally {
+      await app.close();
+    }
+  });
+
+  it("uses the live application database handle for readiness", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "novel-engine-health-db-"));
+    const app = await buildApp({
+      logger: false,
+      databasePath: join(directory, "novel-engine.sqlite3"),
+    });
+    app.studioDb?.raw.close();
+
+    try {
+      const ready = await app.inject({ method: "GET", url: "/health/ready" });
+      const live = await app.inject({ method: "GET", url: "/health/live" });
+
+      expect(ready.statusCode).toBe(503);
+      expect(ready.json()).toEqual({
+        status: "not_ready",
+        reason: "database health check failed",
+      });
+      expect(live.statusCode).toBe(200);
+      expect(live.json()).toEqual({ status: "alive" });
+    } finally {
+      await app.close();
+    }
+  });
+
+  it("keeps an explicit injected probe above the database default", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "novel-engine-health-override-"));
+    const app = await buildApp({
+      logger: false,
+      databasePath: join(directory, "novel-engine.sqlite3"),
+      healthProbe: healthyDatabaseProbe,
+    });
+    app.studioDb?.raw.close();
+
+    try {
+      const ready = await app.inject({ method: "GET", url: "/health/ready" });
       expect(ready.statusCode).toBe(200);
       expect(ready.json()).toEqual({ status: "ready" });
     } finally {

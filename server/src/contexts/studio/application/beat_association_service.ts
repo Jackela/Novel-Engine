@@ -3,8 +3,9 @@ import { InvalidOperationError } from "../../../shared/domain/exceptions.js";
 import { type OutlineBeat, splitOutlineBeats } from "./outline_beats.js";
 import type { ChapterBeatPayload } from "./payload_schemas/beat.js";
 import { chapterBeatPayload } from "./payloads.js";
-import type { DocumentWithCurrent, ProjectScope } from "./ports/studio_store.js";
-import { type StudioStore, scopeForPrincipal } from "./ports/studio_store.js";
+import type { DocumentStore, DocumentWithCurrent } from "./ports/document_store.js";
+import type { ProjectScope } from "./ports/studio_store.js";
+import { scopeForPrincipal } from "./ports/studio_store.js";
 
 /**
  * The chapter beat association surface (#313): a chapter links to at most one
@@ -14,10 +15,10 @@ import { type StudioStore, scopeForPrincipal } from "./ports/studio_store.js";
  * errors.
  */
 export class BeatAssociationService {
-  private readonly store: StudioStore;
+  private readonly store: DocumentStore;
   private readonly now: () => Date;
 
-  constructor(store: StudioStore, now: () => Date = () => new Date()) {
+  constructor(store: DocumentStore, now: () => Date = () => new Date()) {
     this.store = store;
     this.now = now;
   }
@@ -66,8 +67,8 @@ export class BeatAssociationService {
  * outline-kind document in the project's reading order is the authority; a
  * project without an outline has no beats.
  */
-export function projectOutlineBeats(
-  store: StudioStore,
+function projectOutlineBeats(
+  store: DocumentStore,
   scope: ProjectScope,
   projectId: string,
 ): OutlineBeat[] {
@@ -79,22 +80,6 @@ export function projectOutlineBeats(
     return [];
   }
   return splitOutlineBeats(revision.contentMarkdown);
-}
-
-/** A chapter's linked beat right now; dangling references resolve to null. */
-export function linkedChapterBeat(
-  store: StudioStore,
-  scope: ProjectScope,
-  projectId: string,
-  document: DocumentWithCurrent,
-): OutlineBeat | null {
-  const reference = document.beatRef;
-  if (reference === null || reference === "") {
-    return null;
-  }
-  return (
-    projectOutlineBeats(store, scope, projectId).find((beat) => beat.title === reference) ?? null
-  );
 }
 
 /** The read contract: `beat` is null when unlinked or when the beat vanished. */

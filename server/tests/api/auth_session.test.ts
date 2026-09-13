@@ -1,4 +1,5 @@
 import { randomBytes } from "node:crypto";
+import { join } from "node:path";
 import type { FastifyInstance } from "fastify";
 import { describe, expect, it } from "vitest";
 
@@ -261,7 +262,10 @@ describe("owner and guest sessions", () => {
   it("replaces an unset secret with a fresh random value on every start", async () => {
     const directory = await makeDataDirectory();
 
-    const issued = await buildApp({ logger: false, dataDirectory: directory });
+    const issued = await buildApp({
+      logger: false,
+      databasePath: join(directory, "novel-engine.sqlite3"),
+    });
     let jar: Map<string, string>;
     try {
       await setupOwner(issued);
@@ -270,7 +274,10 @@ describe("owner and guest sessions", () => {
       await issued.close();
     }
 
-    const restarted = await buildApp({ logger: false, dataDirectory: directory });
+    const restarted = await buildApp({
+      logger: false,
+      databasePath: join(directory, "novel-engine.sqlite3"),
+    });
     try {
       const response = await restarted.inject({
         method: "GET",

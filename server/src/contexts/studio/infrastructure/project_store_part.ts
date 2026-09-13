@@ -1,41 +1,47 @@
 import { randomUUID } from "node:crypto";
-import { rmSync } from "node:fs";
-import { join } from "node:path";
-import { and, desc, eq } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 
 import type { StudioSqliteDatabase } from "../../../shared/infrastructure/db/connection.js";
-import { jobs, usageEvents } from "../../../shared/infrastructure/db/schema.js";
+import type { DocumentWithCurrent } from "../application/ports/document_store.js";
+import type {
+  ProjectCatalogPage,
+  ProjectPageInput,
+} from "../application/ports/project_catalog_store.js";
+import { projectPageLimit } from "../application/ports/project_catalog_store.js";
 import type {
   AddImportedProjectInput,
   AddProjectInput,
-  DocumentWithCurrent,
-  ProjectScope,
-} from "../application/ports/studio_store.js";
-import { DEFAULT_LORE_STATUS } from "../domain/kinds.js";
-import { clearProjectDocumentIndex, refreshDocumentIndex } from "./db/document_search.js";
-import { documents, projects } from "./db/schema.js";
+  ProjectStore,
+} from "../application/ports/project_store.js";
+import type { ProjectUpdateInput } from "../application/ports/project_update_store.js";
+import type { ProjectScope } from "../application/ports/studio_store.js";
+import { NotFoundError } from "../domain/exceptions.js";
+import { clearProjectDocumentIndex } from "./db/document_search.js";
+import { seedDocumentInTransaction } from "./db/document_seed_writes.js";
+import { jobs, projects, usageEvents } from "./db/schema.js";
 import {
+  documentSummaries,
   documentsWithCurrent,
-  insertRevision,
   type ProjectRow,
   scopeCondition,
   scopedProject,
+  volumesInOrder,
 } from "./db/studio_query_helpers.js";
+import { buildProjectCatalogSummariesQuery } from "./project_page_queries.js";
 import { DEFAULT_VOLUME_TITLE, insertVolume } from "./volume_store_part.js";
 
 /**
- * The project half of the Drizzle studio store (mirrors the Python
- * ProjectRepositoryMixin): creation with the seed document/revision in one
- * transaction, updated_at-descending lists, and deletion that cascades rows
- * and removes the project's export directory after the commit.
+ * The project half of the Drizzle studio store: creation with the seed
+ * document/revision in one transaction, updated_at-descending lists, and
+ * deletion that cascades rows in the same database transaction. Filesystem
+ * cleanup belongs to the application service because it cannot join
+ * SQLite's transaction.
  */
-export class ProjectStorePart {
+export class ProjectStorePart implements ProjectStore {
   protected readonly db: StudioSqliteDatabase;
-  protected readonly dataDirectory: string;
 
-  constructor(db: StudioSqliteDatabase, dataDirectory: string) {
+  constructor(db: StudioSqliteDatabase) {
     this.db = db;
-    this.dataDirectory = dataDirectory;
   }
 
   addProject(scope: ProjectScope, input: AddProjectInput) {
@@ -61,68 +67,80 @@ export class ProjectStorePart {
       });
       const seeded: DocumentWithCurrent[] = [];
       if (input.seed !== null) {
-        const document: typeof documents.$inferInsert = {
-          id: randomUUID(),
-          projectId: project.id,
-          kind: input.seed.kind,
-          title: input.seed.title,
-          position: 1,
-          volumeId: defaultVolume.id,
-          currentRevisionId: null,
-          createdAt: input.now,
-          updatedAt: input.now,
-        };
-        tx.insert(documents).values(document).run();
-        const revision = insertRevision(tx, {
-          documentId: document.id,
-          parentRevisionId: null,
-          revisionNumber: 1,
-          contentMarkdown: input.seed.contentMarkdown,
-          metadataJson: input.seed.metadataJson,
-          source: "author",
-          now: input.now,
-        });
-        tx.update(documents)
-          .set({ currentRevisionId: revision.id })
-          .where(eq(documents.id, document.id))
-          .run();
-        refreshDocumentIndex(tx, {
-          documentId: document.id,
-          projectId: project.id,
-          title: input.seed.title,
-          content: input.seed.contentMarkdown,
-        });
-        seeded.push({
-          id: document.id,
-          projectId: project.id,
-          kind: input.seed.kind,
-          title: input.seed.title,
-          position: 1,
-          volumeId: defaultVolume.id,
-          beatRef: null,
-          loreAliasesJson: "[]",
-          loreStatus: DEFAULT_LORE_STATUS,
-          currentRevisionId: revision.id,
-          createdAt: input.now,
-          updatedAt: input.now,
-          currentRevision: revision,
-        });
+        seeded.push(
+          seedDocumentInTransaction(tx, {
+            projectId: project.id,
+            volumeId: defaultVolume.id,
+            kind: input.seed.kind,
+            title: input.seed.title,
+            position: 1,
+            contentMarkdown: input.seed.contentMarkdown,
+            metadataJson: input.seed.metadataJson,
+            revisionSource: "author",
+            now: input.now,
+            touchDocumentUpdatedAt: false,
+          }),
+        );
       }
       return { project: project as ProjectRow, documents: seeded };
     });
   }
 
-  findProjects(scope: ProjectScope): ProjectRow[] {
-    return this.db
-      .select()
-      .from(projects)
-      .where(scopeCondition(scope))
-      .orderBy(desc(projects.updatedAt))
-      .all();
+  findProjectCatalogSummaries(scope: ProjectScope, input: ProjectPageInput): ProjectCatalogPage {
+    const limit = projectPageLimit(input.limit);
+    return this.db.transaction((tx) => {
+      const rows = buildProjectCatalogSummariesQuery(tx, scope, { ...input, limit }).all();
+      const returnedRows = rows.slice(0, limit);
+      if (returnedRows.length === 0) {
+        return { projects: [], nextCursor: null };
+      }
+      const boundary = returnedRows.at(-1);
+      const nextCursor =
+        rows.length > limit && boundary !== undefined
+          ? { updatedAtMs: boundary.updatedAt.getTime(), id: boundary.id }
+          : null;
+      return { projects: returnedRows, nextCursor };
+    });
   }
 
   findProject(scope: ProjectScope, projectId: string): ProjectRow {
     return this.db.transaction((tx) => scopedProject(tx, scope, projectId));
+  }
+
+  updateProject(scope: ProjectScope, projectId: string, input: ProjectUpdateInput): ProjectRow {
+    if (
+      input.title === undefined &&
+      input.description === undefined &&
+      input.settingsJson === undefined
+    ) {
+      throw new RangeError("Project update requires at least one mutable field.");
+    }
+    const updated = this.db
+      .update(projects)
+      .set({
+        ...(input.title === undefined ? {} : { title: input.title }),
+        ...(input.description === undefined ? {} : { description: input.description }),
+        ...(input.settingsJson === undefined ? {} : { settingsJson: input.settingsJson }),
+        updatedAt: sql`max(${projects.updatedAt} + 1, ${input.now.getTime()})`,
+      })
+      .where(and(eq(projects.id, projectId), scopeCondition(scope)))
+      .returning()
+      .get();
+    if (updated === undefined) {
+      throw new NotFoundError(`Project not found: ${projectId}.`);
+    }
+    return updated;
+  }
+
+  readProjectShell(scope: ProjectScope, projectId: string) {
+    return this.db.transaction((tx) => {
+      const project = scopedProject(tx, scope, projectId);
+      return {
+        project,
+        documents: documentSummaries(tx, project.id),
+        volumes: volumesInOrder(tx, project.id),
+      };
+    });
   }
 
   /** The principal-scoped idempotency probe: at most one row per (scope, hash). */
@@ -166,37 +184,17 @@ export class ProjectStorePart {
       });
       for (const [index, chapter] of input.chapters.entries()) {
         const position = index + 1;
-        const title = `Chapter ${position}`;
-        const document: typeof documents.$inferInsert = {
-          id: randomUUID(),
+        seedDocumentInTransaction(tx, {
           projectId: project.id,
-          kind: "chapter",
-          title,
-          position,
           volumeId: defaultVolume.id,
-          currentRevisionId: null,
-          createdAt: input.now,
-          updatedAt: input.now,
-        };
-        tx.insert(documents).values(document).run();
-        const revision = insertRevision(tx, {
-          documentId: document.id,
-          parentRevisionId: null,
-          revisionNumber: 1,
+          kind: "chapter",
+          title: `Chapter ${position}`,
+          position,
           contentMarkdown: chapter.contentMarkdown,
           metadataJson: chapter.metadataJson,
-          source: "author",
+          revisionSource: "author",
           now: input.now,
-        });
-        tx.update(documents)
-          .set({ currentRevisionId: revision.id })
-          .where(eq(documents.id, document.id))
-          .run();
-        refreshDocumentIndex(tx, {
-          documentId: document.id,
-          projectId: project.id,
-          title,
-          content: chapter.contentMarkdown,
+          touchDocumentUpdatedAt: false,
         });
       }
       return {
@@ -211,13 +209,12 @@ export class ProjectStorePart {
       const project = scopedProject(tx, scope, projectId);
       // The FTS table and the workflow jobs reference the project without a
       // cross-schema FK, so their rows leave explicitly in this same
-      // transaction; cascades remove documents and revisions, and the export
-      // tree belongs to the deleted project alone and goes after the commit.
+      // transaction; cascades remove documents and revisions. Export-file
+      // cleanup runs only after this database commit succeeds.
       clearProjectDocumentIndex(tx, project.id);
       tx.delete(usageEvents).where(eq(usageEvents.project_id, project.id)).run();
       tx.delete(jobs).where(eq(jobs.project_id, project.id)).run();
       tx.delete(projects).where(eq(projects.id, project.id)).run();
     });
-    rmSync(join(this.dataDirectory, "exports", projectId), { recursive: true, force: true });
   }
 }

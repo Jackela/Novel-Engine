@@ -42,7 +42,7 @@ export async function buildAuthApp(options: BuildAuthAppOptions = {}): Promise<A
   const directory = options.directory ?? (await makeDataDirectory());
   const app = await buildApp({
     logger: false,
-    dataDirectory: directory,
+    databasePath: join(directory, "novel-engine.sqlite3"),
     environment: options.environment,
     sessionSecret: options.sessionSecret ?? TEST_SESSION_SECRET,
     corsOrigins: options.corsOrigins,

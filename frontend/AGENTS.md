@@ -11,7 +11,7 @@ src/
 ├── app/                  # API client, router, shared API types
 └── features/studio/      # Entry/library pages and Studio workspace
 tests/setup.ts            # Vitest/jsdom global cleanup
-tests/e2e/                # Playwright browser workflows
+tests/e2e-ts/             # Playwright browser workflows
 scripts/                  # Playwright/server wrappers
 ```
 
@@ -27,7 +27,7 @@ scripts/                  # Playwright/server wrappers
 | Data/effect orchestration | `src/features/studio/hooks/` | Autosave, jobs, proposals, search |
 | Inspector subpanels | `src/features/studio/components/` | Presentational feature slices |
 | Unit tests | `src/**/*.test.ts(x)` | Co-located Vitest tests |
-| Browser tests | `tests/e2e/` | Fresh-stack Playwright runs |
+| Browser tests | `tests/e2e-ts/` | Fresh-stack Playwright runs |
 
 ## CONVENTIONS
 

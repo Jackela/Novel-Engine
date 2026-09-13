@@ -1,35 +1,13 @@
 import type { FastifyError, FastifyInstance, FastifyReply } from "fastify";
 
+import { ERROR_CODES, type ErrorCode } from "../../domain/error_codes.js";
 import { InvalidOperationError } from "../../domain/exceptions.js";
 
+export type { ErrorCode };
+export { ERROR_CODES };
+
 /** Optional machine-readable payload carried inside the unified error envelope. */
-export type ErrorEnvelopeDetails = Record<string, unknown>;
-
-/**
- * The stable error-code catalog (SSOT): every SCREAMING_SNAKE code the
- * unified envelope can emit. Throw sites, schema enums, the OpenAPI
- * `ErrorEnvelope` component, and `docs/agents/error-codes.md` all derive
- * from these constants — never restate a code as a bare literal.
- */
-export const ERROR_CODES = {
-  UNAUTHORIZED: "UNAUTHORIZED",
-  FORBIDDEN: "FORBIDDEN",
-  CSRF_TOKEN_MISSING: "CSRF_TOKEN_MISSING",
-  CSRF_TOKEN_INVALID: "CSRF_TOKEN_INVALID",
-  RATE_LIMIT_EXCEEDED: "RATE_LIMIT_EXCEEDED",
-  NOT_FOUND: "NOT_FOUND",
-  INVALID_OPERATION: "INVALID_OPERATION",
-  VALIDATION_ERROR: "VALIDATION_ERROR",
-  REVISION_CONFLICT: "REVISION_CONFLICT",
-  VOLUME_CONFLICT: "VOLUME_CONFLICT",
-  SNAPSHOT_CONFLICT: "SNAPSHOT_CONFLICT",
-  DOCUMENT_CONFLICT: "DOCUMENT_CONFLICT",
-  OPERATION_IN_FLIGHT: "OPERATION_IN_FLIGHT",
-  SERVICE_UNAVAILABLE: "SERVICE_UNAVAILABLE",
-  INTERNAL_ERROR: "INTERNAL_ERROR",
-} as const;
-
-export type ErrorCode = (typeof ERROR_CODES)[keyof typeof ERROR_CODES];
+type ErrorEnvelopeDetails = Record<string, unknown>;
 
 /** HTTP status the envelope renders for each catalog code. */
 export const ERROR_HTTP_STATUS = {
@@ -40,12 +18,17 @@ export const ERROR_HTTP_STATUS = {
   RATE_LIMIT_EXCEEDED: 429,
   NOT_FOUND: 404,
   INVALID_OPERATION: 422,
+  EXPORT_CAPACITY_EXCEEDED: 422,
+  GENERATION_CAPACITY_EXCEEDED: 422,
+  IMPORT_CAPACITY_EXCEEDED: 422,
+  STRUCTURE_CAPACITY_EXCEEDED: 422,
   VALIDATION_ERROR: 422,
   REVISION_CONFLICT: 409,
   VOLUME_CONFLICT: 409,
   SNAPSHOT_CONFLICT: 409,
   DOCUMENT_CONFLICT: 409,
   OPERATION_IN_FLIGHT: 409,
+  OPERATION_CAPACITY_EXCEEDED: 503,
   SERVICE_UNAVAILABLE: 503,
   INTERNAL_ERROR: 500,
 } as const satisfies Record<ErrorCode, number>;
@@ -54,11 +37,12 @@ export const ERROR_HTTP_STATUS = {
 export const INVALID_OPERATION_CODE = ERROR_CODES.INVALID_OPERATION;
 export const INVALID_OPERATION_STATUS_CODE = ERROR_HTTP_STATUS[ERROR_CODES.INVALID_OPERATION];
 
-export interface AppErrorOptions {
+interface AppErrorOptions {
   statusCode: number;
   code: string;
   message: string;
   details?: ErrorEnvelopeDetails;
+  responseHeaders?: Readonly<Partial<Record<"retry-after", string>>>;
 }
 
 /**
@@ -69,6 +53,7 @@ export class AppError extends Error {
   readonly statusCode: number;
   readonly code: string;
   readonly details: ErrorEnvelopeDetails | undefined;
+  readonly responseHeaders: Readonly<Partial<Record<"retry-after", string>>> | undefined;
 
   constructor(options: AppErrorOptions) {
     super(options.message);
@@ -76,18 +61,19 @@ export class AppError extends Error {
     this.statusCode = options.statusCode;
     this.code = options.code;
     this.details = options.details;
+    this.responseHeaders = options.responseHeaders;
   }
 }
 
 /** OpenAPI component name for the shared error envelope schema. */
-export const ERROR_ENVELOPE_SCHEMA_ID = "ErrorEnvelope";
+const ERROR_ENVELOPE_SCHEMA_ID = "ErrorEnvelope";
 
 /**
  * The generic envelope shape shared by every non-conflict error response in
  * the OpenAPI document (`code` stays an open string so Fastify transport
  * codes such as FST_ERR_* keep passing through verbatim).
  */
-export const errorEnvelopeSchema = {
+const errorEnvelopeSchema = {
   $id: ERROR_ENVELOPE_SCHEMA_ID,
   description:
     "Unified error envelope: every API failure renders as {error:{code,message,details?}}.",
@@ -166,6 +152,9 @@ export function registerErrorEnvelope(app: FastifyInstance): void {
   app.addSchema(errorEnvelopeSchema);
   app.setErrorHandler((error: unknown, request, reply) => {
     if (error instanceof AppError) {
+      if (error.responseHeaders?.["retry-after"] !== undefined) {
+        reply.header("retry-after", error.responseHeaders["retry-after"]);
+      }
       sendEnvelope(reply, error.statusCode, error.code, error.message, error.details);
       return;
     }

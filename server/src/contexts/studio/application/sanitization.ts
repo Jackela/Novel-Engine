@@ -41,7 +41,7 @@ const PROMPT_INJECTION_PATTERNS: readonly RegExp[] = [
 export const AUTHOR_INSTRUCTION_BEGIN = "[BEGIN AUTHOR INSTRUCTION]";
 export const AUTHOR_INSTRUCTION_END = "[END AUTHOR INSTRUCTION]";
 export const UNTRUSTED_MANUSCRIPT_BEGIN = "[BEGIN UNTRUSTED MANUSCRIPT JSON]";
-export const UNTRUSTED_MANUSCRIPT_END = "[END UNTRUSTED MANUSCRIPT JSON]";
+const UNTRUSTED_MANUSCRIPT_END = "[END UNTRUSTED MANUSCRIPT JSON]";
 /** Resident-context section markers (#314, ADR-0004 layer 1). */
 export const PROJECT_OUTLINE_BEGIN = "[BEGIN PROJECT OUTLINE]";
 export const PROJECT_OUTLINE_END = "[END PROJECT OUTLINE]";
@@ -52,6 +52,16 @@ export const RECENT_TEXT_END = "[END RECENT CHAPTER TAIL]";
 /** Keyword-triggered lorebook markers (#315, ADR-0004 layer 2). */
 export const LOREBOOK_BEGIN = "[BEGIN LOREBOOK]";
 export const LOREBOOK_END = "[END LOREBOOK]";
+
+/**
+ * Reversibly encode project-derived prompt data so it cannot emit a structural
+ * block delimiter. Backslashes are escaped first, keeping a literal `\u005B`
+ * distinct from an encoded opening bracket.
+ */
+export function escapePromptData(text: string): string {
+  return String(text).replace(/\\/g, "\\\\").replace(/\[/g, "\\u005B").replace(/\]/g, "\\u005D");
+}
+
 export function sanitizeInstruction(instruction: string): string {
   let cleaned = instruction.trim();
   for (const pattern of PROMPT_INJECTION_PATTERNS) {
@@ -60,10 +70,10 @@ export function sanitizeInstruction(instruction: string): string {
   return cleaned;
 }
 export function formatAuthorInstruction(instruction: string): string {
-  return `${AUTHOR_INSTRUCTION_BEGIN}\n${sanitizeInstruction(instruction)}\n${AUTHOR_INSTRUCTION_END}`;
+  return `${AUTHOR_INSTRUCTION_BEGIN}\n${sanitizeInstruction(escapePromptData(instruction))}\n${AUTHOR_INSTRUCTION_END}`;
 }
 /** Escape square brackets so text cannot forge any bracketed prompt marker. */
-export function escapePromptBlockMarkers(text: string): string {
+function escapePromptBlockMarkers(text: string): string {
   return String(text).replace(/([[\]])/g, (bracket) => `\\u00${bracket === "[" ? "5b" : "5d"}`);
 }
 /** Encode manuscript text as an explicitly untrusted, bracket-escaped JSON data block. */
@@ -71,15 +81,9 @@ export function formatUntrustedManuscript(markdown: string): string {
   const payload = JSON.stringify({ content_markdown: String(markdown) });
   return `${UNTRUSTED_MANUSCRIPT_BEGIN}\n${escapePromptBlockMarkers(payload)}\n${UNTRUSTED_MANUSCRIPT_END}`;
 }
-/**
- * Chapter-derived resident text (#314) crosses the provider boundary outside
- * the untrusted JSON block, so it carries the same two defenses as manuscript
- * data: bracket escaping (it cannot forge section markers) and the injection-
- * pattern table (chapter text frequently originates from proposals). Escaping
- * runs first so the table's own "[REDACTED]" placeholder survives verbatim.
- */
+/** Encode chapter-derived reference prose without rewriting its story content. */
 export function sanitizeResidentProse(text: string): string {
-  return sanitizeInstruction(escapePromptBlockMarkers(text));
+  return escapePromptData(text);
 }
 export function sanitizeProposalMarkdown(markdown: string): string {
   const kept = String(markdown)

@@ -40,14 +40,15 @@ function completionBody(
 
 /** Records public outbound calls and returns the next scripted transport outcome. */
 function scriptedTransport(
-  script: Array<Response | Error | undefined>,
+  script: Array<Response | Error | undefined | (() => Response | Error | undefined)>,
   capture: CapturedRequest[],
 ): ProviderTransport {
   let call = 0;
   return (url, init) => {
     capture.push({ url: String(url), init: init ?? {} });
-    const answer = script[Math.min(call, script.length - 1)];
+    const scripted = script[Math.min(call, script.length - 1)];
     call += 1;
+    const answer = typeof scripted === "function" ? scripted() : scripted;
     return answer instanceof Error ? Promise.reject(answer) : Promise.resolve(answer);
   };
 }
@@ -144,14 +145,16 @@ describe("OpenAI-compatible adapter transient failure handling", () => {
       transport: scriptedTransport([jsonResponse(401, "bad key")], capture),
     }).generateStructured(chapterTask());
 
-    await expect(generation).rejects.toThrow(/401 bad key/);
+    await expect(generation).rejects.toThrow(
+      "OpenAI-compatible generation failed for step 'chapter_draft': provider returned HTTP 401.",
+    );
     expect(capture).toHaveLength(1);
   });
 
   it("retries malformed JSON and normalized timeout failures", async () => {
     const malformedCalls: CapturedRequest[] = [];
     const malformed = provider({
-      transport: scriptedTransport([jsonResponse(200, "not json {{{")], malformedCalls),
+      transport: scriptedTransport([() => jsonResponse(200, "not json {{{")], malformedCalls),
     }).generateStructured(chapterTask());
     await expect(malformed).rejects.toThrow(/invalid JSON/);
     expect(malformedCalls).toHaveLength(3);
@@ -251,14 +254,17 @@ describe("OpenAI-compatible adapter boundaries", () => {
             { once: true },
           );
         });
-      const generation = provider({ transport, timeoutSeconds: 30 }).generateStructured(
-        chapterTask("chapter_revision"),
-      );
+      const generation = provider({
+        transport,
+        timeoutSeconds: 30,
+        retry: { maxAttempts: 1, delayMs: 0, sleep: async () => {} },
+      }).generateStructured(chapterTask("chapter_revision"));
+      const settled = expect(generation).rejects.toThrow(/timed out after 180s/);
 
       await vi.advanceTimersByTimeAsync(179_999);
       expect(abortFired).toBe(false);
       await vi.advanceTimersByTimeAsync(1);
-      await expect(generation).resolves.toMatchObject({ content: { chapter_markdown: "late" } });
+      await settled;
       expect(vi.getTimerCount()).toBe(0);
     } finally {
       vi.useRealTimers();

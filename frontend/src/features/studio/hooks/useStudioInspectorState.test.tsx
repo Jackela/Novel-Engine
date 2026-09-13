@@ -52,36 +52,40 @@ const baseProject = project({
 });
 
 describe("useStudioInspectorState", () => {
-  it("selects the matching inspector tab when route sections change", () => {
+  it("reflects the controlled route Inspector when navigation changes", () => {
     const loadJobs = vi.fn<() => Promise<void>>().mockResolvedValue(undefined);
+    const onSelectInspector = vi.fn();
     const hook = renderInspectorHook({
-      section: "manuscript",
+      inspector: "copilot",
       project: baseProject,
       loadJobs,
+      onSelectInspector,
     });
 
     expect(hook.result().inspector).toBe("copilot");
 
-    hook.rerender({ section: "review", project: baseProject, loadJobs });
+    hook.rerender({ inspector: "review", project: baseProject, loadJobs, onSelectInspector });
     expect(hook.result().inspector).toBe("review");
 
-    hook.rerender({ section: "history", project: baseProject, loadJobs });
+    hook.rerender({ inspector: "history", project: baseProject, loadJobs, onSelectInspector });
     expect(hook.result().inspector).toBe("history");
 
-    hook.rerender({ section: "export", project: baseProject, loadJobs });
+    hook.rerender({ inspector: "export", project: baseProject, loadJobs, onSelectInspector });
     expect(hook.result().inspector).toBe("export");
 
-    hook.rerender({ section: "settings", project: baseProject, loadJobs });
+    hook.rerender({ inspector: "settings", project: baseProject, loadJobs, onSelectInspector });
     expect(hook.result().inspector).toBe("settings");
     expect(loadJobs).not.toHaveBeenCalled();
   });
 
-  it("loads jobs only when the jobs inspector is selected", () => {
+  it("requests navigation first and loads jobs when the controlled route selects Jobs", () => {
     const loadJobs = vi.fn<() => Promise<void>>().mockResolvedValue(undefined);
+    const onSelectInspector = vi.fn();
     const hook = renderInspectorHook({
-      section: "manuscript",
+      inspector: "copilot",
       project: baseProject,
       loadJobs,
+      onSelectInspector,
     });
 
     expect(loadJobs).not.toHaveBeenCalled();
@@ -90,16 +94,74 @@ describe("useStudioInspectorState", () => {
       hook.result().setInspector("jobs");
     });
 
+    expect(onSelectInspector).toHaveBeenCalledWith("jobs");
+    expect(hook.result().inspector).toBe("copilot");
+    expect(loadJobs).not.toHaveBeenCalled();
+
+    hook.rerender({ inspector: "jobs", project: baseProject, loadJobs, onSelectInspector });
     expect(hook.result().inspector).toBe("jobs");
     expect(loadJobs).toHaveBeenCalledTimes(1);
   });
 
+  it("reloads a visible Jobs inspector once when project ownership changes", () => {
+    const firstLoad = vi.fn<() => Promise<void>>().mockResolvedValue(undefined);
+    const secondLoad = vi.fn<() => Promise<void>>().mockResolvedValue(undefined);
+    const onSelectInspector = vi.fn();
+    const hook = renderInspectorHook({
+      inspector: "jobs",
+      project: baseProject,
+      loadJobs: firstLoad,
+      onSelectInspector,
+    });
+    expect(firstLoad).toHaveBeenCalledTimes(1);
+
+    hook.rerender({
+      inspector: "jobs",
+      project: project({ id: "project-2" }),
+      loadJobs: secondLoad,
+      onSelectInspector,
+    });
+
+    expect(secondLoad).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps Jobs lazy when project ownership changes behind another inspector", () => {
+    const firstLoad = vi.fn<() => Promise<void>>().mockResolvedValue(undefined);
+    const secondLoad = vi.fn<() => Promise<void>>().mockResolvedValue(undefined);
+    const onSelectInspector = vi.fn();
+    const hook = renderInspectorHook({
+      inspector: "review",
+      project: baseProject,
+      loadJobs: firstLoad,
+      onSelectInspector,
+    });
+
+    hook.rerender({
+      inspector: "review",
+      project: project({ id: "project-2" }),
+      loadJobs: secondLoad,
+      onSelectInspector,
+    });
+    expect(firstLoad).not.toHaveBeenCalled();
+    expect(secondLoad).not.toHaveBeenCalled();
+
+    hook.rerender({
+      inspector: "jobs",
+      project: project({ id: "project-2" }),
+      loadJobs: secondLoad,
+      onSelectInspector,
+    });
+    expect(secondLoad).toHaveBeenCalledTimes(1);
+  });
+
   it("copies the selected project into settings form state", () => {
     const loadJobs = vi.fn<() => Promise<void>>().mockResolvedValue(undefined);
+    const onSelectInspector = vi.fn();
     const hook = renderInspectorHook({
-      section: "settings",
+      inspector: "settings",
       project: baseProject,
       loadJobs,
+      onSelectInspector,
     });
 
     expect(hook.result().settingsForm).toEqual({
@@ -109,7 +171,7 @@ describe("useStudioInspectorState", () => {
     });
 
     hook.rerender({
-      section: "settings",
+      inspector: "settings",
       project: {
         ...baseProject,
         title: "Mock Harbor",
@@ -117,6 +179,7 @@ describe("useStudioInspectorState", () => {
         settings: {},
       },
       loadJobs,
+      onSelectInspector,
     });
 
     expect(hook.result().settingsForm).toEqual({

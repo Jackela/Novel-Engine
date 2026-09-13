@@ -1,0 +1,147 @@
+import { mkdtemp, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+
+import { afterEach, describe, expect, it } from "vitest";
+
+import { scopeForPrincipal } from "../../src/contexts/studio/application/ports/studio_store.js";
+import {
+  createStudioServices,
+  type StudioPersistence,
+} from "../../src/contexts/studio/application/studio_services.js";
+import { OperationCapacityExceededError } from "../../src/contexts/studio/domain/exceptions.js";
+import { jobs } from "../../src/contexts/studio/infrastructure/db/schema.js";
+import { DocumentStorePart } from "../../src/contexts/studio/infrastructure/document_store_part.js";
+import { ExportStorePart } from "../../src/contexts/studio/infrastructure/export_store_part.js";
+import { JobStorePart } from "../../src/contexts/studio/infrastructure/job_store_part.js";
+import { LoreStorePart } from "../../src/contexts/studio/infrastructure/lore_store_part.js";
+import { ProjectStorePart } from "../../src/contexts/studio/infrastructure/project_store_part.js";
+import { ProposalAcceptanceStorePart } from "../../src/contexts/studio/infrastructure/proposal_acceptance_store_part.js";
+import { ProposalContextStorePart } from "../../src/contexts/studio/infrastructure/proposal_context_store_part.js";
+import { ReviewStorePart } from "../../src/contexts/studio/infrastructure/review_store_part.js";
+import { VolumeStorePart } from "../../src/contexts/studio/infrastructure/volume_store_part.js";
+import { AuthService } from "../../src/shared/application/auth_service.js";
+import { DrizzleAuthStore } from "../../src/shared/infrastructure/db/auth_store.js";
+import { openStudioDatabase } from "../../src/shared/infrastructure/db/startup.js";
+
+const directories: string[] = [];
+
+afterEach(async () => {
+  await Promise.all(directories.splice(0).map((directory) => rm(directory, { recursive: true })));
+});
+
+describe("export retry renderer admission", () => {
+  it("refuses before reserving a retry Job while another render owns the app", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "novel-engine-renderer-retry-"));
+    directories.push(directory);
+    const database = await openStudioDatabase(join(directory, "novel-engine.sqlite3"));
+    const jobStore = new JobStorePart(database.db);
+    const store: StudioPersistence = {
+      projects: new ProjectStorePart(database.db),
+      documents: new DocumentStorePart(database.db),
+      volumes: new VolumeStorePart(database.db),
+      lore: new LoreStorePart(database.db),
+      jobs: jobStore,
+      reviewOutcomes: new ReviewStorePart(database.db),
+      proposalContext: new ProposalContextStorePart(database.db),
+      proposalAcceptance: new ProposalAcceptanceStorePart(database.db),
+    };
+    const now = () => new Date("2026-09-03T00:00:00.000Z");
+    const auth = new AuthService({
+      store: new DrizzleAuthStore(database.db),
+      sessionSecret: "renderer-retry-secret",
+      now,
+    });
+    await auth.configureOwner("renderer-owner", "long-test-password");
+    const principal = (await auth.createOwnerSession("renderer-owner", "long-test-password"))
+      .principal;
+    const acknowledgement = deferred<void>();
+    let acknowledgementStarted = false;
+    const services = createStudioServices(store, {
+      now,
+      providerFactory: () => {
+        throw new Error("Unexpected provider construction.");
+      },
+      artifactStore: new ExportStorePart(database.db),
+      artifactFiles: {
+        async writeSnapshotArtifact(request) {
+          return {
+            relativePath: `exports/${request.projectId}/${request.artifactId}.md`,
+            sizeBytes: 1,
+            checksumSha256: "a".repeat(64),
+            acknowledge: async () => {
+              acknowledgementStarted = true;
+              await acknowledgement.promise;
+            },
+            rollback: async () => undefined,
+          };
+        },
+        async readArtifactBytes() {
+          throw new Error("Unexpected artifact read.");
+        },
+      },
+      projectArtifactCleaner: { removeProjectArtifacts: async () => undefined },
+      legacyWorkspaceReader: {
+        read: async () => Promise.reject(new Error("Unexpected legacy read.")),
+        readConfinedLegacyWorkspace: async () =>
+          Promise.reject(new Error("Unexpected confined legacy read.")),
+      },
+    });
+
+    try {
+      const project = services.projects.newProject(principal, { title: "Renderer owner" }) as {
+        id: string;
+      };
+      const scope = scopeForPrincipal(principal);
+      const retrySource = jobStore.addJob(scope, {
+        projectId: project.id,
+        documentId: null,
+        kind: "export",
+        operation: "export",
+        status: "failed",
+        provider: "studio",
+        model: "",
+        requestJson: '{"format":"markdown"}',
+        resultJson: "{}",
+        error: "fixture failure",
+        eventDetailsJson: '{"error":"fixture failure"}',
+        now: now(),
+      });
+      const active = services.jobHistory.recordExportJob(principal, project.id, "markdown");
+      await waitUntil(() => acknowledgementStarted);
+      const jobsBeforeRetry = database.db.select().from(jobs).all().length;
+
+      await expect(
+        services.jobHistory.reexecuteProjectJob(
+          principal,
+          project.id,
+          retrySource.id,
+          "renderer-retry-key",
+          () => undefined,
+        ),
+      ).rejects.toBeInstanceOf(OperationCapacityExceededError);
+      expect(database.db.select().from(jobs).all()).toHaveLength(jobsBeforeRetry);
+
+      acknowledgement.resolve();
+      await expect(active).resolves.toMatchObject({ status: "completed" });
+    } finally {
+      database.close();
+    }
+  });
+});
+
+function deferred<T>() {
+  let resolve!: (value: T | PromiseLike<T>) => void;
+  const promise = new Promise<T>((resolvePromise) => {
+    resolve = resolvePromise;
+  });
+  return { promise, resolve };
+}
+
+async function waitUntil(predicate: () => boolean): Promise<void> {
+  for (let attempt = 0; attempt < 50; attempt += 1) {
+    if (predicate()) return;
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  }
+  throw new Error("Timed out waiting for acknowledgement ownership.");
+}

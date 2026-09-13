@@ -7,6 +7,8 @@ import {
 } from "../../../../shared/interface/http/error_envelope.js";
 import type { JsonResponseSchema } from "./json_response_schema.js";
 import { requireServices, type StudioRoutesOptions } from "./project_routes.js";
+import { authedReadResponses, authedWriteResponses } from "./route_responses.js";
+import { structureCapacity422ResponseSchema } from "./structure_capacity_schemas.js";
 import { withStudioErrors } from "./studio_error_mapping.js";
 import { projectIdParams, volumeIdParams } from "./studio_request_schemas.js";
 import {
@@ -18,7 +20,7 @@ import {
 } from "./volume_schemas.js";
 
 /** The 409 envelope when a title collides with an existing project volume. */
-export const volumeConflictSchema: JsonResponseSchema = {
+const volumeConflictSchema: JsonResponseSchema = {
   type: "object",
   additionalProperties: false,
   properties: {
@@ -33,33 +35,6 @@ export const volumeConflictSchema: JsonResponseSchema = {
     },
   },
   required: ["error"],
-} as const;
-
-const CREATE_RESPONSES = {
-  201: volumeResponseSchema,
-  401: errorEnvelopeResponse,
-  403: errorEnvelopeResponse,
-  // The parent project is scoped first: a foreign or missing project 404s.
-  404: errorEnvelopeResponse,
-  422: errorEnvelopeResponse,
-  409: volumeConflictSchema,
-  503: errorEnvelopeResponse,
-} as const;
-const RETITLE_RESPONSES = {
-  200: volumeResponseSchema,
-  401: errorEnvelopeResponse,
-  403: errorEnvelopeResponse,
-  404: errorEnvelopeResponse,
-  422: errorEnvelopeResponse,
-  409: volumeConflictSchema,
-  503: errorEnvelopeResponse,
-} as const;
-
-/** Guard failures shared by the volume reads. */
-const VOLUME_READ_ERROR_RESPONSES = {
-  401: errorEnvelopeResponse,
-  404: errorEnvelopeResponse,
-  503: errorEnvelopeResponse,
 } as const;
 
 /**
@@ -77,7 +52,7 @@ export const volumeRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fast
       preHandler: [guard],
       schema: {
         params: projectIdParams,
-        response: { 200: volumeListResponseSchema, ...VOLUME_READ_ERROR_RESPONSES },
+        response: authedReadResponses({ 200: volumeListResponseSchema }),
       },
     },
     async (request) =>
@@ -96,7 +71,12 @@ export const volumeRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fast
       schema: {
         params: projectIdParams,
         body: volumeCreateSchema,
-        response: CREATE_RESPONSES,
+        response: authedWriteResponses({
+          201: volumeResponseSchema,
+          // The per-project volume budget gates the create (#461).
+          422: structureCapacity422ResponseSchema,
+          409: volumeConflictSchema,
+        }),
       },
     },
     async (request, reply) => {
@@ -121,12 +101,10 @@ export const volumeRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fast
       schema: {
         params: projectIdParams,
         body: volumeReorderSchema,
-        response: {
+        response: authedWriteResponses({
           200: volumeListResponseSchema,
-          ...VOLUME_READ_ERROR_RESPONSES,
-          403: errorEnvelopeResponse,
           422: errorEnvelopeResponse,
-        },
+        }),
       },
     },
     async (request) =>
@@ -146,7 +124,11 @@ export const volumeRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fast
       schema: {
         params: volumeIdParams,
         body: volumeRetitleSchema,
-        response: RETITLE_RESPONSES,
+        response: authedWriteResponses({
+          200: volumeResponseSchema,
+          422: errorEnvelopeResponse,
+          409: volumeConflictSchema,
+        }),
       },
     },
     async (request) =>
@@ -168,13 +150,12 @@ export const volumeRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fast
       preHandler: [guard],
       schema: {
         params: volumeIdParams,
-        response: {
+        response: authedWriteResponses({
           204: { type: "null" },
-          ...VOLUME_READ_ERROR_RESPONSES,
-          403: errorEnvelopeResponse,
-          // The at-least-one-volume guard answers 422 INVALID_OPERATION.
-          422: errorEnvelopeResponse,
-        },
+          // The at-least-one-volume guard answers 422 INVALID_OPERATION; a
+          // merge that would overflow the survivor refuses on capacity (#461).
+          422: structureCapacity422ResponseSchema,
+        }),
       },
     },
     async (request, reply) => {

@@ -1,8 +1,8 @@
 /**
- * Text generation contract used by narrative workflows (TS twin of the
- * Python authority's text_generation_port). The step vocabulary is CLOSED:
- * the application layer maps frontend operations to provider steps at this
- * boundary, and providers reject every other step instead of echoing it.
+ * Text generation contract used by narrative workflows. The step vocabulary
+ * is CLOSED: the application layer maps frontend operations to provider
+ * steps at this boundary, and providers reject every other step instead of
+ * echoing it.
  */
 
 /** The closed provider-step vocabulary at the port boundary. */
@@ -23,11 +23,24 @@ export function isTextProviderName(value: string): value is TextProviderName {
   return (PROVIDER_NAMES as readonly string[]).includes(value);
 }
 
+/** Runtime contract for exact, non-negative usage accounting. */
+export function isSafeUsageToken(value: unknown): value is number {
+  return typeof value === "number" && Number.isSafeInteger(value) && value >= 0;
+}
+
 /** Raised when a provider cannot complete a request; job persistence records it. */
 export class TextGenerationProviderError extends Error {
   constructor(message: string) {
     super(message);
     this.name = "TextGenerationProviderError";
+  }
+}
+
+/** Internal control-flow signal for an application-owned stream cancellation. */
+export class TextGenerationCancelledError extends Error {
+  constructor() {
+    super("Text generation was cancelled.");
+    this.name = "TextGenerationCancelledError";
   }
 }
 
@@ -73,6 +86,22 @@ export interface TextGenerationStreamOptions {
 }
 
 export interface TextGenerationProvider {
+  /**
+   * One structured completion. `content` is the parsed JSON object whose
+   * shape `task.responseSchema` fixes. `rawText` is a provider evidence
+   * and diagnostic field; no application code reads it — HTTP-backed
+   * providers (dashscope, openai_compatible) serialize that same `content`
+   * payload into it, while the deterministic provider's chapter steps store
+   * the bare chapter markdown there and wrap it as `{ chapter_markdown }`
+   * inside `content` (its review step serializes `content` like the
+   * HTTP-backed providers). Usage counters are null whenever the provider response
+   * carries no usage evidence — the deterministic provider never reports
+   * any — and safe non-negative integers otherwise. Rejects with
+   * `TextGenerationProviderError` for every expected provider failure:
+   * unsupported step, transport, timeout, HTTP status, malformed or
+   * schema-invalid JSON. Anything else is a programming error and stays
+   * unnormalized.
+   */
   generateStructured(task: TextGenerationTask): Promise<TextGenerationResult>;
   /**
    * Optional streaming capability (#308): yields raw chapter_markdown deltas

@@ -3,8 +3,9 @@
  * plus the gap closures adjudicated in #253 and #420:
  *   (a) the interface layer may not import shared infrastructure either (audit F-8);
  *   (b) the ai context is a leaf provider module, importable only through its
- *       application ports (the composition root src/apps is exempt — it wires
- *       concrete providers), and never importing the studio context.
+ *       application ports — the only exemptions are the named composition-root
+ *       wiring files in src/apps (they wire concrete providers), and ai never
+ *       imports the studio context.
  *
  * Paths are relative to server/ (cruise target: src).
  *
@@ -17,7 +18,9 @@ module.exports = {
       comment: "Domain layers never import application or infrastructure layers.",
       severity: "error",
       from: { path: "^src/(contexts/[^/]+|shared)/domain" },
-      to: { path: "^src/(contexts/[^/]+/(application|infrastructure)|shared/infrastructure)" },
+      to: {
+        path: "^src/(contexts/[^/]+/(application|infrastructure)|shared/(application|infrastructure))",
+      },
     },
     {
       name: "application-isolation",
@@ -58,17 +61,26 @@ module.exports = {
     {
       name: "ai-leaf-ports-only",
       comment:
-        "Audit gap closure: the ai context is a leaf provider module — code outside it may only import it through its application ports. The composition root (src/apps) is exempt, mirroring the Python authority whose runtime wires create_text_generation_provider directly.",
+        "Audit gap closure: the ai context is a leaf provider module — everything outside its application layer (infrastructure, interface, and any domain or root-level files) is invisible from outside; application-layer imports are narrowed to ports/ by ai-ports-only. Exemption granularity (#535): only the named composition-root wiring files are exempt, mirroring the Python authority whose runtime wires create_text_generation_provider directly — api/app.ts (mounts provider routes), api/provider_runtime.ts and cli/legacy_import_command.ts (wire the provider factory). Every other src/apps file goes through ai application ports like the rest of the tree.",
       severity: "error",
-      from: { pathNot: ["^src/contexts/ai/", "^src/apps/"] },
-      to: { path: "^src/contexts/ai/(infrastructure|interface)" },
+      from: {
+        pathNot: [
+          "^src/contexts/ai/",
+          "^src/apps/api/app\\.ts$",
+          "^src/apps/api/provider_runtime\\.ts$",
+          "^src/apps/cli/legacy_import_command\\.ts$",
+        ],
+      },
+      to: { path: "^src/contexts/ai/(?!application/)" },
     },
     {
       name: "ai-ports-only",
       comment:
-        "Audit gap closure (#420): inside the ai application layer only ports/ is importable from outside the ai context — application internals (e.g. model_resolution) stay private. The composition root (src/apps) is exempt for the same wiring reason as ai-leaf-ports-only.",
+        "Audit gap closure (#420): inside the ai application layer only ports/ is importable from outside the ai context — application internals (e.g. model_resolution) stay private. Exemption granularity (#535): api/provider_runtime.ts is the only src/apps file exempt (its provider wiring resolves models through ai application internals, same rationale as ai-leaf-ports-only); the other wiring files import ports/ only, so they need no exemption here.",
       severity: "error",
-      from: { pathNot: ["^src/contexts/ai/", "^src/apps/"] },
+      from: {
+        pathNot: ["^src/contexts/ai/", "^src/apps/api/provider_runtime\\.ts$"],
+      },
       to: { path: "^src/contexts/ai/application/(?!ports/)[^/]" },
     },
     {
@@ -78,6 +90,14 @@ module.exports = {
       severity: "error",
       from: { path: "^src/contexts/ai" },
       to: { path: "^src/contexts/studio" },
+    },
+    {
+      name: "ai-providers-neutral-no-vendor",
+      comment:
+        "Neutral shared modules in the ai providers directory (provider_* prefix convention) must not import vendor/adapter modules; the dependency direction is always vendor → neutral (B4 follow-up, 2026-09-11).",
+      severity: "error",
+      from: { path: "^src/contexts/ai/infrastructure/providers/provider_[^/]+\\.ts$" },
+      to: { path: "^src/contexts/ai/infrastructure/providers/(?!provider_)[^/]+\\.ts$" },
     },
   ],
   options: {
