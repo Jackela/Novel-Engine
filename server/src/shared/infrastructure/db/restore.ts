@@ -25,8 +25,11 @@ const WAL_SIDECAR_SUFFIXES = ["-wal", "-shm"] as const;
  * database path — atomic within the data directory's filesystem.
  *
  * Returns the safety backup path, or null when no previous database existed.
- * Any refusal or filesystem failure throws and leaves the configured database
- * byte-for-byte untouched.
+ * Every refusal before the rename (unverified input, failed safety backup,
+ * failed copy or rename) throws and leaves the configured database
+ * byte-for-byte untouched. After the rename has landed, only stale WAL
+ * sidecar removal can still fail; that failure throws an error stating that
+ * the database was replaced, so the reported state is never falsely clean.
  */
 export async function restoreDatabaseFile(
   databasePath: string,
@@ -116,13 +119,21 @@ async function discardStagedCopyAndRethrow(stagedPath: string, error: unknown): 
 /**
  * Remove `-wal`/`-shm` sidecars left by the replaced database generation.
  * Runs only after a successful rename; a missing sidecar is the clean case.
+ * A removal failure must not masquerade as a failed restore: the error states
+ * that the replacement has already landed and only the sidecar removal is
+ * unresolved, so the operator does not re-run a restore that already happened.
  */
 async function removeStaleWalSidecars(databasePath: string): Promise<void> {
   for (const suffix of WAL_SIDECAR_SUFFIXES) {
     try {
       await unlink(databasePath + suffix);
     } catch (error) {
-      if (errorCode(error) !== "ENOENT") throw error;
+      if (errorCode(error) === "ENOENT") continue;
+      const detail = error instanceof Error ? error.message : String(error);
+      throw new Error(
+        `Database was replaced at ${databasePath}, but removing the stale ${suffix} sidecar failed: ${detail}. Resolve before starting the server.`,
+        { cause: error },
+      );
     }
   }
 }

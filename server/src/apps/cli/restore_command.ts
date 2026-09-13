@@ -27,8 +27,11 @@ export interface RestoreCommandContext {
  * receives a safety backup through the same path as `novel-engine backup`,
  * and only then is the database replaced atomically. Every completed step is
  * reported through `writeLine`; a refused restore reports its reason through
- * the shared CLI error channel, exits non-zero, and leaves the configured
- * database byte-for-byte untouched. Backup file contents and database paths
+ * the shared CLI error channel and exits non-zero before the database is
+ * touched. The one failure that can surface after the replacement has landed
+ * — stale WAL sidecar removal — is reported as "database replaced, sidecar
+ * removal unresolved" so the operator never mistakes a completed restore for
+ * a no-op. Backup file contents and database paths
  * are printed, never credentials or other secret configuration.
  */
 export async function runRestoreCommand(

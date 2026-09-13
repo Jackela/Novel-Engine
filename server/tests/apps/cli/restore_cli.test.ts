@@ -101,6 +101,25 @@ describe("restore CLI", () => {
     expect(harness.lines.join("\n")).toContain(`Restored the database: ${harness.databasePath}`);
   });
 
+  it("removes stale WAL sidecars of the replaced database generation", async () => {
+    const harness = await restoreHarness();
+    await seedOwner(harness.databasePath, "current");
+    // Planted after seeding so the sidecar exists when restore replaces the
+    // database file, mirroring a database left behind by an abrupt exit.
+    await writeFile(`${harness.databasePath}-wal`, "stale write-ahead log bytes");
+    await writeFile(`${harness.databasePath}-shm`, "stale shared-memory bytes");
+    const input = await backupFromSeededSource(harness.directory, "rescued");
+
+    const code = await runCli(["restore", "--input", input], harness.context);
+
+    expect(code).toBe(0);
+    // Assert sidecar removal before any database open: a read-only open of a
+    // WAL-mode database itself creates lingering -wal/-shm files.
+    expect(existsSync(`${harness.databasePath}-wal`)).toBe(false);
+    expect(existsSync(`${harness.databasePath}-shm`)).toBe(false);
+    expect(ownerUsernames(harness.databasePath)).toEqual(["rescued"]);
+  });
+
   it("refuses a corrupt backup input without touching the current database", async () => {
     const harness = await restoreHarness();
     await seedOwner(harness.databasePath, "current");
