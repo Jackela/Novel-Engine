@@ -14,7 +14,7 @@ import { DEFAULT_CORS_ORIGINS } from "../../shared/domain/cors_contract.js";
 import type { ServerConfig } from "../../shared/infrastructure/config/server_config.js";
 import { corsAllowList } from "../../shared/interface/http/cors_policy.js";
 
-export const CORS_ALLOWED_HEADERS = [
+const CORS_ALLOWED_HEADERS = [
   "content-type",
   "authorization",
   "x-api-key",
@@ -26,9 +26,9 @@ export const CORS_ALLOWED_HEADERS = [
   "idempotency-key",
 ];
 
-export const CORS_ALLOWED_METHODS = ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"];
+const CORS_ALLOWED_METHODS = ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"];
 
-export const CORS_EXPOSED_HEADERS = ["x-request-id", "retry-after"];
+const CORS_EXPOSED_HEADERS = ["x-request-id", "retry-after"];
 
 export interface CorsOriginsAppOptions {
   /** Browser origins allowed by the setup same-origin check (default: dev set). */

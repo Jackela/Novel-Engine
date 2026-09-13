@@ -95,7 +95,7 @@ function parseIPv6(text: string): bigint | null {
 }
 
 /** Parse an IPv4 or IPv6 literal; IPv4-mapped IPv6 compares as its IPv4 value. */
-export function parseIpAddress(text: string): ParsedAddress | null {
+function parseIpAddress(text: string): ParsedAddress | null {
   const v4 = parseIPv4(text);
   if (v4 !== null) {
     return { value: v4, bits: 32 };

@@ -26,7 +26,7 @@ export interface StudioDatabase {
   close(): void;
 }
 
-export interface OpenStudioDatabaseOptions {
+interface OpenStudioDatabaseOptions {
   /** Context-owned reconciliation after schema migration and before job recovery. */
   readonly beforeJobRecovery?:
     | ((database: StudioSqliteDatabase, dataDirectory: string) => Promise<void> | void)

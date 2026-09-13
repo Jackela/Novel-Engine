@@ -3,10 +3,10 @@ import { type BetterSQLite3Database, drizzle } from "drizzle-orm/better-sqlite3"
 
 import * as schema from "./schema.js";
 
-export type StudioSchema = typeof schema;
+type StudioSchema = typeof schema;
 export type StudioSqliteDatabase = BetterSQLite3Database<StudioSchema>;
 
-export interface StudioConnection {
+interface StudioConnection {
   readonly raw: Database.Database;
   readonly db: StudioSqliteDatabase;
 }
@@ -16,7 +16,7 @@ export interface StudioQueryLogger {
   logQuery(query: string, params: unknown[]): void;
 }
 
-export interface OpenConnectionOptions {
+interface OpenConnectionOptions {
   readonly queryLogger?: StudioQueryLogger | undefined;
 }
 

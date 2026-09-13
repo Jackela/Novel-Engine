@@ -13,7 +13,7 @@ import type { FastifyInstance, FastifyReply } from "fastify";
  * index.html fallback, or the unbuilt-dist notice.
  */
 
-export interface SpaServingOptions {
+interface SpaServingOptions {
   /** Directory holding the built SPA contents (frontend/dist). */
   readonly distDirectory: string;
   readonly productName: string;

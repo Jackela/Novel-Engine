@@ -27,7 +27,7 @@ function utf8ByteLength(value: string): number {
   return new TextEncoder().encode(value).length;
 }
 
-export interface AuthServiceOptions {
+interface AuthServiceOptions {
   store: AuthStore;
   sessionSecret: string;
   now?: (() => Date) | undefined;

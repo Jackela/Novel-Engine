@@ -12,7 +12,7 @@ import { AuthService } from "../../shared/application/auth_service.js";
 import { DrizzleAuthStore } from "../../shared/infrastructure/db/auth_store.js";
 import { createStudioPersistence } from "../studio_persistence.js";
 
-export interface LegacyImportCommandInput {
+interface LegacyImportCommandInput {
   /** Exact database authority (backup → migrate → reconcile exports → recover jobs runs first). */
   databasePath: string;
   /** Explicit legacy workspace path; the CLI is not confined to data/imports. */
