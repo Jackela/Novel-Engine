@@ -23,29 +23,29 @@ export interface FileProof {
   readonly ino: bigint;
 }
 
-export interface CollectedFileProof extends FileProof {
+interface CollectedFileProof extends FileProof {
   readonly contents: Buffer;
 }
 
-export interface ExpectedFileProof {
+interface ExpectedFileProof {
   readonly sizeBytes: number;
   readonly checksumSha256: string;
 }
 
-export interface FileProofCapacity {
+interface FileProofCapacity {
   readonly resource: ExportCapacityResource;
   readonly limit: number;
 }
 
 /** Internal deterministic seams; production callers must leave these absent. */
-export interface FileProofTestHooks {
+interface FileProofTestHooks {
   readonly allocate?: ((size: number) => Buffer) | undefined;
   readonly maxReadBytes?: number | undefined;
   readonly afterInitialStat?: (() => Promise<void>) | undefined;
   readonly onRead?: ((requested: number, actual: number) => void) | undefined;
 }
 
-export interface ReadFileProofOptions {
+interface ReadFileProofOptions {
   readonly missingAllowed?: boolean | undefined;
   readonly collectContents?: boolean | undefined;
   readonly capacity?: FileProofCapacity | undefined;

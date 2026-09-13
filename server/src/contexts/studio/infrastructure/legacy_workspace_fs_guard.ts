@@ -17,7 +17,7 @@ export interface DirectoryIdentity {
   readonly ino: bigint;
 }
 
-export interface ByteBudget {
+interface ByteBudget {
   total: number;
 }
 

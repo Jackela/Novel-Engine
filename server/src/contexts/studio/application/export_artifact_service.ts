@@ -25,14 +25,14 @@ import type {
 } from "./ports/export_store.js";
 import { scopeForPrincipal } from "./ports/studio_store.js";
 
-export interface SnapshotArtifactServiceOptions {
+interface SnapshotArtifactServiceOptions {
   readonly now?: (() => Date) | undefined;
   readonly newId?: (() => string) | undefined;
   readonly rendererGuard?: ExportRendererGuard | undefined;
   readonly downloadCapacity?: ArtifactDownloadCapacity | undefined;
 }
 
-export interface ArtifactOutcomeOptions {
+interface ArtifactOutcomeOptions {
   readonly reportCleanupFailure?: ((failure: unknown) => void) | undefined;
 }
 

@@ -23,7 +23,7 @@ const UNAVAILABLE_READ_CODES = new Set(["ENOENT", "ENOTDIR", "ELOOP"]);
 
 class ExportArtifactPathError extends Error {}
 
-export interface FilesystemExportArtifactGatewayOptions {
+interface FilesystemExportArtifactGatewayOptions {
   /** Durable database authority for replaying interrupted rollback cleanup. */
   readonly cleanupJournal?: ExportPublicationCleanupJournal | undefined;
   /** Deterministic publication/temporary ids used only by collision tests. */

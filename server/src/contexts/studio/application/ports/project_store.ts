@@ -26,7 +26,7 @@ export interface AddProjectInput {
 }
 
 /** One imported chapter: content plus its persisted metadata JSON. */
-export interface ImportedChapterInput {
+interface ImportedChapterInput {
   contentMarkdown: string;
   metadataJson: string;
 }

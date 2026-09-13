@@ -8,7 +8,7 @@ import {
   timeoutFailure,
 } from "./provider_http.js";
 
-export const MAX_PROVIDER_RESPONSE_BYTES = 8 * 1024 * 1024;
+const MAX_PROVIDER_RESPONSE_BYTES = 8 * 1024 * 1024;
 export const MAX_PROVIDER_STREAM_EVENT_BYTES = 1024 * 1024;
 
 type ProviderBodyReader = ReturnType<ReadableStream<Uint8Array>["getReader"]>;
@@ -74,7 +74,7 @@ export function startProviderResponseDeadline(
 }
 
 /** Race an in-progress boundary operation against the immutable deadline. */
-export async function withinProviderDeadline<T>(
+async function withinProviderDeadline<T>(
   pending: Promise<T>,
   deadline: ProviderResponseDeadline,
 ): Promise<T> {

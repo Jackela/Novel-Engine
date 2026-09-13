@@ -7,7 +7,7 @@
  */
 
 /** Bounds and message subject of one port's page-limit validation. */
-export interface PageLimitRules {
+interface PageLimitRules {
   /** Inclusive lower bound of one page's row budget. */
   readonly min: number;
   /** Inclusive upper bound of one page's row budget. */

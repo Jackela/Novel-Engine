@@ -8,7 +8,7 @@ export interface FileIdentity {
   readonly ino: bigint;
 }
 
-export interface PublicationSidecarOwnership {
+interface PublicationSidecarOwnership {
   readonly stage?: FileIdentity | undefined;
   readonly manifest?: FileIdentity | undefined;
 }

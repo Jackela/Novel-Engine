@@ -85,7 +85,7 @@ function decodedSimpleEscape(selector: string): string {
  * `JSON.parse(payload).chapter_markdown` byte-for-byte. Nested object/array
  * sibling values are rejected to keep the walker small.
  */
-export interface ChapterMarkdownUnwrapper {
+interface ChapterMarkdownUnwrapper {
   feed(fragment: string): string | undefined;
   /** Ends the stream; throws when no complete chapter_markdown string arrived. */
   finish(): void;

@@ -14,7 +14,7 @@ import {
 import { documentRevisions, documents, projects, volumes } from "./schema.js";
 
 export type ProjectRow = typeof projects.$inferSelect;
-export type DocumentRow = typeof documents.$inferSelect;
+type DocumentRow = typeof documents.$inferSelect;
 export type RevisionRow = typeof documentRevisions.$inferSelect;
 export type VolumeRow = typeof volumes.$inferSelect;
 
@@ -90,7 +90,7 @@ export function scopedDocument(
  * in-volume position first; non-chapter documents keep the flat kind/position
  * ordering outside volumes.
  */
-export interface ReadingOrderKey {
+interface ReadingOrderKey {
   readonly kind: string;
   readonly position: number;
   readonly createdAt: Date;

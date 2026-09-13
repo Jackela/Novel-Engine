@@ -8,7 +8,7 @@ import { documents } from "./schema.js";
 import { insertRevision, type Tx } from "./studio_query_helpers.js";
 
 /** One seed document's placement and body, written inside a caller transaction. */
-export interface SeedDocumentWrite {
+interface SeedDocumentWrite {
   readonly projectId: string;
   readonly volumeId: string | null;
   readonly kind: string;

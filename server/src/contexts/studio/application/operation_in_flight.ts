@@ -1,6 +1,6 @@
 import { OperationCapacityExceededError, OperationInFlightError } from "../domain/exceptions.js";
 
-export interface InFlightTarget {
+interface InFlightTarget {
   readonly projectId: string;
   readonly documentId: string | null;
   readonly operation: string;
@@ -17,7 +17,7 @@ export interface OperationCapacityPolicy {
  * app instance, at most 2 of them per project. Counts are process-local —
  * the guard only sees its own app instance's in-flight window (#305).
  */
-export const DEFAULT_OPERATION_CAPACITY_POLICY: OperationCapacityPolicy = Object.freeze({
+const DEFAULT_OPERATION_CAPACITY_POLICY: OperationCapacityPolicy = Object.freeze({
   applicationLimit: 4,
   projectLimit: 2,
 });

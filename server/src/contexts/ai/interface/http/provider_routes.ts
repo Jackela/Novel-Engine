@@ -11,7 +11,7 @@ import {
   type ProviderCatalogOptions,
 } from "../../application/model_resolution.js";
 
-export interface ProviderCatalogRoutesOptions extends ProviderCatalogOptions {
+interface ProviderCatalogRoutesOptions extends ProviderCatalogOptions {
   readonly authService?: AuthService | undefined;
 }
 

@@ -248,7 +248,7 @@ export class OperationInFlightError extends Error {
   }
 }
 
-export type OperationCapacityScope = "project" | "application";
+type OperationCapacityScope = "project" | "application";
 
 /** An admitted expensive workflow would exceed one app-local capacity limit. */
 export class OperationCapacityExceededError extends Error {

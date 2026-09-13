@@ -1,5 +1,5 @@
-export type Quote = '"' | "'" | "`";
-export type UnicodeEscape = { character: string; end: number };
+type Quote = '"' | "'" | "`";
+type UnicodeEscape = { character: string; end: number };
 
 /**
  * Outcome of reading a JSON candidate boundary.
@@ -13,7 +13,7 @@ export const jsonLimits = { candidates: 512, candidateLength: 24e3, depth: 24 };
 export const isWhitespace = (value?: string) =>
   value !== undefined && /[\s\u0085\u200B]/u.test(value);
 export const isLineBreak = (v?: string) => v !== undefined && "\r\n\u0085\u2028\u2029".includes(v);
-export const isIdentifier = (value?: string) => /[A-Za-z0-9_-]/.test(value ?? "");
+const isIdentifier = (value?: string) => /[A-Za-z0-9_-]/.test(value ?? "");
 export const isQuote = (value?: string): value is Quote =>
   value === '"' || value === "'" || value === "`";
 export const isInWordApostrophe = (markdown: string, index: number) =>
@@ -96,7 +96,7 @@ export function parseSerializedJson(source: string): unknown | undefined {
     return undefined;
   }
 }
-export function readJsonStringEnd(markdown: string, start: number): CandidateEnd {
+function readJsonStringEnd(markdown: string, start: number): CandidateEnd {
   for (let index = start + 1; index < markdown.length; index += 1) {
     if (index - start > jsonLimits.candidateLength) return { kind: "limit" };
     if (markdown[index] === '"') return { kind: "end", end: index + 1 };

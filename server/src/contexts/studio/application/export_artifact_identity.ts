@@ -14,7 +14,7 @@ const FORMAT_BY_EXTENSION = new Map(
 const SAFE_IDENTIFIER = /^[A-Za-z0-9_-]+$/;
 const SHA256 = /^[a-f0-9]{64}$/;
 
-export interface ExportArtifactEvidenceIdentity {
+interface ExportArtifactEvidenceIdentity {
   readonly projectId: unknown;
   readonly id: unknown;
   readonly format: unknown;

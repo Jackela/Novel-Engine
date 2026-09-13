@@ -10,7 +10,7 @@ import { documentRevisions } from "./db/schema.js";
 
 export const REVISION_WORD_COUNT_BATCH_SIZE = 256;
 
-export interface RevisionWordCountReconciliationOptions {
+interface RevisionWordCountReconciliationOptions {
   readonly afterBatchCommitted?: ((completed: number) => void) | undefined;
 }
 

@@ -3,7 +3,7 @@ import { pageLimit } from "./page_limit.js";
 import type { ProjectScope } from "./studio_store.js";
 
 /** Persistence-neutral row shape handed to the application layer. */
-export interface DocumentRecord {
+interface DocumentRecord {
   id: string;
   projectId: string;
   kind: string;
@@ -56,8 +56,8 @@ export interface RevisionSummaryRecord {
 /** The validated row budget of one bounded document revision page. */
 export type RevisionPageLimit = number & { readonly __revisionPageLimit: unique symbol };
 
-export const MIN_REVISION_PAGE_LIMIT = 1;
-export const MAX_REVISION_PAGE_LIMIT = 100;
+const MIN_REVISION_PAGE_LIMIT = 1;
+const MAX_REVISION_PAGE_LIMIT = 100;
 
 /** Validate and narrow a revision-page budget before persistence. */
 export function revisionPageLimit(value: number): RevisionPageLimit {

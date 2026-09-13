@@ -16,11 +16,11 @@ export interface ProjectCatalogSummaryRecord {
 }
 
 /** The validated row budget of one bounded project catalog page. */
-export type ProjectPageLimit = number & { readonly __projectPageLimit: unique symbol };
+type ProjectPageLimit = number & { readonly __projectPageLimit: unique symbol };
 
 /** Inclusive application/store boundary for one catalog page. */
-export const MIN_PROJECT_PAGE_LIMIT = 1;
-export const MAX_PROJECT_PAGE_LIMIT = 100;
+const MIN_PROJECT_PAGE_LIMIT = 1;
+const MAX_PROJECT_PAGE_LIMIT = 100;
 
 /** Validate and narrow a catalog-page budget before persistence. */
 export function projectPageLimit(value: number): ProjectPageLimit {

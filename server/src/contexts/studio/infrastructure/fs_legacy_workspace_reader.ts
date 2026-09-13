@@ -34,7 +34,7 @@ interface ReadChapter extends RawFile {
   readonly filename: string;
 }
 
-export interface FsLegacyWorkspaceReaderHooks {
+interface FsLegacyWorkspaceReaderHooks {
   readonly afterFileOpen?: (path: string) => void | Promise<void>;
   readonly beforeFinalDirectoryValidation?: (source: string) => void | Promise<void>;
 }

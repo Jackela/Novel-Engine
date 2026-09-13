@@ -12,9 +12,9 @@ import type { Tx } from "./studio_query_helpers.js";
  */
 
 /** Result cap of the ranked query: the SQL statement uses LIMIT 30. */
-export const MATCH_RESULT_LIMIT = 30;
+const MATCH_RESULT_LIMIT = 30;
 
-export interface DocumentIndexEntry {
+interface DocumentIndexEntry {
   documentId: string;
   projectId: string;
   title: string;

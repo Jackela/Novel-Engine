@@ -7,7 +7,7 @@ import type { AddJobInput } from "./ports/job_records.js";
  * retries): the status is always "failed" and the event trail mirrors the
  * error message exactly.
  */
-export interface FailedJobOutcome {
+interface FailedJobOutcome {
   readonly status: "failed";
   readonly error: string;
   readonly eventDetailsJson: string;

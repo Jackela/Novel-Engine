@@ -67,7 +67,7 @@ export class BeatAssociationService {
  * outline-kind document in the project's reading order is the authority; a
  * project without an outline has no beats.
  */
-export function projectOutlineBeats(
+function projectOutlineBeats(
   store: DocumentStore,
   scope: ProjectScope,
   projectId: string,

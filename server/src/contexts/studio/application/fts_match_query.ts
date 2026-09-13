@@ -9,7 +9,7 @@
 /** Unicode word tokens, the `\w+` twin (letters, digits, underscore). */
 const FTS_TOKEN_PATTERN = /[\p{L}\p{N}_]+/gu;
 
-export const MAX_MATCH_TOKENS = 8;
+const MAX_MATCH_TOKENS = 8;
 
 /**
  * `toLowerCase` (not the stronger `casefold` folding) is deliberate: it

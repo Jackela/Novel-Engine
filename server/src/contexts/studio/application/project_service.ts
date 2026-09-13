@@ -19,7 +19,7 @@ const SEED_DOCUMENT_TITLE = "Chapter 1";
 const SEED_DOCUMENT_CONTENT = "# Chapter 1\n\n";
 const DEFAULT_SETTINGS = dumpJson({ provider: "mock" });
 
-export interface ProjectServiceOptions {
+interface ProjectServiceOptions {
   /** Shared with provider/export operations in the app composition root. */
   readonly inFlight?: InFlightOperationGuard | undefined;
   /** Optional only for persistence-focused unit harnesses. */
@@ -49,7 +49,7 @@ export function projectUpdateCommand(
 }
 
 /** The bounded catalog page handed to the HTTP surface. */
-export interface ProjectCatalogPayloadPage {
+interface ProjectCatalogPayloadPage {
   readonly projects: ProjectCatalogSummaryPayload[];
   readonly nextCursor: ProjectPageCursor | null;
 }

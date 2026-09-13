@@ -1,4 +1,4 @@
-export type StructureCapacityResource =
+type StructureCapacityResource =
   | "project_documents"
   | "project_volumes"
   | "volume_chapters"

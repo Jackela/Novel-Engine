@@ -21,9 +21,9 @@ type JsonObject = Record<string, unknown>;
 const MAX_BOUNDARY_PREFIX_BYTES = 3;
 
 /** Ceiling on silence before the upstream sends its first stream byte. */
-export const DEFAULT_STREAM_FIRST_BYTE_TIMEOUT_MS = 30_000;
+const DEFAULT_STREAM_FIRST_BYTE_TIMEOUT_MS = 30_000;
 /** Ceiling on silence between consecutive stream frames. */
-export const DEFAULT_STREAM_IDLE_TIMEOUT_MS = 60_000;
+const DEFAULT_STREAM_IDLE_TIMEOUT_MS = 60_000;
 
 /** Strip exactly the one leading space the SSE `data:` field rule allows. */
 function dataFieldValue(line: string): string {

@@ -19,7 +19,7 @@ import type { ProposalContextDocument } from "./ports/proposal_context_store.js"
  */
 
 /** The document kinds that serve as lore entries. */
-export const LOREBOOK_ENTRY_KINDS = ["character", "world"] as const;
+const LOREBOOK_ENTRY_KINDS = ["character", "world"] as const;
 
 export function isLoreEntryKind(kind: string): boolean {
   return (LOREBOOK_ENTRY_KINDS as readonly string[]).includes(kind);
@@ -52,7 +52,7 @@ export interface LoreMatchCorpora {
 }
 
 /** Upper bound on stored aliases per document (request schemas mirror it). */
-export const MAX_LORE_ALIASES = 64;
+const MAX_LORE_ALIASES = 64;
 const MAX_LORE_ALIAS_LENGTH = 240;
 
 /** Parse stored alias JSON defensively: anything but a string array reads as no aliases. */

@@ -10,7 +10,7 @@ import {
 } from "./export_publication_recovery.js";
 import { reconcileRevisionWordCounts } from "./revision_word_count_reconciliation.js";
 
-export interface ReconciledStudioDatabaseOptions {
+interface ReconciledStudioDatabaseOptions {
   readonly onReconciled?:
     | ((report: ExportPublicationRecoveryReport) => Promise<void> | void)
     | undefined;

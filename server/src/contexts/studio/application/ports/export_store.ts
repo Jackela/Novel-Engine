@@ -38,11 +38,11 @@ export interface ExportArtifactRecord {
 }
 
 /** The validated row budget of one bounded export catalog page. */
-export type ExportPageLimit = number & { readonly __exportPageLimit: unique symbol };
+type ExportPageLimit = number & { readonly __exportPageLimit: unique symbol };
 
 /** Inclusive application/store boundary for one page of the catalog. */
-export const MIN_EXPORT_PAGE_LIMIT = 1;
-export const MAX_EXPORT_PAGE_LIMIT = 100;
+const MIN_EXPORT_PAGE_LIMIT = 1;
+const MAX_EXPORT_PAGE_LIMIT = 100;
 
 /** Validate and narrow a transport/application number before persistence. */
 export function exportPageLimit(value: number): ExportPageLimit {

@@ -171,7 +171,7 @@ export function coercePayloadToSchema(payload: JsonObject, responseSchema: JsonO
  * Prose is only a valid recovery path for chapter markdown, whose contract
  * explicitly permits a plain narrative response from an HTTP provider.
  */
-export function fallbackPayloadFromNonObjectResponse(
+function fallbackPayloadFromNonObjectResponse(
   rawText: string,
   responseSchema: JsonObject,
 ): JsonObject | undefined {

@@ -39,7 +39,7 @@ type JsonObject = Record<string, unknown>;
 
 export type DashscopeTransportMode = "text_generation" | "multimodal_generation" | "responses";
 
-export interface DashscopeGenerationRequest {
+interface DashscopeGenerationRequest {
   readonly model: string;
   readonly input: {
     readonly messages: readonly {
@@ -55,7 +55,7 @@ export interface DashscopeGenerationRequest {
   };
 }
 
-export interface DashscopeResponsesRequest {
+interface DashscopeResponsesRequest {
   readonly model: string;
   readonly input: string;
   readonly temperature: number;

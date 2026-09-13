@@ -27,7 +27,7 @@ import type { ReviewService } from "./review_service.js";
 /** Honest provenance for the deterministic studio renderers (no AI model). */
 const STUDIO_EXPORTER_PROVIDER = "studio";
 
-export interface JobHistoryServiceOptions {
+interface JobHistoryServiceOptions {
   readonly now?: (() => Date) | undefined;
   /** Serializes identical exports and retries (#305); shared with proposals. */
   readonly inFlight: InFlightOperationGuard;
@@ -35,7 +35,7 @@ export interface JobHistoryServiceOptions {
   readonly proposals: ProposalGenerationPipeline;
 }
 
-export interface JobHistoryPage {
+interface JobHistoryPage {
   readonly jobs: JobSummaryPayload[];
   readonly nextCursor: JobPageCursor | null;
 }

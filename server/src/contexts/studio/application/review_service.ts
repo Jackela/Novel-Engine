@@ -23,7 +23,7 @@ import { chapterWordCounts, coerceEditorialFindings, THIN_CHAPTER_WORDS } from "
 import { formatUntrustedManuscript } from "./sanitization.js";
 
 /** The adjudicated summary of a deterministic, non-mutating editorial pass. */
-export const EDITORIAL_SUMMARY = "Editorial checks completed without modifying the manuscript.";
+const EDITORIAL_SUMMARY = "Editorial checks completed without modifying the manuscript.";
 
 /** Server-owned provenance; callers never supply a provider model. */
 export interface ReviewProviderProvenance {
@@ -32,7 +32,7 @@ export interface ReviewProviderProvenance {
 }
 
 /** Stable application DTO, deliberately independent of database row shapes. */
-export interface EditorialAssessmentIssue {
+interface EditorialAssessmentIssue {
   readonly id: string;
   readonly documentId: string;
   readonly severity: string;
@@ -54,14 +54,14 @@ export interface EditorialAssessment {
   readonly issues: readonly EditorialAssessmentIssue[];
 }
 
-export interface ReviewServiceOptions {
+interface ReviewServiceOptions {
   readonly now?: (() => Date) | undefined;
   readonly provenance?: ReviewProviderProvenance | undefined;
   /** Per-request provider factory; the composition root injects the concrete one. */
   readonly providerFactory: TextGenerationProviderFactory;
 }
 
-export interface ReviewEvaluationOptions {
+interface ReviewEvaluationOptions {
   readonly provider?: TextProviderName | undefined;
   readonly reportCleanupFailure?: CleanupFailureReporter | undefined;
 }
