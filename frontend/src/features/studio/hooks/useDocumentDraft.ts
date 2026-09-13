@@ -1,27 +1,20 @@
 import type { Dispatch, SetStateAction } from "react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useRef } from "react";
 
-import type { Project, SaveState, StudioDocument } from "@/app/types/studio";
-import {
-  type DraftStates,
-  draftStateFor,
-  materializeActiveDraftState,
-  type PersistedDraft,
-  replaceOwnerBaseline,
-  replaceOwnerState,
-  stateForActiveDocument,
-  stateForOwner,
-} from "./documentDraftState";
-import { reconcileCommittedDraft } from "./reconcileCommittedDraft";
-import { useAcceptanceCapture } from "./useAcceptanceCapture";
+import type { Project, StudioDocument } from "@/app/types/studio";
+
 import { useDocumentDraftActions } from "./useDocumentDraftActions";
 import { useDocumentDraftAutosave } from "./useDocumentDraftAutosave";
+import { useDocumentDraftCommit } from "./useDocumentDraftCommit";
 import { useDocumentDraftOwner } from "./useDocumentDraftOwner";
-import {
-  useDocumentRevisionHistory,
-  usePersistDocumentDraftAndRefreshHistory,
-} from "./useDocumentRevisionHistory";
+import { useDocumentDraftState } from "./useDocumentDraftState";
+import { useDocumentRevisionHistory } from "./useDocumentRevisionHistory";
 
+/**
+ * Composition facade for the Document Draft: per-owner text state, commit
+ * and persistence, revision history, conflict actions, and autosave, wired
+ * behind the stable return shape consumed by the studio page model.
+ */
 export function useDocumentDraft(
   activeDocument: StudioDocument | null,
   projectId: string,
@@ -35,55 +28,22 @@ export function useDocumentDraft(
     projectId,
     selectedDocumentId,
   );
-  const [draftStates, setDraftStates] = useState<DraftStates>(() => ({
-    [owner.key]: draftStateFor(activeDocument, owner.key),
-  }));
   const saveTimer = useRef<number | null>(null);
   const saveInFlight = useRef(new Set<string>());
-  const persistedDraftsRef = useRef(new Map<string, PersistedDraft>());
-  const activeDraftState = stateForActiveDocument(draftStates, activeDocument, owner.key);
-  const { draft, titleDraft, saveState } = activeDraftState;
-
-  // Only the selected Document owns a Draft. A temporary body-loading state
-  // preserves this owner; selecting another Document replaces its local state.
-  useEffect(() => {
-    setDraftStates((current) => materializeActiveDraftState(current, activeDocument, owner.key));
-  }, [activeDocument, owner.key]);
-
-  useEffect(() => {
-    if (!isCurrentOwner(owner)) return;
-    persistedDraftsRef.current.clear();
-    setError(null);
-    setRestoreError(null);
-  }, [isCurrentOwner, owner, setError, setRestoreError]);
-
-  const loadedRevision = useMemo(
-    () => ({ current: activeDraftState.loadedRevisionId, ownerToken: owner.token }),
-    [activeDraftState.loadedRevisionId, owner.token],
-  );
-  const draftRef = useRef({
-    draft,
-    titleDraft,
-    activeDocument,
-    editVersion: activeDraftState.editVersion,
-    ownerToken: owner.token,
-  });
-  const saveStateRef = useRef(saveState);
   const conflictActionPendingRef = useRef<typeof owner.token | null>(null);
 
-  useEffect(() => {
-    draftRef.current = {
-      draft,
-      titleDraft,
-      activeDocument,
-      editVersion: activeDraftState.editVersion,
-      ownerToken: owner.token,
-    };
-  }, [activeDocument, activeDraftState.editVersion, draft, owner.token, titleDraft]);
-
-  useEffect(() => {
-    saveStateRef.current = saveState;
-  }, [saveState]);
+  const {
+    draft,
+    titleDraft,
+    saveState,
+    loadedRevision,
+    draftRef,
+    saveStateRef,
+    setDraftStates,
+    setDraft,
+    setTitleDraft,
+    setCurrentSaveState,
+  } = useDocumentDraftState({ activeDocument, owner, isCurrentOwner });
 
   const {
     revisions,
@@ -101,130 +61,26 @@ export function useDocumentDraft(
     setRevisionError,
   );
 
-  const setDraft = useCallback<Dispatch<SetStateAction<string>>>(
-    (nextDraft) => {
-      if (!isCurrentOwner(owner)) return;
-      setDraftStates((current) => {
-        if (!isCurrentOwner(owner)) return current;
-        const currentState = stateForActiveDocument(
-          current,
-          draftRef.current.activeDocument,
-          owner.key,
-        );
-        const draft = typeof nextDraft === "function" ? nextDraft(currentState.draft) : nextDraft;
-        if (draft === currentState.draft) return current;
-        return replaceOwnerState(current, {
-          ...currentState,
-          draft,
-          editVersion: currentState.editVersion + 1,
-          saveState: currentState.saveState === "conflict" ? "conflict" : "saving",
-        });
-      });
-    },
-    [isCurrentOwner, owner],
-  );
-
-  const setTitleDraft = useCallback<Dispatch<SetStateAction<string>>>(
-    (nextTitle) => {
-      if (!isCurrentOwner(owner)) return;
-      setDraftStates((current) => {
-        if (!isCurrentOwner(owner)) return current;
-        const currentState = stateForActiveDocument(
-          current,
-          draftRef.current.activeDocument,
-          owner.key,
-        );
-        const titleDraft =
-          typeof nextTitle === "function" ? nextTitle(currentState.titleDraft) : nextTitle;
-        if (titleDraft === currentState.titleDraft) return current;
-        return replaceOwnerState(current, {
-          ...currentState,
-          titleDraft,
-          editVersion: currentState.editVersion + 1,
-          saveState: currentState.saveState === "conflict" ? "conflict" : "saving",
-        });
-      });
-    },
-    [isCurrentOwner, owner],
-  );
-
-  const setCurrentSaveState = useCallback(
-    (nextSaveState: SaveState) => {
-      if (!isCurrentOwner(owner)) return;
-      saveStateRef.current = nextSaveState;
-      setDraftStates((current) =>
-        isCurrentOwner(owner)
-          ? replaceOwnerState(current, {
-              ...stateForOwner(current, activeDocument, owner.key),
-              saveState: nextSaveState,
-            })
-          : current,
-      );
-    },
-    [activeDocument, isCurrentOwner, owner],
-  );
-
-  const applyDocument = useCallback(
-    (document: StudioDocument, nextSaveState: SaveState, rememberPersisted: boolean) => {
-      if (
-        !isCurrentOwner(owner) ||
-        document.project_id !== owner.projectId ||
-        document.id !== owner.documentId
-      ) {
-        return;
-      }
-      loadedRevision.current = document.current_revision_id;
-      saveStateRef.current = nextSaveState;
-      if (rememberPersisted) {
-        persistedDraftsRef.current.set(owner.key, {
-          ownerKey: owner.key,
-          draft: document.content_markdown,
-          titleDraft: document.title,
-        });
-      }
-      setDraftStates((current) =>
-        replaceOwnerBaseline(current, document, owner.key, nextSaveState),
-      );
-    },
-    [isCurrentOwner, loadedRevision, owner],
-  );
-
-  const reconcileCommittedDocument = useCallback(
-    (document: StudioDocument, expectation: Parameters<typeof reconcileCommittedDraft>[2]) =>
-      reconcileCommittedDraft(
-        {
-          owner,
-          mountedRef,
-          ownerRef,
-          draftRef,
-          loadedRevision,
-          saveStateRef,
-          persistedDraftsRef,
-          setProject,
-          setDraftStates,
-        },
-        document,
-        expectation,
-      ),
-    [loadedRevision, mountedRef, owner, ownerRef, setProject],
-  );
-
-  const captureAcceptance = useAcceptanceCapture(
-    owner,
-    ownerRef,
-    draftRef,
+  const {
+    persistedDraftsRef,
+    applyDocument,
     reconcileCommittedDocument,
-    refreshDocumentRevisions,
-    setError,
-  );
-
-  const persistDraft = usePersistDocumentDraftAndRefreshHistory({
+    captureAcceptance,
+    persistDraft,
+  } = useDocumentDraftCommit({
     projectId,
     owner,
+    ownerRef,
+    mountedRef,
     isCurrentOwner,
-    reconcileCommittedDocument,
+    draftRef,
+    saveStateRef,
+    loadedRevision,
+    setDraftStates,
     refreshDocumentRevisions,
+    setProject,
     setError,
+    setRestoreError,
   });
 
   const isCurrentDraftOwner = useCallback(() => isCurrentOwner(owner), [isCurrentOwner, owner]);
