@@ -7,6 +7,14 @@ A self-hosted writing studio: a TypeScript/Fastify + SQLite backend with a React
 - [Documentation index](https://raw.githubusercontent.com/Jackela/Novel-Engine/main/docs/README.md): Entry points for current guides, source contracts, and historical evidence.
 - [README](https://raw.githubusercontent.com/Jackela/Novel-Engine/main/README.md): Project introduction, feature overview, and how to run Novel Engine.
 - [Quickstart](https://raw.githubusercontent.com/Jackela/Novel-Engine/main/openwiki/quickstart.md): Step-by-step setup guide to install, configure, and launch the studio locally.
+- [Getting started (Docker)](https://raw.githubusercontent.com/Jackela/Novel-Engine/main/openwiki/guides/getting-started.md): Writer-first path from Docker Desktop to the first AI-assisted chapter.
+- [Provider setup](https://raw.githubusercontent.com/Jackela/Novel-Engine/main/openwiki/guides/provider-setup.md): Trial mode, DashScope, and OpenAI-compatible providers (DeepSeek example) with environment-variable examples.
+- [Writing guide](https://raw.githubusercontent.com/Jackela/Novel-Engine/main/openwiki/guides/writing-guide.md): The authoring workflow: projects, Copilot proposals, the whole-book loop, lore, review, and history.
+- [Exporting](https://raw.githubusercontent.com/Jackela/Novel-Engine/main/openwiki/guides/exporting.md): Markdown, DOCX, and EPUB exports and where the files land.
+- [Backup and restore](https://raw.githubusercontent.com/Jackela/Novel-Engine/main/openwiki/guides/backup-and-restore.md): Where the data physically lives and how to back it up and restore it.
+- [Upgrading](https://raw.githubusercontent.com/Jackela/Novel-Engine/main/openwiki/guides/upgrading.md): Pull new code, rebuild the image, and keep the data volume.
+- [Troubleshooting](https://raw.githubusercontent.com/Jackela/Novel-Engine/main/openwiki/guides/troubleshooting.md): Symptom-to-fix for common self-hosting problems.
+- [FAQ](https://raw.githubusercontent.com/Jackela/Novel-Engine/main/openwiki/guides/faq.md): Short answers about storage, models, and offline use.
 - [Architecture overview](https://raw.githubusercontent.com/Jackela/Novel-Engine/main/openwiki/architecture/overview.md): End-to-end tour of the TypeScript backend, bounded contexts, and runtime composition.
 - [Streaming and the whole-book loop](https://raw.githubusercontent.com/Jackela/Novel-Engine/main/openwiki/architecture/streaming-and-whole-book.md): How the SSE proposal stream and the chapter-by-chapter whole-book loop ride on one proposal pipeline.
 - [Lorebook](https://raw.githubusercontent.com/Jackela/Novel-Engine/main/openwiki/architecture/lorebook.md): Keyword-triggered lore injection: entry keys, substring matching, lifecycle gating, and deterministic ordering.

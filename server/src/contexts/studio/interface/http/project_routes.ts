@@ -16,6 +16,7 @@ import {
   encodeProjectCatalogCursor,
 } from "./project_catalog_cursor.js";
 import { projectUpdateRawKeyGuard } from "./project_update_raw_keys.js";
+import { authedReadResponses, authedWriteResponses } from "./route_responses.js";
 import { structureCapacity422ResponseSchema } from "./structure_capacity_schemas.js";
 import { withAsyncStudioErrors, withStudioErrors } from "./studio_error_mapping.js";
 import {
@@ -65,6 +66,9 @@ export const projectRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fas
       preValidation: [guard],
       schema: {
         querystring: projectListQuerySchema,
+        // Not project-scoped, so the shared read base's 404 never applies;
+        // the map stays inline instead of borrowing a code the surface
+        // cannot answer.
         response: {
           200: projectListResponseSchema,
           401: errorEnvelopeResponse,
@@ -99,16 +103,12 @@ export const projectRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fas
       schema: {
         params: projectIdParams,
         body: projectUpdateSchema,
-        response: {
+        response: authedWriteResponses({
           200: projectResponseSchema,
-          401: errorEnvelopeResponse,
-          403: errorEnvelopeResponse,
-          404: errorEnvelopeResponse,
           // Oversized settings JSON refuses permanently (#461).
           422: structureCapacity422ResponseSchema,
           500: errorEnvelopeResponse,
-          503: errorEnvelopeResponse,
-        },
+        }),
       },
     },
     async (request) =>
@@ -127,6 +127,8 @@ export const projectRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fas
       preHandler: [guard],
       schema: {
         body: projectCreateSchema,
+        // Not project-scoped (the create mints the parent), so the shared
+        // write base's 404 never applies; the map stays inline.
         response: {
           201: projectShellResponseSchema,
           401: errorEnvelopeResponse,
@@ -154,12 +156,7 @@ export const projectRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fas
       preHandler: [guard],
       schema: {
         params: projectIdParams,
-        response: {
-          200: projectShellResponseSchema,
-          401: errorEnvelopeResponse,
-          404: errorEnvelopeResponse,
-          503: errorEnvelopeResponse,
-        },
+        response: authedReadResponses({ 200: projectShellResponseSchema }),
       },
     },
     async (request) =>
@@ -179,13 +176,10 @@ export const projectRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fas
       schema: {
         params: projectIdParams,
         querystring: projectMatchQuerySchema,
-        response: {
+        response: authedReadResponses({
           200: matchListResponseSchema,
-          401: errorEnvelopeResponse,
-          404: errorEnvelopeResponse,
           422: errorEnvelopeResponse,
-          503: errorEnvelopeResponse,
-        },
+        }),
       },
     },
     async (request) =>
@@ -204,14 +198,10 @@ export const projectRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fas
       preHandler: [guard],
       schema: {
         params: projectIdParams,
-        response: {
+        response: authedWriteResponses({
           204: { type: "null" },
-          401: errorEnvelopeResponse,
-          403: errorEnvelopeResponse,
-          404: errorEnvelopeResponse,
           409: operationInFlightSchema,
-          503: errorEnvelopeResponse,
-        },
+        }),
       },
     },
     async (request, reply) => {

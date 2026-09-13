@@ -17,6 +17,7 @@ import {
   reviewListResponseSchema,
   reviewResponseSchema,
 } from "./review_schemas.js";
+import { authedReadResponses, authedWriteResponses } from "./route_responses.js";
 import { withAsyncStudioErrors, withStudioErrors } from "./studio_error_mapping.js";
 import { projectIdParams, reviewIdParams } from "./studio_request_schemas.js";
 import { operationCapacityResponseSchema, operationInFlightSchema } from "./studio_schemas.js";
@@ -60,15 +61,12 @@ export const reviewRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fast
       schema: {
         params: projectIdParams,
         body: reviewCreateSchema,
-        response: {
+        response: authedWriteResponses({
           201: jobResponseSchema,
-          401: errorEnvelopeResponse,
-          403: errorEnvelopeResponse,
-          404: errorEnvelopeResponse,
           409: operationInFlightSchema,
           422: errorEnvelopeResponse,
           503: operationCapacityResponseSchema,
-        },
+        }),
       },
       config: {
         swaggerTransform: ({ schema, url }) => {
@@ -104,13 +102,10 @@ export const reviewRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fast
       schema: {
         params: projectIdParams,
         querystring: reviewListQuerySchema,
-        response: {
+        response: authedReadResponses({
           200: reviewListResponseSchema,
-          401: errorEnvelopeResponse,
-          404: errorEnvelopeResponse,
           422: errorEnvelopeResponse,
-          503: errorEnvelopeResponse,
-        },
+        }),
       },
     },
     async (request) => {
@@ -141,12 +136,7 @@ export const reviewRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fast
       preHandler: [guard],
       schema: {
         params: reviewIdParams,
-        response: {
-          200: reviewResponseSchema,
-          401: errorEnvelopeResponse,
-          404: errorEnvelopeResponse,
-          503: errorEnvelopeResponse,
-        },
+        response: authedReadResponses({ 200: reviewResponseSchema }),
       },
     },
     async (request) =>
