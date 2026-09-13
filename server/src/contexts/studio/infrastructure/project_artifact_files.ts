@@ -3,6 +3,7 @@ import { constants } from "node:fs";
 import { lstat, open, realpath, rename, rm, unlink } from "node:fs/promises";
 import { resolve } from "node:path";
 
+import { errorCode } from "../../../shared/infrastructure/error_code.js";
 import type { ProjectArtifactCleaner } from "../application/ports/project_artifact_cleaner.js";
 import { isDescendant } from "./export_artifact_durable_files.js";
 
@@ -218,10 +219,4 @@ function sameIdentity(left: FileIdentity, right: FileIdentity): boolean {
 
 function matchesKind(details: FileDetails, kind: ConfinedProjectLeaf["kind"]): boolean {
   return kind === "symbolic-link" ? details.isSymbolicLink() : details.isDirectory();
-}
-
-function errorCode(error: unknown): string | undefined {
-  return error !== null && typeof error === "object" && "code" in error
-    ? String((error as { code?: unknown }).code)
-    : undefined;
 }

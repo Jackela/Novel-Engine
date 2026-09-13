@@ -4,6 +4,7 @@ import { basename, dirname, join } from "node:path";
 
 import Database from "better-sqlite3";
 
+import { errorCode } from "../error_code.js";
 import { backupDatabaseFile } from "./backup.js";
 
 /**
@@ -136,9 +137,4 @@ async function removeStaleWalSidecars(databasePath: string): Promise<void> {
       );
     }
   }
-}
-
-function errorCode(error: unknown): string | undefined {
-  if (typeof error !== "object" || error === null || !("code" in error)) return undefined;
-  return typeof error.code === "string" ? error.code : undefined;
 }
