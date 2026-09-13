@@ -8,7 +8,13 @@ import type {
   TextGenerationTask,
 } from "../../src/contexts/ai/application/ports/text_generation.js";
 import { TextGenerationProviderError } from "../../src/contexts/ai/application/ports/text_generation.js";
-import { jobs as jobsTable } from "../../src/contexts/studio/infrastructure/db/schema.js";
+import {
+  jobs as jobsTable,
+  projectSnapshots,
+  reviewIssues,
+  reviews,
+  snapshotDocuments,
+} from "../../src/contexts/studio/infrastructure/db/schema.js";
 import { validProposalProse } from "./proposal_test_helpers.js";
 import { type CookieJar, seedProject } from "./studio_helpers.js";
 
@@ -141,4 +147,13 @@ export function studioDatabase(app: FastifyInstance) {
   if (database === undefined) throw new Error("Expected the real Studio database.");
   expect(database).toBeDefined();
   return database;
+}
+
+/** A failed review must land without persisting any review evidence rows. */
+export function expectNoReviewEvidence(app: FastifyInstance): void {
+  const database = studioDatabase(app);
+  expect(database.select().from(projectSnapshots).all()).toEqual([]);
+  expect(database.select().from(snapshotDocuments).all()).toEqual([]);
+  expect(database.select().from(reviews).all()).toEqual([]);
+  expect(database.select().from(reviewIssues).all()).toEqual([]);
 }
