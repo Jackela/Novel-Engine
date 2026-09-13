@@ -14,24 +14,13 @@ import {
   usageResponseSchema,
 } from "./job_schemas.js";
 import { requireServices, type StudioRoutesOptions } from "./project_routes.js";
+import { authedReadResponses, authedWriteResponses } from "./route_responses.js";
 import { withAsyncStudioErrors, withStudioErrors } from "./studio_error_mapping.js";
 import { jobIdParams, projectIdParams } from "./studio_request_schemas.js";
 import {
   keyedRetryInFlightResponseSchema,
   operationCapacityResponseSchema,
 } from "./studio_schemas.js";
-
-/** Guard + scope failures shared by the project-scoped job reads. */
-const JOB_READ_ERROR_RESPONSES = {
-  401: errorEnvelopeResponse,
-  404: errorEnvelopeResponse,
-  503: errorEnvelopeResponse,
-} as const;
-
-const JOB_LIST_ERROR_RESPONSES = {
-  ...JOB_READ_ERROR_RESPONSES,
-  422: errorEnvelopeResponse,
-} as const;
 
 /**
  * The synchronous jobs audit surface: the persisted listing (newest first)
@@ -49,7 +38,10 @@ export const jobRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fastify
       schema: {
         params: projectIdParams,
         querystring: jobListQuerySchema,
-        response: { 200: jobListResponseSchema, ...JOB_LIST_ERROR_RESPONSES },
+        response: authedReadResponses({
+          200: jobListResponseSchema,
+          422: errorEnvelopeResponse,
+        }),
       },
     },
     async (request) => {
@@ -80,11 +72,10 @@ export const jobRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fastify
       preHandler: [guard],
       schema: {
         params: jobDetailParamsSchema,
-        response: {
+        response: authedReadResponses({
           200: jobResponseSchema,
-          ...JOB_READ_ERROR_RESPONSES,
           422: errorEnvelopeResponse,
-        },
+        }),
       },
     },
     async (request) =>
@@ -104,14 +95,12 @@ export const jobRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fastify
       schema: {
         params: jobIdParams,
         headers: jobRetryHeadersSchema,
-        response: {
+        response: authedWriteResponses({
           200: jobResponseSchema,
-          ...JOB_READ_ERROR_RESPONSES,
-          403: errorEnvelopeResponse,
           422: jobRetry422ResponseSchema,
           409: keyedRetryInFlightResponseSchema,
           503: operationCapacityResponseSchema,
-        },
+        }),
       },
     },
     async (request) => {
@@ -146,7 +135,7 @@ export const jobRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fastify
       preHandler: [guard],
       schema: {
         params: projectIdParams,
-        response: { 200: usageResponseSchema, ...JOB_READ_ERROR_RESPONSES },
+        response: authedReadResponses({ 200: usageResponseSchema }),
       },
     },
     async (request) => {
