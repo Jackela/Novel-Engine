@@ -1,11 +1,12 @@
 import { link, lstat, readdir, realpath } from "node:fs/promises";
-import { isAbsolute, relative, resolve, sep } from "node:path";
+import { resolve } from "node:path";
 
 import {
   assertCanonicalExportArtifactEvidence,
   exportArtifactFilename,
 } from "../application/export_artifact_identity.js";
 import type { exports as exportArtifacts } from "./db/schema.js";
+import { isDescendant } from "./export_artifact_durable_files.js";
 import {
   cleanupOwnedFile,
   errorCode,
@@ -276,11 +277,6 @@ export async function assertTreeContainsNoSymlinks(directory: string): Promise<v
     else if (!entry.isFile())
       throw new Error(`Unsafe entry in deleted project export tree: ${path}`);
   }
-}
-
-function isDescendant(root: string, candidate: string): boolean {
-  const offset = relative(root, candidate);
-  return offset !== "" && offset !== ".." && !offset.startsWith(`..${sep}`) && !isAbsolute(offset);
 }
 
 function missingArtifact(id: string): Error {

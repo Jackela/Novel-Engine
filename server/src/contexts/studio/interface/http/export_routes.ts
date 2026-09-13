@@ -21,6 +21,7 @@ import { decodeExportCursor, encodeExportCursor } from "./export_cursor.js";
 import { jobResponseSchema } from "./job_schemas.js";
 import type { JsonResponseSchema } from "./json_response_schema.js";
 import { requireServices, type StudioRoutesOptions } from "./project_routes.js";
+import { authedReadResponses, authedWriteResponses } from "./route_responses.js";
 import { withAsyncStudioErrors, withStudioErrors } from "./studio_error_mapping.js";
 import { exportIdParams, projectIdParams } from "./studio_request_schemas.js";
 import { operationCapacityResponseSchema, operationInFlightSchema } from "./studio_schemas.js";
@@ -73,18 +74,6 @@ const deliveryByFormat: Record<ExportArtifactFormat, { contentType: string }> = 
   epub: { contentType: "application/epub+zip" },
 };
 
-/** Guard + scope failures shared by the project-scoped export reads. */
-const EXPORT_READ_ERROR_RESPONSES = {
-  401: errorEnvelopeResponse,
-  404: errorEnvelopeResponse,
-  503: errorEnvelopeResponse,
-} as const;
-
-const EXPORT_LIST_ERROR_RESPONSES = {
-  ...EXPORT_READ_ERROR_RESPONSES,
-  422: errorEnvelopeResponse,
-} as const;
-
 /**
  * Project-scoped export surface: the synchronous POST bridge that reports a
  * terminal job, the read-only artifact catalog, and confined binary delivery.
@@ -100,15 +89,13 @@ export const exportRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fast
       schema: {
         params: projectIdParams,
         body: exportCreateSchema,
-        response: {
+        response: authedWriteResponses({
           201: jobResponseSchema,
-          ...EXPORT_READ_ERROR_RESPONSES,
-          403: errorEnvelopeResponse,
           // No chapter answers INVALID_OPERATION; a permanent fresh limit has its own stable code.
           422: exportCreateOrRetry422ResponseSchema,
           409: operationInFlightSchema,
           503: operationCapacityResponseSchema,
-        },
+        }),
       },
     },
     async (request, reply) => {
@@ -140,7 +127,10 @@ export const exportRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fast
         params: projectIdParams,
         querystring: exportListQuerySchema,
         security: [{ cookieAuth: [] }],
-        response: { 200: exportListResponseSchema, ...EXPORT_LIST_ERROR_RESPONSES },
+        response: authedReadResponses({
+          200: exportListResponseSchema,
+          422: errorEnvelopeResponse,
+        }),
       },
     },
     async (request) => {

@@ -17,13 +17,12 @@ import type {
   ProjectScope,
 } from "../application/ports/studio_store.js";
 import { NotFoundError } from "../domain/exceptions.js";
-import { DEFAULT_LORE_STATUS } from "../domain/kinds.js";
-import { clearProjectDocumentIndex, refreshDocumentIndex } from "./db/document_search.js";
-import { documents, projects } from "./db/schema.js";
+import { clearProjectDocumentIndex } from "./db/document_search.js";
+import { seedDocumentInTransaction } from "./db/document_seed_writes.js";
+import { projects } from "./db/schema.js";
 import {
   documentSummaries,
   documentsWithCurrent,
-  insertRevision,
   type ProjectRow,
   scopeCondition,
   scopedProject,
@@ -69,52 +68,20 @@ export class ProjectStorePart implements ProjectStore {
       });
       const seeded: DocumentWithCurrent[] = [];
       if (input.seed !== null) {
-        const document: typeof documents.$inferInsert = {
-          id: randomUUID(),
-          projectId: project.id,
-          kind: input.seed.kind,
-          title: input.seed.title,
-          position: 1,
-          volumeId: defaultVolume.id,
-          currentRevisionId: null,
-          createdAt: input.now,
-          updatedAt: input.now,
-        };
-        tx.insert(documents).values(document).run();
-        const revision = insertRevision(tx, {
-          documentId: document.id,
-          parentRevisionId: null,
-          revisionNumber: 1,
-          contentMarkdown: input.seed.contentMarkdown,
-          metadataJson: input.seed.metadataJson,
-          source: "author",
-          now: input.now,
-        });
-        tx.update(documents)
-          .set({ currentRevisionId: revision.id })
-          .where(eq(documents.id, document.id))
-          .run();
-        refreshDocumentIndex(tx, {
-          documentId: document.id,
-          projectId: project.id,
-          title: input.seed.title,
-          content: input.seed.contentMarkdown,
-        });
-        seeded.push({
-          id: document.id,
-          projectId: project.id,
-          kind: input.seed.kind,
-          title: input.seed.title,
-          position: 1,
-          volumeId: defaultVolume.id,
-          beatRef: null,
-          loreAliasesJson: "[]",
-          loreStatus: DEFAULT_LORE_STATUS,
-          currentRevisionId: revision.id,
-          createdAt: input.now,
-          updatedAt: input.now,
-          currentRevision: revision,
-        });
+        seeded.push(
+          seedDocumentInTransaction(tx, {
+            projectId: project.id,
+            volumeId: defaultVolume.id,
+            kind: input.seed.kind,
+            title: input.seed.title,
+            position: 1,
+            contentMarkdown: input.seed.contentMarkdown,
+            metadataJson: input.seed.metadataJson,
+            revisionSource: "author",
+            now: input.now,
+            touchDocumentUpdatedAt: false,
+          }),
+        );
       }
       return { project: project as ProjectRow, documents: seeded };
     });
@@ -218,37 +185,17 @@ export class ProjectStorePart implements ProjectStore {
       });
       for (const [index, chapter] of input.chapters.entries()) {
         const position = index + 1;
-        const title = `Chapter ${position}`;
-        const document: typeof documents.$inferInsert = {
-          id: randomUUID(),
+        seedDocumentInTransaction(tx, {
           projectId: project.id,
-          kind: "chapter",
-          title,
-          position,
           volumeId: defaultVolume.id,
-          currentRevisionId: null,
-          createdAt: input.now,
-          updatedAt: input.now,
-        };
-        tx.insert(documents).values(document).run();
-        const revision = insertRevision(tx, {
-          documentId: document.id,
-          parentRevisionId: null,
-          revisionNumber: 1,
+          kind: "chapter",
+          title: `Chapter ${position}`,
+          position,
           contentMarkdown: chapter.contentMarkdown,
           metadataJson: chapter.metadataJson,
-          source: "author",
+          revisionSource: "author",
           now: input.now,
-        });
-        tx.update(documents)
-          .set({ currentRevisionId: revision.id })
-          .where(eq(documents.id, document.id))
-          .run();
-        refreshDocumentIndex(tx, {
-          documentId: document.id,
-          projectId: project.id,
-          title,
-          content: chapter.contentMarkdown,
+          touchDocumentUpdatedAt: false,
         });
       }
       return {
