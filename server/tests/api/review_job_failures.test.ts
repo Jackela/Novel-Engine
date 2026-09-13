@@ -1,22 +1,10 @@
-import type { FastifyInstance } from "fastify";
 import { describe, expect, it } from "vitest";
 
 import {
   TextGenerationProviderError,
   type TextGenerationProviderFactory,
 } from "../../src/contexts/ai/application/ports/text_generation.js";
-import {
-  projectSnapshots,
-  reviewIssues,
-  reviews,
-  snapshotDocuments,
-} from "../../src/contexts/studio/infrastructure/db/schema.js";
-import {
-  deferredReviewFactory,
-  firstDocument,
-  flakyProviderFactory,
-  studioDatabase,
-} from "./job_test_helpers.js";
+import { expectNoReviewEvidence, firstDocument, flakyProviderFactory } from "./job_test_helpers.js";
 import { retryJobRequest } from "./retry_test_helpers.js";
 import {
   buildStudioApp,
@@ -39,14 +27,6 @@ function staticReviewFactory(content: Record<string, unknown>): TextGenerationPr
       completionTokens: null,
     }),
   });
-}
-
-function expectNoReviewEvidence(app: FastifyInstance): void {
-  const database = studioDatabase(app);
-  expect(database.select().from(projectSnapshots).all()).toEqual([]);
-  expect(database.select().from(snapshotDocuments).all()).toEqual([]);
-  expect(database.select().from(reviews).all()).toEqual([]);
-  expect(database.select().from(reviewIssues).all()).toEqual([]);
 }
 
 describe("review job failure closure", () => {
@@ -228,91 +208,6 @@ describe("review job failure closure", () => {
       );
       expect(removed.statusCode, removed.body).toBe(204);
     } finally {
-      await app.close();
-    }
-  });
-
-  it("records a failed job when a captured source is deleted before landing", async () => {
-    const deferred = deferredReviewFactory();
-    const { app } = await buildStudioApp(monotonicClock(), {
-      textProviderFactory: deferred.factory,
-    });
-    try {
-      const owner = await ownerJar(app);
-      const project = await seedProject(app, owner, "Concurrent review deletion");
-      const document = firstDocument(project);
-      const pendingReview = call(app, owner, "POST", `/api/projects/${project.id}/reviews`);
-      await deferred.started;
-
-      const removed = await call(
-        app,
-        owner,
-        "DELETE",
-        `/api/projects/${project.id}/documents/${document.id}`,
-      );
-      expect(removed.statusCode, removed.body).toBe(204);
-      deferred.succeed();
-
-      const reviewed = await pendingReview;
-      expect(reviewed.statusCode, reviewed.body).toBe(201);
-      expect(reviewed.json<JobPayload>()).toMatchObject({
-        status: "failed",
-        provider: "mock",
-        model: "deferred-review-model",
-        result: { review_id: null, snapshot_id: null },
-        error: "Review source changed before the evaluated result could be recorded.",
-      });
-      expectNoReviewEvidence(app);
-    } finally {
-      deferred.succeed();
-      await app.close();
-    }
-  });
-
-  it("retains the evaluated model when a retry source is deleted before landing", async () => {
-    const deferred = deferredReviewFactory(1);
-    const { app } = await buildStudioApp(monotonicClock(), {
-      textProviderFactory: deferred.factory,
-    });
-    try {
-      const owner = await ownerJar(app);
-      const project = await seedProject(app, owner, "Concurrent review retry deletion");
-      const document = firstDocument(project);
-      const first = await call(app, owner, "POST", `/api/projects/${project.id}/reviews`);
-      const firstJob = first.json<JobPayload>();
-      expect(firstJob).toMatchObject({ status: "failed", model: "" });
-
-      const pendingRetry = retryJobRequest(
-        app,
-        owner,
-        `/api/projects/${project.id}/jobs/${firstJob.id}/retry`,
-        "deleted-review-source-retry-0001",
-      );
-      await deferred.started;
-      const removed = await call(
-        app,
-        owner,
-        "DELETE",
-        `/api/projects/${project.id}/documents/${document.id}`,
-      );
-      expect(removed.statusCode, removed.body).toBe(204);
-      deferred.succeed();
-
-      const retried = await pendingRetry;
-      expect(retried.statusCode, retried.body).toBe(200);
-      expect(retried.json<JobPayload>()).toMatchObject({
-        status: "failed",
-        model: "deferred-review-model",
-        retry_of_job_id: firstJob.id,
-        error: "Review source changed before the evaluated result could be recorded.",
-      });
-      expect(retried.json<JobPayload>().events.map((event) => event.status)).toEqual([
-        "running",
-        "failed",
-      ]);
-      expectNoReviewEvidence(app);
-    } finally {
-      deferred.succeed();
       await app.close();
     }
   });

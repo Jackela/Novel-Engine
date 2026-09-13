@@ -15,7 +15,7 @@ import { exportRetryCapacityOutcome } from "./export_retry_capacity_outcome.js";
 import { failedJobOutcome } from "./failed_job_input.js";
 import { generationRetryCapacityOutcome } from "./generation_retry_capacity_outcome.js";
 import { replayedJobPayload } from "./job_replay_payload.js";
-import { dumpJson, jobPayload, safeLoadJson } from "./payloads.js";
+import { jobPayload, safeLoadJson } from "./payloads.js";
 import type { StudioJobLedgerStore } from "./ports/job_ledger_store.js";
 import type { JobRecord } from "./ports/job_records.js";
 import type { ReviewOutcomeStore } from "./ports/review_outcome_store.js";
@@ -191,13 +191,12 @@ export class JobRetryExecutor {
     } catch (error) {
       if (!(error instanceof ReviewSourceInvalidatedError)) throw error;
       return jobPayload(
-        this.jobs.markJobOutcome(scope, retry.projectId, retry.id, {
-          status: "failed",
-          model: evaluation.model,
-          error: error.message,
-          eventDetailsJson: dumpJson({ error: error.message }),
-          now: this.now(),
-        }),
+        this.jobs.markJobOutcome(
+          scope,
+          retry.projectId,
+          retry.id,
+          failedJobOutcome(error.message, this.now(), evaluation.model),
+        ),
       );
     }
   }
