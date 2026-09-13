@@ -83,8 +83,8 @@ export function EntryPage() {
           Your projects, Markdown revisions, reviews, and exports stay in this self-hosted instance.
         </p>
         <p>
-          Running in trial mode: no API key needed — generation uses the built-in provider. Connect
-          a real provider in a project's Settings when you're ready.
+          No API key? Generation runs on the built-in trial provider — connect a real one in a
+          project's Settings when you're ready.
         </p>
         {setup ? (
           <form className="entry__form" onSubmit={submit}>
