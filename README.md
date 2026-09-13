@@ -85,14 +85,18 @@ the same folder.
 
 If port 8000 is already taken by another application, create a
 `compose.override.yaml` next to `compose.yaml` with this content and restart
-with `docker compose up -d`; the studio then listens on port 8001:
+with `docker compose up -d`; the studio then listens on port 8001 (the
+`!override` tag replaces the default port mapping instead of adding to it;
+requires Docker Compose v2.24+, which current Docker Desktop ships):
 
 ```yaml
 services:
   novel-engine:
-    ports:
+    ports: !override
       - "8001:8000"
 ```
+
+Alternatively, edit `compose.yaml` and change `8000:8000` to `8001:8000`.
 
 Your novels live in the `novel-engine-data` named volume: `docker compose
 down` keeps it, `docker compose down -v` deletes it (permanently). The

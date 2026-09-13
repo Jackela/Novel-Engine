@@ -22,10 +22,10 @@ if [ -z "${SECURITY_SECRET_KEY:-}" ]; then
     fi
   else
     SECRET_VALUE=$(node -e "process.stdout.write(require('node:crypto').randomBytes(32).toString('hex'))")
-    # 177 (umask) => the file is created 0600 from the first write; the
-    # explicit chmod also repairs a pre-existing file with looser modes.
-    umask 177
-    printf '%s\n' "$SECRET_VALUE" > "$SECRET_FILE"
+    # 177 (umask) makes the very first write create the file 0600; scoping it
+    # to a subshell keeps the server process's umask untouched. The explicit
+    # chmod is defense in depth for exotic filesystems that ignore umask.
+    (umask 177 && printf '%s\n' "$SECRET_VALUE" > "$SECRET_FILE")
     chmod 600 "$SECRET_FILE"
   fi
   export SECURITY_SECRET_KEY="$SECRET_VALUE"
