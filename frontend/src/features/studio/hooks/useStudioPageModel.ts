@@ -1,20 +1,16 @@
-import { useState } from "react";
 import type { NavigateFunction } from "react-router-dom";
 
 import type { StudioRouteState } from "../studioRouteState";
-import { projectDocumentOwnerKey } from "./projectDocumentOwnerKey";
 import {
   buildNavigatorRowCommands,
   buildStudioInspectorModel,
   buildStudioNavigatorProps,
 } from "./studioPageModelView";
-import { useActiveDocument } from "./useActiveDocument";
-import { useDocumentDraft } from "./useDocumentDraft";
 import { useExportDownload } from "./useExportDownload";
 import { useLazyInspectorHistories } from "./useLazyInspectorHistories";
-import { usePageCurrentDocument } from "./usePageCurrentDocument";
+import { usePageActiveDocument } from "./usePageActiveDocument";
+import { usePageDocumentDraft } from "./usePageDocumentDraft";
 import { reviewInspectorModel } from "./useReviewHistory";
-import { useScopedRevisionRestore } from "./useScopedRevisionRestore";
 import { useStudioActions } from "./useStudioActions";
 import { useStudioErrorChannels } from "./useStudioErrorChannels";
 import { useStudioGeneration } from "./useStudioGeneration";
@@ -37,7 +33,6 @@ type Nav = NavigateFunction;
  */
 export function useStudioPageModel(projectId: string, route: StudioRouteState, navigate: Nav) {
   const { inspector: routeInspector, section } = route;
-  const [activeId, setActiveId] = useState<string | null>(null);
   const {
     project,
     setProject,
@@ -61,15 +56,15 @@ export function useStudioPageModel(projectId: string, route: StudioRouteState, n
     recheckProject,
     onSessionLost: navigation.onProjectResourceSessionLost,
   });
-  const activeSummary = useActiveDocument(project, section, activeId);
-  const currentDocument = usePageCurrentDocument(
-    projectId,
-    activeSummary,
-    lifecycle,
-    { captureProjectShellRead, publishProjectShellRead },
-    navigate,
-  );
-  const activeDocument = currentDocument.document;
+  const { activeId, setActiveId, activeSummary, currentDocument, activeDocument } =
+    usePageActiveDocument({
+      projectId,
+      project,
+      section,
+      lifecycle,
+      shellReadAuthority: { captureProjectShellRead, publishProjectShellRead },
+      navigate,
+    });
   const { projectErrors, documentErrors, visibleError, visibleErrorWithoutSettings } =
     useStudioErrorChannels(projectId, activeSummary?.id ?? null, error);
   const {
@@ -86,19 +81,20 @@ export function useStudioPageModel(projectId: string, route: StudioRouteState, n
     isLoadingHistory,
     loadOlderRevisions,
     captureAcceptance,
-    restoreRevision,
+    restoringRevisionId,
+    onRestoreRevision,
     isConflictActionPending,
     loadLatest,
     retryOverwrite,
-  } = useDocumentDraft(
-    activeDocument,
+  } = usePageDocumentDraft({
     projectId,
+    activeDocument,
+    selectedDocumentId: activeSummary?.id ?? null,
     setProject,
-    documentErrors.publishers.draft,
-    documentErrors.publishers.revision,
-    documentErrors.publishers.restore,
-    activeSummary?.id ?? null,
-  );
+    draftError: documentErrors.publishers.draft,
+    revisionError: documentErrors.publishers.revision,
+    restoreError: documentErrors.publishers.restore,
+  });
   const generation = useStudioGeneration({
     projectId,
     activeDocument,
@@ -126,10 +122,6 @@ export function useStudioPageModel(projectId: string, route: StudioRouteState, n
     loadJobs,
     onSelectInspector: navigation.onSelectInspector,
   });
-  const { restoringRevisionId, restoreRevision: onRestoreRevision } = useScopedRevisionRestore(
-    projectDocumentOwnerKey(projectId, activeDocument?.id ?? null),
-    restoreRevision,
-  );
   const { search, setSearch, isSearching, searchResults, runSearch } = useStudioSearch(
     projectId,
     projectErrors.publishers.search,
