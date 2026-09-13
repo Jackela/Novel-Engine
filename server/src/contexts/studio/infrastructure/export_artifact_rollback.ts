@@ -19,7 +19,7 @@ export interface OwnedArtifactProof extends FileIdentity {
   readonly checksumSha256: string;
 }
 
-export type OwnedFinalRemoval = "missing" | "removed" | "replacement-restored";
+type OwnedFinalRemoval = "missing" | "removed" | "replacement-restored";
 
 export const REPLACEMENT_PRESERVED_ERROR =
   "Export rollback preserved a replacement and its recovery sidecars for operator review.";

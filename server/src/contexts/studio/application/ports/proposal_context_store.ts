@@ -3,7 +3,7 @@ import type { ProjectScope } from "./studio_store.js";
 import type { VolumeRecord } from "./volume_store.js";
 
 /** Immutable revision paired to one document at proposal-context capture. */
-export type ProposalContextRevision = Readonly<RevisionRecord>;
+type ProposalContextRevision = Readonly<RevisionRecord>;
 
 /** Immutable document row paired to the revision current in the same snapshot. */
 export type ProposalContextDocument = Readonly<
@@ -13,7 +13,7 @@ export type ProposalContextDocument = Readonly<
 >;
 
 /** Immutable volume row in canonical project reading order. */
-export type ProposalContextVolume = Readonly<VolumeRecord>;
+type ProposalContextVolume = Readonly<VolumeRecord>;
 
 /** Every database-owned input needed to assemble one proposal task coherently. */
 export interface ProposalContextSource {

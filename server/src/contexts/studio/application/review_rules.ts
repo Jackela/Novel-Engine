@@ -13,7 +13,7 @@ export const REVIEW_DIMENSIONS = [
   "foreshadowing",
   "dialogue",
 ] as const;
-export type ReviewDimension = (typeof REVIEW_DIMENSIONS)[number];
+type ReviewDimension = (typeof REVIEW_DIMENSIONS)[number];
 
 const DIMENSION_SET: ReadonlySet<string> = new Set(REVIEW_DIMENSIONS);
 const SEVERITY_RANK: Readonly<Record<string, number>> = { blocker: 0, warning: 1 };

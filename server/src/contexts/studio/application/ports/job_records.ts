@@ -3,7 +3,7 @@
 import { pageLimit } from "./page_limit.js";
 
 /** One durable job-event trail entry. */
-export interface JobEventRecord {
+interface JobEventRecord {
   id: string;
   jobId: string;
   status: string;
@@ -50,8 +50,8 @@ export interface JobSummaryRecord {
 export type JobPageLimit = number & { readonly __jobPageLimit: unique symbol };
 
 /** Inclusive application/store boundary for one page of job history. */
-export const MIN_JOB_PAGE_LIMIT = 1;
-export const MAX_JOB_PAGE_LIMIT = 100;
+const MIN_JOB_PAGE_LIMIT = 1;
+const MAX_JOB_PAGE_LIMIT = 100;
 
 /** Validate and narrow a transport/application number before it reaches persistence. */
 export function jobPageLimit(value: number): JobPageLimit {

@@ -16,7 +16,7 @@ export interface CapacityOutcomeEvidence {
 }
 
 /** The structural refusal shape shared by the studio capacity error classes. */
-export interface CapacityRefusal {
+interface CapacityRefusal {
   readonly message: string;
   readonly resource: string;
   readonly limit: number;

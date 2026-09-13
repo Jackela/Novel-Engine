@@ -9,7 +9,7 @@ import type {
 } from "./ports/document_store.js";
 import { scopeForPrincipal } from "./ports/studio_store.js";
 
-export interface RevisionHistoryPage {
+interface RevisionHistoryPage {
   readonly revisions: RevisionSummaryPayload[];
   readonly nextCursor: RevisionPageCursor | null;
 }

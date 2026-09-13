@@ -52,7 +52,7 @@ export function normalizedTimeoutSeconds(
   return value;
 }
 
-export interface ProviderTransportErrorFields {
+interface ProviderTransportErrorFields {
   readonly status?: number | undefined;
   readonly timedOut?: boolean | undefined;
   readonly malformedJson?: boolean | undefined;
@@ -186,7 +186,7 @@ export function cancelProviderResponseBody(
     : settleProviderCleanup(() => body.cancel());
 }
 
-export type ProviderFailureRegistrar = (failure: ProviderTransportError) => ProviderTransportError;
+type ProviderFailureRegistrar = (failure: ProviderTransportError) => ProviderTransportError;
 
 /** Register HTTP status first, then cancel its untrusted body without consuming it. */
 export async function discardHttpFailureResponse(

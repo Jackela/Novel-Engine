@@ -35,7 +35,7 @@ interface ProposalRawResponse extends EventEmitter {
   destroy(error?: Error): unknown;
 }
 
-export interface ProposalStreamResponseOptions {
+interface ProposalStreamResponseOptions {
   response: ProposalRawResponse;
   socket?: EventEmitter;
   frames: AsyncGenerator<ProposalStreamFrame, void, void>;

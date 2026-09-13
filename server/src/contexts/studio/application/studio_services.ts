@@ -57,7 +57,7 @@ export interface StudioPersistence {
   proposalAcceptance: ProposalAcceptanceStore;
 }
 
-export interface CreateStudioServicesOptions {
+interface CreateStudioServicesOptions {
   now?: (() => Date) | undefined;
   /** Per-request provider factory; the composition root injects the concrete one. */
   providerFactory: TextGenerationProviderFactory;

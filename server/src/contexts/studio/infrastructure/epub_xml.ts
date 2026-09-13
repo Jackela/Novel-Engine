@@ -15,7 +15,7 @@ const XML_ESCAPES: Record<string, string> = {
   "'": "&apos;",
 };
 
-export function escapeXml(value: string): string {
+function escapeXml(value: string): string {
   return value.replace(invalidXmlCharacters, "").replace(/[&<>"']/g, (character) => {
     return XML_ESCAPES[character] ?? character;
   });

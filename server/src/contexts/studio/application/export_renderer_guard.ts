@@ -1,6 +1,6 @@
 import { OperationCapacityExceededError } from "../domain/exceptions.js";
 
-export interface ExportRendererPermit {
+interface ExportRendererPermit {
   release(): void;
 }
 

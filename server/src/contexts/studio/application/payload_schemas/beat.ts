@@ -9,7 +9,7 @@ import { type Static, Type } from "@fastify/type-provider-typebox";
  */
 
 /** One resolved outline beat: heading title plus its raw section content. */
-export const linkedBeatPayloadSchema = Type.Object(
+const linkedBeatPayloadSchema = Type.Object(
   {
     title: Type.String(),
     content: Type.String(),
@@ -17,7 +17,7 @@ export const linkedBeatPayloadSchema = Type.Object(
   { additionalProperties: false },
 );
 
-export type LinkedBeatPayload = Static<typeof linkedBeatPayloadSchema>;
+type LinkedBeatPayload = Static<typeof linkedBeatPayloadSchema>;
 
 export const chapterBeatPayloadSchema = Type.Object(
   {

@@ -13,7 +13,7 @@ import { streamProposal } from "./proposal_streaming.js";
  * instruction, and the named provider. The model stays server-owned and
  * never travels with the request.
  */
-export interface ProposalDraftInput {
+interface ProposalDraftInput {
   readonly operation: string;
   readonly instruction: string;
   readonly provider: string;

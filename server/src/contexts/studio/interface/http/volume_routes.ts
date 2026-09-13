@@ -20,7 +20,7 @@ import {
 } from "./volume_schemas.js";
 
 /** The 409 envelope when a title collides with an existing project volume. */
-export const volumeConflictSchema: JsonResponseSchema = {
+const volumeConflictSchema: JsonResponseSchema = {
   type: "object",
   additionalProperties: false,
   properties: {

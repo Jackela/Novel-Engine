@@ -2,7 +2,7 @@ import type { DocumentWithCurrent } from "./document_store.js";
 import type { ProjectScope } from "./studio_store.js";
 
 /** The association write (#313): a beat title or an explicit null to clear. */
-export interface SetBeatReferenceInput {
+interface SetBeatReferenceInput {
   beatRef: string | null;
   now: Date;
 }

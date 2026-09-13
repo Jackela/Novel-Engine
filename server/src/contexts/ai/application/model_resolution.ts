@@ -28,7 +28,7 @@ export interface ProviderCatalogOptions {
 }
 
 /** One provider's server-owned facts as the catalog endpoint exposes them. */
-export interface ProviderCatalogEntry {
+interface ProviderCatalogEntry {
   readonly provider: TextProviderName;
   readonly configured: boolean;
   readonly model: string;

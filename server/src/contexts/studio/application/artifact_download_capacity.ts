@@ -2,7 +2,7 @@ import { OperationCapacityExceededError } from "../domain/exceptions.js";
 
 export const ARTIFACT_DOWNLOAD_POOL_BYTES = 134_217_728;
 
-export interface ArtifactDownloadPermit {
+interface ArtifactDownloadPermit {
   release(): void;
 }
 

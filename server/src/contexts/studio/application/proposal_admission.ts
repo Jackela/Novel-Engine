@@ -26,7 +26,7 @@ import type { ProviderCleanupFailureReporter } from "./provider_disposal.js";
  */
 
 /** The provider-facing task target, resolved before any job row exists. */
-export interface ProposalRevisionTarget {
+interface ProposalRevisionTarget {
   readonly document: ProposalContextSource["target"];
   readonly revision: NonNullable<ProposalContextSource["target"]["currentRevision"]>;
 }
@@ -51,7 +51,7 @@ export function admitTextProvider(provider: string): TextProviderName {
 }
 
 /** Maps an API operation onto its provider-facing step, or undefined. */
-export function proposalStepForOperation(operation: string): ProviderStep | undefined {
+function proposalStepForOperation(operation: string): ProviderStep | undefined {
   return OPERATION_STEPS[operation];
 }
 
@@ -123,7 +123,7 @@ export interface ProposalRetryRequest {
 /** The stored-context recovery verdict for a claimed proposal retry: the
  * recovered generation inputs, or the exact stale-base failure outcome to
  * land on the reserved row. */
-export type ProposalRetryRecovery =
+type ProposalRetryRecovery =
   | {
       readonly kind: "recovered";
       readonly instruction: string;

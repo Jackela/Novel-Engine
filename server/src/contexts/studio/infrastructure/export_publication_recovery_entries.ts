@@ -13,17 +13,17 @@ const MANIFEST_TEMP = /^\.([A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.manifest\.json)\.[A-Z
 const CLEANUP_SUFFIX = /^(.*)\.cleanup-[A-Za-z0-9_-]+$/;
 const MAX_CLEANUP_DEPTH = 8;
 
-export interface RecoveryFileEntry {
+interface RecoveryFileEntry {
   readonly path: string;
   readonly logicalName: string;
   readonly cleanupDepth: number;
 }
 
-export interface RecoveryManifestEntry extends RecoveryFileEntry {
+interface RecoveryManifestEntry extends RecoveryFileEntry {
   readonly evidence: ManifestEvidence;
 }
 
-export interface RecoveryTemporaryEntry extends RecoveryFileEntry {
+interface RecoveryTemporaryEntry extends RecoveryFileEntry {
   readonly manifestName: string | undefined;
 }
 

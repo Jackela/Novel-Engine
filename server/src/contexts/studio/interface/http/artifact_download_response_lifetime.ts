@@ -16,7 +16,7 @@ interface ArtifactDownloadSocket extends EventEmitter {
   readonly closed?: boolean | undefined;
 }
 
-export interface ArtifactDownloadResponseLifetimeOptions {
+interface ArtifactDownloadResponseLifetimeOptions {
   readonly response: ArtifactDownloadResponse;
   readonly request?: ArtifactDownloadRequest | undefined;
   readonly socket?: ArtifactDownloadSocket | undefined;

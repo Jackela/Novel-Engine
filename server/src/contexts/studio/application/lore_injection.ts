@@ -21,7 +21,7 @@ import { escapePromptData, LOREBOOK_BEGIN, LOREBOOK_END } from "./sanitization.j
 export const DEFAULT_LOREBOOK_BUDGET_CHARACTERS = 4000;
 
 /** How much of an entry the prompt carries: the whole body or one summary line. */
-export type LoreInjectionMode = "full" | "summary";
+type LoreInjectionMode = "full" | "summary";
 
 /** Deterministic work counters used to prove the planner's linear contract. */
 export interface LorePlanningInstrumentation {

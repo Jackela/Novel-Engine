@@ -41,7 +41,7 @@ const PROMPT_INJECTION_PATTERNS: readonly RegExp[] = [
 export const AUTHOR_INSTRUCTION_BEGIN = "[BEGIN AUTHOR INSTRUCTION]";
 export const AUTHOR_INSTRUCTION_END = "[END AUTHOR INSTRUCTION]";
 export const UNTRUSTED_MANUSCRIPT_BEGIN = "[BEGIN UNTRUSTED MANUSCRIPT JSON]";
-export const UNTRUSTED_MANUSCRIPT_END = "[END UNTRUSTED MANUSCRIPT JSON]";
+const UNTRUSTED_MANUSCRIPT_END = "[END UNTRUSTED MANUSCRIPT JSON]";
 /** Resident-context section markers (#314, ADR-0004 layer 1). */
 export const PROJECT_OUTLINE_BEGIN = "[BEGIN PROJECT OUTLINE]";
 export const PROJECT_OUTLINE_END = "[END PROJECT OUTLINE]";
@@ -73,7 +73,7 @@ export function formatAuthorInstruction(instruction: string): string {
   return `${AUTHOR_INSTRUCTION_BEGIN}\n${sanitizeInstruction(escapePromptData(instruction))}\n${AUTHOR_INSTRUCTION_END}`;
 }
 /** Escape square brackets so text cannot forge any bracketed prompt marker. */
-export function escapePromptBlockMarkers(text: string): string {
+function escapePromptBlockMarkers(text: string): string {
   return String(text).replace(/([[\]])/g, (bracket) => `\\u00${bracket === "[" ? "5b" : "5d"}`);
 }
 /** Encode manuscript text as an explicitly untrusted, bracket-escaped JSON data block. */

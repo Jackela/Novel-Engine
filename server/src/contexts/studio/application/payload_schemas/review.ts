@@ -15,7 +15,7 @@ import { freeFormObject } from "./common.js";
  */
 export type ReviewSeverity = "blocker" | "warning" | "suggestion";
 
-export const reviewIssuePayloadSchema = Type.Object(
+const reviewIssuePayloadSchema = Type.Object(
   {
     id: Type.String(),
     document_id: Type.String(),

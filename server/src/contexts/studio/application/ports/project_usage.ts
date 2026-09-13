@@ -1,5 +1,5 @@
 /** Per-model aggregate row of the usage ledger (#317). */
-export interface ProjectUsageBreakdownEntry {
+interface ProjectUsageBreakdownEntry {
   model: string;
   requests: number;
   promptTokens: number;

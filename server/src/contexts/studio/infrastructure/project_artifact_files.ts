@@ -31,7 +31,7 @@ interface ConfinedProjectLeaf {
   readonly path: string;
 }
 
-export interface FilesystemProjectArtifactCleanerOptions {
+interface FilesystemProjectArtifactCleanerOptions {
   /** Deterministic failure seam after confinement checks and before removal. */
   readonly beforeRemove?: ((projectDirectory: string) => Promise<void> | void) | undefined;
 }

@@ -1,5 +1,5 @@
 /** One chapter discovered in a legacy workspace without changing its source. */
-export interface LegacyWorkspaceChapter {
+interface LegacyWorkspaceChapter {
   readonly filename: string;
   readonly contentMarkdown: string;
   readonly bytes: number;

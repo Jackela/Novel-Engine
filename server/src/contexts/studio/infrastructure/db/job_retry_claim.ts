@@ -9,7 +9,7 @@ type JobRow = typeof jobs.$inferSelect;
 const RETRY_IDEMPOTENCY_CONSTRAINT =
   "UNIQUE constraint failed: jobs.project_id, jobs.retry_of_job_id, jobs.retry_idempotency_key";
 
-export interface RetryClaimRow {
+interface RetryClaimRow {
   readonly jobId: string;
   readonly created: boolean;
 }

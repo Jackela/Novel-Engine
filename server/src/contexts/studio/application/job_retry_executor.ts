@@ -25,7 +25,7 @@ import { admitTextProvider } from "./proposal_admission.js";
 import type { ProposalGenerationPipeline } from "./proposal_pipeline.js";
 import type { ReviewService } from "./review_service.js";
 
-export interface JobRetryExecutorOptions {
+interface JobRetryExecutorOptions {
   readonly now?: (() => Date) | undefined;
   /** Owns the proposal generation sequence and its prompt/landing configuration. */
   readonly proposals: ProposalGenerationPipeline;

@@ -70,8 +70,8 @@ export interface ReviewSummaryRecord {
 export type ReviewPageLimit = number & { readonly __reviewPageLimit: unique symbol };
 
 /** Inclusive application/store boundary for one page of review history. */
-export const MIN_REVIEW_PAGE_LIMIT = 1;
-export const MAX_REVIEW_PAGE_LIMIT = 100;
+const MIN_REVIEW_PAGE_LIMIT = 1;
+const MAX_REVIEW_PAGE_LIMIT = 100;
 
 /** Validate and narrow a transport/application number before it reaches persistence. */
 export function reviewPageLimit(value: number): ReviewPageLimit {

@@ -26,7 +26,7 @@ export const PRIOR_STORY_DIGEST_WORD_LIMIT = 60;
 export const PRIOR_STORY_DIGEST_CODE_POINT_LIMIT = 512;
 export const RECENT_TEXT_CHARACTER_LIMIT = 1200;
 /** How far past the cut a line/space boundary may lie before the cut is hard. */
-export const RECENT_TEXT_BOUNDARY_WINDOW = 200;
+const RECENT_TEXT_BOUNDARY_WINDOW = 200;
 export const EMPTY_CHAPTER_DIGEST_PLACEHOLDER = "(no text yet)";
 
 /** The minimal chapter facts the assembler needs; store rows satisfy this shape. */
@@ -49,13 +49,13 @@ export interface ResidentContextSource {
   readonly targetDocumentId: string;
 }
 
-export interface PriorChapterDigest {
+interface PriorChapterDigest {
   readonly ordinal: number;
   readonly title: string;
   readonly digest: string;
 }
 
-export interface ResidentOutlineContext {
+interface ResidentOutlineContext {
   readonly markdown: string;
   readonly linkedBeat: OutlineBeat | null;
 }

@@ -111,7 +111,7 @@ export function validatedProposalOrThrow(result: {
 }
 
 /** Invalid or absent provider usage falls back to the shared exact word count. */
-export function resolvedTokenCount(reported: number | null, text: string): number {
+function resolvedTokenCount(reported: number | null, text: string): number {
   return isSafeUsageToken(reported) ? reported : revisionWordCount(text);
 }
 
@@ -126,7 +126,7 @@ export interface ProposalJobSeed {
 }
 
 /** The terminal payload shape of a completed proposal job. */
-export interface ProposalLanding {
+interface ProposalLanding {
   readonly proposal: string;
   readonly provider: TextProviderName;
   readonly model: string;
@@ -176,7 +176,7 @@ export function completedProposalJob(
  * instead of by duplication. Structurally assignable to
  * `CompleteJobWithUsageInput` for the retry transition.
  */
-export interface CompletedProposalLanding {
+interface CompletedProposalLanding {
   readonly outcome: {
     readonly status: "completed";
     readonly model: string;

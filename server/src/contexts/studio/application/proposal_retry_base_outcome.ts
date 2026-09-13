@@ -1,7 +1,7 @@
 import { dumpJson } from "./payloads.js";
 import type { MarkJobOutcomeInput } from "./ports/job_records.js";
 
-export const PROPOSAL_RETRY_STALE_BASE_ERROR = "Proposal retry base revision is no longer current.";
+const PROPOSAL_RETRY_STALE_BASE_ERROR = "Proposal retry base revision is no longer current.";
 
 /** The exact failed outcome for a retry whose immutable base is no longer current. */
 export function proposalRetryStaleBaseOutcome(

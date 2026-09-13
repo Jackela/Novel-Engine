@@ -40,7 +40,7 @@ export const proposalErrorFrameSchema = Type.Object(
   { additionalProperties: false },
 );
 
-export const proposalStreamFrameSchema = Type.Union([
+const proposalStreamFrameSchema = Type.Union([
   proposalDeltaFrameSchema,
   proposalDoneFrameSchema,
   proposalErrorFrameSchema,
