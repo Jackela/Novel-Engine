@@ -47,6 +47,10 @@ Process environment variables always win over the file. `.env.local` and the
 default SQLite `data/` directory resolve against the workspace root (the
 checkout directory), not the current working directory, so `pnpm --dir server
 cli serve` reads the root `.env.local` and stores data under `<workspace>/data/`.
+Under Docker Compose the container instead receives provider settings from a
+project-root `.env` file (or the shell environment) through the pass-through
+declared in `compose.yaml`; see the [provider setup
+guide](openwiki/guides/provider-setup.md).
 
 | Variable | Default | Notes |
 |---|---:|---|
