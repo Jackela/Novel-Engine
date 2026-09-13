@@ -8,9 +8,6 @@ import { buildSystemContent, buildUserContent } from "./provider_json.js";
 const DASHSCOPE_API_PATH_SEGMENTS = {
   root: "api",
   nativeVersion: "v1",
-  compatibleVersion: "v2",
-  applications: "apps",
-  protocols: "protocols",
   compatibleMode: "compatible-mode",
 } as const;
 
@@ -22,16 +19,17 @@ const NATIVE_API_PATH = apiPath(
   DASHSCOPE_API_PATH_SEGMENTS.root,
   DASHSCOPE_API_PATH_SEGMENTS.nativeVersion,
 );
-const COMPATIBLE_MODE_PATH = apiPath(
-  DASHSCOPE_API_PATH_SEGMENTS.root,
-  DASHSCOPE_API_PATH_SEGMENTS.compatibleVersion,
-  DASHSCOPE_API_PATH_SEGMENTS.applications,
-  DASHSCOPE_API_PATH_SEGMENTS.protocols,
+/**
+ * Official OpenAI-compatible Responses path (#502): the legacy `api`-rooted
+ * segment chain is no longer maintained upstream, so the default now targets
+ * `compatible-mode` + native version. Explicit bases pass through unrewritten.
+ */
+const RESPONSES_COMPATIBLE_MODE_PATH = apiPath(
   DASHSCOPE_API_PATH_SEGMENTS.compatibleMode,
   DASHSCOPE_API_PATH_SEGMENTS.nativeVersion,
 );
 const DEFAULT_DASHSCOPE_API_BASE = `https://dashscope.aliyuncs.com${NATIVE_API_PATH}`;
-const DEFAULT_DASHSCOPE_RESPONSES_API_BASE = `https://dashscope.aliyuncs.com${COMPATIBLE_MODE_PATH}`;
+const DEFAULT_DASHSCOPE_RESPONSES_API_BASE = `https://dashscope.aliyuncs.com${RESPONSES_COMPATIBLE_MODE_PATH}`;
 const DEFAULT_DASHSCOPE_TEXT_ENDPOINT = "/services/aigc/text-generation/generation";
 const DEFAULT_DASHSCOPE_MULTIMODAL_ENDPOINT = "/services/aigc/multimodal-generation/generation";
 const DEFAULT_DASHSCOPE_RESPONSES_ENDPOINT = "/responses";
@@ -90,12 +88,16 @@ function normalizeGenerationBase(apiBase: string | undefined): string {
   return parsed.pathname.includes("compatible-mode") ? `${parsed.origin}${NATIVE_API_PATH}` : base;
 }
 
+/**
+ * Responses base resolution (#502): the no-config default is the official
+ * compatible-mode path; an explicitly configured base is validated as an
+ * absolute URL and passed through verbatim (only whitespace and trailing
+ * slashes are trimmed) instead of being rewritten to a canonical path.
+ */
 function normalizeResponsesBase(apiBase: string | undefined): string {
   const base = normalizedBase(apiBase, DEFAULT_DASHSCOPE_RESPONSES_API_BASE);
-  const parsed = parseBaseUrl(base);
-  return parsed.pathname === COMPATIBLE_MODE_PATH
-    ? base
-    : `${parsed.origin}${COMPATIBLE_MODE_PATH}`;
+  parseBaseUrl(base);
+  return base;
 }
 
 function textFromContent(content: unknown): string | undefined {
