@@ -1,5 +1,5 @@
 import { lstat, mkdir, realpath } from "node:fs/promises";
-import { isAbsolute, relative, resolve, sep } from "node:path";
+import { resolve } from "node:path";
 import { exportArtifactNames } from "../application/export_artifact_identity.js";
 import type {
   ArtifactFileEvidence,
@@ -13,6 +13,7 @@ import {
   NotFoundError,
 } from "../domain/exceptions.js";
 import { assertArtifactByteLength, serializeBoundedArtifact } from "./bounded_export_rendering.js";
+import { isDescendant } from "./export_artifact_durable_files.js";
 import { errorCode, syncDirectory } from "./export_artifact_fs_support.js";
 import { publishArtifact as publishDurableArtifact } from "./export_artifact_publication.js";
 import type { ExportPublicationCleanupJournal } from "./export_publication_cleanup_journal.js";
@@ -134,11 +135,6 @@ async function realChildDirectory(parent: string, name: string, create: boolean)
   // SQLite can commit the artifact row.
   if (create) await syncDirectory(parent);
   return actual;
-}
-
-function isDescendant(root: string, candidate: string): boolean {
-  const offset = relative(root, candidate);
-  return offset !== "" && offset !== ".." && !offset.startsWith(`..${sep}`) && !isAbsolute(offset);
 }
 
 async function readVerifiedArtifact(target: string, request: ArtifactReadRequest): Promise<Buffer> {

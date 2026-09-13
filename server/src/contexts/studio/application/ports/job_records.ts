@@ -1,5 +1,7 @@
 /** Job-row shapes for the synchronous jobs model (#268/#272). */
 
+import { pageLimit } from "./page_limit.js";
+
 /** One durable job-event trail entry. */
 export interface JobEventRecord {
   id: string;
@@ -53,12 +55,11 @@ export const MAX_JOB_PAGE_LIMIT = 100;
 
 /** Validate and narrow a transport/application number before it reaches persistence. */
 export function jobPageLimit(value: number): JobPageLimit {
-  if (!Number.isInteger(value) || value < MIN_JOB_PAGE_LIMIT || value > MAX_JOB_PAGE_LIMIT) {
-    throw new RangeError(
-      `Job page limit must be an integer from ${MIN_JOB_PAGE_LIMIT} through ${MAX_JOB_PAGE_LIMIT}.`,
-    );
-  }
-  return value as JobPageLimit;
+  return pageLimit<JobPageLimit>(value, {
+    min: MIN_JOB_PAGE_LIMIT,
+    max: MAX_JOB_PAGE_LIMIT,
+    subject: "Job",
+  });
 }
 
 /** Persistence-neutral exclusive position in `(created_at DESC, id DESC)` order. */
