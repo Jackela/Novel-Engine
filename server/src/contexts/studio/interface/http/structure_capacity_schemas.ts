@@ -12,6 +12,13 @@ import {
  * at most `limit + 1`. Documentation-only like the generation/export capacity
  * envelopes — runtime serialization stays the permissive error envelope.
  */
+/**
+ * The fixed wire message of the structure-capacity refusal: the schema enum
+ * and the error mapping pin this exact literal, while the domain exception's
+ * own message is enriched for humans and logs.
+ */
+export const STRUCTURE_CAPACITY_MESSAGE = "Authoring structure capacity exceeded.";
+
 const structureCapacityEnvelope = {
   type: "object",
   additionalProperties: false,
@@ -21,7 +28,7 @@ const structureCapacityEnvelope = {
       additionalProperties: false,
       properties: {
         code: { type: "string", enum: [ERROR_CODES.STRUCTURE_CAPACITY_EXCEEDED] },
-        message: { type: "string", enum: ["Authoring structure capacity exceeded."] },
+        message: { type: "string", enum: [STRUCTURE_CAPACITY_MESSAGE] },
         details: {
           type: "object",
           additionalProperties: false,

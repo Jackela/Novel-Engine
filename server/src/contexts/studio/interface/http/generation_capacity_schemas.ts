@@ -11,6 +11,13 @@ import {
   validationErrorEnvelope,
 } from "./unprocessable_entity_schemas.js";
 
+/**
+ * The fixed wire message of the generation-capacity refusal: the schema enum
+ * and the error mapping pin this exact literal, while the domain exception's
+ * own message is enriched for humans and logs.
+ */
+export const GENERATION_CAPACITY_MESSAGE = "Generation capacity exceeded.";
+
 const generationCapacityEnvelope = {
   type: "object",
   additionalProperties: false,
@@ -20,7 +27,7 @@ const generationCapacityEnvelope = {
       additionalProperties: false,
       properties: {
         code: { type: "string", enum: [ERROR_CODES.GENERATION_CAPACITY_EXCEEDED] },
-        message: { type: "string", enum: ["Generation capacity exceeded."] },
+        message: { type: "string", enum: [GENERATION_CAPACITY_MESSAGE] },
         details: {
           type: "object",
           additionalProperties: false,

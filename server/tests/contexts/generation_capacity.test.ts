@@ -93,7 +93,7 @@ describe("generation prompt capacity policy", () => {
         Number.MAX_SAFE_INTEGER,
       ),
     ).toMatchObject({
-      message: "Generation capacity exceeded.",
+      message: `Generation capacity exceeded: prompt_bytes limit ${GENERATION_PROMPT_BYTE_LIMIT}.`,
       observed: GENERATION_PROMPT_BYTE_LIMIT + 1,
     });
     expect(

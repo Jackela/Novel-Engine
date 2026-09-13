@@ -51,7 +51,7 @@ export class StructureCapacityExceededError extends Error {
         "Structure capacity resource and values must identify a bounded safe-integer excess.",
       );
     }
-    super("Authoring structure capacity exceeded.");
+    super(`Authoring structure capacity exceeded: ${resource} limit ${limit}.`);
     this.name = "StructureCapacityExceededError";
     this.resource = resource;
     this.limit = limit;

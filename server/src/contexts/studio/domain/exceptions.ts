@@ -106,7 +106,7 @@ export class ExportCapacityExceededError extends Error {
         "Export capacity resource and values must identify a bounded safe-integer excess.",
       );
     }
-    super("Export capacity exceeded.");
+    super(`Export capacity exceeded: ${resource} limit ${limit}.`);
     this.name = "ExportCapacityExceededError";
     this.resource = resource;
     this.limit = limit;
@@ -143,7 +143,7 @@ export class GenerationCapacityExceededError extends Error {
         "Generation capacity resource and values must identify a bounded safe-integer excess.",
       );
     }
-    super("Generation capacity exceeded.");
+    super(`Generation capacity exceeded: ${resource} limit ${limit}.`);
     this.name = "GenerationCapacityExceededError";
     this.resource = resource;
     this.limit = limit;
@@ -173,7 +173,7 @@ export class ImportCapacityExceededError extends Error {
     ) {
       throw new RangeError("Import capacity values must be non-negative safe integers.");
     }
-    super("Legacy import capacity exceeded.");
+    super(`Legacy import capacity exceeded: ${resource} limit ${limit}.`);
     this.name = "ImportCapacityExceededError";
     this.resource = resource;
     this.limit = limit;
@@ -265,7 +265,7 @@ export class OperationCapacityExceededError extends Error {
     projectId: string,
     retryAfterSeconds = 5,
   ) {
-    super("Studio operation capacity is exhausted.");
+    super(`Studio operation capacity is exhausted: ${scope} limit ${limit}.`);
     this.name = "OperationCapacityExceededError";
     this.scope = scope;
     this.limit = limit;

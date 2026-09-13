@@ -21,6 +21,17 @@ import {
   SnapshotConflict,
 } from "../../domain/exceptions.js";
 import { StructureCapacityExceededError } from "../../domain/structure_capacity.js";
+import { EXPORT_CAPACITY_MESSAGE } from "./export_capacity_schemas.js";
+import { GENERATION_CAPACITY_MESSAGE } from "./generation_capacity_schemas.js";
+import { STRUCTURE_CAPACITY_MESSAGE } from "./structure_capacity_schemas.js";
+import { OPERATION_CAPACITY_MESSAGE } from "./studio_schemas.js";
+
+/**
+ * The import-capacity refusal has no dedicated schema enum; the wire message
+ * stays pinned to the historical literal the import surfaces have always
+ * returned, while the domain exception's message is enriched for humans.
+ */
+const IMPORT_CAPACITY_MESSAGE = "Legacy import capacity exceeded.";
 
 /**
  * One translation rule of the studio failure table: match a known domain
@@ -45,15 +56,21 @@ function errorMapping<E extends object>(
   };
 }
 
-/** Shared envelope for the fixed-budget capacity failures. */
+/**
+ * Shared envelope for the fixed-budget capacity failures. The wire message is
+ * pinned to the schema-enum literal instead of the domain exception's message:
+ * the exception message is enriched for humans and logs, while `details`
+ * carries the structured resource/limit/observed evidence agents consume.
+ */
 function capacityEnvelope(
   code: ErrorCode,
+  message: string,
   error: Error & { resource: string; limit: number; observed: number },
 ): AppError {
   return new AppError({
     statusCode: ERROR_HTTP_STATUS[code],
     code,
-    message: error.message,
+    message,
     details: { resource: error.resource, limit: error.limit, observed: error.observed },
   });
 }
@@ -141,7 +158,7 @@ const ERROR_ENVELOPE_MAPPINGS: readonly ErrorEnvelopeMapping[] = [
       new AppError({
         statusCode: ERROR_HTTP_STATUS[ERROR_CODES.OPERATION_CAPACITY_EXCEEDED],
         code: ERROR_CODES.OPERATION_CAPACITY_EXCEEDED,
-        message: error.message,
+        message: OPERATION_CAPACITY_MESSAGE,
         details: {
           scope: error.scope,
           limit: error.limit,
@@ -153,16 +170,16 @@ const ERROR_ENVELOPE_MAPPINGS: readonly ErrorEnvelopeMapping[] = [
       }),
   ),
   errorMapping(ImportCapacityExceededError, (error) =>
-    capacityEnvelope(ERROR_CODES.IMPORT_CAPACITY_EXCEEDED, error),
+    capacityEnvelope(ERROR_CODES.IMPORT_CAPACITY_EXCEEDED, IMPORT_CAPACITY_MESSAGE, error),
   ),
   errorMapping(StructureCapacityExceededError, (error) =>
-    capacityEnvelope(ERROR_CODES.STRUCTURE_CAPACITY_EXCEEDED, error),
+    capacityEnvelope(ERROR_CODES.STRUCTURE_CAPACITY_EXCEEDED, STRUCTURE_CAPACITY_MESSAGE, error),
   ),
   errorMapping(ExportCapacityExceededError, (error) =>
-    capacityEnvelope(ERROR_CODES.EXPORT_CAPACITY_EXCEEDED, error),
+    capacityEnvelope(ERROR_CODES.EXPORT_CAPACITY_EXCEEDED, EXPORT_CAPACITY_MESSAGE, error),
   ),
   errorMapping(GenerationCapacityExceededError, (error) =>
-    capacityEnvelope(ERROR_CODES.GENERATION_CAPACITY_EXCEEDED, error),
+    capacityEnvelope(ERROR_CODES.GENERATION_CAPACITY_EXCEEDED, GENERATION_CAPACITY_MESSAGE, error),
   ),
   errorMapping(
     InvalidOperationError,
