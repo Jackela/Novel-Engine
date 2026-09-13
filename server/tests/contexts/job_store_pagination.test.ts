@@ -11,13 +11,14 @@ import {
   jobPageLimit,
 } from "../../src/contexts/studio/application/ports/job_records.js";
 import { scopeForPrincipal } from "../../src/contexts/studio/application/ports/studio_store.js";
+import * as studioSchema from "../../src/contexts/studio/infrastructure/db/schema.js";
+import { jobs as jobsTable } from "../../src/contexts/studio/infrastructure/db/schema.js";
 import { buildProjectJobSummariesQuery } from "../../src/contexts/studio/infrastructure/job_page_queries.js";
 import { JobStorePart } from "../../src/contexts/studio/infrastructure/job_store_part.js";
 import { ProjectStorePart } from "../../src/contexts/studio/infrastructure/project_store_part.js";
 import { AuthService } from "../../src/shared/application/auth_service.js";
 import { DrizzleAuthStore } from "../../src/shared/infrastructure/db/auth_store.js";
 import * as databaseSchema from "../../src/shared/infrastructure/db/schema.js";
-import { jobs as jobsTable } from "../../src/shared/infrastructure/db/schema.js";
 import { openStudioDatabase } from "../../src/shared/infrastructure/db/startup.js";
 
 function completedJob(projectId: string, id: string, createdAtMs: number): AddJobInput {
@@ -194,7 +195,7 @@ describe("project job keyset pages", () => {
       });
       const executedSql: string[] = [];
       const tracedDatabase = drizzle(studio.raw, {
-        schema: databaseSchema,
+        schema: { ...databaseSchema, ...studioSchema },
         logger: { logQuery: (query: string) => executedSql.push(query) },
       });
       const publicStore = new JobStorePart(tracedDatabase);

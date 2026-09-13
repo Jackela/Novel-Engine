@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { and, eq } from "drizzle-orm";
 
-import { jobEvents, jobs } from "../../../../shared/infrastructure/db/schema.js";
+import { jobEvents, jobs } from "./schema.js";
 import type { Tx } from "./studio_query_helpers.js";
 
 type JobRow = typeof jobs.$inferSelect;

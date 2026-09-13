@@ -6,7 +6,7 @@ import type {
 } from "../../src/contexts/ai/application/ports/text_generation.js";
 import { OpenAICompatibleTextProvider } from "../../src/contexts/ai/infrastructure/providers/openai_compatible_provider.js";
 import type { ProposalStreamFrame } from "../../src/contexts/studio/application/proposal_streaming.js";
-import { jobs, usageEvents } from "../../src/shared/infrastructure/db/schema.js";
+import { jobs, usageEvents } from "../../src/contexts/studio/infrastructure/db/schema.js";
 import { fixtureApiKey } from "../credential_fixtures.js";
 import {
   buildStudioApp,

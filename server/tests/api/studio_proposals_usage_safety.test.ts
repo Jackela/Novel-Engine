@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { wordCount } from "../../src/contexts/studio/application/payloads.js";
-import { usageEvents } from "../../src/shared/infrastructure/db/schema.js";
+import { usageEvents } from "../../src/contexts/studio/infrastructure/db/schema.js";
 import { capturingFactory, propose, validProposalProse } from "./proposal_test_helpers.js";
 import { buildStudioApp, ownerJar, seedProject } from "./studio_helpers.js";
 

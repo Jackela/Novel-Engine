@@ -3,7 +3,11 @@ import { describe, expect, it } from "vitest";
 import type { TextGenerationProviderFactory } from "../../src/contexts/ai/application/ports/text_generation.js";
 import { DashScopeTextProvider } from "../../src/contexts/ai/infrastructure/providers/dashscope_provider.js";
 import { OpenAICompatibleTextProvider } from "../../src/contexts/ai/infrastructure/providers/openai_compatible_provider.js";
-import { jobEvents, jobs, usageEvents } from "../../src/shared/infrastructure/db/schema.js";
+import {
+  jobEvents,
+  jobs,
+  usageEvents,
+} from "../../src/contexts/studio/infrastructure/db/schema.js";
 import {
   fixtureApiKey,
   hostileProviderFailureBody,

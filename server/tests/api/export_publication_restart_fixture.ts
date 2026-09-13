@@ -9,6 +9,8 @@ import type {
 import {
   exportPublicationCleanupIntents,
   exports as exportRecords,
+  jobEvents,
+  jobs,
   projectSnapshots,
   snapshotDocuments,
 } from "../../src/contexts/studio/infrastructure/db/schema.js";
@@ -19,7 +21,6 @@ import {
   openConnection,
   type StudioSqliteDatabase,
 } from "../../src/shared/infrastructure/db/connection.js";
-import { jobEvents, jobs } from "../../src/shared/infrastructure/db/schema.js";
 import { TEST_SESSION_SECRET } from "./auth_helpers.js";
 import { studioDatabase } from "./job_test_helpers.js";
 import { type CookieJar, call, ownerJar, seedProject } from "./studio_helpers.js";

@@ -5,7 +5,9 @@ import { join } from "node:path";
 import { eq } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
 
-import { jobEvents, jobs, sessions } from "../../src/shared/infrastructure/db/schema.js";
+import { recoverInterruptedJobs } from "../../src/contexts/studio/infrastructure/db/job_recovery.js";
+import { jobEvents, jobs } from "../../src/contexts/studio/infrastructure/db/schema.js";
+import { sessions } from "../../src/shared/infrastructure/db/schema.js";
 import { openStudioDatabase } from "../../src/shared/infrastructure/db/startup.js";
 
 const DATABASE_FILENAME = "novel-engine.sqlite3";
@@ -127,6 +129,7 @@ describe("restart persistence", () => {
           .where(eq(jobs.id, "job-running"))
           .get()?.status;
       },
+      recoverJobs: recoverInterruptedJobs,
     });
     try {
       expect(statusBeforeJobRecovery).toBe("running");

@@ -4,7 +4,7 @@ import type { TextGenerationProviderFactory } from "../../src/contexts/ai/applic
 import { DashScopeTextProvider } from "../../src/contexts/ai/infrastructure/providers/dashscope_provider.js";
 import { OpenAICompatibleTextProvider } from "../../src/contexts/ai/infrastructure/providers/openai_compatible_provider.js";
 import { wordCount } from "../../src/contexts/studio/application/payloads.js";
-import { jobs, usageEvents } from "../../src/shared/infrastructure/db/schema.js";
+import { jobs, usageEvents } from "../../src/contexts/studio/infrastructure/db/schema.js";
 import { fixtureApiKey } from "../credential_fixtures.js";
 import { capturingFactory, propose, validProposalProse } from "./proposal_test_helpers.js";
 import {

@@ -3,10 +3,14 @@ import { describe, expect, it, vi } from "vitest";
 
 import type { TextGenerationProviderFactory } from "../../src/contexts/ai/application/ports/text_generation.js";
 import { TextGenerationProviderError } from "../../src/contexts/ai/application/ports/text_generation.js";
-import { documents } from "../../src/contexts/studio/infrastructure/db/schema.js";
+import {
+  documents,
+  jobEvents,
+  jobs,
+  usageEvents,
+} from "../../src/contexts/studio/infrastructure/db/schema.js";
 import { JobStorePart } from "../../src/contexts/studio/infrastructure/job_store_part.js";
 import { ProposalContextStorePart } from "../../src/contexts/studio/infrastructure/proposal_context_store_part.js";
-import { jobEvents, jobs, usageEvents } from "../../src/shared/infrastructure/db/schema.js";
 import { studioDatabase } from "./job_test_helpers.js";
 import {
   buildStudioApp,
