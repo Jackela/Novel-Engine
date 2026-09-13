@@ -136,7 +136,8 @@ export class ExportStorePart implements ExportOutcomeStore {
     return this.db.transaction((tx) => {
       const project = scopedProject(tx, scope, projectId);
       const artifact = loadProjectArtifact(tx, project.id, artifactId);
-      if (artifact === undefined) throw new NotFoundError("Export artifact not found.");
+      if (artifact === undefined)
+        throw new NotFoundError(`Export artifact not found: ${artifactId}.`);
       return artifact;
     });
   }
@@ -184,7 +185,7 @@ export class ExportStorePart implements ExportOutcomeStore {
       job.document_id !== null ||
       job.retry_of_job_id === null
     ) {
-      throw new NotFoundError("Export retry job not found.");
+      throw new NotFoundError(`Export retry job not found: ${jobId}.`);
     }
     if (job.status !== "running" && job.status !== "pending") {
       throw new InvalidJobTransitionError(job.id, job.status, "completed");

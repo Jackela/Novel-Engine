@@ -127,7 +127,7 @@ export class ProjectStorePart implements ProjectStore {
       .returning()
       .get();
     if (updated === undefined) {
-      throw new NotFoundError("Project not found.");
+      throw new NotFoundError(`Project not found: ${projectId}.`);
     }
     return updated;
   }

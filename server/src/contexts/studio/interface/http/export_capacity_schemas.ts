@@ -6,6 +6,13 @@ import {
   validationErrorEnvelope,
 } from "./unprocessable_entity_schemas.js";
 
+/**
+ * The fixed wire message of the export-capacity refusal: the schema enum and
+ * the error mapping pin this exact literal, while the domain exception's own
+ * message is enriched for humans and logs.
+ */
+export const EXPORT_CAPACITY_MESSAGE = "Export capacity exceeded.";
+
 export function exportCapacityEnvelope(resources: readonly ExportCapacityResource[]) {
   return {
     type: "object",
@@ -16,7 +23,7 @@ export function exportCapacityEnvelope(resources: readonly ExportCapacityResourc
         additionalProperties: false,
         properties: {
           code: { type: "string", enum: [ERROR_CODES.EXPORT_CAPACITY_EXCEEDED] },
-          message: { type: "string", enum: ["Export capacity exceeded."] },
+          message: { type: "string", enum: [EXPORT_CAPACITY_MESSAGE] },
           details: {
             type: "object",
             additionalProperties: false,

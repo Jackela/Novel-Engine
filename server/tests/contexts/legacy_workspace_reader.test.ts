@@ -13,7 +13,8 @@ import {
 
 const reader = new FsLegacyWorkspaceReader();
 const WEB_SOURCE_ERROR = "Web imports must name a workspace directory under data/imports.";
-const IMPORT_NOT_FOUND_ERROR = "Import workspace not found under data/imports.";
+const importNotFoundError = (source: string) =>
+  new NotFoundError(`Import workspace not found under data/imports: ${source}.`);
 
 function workspacePath(label: string): string {
   return join(tmpdir(), `novel-engine-legacy-reader-${label}-${Date.now()}-${Math.random()}`);
@@ -163,7 +164,7 @@ describe("legacy workspace reader", () => {
   it("rejects missing, non-directory, and symbolic-link web roots or sources", async () => {
     const missingRoot = workspacePath("missing-web-root");
     await expect(reader.readConfinedLegacyWorkspace(missingRoot, "safe")).rejects.toThrowError(
-      new NotFoundError(IMPORT_NOT_FOUND_ERROR),
+      importNotFoundError("safe"),
     );
 
     const dataDirectory = workspacePath("web-source-shapes");
@@ -177,7 +178,7 @@ describe("legacy workspace reader", () => {
 
     for (const source of ["missing", "not-a-directory", "linked-source"]) {
       await expect(reader.readConfinedLegacyWorkspace(dataDirectory, source)).rejects.toThrowError(
-        new NotFoundError(IMPORT_NOT_FOUND_ERROR),
+        importNotFoundError(source),
       );
     }
 
@@ -185,7 +186,7 @@ describe("legacy workspace reader", () => {
     mkdirSync(linkedRootData, { recursive: true });
     symlinkSync(outside, join(linkedRootData, "imports"), "dir");
     await expect(reader.readConfinedLegacyWorkspace(linkedRootData, "safe")).rejects.toThrowError(
-      new NotFoundError(IMPORT_NOT_FOUND_ERROR),
+      importNotFoundError("safe"),
     );
   });
 

@@ -132,6 +132,13 @@ export const keyedRetryInFlightResponseSchema: JsonResponseSchema = {
   },
 } as const;
 
+/**
+ * The fixed wire message of the operation-capacity refusal: the schema enum
+ * and the error mapping pin this exact literal, while the domain exception's
+ * own message is enriched for humans and logs.
+ */
+export const OPERATION_CAPACITY_MESSAGE = "Studio operation capacity is exhausted.";
+
 const operationCapacityExceededEnvelope = {
   type: "object",
   additionalProperties: false,
@@ -143,7 +150,7 @@ const operationCapacityExceededEnvelope = {
         code: { type: "string", enum: [ERROR_CODES.OPERATION_CAPACITY_EXCEEDED] },
         message: {
           type: "string",
-          enum: ["Studio operation capacity is exhausted."],
+          enum: [OPERATION_CAPACITY_MESSAGE],
         },
         details: {
           type: "object",

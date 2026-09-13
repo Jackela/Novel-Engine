@@ -121,7 +121,7 @@ describe("Project settings PATCH validation and guards", () => {
     }
   });
 
-  it("returns byte-identical Project not-found envelopes for missing and foreign scope", async () => {
+  it("returns the same Project not-found envelope shape for missing and foreign scope", async () => {
     const { app } = await buildStudioApp();
     try {
       const jar = await ownerJar(app);
@@ -150,16 +150,20 @@ describe("Project settings PATCH validation and guards", () => {
         })
         .run();
 
+      const attemptedProjectIds = [randomUUID(), foreignProjectId];
       const bodies = await Promise.all(
-        [randomUUID(), foreignProjectId].map((id) =>
+        attemptedProjectIds.map((id) =>
           call(app, jar, "PATCH", `/api/projects/${id}`, { title: "hidden" }),
         ),
       );
       expect(bodies.map((response) => response.statusCode)).toEqual([404, 404]);
-      expect(new Set(bodies.map((response) => response.body)).size).toBe(1);
-      expect(bodies[0]?.json().error).toEqual({
-        code: "NOT_FOUND",
-        message: "Project not found.",
+      bodies.forEach((response, index) => {
+        // Unknown and foreign ids stay indistinguishable: same code, and the
+        // message echoes the requested id instead of revealing scope state.
+        expect(response.json().error).toEqual({
+          code: "NOT_FOUND",
+          message: `Project not found: ${attemptedProjectIds[index]}.`,
+        });
       });
       expect(db.select().from(projects).where(eq(projects.id, foreignProjectId)).get()?.title).toBe(
         "Foreign",

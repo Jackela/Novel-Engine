@@ -42,7 +42,7 @@ export function scopedProject(tx: Tx, scope: ProjectScope, projectId: string): P
     .where(and(eq(projects.id, projectId), scopeCondition(scope)))
     .get();
   if (row === undefined) {
-    throw new NotFoundError("Project not found.");
+    throw new NotFoundError(`Project not found: ${projectId}.`);
   }
   return row;
 }
@@ -61,7 +61,7 @@ export function scopedVolume(
     .where(and(eq(volumes.id, volumeId), eq(projects.id, projectId), scopeCondition(scope)))
     .get();
   if (row === undefined) {
-    throw new NotFoundError("Volume not found.");
+    throw new NotFoundError(`Volume not found: ${volumeId}.`);
   }
   return row.volume;
 }
@@ -80,10 +80,7 @@ export function scopedDocument(
     .where(and(eq(documents.id, documentId), eq(projects.id, projectId), scopeCondition(scope)))
     .get();
   if (row === undefined) {
-    throw new NotFoundError(
-      `No document '${documentId}' exists in project '${projectId}': the id does not exist ` +
-        `there, or the document belongs to a different project.`,
-    );
+    throw new NotFoundError(`Document not found: ${documentId}.`);
   }
   return row.document;
 }
@@ -218,10 +215,7 @@ export function documentWithCurrent(
     .where(and(eq(documents.id, documentId), eq(documents.projectId, projectId)))
     .get();
   if (row === undefined) {
-    throw new NotFoundError(
-      `No document '${documentId}' exists in project '${projectId}': the id does not exist ` +
-        `there, or the document belongs to a different project.`,
-    );
+    throw new NotFoundError(`Document not found: ${documentId}.`);
   }
   return { ...row.document, currentRevision: row.revision };
 }
@@ -258,7 +252,7 @@ export function scopedCurrentDocument(
 ): DocumentWithCurrent {
   const row = buildScopedCurrentDocumentQuery(tx, scope, projectId, documentId).get();
   if (row === undefined || row.revision === null) {
-    throw new NotFoundError("Document not found.");
+    throw new NotFoundError(`Document not found: ${documentId}.`);
   }
   return { ...row.document, currentRevision: row.revision };
 }

@@ -94,7 +94,7 @@ export class JobHistoryService {
       return jobPayload(this.jobs.findJob(scopeForPrincipal(principal), projectId, jobId));
     } catch (error) {
       if (!(error instanceof NotFoundError)) throw error;
-      throw new NotFoundError("Job not found.");
+      throw new NotFoundError(`Job not found: ${jobId}.`);
     }
   }
 

@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
 import { runCli } from "../../../src/apps/cli/main.js";
+import { LEGACY_IMPORT_LIMITS } from "../../../src/contexts/studio/application/ports/legacy_workspace_reader.js";
 import { AuthService } from "../../../src/shared/application/auth_service.js";
 import { DrizzleAuthStore } from "../../../src/shared/infrastructure/db/auth_store.js";
 import { openStudioDatabase } from "../../../src/shared/infrastructure/db/startup.js";
@@ -98,7 +99,11 @@ describe("legacy import CLI", () => {
     const code = await runCli(["import", "--source", source, "--owner", "owner"], harness.context);
 
     expect(code).toBe(1);
-    expect(harness.lines).toEqual(["Legacy import capacity exceeded."]);
+    // The CLI prints the enriched domain message; the HTTP wire message stays
+    // pinned to the fixed schema-enum literal.
+    expect(harness.lines).toEqual([
+      `Legacy import capacity exceeded: chapter_bytes limit ${LEGACY_IMPORT_LIMITS.chapterBytes}.`,
+    ]);
   });
 
   it("reports a missing source as usage error exit 2", async () => {

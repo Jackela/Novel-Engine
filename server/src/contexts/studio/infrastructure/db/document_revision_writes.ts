@@ -34,7 +34,7 @@ export function advanceDocumentInTransaction(
     .where(eq(documentRevisions.id, document.currentRevisionId ?? ""))
     .get();
   if (current === undefined) {
-    throw new NotFoundError("Current revision not found.");
+    throw new NotFoundError(`Current revision not found: ${documentId}.`);
   }
   // Every path that mints outline content (author saves, restores, accepted
   // AI proposals) funnels through this chokepoint, so the beat budget holds

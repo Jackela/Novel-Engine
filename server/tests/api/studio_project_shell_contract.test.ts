@@ -180,16 +180,23 @@ describe("bounded project shell contract", () => {
         })
         .run();
 
+      const missingDocumentIds = [randomUUID(), secondDocument.id, foreignDocumentId];
       const urls = [
-        `/api/projects/${first.id}/documents/${randomUUID()}`,
-        `/api/projects/${first.id}/documents/${secondDocument.id}`,
-        `/api/projects/${foreignProjectId}/documents/${foreignDocumentId}`,
+        `/api/projects/${first.id}/documents/${missingDocumentIds[0]}`,
+        `/api/projects/${first.id}/documents/${missingDocumentIds[1]}`,
+        `/api/projects/${foreignProjectId}/documents/${missingDocumentIds[2]}`,
       ];
       const misses = await Promise.all(urls.map((url) => call(app, owner, "GET", url)));
       expect(misses.map((response) => response.statusCode)).toEqual([404, 404, 404]);
-      expect(new Set(misses.map((response) => response.body)).size).toBe(1);
-      expect(misses[0]?.json()).toEqual({
-        error: { code: "NOT_FOUND", message: "Document not found." },
+      misses.forEach((response, index) => {
+        // Unknown and cross-scope ids stay indistinguishable: every miss
+        // renders the same code plus a message echoing the requested id.
+        expect(response.json()).toEqual({
+          error: {
+            code: "NOT_FOUND",
+            message: `Document not found: ${missingDocumentIds[index]}.`,
+          },
+        });
       });
     } finally {
       await app.close();

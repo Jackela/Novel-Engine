@@ -89,7 +89,7 @@ export class FilesystemExportArtifactGateway implements ExportArtifactGateway {
         error instanceof ExportFileEvidenceError ||
         isUnavailableReadError(error)
       ) {
-        throw new NotFoundError("Export file not found.");
+        throw new NotFoundError(`Export file not found: ${request.artifactId}.`);
       }
       throw error;
     }

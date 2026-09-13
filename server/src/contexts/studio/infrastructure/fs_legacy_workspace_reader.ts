@@ -23,7 +23,6 @@ const STORY_ERROR = "Legacy workspace must contain story.yaml.";
 const SOURCE_ERROR = "Legacy workspace source must be a real directory.";
 const CHAPTER_ERROR = "Legacy workspace chapters must be regular files.";
 const WEB_SOURCE_ERROR = "Web imports must name a workspace directory under data/imports.";
-const IMPORT_NOT_FOUND_ERROR = "Import workspace not found under data/imports.";
 const CHAPTER_FILENAME = /^chapter-.*\.md$/;
 
 interface RawFile {
@@ -57,7 +56,8 @@ export class FsLegacyWorkspaceReader implements LegacyWorkspaceReader {
     source: string,
   ): Promise<LegacyWorkspace> {
     assertConfinedSourceName(source);
-    const fail = () => new NotFoundError(IMPORT_NOT_FOUND_ERROR);
+    const fail = () =>
+      new NotFoundError(`Import workspace not found under data/imports: ${source}.`);
     const root = await captureDirectory(join(dataDirectory, "imports"), fail);
     const directory = await captureDirectory(join(root.path, source), fail);
     if (dirname(directory.path) !== root.path) throw fail();

@@ -96,7 +96,9 @@ describe("JobHistoryService summary/detail reads", () => {
           "missing-project",
           "missing-job",
         ),
-      ).toThrowError(expect.objectContaining({ name: "NotFoundError", message: "Job not found." }));
+      ).toThrowError(
+        expect.objectContaining({ name: "NotFoundError", message: "Job not found: missing-job." }),
+      );
     } finally {
       studio.close();
     }

@@ -73,7 +73,7 @@ export class ReviewStorePart implements ReviewOutcomeStore {
           job.document_id !== null ||
           job.retry_of_job_id === null
         ) {
-          throw new NotFoundError("Review retry job not found.");
+          throw new NotFoundError(`Review retry job not found: ${jobId}.`);
         }
         if (job.status !== "running" && job.status !== "pending") {
           throw new InvalidJobTransitionError(job.id, job.status, "completed");
@@ -120,7 +120,7 @@ export class ReviewStorePart implements ReviewOutcomeStore {
       const project = scopedProject(tx, scope, projectId);
       const review = findProjectReviewRow(tx, project.id, reviewId);
       if (review === undefined) {
-        throw new NotFoundError("Review not found.");
+        throw new NotFoundError(`Review not found: ${reviewId}.`);
       }
       return toEditorialAssessment(review, loadReviewIssues(tx, review));
     });

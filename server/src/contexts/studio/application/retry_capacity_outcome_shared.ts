@@ -66,8 +66,11 @@ export function capacityRetryOutcome<
   return {
     status: "failed",
     resultJson: dumpJson(protocol.buildFailureResult(identity, evidence)),
-    error: error.message,
-    eventDetailsJson: dumpJson(capacityEventDetails(error.message, evidence)),
+    // The persisted outcome pins the protocol's fixed wire message: the replay
+    // recognizer matches `job.error` against it verbatim, so the enriched
+    // domain message (for humans and logs) must not enter the job record.
+    error: protocol.capacityMessage,
+    eventDetailsJson: dumpJson(capacityEventDetails(protocol.capacityMessage, evidence)),
     now,
   };
 }
