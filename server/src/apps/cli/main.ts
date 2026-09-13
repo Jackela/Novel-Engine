@@ -19,6 +19,7 @@ import { readProductIdentity } from "../../shared/infrastructure/workspace_manif
 import { buildApp } from "../api/app.js";
 import { closeResourceAndRethrow } from "../api/app_lifecycle.js";
 import { runLegacyImportCommand } from "./legacy_import_command.js";
+import { runRestoreCommand } from "./restore_command.js";
 import {
   processShutdownSignalSource,
   runCliOwnedServeLifecycle,
@@ -26,9 +27,9 @@ import {
 } from "./shutdown_signals.js";
 
 /**
- * The single emitted TS CLI root (#272): `serve`, `import`, `backup`, and
- * `doctor`. #273's legacy-import runner registers through `importRunner`;
- * there is no competing executable root.
+ * The single emitted TS CLI root (#272): `serve`, `import`, `backup`,
+ * `restore`, and `doctor`. #273's legacy-import runner registers through
+ * `importRunner`; there is no competing executable root.
  */
 
 type WriteLine = (line: string) => void;
@@ -81,6 +82,8 @@ const USAGE = [
   "      Import a legacy file workspace as the owner principal.",
   "  backup",
   "      Write a SQLite backup beneath the backups directory and print its path.",
+  "  restore --input BACKUP",
+  "      Verify a backup file, back up the current database, then replace it atomically.",
   "  doctor",
   "      Report product identity, database integrity, journal mode, foreign keys, owner.",
 ].join("\n");
@@ -103,7 +106,7 @@ interface ParsedArguments {
 
 function parseArguments(argv: readonly string[]): ParsedArguments {
   const flags = new Map<string, string | true>();
-  const valueFlags = new Set(["--host", "--port", "--source", "--owner"]);
+  const valueFlags = new Set(["--host", "--port", "--source", "--owner", "--input"]);
   const [command] = argv;
   for (let index = 1; index < argv.length; index += 1) {
     const token = argv[index];
@@ -278,6 +281,11 @@ export async function runCli(argv: readonly string[], context: CliContext = {}):
         return await serveCommand(parsed, context, writeLine);
       case "backup":
         return await backupCommand(context, writeLine);
+      case "restore":
+        return await runRestoreCommand(
+          { input: flagValue(parsed.flags, "--input") },
+          { config: configFor(context), writeLine },
+        );
       case "doctor":
         return await doctorCommand(context, writeLine);
       case "import":
