@@ -16,9 +16,6 @@ import {
 const DASHSCOPE_API_PATH_SEGMENTS = {
   root: "api",
   nativeVersion: "v1",
-  compatibleVersion: "v2",
-  applications: "apps",
-  protocols: "protocols",
   compatibleMode: "compatible-mode",
 } as const;
 
@@ -33,12 +30,9 @@ function expectedNativeApiBase(origin: string): string {
   ]);
 }
 
-function expectedCompatibleModeApiBase(origin: string): string {
+/** Official OpenAI-compatible Responses path (#502), without the responses endpoint suffix. */
+function expectedResponsesApiBase(origin: string): string {
   return expectedApiBase(origin, [
-    DASHSCOPE_API_PATH_SEGMENTS.root,
-    DASHSCOPE_API_PATH_SEGMENTS.compatibleVersion,
-    DASHSCOPE_API_PATH_SEGMENTS.applications,
-    DASHSCOPE_API_PATH_SEGMENTS.protocols,
     DASHSCOPE_API_PATH_SEGMENTS.compatibleMode,
     DASHSCOPE_API_PATH_SEGMENTS.nativeVersion,
   ]);
@@ -91,7 +85,7 @@ describe("dashscope transport modes", () => {
     const transport = resolveDashscopeTransport("responses");
     expect(transport.endpointPath()).toBe("/responses");
     expect(transport.normalizeApiBase(undefined)).toBe(
-      expectedCompatibleModeApiBase("https://dashscope.aliyuncs.com"),
+      expectedResponsesApiBase("https://dashscope.aliyuncs.com"),
     );
     const payload = transport.buildRequestPayload("qwen3.5-flash", task());
     expect(typeof payload.input).toBe("string");
@@ -104,16 +98,24 @@ describe("dashscope transport modes", () => {
   it("rewrites a compatible-mode base back to the native generation base", () => {
     const transport = resolveDashscopeTransport("multimodal_generation");
     expect(
-      transport.normalizeApiBase(
-        `${expectedCompatibleModeApiBase("https://dashscope.example.com")}/`,
-      ),
+      transport.normalizeApiBase(`${expectedResponsesApiBase("https://dashscope.example.com")}/`),
     ).toBe(expectedNativeApiBase("https://dashscope.example.com"));
   });
 
-  it("forces the compatible-mode base for the responses transport", () => {
+  it("passes an explicit api base through for the responses transport", () => {
     const transport = resolveDashscopeTransport("responses");
     expect(transport.normalizeApiBase("https://proxy.example.com/custom")).toBe(
-      expectedCompatibleModeApiBase("https://proxy.example.com"),
+      "https://proxy.example.com/custom",
+    );
+    expect(transport.normalizeApiBase("https://proxy.example.com/custom/")).toBe(
+      "https://proxy.example.com/custom",
+    );
+  });
+
+  it("rejects a non-absolute api base for the responses transport", () => {
+    const transport = resolveDashscopeTransport("responses");
+    expect(() => transport.normalizeApiBase("not-an-absolute-url")).toThrow(
+      TextGenerationProviderError,
     );
   });
 });

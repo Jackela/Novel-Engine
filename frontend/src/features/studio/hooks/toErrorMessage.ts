@@ -1,10 +1,7 @@
 import { HttpError } from "@/app/httpClient";
+import { isRecord } from "@/app/typeGuards";
 
 const STRUCTURE_CAPACITY_EXCEEDED_CODE = "STRUCTURE_CAPACITY_EXCEEDED";
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
 
 /**
  * The permanent structure-capacity refusal (#461) reports a fixed message, so
