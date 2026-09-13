@@ -11,7 +11,7 @@ interface NarrowFieldOwner {
 }
 
 /** Per-document pending lifecycle of one narrow summary field (#466). */
-export interface NarrowFieldLifecycleState<Value> {
+interface NarrowFieldLifecycleState<Value> {
   readonly isSaving: boolean;
   readonly error: string | null;
   readonly attempted: Value | null;
@@ -32,7 +32,7 @@ interface NarrowFieldIntent<Value> {
  * Anything older — reverse-order same-revision settlements, or a response
  * outrun by a newer revision — is stale and ignored.
  */
-export interface UseNarrowSummaryFieldOptions<Owner extends NarrowFieldOwner, Value> {
+interface UseNarrowSummaryFieldOptions<Owner extends NarrowFieldOwner, Value> {
   readonly project: Project | null;
   readonly projectId: string;
   readonly setProject: Dispatch<SetStateAction<Project | null>>;

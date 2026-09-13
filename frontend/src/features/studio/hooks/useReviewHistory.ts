@@ -14,7 +14,7 @@ interface UseReviewHistoryOptions {
   readonly onSessionLost: () => void;
 }
 
-export interface ReviewDetailState {
+interface ReviewDetailState {
   readonly review: Review | null;
   readonly isLoading: boolean;
   readonly error: string | null;

@@ -10,7 +10,7 @@ const DEFAULT_ERROR = "Unable to load this document. Please retry.";
 const CHURN_ERROR = "This document changed again while loading. Please retry.";
 const INCONSISTENT_ERROR = "This document is listed but could not be loaded. Please retry.";
 
-export type CommitShellResult = "published" | "superseded" | "unexpected";
+type CommitShellResult = "published" | "superseded" | "unexpected";
 type CommitShell = () => CommitShellResult;
 
 export type CurrentDocumentReadOutcome =

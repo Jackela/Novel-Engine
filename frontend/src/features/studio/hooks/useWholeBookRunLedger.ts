@@ -31,7 +31,7 @@ export type WholeBookPhase =
     };
 
 /** One registered whole-book run: identity, stop flag, and its two cancellable transports. */
-export interface WholeBookRun {
+interface WholeBookRun {
   readonly projectId: string;
   readonly epoch: number;
   readonly auditEpoch: number;

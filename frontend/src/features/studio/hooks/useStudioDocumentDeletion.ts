@@ -35,7 +35,7 @@ interface UseStudioDocumentDeletionOptions<Owner extends DocumentDeletionOwner> 
   readonly isCurrentOwner: (owner: Owner) => boolean;
 }
 
-export interface DocumentDeletionLifecycleState {
+interface DocumentDeletionLifecycleState {
   readonly isDeleting: boolean;
   readonly error: string | null;
 }

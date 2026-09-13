@@ -39,7 +39,7 @@ export interface InspectorPendingState {
 }
 
 /** #412: per-tab data/action groups, assembled once at the Inspector boundary. */
-export interface InspectorCopilotModel {
+interface InspectorCopilotModel {
   instruction: string;
   proposal: StudioJob | null;
   /** #308: markdown received so far while the proposal stream is running. */
@@ -56,7 +56,7 @@ export interface InspectorCopilotModel {
   setProposal: Dispatch<SetStateAction<StudioJob | null>>;
 }
 
-export interface InspectorExportModel {
+interface InspectorExportModel {
   exports: StudioExport[];
   historyInitialized?: boolean;
   isLoadingHistory?: boolean;
@@ -100,7 +100,7 @@ export interface InspectorReviewModel {
   onRunReview: () => void | Promise<void>;
 }
 
-export interface InspectorHistoryModel {
+interface InspectorHistoryModel {
   revisions: RevisionSummary[];
   loadedRevisionId: string | null;
   historyInitialized: boolean;
@@ -111,7 +111,7 @@ export interface InspectorHistoryModel {
   onRestoreRevision: (revisionId: string) => void | Promise<void>;
 }
 
-export interface InspectorJobsModel {
+interface InspectorJobsModel {
   jobs: StudioJobSummary[];
   hasOlderJobs: boolean;
   onLoadJobs: () => void | Promise<void>;
@@ -119,12 +119,12 @@ export interface InspectorJobsModel {
   onRetryJob: (jobId: string) => void | Promise<void>;
 }
 
-export interface InspectorUsageModel {
+interface InspectorUsageModel {
   /** #377: project scope for the lazily loaded usage panel. */
   projectId: string;
 }
 
-export interface InspectorSettingsModel {
+interface InspectorSettingsModel {
   settingsForm: SettingsFormState;
   providers: ProviderInfo[];
   error: string | null;

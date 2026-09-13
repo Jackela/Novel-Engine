@@ -13,8 +13,6 @@ import { useStudioJobActions } from "./useStudioJobActions";
 import type { JobsFreshLoadInitiator } from "./useStudioJobs";
 import { useStudioLoreStatusActions } from "./useStudioLoreStatusActions";
 
-export type { StudioActionErrorPublishers };
-
 interface UseStudioActionsOptions {
   project: Project | null;
   projectId: string;

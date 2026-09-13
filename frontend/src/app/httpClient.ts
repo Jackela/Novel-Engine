@@ -35,10 +35,7 @@ type ResponseParser<T> = (value: unknown) => T;
  * `{ error: { code, message, details } }`. Unknown bodies fall back to the
  * caller's status message.
  */
-export async function readHttpError(
-  response: Response,
-  fallbackMessage: string,
-): Promise<HttpError> {
+async function readHttpError(response: Response, fallbackMessage: string): Promise<HttpError> {
   const payload = await response.json().catch(() => null);
   if (isRecord(payload) && isRecord(payload.error)) {
     const envelope = payload.error;

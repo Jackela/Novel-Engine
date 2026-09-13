@@ -4,7 +4,7 @@ const AUTHORING_SECTIONS = ["manuscript", "outline", "characters", "world"] as c
 const ROUTE_INSPECTORS = ["review", "history", "export", "settings"] as const;
 const LOCAL_INSPECTORS = ["copilot", "jobs", "usage"] as const;
 
-export type StudioSection = (typeof AUTHORING_SECTIONS)[number] | (typeof ROUTE_INSPECTORS)[number];
+type StudioSection = (typeof AUTHORING_SECTIONS)[number] | (typeof ROUTE_INSPECTORS)[number];
 
 export interface StudioRouteState {
   readonly section: StudioSection;

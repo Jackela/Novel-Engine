@@ -92,7 +92,7 @@ export function numberField(source: JsonRecord, key: string, parent: string): nu
   return typeof value === "number" && Number.isFinite(value) ? value : fail(`${parent}.${key}`);
 }
 
-export function booleanField(source: JsonRecord, key: string, parent: string): boolean {
+function booleanField(source: JsonRecord, key: string, parent: string): boolean {
   const value = field(source, key, parent);
   return typeof value === "boolean" ? value : fail(`${parent}.${key}`);
 }

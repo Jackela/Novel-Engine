@@ -32,7 +32,7 @@ interface ProjectLoadRequest {
  * bootstrap/retry read, the shared navigation identity, and the action error
  * channel.
  */
-export interface ProjectShellLoadCollaborators {
+interface ProjectShellLoadCollaborators {
   readonly navigate: NavigateFunction;
   readonly isActiveProject: () => boolean;
   readonly setError: Dispatch<SetStateAction<string | null>>;

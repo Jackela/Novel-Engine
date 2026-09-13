@@ -34,7 +34,7 @@ function findRead(key: CurrentDocumentReadKey): SharedRead | undefined {
   return undefined;
 }
 
-export interface CurrentDocumentReadLease {
+interface CurrentDocumentReadLease {
   readonly promise: Promise<CurrentDocumentReadOutcome>;
   release: () => void;
 }
