@@ -10,12 +10,13 @@ import {
 } from "../../src/contexts/studio/domain/exceptions.js";
 import {
   exports,
+  jobEvents,
+  jobs,
   projectSnapshots,
   snapshotDocuments,
 } from "../../src/contexts/studio/infrastructure/db/schema.js";
 import { ExportStorePart } from "../../src/contexts/studio/infrastructure/export_store_part.js";
 import { withAsyncStudioErrors } from "../../src/contexts/studio/interface/http/studio_error_mapping.js";
-import { jobEvents, jobs } from "../../src/shared/infrastructure/db/schema.js";
 import { AppError } from "../../src/shared/interface/http/error_envelope.js";
 import { seedProjectWithChapter, studioDatabase } from "./job_test_helpers.js";
 import { buildStudioApp, call, monotonicClock, ownerJar } from "./studio_helpers.js";

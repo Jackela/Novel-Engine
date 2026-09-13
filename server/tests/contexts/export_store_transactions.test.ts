@@ -13,6 +13,8 @@ import { ExportSourceInvalidatedError } from "../../src/contexts/studio/domain/e
 import {
   documentRevisions,
   exports as exportArtifacts,
+  jobEvents,
+  jobs,
   projectSnapshots,
   snapshotDocuments,
 } from "../../src/contexts/studio/infrastructure/db/schema.js";
@@ -23,7 +25,6 @@ import { ProjectStorePart } from "../../src/contexts/studio/infrastructure/proje
 import { AuthService } from "../../src/shared/application/auth_service.js";
 import { DrizzleAuthStore } from "../../src/shared/infrastructure/db/auth_store.js";
 import type { StudioSqliteDatabase } from "../../src/shared/infrastructure/db/connection.js";
-import { jobEvents, jobs } from "../../src/shared/infrastructure/db/schema.js";
 import { openStudioDatabase } from "../../src/shared/infrastructure/db/startup.js";
 
 const directories: string[] = [];

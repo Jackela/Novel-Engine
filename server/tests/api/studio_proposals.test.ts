@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { TextGenerationProviderError } from "../../src/contexts/ai/application/ports/text_generation.js";
 import { wordCount } from "../../src/contexts/studio/application/payloads.js";
 import { isProposalMarkdownProse } from "../../src/contexts/studio/application/sanitization.js";
-import { usageEvents } from "../../src/shared/infrastructure/db/schema.js";
+import { usageEvents } from "../../src/contexts/studio/infrastructure/db/schema.js";
 import { capturingFactory, validProposalProse } from "./proposal_test_helpers.js";
 import {
   admitProposal,

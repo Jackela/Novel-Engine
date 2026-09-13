@@ -6,11 +6,14 @@ import { join } from "node:path";
 import { eq } from "drizzle-orm";
 import { afterEach, describe, expect, it } from "vitest";
 import { buildApp } from "../../src/apps/api/app.js";
-import { exportPublicationCleanupIntents } from "../../src/contexts/studio/infrastructure/db/schema.js";
+import {
+  exportPublicationCleanupIntents,
+  jobEvents,
+  jobs,
+} from "../../src/contexts/studio/infrastructure/db/schema.js";
 import { FilesystemExportArtifactGateway } from "../../src/contexts/studio/infrastructure/export_artifact_files.js";
 import { DATABASE_FILENAME } from "../../src/shared/infrastructure/db/backup.js";
 import { openConnection } from "../../src/shared/infrastructure/db/connection.js";
-import { jobEvents, jobs } from "../../src/shared/infrastructure/db/schema.js";
 import { TEST_SESSION_SECRET } from "./auth_helpers.js";
 import { studioDatabase } from "./job_test_helpers.js";
 import { ownerJar, seedProject } from "./studio_helpers.js";

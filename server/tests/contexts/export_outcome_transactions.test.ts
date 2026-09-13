@@ -11,6 +11,8 @@ import { ProposalGenerationPipeline } from "../../src/contexts/studio/applicatio
 import { ReviewService } from "../../src/contexts/studio/application/review_service.js";
 import {
   exports as exportArtifacts,
+  jobEvents,
+  jobs,
   projectSnapshots,
   snapshotDocuments,
 } from "../../src/contexts/studio/infrastructure/db/schema.js";
@@ -22,7 +24,6 @@ import { ProposalContextStorePart } from "../../src/contexts/studio/infrastructu
 import { ReviewStorePart } from "../../src/contexts/studio/infrastructure/review_store_part.js";
 import { AuthService } from "../../src/shared/application/auth_service.js";
 import { DrizzleAuthStore } from "../../src/shared/infrastructure/db/auth_store.js";
-import { jobEvents, jobs } from "../../src/shared/infrastructure/db/schema.js";
 import { openStudioDatabase } from "../../src/shared/infrastructure/db/startup.js";
 
 const directories: string[] = [];

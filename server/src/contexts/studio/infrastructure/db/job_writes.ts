@@ -1,14 +1,13 @@
 import { randomUUID } from "node:crypto";
 import { eq } from "drizzle-orm";
-
-import { nextJobEventSequence } from "../../../../shared/infrastructure/db/job_event_sequence.js";
-import { jobEvents, jobs, usageEvents } from "../../../../shared/infrastructure/db/schema.js";
 import type {
   AddJobInput,
   AddUsageEventInput,
   MarkJobOutcomeInput,
 } from "../../application/ports/job_records.js";
+import { nextJobEventSequence } from "./job_event_sequence.js";
 import { assertSafeUsageToken } from "./safe_usage_tokens.js";
+import { jobEvents, jobs, usageEvents } from "./schema.js";
 import type { Tx } from "./studio_query_helpers.js";
 
 /**

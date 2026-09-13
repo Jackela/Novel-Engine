@@ -9,12 +9,14 @@ import type { ExportArtifactGateway } from "../../src/contexts/studio/applicatio
 import {
   exports as exportArtifacts,
   exportPublicationCleanupIntents,
+  jobEvents,
+  jobs,
   projectSnapshots,
   reviewIssues,
   reviews,
   snapshotDocuments,
+  usageEvents,
 } from "../../src/contexts/studio/infrastructure/db/schema.js";
-import { jobEvents, jobs, usageEvents } from "../../src/shared/infrastructure/db/schema.js";
 import { seedRetryableProposal, studioDatabase } from "./job_test_helpers.js";
 import { validProposalProse } from "./proposal_test_helpers.js";
 import { buildStudioApp, call, ownerJar, seedProject } from "./studio_helpers.js";

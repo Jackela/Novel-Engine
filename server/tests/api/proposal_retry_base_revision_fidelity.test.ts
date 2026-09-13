@@ -4,10 +4,14 @@ import type {
   TextGenerationTask,
 } from "../../src/contexts/ai/application/ports/text_generation.js";
 import { TextGenerationProviderError } from "../../src/contexts/ai/application/ports/text_generation.js";
+import {
+  jobEvents,
+  jobs,
+  usageEvents,
+} from "../../src/contexts/studio/infrastructure/db/schema.js";
 import { DocumentStorePart } from "../../src/contexts/studio/infrastructure/document_store_part.js";
 import { ProposalContextStorePart } from "../../src/contexts/studio/infrastructure/proposal_context_store_part.js";
 import { VolumeStorePart } from "../../src/contexts/studio/infrastructure/volume_store_part.js";
-import { jobEvents, jobs, usageEvents } from "../../src/shared/infrastructure/db/schema.js";
 import { studioDatabase } from "./job_test_helpers.js";
 import { validProposalProse } from "./proposal_test_helpers.js";
 import {

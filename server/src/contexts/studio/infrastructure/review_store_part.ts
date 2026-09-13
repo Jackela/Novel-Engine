@@ -1,7 +1,6 @@
 import { eq } from "drizzle-orm";
 
 import type { StudioSqliteDatabase } from "../../../shared/infrastructure/db/connection.js";
-import { jobs } from "../../../shared/infrastructure/db/schema.js";
 import type { AddJobInput } from "../application/ports/job_records.js";
 import {
   type EvaluatedReview,
@@ -22,6 +21,7 @@ import {
   readReviewSourceDocuments,
   toEditorialAssessment,
 } from "./db/review_records.js";
+import { jobs } from "./db/schema.js";
 import { scopedProject, type Tx } from "./db/studio_query_helpers.js";
 import { jobWithEvents } from "./job_store_part.js";
 import { buildReviewSummariesQuery } from "./review_page_queries.js";

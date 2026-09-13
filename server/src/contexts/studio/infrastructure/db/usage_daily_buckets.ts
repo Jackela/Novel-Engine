@@ -1,8 +1,7 @@
 import { and, eq, gte } from "drizzle-orm";
-
-import { usageEvents } from "../../../../shared/infrastructure/db/schema.js";
 import type { ProjectUsageDailyBucket } from "../../application/ports/project_usage.js";
 import { addSafeUsage, assertSafeUsageToken } from "./safe_usage_tokens.js";
+import { usageEvents } from "./schema.js";
 import type { Tx } from "./studio_query_helpers.js";
 
 const DAY_MS = 86_400_000;

@@ -6,8 +6,12 @@ import type {
   TextGenerationProvider,
   TextGenerationProviderFactory,
 } from "../../src/contexts/ai/application/ports/text_generation.js";
-import { documentRevisions } from "../../src/contexts/studio/infrastructure/db/schema.js";
-import { jobEvents, jobs, usageEvents } from "../../src/shared/infrastructure/db/schema.js";
+import {
+  documentRevisions,
+  jobEvents,
+  jobs,
+  usageEvents,
+} from "../../src/contexts/studio/infrastructure/db/schema.js";
 import { seedRetryableProposal, studioDatabase } from "./job_test_helpers.js";
 import { validProposalProse } from "./proposal_test_helpers.js";
 import { retryJobRequest } from "./retry_test_helpers.js";

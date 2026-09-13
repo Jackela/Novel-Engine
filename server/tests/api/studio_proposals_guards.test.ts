@@ -5,7 +5,7 @@ import {
   TextGenerationProviderError,
   type TextGenerationProviderFactory,
 } from "../../src/contexts/ai/application/ports/text_generation.js";
-import { usageEvents } from "../../src/shared/infrastructure/db/schema.js";
+import { usageEvents } from "../../src/contexts/studio/infrastructure/db/schema.js";
 import { capturingFactory, propose, validProposalProse } from "./proposal_test_helpers.js";
 import {
   buildStudioApp,

@@ -2,6 +2,7 @@ import { drizzle } from "drizzle-orm/better-sqlite3";
 import { describe, expect, it } from "vitest";
 
 import { reviewPageLimit } from "../../src/contexts/studio/application/ports/review_outcome_store.js";
+import * as studioSchema from "../../src/contexts/studio/infrastructure/db/schema.js";
 import { buildReviewSummariesQuery } from "../../src/contexts/studio/infrastructure/review_page_queries.js";
 import { ReviewStorePart } from "../../src/contexts/studio/infrastructure/review_store_part.js";
 import * as databaseSchema from "../../src/shared/infrastructure/db/schema.js";
@@ -73,7 +74,7 @@ describe("review page query budget and detail reads", () => {
 
       const executedSql: string[] = [];
       const traced = drizzle(harness.database.raw, {
-        schema: databaseSchema,
+        schema: { ...databaseSchema, ...studioSchema },
         logger: { logQuery: (query: string) => executedSql.push(query) },
       });
       new ReviewStorePart(traced as never).findProjectReview(
@@ -105,7 +106,7 @@ function tracedStatements(harness: ReviewPageHarness, expectedReviews: number): 
   expect(count).toBe(expectedReviews);
   const executedSql: string[] = [];
   const traced = drizzle(harness.database.raw, {
-    schema: databaseSchema,
+    schema: { ...databaseSchema, ...studioSchema },
     logger: { logQuery: (query: string) => executedSql.push(query) },
   });
   new ReviewStorePart(traced as never).collectProjectReviewSummaries(
