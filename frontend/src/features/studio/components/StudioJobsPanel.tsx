@@ -4,6 +4,7 @@ import { useRef } from "react";
 import type { StudioJobSummary } from "@/app/types/studio";
 import { useCommandFocusRestoration } from "../hooks/useCommandFocusRestoration";
 import type { JobsLoadInitiator } from "../hooks/useStudioJobs";
+import { providerLabel } from "../studioConstants";
 
 interface StudioJobsPanelProps {
   jobs: StudioJobSummary[];
@@ -64,7 +65,7 @@ export function StudioJobsPanel({
                 <strong>{job.operation}</strong>
                 <span className={`job-status job-status--${job.status}`}>{job.status}</span>
                 <small>
-                  {job.provider} · {new Date(job.created_at).toLocaleString()}
+                  {providerLabel(job.provider)} · {new Date(job.created_at).toLocaleString()}
                 </small>
                 {job.error ? <small className="job-error">{job.error}</small> : null}
               </div>

@@ -142,9 +142,7 @@ test.describe
       const projectId = await createProject(studio, "Prose Harbor");
       await typeChapter(studio, "# Chapter 1\n\nThe harbor bell rang twice.");
 
-      await studio
-        .getByPlaceholder("Describe the change or direction...")
-        .fill("Deepen the storm.");
+      await studio.getByLabel("Proposal instruction").fill("Deepen the storm.");
       await studio.getByRole("button", { name: "Continue" }).click();
       await expect(studio.getByText("Proposed Markdown")).toBeVisible();
       // #308 streams the preview progressively: the Accept affordance appears

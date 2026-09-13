@@ -14,6 +14,33 @@ afterEach(() => {
 });
 
 describe("StudioCopilotPanel", () => {
+  it("onboards first-time authors with an example prompt and the accept semantics", () => {
+    const mounted = harness.mount(
+      <StudioCopilotPanel
+        instruction=""
+        onAcceptProposal={vi.fn()}
+        onRunProposal={vi.fn()}
+        proposal={null}
+        setInstruction={vi.fn()}
+        setProposal={vi.fn()}
+      />,
+    );
+
+    const instruction = getByRole(mounted.container, "textbox", {
+      name: "Proposal instruction",
+    });
+    expect(instruction).toHaveAttribute(
+      "placeholder",
+      'e.g. "Continue this scene with a quieter, more ominous tone"',
+    );
+    expect(mounted.container.textContent).toContain(
+      "Copilot never changes the manuscript until you accept a proposal.",
+    );
+    expect(mounted.container.textContent).toContain(
+      "Rewrite or Continue drafts a proposal to preview here; Accept applies it to the manuscript.",
+    );
+  });
+
   it.each([
     ["Rewrite", "rewrite", "Rewriting…", "Continue"],
     ["Continue", "continue", "Generating…", "Rewrite"],

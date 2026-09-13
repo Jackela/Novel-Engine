@@ -41,17 +41,33 @@ describe("StudioSettingsPanel", () => {
 
     const container = render(<StudioSettingsPanel {...baseProps} providers={providers} />);
 
-    expect(getByRole(container, "option", { name: "mock" })).toBeInTheDocument();
-    expect(getByRole(container, "option", { name: "openai_compatible" })).toBeInTheDocument();
-    expect(queryByRole(container, "option", { name: "dashscope" })).not.toBeInTheDocument();
+    expect(
+      getByRole(container, "option", { name: "Mock (trial — no API key)" }),
+    ).toBeInTheDocument();
+    expect(getByRole(container, "option", { name: "OpenAI-compatible" })).toBeInTheDocument();
+    expect(queryByRole(container, "option", { name: "DashScope" })).not.toBeInTheDocument();
   });
 
   it("falls back to built-in providers when no provider list is supplied", () => {
     const container = render(<StudioSettingsPanel {...baseProps} />);
 
-    expect(getByRole(container, "option", { name: "mock" })).toBeInTheDocument();
-    expect(getByRole(container, "option", { name: "dashscope" })).toBeInTheDocument();
-    expect(getByRole(container, "option", { name: "openai_compatible" })).toBeInTheDocument();
+    expect(
+      getByRole(container, "option", { name: "Mock (trial — no API key)" }),
+    ).toBeInTheDocument();
+    expect(getByRole(container, "option", { name: "DashScope" })).toBeInTheDocument();
+    expect(getByRole(container, "option", { name: "OpenAI-compatible" })).toBeInTheDocument();
+  });
+
+  it("shows unknown provider IDs under their raw name so they stay selectable", () => {
+    const providers: ProviderInfo[] = [
+      { provider: "mock", configured: true, model: null, is_default: true },
+      { provider: "custom_relay", configured: true, model: null, is_default: false },
+    ];
+
+    const container = render(<StudioSettingsPanel {...baseProps} providers={providers} />);
+
+    const option = getByRole(container, "option", { name: "custom_relay" });
+    expect(option).toHaveValue("custom_relay");
   });
 
   it("calls setSettingsForm when provider selection changes", () => {

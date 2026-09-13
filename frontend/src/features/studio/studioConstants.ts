@@ -61,3 +61,18 @@ export const DEFAULT_PROVIDER_OPTIONS: ProviderInfo[] = [
     is_default: false,
   },
 ];
+
+/**
+ * Display-only labels for the raw provider IDs surfaced by the API (#606).
+ * Unknown IDs fall back to their raw value so providers added server-side
+ * later remain visible and selectable without a frontend change.
+ */
+const PROVIDER_LABELS: Record<string, string> = {
+  mock: "Mock (trial — no API key)",
+  dashscope: "DashScope",
+  openai_compatible: "OpenAI-compatible",
+};
+
+export function providerLabel(provider: string): string {
+  return PROVIDER_LABELS[provider] ?? provider;
+}

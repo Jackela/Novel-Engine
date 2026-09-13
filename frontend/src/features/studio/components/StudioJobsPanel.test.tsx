@@ -23,6 +23,26 @@ const jobs = [
 ];
 
 describe("StudioJobsPanel", () => {
+  it("renders job providers under human-readable labels instead of raw IDs", () => {
+    const mounted = harness.mount(
+      <StudioJobsPanel
+        jobs={[
+          jobSummary({
+            id: "job-1",
+            operation: "rewrite",
+            status: "completed",
+            provider: "dashscope",
+          }),
+        ]}
+        onLoadJobs={vi.fn()}
+        onRetryJob={vi.fn()}
+      />,
+    );
+
+    expect(mounted.container.textContent).toContain("DashScope ·");
+    expect(mounted.container.textContent).not.toContain("dashscope");
+  });
+
   it("does not offer retry for terminal import jobs", () => {
     const onRetryJob = vi.fn();
     const mounted = harness.mount(

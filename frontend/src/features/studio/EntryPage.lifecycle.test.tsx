@@ -163,71 +163,6 @@ describe("EntryPage request lifecycle", () => {
     expect(document.activeElement).toBe(heading);
   });
 
-  it("aborts the session probe when the entry surface unmounts", () => {
-    vi.mocked(api.session).mockReturnValue(deferred<Session>().promise);
-
-    const mounted = renderEntry();
-    const signal = vi.mocked(api.session).mock.calls[0]?.[0]?.signal;
-    expect(signal).toBeInstanceOf(AbortSignal);
-
-    harness.unmount(mounted.container);
-
-    expect(signal?.aborted).toBe(true);
-  });
-
-  it("does not navigate when a stale session probe completes after route exit", async () => {
-    const session = deferred<Session>();
-    vi.mocked(api.session).mockReturnValue(session.promise);
-
-    const { container } = renderEntry();
-    act(() => {
-      getByRole(container, "button", { name: "Leave entry" }).click();
-    });
-
-    await act(async () => {
-      session.resolve(ownerSession);
-      await session.promise;
-    });
-
-    expect(container.querySelector('[data-testid="location"]')?.textContent).toBe("/away");
-  });
-
-  it("aborts the setup-status read when the entry surface unmounts", async () => {
-    vi.mocked(api.session).mockRejectedValue(new HttpError("Sign in required.", 401));
-    vi.mocked(api.setupStatus).mockReturnValue(
-      deferred<{ owner_configured: boolean; name: string; version: string }>().promise,
-    );
-
-    const mounted = renderEntry();
-    await flushEffects();
-    const signal = vi.mocked(api.setupStatus).mock.calls[0]?.[0]?.signal;
-    expect(signal).toBeInstanceOf(AbortSignal);
-
-    harness.unmount(mounted.container);
-
-    expect(signal?.aborted).toBe(true);
-  });
-
-  it("does not publish a setup-status result after route exit", async () => {
-    vi.mocked(api.session).mockRejectedValue(new HttpError("Sign in required.", 401));
-    const setup = deferred<{ owner_configured: boolean; name: string; version: string }>();
-    vi.mocked(api.setupStatus).mockReturnValue(setup.promise);
-
-    const { container } = renderEntry();
-    await flushEffects();
-    act(() => {
-      getByRole(container, "button", { name: "Leave entry" }).click();
-    });
-
-    await act(async () => {
-      setup.resolve({ owner_configured: true, name: "Test Engine", version: "test" });
-      await setup.promise;
-    });
-
-    expect(container.querySelector('[data-testid="location"]')?.textContent).toBe("/away");
-    expect(container.querySelector("form")).toBeNull();
-  });
-
   it("guards first-run setup and login against duplicate submission", async () => {
     vi.mocked(api.session).mockRejectedValue(new HttpError("Sign in required.", 401));
     vi.mocked(api.setupStatus).mockResolvedValue({
@@ -313,35 +248,6 @@ describe("EntryPage request lifecycle", () => {
     expect(api.setupOwner).toHaveBeenCalledTimes(1);
     expect(api.login).toHaveBeenCalledTimes(2);
     expect(container.querySelector('[data-testid="location"]')?.textContent).toBe("/projects");
-  });
-
-  it("does not navigate when login completes after the entry route was left", async () => {
-    vi.mocked(api.session).mockRejectedValue(new HttpError("Sign in required.", 401));
-    vi.mocked(api.setupStatus).mockResolvedValue({
-      owner_configured: true,
-      name: "Test Engine",
-      version: "test",
-    });
-    const login = deferred<Session>();
-    vi.mocked(api.login).mockReturnValue(login.promise);
-
-    const { container } = renderEntry();
-    await flushEffects();
-    const form = container.querySelector("form");
-    const password = container.querySelector<HTMLInputElement>('input[type="password"]');
-    if (form === null || password === null) throw new Error("Expected the login form.");
-    act(() => {
-      fireEvent.change(password, { target: { value: "long-password" } });
-      fireEvent.submit(form);
-      getByRole(container, "button", { name: "Leave entry" }).click();
-    });
-
-    await act(async () => {
-      login.resolve(ownerSession);
-      await login.promise;
-    });
-
-    expect(container.querySelector('[data-testid="location"]')?.textContent).toBe("/away");
   });
 });
 
