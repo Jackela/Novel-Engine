@@ -14,9 +14,9 @@ import {
  * request lifecycle, and these tables record their state so a restart can
  * mark running work interrupted. The proposal workflow (#268) grew the
  * persistence columns (project/document scoping, provider, request/result
- * payloads, retry chain); project linkage is a plain column — the studio
- * tables live in their own schema file, so cascade deletes are enforced by
- * the studio store's dropProject transaction, not by a cross-schema FK.
+ * payloads, retry chain); project linkage is a plain column — cascade
+ * deletes are enforced by the studio store's dropProject transaction, not by
+ * a cross-table FK.
  */
 export const jobs = sqliteTable(
   "jobs",
