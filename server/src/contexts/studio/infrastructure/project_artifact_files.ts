@@ -1,9 +1,10 @@
 import { randomUUID } from "node:crypto";
 import { constants } from "node:fs";
 import { lstat, open, realpath, rename, rm, unlink } from "node:fs/promises";
-import { isAbsolute, relative, resolve, sep } from "node:path";
+import { resolve } from "node:path";
 
 import type { ProjectArtifactCleaner } from "../application/ports/project_artifact_cleaner.js";
+import { isDescendant } from "./export_artifact_durable_files.js";
 
 const SAFE_PROJECT_ID = /^[A-Za-z0-9_-]+$/;
 
@@ -217,11 +218,6 @@ function sameIdentity(left: FileIdentity, right: FileIdentity): boolean {
 
 function matchesKind(details: FileDetails, kind: ConfinedProjectLeaf["kind"]): boolean {
   return kind === "symbolic-link" ? details.isSymbolicLink() : details.isDirectory();
-}
-
-function isDescendant(root: string, candidate: string): boolean {
-  const offset = relative(root, candidate);
-  return offset !== "" && offset !== ".." && !offset.startsWith(`..${sep}`) && !isAbsolute(offset);
 }
 
 function errorCode(error: unknown): string | undefined {

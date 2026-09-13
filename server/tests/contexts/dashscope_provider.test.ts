@@ -19,15 +19,8 @@ const NATIVE_GENERATION_PATH_SEGMENTS = [
   "multimodal-generation",
   "generation",
 ] as const;
-const COMPATIBLE_RESPONSES_PATH_SEGMENTS = [
-  "api",
-  "v2",
-  "apps",
-  "protocols",
-  "compatible-mode",
-  "v1",
-  "responses",
-] as const;
+/** Official OpenAI-compatible Responses path (#502): default base plus endpoint suffix. */
+const RESPONSES_DEFAULT_PATH_SEGMENTS = ["compatible-mode", "v1", "responses"] as const;
 
 function expectedEndpoint(origin: string, pathSegments: readonly string[]): string {
   return new URL(pathSegments.join("/"), `${origin}/`).toString();
@@ -95,9 +88,7 @@ describe("dashscope adapter request shape", () => {
 
     expect(capture).toHaveLength(1);
     const [request] = capture;
-    if (request === undefined) {
-      throw new Error("Expected a captured DashScope request.");
-    }
+    if (request === undefined) throw new Error("Expected a captured DashScope request.");
     expect(request.url).toBe(expectedEndpoint(DASHSCOPE_ORIGIN, NATIVE_GENERATION_PATH_SEGMENTS));
     expect(new Headers(request.init.headers).get("authorization")).toBe("Bearer sk-dashscope-test");
     const body = JSON.parse(String(request.init.body));
@@ -132,7 +123,25 @@ describe("dashscope adapter request shape", () => {
     expect(prose.content.chapter_markdown).toBe("Just a plain prose chapter.");
   });
 
-  it("honors a custom base and the responses transport mode", async () => {
+  it("posts responses-mode requests to the official compatible-mode path by default", async () => {
+    const capture: CapturedRequest[] = [];
+    const transport = scriptedTransport(
+      [
+        jsonResponse(200, {
+          output: [{ type: "message", content: [{ text: '{"chapter_markdown": "resp"}' }] }],
+        }),
+      ],
+      capture,
+    );
+    await provider({ transport, transportMode: "responses" }).generateStructured(
+      chapterTask("chapter_draft"),
+    );
+    const [request] = capture;
+    if (request === undefined) throw new Error("Expected a captured DashScope request.");
+    expect(request.url).toBe(expectedEndpoint(DASHSCOPE_ORIGIN, RESPONSES_DEFAULT_PATH_SEGMENTS));
+  });
+
+  it("honors a custom base verbatim with the responses transport mode", async () => {
     const capture: CapturedRequest[] = [];
     const transport = scriptedTransport(
       [
@@ -148,12 +157,8 @@ describe("dashscope adapter request shape", () => {
       apiBase: "https://proxy.example.com/x",
     }).generateStructured(chapterTask("chapter_draft"));
     const [request] = capture;
-    if (request === undefined) {
-      throw new Error("Expected a captured DashScope request.");
-    }
-    expect(request.url).toBe(
-      expectedEndpoint("https://proxy.example.com", COMPATIBLE_RESPONSES_PATH_SEGMENTS),
-    );
+    if (request === undefined) throw new Error("Expected a captured DashScope request.");
+    expect(request.url).toBe("https://proxy.example.com/x/responses");
   });
 });
 

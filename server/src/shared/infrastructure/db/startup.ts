@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import { existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import Database from "better-sqlite3";
+import type Database from "better-sqlite3";
 import { eq } from "drizzle-orm";
 import { migrate } from "drizzle-orm/better-sqlite3/migrator";
 
@@ -21,9 +21,6 @@ import { jobEvents, jobs } from "./schema.js";
 const SEARCH_DEPTH = 8;
 const PACKAGE_ROOT_MARKER = "drizzle.config.ts";
 const MIGRATIONS_DIRECTORY = "drizzle";
-
-/** Marker table of the frozen Python stack's alembic-managed schema. */
-const PYTHON_SCHEMA_MARKER_TABLE = "alembic_version";
 
 /** The fixed restart error and event reason are contract surfaces; keep byte-identical. */
 const RESTART_INTERRUPTED_ERROR = "Job lost its execution lease during process restart.";
@@ -62,13 +59,6 @@ export async function openStudioDatabase(
   let connection: ReturnType<typeof openConnection> | undefined;
   try {
     await assertNoLegacyDatabaseSibling(databasePath, dataDirectory);
-    if (containsPythonSchema(databasePath)) {
-      throw new Error(
-        `Refusing to open ${databasePath}: the database contains a non-drizzle schema ` +
-          "(the Python stack used the same filename with an incompatible schema). " +
-          "Start the TS server with a fresh data directory.",
-      );
-    }
     await backupDatabaseFile(databasePath);
 
     connection = openConnection(databasePath, { queryLogger: options.queryLogger });
@@ -165,32 +155,6 @@ function recoverInterruptedJobs(db: StudioSqliteDatabase): number {
     }
     return running.length;
   });
-}
-
-/**
- * Detect the Python stack's data files before any backup or migration runs,
- * so a misdirected data directory fails with one clear operator error
- * instead of one backup file per attempt. Any read failure (missing file,
- * unreadable state) reports "not the Python schema" and falls through to the
- * regular backup-first pipeline, which fails loudly on its own.
- */
-function containsPythonSchema(databasePath: string): boolean {
-  let probe: Database.Database;
-  try {
-    probe = new Database(databasePath, { readonly: true });
-  } catch {
-    return false;
-  }
-  try {
-    const marker = probe
-      .prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?")
-      .get(PYTHON_SCHEMA_MARKER_TABLE);
-    return marker !== undefined;
-  } catch {
-    return false;
-  } finally {
-    probe.close();
-  }
 }
 
 function locateMigrationsFolder(): string {

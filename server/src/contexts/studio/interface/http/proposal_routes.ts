@@ -1,12 +1,12 @@
 import type { TypeBoxTypeProvider } from "@fastify/type-provider-typebox";
 import type { FastifyPluginAsync } from "fastify";
 import { principalGuard, requirePrincipal } from "../../../../shared/interface/http/auth_guard.js";
-import { errorEnvelopeResponse } from "../../../../shared/interface/http/error_envelope.js";
 import { proposalGeneration422ResponseSchema } from "./generation_capacity_schemas.js";
 import { jobResponseSchema } from "./job_schemas.js";
 import type { JsonResponseSchema } from "./json_response_schema.js";
 import { requireServices, type StudioRoutesOptions } from "./project_routes.js";
 import { writeProposalStreamResponse } from "./proposal_stream_response.js";
+import { authedWriteResponses } from "./route_responses.js";
 import { structureCapacity422ResponseSchema } from "./structure_capacity_schemas.js";
 import { withAsyncStudioErrors, withStudioErrors } from "./studio_error_mapping.js";
 import { documentIdParams, jobIdParams, proposalCreateSchema } from "./studio_request_schemas.js";
@@ -29,19 +29,6 @@ const proposalStreamResponseSchema: JsonResponseSchema = {
   },
 } as const;
 
-/** Guard + CSRF failures shared by the proposal writes; scope misses answer 404. */
-const PROPOSAL_ERROR_RESPONSES = {
-  401: errorEnvelopeResponse,
-  403: errorEnvelopeResponse,
-  404: errorEnvelopeResponse,
-  503: errorEnvelopeResponse,
-} as const;
-
-const PROPOSAL_GENERATION_ERROR_RESPONSES = {
-  ...PROPOSAL_ERROR_RESPONSES,
-  422: proposalGeneration422ResponseSchema,
-} as const;
-
 /**
  * The AI proposal surface: synchronous generation that records a proposal on
  * a job (never mutating the manuscript), explicit acceptance that writes the
@@ -59,12 +46,12 @@ export const proposalRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fa
       schema: {
         params: documentIdParams,
         body: proposalCreateSchema,
-        response: {
+        response: authedWriteResponses({
           200: jobResponseSchema,
-          ...PROPOSAL_GENERATION_ERROR_RESPONSES,
+          422: proposalGeneration422ResponseSchema,
           409: operationInFlightSchema,
           503: operationCapacityResponseSchema,
-        },
+        }),
       },
     },
     async (request) => {
@@ -97,12 +84,12 @@ export const proposalRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fa
       schema: {
         params: documentIdParams,
         body: proposalCreateSchema,
-        response: {
+        response: authedWriteResponses({
           200: proposalStreamResponseSchema,
-          ...PROPOSAL_GENERATION_ERROR_RESPONSES,
+          422: proposalGeneration422ResponseSchema,
           409: operationInFlightSchema,
           503: operationCapacityResponseSchema,
-        },
+        }),
       },
     },
     async (request, reply) => {
@@ -148,9 +135,8 @@ export const proposalRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fa
       preHandler: [guard],
       schema: {
         params: jobIdParams,
-        response: {
+        response: authedWriteResponses({
           200: jobResponseSchema,
-          ...PROPOSAL_ERROR_RESPONSES,
           // The recorded proposal base can go stale when the author saves
           // after drafting; acceptance refuses with the shared conflict
           // envelope instead of clobbering the newer revision.
@@ -158,7 +144,7 @@ export const proposalRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fa
           // Accepting a proposal beyond the outline-beat budget refuses
           // permanently (#461).
           422: structureCapacity422ResponseSchema,
-        },
+        }),
       },
     },
     async (request) => {
