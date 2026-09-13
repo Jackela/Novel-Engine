@@ -4,11 +4,11 @@ import {
   BoundedPromptWriter,
   GENERATION_PROMPT_BYTE_LIMIT,
 } from "../../src/contexts/studio/application/generation_capacity.js";
-import type { ProposalContextSource } from "../../src/contexts/studio/application/ports/proposal_context_store.js";
 import type {
   DocumentWithCurrent,
   RevisionRecord,
-} from "../../src/contexts/studio/application/ports/studio_store.js";
+} from "../../src/contexts/studio/application/ports/document_store.js";
+import type { ProposalContextSource } from "../../src/contexts/studio/application/ports/proposal_context_store.js";
 import {
   buildProposalTask,
   SYSTEM_PROMPT,

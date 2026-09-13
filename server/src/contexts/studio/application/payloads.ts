@@ -17,15 +17,15 @@ import type { LoreAliasPayload, LoreStatusPayload } from "./payload_schemas/lore
 import type { ProjectCatalogSummaryPayload, ProjectPayload } from "./payload_schemas/project.js";
 import type { RevisionPayload, RevisionSummaryPayload } from "./payload_schemas/revision.js";
 import type { VolumePayload } from "./payload_schemas/volume.js";
-import type { ExportArtifactRecord } from "./ports/export_store.js";
-import type { JobRecord, JobSummaryRecord } from "./ports/job_records.js";
-import type { ProjectCatalogSummaryRecord } from "./ports/project_catalog_store.js";
 import type {
   DocumentMatchRecord,
   DocumentWithCurrent,
   RevisionRecord,
   RevisionSummaryRecord,
-} from "./ports/studio_store.js";
+} from "./ports/document_store.js";
+import type { ExportArtifactRecord } from "./ports/export_store.js";
+import type { JobRecord, JobSummaryRecord } from "./ports/job_records.js";
+import type { ProjectCatalogSummaryRecord } from "./ports/project_catalog_store.js";
 import type { VolumeRecord } from "./ports/volume_store.js";
 
 /**

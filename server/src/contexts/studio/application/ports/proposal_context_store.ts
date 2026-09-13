@@ -1,4 +1,5 @@
-import type { DocumentWithCurrent, ProjectScope, RevisionRecord } from "./studio_store.js";
+import type { DocumentWithCurrent, RevisionRecord } from "./document_store.js";
+import type { ProjectScope } from "./studio_store.js";
 import type { VolumeRecord } from "./volume_store.js";
 
 /** Immutable revision paired to one document at proposal-context capture. */

@@ -2,12 +2,12 @@ import type { Principal } from "../../../shared/application/ports/auth.js";
 import type { DocumentService } from "./document_service.js";
 import type { RevisionSummaryPayload } from "./payload_schemas/revision.js";
 import { revisionSummaryPayload, safeLoadJson } from "./payloads.js";
-import type { DocumentStore } from "./ports/document_store.js";
-import {
-  type RevisionPageCursor,
-  type RevisionPageInput,
-  scopeForPrincipal,
-} from "./ports/studio_store.js";
+import type {
+  DocumentStore,
+  RevisionPageCursor,
+  RevisionPageInput,
+} from "./ports/document_store.js";
+import { scopeForPrincipal } from "./ports/studio_store.js";
 
 export interface RevisionHistoryPage {
   readonly revisions: RevisionSummaryPayload[];

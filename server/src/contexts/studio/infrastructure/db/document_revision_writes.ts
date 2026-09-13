@@ -3,8 +3,8 @@ import { eq } from "drizzle-orm";
 import type {
   AdvanceDocumentInput,
   DocumentWithCurrent,
-  ProjectScope,
-} from "../../application/ports/studio_store.js";
+} from "../../application/ports/document_store.js";
+import type { ProjectScope } from "../../application/ports/studio_store.js";
 import { NotFoundError, RevisionConflictError } from "../../domain/exceptions.js";
 import { refreshDocumentIndex } from "./document_search.js";
 import { documentRevisions, documents, projects } from "./schema.js";

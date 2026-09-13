@@ -1,5 +1,5 @@
 import { makeKeysetCursor } from "../../../../shared/interface/http/canonical_cursor.js";
-import type { RevisionPageCursor } from "../../application/ports/studio_store.js";
+import type { RevisionPageCursor } from "../../application/ports/document_store.js";
 
 const cursor = makeKeysetCursor({
   version: 1,
