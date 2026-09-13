@@ -2,6 +2,8 @@ import { useEffect, useRef } from "react";
 
 import type { ReviewSummary } from "@/app/types/studio";
 
+import { providerLabel } from "../studioConstants";
+
 interface StudioReviewHistoryListProps {
   summaries: ReviewSummary[];
   historyInitialized: boolean;
@@ -68,7 +70,7 @@ export function StudioReviewHistoryList({
               <span>{new Date(summary.created_at).toLocaleString()}</span>
               <small>
                 {summary.issue_count} {summary.issue_count === 1 ? "finding" : "findings"} ·{" "}
-                {summary.provider}
+                {providerLabel(summary.provider)}
               </small>
             </li>
           ))}
