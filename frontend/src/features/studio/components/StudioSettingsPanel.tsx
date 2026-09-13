@@ -4,7 +4,7 @@ import { useId, useRef } from "react";
 import type { ProviderInfo } from "@/app/types/studio";
 
 import { useCommandFocusRestoration } from "../hooks/useCommandFocusRestoration";
-import { DEFAULT_PROVIDER_OPTIONS } from "../studioConstants";
+import { DEFAULT_PROVIDER_OPTIONS, providerLabel } from "../studioConstants";
 import type { SettingsFormState } from "../studioInspectorTypes";
 
 interface StudioSettingsPanelProps {
@@ -94,7 +94,7 @@ export function StudioSettingsPanel({
         >
           {providers.map((provider) => (
             <option key={provider.provider} value={provider.provider}>
-              {provider.provider}
+              {providerLabel(provider.provider)}
             </option>
           ))}
         </select>

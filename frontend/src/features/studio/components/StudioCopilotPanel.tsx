@@ -84,11 +84,14 @@ export function StudioCopilotPanel({
     <div aria-busy={isBusy} className="studio-inspector__panel">
       <h2>AI proposal</h2>
       <p>Copilot never changes the manuscript until you accept a proposal.</p>
+      <p>
+        Rewrite or Continue drafts a proposal to preview here; Accept applies it to the manuscript.
+      </p>
       <textarea
         aria-label="Proposal instruction"
         disabled={isBusy || (proposalOutcomeUnknown && proposalAuditStatus !== "audit_succeeded")}
         onChange={(event) => setInstruction(event.target.value)}
-        placeholder="Describe the change or direction..."
+        placeholder='e.g. "Continue this scene with a quieter, more ominous tone"'
         ref={instructionRef}
         rows={5}
         value={instruction}

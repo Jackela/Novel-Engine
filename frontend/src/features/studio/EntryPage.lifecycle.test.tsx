@@ -345,6 +345,20 @@ describe("EntryPage request lifecycle", () => {
   });
 });
 
+describe("EntryPage first-run explainer", () => {
+  it("tells first-time authors the instance is local-first and running in trial mode", () => {
+    vi.mocked(api.session).mockReturnValue(deferred<Session>().promise);
+
+    const { container } = renderEntry();
+    const panel = container.querySelector(".entry__panel")?.textContent ?? "";
+
+    expect(panel).toContain("stay in this self-hosted instance");
+    expect(panel).toContain("Running in trial mode");
+    expect(panel).toContain("no API key needed");
+    expect(panel).toContain("a project's Settings");
+  });
+});
+
 describe("EntryPage theme selection mount", () => {
   it("mounts the theme switch in the entry panel and persists a dark lock", () => {
     vi.mocked(api.session).mockReturnValue(deferred<Session>().promise);
