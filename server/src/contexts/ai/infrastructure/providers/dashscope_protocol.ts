@@ -174,59 +174,73 @@ function rawTextFromContent(content: unknown): string | undefined {
 }
 
 /**
- * One incremental text piece from an SSE stream chunk (#308): native
- * generation with `incremental_output` delivers partial message content,
- * compatible-mode chunks use the OpenAI delta shape, and Responses-style
- * events carry the piece in a top-level `delta` field. Returns undefined
- * for chunks without text (role prelude, usage-only tail, keep-alives).
+ * One incremental text piece from an SSE stream chunk (#308), dispatched per
+ * transport mode. Returns undefined for chunks without text (role prelude,
+ * usage-only tail, keep-alives).
  */
 export function extractDashscopeIncrementalText(data: JsonObject): string | undefined {
+  return (
+    extractResponsesStreamText(data) ??
+    extractCompatibleModeStreamText(data) ??
+    extractNativeGenerationStreamText(data)
+  );
+}
+
+/** Responses events: a top-level string `delta`, then `output` list items. */
+function extractResponsesStreamText(data: JsonObject): string | undefined {
   const topLevelDelta = data.delta;
   if (typeof topLevelDelta === "string" && topLevelDelta !== "") return topLevelDelta;
-  const choices = Array.isArray(data.choices) ? data.choices : [];
-  const firstChoice = choices.find(isJsonObject);
-  if (firstChoice !== undefined) {
-    for (const holder of [firstChoice.delta, firstChoice.message]) {
+  const output = data.output;
+  if (!Array.isArray(output)) return undefined;
+  // Responses-mode events mirror the non-streaming shape (#343): output is a
+  // list of items whose message content carries the incremental text.
+  for (const item of output) {
+    if (!isJsonObject(item)) continue;
+    // #371: only message items expose content/text; typed non-message items
+    // (reasoning, tool_call) are accepted solely via a top-level string
+    // delta, mirroring OpenAI Responses event semantics. Untyped items keep
+    // the pre-existing permissive extraction so older fixture shapes stay green.
+    if (typeof item.type === "string" && item.type !== "message") {
+      if (typeof item.delta === "string" && item.delta !== "") return item.delta;
+      continue;
+    }
+    // Assumption: when a message item carries both `content` and `delta`,
+    // `content` is authoritative and is returned first (#364 review minor #3).
+    for (const holder of [item.message, item]) {
       if (!isJsonObject(holder)) continue;
       const text = rawTextFromContent(holder.content);
       if (text !== undefined) return text;
     }
+    if (typeof item.delta === "string" && item.delta !== "") return item.delta;
+    if (typeof item.text === "string" && item.text !== "") return item.text;
   }
+  return undefined;
+}
+
+/** Compatible-mode chunks: the OpenAI delta shape under `choices[0]`. */
+function extractCompatibleModeStreamText(data: JsonObject): string | undefined {
+  const choices = Array.isArray(data.choices) ? data.choices : [];
+  const firstChoice = choices.find(isJsonObject);
+  if (firstChoice === undefined) return undefined;
+  for (const holder of [firstChoice.delta, firstChoice.message]) {
+    if (!isJsonObject(holder)) continue;
+    const text = rawTextFromContent(holder.content);
+    if (text !== undefined) return text;
+  }
+  return undefined;
+}
+
+/** Native `incremental_output` chunks: partial `output` message, or `output.text`. */
+function extractNativeGenerationStreamText(data: JsonObject): string | undefined {
   const output = data.output;
-  if (Array.isArray(output)) {
-    // Responses-mode events mirror the non-streaming shape (#343): output is a
-    // list of items whose message content carries the incremental text.
-    for (const item of output) {
-      if (!isJsonObject(item)) continue;
-      // #371: only message items expose content/text; typed non-message items
-      // (reasoning, tool_call) are accepted solely via a top-level string
-      // delta, mirroring OpenAI Responses event semantics. Untyped items keep
-      // the pre-existing permissive extraction so older fixture shapes stay green.
-      if (typeof item.type === "string" && item.type !== "message") {
-        if (typeof item.delta === "string" && item.delta !== "") return item.delta;
-        continue;
-      }
-      // Assumption: when a message item carries both `content` and `delta`,
-      // `content` is authoritative and is returned first (#364 review minor #3).
-      for (const holder of [item.message, item]) {
-        if (!isJsonObject(holder)) continue;
-        const text = rawTextFromContent(holder.content);
-        if (text !== undefined) return text;
-      }
-      if (typeof item.delta === "string" && item.delta !== "") return item.delta;
-      if (typeof item.text === "string" && item.text !== "") return item.text;
-    }
-    return undefined;
+  if (!isJsonObject(output)) return undefined;
+  const outputChoices = Array.isArray(output.choices) ? output.choices : [];
+  const outputChoice = outputChoices.find(isJsonObject);
+  if (outputChoice !== undefined && isJsonObject(outputChoice.message)) {
+    const text = rawTextFromContent(outputChoice.message.content);
+    if (text !== undefined) return text;
   }
-  if (isJsonObject(output)) {
-    const outputChoices = Array.isArray(output.choices) ? output.choices : [];
-    const outputChoice = outputChoices.find(isJsonObject);
-    if (outputChoice !== undefined && isJsonObject(outputChoice.message)) {
-      const text = rawTextFromContent(outputChoice.message.content);
-      if (text !== undefined) return text;
-    }
-    if (typeof output.text === "string" && output.text !== "") return output.text;
-  }
+  if (typeof output.text === "string" && output.text !== "") return output.text;
   return undefined;
 }
 
