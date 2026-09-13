@@ -110,7 +110,7 @@ draft-status world sheet: fill it in and mark it stable.
 
 ## Review: a second pair of eyes
 
-The **Review** section (left navigation) runs an AI review over the current
+The **Review** tab in the right Inspector runs an AI review over the current
 manuscript. Press **Run review**; findings come back grouped with severity —
 continuity slips, pacing notes, inconsistencies against your lore — and are
 kept as a bound snapshot with the manuscript state they describe, so past

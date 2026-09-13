@@ -13,9 +13,11 @@ generation, review — works with it.
 ## How providers are selected
 
 Each project picks its provider in the project's **Settings** panel. The
-settings screen only offers providers the server can actually use: `mock` is
-always available, and DashScope or OpenAI-compatible appear once their API key
-is configured. Until you configure a key, projects run on the trial provider.
+panel lists every provider type — `mock`, DashScope, and
+OpenAI-compatible — but only the ones whose API key the server has been
+given (see below) can generate successfully; selecting an unconfigured
+provider makes every generation fail. Until you configure a key, keep the
+project on the built-in trial provider (`mock`).
 
 ## How configuration reaches the container
 

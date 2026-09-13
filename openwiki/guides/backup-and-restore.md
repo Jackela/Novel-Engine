@@ -133,4 +133,6 @@ docker compose start novel-engine
 
 Copying the file back in works the same way in reverse. Prefer the `restore`
 command whenever a `.bak` file exists: it verifies what a bare copy cannot.
-Copy files only while the studio is stopped.
+Copy files only while the studio is stopped. The `-v "$PWD:/host"` mount
+syntax is for macOS and Linux terminals; on Windows, move the file with
+`docker compose cp` instead (shown under "Backing up" and "Restoring").

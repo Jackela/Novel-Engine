@@ -30,9 +30,11 @@ Still nothing? Read what the container says:
 docker compose logs novel-engine
 ```
 
-and check the health endpoint at `http://localhost:8000/health/ready` —
-a JSON answer there means the server itself is fine and the problem is
-between the browser and the port.
+and check the health endpoint on the host port you actually mapped — for
+example `http://localhost:8001/health/ready` after the port change above, or
+`http://localhost:8000/health/ready` on a default installation. A JSON
+answer there means the server itself is fine and the problem is between the
+browser and the port.
 
 ## I created my account but cannot use the studio (Safari)
 
@@ -91,6 +93,29 @@ Expected, once: the application image is built from source the first time,
 which can take a few minutes depending on the machine and network. Later
 starts reuse the image and open in seconds; a version
 [upgrade](upgrading.md) rebuilds and is slow again once.
+
+## The container restarts endlessly with a secret error
+
+**Symptom:** the container never comes up and
+`docker compose logs novel-engine` repeats
+`entrypoint: /app/data/.secret is empty; remove it or set SECURITY_SECRET_KEY`.
+
+The auto-generated session secret inside the data volume exists but is empty
+(perhaps the volume was restored incompletely). Either delete the broken file
+so the next start generates a fresh one:
+
+```bash
+docker compose stop novel-engine
+docker run --rm -v novel-engine-data:/data alpine rm /data/.secret
+docker compose up -d
+```
+
+or set `SECURITY_SECRET_KEY` to a long random value in your
+`compose.override.yaml` and run `docker compose up -d`. A related refusal:
+an explicitly set secret that is too short is rejected at startup with
+`SECURITY_SECRET_KEY must be at least 16 characters long` — use a longer
+value. (Setting the key counts as an intentional logout: log in again after
+the restart.)
 
 ## Anything else
 

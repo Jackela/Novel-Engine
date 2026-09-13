@@ -68,9 +68,9 @@ cli serve` reads the root `.env.local` and stores data under `<workspace>/data/`
 | `DASHSCOPE_REVIEW_MODEL` | unset | DashScope model for AI review runs; falls back to the generation model. |
 | `DASHSCOPE_API_BASE` | unset | Custom DashScope API base URL, for gateways mirroring the DashScope API. |
 | `LLM_API_KEY` | unset | Required when `LLM_PROVIDER=openai_compatible`. |
-| `OPENAI_API_KEY` | unset | Alias of `LLM_API_KEY`; the first set value wins. |
+| `OPENAI_API_KEY` | unset | Alias of `LLM_API_KEY`; `LLM_API_KEY` takes precedence when both are set. |
 | `LLM_API_BASE` | unset | Base URL of the OpenAI-compatible endpoint (e.g. `https://api.openai.com/v1`). |
-| `OPENAI_API_BASE` | unset | Alias of `LLM_API_BASE`; the first set value wins. |
+| `OPENAI_API_BASE` | unset | Alias of `LLM_API_BASE`; `LLM_API_BASE` takes precedence when both are set. |
 | `OPENAI_COMPATIBLE_MODEL` | unset | OpenAI-compatible generation model; falls back to `LLM_MODEL`, then `gpt-4o-mini`. |
 | `LLM_TIMEOUT` | `30` | Outbound provider request timeout in seconds (5–300). |
 | `LLM_STREAM_FIRST_BYTE_TIMEOUT_MS` | `30000` | Streaming silence ceiling (ms) before the first proposal byte (1–300000). |
