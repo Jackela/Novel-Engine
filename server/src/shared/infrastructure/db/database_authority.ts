@@ -1,6 +1,7 @@
 import { lstat } from "node:fs/promises";
 import { basename, dirname, join } from "node:path";
 
+import { errorCode } from "../error_code.js";
 import { DATABASE_FILENAME } from "./backup.js";
 
 /** Directory resources owned by one exact configured SQLite file. */
@@ -30,9 +31,4 @@ export async function assertNoLegacyDatabaseSibling(
     `Refusing configured database ${databasePath}: legacy default sibling ${legacyPath} exists. ` +
       "Choose one database authority explicitly; Novel Engine will not move, merge, or fall back.",
   );
-}
-
-function errorCode(error: unknown): string | undefined {
-  if (typeof error !== "object" || error === null || !("code" in error)) return undefined;
-  return typeof error.code === "string" ? error.code : undefined;
 }

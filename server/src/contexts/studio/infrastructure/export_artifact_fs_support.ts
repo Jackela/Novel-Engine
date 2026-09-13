@@ -3,6 +3,10 @@ import { constants } from "node:fs";
 import { link, open, rename, unlink } from "node:fs/promises";
 import { dirname } from "node:path";
 
+import { errorCode } from "../../../shared/infrastructure/error_code.js";
+
+export { errorCode };
+
 export interface FileIdentity {
   readonly dev: bigint;
   readonly ino: bigint;
@@ -127,9 +131,4 @@ export async function syncDirectory(path: string): Promise<void> {
   } finally {
     await handle.close();
   }
-}
-
-export function errorCode(error: unknown): string | undefined {
-  if (typeof error !== "object" || error === null || !("code" in error)) return undefined;
-  return typeof error.code === "string" ? error.code : undefined;
 }
