@@ -18,7 +18,7 @@ import type {
 import { NotFoundError } from "../domain/exceptions.js";
 import { clearProjectDocumentIndex } from "./db/document_search.js";
 import { seedDocumentInTransaction } from "./db/document_seed_writes.js";
-import { projects } from "./db/schema.js";
+import { jobs, projects, usageEvents } from "./db/schema.js";
 import {
   documentSummaries,
   documentsWithCurrent,
