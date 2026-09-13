@@ -5,8 +5,15 @@ packages:
 allowBuilds:
   '@fission-ai/openspec': true
   '@swc/core': true
-  better-sqlite3: true
+  # better-sqlite3 ships prebuilt N-API binaries in its tarball; a binding.gyp
+  # inside the package makes an allow-listed (true) install run node-gyp
+  # rebuild, which fails without a Python toolchain (as the Docker image build
+  # did). lib/binding.js loads the prebuilds directly, so the build script is
+  # explicitly denied (false); leaving it undecided makes pnpm 11 fresh
+  # installs hard-fail on the ignored build script.
+  better-sqlite3: false
   esbuild: true
+
 overrides:
   # Legacy drizzle-kit chain (drizzle-kit > @esbuild-kit/esm-loader >
   # @esbuild-kit/core-utils > esbuild 0.18.20) carries GHSA-67mh-4wv8-2f99.
