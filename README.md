@@ -132,7 +132,8 @@ pnpm spec:validate
 ## Upgrading from 0.3.x (Python stack)
 
 0.4.0 is the TypeScript rewrite cutover. The database schema is not migrated:
-the TS server refuses to open a Python-era database by design. Back up or keep
-the old `data/` directory, start 0.4.0 with a fresh data directory, create the
-Owner account, then re-import legacy workspaces with the import command above.
-The pre-cutover Python stack remains available at git tag `python-final`.
+a Python-era database is unsupported and must not be reused as the new
+`data/` directory. Back up or keep the old `data/` directory, start 0.4.0 with
+a fresh data directory, create the Owner account, then re-import legacy
+workspaces with the import command above. The pre-cutover Python stack remains
+available at git tag `python-final`.
