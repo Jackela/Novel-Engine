@@ -45,7 +45,7 @@ export const SECTIONS = [
 ] as const;
 
 /** The document kinds that serve as lorebook entries (#315); lifecycle-gated (#444). */
-export const LOREBOOK_ENTRY_KINDS: readonly DocumentKind[] = ["character", "world"];
+const LOREBOOK_ENTRY_KINDS: readonly DocumentKind[] = ["character", "world"];
 
 export function isLoreEntryKind(kind: DocumentKind): boolean {
   return LOREBOOK_ENTRY_KINDS.includes(kind);

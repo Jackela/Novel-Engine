@@ -13,7 +13,7 @@ interface AcceptRequest extends ProposalRequest {
   readonly projectId: string;
 }
 
-export interface ProposalAcceptanceOptions {
+interface ProposalAcceptanceOptions {
   readonly projectId: string;
   readonly activeDocument: StudioDocument | null;
   readonly ownerKey: string;

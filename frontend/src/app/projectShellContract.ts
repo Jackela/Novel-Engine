@@ -85,7 +85,7 @@ const documentSummaryKeys = [
   "updated_at",
 ] as const;
 
-export function parseDocumentSummary(value: unknown, label = "document summary"): DocumentSummary {
+function parseDocumentSummary(value: unknown, label = "document summary"): DocumentSummary {
   const item = objectValue(value, label);
   exactKeys(item, documentSummaryKeys, label);
   return {
@@ -177,7 +177,7 @@ export const parseStudioDocument = parseDocument;
 const projectCatalogKeys = ["id", "title", "description", "created_at", "updated_at"] as const;
 
 /** Bounded catalog row (#458); settings/import metadata stay server authority. */
-export function parseProjectCatalogItem(
+function parseProjectCatalogItem(
   value: unknown,
   label = "project catalog item",
 ): ProjectCatalogItem {

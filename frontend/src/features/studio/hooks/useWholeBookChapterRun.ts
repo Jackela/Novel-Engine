@@ -15,7 +15,7 @@ interface CommittedChapters {
   readonly documentIds: Set<string>;
 }
 
-export interface UseWholeBookChapterRunArgs {
+interface UseWholeBookChapterRunArgs {
   readonly projectId: string;
   readonly provider: string;
   readonly setProject: Dispatch<SetStateAction<Project | null>>;

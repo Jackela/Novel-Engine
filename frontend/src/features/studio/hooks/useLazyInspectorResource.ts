@@ -6,7 +6,7 @@ import { HttpError } from "@/app/api";
 import { resolveStateAction } from "./resolveStateAction";
 import { toErrorMessage } from "./toErrorMessage";
 
-export type LazyResourcePhase = "idle" | "pending" | "success" | "failure";
+type LazyResourcePhase = "idle" | "pending" | "success" | "failure";
 
 interface LazyResourceState<T> {
   readonly projectId: string;

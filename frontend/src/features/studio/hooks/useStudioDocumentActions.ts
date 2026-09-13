@@ -25,7 +25,7 @@ interface ScopedCreatingDocument {
   readonly kind: DocumentKind;
 }
 
-export interface PendingDocumentMove {
+interface PendingDocumentMove {
   readonly documentId: string;
   readonly direction: -1 | 1;
 }

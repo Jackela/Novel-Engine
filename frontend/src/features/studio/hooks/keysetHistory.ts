@@ -61,7 +61,7 @@ interface ActiveOlderPageRequest {
 }
 
 /** The shared older-page traversal every bounded keyset history consumes. */
-export interface KeysetOlderPages {
+interface KeysetOlderPages {
   /** Begin or join the older traversal; blocked or stale calls resolve without requesting. */
   readonly loadOlder: () => Promise<void>;
   readonly isLoadingOlder: boolean;

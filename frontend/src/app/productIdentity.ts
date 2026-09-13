@@ -1,4 +1,4 @@
-export interface ProductIdentity {
+interface ProductIdentity {
   readonly name: string;
   readonly version: string;
 }

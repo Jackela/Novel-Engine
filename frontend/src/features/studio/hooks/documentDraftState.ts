@@ -9,7 +9,7 @@ export interface DocumentDraftOwner {
   readonly token: symbol;
 }
 
-export interface DraftState {
+interface DraftState {
   readonly ownerKey: DocumentDraftOwner["key"];
   readonly draft: string;
   readonly titleDraft: string;

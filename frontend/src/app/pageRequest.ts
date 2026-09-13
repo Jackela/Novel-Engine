@@ -8,7 +8,7 @@ export interface PageRequestOptions extends RequestInit {
  * Encode one opaque path identifier so user-controlled ids stay uniformly
  * encoded in every request path (#479).
  */
-export function encodePathSegment(value: string): string {
+function encodePathSegment(value: string): string {
   return encodeURIComponent(value);
 }
 

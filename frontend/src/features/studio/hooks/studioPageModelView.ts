@@ -29,7 +29,7 @@ import type { LoreStatusLifecycleState } from "./useStudioLoreStatusActions";
 
 type NavigatorProps = ComponentProps<typeof StudioNavigator>;
 
-export interface StudioNavigatorModel
+interface StudioNavigatorModel
   extends Omit<NavigatorProps, "onNavigateSection" | "onCreateDocument" | "onMoveDocument"> {
   createDocument: (kind: DocumentKind) => void | Promise<void>;
   moveDocument: (documentId: string, direction: -1 | 1) => void | Promise<void>;
@@ -106,7 +106,7 @@ export function buildLoreStatusModel(
  * returned link function preserves the mutation owner's completion Promise;
  * only chapters associate with outline beats.
  */
-export function buildBeatModel(
+function buildBeatModel(
   document: Pick<DocumentSummary, "id" | "kind" | "beat_ref"> | null,
   linkBeat: (documentId: string, beat: string | null) => Promise<void>,
   lifecycle: BeatLifecycleState,
@@ -136,7 +136,7 @@ interface InspectorNarrowCommands {
 }
 
 /** Per-tab inputs the page model already owns (#412). */
-export interface StudioInspectorModelInputs {
+interface StudioInspectorModelInputs {
   readonly projectId: string;
   readonly copilot: ReturnType<typeof useStudioGeneration>["copilot"];
   readonly jobs: {

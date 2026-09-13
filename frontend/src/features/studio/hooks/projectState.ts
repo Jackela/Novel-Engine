@@ -103,7 +103,7 @@ export interface NarrowFieldCapture {
 }
 
 /** The placement fields the volume-placement command owns exclusively (#481). */
-export interface DocumentPlacement {
+interface DocumentPlacement {
   readonly volumeId: string;
   readonly position: number;
   readonly updatedAt: string;

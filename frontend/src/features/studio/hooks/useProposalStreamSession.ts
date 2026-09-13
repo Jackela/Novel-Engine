@@ -36,7 +36,7 @@ interface UnknownProposalAttempt {
   readonly operation: "continue" | "rewrite";
 }
 
-export interface ProposalStreamSessionOptions {
+interface ProposalStreamSessionOptions {
   readonly projectId: string;
   readonly activeDocument: StudioDocument | null;
   readonly project: Project | null;

@@ -24,7 +24,7 @@ interface ScopedPlacingChapter {
   readonly volumeId: string;
 }
 
-export interface ChapterPlacementLifecycleState {
+interface ChapterPlacementLifecycleState {
   readonly isPlacing: boolean;
   readonly error: string | null;
   readonly attemptedVolumeId: string | null;
