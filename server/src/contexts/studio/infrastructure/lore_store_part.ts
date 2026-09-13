@@ -3,12 +3,13 @@ import { eq } from "drizzle-orm";
 import { InvalidOperationError } from "../../../shared/domain/exceptions.js";
 import type { StudioSqliteDatabase } from "../../../shared/infrastructure/db/connection.js";
 import { isLoreEntryKind } from "../application/lorebook.js";
+import type { DocumentWithCurrent } from "../application/ports/document_store.js";
 import type {
   SetLoreAliasesInput,
   SetLoreStatusInput,
   StudioLoreStore,
 } from "../application/ports/lore_store.js";
-import type { DocumentWithCurrent, ProjectScope } from "../application/ports/studio_store.js";
+import type { ProjectScope } from "../application/ports/studio_store.js";
 import { documents, projects } from "./db/schema.js";
 import { documentWithCurrent, scopedDocument, scopedProject } from "./db/studio_query_helpers.js";
 

@@ -2,8 +2,8 @@ import type { Principal } from "../../../shared/application/ports/auth.js";
 import { InvalidOperationError } from "../../../shared/domain/exceptions.js";
 import { dumpJson } from "./payloads.js";
 import type { LegacyWorkspace, LegacyWorkspaceReader } from "./ports/legacy_workspace_reader.js";
-import type { ProjectStore } from "./ports/project_store.js";
-import { type ProjectRecord, scopeForPrincipal } from "./ports/studio_store.js";
+import type { ProjectRecord, ProjectStore } from "./ports/project_store.js";
+import { scopeForPrincipal } from "./ports/studio_store.js";
 
 /** Imported projects keep the authoring-core default settings (the mock provider). */
 const IMPORT_SETTINGS_JSON = dumpJson({ provider: "mock" });

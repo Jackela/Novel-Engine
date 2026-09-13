@@ -1,5 +1,5 @@
 import type { RevisionSource } from "../../domain/kinds.js";
-import type { ProjectRecord } from "./studio_store.js";
+import type { ProjectRecord } from "./project_store.js";
 import type { VolumeRecord } from "./volume_store.js";
 
 /** Structural navigation row; accepted body and revision metadata stay absent. */

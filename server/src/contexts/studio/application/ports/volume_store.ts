@@ -1,5 +1,6 @@
+import type { DocumentWithCurrent } from "./document_store.js";
 import type { DocumentSummaryRecord } from "./project_shell_records.js";
-import type { DocumentWithCurrent, ProjectScope } from "./studio_store.js";
+import type { ProjectScope } from "./studio_store.js";
 
 /**
  * Persistence-neutral volume row shape (ADR-0005): the fixed two-level

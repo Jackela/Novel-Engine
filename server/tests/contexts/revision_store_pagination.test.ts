@@ -8,8 +8,8 @@ import { describe, expect, it } from "vitest";
 import {
   type RevisionPageLimit,
   revisionPageLimit,
-  scopeForPrincipal,
-} from "../../src/contexts/studio/application/ports/studio_store.js";
+} from "../../src/contexts/studio/application/ports/document_store.js";
+import { scopeForPrincipal } from "../../src/contexts/studio/application/ports/studio_store.js";
 import * as studioSchema from "../../src/contexts/studio/infrastructure/db/schema.js";
 import { documentRevisions } from "../../src/contexts/studio/infrastructure/db/schema.js";
 import { DocumentStorePart } from "../../src/contexts/studio/infrastructure/document_store_part.js";

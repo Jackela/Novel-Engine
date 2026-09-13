@@ -3,10 +3,8 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
-import {
-  revisionPageLimit,
-  scopeForPrincipal,
-} from "../../src/contexts/studio/application/ports/studio_store.js";
+import { revisionPageLimit } from "../../src/contexts/studio/application/ports/document_store.js";
+import { scopeForPrincipal } from "../../src/contexts/studio/application/ports/studio_store.js";
 import { DocumentStorePart } from "../../src/contexts/studio/infrastructure/document_store_part.js";
 import { JobStorePart } from "../../src/contexts/studio/infrastructure/job_store_part.js";
 import { ProjectStorePart } from "../../src/contexts/studio/infrastructure/project_store_part.js";

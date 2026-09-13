@@ -1,6 +1,6 @@
 import { and, desc, eq, lt, or } from "drizzle-orm";
 
-import type { RevisionPageInput } from "../application/ports/studio_store.js";
+import type { RevisionPageInput } from "../application/ports/document_store.js";
 import { documentRevisions } from "./db/schema.js";
 import type { Tx } from "./db/studio_query_helpers.js";
 

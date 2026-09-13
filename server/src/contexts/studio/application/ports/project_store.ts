@@ -1,13 +1,48 @@
+import type { DocumentWithCurrent } from "./document_store.js";
 import type { ProjectCatalogStore } from "./project_catalog_store.js";
 import type { ProjectShellRecord } from "./project_shell_records.js";
 import type { ProjectUpdateStore } from "./project_update_store.js";
-import type {
-  AddImportedProjectInput,
-  AddProjectInput,
-  DocumentWithCurrent,
-  ProjectRecord,
-  ProjectScope,
-} from "./studio_store.js";
+import type { ProjectScope } from "./studio_store.js";
+
+/** Persistence-neutral row shape handed to the application layer. */
+export interface ProjectRecord {
+  id: string;
+  ownerId: string;
+  title: string;
+  description: string;
+  settingsJson: string;
+  importHash: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface AddProjectInput {
+  title: string;
+  description: string;
+  settingsJson: string;
+  /** Seed document/revision written in the same transaction as the project. */
+  seed: { kind: string; title: string; contentMarkdown: string; metadataJson: string } | null;
+  now: Date;
+}
+
+/** One imported chapter: content plus its persisted metadata JSON. */
+export interface ImportedChapterInput {
+  contentMarkdown: string;
+  metadataJson: string;
+}
+
+/**
+ * The whole legacy-import write: the project row already carries its import
+ * hash, and every chapter document/revision lands in the same transaction.
+ */
+export interface AddImportedProjectInput {
+  title: string;
+  description: string;
+  settingsJson: string;
+  importHash: string;
+  chapters: ImportedChapterInput[];
+  now: Date;
+}
 
 /**
  * Project-port of the authoring core: creation with the seed document and

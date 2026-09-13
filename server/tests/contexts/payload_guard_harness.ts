@@ -17,13 +17,13 @@
  */
 
 import { Ajv, type ValidateFunction } from "ajv";
-import type { JobRecord } from "../../src/contexts/studio/application/ports/job_records.js";
-import type { DocumentSummaryRecord } from "../../src/contexts/studio/application/ports/project_shell_records.js";
 import type {
   DocumentMatchRecord,
   DocumentWithCurrent,
   RevisionRecord,
-} from "../../src/contexts/studio/application/ports/studio_store.js";
+} from "../../src/contexts/studio/application/ports/document_store.js";
+import type { JobRecord } from "../../src/contexts/studio/application/ports/job_records.js";
+import type { DocumentSummaryRecord } from "../../src/contexts/studio/application/ports/project_shell_records.js";
 import type { VolumeRecord } from "../../src/contexts/studio/application/ports/volume_store.js";
 
 export type SchemaNode = Record<string, unknown>;

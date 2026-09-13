@@ -1,6 +1,6 @@
 import { sql } from "drizzle-orm";
 
-import type { DocumentMatchRecord } from "../../application/ports/studio_store.js";
+import type { DocumentMatchRecord } from "../../application/ports/document_store.js";
 import type { Tx } from "./studio_query_helpers.js";
 
 /**

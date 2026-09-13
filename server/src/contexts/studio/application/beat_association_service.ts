@@ -3,8 +3,8 @@ import { InvalidOperationError } from "../../../shared/domain/exceptions.js";
 import { type OutlineBeat, splitOutlineBeats } from "./outline_beats.js";
 import type { ChapterBeatPayload } from "./payload_schemas/beat.js";
 import { chapterBeatPayload } from "./payloads.js";
-import type { DocumentStore } from "./ports/document_store.js";
-import type { DocumentWithCurrent, ProjectScope } from "./ports/studio_store.js";
+import type { DocumentStore, DocumentWithCurrent } from "./ports/document_store.js";
+import type { ProjectScope } from "./ports/studio_store.js";
 import { scopeForPrincipal } from "./ports/studio_store.js";
 
 /**

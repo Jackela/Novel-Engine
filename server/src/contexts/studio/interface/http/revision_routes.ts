@@ -2,7 +2,7 @@ import type { TypeBoxTypeProvider } from "@fastify/type-provider-typebox";
 import type { FastifyPluginAsync } from "fastify";
 import { principalGuard, requirePrincipal } from "../../../../shared/interface/http/auth_guard.js";
 import { errorEnvelopeResponse } from "../../../../shared/interface/http/error_envelope.js";
-import { revisionPageLimit } from "../../application/ports/studio_store.js";
+import { revisionPageLimit } from "../../application/ports/document_store.js";
 import { requireServices, type StudioRoutesOptions } from "./project_routes.js";
 import { decodeRevisionCursor, encodeRevisionCursor } from "./revision_cursor.js";
 import { authedReadResponses, authedWriteResponses } from "./route_responses.js";

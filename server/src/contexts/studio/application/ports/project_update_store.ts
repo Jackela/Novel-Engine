@@ -1,4 +1,5 @@
-import type { ProjectRecord, ProjectScope } from "./studio_store.js";
+import type { ProjectRecord } from "./project_store.js";
+import type { ProjectScope } from "./studio_store.js";
 
 interface OptionalProjectUpdateFields {
   readonly title?: string | undefined;

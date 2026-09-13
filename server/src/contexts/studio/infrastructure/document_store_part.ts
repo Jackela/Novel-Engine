@@ -2,17 +2,17 @@ import { and, desc, eq } from "drizzle-orm";
 
 import { InvalidOperationError } from "../../../shared/domain/exceptions.js";
 import type { StudioSqliteDatabase } from "../../../shared/infrastructure/db/connection.js";
-import type { DocumentStore } from "../application/ports/document_store.js";
 import type {
   AddDocumentInput,
   AdvanceDocumentInput,
   DocumentMatchRecord,
+  DocumentStore,
   DocumentWithCurrent,
-  ProjectScope,
   RevisionPageInput,
   RevisionSummaryPage,
-} from "../application/ports/studio_store.js";
-import { revisionPageLimit } from "../application/ports/studio_store.js";
+} from "../application/ports/document_store.js";
+import { revisionPageLimit } from "../application/ports/document_store.js";
+import type { ProjectScope } from "../application/ports/studio_store.js";
 import { DuplicateDocumentError, NotFoundError, SnapshotConflict } from "../domain/exceptions.js";
 import { assertStoredRevisionWordCount } from "../domain/revision_word_count.js";
 import { advanceDocumentInTransaction } from "./db/document_revision_writes.js";
