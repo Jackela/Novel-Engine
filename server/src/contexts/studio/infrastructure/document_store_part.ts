@@ -1,4 +1,3 @@
-import { randomUUID } from "node:crypto";
 import { and, desc, eq } from "drizzle-orm";
 
 import { InvalidOperationError } from "../../../shared/domain/exceptions.js";
@@ -15,14 +14,10 @@ import type {
 } from "../application/ports/studio_store.js";
 import { revisionPageLimit } from "../application/ports/studio_store.js";
 import { DuplicateDocumentError, NotFoundError, SnapshotConflict } from "../domain/exceptions.js";
-import { DEFAULT_LORE_STATUS } from "../domain/kinds.js";
 import { assertStoredRevisionWordCount } from "../domain/revision_word_count.js";
 import { advanceDocumentInTransaction } from "./db/document_revision_writes.js";
-import {
-  clearDocumentIndex,
-  matchDocumentIndex,
-  refreshDocumentIndex,
-} from "./db/document_search.js";
+import { clearDocumentIndex, matchDocumentIndex } from "./db/document_search.js";
+import { seedDocumentInTransaction } from "./db/document_seed_writes.js";
 import { documentRevisions, documents, projects, snapshotDocuments } from "./db/schema.js";
 import {
   assertOutlineBeatCapacity,
@@ -32,7 +27,6 @@ import {
 import {
   documentsWithCurrent,
   documentWithCurrent,
-  insertRevision,
   isUniqueViolation,
   type RevisionRow,
   scopedCurrentDocument,
@@ -85,53 +79,20 @@ export class DocumentStorePart implements DocumentStore {
           assertVolumeChapterCapacity(tx, input.volumeId);
         }
         assertOutlineBeatCapacity(input.kind, input.contentMarkdown);
-        const document: typeof documents.$inferInsert = {
-          id: randomUUID(),
+        const seeded = seedDocumentInTransaction(tx, {
           projectId: project.id,
+          volumeId: input.volumeId,
           kind: input.kind,
           title: input.title,
           position: input.position,
-          volumeId: input.volumeId,
-          currentRevisionId: null,
-          createdAt: input.now,
-          updatedAt: input.now,
-        };
-        tx.insert(documents).values(document).run();
-        const revision = insertRevision(tx, {
-          documentId: document.id,
-          parentRevisionId: null,
-          revisionNumber: 1,
           contentMarkdown: input.contentMarkdown,
           metadataJson: input.metadataJson,
-          source: "author",
+          revisionSource: "author",
           now: input.now,
-        });
-        tx.update(documents)
-          .set({ currentRevisionId: revision.id, updatedAt: input.now })
-          .where(eq(documents.id, document.id))
-          .run();
-        refreshDocumentIndex(tx, {
-          documentId: document.id,
-          projectId: project.id,
-          title: input.title,
-          content: input.contentMarkdown,
+          touchDocumentUpdatedAt: true,
         });
         tx.update(projects).set({ updatedAt: input.now }).where(eq(projects.id, project.id)).run();
-        return {
-          id: document.id,
-          projectId: project.id,
-          kind: input.kind,
-          title: input.title,
-          position: input.position,
-          volumeId: input.volumeId,
-          beatRef: null,
-          loreAliasesJson: "[]",
-          loreStatus: DEFAULT_LORE_STATUS,
-          currentRevisionId: revision.id,
-          createdAt: input.now,
-          updatedAt: input.now,
-          currentRevision: revision,
-        };
+        return seeded;
       });
     } catch (error) {
       if (isUniqueViolation(error)) {
