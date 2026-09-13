@@ -5,6 +5,7 @@ import { principalGuard, requirePrincipal } from "../../../../shared/interface/h
 import { errorEnvelopeResponse } from "../../../../shared/interface/http/error_envelope.js";
 import { chapterBeatPayloadSchema } from "../../application/payload_schemas/beat.js";
 import { requireServices, type StudioRoutesOptions } from "./project_routes.js";
+import { authedReadResponses, authedWriteResponses } from "./route_responses.js";
 import { withStudioErrors } from "./studio_error_mapping.js";
 import { documentIdParams } from "./studio_request_schemas.js";
 
@@ -44,12 +45,7 @@ export const beatRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fastif
       preHandler: [guard],
       schema: {
         params: documentIdParams,
-        response: {
-          200: chapterBeatResponseSchema,
-          401: errorEnvelopeResponse,
-          404: errorEnvelopeResponse,
-          503: errorEnvelopeResponse,
-        },
+        response: authedReadResponses({ 200: chapterBeatResponseSchema }),
       },
     },
     async (request) =>
@@ -69,14 +65,10 @@ export const beatRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fastif
       schema: {
         params: documentIdParams,
         body: chapterBeatLinkSchema,
-        response: {
+        response: authedWriteResponses({
           200: chapterBeatResponseSchema,
-          401: errorEnvelopeResponse,
-          403: errorEnvelopeResponse,
-          404: errorEnvelopeResponse,
           422: errorEnvelopeResponse,
-          503: errorEnvelopeResponse,
-        },
+        }),
       },
     },
     async (request) =>

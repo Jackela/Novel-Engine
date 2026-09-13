@@ -10,6 +10,7 @@ import {
   loreStatusWriteSchema,
 } from "./lore_schemas.js";
 import { requireServices, type StudioRoutesOptions } from "./project_routes.js";
+import { authedReadResponses, authedWriteResponses } from "./route_responses.js";
 import { withStudioErrors } from "./studio_error_mapping.js";
 import { documentIdParams } from "./studio_request_schemas.js";
 
@@ -29,12 +30,7 @@ export const loreRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fastif
       preHandler: [guard],
       schema: {
         params: documentIdParams,
-        response: {
-          200: loreAliasResponseSchema,
-          401: errorEnvelopeResponse,
-          404: errorEnvelopeResponse,
-          503: errorEnvelopeResponse,
-        },
+        response: authedReadResponses({ 200: loreAliasResponseSchema }),
       },
     },
     async (request) =>
@@ -56,15 +52,11 @@ export const loreRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fastif
       schema: {
         params: documentIdParams,
         body: loreAliasWriteSchema,
-        response: {
+        response: authedWriteResponses({
           200: loreAliasResponseSchema,
           // Non-lore document kinds answer 422 INVALID_OPERATION.
-          401: errorEnvelopeResponse,
-          403: errorEnvelopeResponse,
-          404: errorEnvelopeResponse,
           422: errorEnvelopeResponse,
-          503: errorEnvelopeResponse,
-        },
+        }),
       },
     },
     async (request) =>
@@ -87,15 +79,11 @@ export const loreRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fastif
       schema: {
         params: documentIdParams,
         body: loreStatusWriteSchema,
-        response: {
+        response: authedWriteResponses({
           200: loreStatusResponseSchema,
           // Non-lore kinds and enum misses answer 422.
-          401: errorEnvelopeResponse,
-          403: errorEnvelopeResponse,
-          404: errorEnvelopeResponse,
           422: errorEnvelopeResponse,
-          503: errorEnvelopeResponse,
-        },
+        }),
       },
     },
     async (request) =>
