@@ -14,6 +14,7 @@ import {
 } from "./export_publication_cleanup_journal.js";
 import { readManifestEvidence } from "./export_publication_manifest_evidence.js";
 import {
+  type RecoveryStagingEntries,
   readRecoveryStagingEntries,
   stageArtifactId,
 } from "./export_publication_recovery_entries.js";
@@ -106,6 +107,13 @@ export async function removeOwnedFinalQuarantines(
   await syncDirectory(projectDirectory);
 }
 
+// A staging temporary proven to match its recovery manifest; removable later
+// as a reconciled sidecar.
+interface StagedTemporary {
+  readonly path: string;
+  readonly identity: { dev: bigint; ino: bigint };
+}
+
 export async function reconcileStaging(
   staging: string,
   projectDirectory: string,
@@ -117,10 +125,34 @@ export async function reconcileStaging(
 ): Promise<void> {
   const entries = await readRecoveryStagingEntries(staging, projectId);
   const manifests = replayManifests(entries.manifests, intents);
-  const temporaryByManifest = new Map<
-    string,
-    Array<{ path: string; identity: { dev: bigint; ino: bigint } }>
-  >();
+  const temporaryByManifest = await classifyStagingTemporaries(entries, manifests, projectId);
+  const handledStages = new Set([...manifests.values()].map(({ record }) => record.stage_file));
+  await preflightStagedRecovery(entries, manifests, artifacts, handledStages, projectDirectory);
+  await reconcileStagedManifests(
+    entries,
+    manifests,
+    temporaryByManifest,
+    artifacts,
+    projectDirectory,
+    journal,
+    report,
+  );
+  await restoreUnhandledStages(entries, handledStages, artifacts, projectDirectory, report);
+  await syncDirectory(staging);
+  await rmdir(staging);
+  await syncDirectory(projectDirectory);
+}
+
+// Step 1: classify staging temporaries against the replayed manifests. A
+// temporary may become the only surviving manifest copy (refreshing its
+// evidence), or prove itself against the linked manifest and join the
+// per-manifest removal set; anything unproven aborts recovery.
+async function classifyStagingTemporaries(
+  entries: RecoveryStagingEntries,
+  manifests: Map<string, ReplayManifest>,
+  projectId: string,
+): Promise<Map<string, StagedTemporary[]>> {
+  const temporaryByManifest = new Map<string, StagedTemporary[]>();
   for (const temporary of entries.temporary) {
     if (temporary.manifestName === undefined) unproven(temporary.path);
     const current = manifests.get(temporary.manifestName);
@@ -153,7 +185,18 @@ export async function reconcileStaging(
       { path: temporary.path, identity },
     ]);
   }
-  const handledStages = new Set([...manifests.values()].map(({ record }) => record.stage_file));
+  return temporaryByManifest;
+}
+
+// Step 2: prove unhandled stage evidence and preflight every manifest's
+// recovery before any side effect mutates the staging or project directories.
+async function preflightStagedRecovery(
+  entries: RecoveryStagingEntries,
+  manifests: Map<string, ReplayManifest>,
+  artifacts: Map<string, ArtifactRow>,
+  handledStages: ReadonlySet<string>,
+  projectDirectory: string,
+): Promise<void> {
   for (const [name, stage] of entries.stages) {
     if (handledStages.has(name)) continue;
     const artifact = artifacts.get(stageArtifactId(name) ?? "");
@@ -170,6 +213,20 @@ export async function reconcileStaging(
       artifacts.get(manifest.record.artifact_id),
     );
   }
+}
+
+// Step 3: reconcile each manifest — remove its proven temporaries, restore the
+// final from its stage file, and complete the cleanup journal whenever the
+// recorded cleanup intent was consumed.
+async function reconcileStagedManifests(
+  entries: RecoveryStagingEntries,
+  manifests: Map<string, ReplayManifest>,
+  temporaryByManifest: ReadonlyMap<string, StagedTemporary[]>,
+  artifacts: Map<string, ArtifactRow>,
+  projectDirectory: string,
+  journal: ExportPublicationCleanupJournal,
+  report: MutableRecoveryReport,
+): Promise<void> {
   for (const [manifestName, manifest] of manifests) {
     const artifact = artifacts.get(manifest.record.artifact_id);
     for (const temporary of temporaryByManifest.get(manifestName) ?? []) {
@@ -188,6 +245,18 @@ export async function reconcileStaging(
     );
     if (cleanupIntentUsed) await journal.complete(manifest.record.publication_id);
   }
+}
+
+// Step 4: restore finals for stages without a recovery manifest and remove
+// their stage files as leftover sidecars; the caller then clears the staging
+// directory itself.
+async function restoreUnhandledStages(
+  entries: RecoveryStagingEntries,
+  handledStages: ReadonlySet<string>,
+  artifacts: Map<string, ArtifactRow>,
+  projectDirectory: string,
+  report: MutableRecoveryReport,
+): Promise<void> {
   for (const [name, stage] of entries.stages) {
     if (handledStages.has(name)) continue;
     const artifact = artifacts.get(stageArtifactId(name) ?? "");
@@ -196,9 +265,6 @@ export async function reconcileStaging(
     await cleanupOwnedFile(stage.path, identity);
     report.sidecarsRemoved += 1;
   }
-  await syncDirectory(staging);
-  await rmdir(staging);
-  await syncDirectory(projectDirectory);
 }
 
 function replayManifests(
