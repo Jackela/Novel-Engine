@@ -1,7 +1,6 @@
 import type { TypeBoxTypeProvider } from "@fastify/type-provider-typebox";
 import type { FastifyPluginAsync } from "fastify";
 import { principalGuard, requirePrincipal } from "../../../../shared/interface/http/auth_guard.js";
-import { errorEnvelopeResponse } from "../../../../shared/interface/http/error_envelope.js";
 import { requireServices, type StudioRoutesOptions } from "./project_routes.js";
 import { authedReadResponses, authedWriteResponses } from "./route_responses.js";
 import { structureCapacity422ResponseSchema } from "./structure_capacity_schemas.js";
@@ -11,11 +10,9 @@ import {
   documentIdParams,
   documentSaveSchema,
   projectIdParams,
-  reorderSchema,
 } from "./studio_request_schemas.js";
 import {
   documentConflictSchema,
-  documentListResponseSchema,
   documentResponseSchema,
   revisionConflictSchema,
   snapshotConflictSchema,
@@ -24,9 +21,12 @@ import { documentPlaceSchema } from "./volume_schemas.js";
 
 /**
  * Document surface: creation with the identity uniqueness contract,
- * conflict-checked saves, whole-set reorder, and deletion.
+ * conflict-checked saves, volume placement, and deletion.
  */
-export const documentRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fastify, options) => {
+export const documentCrudRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (
+  fastify,
+  options,
+) => {
   const app = fastify.withTypeProvider<TypeBoxTypeProvider>();
   const guard = principalGuard(options.authService);
 
@@ -62,30 +62,6 @@ export const documentRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fa
       reply.status(201);
       return payload;
     },
-  );
-
-  app.put(
-    "/api/projects/:projectId/documents/reorder",
-    {
-      preHandler: [guard],
-      schema: {
-        params: projectIdParams,
-        body: reorderSchema,
-        response: authedWriteResponses({
-          200: documentListResponseSchema,
-          404: errorEnvelopeResponse,
-          422: errorEnvelopeResponse,
-        }),
-      },
-    },
-    async (request) =>
-      withStudioErrors(() => ({
-        documents: requireServices(options).documents.reorderProjectDocuments(
-          requirePrincipal(request),
-          request.params.projectId,
-          request.body.document_ids,
-        ),
-      })),
   );
 
   app.get(
