@@ -2,7 +2,6 @@ import { randomUUID } from "node:crypto";
 import { and, eq, sql } from "drizzle-orm";
 
 import type { StudioSqliteDatabase } from "../../../shared/infrastructure/db/connection.js";
-import { jobs, usageEvents } from "../../../shared/infrastructure/db/schema.js";
 import type {
   ProjectCatalogPage,
   ProjectPageInput,
@@ -19,7 +18,7 @@ import type {
 import { NotFoundError } from "../domain/exceptions.js";
 import { clearProjectDocumentIndex } from "./db/document_search.js";
 import { seedDocumentInTransaction } from "./db/document_seed_writes.js";
-import { projects } from "./db/schema.js";
+import { jobs, projects, usageEvents } from "./db/schema.js";
 import {
   documentSummaries,
   documentsWithCurrent,

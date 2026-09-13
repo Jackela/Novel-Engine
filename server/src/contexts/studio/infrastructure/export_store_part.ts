@@ -1,6 +1,5 @@
 import { eq } from "drizzle-orm";
 import type { StudioSqliteDatabase } from "../../../shared/infrastructure/db/connection.js";
-import { jobs } from "../../../shared/infrastructure/db/schema.js";
 import { sameExportSourceProjection } from "../application/export_source_identity.js";
 import { exportJobResultJson } from "../application/payloads.js";
 import type {
@@ -29,6 +28,7 @@ import {
   isExportSnapshotWithinSourceCapacity,
 } from "./db/export_source_capacity.js";
 import { applyJobOutcome, insertJobAndEvent } from "./db/job_writes.js";
+import { jobs } from "./db/schema.js";
 import { scopedProject, type Tx } from "./db/studio_query_helpers.js";
 import { jobWithEvents } from "./job_store_part.js";
 

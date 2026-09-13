@@ -7,11 +7,12 @@ import type { ExportArtifactGateway } from "../../src/contexts/studio/applicatio
 import { ExportArtifactWriteError } from "../../src/contexts/studio/domain/exceptions.js";
 import {
   exports as exportRecords,
+  jobEvents,
+  jobs,
   projectSnapshots,
   snapshotDocuments,
 } from "../../src/contexts/studio/infrastructure/db/schema.js";
 import { ExportStorePart } from "../../src/contexts/studio/infrastructure/export_store_part.js";
-import { jobEvents, jobs } from "../../src/shared/infrastructure/db/schema.js";
 import { seedProjectWithChapter, studioDatabase } from "./job_test_helpers.js";
 import { retryJobRequest } from "./retry_test_helpers.js";
 import {

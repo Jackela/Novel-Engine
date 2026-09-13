@@ -3,7 +3,10 @@ import { join } from "node:path";
 import { eq } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
 
-import { jobs as jobsTable, usageEvents } from "../../src/shared/infrastructure/db/schema.js";
+import {
+  jobs as jobsTable,
+  usageEvents,
+} from "../../src/contexts/studio/infrastructure/db/schema.js";
 import {
   firstDocument,
   flakyProviderFactory,

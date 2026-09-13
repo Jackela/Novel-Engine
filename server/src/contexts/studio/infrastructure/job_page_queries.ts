@@ -1,7 +1,6 @@
 import { and, desc, eq, sql } from "drizzle-orm";
-
-import { jobs } from "../../../shared/infrastructure/db/schema.js";
 import type { JobPageInput } from "../application/ports/job_records.js";
+import { jobs } from "./db/schema.js";
 import type { Tx } from "./db/studio_query_helpers.js";
 
 /** Build the exact keyset query executed by the project job listing. */

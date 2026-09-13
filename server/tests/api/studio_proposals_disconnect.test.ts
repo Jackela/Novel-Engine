@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import type { TextGenerationTask } from "../../src/contexts/ai/application/ports/text_generation.js";
 import type { ProposalStreamFrame } from "../../src/contexts/studio/application/proposal_streaming.js";
-import { jobs, usageEvents } from "../../src/shared/infrastructure/db/schema.js";
+import { jobs, usageEvents } from "../../src/contexts/studio/infrastructure/db/schema.js";
 import {
   authHeaders,
   buildStudioApp,

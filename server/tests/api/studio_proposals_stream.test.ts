@@ -9,7 +9,7 @@ import {
 import { wordCount } from "../../src/contexts/studio/application/payloads.js";
 import type { ProposalStreamFrame } from "../../src/contexts/studio/application/proposal_streaming.js";
 import { isProposalMarkdownProse } from "../../src/contexts/studio/application/sanitization.js";
-import { jobs, usageEvents } from "../../src/shared/infrastructure/db/schema.js";
+import { jobs, usageEvents } from "../../src/contexts/studio/infrastructure/db/schema.js";
 import { cookieHeader, loginOwner } from "./auth_helpers.js";
 import { validProposalProse } from "./proposal_test_helpers.js";
 import {

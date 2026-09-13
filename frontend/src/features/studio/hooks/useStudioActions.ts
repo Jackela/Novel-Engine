@@ -1,19 +1,19 @@
 import type { Dispatch, SetStateAction } from "react";
-import { useCallback, useLayoutEffect, useRef, useState } from "react";
 
-import { api, HttpError } from "@/app/api";
-import { clearRetryAttempt, getOrCreateRetryAttemptKey } from "@/app/retryAttemptRegistry";
 import type { Project, ReviewsPage } from "@/app/types/studio";
 import type { SettingsFormState } from "../studioInspectorTypes";
-import { toErrorMessage } from "./toErrorMessage";
-import { usePendingAction } from "./usePendingAction";
 import { useProjectSettingsUpdate } from "./useProjectSettingsUpdate";
+import type { StudioActionErrorPublishers } from "./useStudioActionOwner";
+import { useStudioActionOwner } from "./useStudioActionOwner";
 import { useStudioBeatActions } from "./useStudioBeatActions";
 import { useStudioChapterPlacement } from "./useStudioChapterPlacement";
 import { useStudioDocumentActions } from "./useStudioDocumentActions";
 import { useStudioDocumentDeletion } from "./useStudioDocumentDeletion";
+import { useStudioJobActions } from "./useStudioJobActions";
 import type { JobsFreshLoadInitiator } from "./useStudioJobs";
 import { useStudioLoreStatusActions } from "./useStudioLoreStatusActions";
+
+export type { StudioActionErrorPublishers };
 
 interface UseStudioActionsOptions {
   project: Project | null;
@@ -31,29 +31,13 @@ interface UseStudioActionsOptions {
   isProposalActionGated?: () => boolean;
 }
 
-export interface StudioActionErrorPublishers {
-  readonly review: Dispatch<SetStateAction<string | null>>;
-  readonly settings: Dispatch<SetStateAction<string | null>>;
-  readonly retryJob: Dispatch<SetStateAction<string | null>>;
-  readonly createDocument: Dispatch<SetStateAction<string | null>>;
-  readonly moveDocument: Dispatch<SetStateAction<string | null>>;
-}
-
-type StudioActionErrorSource = keyof StudioActionErrorPublishers;
-
-const ACTION_KEYS = ["runReview", "retryJob"] as const;
-
-type ActionKey = (typeof ACTION_KEYS)[number];
-
-const DEFINITIVE_RETRY_REJECTIONS = new Set([401, 403, 404, 422]);
 const PROPOSAL_ACTIONS_UNGATED = () => false;
 
-interface StudioActionsOwner {
-  readonly projectId: string;
-  readonly controllers: Set<AbortController>;
-  active: boolean;
-}
-
+/**
+ * Composition facade over the studio action domains: one mounted owner per
+ * project generation, one sub-hook per state domain, and the flat action
+ * surface pinned by the page model and its tests.
+ */
 export function useStudioActions({
   project,
   projectId,
@@ -69,56 +53,11 @@ export function useStudioActions({
   loadJobs,
   isProposalActionGated = PROPOSAL_ACTIONS_UNGATED,
 }: UseStudioActionsOptions) {
-  const { pending, begin, finish } = usePendingAction<ActionKey>(ACTION_KEYS);
-  const [retryingJobId, setRetryingJobId] = useState<string | null>(null);
-  const ownerRef = useRef<StudioActionsOwner | null>(null);
-
-  useLayoutEffect(() => {
-    const owner: StudioActionsOwner = {
-      projectId,
-      controllers: new Set<AbortController>(),
-      active: true,
-    };
-    ownerRef.current = owner;
-    return () => {
-      owner.active = false;
-      for (const controller of owner.controllers) controller.abort();
-      owner.controllers.clear();
-      if (ownerRef.current === owner) ownerRef.current = null;
-    };
-  }, [projectId]);
-
-  const currentOwner = useCallback((): StudioActionsOwner | null => {
-    const owner = ownerRef.current;
-    return owner?.active && owner.projectId === projectId ? owner : null;
-  }, [projectId]);
-
-  const isCurrentOwner = useCallback(
-    (owner: StudioActionsOwner): boolean => owner.active && ownerRef.current === owner,
-    [],
-  );
-
-  const publishError = useCallback(
-    (owner: StudioActionsOwner, source: StudioActionErrorSource, value: string | null) => {
-      if (!isCurrentOwner(owner)) return;
-      const publisher = errorPublishers?.[source] ?? setError;
-      publisher((current) => (isCurrentOwner(owner) ? value : current));
-    },
-    [errorPublishers, isCurrentOwner, setError],
-  );
-  const clearSharedError = useCallback(
-    (owner: StudioActionsOwner) => {
-      if (!errorPublishers) publishError(owner, "review", null);
-    },
-    [errorPublishers, publishError],
-  );
-
-  const finishForOwner = useCallback(
-    (owner: StudioActionsOwner, key: ActionKey) => {
-      if (isCurrentOwner(owner)) finish(key);
-    },
-    [finish, isCurrentOwner],
-  );
+  const { currentOwner, isCurrentOwner, publishError, clearSharedError } = useStudioActionOwner({
+    projectId,
+    setError,
+    errorPublishers,
+  });
 
   const documentActions = useStudioDocumentActions({
     project,
@@ -170,72 +109,15 @@ export function useStudioActions({
     onSessionLost: onSettingsSessionLost,
     onProjectMissing: onSettingsProjectMissing,
   });
-
-  const runReview = useCallback(async () => {
-    const owner = currentOwner();
-    if (!owner || !begin("runReview")) return;
-    publishError(owner, "review", null);
-    let reviewController: AbortController | null = null;
-    try {
-      // The synchronous job contract (#272): the response is the terminal
-      // review job; one cursorless first-page refresh follows (#459).
-      const job = await api.createReview(projectId);
-      if (job.status !== "completed") {
-        throw new Error(job.error ?? "Unable to run review.");
-      }
-      if (!isCurrentOwner(owner)) return;
-      reviewController = new AbortController();
-      owner.controllers.add(reviewController);
-      const response = await api.reviews(projectId, { signal: reviewController.signal });
-      if (!isCurrentOwner(owner) || reviewController.signal.aborted) return;
-      setReviewPage(response);
-    } catch (reason) {
-      publishError(owner, "review", toErrorMessage(reason, "Unable to run review."));
-    } finally {
-      if (reviewController) owner.controllers.delete(reviewController);
-      finishForOwner(owner, "runReview");
-    }
-  }, [begin, currentOwner, finishForOwner, isCurrentOwner, projectId, publishError, setReviewPage]);
-
-  const retryJob = useCallback(
-    async (jobId: string) => {
-      if (isProposalActionGated()) return;
-      const owner = currentOwner();
-      if (!owner || !begin("retryJob")) return;
-      setRetryingJobId(jobId);
-      publishError(owner, "retryJob", null);
-      let idempotencyKey: string | null = null;
-      try {
-        idempotencyKey = getOrCreateRetryAttemptKey(projectId, jobId);
-        await api.retryJob(projectId, jobId, idempotencyKey);
-        clearRetryAttempt(projectId, jobId, idempotencyKey);
-        if (!isCurrentOwner(owner)) return;
-        await loadJobs("retry");
-      } catch (reason) {
-        if (
-          idempotencyKey !== null &&
-          reason instanceof HttpError &&
-          DEFINITIVE_RETRY_REJECTIONS.has(reason.status)
-        ) {
-          clearRetryAttempt(projectId, jobId, idempotencyKey);
-        }
-        publishError(owner, "retryJob", toErrorMessage(reason, "Unable to retry job."));
-      } finally {
-        if (isCurrentOwner(owner)) setRetryingJobId(null);
-        finishForOwner(owner, "retryJob");
-      }
-    },
-    [
-      begin,
-      currentOwner,
-      finishForOwner,
-      isProposalActionGated,
-      isCurrentOwner,
-      loadJobs,
-      projectId,
-      publishError,
-    ],
-  );
+  const jobActions = useStudioJobActions({
+    projectId,
+    currentOwner,
+    isCurrentOwner,
+    publishError,
+    setReviewPage,
+    loadJobs,
+    isProposalActionGated,
+  });
 
   return {
     createDocument: documentActions.createDocument,
@@ -246,24 +128,24 @@ export function useStudioActions({
     placeChapter: placementActions.placeChapter,
     placementFor: placementActions.placementFor,
     placingDocument: placementActions.placingDocument,
-    runReview,
+    runReview: jobActions.runReview,
     updateProjectSettings: settingsUpdate.updateProjectSettings,
-    retryJob,
+    retryJob: jobActions.retryJob,
     changeLoreStatus: loreStatusActions.changeLoreStatus,
     loreStatusFor: loreStatusActions.loreStatusFor,
     linkBeat: beatActions.linkBeat,
     beatFor: beatActions.beatFor,
     pending: {
       ...documentActions.pending,
-      ...pending,
+      ...jobActions.pending,
     },
     creatingDocumentKind: documentActions.creatingDocumentKind,
     movingDocument: documentActions.movingDocument,
     isCreatingDocument: documentActions.isCreatingDocument,
     isMovingDocument: documentActions.isMovingDocument,
-    isRunningReview: pending.runReview,
+    isRunningReview: jobActions.pending.runReview,
     isUpdatingSettings: settingsUpdate.isUpdatingSettings,
-    isRetryingJob: pending.retryJob,
-    retryingJobId,
+    isRetryingJob: jobActions.pending.retryJob,
+    retryingJobId: jobActions.retryingJobId,
   };
 }

@@ -3,11 +3,12 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
   exports as exportRecords,
+  jobEvents,
+  jobs,
   projectSnapshots,
   snapshotDocuments,
 } from "../../src/contexts/studio/infrastructure/db/schema.js";
 import { ExportStorePart } from "../../src/contexts/studio/infrastructure/export_store_part.js";
-import { jobEvents, jobs } from "../../src/shared/infrastructure/db/schema.js";
 import { seedProjectWithChapter, studioDatabase } from "./job_test_helpers.js";
 import {
   buildStudioApp,

@@ -3,6 +3,7 @@ import {
   openStudioDatabase,
   type StudioDatabase,
 } from "../../../shared/infrastructure/db/startup.js";
+import { recoverInterruptedJobs } from "./db/job_recovery.js";
 import {
   type ExportPublicationRecoveryReport,
   reconcileExportPublications,
@@ -28,5 +29,6 @@ export function openReconciledStudioDatabase(
       const report = await reconcileExportPublications(database, dataDirectory);
       await options.onReconciled?.(report);
     },
+    recoverJobs: recoverInterruptedJobs,
   });
 }
