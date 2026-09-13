@@ -31,6 +31,17 @@ function content(overrides: Partial<Parameters<typeof StudioReviewHistoryList>[0
 }
 
 describe("StudioReviewHistoryList", () => {
+  it("renders review providers under human-readable labels instead of raw IDs", () => {
+    const { container } = harness.mount(
+      content({
+        summaries: [reviewSummary({ id: "review-1", issue_count: 1, provider: "dashscope" })],
+      }),
+    );
+
+    expect(container.textContent).toContain("1 finding · DashScope");
+    expect(container.textContent).not.toContain("dashscope");
+  });
+
   it("renders bounded summaries with an explicit load-older action", () => {
     const { container } = harness.mount(content({}));
     expect(container).toHaveTextContent("Review history");

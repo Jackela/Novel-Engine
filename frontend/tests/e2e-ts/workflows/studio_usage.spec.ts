@@ -22,7 +22,7 @@ async function usageResponse(page: Page, projectId: string): Promise<UsagePayloa
 }
 
 async function generateUsage(page: Page): Promise<void> {
-  await page.getByPlaceholder("Describe the change or direction...").fill("Add a quiet storm.");
+  await page.getByLabel("Proposal instruction").fill("Add a quiet storm.");
   await page.getByRole("button", { name: "Continue" }).click();
   await expect(page.getByRole("button", { name: "Accept" })).toBeVisible();
   await page.getByRole("button", { name: "Accept" }).click();

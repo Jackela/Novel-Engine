@@ -89,7 +89,7 @@ test("owner setup, editing, AI proposal accept, search, and deep links", async (
   // Deterministic mock provider: proposal then accept through the terminal
   // job contract of the TS backend. Accepting replaces the chapter content
   // with the generated draft.
-  await page.getByPlaceholder("Describe the change or direction...").fill("Bring in the storm.");
+  await page.getByLabel("Proposal instruction").fill("Bring in the storm.");
   await page.getByRole("button", { name: "Continue" }).click();
   await expect(page.getByText("Proposed Markdown")).toBeVisible();
   await page.getByRole("button", { name: "Accept" }).click();
