@@ -6,7 +6,7 @@
  */
 import type { FastifyPluginAsync } from "fastify";
 
-export interface RuntimeIdentity {
+interface RuntimeIdentity {
   name: string;
   version: string;
 }
@@ -20,7 +20,7 @@ export interface VersionInfo {
   build: string;
 }
 
-export interface VersionRoutesOptions {
+interface VersionRoutesOptions {
   info: VersionInfo;
 }
 

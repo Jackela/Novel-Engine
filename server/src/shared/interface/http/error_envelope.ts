@@ -7,7 +7,7 @@ export type { ErrorCode };
 export { ERROR_CODES };
 
 /** Optional machine-readable payload carried inside the unified error envelope. */
-export type ErrorEnvelopeDetails = Record<string, unknown>;
+type ErrorEnvelopeDetails = Record<string, unknown>;
 
 /** HTTP status the envelope renders for each catalog code. */
 export const ERROR_HTTP_STATUS = {
@@ -37,7 +37,7 @@ export const ERROR_HTTP_STATUS = {
 export const INVALID_OPERATION_CODE = ERROR_CODES.INVALID_OPERATION;
 export const INVALID_OPERATION_STATUS_CODE = ERROR_HTTP_STATUS[ERROR_CODES.INVALID_OPERATION];
 
-export interface AppErrorOptions {
+interface AppErrorOptions {
   statusCode: number;
   code: string;
   message: string;
@@ -66,14 +66,14 @@ export class AppError extends Error {
 }
 
 /** OpenAPI component name for the shared error envelope schema. */
-export const ERROR_ENVELOPE_SCHEMA_ID = "ErrorEnvelope";
+const ERROR_ENVELOPE_SCHEMA_ID = "ErrorEnvelope";
 
 /**
  * The generic envelope shape shared by every non-conflict error response in
  * the OpenAPI document (`code` stays an open string so Fastify transport
  * codes such as FST_ERR_* keep passing through verbatim).
  */
-export const errorEnvelopeSchema = {
+const errorEnvelopeSchema = {
   $id: ERROR_ENVELOPE_SCHEMA_ID,
   description:
     "Unified error envelope: every API failure renders as {error:{code,message,details?}}.",
