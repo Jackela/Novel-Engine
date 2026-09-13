@@ -6,12 +6,14 @@ import type {
   TextGenerationTask,
 } from "../../application/ports/text_generation.js";
 import {
-  type DashscopeTransport,
-  type DashscopeTransportMode,
   extractDashscopeIncrementalText,
   extractDashscopeUsageTokens,
+} from "./dashscope_extractors.js";
+import {
+  type DashscopeTransport,
+  type DashscopeTransportMode,
   resolveDashscopeTransport,
-} from "./dashscope_protocol.js";
+} from "./dashscope_transport.js";
 import {
   DEFAULT_PROVIDER_RETRY_POLICY,
   DEFAULT_PROVIDER_TIMEOUT_SECONDS,
