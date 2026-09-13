@@ -5,19 +5,24 @@ import {
 } from "../../../contexts/ai/application/ports/text_generation.js";
 import { InvalidOperationError } from "../../../shared/domain/exceptions.js";
 import type { InFlightOperationPermit } from "./operation_in_flight.js";
-import { dumpJson } from "./payloads.js";
-import type { JobRecord } from "./ports/job_records.js";
-import type { ProposalContextSource } from "./ports/proposal_context_store.js";
+import { dumpJson, safeLoadJson } from "./payloads.js";
+import type { JobRecord, MarkJobOutcomeInput } from "./ports/job_records.js";
+import type {
+  ProposalContextSource,
+  ProposalContextStore,
+} from "./ports/proposal_context_store.js";
 import type { ProjectScope } from "./ports/studio_store.js";
 import { OPERATION_STEPS, type ProposalJobSeed } from "./proposal_landing.js";
+import { proposalRetryStaleBaseOutcome } from "./proposal_retry_base_outcome.js";
 import type { ProviderCleanupFailureReporter } from "./provider_disposal.js";
 
 /**
  * The request/admission half of the proposal pipeline shared by the
  * synchronous draft (#305), the streaming twin (#308), and the retry path
  * (#272): transport-decoded request types, operation/provider admission,
- * captured-revision resolution, and the seed construction that lands on every
- * proposal job. The execution sequence lives in `proposal_pipeline.ts`.
+ * captured-revision resolution, the stored-retry recovery with its stale-base
+ * judgment, and the seed construction that lands on every proposal job. The
+ * execution sequence lives in `proposal_pipeline.ts`.
  */
 
 /** The provider-facing task target, resolved before any job row exists. */
@@ -113,4 +118,68 @@ export interface ProposalRetryRequest {
   readonly retry: JobRecord;
   readonly reportCleanupFailure: ProviderCleanupFailureReporter;
   readonly now: () => Date;
+}
+
+/** The stored-context recovery verdict for a claimed proposal retry: the
+ * recovered generation inputs, or the exact stale-base failure outcome to
+ * land on the reserved row. */
+export type ProposalRetryRecovery =
+  | {
+      readonly kind: "recovered";
+      readonly instruction: string;
+      readonly step: ProviderStep;
+      readonly providerName: TextProviderName;
+      readonly context: ProposalContextSource;
+      readonly baseRevisionId: string;
+    }
+  | {
+      readonly kind: "stale-base";
+      readonly outcome: MarkJobOutcomeInput;
+    };
+
+/**
+ * Recovers a claimed retry's stored request context (#272): decodes the
+ * stored evidence, refuses retries whose request context is lost, admits the
+ * stored operation and provider, resolves the captured context, and judges
+ * base currency. A stale immutable base yields the exact stale-base failure
+ * outcome instead of generation inputs.
+ */
+export function recoverProposalRetryContext(
+  request: ProposalRetryRequest,
+  proposalContext: ProposalContextStore,
+): ProposalRetryRecovery {
+  const retry = request.retry;
+  const stored = safeLoadJson(retry.requestJson);
+  const instruction = typeof stored.instruction === "string" ? stored.instruction : "";
+  const baseRevisionId =
+    typeof stored.base_revision_id === "string" ? stored.base_revision_id : null;
+  if (retry.documentId === null || baseRevisionId === null) {
+    throw new InvalidOperationError("Original AI job is missing its request context.");
+  }
+  // A stored operation without a provider step has lost its request context.
+  const step = proposalStepForOperation(retry.operation);
+  if (step === undefined) {
+    throw new InvalidOperationError("Original AI job is missing its request context.");
+  }
+  const providerName = admitTextProvider(retry.provider);
+  const context = proposalContext.readProposalContext(
+    request.scope,
+    retry.projectId,
+    retry.documentId,
+  );
+  const { revision } = proposalRevisionFromContext(context);
+  if (revision.id !== baseRevisionId) {
+    return {
+      kind: "stale-base",
+      outcome: proposalRetryStaleBaseOutcome(baseRevisionId, revision.id, request.now()),
+    };
+  }
+  return {
+    kind: "recovered",
+    instruction,
+    step,
+    providerName,
+    context,
+    baseRevisionId,
+  };
 }
