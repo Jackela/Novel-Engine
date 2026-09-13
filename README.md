@@ -7,6 +7,20 @@ serves the Studio SPA and the JSON API.
 [Documentation](docs/README.md) · [Contributing](CONTRIBUTING.md) ·
 [Security](.github/SECURITY.md) · [License](LICENSE)
 
+## For Writers
+
+If you only want to write with Novel Engine — no development involved — start
+with the writer guides: [getting started with Docker](openwiki/guides/getting-started.md)
+covers installation to your first AI-assisted chapter, and
+[provider setup](openwiki/guides/provider-setup.md) connects a real AI
+provider such as DashScope or DeepSeek. The full journey is documented end to
+end: [writing](openwiki/guides/writing-guide.md),
+[exporting](openwiki/guides/exporting.md),
+[backup and restore](openwiki/guides/backup-and-restore.md),
+[upgrading](openwiki/guides/upgrading.md),
+[troubleshooting](openwiki/guides/troubleshooting.md), and the
+[FAQ](openwiki/guides/faq.md).
+
 ## First-Time Setup
 
 Prerequisites: Node.js 24 and the pnpm version pinned in
@@ -47,11 +61,20 @@ cli serve` reads the root `.env.local` and stores data under `<workspace>/data/`
 | `SECURITY_RATE_LIMIT` | `5/minute` | Auth endpoint rate limit. |
 | `SECURITY_TRUSTED_PROXIES` | empty | Comma-separated trusted proxies (exact IP, CIDR, or host) for forwarded client identity. |
 | `LLM_PROVIDER` | `mock` | `mock`, `dashscope`, or `openai_compatible`. |
-| `LLM_MODEL` | `studio-copilot-v1` | Default model label for mock/local flows. |
+| `LLM_MODEL` | `studio-copilot-v1` | Default model label for mock/local flows; intermediate model fallback for real providers. |
 | `DASHSCOPE_API_KEY` | unset | Required when `LLM_PROVIDER=dashscope`. |
 | `DASHSCOPE_TRANSPORT_MODE` | `multimodal_generation` | `text_generation`, `multimodal_generation`, or `responses`. |
+| `DASHSCOPE_MODEL` | unset | DashScope generation model; falls back to `LLM_MODEL`, then `qwen3.5-flash`. |
+| `DASHSCOPE_REVIEW_MODEL` | unset | DashScope model for AI review runs; falls back to the generation model. |
+| `DASHSCOPE_API_BASE` | unset | Custom DashScope API base URL, for gateways mirroring the DashScope API. |
 | `LLM_API_KEY` | unset | Required when `LLM_PROVIDER=openai_compatible`. |
+| `OPENAI_API_KEY` | unset | Alias of `LLM_API_KEY`; `LLM_API_KEY` takes precedence when both are set. |
+| `LLM_API_BASE` | unset | Base URL of the OpenAI-compatible endpoint (e.g. `https://api.openai.com/v1`). |
+| `OPENAI_API_BASE` | unset | Alias of `LLM_API_BASE`; `LLM_API_BASE` takes precedence when both are set. |
+| `OPENAI_COMPATIBLE_MODEL` | unset | OpenAI-compatible generation model; falls back to `LLM_MODEL`, then `gpt-4o-mini`. |
 | `LLM_TIMEOUT` | `30` | Outbound provider request timeout in seconds (5–300). |
+| `LLM_STREAM_FIRST_BYTE_TIMEOUT_MS` | `30000` | Streaming silence ceiling (ms) before the first proposal byte (1–300000). |
+| `LLM_STREAM_IDLE_TIMEOUT_MS` | `60000` | Streaming silence ceiling (ms) between consecutive frames (1–300000). |
 | `LLM_RETRY_ATTEMPTS` | `3` | Provider retry attempts (1–3). |
 | `LLM_RETRY_DELAY` | `1` | Base retry delay in seconds (0.1–10). |
 | `LLM_LOREBOOK_BUDGET_CHARACTERS` | `4000` | Character budget of the lorebook prompt section. |
@@ -112,7 +135,15 @@ The operational CLI builds and runs through pnpm:
 pnpm --dir server cli serve
 pnpm --dir server cli doctor
 pnpm --dir server cli backup
+pnpm --dir server cli restore --input <backup-file>
 ```
+
+`backup` writes a consistent online backup beneath `data/backups/` and prints
+its path. `restore --input <backup-file>` verifies a backup file, backs up
+the current database, then replaces it atomically. Both commands take
+exclusive ownership of the data directory: stop the running server first.
+Backups are never removed automatically. For the Docker equivalents, see the
+[backup and restore guide](openwiki/guides/backup-and-restore.md).
 
 Legacy import expects a directory containing `story.yaml` and optional chapter
 files under `manuscript/chapters/chapter-*.md`:
