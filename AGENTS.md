@@ -93,6 +93,14 @@ Complete `README.md`, package script declarations, and corresponding lockfile sy
 - React components should stay below 200 lines; split orchestration into hooks/components.
 - Comments are prose-style JSDoc with explicit failure semantics — this repo's documentation standard.
 
+## NAMING CONVENTIONS
+
+These naming rules apply to new code; existing mismatches are tracked in #536.
+
+- Name a new file after its primary export (file name = class/function name).
+- Modules in one subsystem share one prefix family; do not mint a second prefix for the same family.
+- Orchestration-layer suffixes are fixed by role: `*_service` for capability facades, `*_pipeline` for generation flows, `*_executor` for job re-execution. Pick the existing sibling's suffix; do not invent a new one for the same role.
+
 ## PROJECT-SPECIFIC INVARIANTS
 
 - Each app instance owns its database handle through `buildApp` options; handlers reach services through the injected store; tests use Fastify `inject()`.

@@ -1,4 +1,5 @@
 import type { JobRecord } from "./job_records.js";
+import { pageLimit } from "./page_limit.js";
 import type { ProjectScope } from "./studio_store.js";
 
 /** A document/revision pair read for provider evaluation without persistence. */
@@ -74,12 +75,11 @@ export const MAX_REVIEW_PAGE_LIMIT = 100;
 
 /** Validate and narrow a transport/application number before it reaches persistence. */
 export function reviewPageLimit(value: number): ReviewPageLimit {
-  if (!Number.isInteger(value) || value < MIN_REVIEW_PAGE_LIMIT || value > MAX_REVIEW_PAGE_LIMIT) {
-    throw new RangeError(
-      `Review page limit must be an integer from ${MIN_REVIEW_PAGE_LIMIT} through ${MAX_REVIEW_PAGE_LIMIT}.`,
-    );
-  }
-  return value as ReviewPageLimit;
+  return pageLimit<ReviewPageLimit>(value, {
+    min: MIN_REVIEW_PAGE_LIMIT,
+    max: MAX_REVIEW_PAGE_LIMIT,
+    subject: "Review",
+  });
 }
 
 /** Persistence-neutral exclusive position in `(created_at DESC, id DESC)` order. */
