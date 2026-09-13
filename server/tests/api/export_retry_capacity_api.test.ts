@@ -6,11 +6,12 @@ import {
 } from "../../src/contexts/studio/domain/exceptions.js";
 import {
   exports as exportArtifacts,
+  jobEvents,
+  jobs,
   projectSnapshots,
   snapshotDocuments,
 } from "../../src/contexts/studio/infrastructure/db/schema.js";
 import { ExportStorePart } from "../../src/contexts/studio/infrastructure/export_store_part.js";
-import { jobEvents, jobs } from "../../src/shared/infrastructure/db/schema.js";
 import { seedProjectWithChapter, studioDatabase } from "./job_test_helpers.js";
 import { retryJobRequest } from "./retry_test_helpers.js";
 import { buildStudioApp, monotonicClock, ownerJar } from "./studio_helpers.js";

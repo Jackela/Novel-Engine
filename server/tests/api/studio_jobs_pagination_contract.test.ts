@@ -1,10 +1,9 @@
 import { describe, expect, it } from "vitest";
-
+import { jobs as jobsTable } from "../../src/contexts/studio/infrastructure/db/schema.js";
 import {
   decodeJobCursor,
   encodeJobCursor,
 } from "../../src/contexts/studio/interface/http/job_cursor.js";
-import { jobs as jobsTable } from "../../src/shared/infrastructure/db/schema.js";
 import { firstDocument, studioDatabase } from "./job_test_helpers.js";
 import {
   buildStudioApp,

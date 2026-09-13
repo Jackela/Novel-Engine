@@ -1,9 +1,7 @@
-import { randomUUID } from "node:crypto";
 import { existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import type Database from "better-sqlite3";
-import { eq } from "drizzle-orm";
 import { migrate } from "drizzle-orm/better-sqlite3/migrator";
 
 import { backupDatabaseFile } from "./backup.js";
@@ -15,16 +13,10 @@ import {
 } from "./connection.js";
 import { acquireDataDirectoryLock, type DataDirectoryLock } from "./data_directory_lock.js";
 import { assertNoLegacyDatabaseSibling, databaseDataDirectory } from "./database_authority.js";
-import { nextJobEventSequence } from "./job_event_sequence.js";
-import { jobEvents, jobs } from "./schema.js";
 
 const SEARCH_DEPTH = 8;
 const PACKAGE_ROOT_MARKER = "drizzle.config.ts";
 const MIGRATIONS_DIRECTORY = "drizzle";
-
-/** The fixed restart error and event reason are contract surfaces; keep byte-identical. */
-const RESTART_INTERRUPTED_ERROR = "Job lost its execution lease during process restart.";
-const RESTART_EVENT_DETAILS = '{"reason":"execution_lease_lost_during_restart"}';
 
 export interface StudioDatabase {
   readonly db: StudioSqliteDatabase;
@@ -39,6 +31,12 @@ export interface OpenStudioDatabaseOptions {
   readonly beforeJobRecovery?:
     | ((database: StudioSqliteDatabase, dataDirectory: string) => Promise<void> | void)
     | undefined;
+  /**
+   * Context-owned job-state recovery after the reconciliation hook; production
+   * wires the studio restart recovery here (#534). Opening without it skips
+   * recovery, so callers relying on the restart contract must inject it.
+   */
+  readonly recoverJobs?: ((database: StudioSqliteDatabase) => number) | undefined;
   /** Optional statement observer; persistence behavior remains unchanged. */
   readonly queryLogger?: StudioQueryLogger | undefined;
 }
@@ -47,8 +45,8 @@ export interface OpenStudioDatabaseOptions {
  * The startup pipeline of the content authority, in the adjudicated order:
  * exclusive data-directory ownership, legacy-authority ambiguity rejection,
  * online backup of any pre-existing non-empty database, schema migrations, the optional context-owned
- * reconciliation hook, then job-state recovery — only afterwards may the
- * caller serve.
+ * reconciliation hook, then the injected job-state recovery — only afterwards
+ * may the caller serve.
  */
 export async function openStudioDatabase(
   databasePath: string,
@@ -65,7 +63,7 @@ export async function openStudioDatabase(
     const { db } = connection;
     migrate(db, { migrationsFolder: locateMigrationsFolder() });
     await options.beforeJobRecovery?.(db, dataDirectory);
-    recoverInterruptedJobs(db);
+    options.recoverJobs?.(db);
   } catch (error) {
     const failedRaw =
       error instanceof StudioConnectionInitializationCleanupError ? error.raw : connection?.raw;
@@ -119,42 +117,6 @@ function releaseAfterStartupFailure(
     );
   }
   throw startupError;
-}
-
-/**
- * Job-state restart recovery is row updates and event inserts only: every
- * running job becomes interrupted with the fixed restart error and one job
- * event naming the restart reason. Context-owned filesystem reconciliation
- * runs separately through the pre-recovery hook above.
- */
-function recoverInterruptedJobs(db: StudioSqliteDatabase): number {
-  const now = new Date();
-  return db.transaction((tx) => {
-    const running = tx.select({ id: jobs.id }).from(jobs).where(eq(jobs.status, "running")).all();
-    for (const job of running) {
-      const jobId = job.id;
-      tx.update(jobs)
-        .set({
-          status: "interrupted",
-          error: RESTART_INTERRUPTED_ERROR,
-          updated_at: now,
-          finished_at: now,
-        })
-        .where(eq(jobs.id, jobId))
-        .run();
-      tx.insert(jobEvents)
-        .values({
-          id: randomUUID(),
-          job_id: jobId,
-          status: "interrupted",
-          details_json: RESTART_EVENT_DETAILS,
-          sequence: nextJobEventSequence(tx, jobId),
-          created_at: now,
-        })
-        .run();
-    }
-    return running.length;
-  });
 }
 
 function locateMigrationsFolder(): string {

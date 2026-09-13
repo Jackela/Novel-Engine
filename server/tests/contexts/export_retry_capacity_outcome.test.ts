@@ -16,6 +16,7 @@ import {
   EXPORT_CAPACITY_LIMITS,
   ExportCapacityExceededError,
 } from "../../src/contexts/studio/domain/exceptions.js";
+import { jobs } from "../../src/contexts/studio/infrastructure/db/schema.js";
 import { DocumentStorePart } from "../../src/contexts/studio/infrastructure/document_store_part.js";
 import { ExportStorePart } from "../../src/contexts/studio/infrastructure/export_store_part.js";
 import { JobStorePart } from "../../src/contexts/studio/infrastructure/job_store_part.js";
@@ -27,7 +28,6 @@ import { ReviewStorePart } from "../../src/contexts/studio/infrastructure/review
 import { VolumeStorePart } from "../../src/contexts/studio/infrastructure/volume_store_part.js";
 import { AuthService } from "../../src/shared/application/auth_service.js";
 import { DrizzleAuthStore } from "../../src/shared/infrastructure/db/auth_store.js";
-import { jobs } from "../../src/shared/infrastructure/db/schema.js";
 import { openStudioDatabase } from "../../src/shared/infrastructure/db/startup.js";
 
 const directories: string[] = [];

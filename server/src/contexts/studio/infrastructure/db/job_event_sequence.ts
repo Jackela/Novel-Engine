@@ -1,6 +1,6 @@
 import { eq, max } from "drizzle-orm";
 
-import type { StudioSqliteDatabase } from "./connection.js";
+import type { StudioSqliteDatabase } from "../../../../shared/infrastructure/db/connection.js";
 import { jobEvents } from "./schema.js";
 
 type StudioTransaction = Parameters<Parameters<StudioSqliteDatabase["transaction"]>[0]>[0];

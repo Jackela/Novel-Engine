@@ -1,7 +1,6 @@
 import { eq } from "drizzle-orm";
 import { InvalidOperationError } from "../../../shared/domain/exceptions.js";
 import type { StudioSqliteDatabase } from "../../../shared/infrastructure/db/connection.js";
-import { jobs } from "../../../shared/infrastructure/db/schema.js";
 import type { StudioJobLedgerStore } from "../application/ports/job_ledger_store.js";
 import {
   type AddJobInput,
@@ -30,6 +29,7 @@ import {
   insertJobAndEvent,
   writeUsageEvent as writeUsageEventRow,
 } from "./db/job_writes.js";
+import { jobs } from "./db/schema.js";
 import { type ProjectRow, scopedProject, type Tx } from "./db/studio_query_helpers.js";
 import { projectUsageAggregate } from "./db/usage_aggregation.js";
 import { buildProjectJobSummariesQuery } from "./job_page_queries.js";

@@ -1,8 +1,7 @@
 import { asc, eq, sql } from "drizzle-orm";
-
-import { usageEvents } from "../../../../shared/infrastructure/db/schema.js";
 import type { ProjectUsageAggregate } from "../../application/ports/project_usage.js";
 import { addSafeUsage, safeUsageAggregate } from "./safe_usage_tokens.js";
+import { usageEvents } from "./schema.js";
 import type { Tx } from "./studio_query_helpers.js";
 import { dailyUsageBuckets } from "./usage_daily_buckets.js";
 

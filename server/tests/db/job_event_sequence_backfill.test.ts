@@ -7,6 +7,7 @@ import { drizzle } from "drizzle-orm/better-sqlite3";
 import { migrate } from "drizzle-orm/better-sqlite3/migrator";
 import { describe, expect, it } from "vitest";
 
+import { recoverInterruptedJobs } from "../../src/contexts/studio/infrastructure/db/job_recovery.js";
 import { openStudioDatabase } from "../../src/shared/infrastructure/db/startup.js";
 
 const DATABASE_FILENAME = "novel-engine.sqlite3";
@@ -78,7 +79,9 @@ describe("job event sequence migration", () => {
       advanced.close();
     }
 
-    const restarted = await openStudioDatabase(join(directory, DATABASE_FILENAME));
+    const restarted = await openStudioDatabase(join(directory, DATABASE_FILENAME), {
+      recoverJobs: recoverInterruptedJobs,
+    });
     try {
       expect(
         restarted.raw

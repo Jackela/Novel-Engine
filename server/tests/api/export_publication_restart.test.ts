@@ -4,15 +4,15 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { eq } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
-
 import {
   exportPublicationCleanupIntents,
   exports as exportRecords,
+  jobEvents,
+  jobs,
   projectSnapshots,
 } from "../../src/contexts/studio/infrastructure/db/schema.js";
 import { DATABASE_FILENAME } from "../../src/shared/infrastructure/db/backup.js";
 import { openConnection } from "../../src/shared/infrastructure/db/connection.js";
-import { jobEvents, jobs } from "../../src/shared/infrastructure/db/schema.js";
 import {
   appAt,
   auditEvidence,

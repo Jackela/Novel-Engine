@@ -5,7 +5,7 @@ import type {
   TextGenerationProvider,
   TextGenerationProviderFactory,
 } from "../../src/contexts/ai/application/ports/text_generation.js";
-import { jobs } from "../../src/shared/infrastructure/db/schema.js";
+import { jobs } from "../../src/contexts/studio/infrastructure/db/schema.js";
 import { studioDatabase } from "./job_test_helpers.js";
 import { validProposalProse } from "./proposal_test_helpers.js";
 import { type CookieJar, call } from "./studio_helpers.js";

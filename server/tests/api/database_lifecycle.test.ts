@@ -6,7 +6,8 @@ import { eq } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
 
 import { buildApp } from "../../src/apps/api/app.js";
-import { jobs, sessions } from "../../src/shared/infrastructure/db/schema.js";
+import { jobs } from "../../src/contexts/studio/infrastructure/db/schema.js";
+import { sessions } from "../../src/shared/infrastructure/db/schema.js";
 import { openStudioDatabase } from "../../src/shared/infrastructure/db/startup.js";
 
 async function makeDataDirectory(): Promise<string> {
