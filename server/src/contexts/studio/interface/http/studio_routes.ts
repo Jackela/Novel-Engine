@@ -1,7 +1,8 @@
 import type { FastifyPluginAsync } from "fastify";
 
 import { beatRoutes } from "./beat_routes.js";
-import { documentRoutes } from "./document_routes.js";
+import { documentCrudRoutes } from "./document_crud_routes.js";
+import { documentOrderRoutes } from "./document_order_routes.js";
 import { exportRoutes } from "./export_routes.js";
 import { importRoutes } from "./import_routes.js";
 import { jobRoutes } from "./job_routes.js";
@@ -15,7 +16,8 @@ import { volumeRoutes } from "./volume_routes.js";
 /** Registers the existing Studio HTTP surfaces in their public route order. */
 export const studioRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (app, options) => {
   await app.register(projectRoutes, options);
-  await app.register(documentRoutes, options);
+  await app.register(documentCrudRoutes, options);
+  await app.register(documentOrderRoutes, options);
   await app.register(revisionRoutes, options);
   await app.register(beatRoutes, options);
   await app.register(loreRoutes, options);
