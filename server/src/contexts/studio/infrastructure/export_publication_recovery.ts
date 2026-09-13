@@ -104,6 +104,15 @@ export async function reconcileExportPublications(
   return report;
 }
 
+// Classified contents of one project export directory feeding the recovery
+// steps below: quarantined finals awaiting staged recovery, canonical
+// committed file names, and whether a staging directory is present.
+interface ClassifiedProjectExports {
+  readonly quarantines: FinalQuarantine[];
+  readonly canonicalFiles: Set<string>;
+  readonly hasStaging: boolean;
+}
+
 async function reconcileProject(
   directory: string,
   projectId: string,
@@ -113,9 +122,30 @@ async function reconcileProject(
   report: MutableRecoveryReport,
 ): Promise<void> {
   for (const artifact of artifacts.values()) assertCanonicalArtifact(artifact);
+  const classified = await classifyProjectExportEntries(directory);
+  await recoverProjectStagedExports(
+    directory,
+    projectId,
+    classified,
+    artifacts,
+    intents,
+    cleanupJournal,
+    report,
+  );
+  await verifyProjectCommittedArtifacts(directory, artifacts, report);
+  await assertProjectExportsOwnership(directory, projectId, artifacts);
+  for (const intent of intents.values()) await cleanupJournal.complete(intent.publicationId);
+  await syncDirectory(directory);
+}
+
+// Step 1: classify every entry of the project export directory into
+// quarantined finals, canonical committed files, and the validated staging
+// directory; any unsafe entry aborts recovery.
+async function classifyProjectExportEntries(directory: string): Promise<ClassifiedProjectExports> {
   const entries = await readdir(directory, { withFileTypes: true });
   const quarantines: FinalQuarantine[] = [];
   const canonicalFiles = new Set<string>();
+  let hasStaging = false;
   for (const entry of entries) {
     const path = resolve(directory, entry.name);
     const normalized = normalizeCleanupName(entry.name);
@@ -124,6 +154,7 @@ async function reconcileProject(
     if (entry.name === ".staging") {
       if (entry.isSymbolicLink() || !entry.isDirectory()) throw new Error("Unsafe staging path.");
       await realDirectory(path, directory, false);
+      hasStaging = true;
     } else if (
       normalized.depth > 0 &&
       parseExportArtifactFilename(normalized.name) !== null &&
@@ -147,36 +178,62 @@ async function reconcileProject(
       canonicalFiles.add(entry.name);
     }
   }
+  return { quarantines, canonicalFiles, hasStaging };
+}
+
+// Step 2: recover quarantined finals through the staging directory; without
+// staging, surviving quarantines are ambiguous and abort recovery.
+async function recoverProjectStagedExports(
+  directory: string,
+  projectId: string,
+  classified: ClassifiedProjectExports,
+  artifacts: Map<string, ArtifactRow>,
+  intents: Map<string, CleanupIntentRow>,
+  cleanupJournal: DatabaseExportPublicationCleanupJournal,
+  report: MutableRecoveryReport,
+): Promise<void> {
   const staging = resolve(directory, ".staging");
-  if (entries.some(({ name }) => name === ".staging")) {
-    await removeOwnedFinalQuarantines(
-      staging,
-      directory,
-      projectId,
-      quarantines,
-      canonicalFiles,
-      intents,
-      cleanupJournal,
-      report,
-    );
-    await reconcileStaging(
-      staging,
-      directory,
-      projectId,
-      artifacts,
-      intents,
-      cleanupJournal,
-      report,
-    );
-  } else if (quarantines.length > 0) {
-    throw new Error(
-      `Ambiguous export rollback quarantine or final cleanup quarantine: ${quarantines[0]?.finalName}`,
-    );
+  if (!classified.hasStaging) {
+    if (classified.quarantines.length > 0) {
+      throw new Error(
+        `Ambiguous export rollback quarantine or final cleanup quarantine: ${classified.quarantines[0]?.finalName}`,
+      );
+    }
+    return;
   }
+  await removeOwnedFinalQuarantines(
+    staging,
+    directory,
+    projectId,
+    classified.quarantines,
+    classified.canonicalFiles,
+    intents,
+    cleanupJournal,
+    report,
+  );
+  await reconcileStaging(staging, directory, projectId, artifacts, intents, cleanupJournal, report);
+}
+
+// Step 3: prove every committed artifact still has its integrity evidence in
+// the project directory.
+async function verifyProjectCommittedArtifacts(
+  directory: string,
+  artifacts: Map<string, ArtifactRow>,
+  report: MutableRecoveryReport,
+): Promise<void> {
   for (const artifact of artifacts.values()) {
     await requireEvidence(resolve(directory, artifactFilename(artifact)), artifact);
     report.committedArtifactsVerified += 1;
   }
+}
+
+// Step 4: sweep the project directory for files no committed artifact owns;
+// anything unproven requires operator recovery.
+async function assertProjectExportsOwnership(
+  directory: string,
+  projectId: string,
+  artifacts: Map<string, ArtifactRow>,
+): Promise<void> {
   for (const entry of await readdir(directory, { withFileTypes: true })) {
     if (entry.name === ".staging") continue;
     if (entry.isSymbolicLink() || !entry.isFile())
@@ -190,8 +247,6 @@ async function reconcileProject(
         exportArtifactNames(projectId, identity.id, identity.format).relativePath;
     if (!owned) throw new Error(`Unproven export file requires operator recovery: ${entry.name}`);
   }
-  for (const intent of intents.values()) await cleanupJournal.complete(intent.publicationId);
-  await syncDirectory(directory);
 }
 
 function groupArtifacts(rows: ArtifactRow[]): Map<string, Map<string, ArtifactRow>> {

@@ -3,6 +3,7 @@ import type { FastifyPluginAsync } from "fastify";
 import { principalGuard, requirePrincipal } from "../../../../shared/interface/http/auth_guard.js";
 import { errorEnvelopeResponse } from "../../../../shared/interface/http/error_envelope.js";
 import { requireServices, type StudioRoutesOptions } from "./project_routes.js";
+import { authedReadResponses, authedWriteResponses } from "./route_responses.js";
 import { structureCapacity422ResponseSchema } from "./structure_capacity_schemas.js";
 import { withStudioErrors } from "./studio_error_mapping.js";
 import {
@@ -21,42 +22,6 @@ import {
 } from "./studio_schemas.js";
 import { documentPlaceSchema } from "./volume_schemas.js";
 
-const SAVE_RESPONSES = {
-  200: documentResponseSchema,
-  401: errorEnvelopeResponse,
-  403: errorEnvelopeResponse,
-  404: errorEnvelopeResponse,
-  // Metadata bytes and outline beats refuse here permanently (#461).
-  422: structureCapacity422ResponseSchema,
-  409: revisionConflictSchema,
-  503: errorEnvelopeResponse,
-} as const;
-
-const CREATE_RESPONSES = {
-  201: documentResponseSchema,
-  401: errorEnvelopeResponse,
-  403: errorEnvelopeResponse,
-  // The parent project is scoped first: a foreign or missing project 404s.
-  404: errorEnvelopeResponse,
-  // Document, volume-chapter, and outline-beat budgets gate the create (#461).
-  422: structureCapacity422ResponseSchema,
-  409: documentConflictSchema,
-  503: errorEnvelopeResponse,
-} as const;
-
-/** Guard failures shared by every authenticated document surface. */
-const GUARD_RESPONSES = {
-  401: errorEnvelopeResponse,
-  503: errorEnvelopeResponse,
-} as const;
-
-/** Guard + CSRF double-submit failures shared by authenticated writes. */
-const WRITE_RESPONSES = {
-  ...GUARD_RESPONSES,
-  403: errorEnvelopeResponse,
-  422: errorEnvelopeResponse,
-} as const;
-
 /**
  * Document surface: creation with the identity uniqueness contract,
  * conflict-checked saves, whole-set reorder, and deletion.
@@ -72,7 +37,12 @@ export const documentRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fa
       schema: {
         params: projectIdParams,
         body: documentCreateSchema,
-        response: CREATE_RESPONSES,
+        response: authedWriteResponses({
+          201: documentResponseSchema,
+          // Document, volume-chapter, and outline-beat budgets gate the create (#461).
+          422: structureCapacity422ResponseSchema,
+          409: documentConflictSchema,
+        }),
       },
     },
     async (request, reply) => {
@@ -101,11 +71,11 @@ export const documentRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fa
       schema: {
         params: projectIdParams,
         body: reorderSchema,
-        response: {
+        response: authedWriteResponses({
           200: documentListResponseSchema,
-          ...WRITE_RESPONSES,
           404: errorEnvelopeResponse,
-        },
+          422: errorEnvelopeResponse,
+        }),
       },
     },
     async (request) =>
@@ -125,11 +95,7 @@ export const documentRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fa
       preValidation: [guard],
       schema: {
         params: documentIdParams,
-        response: {
-          200: documentResponseSchema,
-          ...GUARD_RESPONSES,
-          404: errorEnvelopeResponse,
-        },
+        response: authedReadResponses({ 200: documentResponseSchema }),
       },
     },
     async (request) =>
@@ -149,7 +115,12 @@ export const documentRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fa
       schema: {
         params: documentIdParams,
         body: documentSaveSchema,
-        response: SAVE_RESPONSES,
+        response: authedWriteResponses({
+          200: documentResponseSchema,
+          // Metadata bytes and outline beats refuse here permanently (#461).
+          422: structureCapacity422ResponseSchema,
+          409: revisionConflictSchema,
+        }),
       },
     },
     async (request) =>
@@ -175,14 +146,11 @@ export const documentRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fa
       schema: {
         params: documentIdParams,
         body: documentPlaceSchema,
-        response: {
+        response: authedWriteResponses({
           200: documentResponseSchema,
-          ...GUARD_RESPONSES,
-          403: errorEnvelopeResponse,
-          404: errorEnvelopeResponse,
           // Placement into a full volume refuses permanently (#461).
           422: structureCapacity422ResponseSchema,
-        },
+        }),
       },
     },
     async (request) =>
@@ -202,13 +170,10 @@ export const documentRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fa
       preHandler: [guard],
       schema: {
         params: documentIdParams,
-        response: {
+        response: authedWriteResponses({
           204: { type: "null" },
-          ...GUARD_RESPONSES,
-          403: errorEnvelopeResponse,
-          404: errorEnvelopeResponse,
           409: snapshotConflictSchema,
-        },
+        }),
       },
     },
     async (request, reply) => {
