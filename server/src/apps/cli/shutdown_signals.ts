@@ -11,7 +11,7 @@ export interface ShutdownSignalSource {
   remove(signal: ShutdownSignal, handler: ShutdownSignalHandler): void;
 }
 
-export interface ShutdownSignalLatch {
+interface ShutdownSignalLatch {
   /** Resolve once with the first observed signal; this promise never rejects. */
   readonly wait: Promise<ShutdownSignal>;
   /** Remove the exact registered handlers. Safe to call more than once. */
@@ -27,7 +27,7 @@ export const processShutdownSignalSource: ShutdownSignalSource = {
   },
 };
 
-export interface CliOwnedServeLifecycle {
+interface CliOwnedServeLifecycle {
   readonly source: ShutdownSignalSource;
   readonly listen: () => Promise<void>;
   readonly close: () => Promise<void>;
@@ -68,7 +68,7 @@ export function createShutdownSignalLatch(source: ShutdownSignalSource): Shutdow
   };
 }
 
-export function signalExitCode(signal: ShutdownSignal): 130 | 143 {
+function signalExitCode(signal: ShutdownSignal): 130 | 143 {
   return signal === "SIGINT" ? 130 : 143;
 }
 

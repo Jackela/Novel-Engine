@@ -7,7 +7,7 @@ const CURSOR_MAX_LENGTH = 1024;
 const utf8Decoder = new TextDecoder("utf-8", { fatal: true });
 
 /** The one public failure shape for every invalid opaque HTTP cursor. */
-export function invalidCursor(): never {
+function invalidCursor(): never {
   throw new AppError({
     statusCode: ERROR_HTTP_STATUS[ERROR_CODES.VALIDATION_ERROR],
     code: ERROR_CODES.VALIDATION_ERROR,
@@ -19,7 +19,7 @@ export function invalidCursor(): never {
 }
 
 /** Encode trusted JSON cursor data without padding using Node's canonical base64url form. */
-export function encodeCanonicalCursor(value: unknown): string {
+function encodeCanonicalCursor(value: unknown): string {
   const json = JSON.stringify(value);
   if (json === undefined) {
     throw new TypeError("Canonical cursor data must be JSON serializable.");
@@ -31,7 +31,7 @@ export function encodeCanonicalCursor(value: unknown): string {
  * Decode only canonical base64url, fatal UTF-8, and canonical JSON bytes.
  * Tuple shape, version, identity, and range remain owned by each route.
  */
-export function decodeCanonicalCursor(token: string): unknown {
+function decodeCanonicalCursor(token: string): unknown {
   if (token.length < 1 || token.length > CURSOR_MAX_LENGTH || !CURSOR_PATTERN.test(token)) {
     return invalidCursor();
   }
@@ -51,7 +51,7 @@ export function decodeCanonicalCursor(token: string): unknown {
 }
 
 /** Declarative configuration for one resource's keyset pagination cursor. */
-export interface KeysetCursorConfig {
+interface KeysetCursorConfig {
   /** Wire tuple version marker stored at index 0. */
   readonly version: number;
   /** Number of leading string scope values bound to the route: 1 or 2. */
@@ -67,7 +67,7 @@ export interface KeysetCursorConfig {
 }
 
 /** Persistence-neutral exclusive keyset position: the numeric ordering field plus a tiebreaker id. */
-export type KeysetPagePosition<Field extends string> = {
+type KeysetPagePosition<Field extends string> = {
   readonly id: string;
 } & Readonly<Record<Field, number>>;
 

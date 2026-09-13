@@ -31,7 +31,7 @@ import {
  * there is no competing executable root.
  */
 
-export type WriteLine = (line: string) => void;
+type WriteLine = (line: string) => void;
 
 type ServeOperation = (app: FastifyInstance, host: string, port: number) => Promise<void>;
 
@@ -40,18 +40,18 @@ export type ServeRunner =
   | { readonly owner: "cli-owned"; readonly run: ServeOperation }
   | { readonly owner: "runner-owned"; readonly run: ServeOperation };
 
-export interface ImportRunnerContext {
+interface ImportRunnerContext {
   readonly config: ServerConfig;
   readonly writeLine: WriteLine;
 }
 
 /** #273 registers its owner-principal import here (CLI-only, no HTTP auth). */
-export type ImportRunner = (
+type ImportRunner = (
   args: { source: string; owner: string | undefined },
   context: ImportRunnerContext,
 ) => Promise<number>;
 
-export interface CliContext {
+interface CliContext {
   /** Process-style variables; defaults to `process.env`. */
   readonly env?: LoadServerConfigInput["env"];
   /** `.env.local` location; `null` disables file loading (tests). */

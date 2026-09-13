@@ -8,9 +8,9 @@ export const CSRF_COOKIE = "novel_engine_csrf";
 export const CSRF_HEADER = "x-csrf-token";
 
 /** Owner sessions last 30 days — mirrored by the server-side lazy expiry. */
-export const OWNER_COOKIE_MAX_AGE = 60 * 60 * 24 * 30;
+const OWNER_COOKIE_MAX_AGE = 60 * 60 * 24 * 30;
 
-export function isSecureEnvironment(environment: string): boolean {
+function isSecureEnvironment(environment: string): boolean {
   return environment === "production" || environment === "staging";
 }
 
@@ -45,7 +45,7 @@ export function clearSessionCookies(reply: FastifyReply): void {
   reply.clearCookie(CSRF_COOKIE, { path: "/" });
 }
 
-export interface PrincipalPayload {
+interface PrincipalPayload {
   session_id: string;
   kind: SessionKind;
   owner_id: string | null;

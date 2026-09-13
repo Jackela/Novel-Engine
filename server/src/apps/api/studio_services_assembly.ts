@@ -33,7 +33,7 @@ export interface StudioServicesAssemblyOptions {
   lorebookBudgetCharacters?: number | undefined;
 }
 
-export interface StudioServicesAssemblyInputs {
+interface StudioServicesAssemblyInputs {
   /** Resolved operational configuration from loadServerConfig. */
   readonly config?: ServerConfig | undefined;
   provider: ProviderRuntime;

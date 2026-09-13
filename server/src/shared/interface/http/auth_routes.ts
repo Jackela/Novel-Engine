@@ -13,12 +13,12 @@ import {
   SESSION_COOKIE,
 } from "./session_cookies.js";
 
-export type ClientIdentityResolver = (request: {
+type ClientIdentityResolver = (request: {
   socket?: { remoteAddress?: string | undefined } | undefined;
   headers: Record<string, unknown>;
 }) => string;
 
-export interface AuthRoutesOptions {
+interface AuthRoutesOptions {
   /** Absent while the app is database-free; auth surfaces then answer 503. */
   authService?: AuthService | undefined;
   limiter: RateLimiter;

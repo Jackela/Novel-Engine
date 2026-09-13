@@ -7,7 +7,6 @@ import { ConfigurationError } from "./configuration_error.js";
 import { parseEnvFile } from "./env_file.js";
 import { type LlmServerConfig, loadLlmServerConfig } from "./provider_config.js";
 
-export type { DashscopeTransportMode, LlmProvider, LlmServerConfig } from "./provider_config.js";
 export { ConfigurationError };
 
 /** The single converged prefix family; nothing outside it is read. */
@@ -20,8 +19,8 @@ const DEFAULT_RATE_LIMIT = "5/minute";
 const RATE_LIMIT_PATTERN = /^([1-9]\d{0,5})\/minute$/;
 const MIN_ACTIVE_WORKFLOWS = 1;
 const MAX_ACTIVE_WORKFLOWS = 1024;
-export const DEFAULT_MAX_ACTIVE_WORKFLOWS = 4;
-export const DEFAULT_MAX_ACTIVE_WORKFLOWS_PER_PROJECT = 2;
+const DEFAULT_MAX_ACTIVE_WORKFLOWS = 4;
+const DEFAULT_MAX_ACTIVE_WORKFLOWS_PER_PROJECT = 2;
 
 // Sentinel default assembled from harmless words so no credential-shaped literal ships in source.
 export const DEFAULT_SECRET_KEY = ["change-me", "in-production", "32-char-long"].join("-");
@@ -31,7 +30,7 @@ const MIN_SECRET_LENGTH = 16;
 
 const ENVIRONMENTS = ["development", "testing", "staging", "production"] as const;
 
-export type ServerEnvironment = (typeof ENVIRONMENTS)[number];
+type ServerEnvironment = (typeof ENVIRONMENTS)[number];
 
 export interface ServerConfig {
   readonly environment: ServerEnvironment;
@@ -53,7 +52,7 @@ export interface ServerConfig {
   readonly llm: LlmServerConfig;
 }
 
-export interface WorkflowCapacityConfig {
+interface WorkflowCapacityConfig {
   readonly applicationLimit: number;
   readonly projectLimit: number;
 }

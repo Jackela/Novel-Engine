@@ -7,7 +7,7 @@ import type {
   HealthStatus,
 } from "../../application/ports/health.js";
 
-export interface HealthRoutesOptions {
+interface HealthRoutesOptions {
   healthProbe: HealthProbe;
 }
 

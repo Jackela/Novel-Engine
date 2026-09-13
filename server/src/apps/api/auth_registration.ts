@@ -11,7 +11,7 @@ const DEFAULT_AUTH_RATE_LIMIT_PER_MINUTE = 5;
 /** Rate-limit buckets expire with the minute window that fills them. */
 const AUTH_RATE_LIMIT_KEY_TTL_SECONDS = 60;
 
-export interface AuthRegistrationInputs {
+interface AuthRegistrationInputs {
   /** Absent while the app is database-free; auth surfaces then answer 503. */
   authService: AuthService | undefined;
   productIdentity: ProductIdentity;

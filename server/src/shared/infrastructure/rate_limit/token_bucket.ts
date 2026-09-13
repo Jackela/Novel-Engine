@@ -1,6 +1,6 @@
 import type { RateLimitDecision, RateLimiter } from "../../application/ports/rate_limit.js";
 
-export interface TokenBucketOptions {
+interface TokenBucketOptions {
   /** Tokens refilled per second. */
   ratePerSecond: number;
   /** Maximum tokens a bucket can hold (the burst size). */

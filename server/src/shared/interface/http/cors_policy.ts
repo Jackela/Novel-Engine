@@ -1,6 +1,6 @@
 import { LOCALHOST_CORS_PORTS } from "../../domain/cors_contract.js";
 
-export interface CorsAllowList {
+interface CorsAllowList {
   /** True for a configured bare `*` — reflect any origin (non-production only). */
   readonly allowAll: boolean;
   /** Concrete origins with localhost wildcards materialized to the dev ports. */
