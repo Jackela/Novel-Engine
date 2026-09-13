@@ -26,6 +26,18 @@ interface EscapeState {
   readonly hex: string;
 }
 
+/**
+ * Mutable walker state shared by the module-level phase handlers. `output`
+ * accumulates the prose pieces of the current fragment and resets per `feed`.
+ */
+interface UnwrapperState {
+  phase: Phase;
+  keyBuffer: string;
+  keyMatchesTarget: boolean;
+  pendingEscape: EscapeState | undefined;
+  output: string;
+}
+
 function contractFailure(detail: string): TextGenerationProviderError {
   return new TextGenerationProviderError(
     `Provider stream payload did not satisfy the chapter_markdown JSON contract: ${detail}`,
@@ -79,125 +91,159 @@ export interface ChapterMarkdownUnwrapper {
   finish(): void;
 }
 
-export function createChapterMarkdownUnwrapper(): ChapterMarkdownUnwrapper {
-  let phase: Phase = "leading";
-  let keyBuffer = "";
-  let keyMatchesTarget = false;
-  let pendingEscape: EscapeState | undefined;
-  let output = "";
+function createUnwrapperState(): UnwrapperState {
+  return {
+    phase: "leading",
+    keyBuffer: "",
+    keyMatchesTarget: false,
+    pendingEscape: undefined,
+    output: "",
+  };
+}
 
-  const consumeStringChar = (ch: string, emit: (piece: string) => void): boolean => {
-    if (pendingEscape !== undefined) {
-      if (pendingEscape.selector === "") {
-        pendingEscape = { selector: ch, hex: "" };
-        if (ch !== "u") {
-          emit(decodedSimpleEscape(ch));
-          pendingEscape = undefined;
-        }
-        return false;
+/** Consumes one character inside a JSON string body; true when the closing quote arrived. */
+function consumeStringChar(
+  state: UnwrapperState,
+  ch: string,
+  emit: (piece: string) => void,
+): boolean {
+  if (state.pendingEscape !== undefined) {
+    if (state.pendingEscape.selector === "") {
+      state.pendingEscape = { selector: ch, hex: "" };
+      if (ch !== "u") {
+        emit(decodedSimpleEscape(ch));
+        state.pendingEscape = undefined;
       }
-      if (!isHexDigit(ch)) throw contractFailure("incomplete \\u escape sequence");
-      const hex = pendingEscape.hex + ch;
-      if (hex.length < 4) {
-        pendingEscape = { selector: pendingEscape.selector, hex };
-        return false;
-      }
-      emit(String.fromCharCode(Number.parseInt(hex, 16)));
-      pendingEscape = undefined;
       return false;
     }
-    if (ch === '"') return true;
-    if (ch === "\\") {
-      pendingEscape = { selector: "", hex: "" };
+    if (!isHexDigit(ch)) throw contractFailure("incomplete \\u escape sequence");
+    const hex = state.pendingEscape.hex + ch;
+    if (hex.length < 4) {
+      state.pendingEscape = { selector: state.pendingEscape.selector, hex };
       return false;
     }
-    emit(ch);
+    emit(String.fromCharCode(Number.parseInt(hex, 16)));
+    state.pendingEscape = undefined;
     return false;
-  };
+  }
+  if (ch === '"') return true;
+  if (ch === "\\") {
+    state.pendingEscape = { selector: "", hex: "" };
+    return false;
+  }
+  emit(ch);
+  return false;
+}
 
-  const step = (ch: string): void => {
-    switch (phase) {
-      case "leading":
-        if (isJsonWhitespace(ch)) return;
-        if (ch !== "{") throw contractFailure("expected a JSON object wrapper");
-        phase = "member-start";
-        return;
-      case "member-start":
-        if (isJsonWhitespace(ch)) return;
-        if (ch === '"') {
-          keyBuffer = "";
-          phase = "key";
-          return;
-        }
-        if (ch === "}") throw contractFailure("wrapper object closed before chapter_markdown");
-        throw contractFailure("expected a quoted member name");
-      case "key":
-        if (
-          consumeStringChar(ch, (piece) => {
-            keyBuffer += piece;
-          })
-        ) {
-          keyMatchesTarget = keyBuffer === TARGET_KEY;
-          phase = "colon";
-        }
-        return;
-      case "colon":
-        if (isJsonWhitespace(ch)) return;
-        if (ch !== ":") throw contractFailure("expected ':' after the member name");
-        phase = "value-start";
-        return;
-      case "value-start":
-        if (isJsonWhitespace(ch)) return;
-        if (ch === '"') {
-          phase = keyMatchesTarget ? "target" : "skip-string";
-          return;
-        }
-        if (keyMatchesTarget) throw contractFailure("chapter_markdown must be a JSON string value");
-        if (ch === "{" || ch === "[") {
-          throw contractFailure("nested object/array values are not supported");
-        }
-        phase = "skip-plain";
-        return;
-      case "skip-string":
-        if (consumeStringChar(ch, () => undefined)) phase = "member-continue";
-        return;
-      case "skip-plain":
-        if (ch === ",") {
-          phase = "member-start";
-          return;
-        }
-        if (ch === "}") throw contractFailure("wrapper object closed before chapter_markdown");
-        if (isJsonWhitespace(ch)) phase = "member-continue";
-        return;
-      case "member-continue":
-        if (isJsonWhitespace(ch)) return;
-        if (ch === ",") {
-          phase = "member-start";
-          return;
-        }
-        throw contractFailure("wrapper object closed before chapter_markdown");
-      case "target":
-        if (
-          consumeStringChar(ch, (piece) => {
-            output += piece;
-          })
-        ) {
-          phase = "trailing";
-        }
-        return;
-      case "trailing":
-        return;
-    }
-  };
+function stepLeading(state: UnwrapperState, ch: string): void {
+  if (isJsonWhitespace(ch)) return;
+  if (ch !== "{") throw contractFailure("expected a JSON object wrapper");
+  state.phase = "member-start";
+}
 
+function stepMemberStart(state: UnwrapperState, ch: string): void {
+  if (isJsonWhitespace(ch)) return;
+  if (ch === '"') {
+    state.keyBuffer = "";
+    state.phase = "key";
+    return;
+  }
+  if (ch === "}") throw contractFailure("wrapper object closed before chapter_markdown");
+  throw contractFailure("expected a quoted member name");
+}
+
+function stepKey(state: UnwrapperState, ch: string): void {
+  if (
+    consumeStringChar(state, ch, (piece) => {
+      state.keyBuffer += piece;
+    })
+  ) {
+    state.keyMatchesTarget = state.keyBuffer === TARGET_KEY;
+    state.phase = "colon";
+  }
+}
+
+function stepColon(state: UnwrapperState, ch: string): void {
+  if (isJsonWhitespace(ch)) return;
+  if (ch !== ":") throw contractFailure("expected ':' after the member name");
+  state.phase = "value-start";
+}
+
+function stepValueStart(state: UnwrapperState, ch: string): void {
+  if (isJsonWhitespace(ch)) return;
+  if (ch === '"') {
+    state.phase = state.keyMatchesTarget ? "target" : "skip-string";
+    return;
+  }
+  if (state.keyMatchesTarget) throw contractFailure("chapter_markdown must be a JSON string value");
+  if (ch === "{" || ch === "[") {
+    throw contractFailure("nested object/array values are not supported");
+  }
+  state.phase = "skip-plain";
+}
+
+function stepSkipString(state: UnwrapperState, ch: string): void {
+  if (consumeStringChar(state, ch, () => undefined)) state.phase = "member-continue";
+}
+
+function stepSkipPlain(state: UnwrapperState, ch: string): void {
+  if (ch === ",") {
+    state.phase = "member-start";
+    return;
+  }
+  if (ch === "}") throw contractFailure("wrapper object closed before chapter_markdown");
+  if (isJsonWhitespace(ch)) state.phase = "member-continue";
+}
+
+function stepMemberContinue(state: UnwrapperState, ch: string): void {
+  if (isJsonWhitespace(ch)) return;
+  if (ch === ",") {
+    state.phase = "member-start";
+    return;
+  }
+  throw contractFailure("wrapper object closed before chapter_markdown");
+}
+
+function stepTarget(state: UnwrapperState, ch: string): void {
+  if (
+    consumeStringChar(state, ch, (piece) => {
+      state.output += piece;
+    })
+  ) {
+    state.phase = "trailing";
+  }
+}
+
+function stepTrailing(): void {
+  // Everything after the completed chapter_markdown value is ignored.
+}
+
+/** Per-phase handler for one consumed character; handlers advance `state.phase`. */
+type StepHandler = (state: UnwrapperState, ch: string) => void;
+
+const STEP_BY_PHASE: Readonly<Record<Phase, StepHandler>> = {
+  leading: stepLeading,
+  "member-start": stepMemberStart,
+  key: stepKey,
+  colon: stepColon,
+  "value-start": stepValueStart,
+  "skip-string": stepSkipString,
+  "skip-plain": stepSkipPlain,
+  "member-continue": stepMemberContinue,
+  target: stepTarget,
+  trailing: stepTrailing,
+};
+
+export function createChapterMarkdownUnwrapper(): ChapterMarkdownUnwrapper {
+  const state = createUnwrapperState();
   return {
     feed(fragment: string): string | undefined {
-      output = "";
-      for (const ch of fragment) step(ch);
-      return output === "" ? undefined : output;
+      state.output = "";
+      for (const ch of fragment) STEP_BY_PHASE[state.phase](state, ch);
+      return state.output === "" ? undefined : state.output;
     },
     finish(): void {
-      if (phase !== "trailing") {
+      if (state.phase !== "trailing") {
         throw contractFailure("stream ended before a complete chapter_markdown string value");
       }
     },
