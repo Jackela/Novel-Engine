@@ -18,6 +18,10 @@ the operational postures they leave behind.
   after the cutover lives only in the new schema and does not survive the
   rollback. The v0.4.0 release notes and the README's upgrade section
   state this door explicitly.
+  *Amendment 2026-09-13 (#537): the startup probe described above was
+  removed — the Python-era support window is closed. Python-era databases
+  remain unsupported (fresh data directory required); the import CLI
+  remains the migration path for legacy content.*
 - **`python-final` tag is the archive.** The last Python state is preserved
   by an annotated tag at `1597de37` (protected by a tag-protection rule);
   the tree keeps one backend — SSOT. History is the archive: 210 tracked
