@@ -1,3 +1,4 @@
+import { pageLimit } from "./page_limit.js";
 import type { ProjectScope } from "./studio_store.js";
 
 /** Project-row shapes for the bounded owner catalog (#458). */
@@ -23,16 +24,11 @@ export const MAX_PROJECT_PAGE_LIMIT = 100;
 
 /** Validate and narrow a catalog-page budget before persistence. */
 export function projectPageLimit(value: number): ProjectPageLimit {
-  if (
-    !Number.isInteger(value) ||
-    value < MIN_PROJECT_PAGE_LIMIT ||
-    value > MAX_PROJECT_PAGE_LIMIT
-  ) {
-    throw new RangeError(
-      `Project page limit must be an integer from ${MIN_PROJECT_PAGE_LIMIT} through ${MAX_PROJECT_PAGE_LIMIT}.`,
-    );
-  }
-  return value as ProjectPageLimit;
+  return pageLimit<ProjectPageLimit>(value, {
+    min: MIN_PROJECT_PAGE_LIMIT,
+    max: MAX_PROJECT_PAGE_LIMIT,
+    subject: "Project",
+  });
 }
 
 /** Persistence-neutral exclusive position in `(updated_at DESC, id DESC)` order. */

@@ -1,5 +1,6 @@
 import type { ExportArtifactFormat } from "../export_artifact_identity.js";
 import type { JobRecord } from "./job_records.js";
+import { pageLimit } from "./page_limit.js";
 import type { ProjectScope } from "./studio_store.js";
 
 export type { ExportArtifactFormat } from "../export_artifact_identity.js";
@@ -45,12 +46,11 @@ export const MAX_EXPORT_PAGE_LIMIT = 100;
 
 /** Validate and narrow a transport/application number before persistence. */
 export function exportPageLimit(value: number): ExportPageLimit {
-  if (!Number.isInteger(value) || value < MIN_EXPORT_PAGE_LIMIT || value > MAX_EXPORT_PAGE_LIMIT) {
-    throw new RangeError(
-      `Export page limit must be an integer from ${MIN_EXPORT_PAGE_LIMIT} through ${MAX_EXPORT_PAGE_LIMIT}.`,
-    );
-  }
-  return value as ExportPageLimit;
+  return pageLimit<ExportPageLimit>(value, {
+    min: MIN_EXPORT_PAGE_LIMIT,
+    max: MAX_EXPORT_PAGE_LIMIT,
+    subject: "Export",
+  });
 }
 
 /** Persistence-neutral exclusive position in `(created_at DESC, id DESC)` order. */
