@@ -1,4 +1,5 @@
 import type { Principal } from "../../../../shared/application/ports/auth.js";
+import { pageLimit } from "./page_limit.js";
 
 /** Persistence-neutral row shapes handed to the application layer. */
 export interface ProjectRecord {
@@ -70,16 +71,11 @@ export const MAX_REVISION_PAGE_LIMIT = 100;
 
 /** Validate and narrow a revision-page budget before persistence. */
 export function revisionPageLimit(value: number): RevisionPageLimit {
-  if (
-    !Number.isInteger(value) ||
-    value < MIN_REVISION_PAGE_LIMIT ||
-    value > MAX_REVISION_PAGE_LIMIT
-  ) {
-    throw new RangeError(
-      `Revision page limit must be an integer from ${MIN_REVISION_PAGE_LIMIT} through ${MAX_REVISION_PAGE_LIMIT}.`,
-    );
-  }
-  return value as RevisionPageLimit;
+  return pageLimit<RevisionPageLimit>(value, {
+    min: MIN_REVISION_PAGE_LIMIT,
+    max: MAX_REVISION_PAGE_LIMIT,
+    subject: "Revision",
+  });
 }
 
 /** Persistence-neutral exclusive position in `(revision_number DESC, id DESC)` order. */
