@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { eq } from "drizzle-orm";
 
-import type { DocumentWithCurrent } from "../../application/ports/studio_store.js";
+import type { DocumentWithCurrent } from "../../application/ports/document_store.js";
 import { DEFAULT_LORE_STATUS } from "../../domain/kinds.js";
 import { refreshDocumentIndex } from "./document_search.js";
 import { documents } from "./schema.js";

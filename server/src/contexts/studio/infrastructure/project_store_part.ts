@@ -2,19 +2,19 @@ import { randomUUID } from "node:crypto";
 import { and, eq, sql } from "drizzle-orm";
 
 import type { StudioSqliteDatabase } from "../../../shared/infrastructure/db/connection.js";
+import type { DocumentWithCurrent } from "../application/ports/document_store.js";
 import type {
   ProjectCatalogPage,
   ProjectPageInput,
 } from "../application/ports/project_catalog_store.js";
 import { projectPageLimit } from "../application/ports/project_catalog_store.js";
-import type { ProjectStore } from "../application/ports/project_store.js";
-import type { ProjectUpdateInput } from "../application/ports/project_update_store.js";
 import type {
   AddImportedProjectInput,
   AddProjectInput,
-  DocumentWithCurrent,
-  ProjectScope,
-} from "../application/ports/studio_store.js";
+  ProjectStore,
+} from "../application/ports/project_store.js";
+import type { ProjectUpdateInput } from "../application/ports/project_update_store.js";
+import type { ProjectScope } from "../application/ports/studio_store.js";
 import { NotFoundError } from "../domain/exceptions.js";
 import { clearProjectDocumentIndex } from "./db/document_search.js";
 import { seedDocumentInTransaction } from "./db/document_seed_writes.js";

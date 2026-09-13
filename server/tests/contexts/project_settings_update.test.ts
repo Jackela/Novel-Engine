@@ -3,10 +3,11 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { eq } from "drizzle-orm";
 import { afterEach, describe, expect, expectTypeOf, it } from "vitest";
-
-import type { ProjectStore } from "../../src/contexts/studio/application/ports/project_store.js";
+import type {
+  ProjectRecord,
+  ProjectStore,
+} from "../../src/contexts/studio/application/ports/project_store.js";
 import type { ProjectUpdateInput } from "../../src/contexts/studio/application/ports/project_update_store.js";
-import type { ProjectRecord } from "../../src/contexts/studio/application/ports/studio_store.js";
 import type { StudioVolumeStore } from "../../src/contexts/studio/application/ports/volume_store.js";
 import {
   ProjectService,

@@ -1,5 +1,6 @@
 import type { LoreStatus } from "../../domain/kinds.js";
-import type { DocumentWithCurrent, ProjectScope } from "./studio_store.js";
+import type { DocumentWithCurrent } from "./document_store.js";
+import type { ProjectScope } from "./studio_store.js";
 
 /** The alias write (#315): the normalized key list of one lore entry. */
 export interface SetLoreAliasesInput {
