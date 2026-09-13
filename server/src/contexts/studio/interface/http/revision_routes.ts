@@ -5,6 +5,7 @@ import { errorEnvelopeResponse } from "../../../../shared/interface/http/error_e
 import { revisionPageLimit } from "../../application/ports/studio_store.js";
 import { requireServices, type StudioRoutesOptions } from "./project_routes.js";
 import { decodeRevisionCursor, encodeRevisionCursor } from "./revision_cursor.js";
+import { authedReadResponses, authedWriteResponses } from "./route_responses.js";
 import { structureCapacity422ResponseSchema } from "./structure_capacity_schemas.js";
 import { withStudioErrors } from "./studio_error_mapping.js";
 import {
@@ -18,12 +19,6 @@ import {
   revisionConflictSchema,
   revisionListResponseSchema,
 } from "./studio_schemas.js";
-
-/** Guard failures shared by every authenticated revision surface. */
-const GUARD_RESPONSES = {
-  401: errorEnvelopeResponse,
-  503: errorEnvelopeResponse,
-} as const;
 
 /**
  * Revision surface: paginated document history with scoped cursors, and
@@ -42,12 +37,10 @@ export const revisionRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fa
       schema: {
         params: documentIdParams,
         querystring: revisionListQuerySchema,
-        response: {
+        response: authedReadResponses({
           200: revisionListResponseSchema,
-          ...GUARD_RESPONSES,
-          404: errorEnvelopeResponse,
           422: errorEnvelopeResponse,
-        },
+        }),
       },
     },
     async (request) => {
@@ -88,15 +81,12 @@ export const revisionRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fa
       schema: {
         params: revisionIdParams,
         body: restoreSchema,
-        response: {
+        response: authedWriteResponses({
           200: documentResponseSchema,
-          ...GUARD_RESPONSES,
-          403: errorEnvelopeResponse,
-          404: errorEnvelopeResponse,
           // Restoring an over-budget outline revision refuses permanently (#461).
           422: structureCapacity422ResponseSchema,
           409: revisionConflictSchema,
-        },
+        }),
       },
     },
     async (request) =>
