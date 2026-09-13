@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { extractDashscopeIncrementalText } from "../../src/contexts/ai/infrastructure/providers/dashscope_protocol.js";
+import { extractDashscopeIncrementalText } from "../../src/contexts/ai/infrastructure/providers/dashscope_extractors.js";
 
 describe("dashscope incremental stream extraction", () => {
   it("reads the top-level delta string without trimming whitespace", () => {

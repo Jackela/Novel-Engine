@@ -5,8 +5,8 @@ import { TextGenerationProviderError } from "../../src/contexts/ai/application/p
 import {
   extractDashscopeGenerationText,
   extractDashscopeResponsesText,
-  resolveDashscopeTransport,
-} from "../../src/contexts/ai/infrastructure/providers/dashscope_protocol.js";
+} from "../../src/contexts/ai/infrastructure/providers/dashscope_extractors.js";
+import { resolveDashscopeTransport } from "../../src/contexts/ai/infrastructure/providers/dashscope_transport.js";
 import {
   coercePayloadToSchema,
   parseProviderJsonObject,

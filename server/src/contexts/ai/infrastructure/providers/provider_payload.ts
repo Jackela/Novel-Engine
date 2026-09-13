@@ -4,7 +4,8 @@ import { TextGenerationProviderError } from "../../application/ports/text_genera
  * Provider-neutral payload pipeline shared by every real HTTP adapter:
  * response text -> schema-conformant JSON payload. Migrated verbatim from
  * the dashscope_payload/dashscope_json namespaces; DashScope-specific
- * protocol handling stays in dashscope_protocol.ts.
+ * protocol handling stays in dashscope_transport.ts and
+ * dashscope_extractors.ts.
  */
 type JsonObject = Record<string, unknown>;
 
