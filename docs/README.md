@@ -10,6 +10,14 @@ evidence for its named commit, not the status of a later checkout.
 - [Project overview](../README.md): installation, configuration, CLI, and upgrades.
 - [Quickstart](../openwiki/quickstart.md): cross-platform setup, first Owner
   session, local development, and validation prerequisites.
+- Writer guides for the self-hosting author: [getting started](../openwiki/guides/getting-started.md),
+  [provider setup](../openwiki/guides/provider-setup.md),
+  [writing](../openwiki/guides/writing-guide.md),
+  [exporting](../openwiki/guides/exporting.md),
+  [backup and restore](../openwiki/guides/backup-and-restore.md),
+  [upgrading](../openwiki/guides/upgrading.md),
+  [troubleshooting](../openwiki/guides/troubleshooting.md), and the
+  [FAQ](../openwiki/guides/faq.md).
 - [Studio workspace](../openwiki/frontend/studio-workspace.md): authoring,
   navigation, Inspector behavior, and responsive layouts.
 - [Security policy](../.github/SECURITY.md) and [license](../LICENSE).
