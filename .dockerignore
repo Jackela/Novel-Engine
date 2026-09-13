@@ -1,0 +1,26 @@
+# Keep the build context small and hermetic. Everything the Dockerfile
+# COPYs (package manifests, pnpm-lock.yaml, pnpm-workspace.yaml, frontend/,
+# server/, server/drizzle/, docker/entrypoint.sh, LICENSE, README.md) stays
+# in the context; only generated, local, or sensitive state is excluded.
+
+# Version control and local agent state.
+.git/
+.zcode/
+.playwright-mcp/
+
+# Dependencies are installed fresh inside the image; workspace packages keep
+# their own node_modules, so match every level.
+**/node_modules/
+
+# Local runtime data and test/coverage output.
+data/
+test-results/
+**/coverage/
+
+# Host build artifacts; the image rebuilds frontend/dist and server/dist
+# from source.
+**/dist/
+
+# Environment files may hold secrets and must never enter the build context;
+# container configuration flows only through compose environment values.
+**/.env*
