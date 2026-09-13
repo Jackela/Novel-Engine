@@ -1,7 +1,7 @@
 import { TextGenerationProviderError } from "../../application/ports/text_generation.js";
 import { isJsonObject, usageToken } from "./provider_http.js";
 
-export type JsonObject = Record<string, unknown>;
+type JsonObject = Record<string, unknown>;
 
 function textFromContent(content: unknown): string | undefined {
   if (typeof content === "string") {

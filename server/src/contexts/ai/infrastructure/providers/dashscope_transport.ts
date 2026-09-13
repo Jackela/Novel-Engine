@@ -5,9 +5,8 @@ import {
 import {
   extractDashscopeGenerationText,
   extractDashscopeResponsesText,
-  type JsonObject,
 } from "./dashscope_extractors.js";
-import { buildSystemContent, buildUserContent } from "./provider_json.js";
+import { buildSystemContent, buildUserContent, type JsonObject } from "./provider_json.js";
 
 const DASHSCOPE_API_PATH_SEGMENTS = {
   root: "api",
