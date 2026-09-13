@@ -6,6 +6,7 @@ import {
   type TextProviderName,
 } from "../../../contexts/ai/application/ports/text_generation.js";
 import { revisionWordCount } from "../domain/revision_word_count.js";
+import { failedJobInput } from "./failed_job_input.js";
 import { BoundedPromptWriter } from "./generation_capacity.js";
 import { loreEntriesFromDocuments } from "./lorebook.js";
 import { dumpJson } from "./payloads.js";
@@ -224,22 +225,23 @@ export function failedProposalJob(
   revisionId: string,
   message: string,
 ): JobRecord {
-  return jobs.addJob(scope, {
-    projectId: seed.projectId,
-    documentId: seed.documentId,
-    kind: "proposal",
-    operation: seed.operation,
-    provider: seed.provider,
-    status: "failed",
-    model: "",
-    requestJson: seed.requestJson,
-    resultJson: dumpJson({
-      proposal_markdown: "",
-      base_revision_id: revisionId,
-      accepted_revision_id: null,
+  return jobs.addJob(
+    scope,
+    failedJobInput({
+      projectId: seed.projectId,
+      documentId: seed.documentId,
+      kind: "proposal",
+      operation: seed.operation,
+      provider: seed.provider,
+      model: "",
+      requestJson: seed.requestJson,
+      resultJson: dumpJson({
+        proposal_markdown: "",
+        base_revision_id: revisionId,
+        accepted_revision_id: null,
+      }),
+      error: message,
+      now: seed.now,
     }),
-    error: message,
-    eventDetailsJson: dumpJson({ error: message }),
-    now: seed.now,
-  });
+  );
 }

@@ -12,6 +12,7 @@ import {
 import { isExportArtifactFormat } from "./export_artifact_identity.js";
 import type { SnapshotArtifactService } from "./export_artifact_service.js";
 import { exportRetryCapacityOutcome } from "./export_retry_capacity_outcome.js";
+import { failedJobOutcome } from "./failed_job_input.js";
 import { generationRetryCapacityOutcome } from "./generation_retry_capacity_outcome.js";
 import { replayedJobPayload } from "./job_replay_payload.js";
 import { dumpJson, jobPayload, safeLoadJson } from "./payloads.js";
@@ -149,12 +150,12 @@ export class JobRetryExecutor {
         throw error;
       }
       return jobPayload(
-        this.jobs.markJobOutcome(scope, projectId, retry.id, {
-          status: "failed",
-          error: error.message,
-          eventDetailsJson: dumpJson({ error: error.message }),
-          now: this.now(),
-        }),
+        this.jobs.markJobOutcome(
+          scope,
+          projectId,
+          retry.id,
+          failedJobOutcome(error.message, this.now()),
+        ),
       );
     }
   }

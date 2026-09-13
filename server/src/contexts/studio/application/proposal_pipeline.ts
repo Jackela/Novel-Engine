@@ -4,6 +4,7 @@ import {
   type TextGenerationProvider,
   TextGenerationProviderError,
   type TextGenerationProviderFactory,
+  type TextGenerationStreamOptions,
   type TextGenerationStreamOutcome,
   type TextGenerationTask,
   type TextProviderName,
@@ -11,19 +12,18 @@ import {
 import { InvalidOperationError } from "../../../shared/domain/exceptions.js";
 import type { InFlightOperationGuard } from "./operation_in_flight.js";
 import type { ProposalStreamFramePayload } from "./payload_schemas/proposal_frame.js";
-import { jobPayload, safeLoadJson } from "./payloads.js";
+import { jobPayload } from "./payloads.js";
 import type { StudioJobLedgerStore } from "./ports/job_ledger_store.js";
 import type { JobRecord } from "./ports/job_records.js";
 import type { ProposalContextStore } from "./ports/proposal_context_store.js";
 import {
   admitProposalOperation,
-  admitTextProvider,
   buildProposalSeed,
   type ProposalGenerationRequest,
   type ProposalRetryRequest,
   type ProposalStreamOptions,
   proposalRevisionFromContext,
-  proposalStepForOperation,
+  recoverProposalRetryContext,
 } from "./proposal_admission.js";
 import {
   buildProposalTask,
@@ -35,7 +35,6 @@ import {
   type ProposalJobSeed,
   validatedProposalOrThrow,
 } from "./proposal_landing.js";
-import { proposalRetryStaleBaseOutcome } from "./proposal_retry_base_outcome.js";
 import { disposeProvider, type ProviderCleanupFailureReporter } from "./provider_disposal.js";
 
 /**
@@ -55,6 +54,41 @@ interface ProposalTarget {
   readonly seed: ProposalJobSeed;
   readonly revisionId: string;
   readonly task: TextGenerationTask;
+}
+
+/**
+ * The streaming twin's delta loop: consumes the provider stream, counts code
+ * points, accumulates the proposal markdown, and re-emits each delta as a
+ * `delta` frame. Returns the accumulated markdown and the provider-reported
+ * outcome once the stream completes; aborts and provider failures propagate
+ * to the caller's existing cancel/failure handling.
+ */
+async function* accumulateStreamedDeltas(
+  generate: (
+    task: TextGenerationTask,
+    options?: TextGenerationStreamOptions,
+  ) => AsyncGenerator<string, void, void>,
+  task: TextGenerationTask,
+  signal: AbortSignal | undefined,
+): AsyncGenerator<
+  ProposalStreamFramePayload,
+  { accumulated: string[]; reported: TextGenerationStreamOutcome | undefined },
+  void
+> {
+  const accumulated: string[] = [];
+  const codePoints = createProposalCodePointCounter();
+  let reported: TextGenerationStreamOutcome | undefined;
+  for await (const delta of generate(task, {
+    signal,
+    onOutcome: (value) => {
+      reported = value;
+    },
+  })) {
+    includeProposalDelta(codePoints, delta);
+    accumulated.push(delta);
+    yield { type: "delta", text: delta };
+  }
+  return { accumulated, reported };
 }
 
 export class ProposalGenerationPipeline {
@@ -156,19 +190,11 @@ export class ProposalGenerationPipeline {
             `Provider '${providerName}' does not support streaming generation.`,
           );
         }
-        const accumulated: string[] = [];
-        const codePoints = createProposalCodePointCounter();
-        let reported: TextGenerationStreamOutcome | undefined;
-        for await (const delta of stream(target.task, {
-          signal: options.signal,
-          onOutcome: (value) => {
-            reported = value;
-          },
-        })) {
-          includeProposalDelta(codePoints, delta);
-          accumulated.push(delta);
-          yield { type: "delta", text: delta };
-        }
+        const { accumulated, reported } = yield* accumulateStreamedDeltas(
+          stream,
+          target.task,
+          options.signal,
+        );
         if (options.signal?.aborted === true) return;
         const { proposal } = validatedProposalOrThrow({
           content: { chapter_markdown: accumulated.join("") },
@@ -209,43 +235,20 @@ export class ProposalGenerationPipeline {
    */
   async retry(request: ProposalRetryRequest): Promise<JobRecord> {
     const retry = request.retry;
-    const stored = safeLoadJson(retry.requestJson);
-    const instruction = typeof stored.instruction === "string" ? stored.instruction : "";
-    const baseRevisionId =
-      typeof stored.base_revision_id === "string" ? stored.base_revision_id : null;
-    if (retry.documentId === null || baseRevisionId === null) {
-      throw new InvalidOperationError("Original AI job is missing its request context.");
-    }
-    // A stored operation without a provider step has lost its request context.
-    const step = proposalStepForOperation(retry.operation);
-    if (step === undefined) {
-      throw new InvalidOperationError("Original AI job is missing its request context.");
-    }
-    const providerName = admitTextProvider(retry.provider);
-    const context = this.proposalContext.readProposalContext(
-      request.scope,
-      retry.projectId,
-      retry.documentId,
-    );
-    const { revision } = proposalRevisionFromContext(context);
-    if (revision.id !== baseRevisionId) {
-      return this.jobs.markJobOutcome(
-        request.scope,
-        retry.projectId,
-        retry.id,
-        proposalRetryStaleBaseOutcome(baseRevisionId, revision.id, request.now()),
-      );
+    const recovery = recoverProposalRetryContext(request, this.proposalContext);
+    if (recovery.kind === "stale-base") {
+      return this.jobs.markJobOutcome(request.scope, retry.projectId, retry.id, recovery.outcome);
     }
     let provider: TextGenerationProvider | undefined;
     try {
       const task = buildProposalTask(
-        step,
+        recovery.step,
         retry.operation,
-        instruction,
-        context,
+        recovery.instruction,
+        recovery.context,
         this.loreBudgetCharacters,
       );
-      provider = this.providerFactory(providerName);
+      provider = this.providerFactory(recovery.providerName);
       // A retried generation is a proposal generation too (#314): it assembles
       // the same resident context instead of the amnesiac historical shape.
       const result = await provider.generateStructured(task);
@@ -263,9 +266,9 @@ export class ProposalGenerationPipeline {
             model: result.model,
             promptTokens: result.promptTokens,
             completionTokens: result.completionTokens,
-            instruction,
+            instruction: recovery.instruction,
           },
-          { operation: retry.operation, revisionId: baseRevisionId, now: request.now() },
+          { operation: retry.operation, revisionId: recovery.baseRevisionId, now: request.now() },
         ),
       );
     } finally {
