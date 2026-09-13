@@ -22,20 +22,20 @@ project on the built-in trial provider (`mock`).
 ## How configuration reaches the container
 
 The studio container reads its configuration from environment variables. With
-Docker Compose, the cleanest way to set them is a `compose.override.yaml`
-file next to `compose.yaml` (Compose merges it automatically, so the original
-file stays untouched — useful if you installed by downloading the ZIP and
-later replace it during an [upgrade](upgrading.md)).
+Docker Compose, the simplest way to set them is the `.env` file next to
+`compose.yaml`: Compose reads that file automatically and passes provider
+settings through to the container, so putting a key in `.env` and re-running
+`docker compose up -d` is all it takes. The file is yours to edit and is not
+part of the studio code, so an [upgrade](upgrading.md) never overwrites it.
 
-Create `compose.override.yaml` with your variables inside the `environment`
-block:
+Create a file named `.env` in the folder that contains `compose.yaml` (a
+fresh download ships only the `.env.example` template; keep using your
+existing `.env` if you already have one) and add your settings as plain
+`NAME=value` lines:
 
-```yaml
-services:
-  novel-engine:
-    environment:
-      LLM_PROVIDER: dashscope
-      DASHSCOPE_API_KEY: sk-your-key-here
+```bash
+LLM_PROVIDER=dashscope
+DASHSCOPE_API_KEY=sk-your-key-here
 ```
 
 Then apply the change:
@@ -47,11 +47,23 @@ docker compose up -d
 `up -d` recreates the container with the new environment; a plain restart is
 not enough after editing the file.
 
+Alternatively, a `compose.override.yaml` file next to `compose.yaml` works
+too — Compose merges it over the main file, which is useful when you need
+structural changes such as a different port. Settings go inside the
+`environment` block:
+
+```yaml
+services:
+  novel-engine:
+    environment:
+      LLM_PROVIDER: dashscope
+      DASHSCOPE_API_KEY: sk-your-key-here
+```
+
 Notes:
 
-- A `.env` file next to `compose.yaml` only fills variables the main file
-  explicitly forwards (such as `LLM_PROVIDER`), so provider API keys belong in
-  the override file above, not in `.env`.
+- Settings exported in your shell (`export DASHSCOPE_API_KEY=...`) win over
+  the `.env` file; both reach the container through the same pass-through.
 - Values are never echoed into logs or error messages.
 
 ## DashScope
@@ -63,14 +75,11 @@ DashScope is Alibaba Cloud's model service (the Qwen model family).
    `https://modelstudio.console.alibabacloud.com/`. Activate the model service
    if asked (billing is pay-per-token).
 2. Open **API-KEY** management in the console, create a key, and copy it.
-3. Put the key in `compose.override.yaml`:
+3. Put the key in the `.env` file next to `compose.yaml`:
 
-   ```yaml
-   services:
-     novel-engine:
-       environment:
-         LLM_PROVIDER: dashscope
-         DASHSCOPE_API_KEY: sk-your-key-here
+   ```bash
+   LLM_PROVIDER=dashscope
+   DASHSCOPE_API_KEY=sk-your-key-here
    ```
 
 4. Run `docker compose up -d`, then open your project's **Settings** and
@@ -97,16 +106,13 @@ API base URL, an API key, and a model name.
    credit (billing is pay-per-token).
 2. Open **API keys** in the left menu, press **Create new API key**, and copy
    the key (you cannot view it again later).
-3. Put the values in `compose.override.yaml`:
+3. Put the values in the `.env` file next to `compose.yaml`:
 
-   ```yaml
-   services:
-     novel-engine:
-       environment:
-         LLM_PROVIDER: openai_compatible
-         OPENAI_API_KEY: sk-your-deepseek-key
-         OPENAI_API_BASE: https://api.deepseek.com/v1
-         OPENAI_COMPATIBLE_MODEL: deepseek-chat
+   ```bash
+   LLM_PROVIDER=openai_compatible
+   OPENAI_API_KEY=sk-your-deepseek-key
+   OPENAI_API_BASE=https://api.deepseek.com/v1
+   OPENAI_COMPATIBLE_MODEL=deepseek-chat
    ```
 
 4. Run `docker compose up -d`, then open your project's **Settings** and
@@ -118,14 +124,11 @@ The same three variables work for any compatible endpoint — the studio
 accepts `LLM_API_KEY`/`LLM_API_BASE` as the canonical names and
 `OPENAI_API_KEY`/`OPENAI_API_BASE` as aliases (either spelling works):
 
-```yaml
-services:
-  novel-engine:
-    environment:
-      LLM_PROVIDER: openai_compatible
-      LLM_API_KEY: sk-your-key
-      LLM_API_BASE: https://api.openai.com/v1
-      OPENAI_COMPATIBLE_MODEL: gpt-4o-mini
+```bash
+LLM_PROVIDER=openai_compatible
+LLM_API_KEY=sk-your-key
+LLM_API_BASE=https://api.openai.com/v1
+OPENAI_COMPATIBLE_MODEL=gpt-4o-mini
 ```
 
 The model name must be one the endpoint actually serves; if you omit it, the
@@ -144,7 +147,7 @@ studio falls back to `gpt-4o-mini` (or `LLM_MODEL` when set).
    ```
 
    Typical causes: the key was copied with a stray space, `up -d` was not run
-   after editing the override file, the model name does not exist at that
+   after editing `.env`, the model name does not exist at that
    endpoint, or the account is out of credit.
 3. For a deeper database-and-configuration health report, the `doctor`
    command runs inside the container — it needs the studio stopped first; the
@@ -153,6 +156,6 @@ studio falls back to `gpt-4o-mini` (or `LLM_MODEL` when set).
 
 ## Back to trial mode
 
-Set `LLM_PROVIDER: mock` in your override file (or remove the override file)
+Set `LLM_PROVIDER=mock` in your `.env` (or delete the `LLM_PROVIDER` line)
 and run `docker compose up -d`. Projects then run on the trial provider
 again; your manuscripts are unaffected either way.
