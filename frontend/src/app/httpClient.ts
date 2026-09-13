@@ -1,6 +1,7 @@
 import { appConfig } from "@/app/config";
 import { localServiceUnavailable } from "@/app/networkError";
 import { createRequestAbortScope } from "@/app/requestAbortScope";
+import { isRecord } from "@/app/typeGuards";
 
 export class HttpError extends Error {
   constructor(
@@ -28,10 +29,6 @@ export function getCsrfToken(): string | undefined {
 }
 
 type ResponseParser<T> = (value: unknown) => T;
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
 
 /**
  * Read an error response in the unified envelope shape
