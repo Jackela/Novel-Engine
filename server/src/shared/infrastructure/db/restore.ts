@@ -15,13 +15,15 @@ import { backupDatabaseFile } from "./backup.js";
 const WAL_SIDECAR_SUFFIXES = ["-wal", "-shm"] as const;
 
 /**
- * Earliest Novel Engine core table, created by the very first migration
- * (`0000_init_persistence_core.sql`) and never renamed or dropped since.
- * Its presence in `sqlite_master` is the minimal proof that a restore input
- * carries the Novel Engine schema instead of being any structurally valid
- * unrelated SQLite file.
+ * Drizzle's migration journal, the TS-stack-only schema marker. `migrate()`
+ * creates it with `CREATE TABLE IF NOT EXISTS "__drizzle_migrations"` as the
+ * very first statement of every startup — before any migration SQL runs —
+ * and never drops it afterwards. Its presence in `sqlite_master` is the
+ * minimal proof that a restore input was created by this stack instead of
+ * any other database that happens to share table names, including the
+ * retired Python 0.3.x stack, whose schema also carried a `jobs` table.
  */
-const NOVEL_ENGINE_CORE_TABLE = "jobs";
+const NOVEL_ENGINE_MIGRATIONS_TABLE = "__drizzle_migrations";
 
 /**
  * Replace the configured database file with a verified backup file. The input
@@ -61,12 +63,17 @@ export async function restoreDatabaseFile(
 
 /**
  * Refuse any input that is missing, unreadable, empty, fails the SQLite
- * integrity check, or lacks the Novel Engine schema. Only this module's
- * refusal errors are raised here; every branch names the exact input and why
- * it was rejected. The schema assertion cannot reject a legitimate artifact:
- * a genuinely empty new database is zero bytes and produces no backup at all
- * (`backupDatabaseFile` treats size 0 as a clean bootstrap), while every
- * product backup is taken from a migrated live database.
+ * integrity check, or lacks the TS-stack migration journal. Only this
+ * module's refusal errors are raised here; every branch names the exact
+ * input and why it was rejected. The schema assertion cannot reject a
+ * legitimate TS-stack artifact: `migrate()` creates the journal on the first
+ * startup and never drops it, so any backup taken from a database that has
+ * completed migrations carries it, and a genuinely empty new database is
+ * zero bytes and produces no backup at all (`backupDatabaseFile` treats
+ * size 0 as a clean bootstrap). The startup safety backup does run before
+ * migrations, so a stale non-empty foreign file can be swept into
+ * data/backups/ — refusing such an artifact at restore time is exactly what
+ * this assertion is for.
  */
 async function verifyRestoreInput(backupPath: string): Promise<void> {
   let size: number;
@@ -91,10 +98,10 @@ async function verifyRestoreInput(backupPath: string): Promise<void> {
     throw error;
   }
   let check: string;
-  let hasCoreTable: boolean;
+  let hasMigrationsTable: boolean;
   try {
     check = String(input.pragma("quick_check", { simple: true }));
-    hasCoreTable = sqliteTableExists(input, NOVEL_ENGINE_CORE_TABLE);
+    hasMigrationsTable = sqliteTableExists(input, NOVEL_ENGINE_MIGRATIONS_TABLE);
   } catch (error) {
     if (error instanceof Database.SqliteError) {
       throw new Error(
@@ -109,9 +116,9 @@ async function verifyRestoreInput(backupPath: string): Promise<void> {
   if (check !== "ok") {
     throw new Error(`Restore input failed the integrity check (${check}): ${backupPath}`);
   }
-  if (!hasCoreTable) {
+  if (!hasMigrationsTable) {
     throw new Error(
-      `Restore input is not a Novel Engine database: missing "${NOVEL_ENGINE_CORE_TABLE}" table: ${backupPath}`,
+      `Restore input is not a Novel Engine database: missing "${NOVEL_ENGINE_MIGRATIONS_TABLE}" table: ${backupPath}`,
     );
   }
 }
