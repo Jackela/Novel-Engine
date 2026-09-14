@@ -1,29 +1,67 @@
+import { existsSync } from "node:fs";
 import { join } from "node:path";
 
 import { readTextLines, repoRoot, reportFailures } from "./common.mjs";
 
 /**
- * Compose passthrough drift gate (#626): compose.yaml promises that its
- * `environment:` block mirrors every provider variable the server config
- * loaders read, so a key placed in `.env` still reaches the container. This
- * gate extracts the env-variable names from the loader sources (the code is
- * the single source of truth — a second hand-maintained list would drift
- * exactly like the passthrough did), parses the compose service environment
- * keys, and asserts compose coverage ⊇ provider read set. It fails when the
- * extraction rotts (no keys, or an anchor tripwire disappears) or when
- * compose drops a provider variable.
+ * Compose passthrough drift gate (#626): every compose file that runs the
+ * server promises that its `environment:` block mirrors the provider
+ * variables the server config loaders read, so a key placed in `.env`
+ * still reaches the container. This gate extracts the env-variable names
+ * from the loader sources (the code is the single source of truth — a
+ * second hand-maintained list would drift exactly like the passthrough
+ * did), parses each compose service environment keys, and asserts compose
+ * coverage ⊇ provider read set.
+ *
+ * The anchor tripwires below name the complete current read set of each
+ * loader: a refactoring that changes how a loader passes variable names
+ * (e.g. an options object instead of a bare literal) makes the regex
+ * extraction silently under-report, so any missing anchor fails the gate
+ * and points at updating compose.yaml together with this gate instead of
+ * letting the drift pass quietly (#626 review).
  */
 
 const PROVIDER_CONFIG = "server/src/shared/infrastructure/config/provider_config.ts";
 const SERVER_CONFIG = "server/src/shared/infrastructure/config/server_config.ts";
-const COMPOSE_FILE = "compose.yaml";
+const COMPOSE_FILES = ["compose.yaml"];
 
-// Parser tripwires: these variables must always surface from the source
-// extraction. If one vanishes, the regex extraction rotted (or a loader
-// stopped reading real variables) and the gate must fail loudly instead of
-// silently passing on a partial set.
-const PROVIDER_ANCHORS = ["LLM_PROVIDER", "DASHSCOPE_API_KEY", "OPENAI_API_KEY"];
-const SERVER_ANCHORS = ["DB_URL", "APP_ENVIRONMENT", "SECURITY_SECRET_KEY"];
+// Complete current provider read set of provider_config.ts; every entry
+// must surface from the extraction or the gate fails loudly.
+const PROVIDER_ANCHORS = [
+  "LLM_PROVIDER",
+  "LLM_MODEL",
+  "DASHSCOPE_MODEL",
+  "DASHSCOPE_REVIEW_MODEL",
+  "OPENAI_COMPATIBLE_MODEL",
+  "DASHSCOPE_API_KEY",
+  "DASHSCOPE_API_BASE",
+  "DASHSCOPE_TRANSPORT_MODE",
+  "LLM_API_KEY",
+  "OPENAI_API_KEY",
+  "LLM_API_BASE",
+  "OPENAI_API_BASE",
+  "LLM_TIMEOUT",
+  "LLM_RETRY_ATTEMPTS",
+  "LLM_RETRY_DELAY",
+  "LLM_STREAM_FIRST_BYTE_TIMEOUT_MS",
+  "LLM_STREAM_IDLE_TIMEOUT_MS",
+  "LLM_LOREBOOK_BUDGET_CHARACTERS",
+];
+
+// Complete current read set of server_config.ts outside the delegated LLM
+// block; same tripwire semantics as PROVIDER_ANCHORS.
+const SERVER_ANCHORS = [
+  "APP_ENVIRONMENT",
+  "DB_URL",
+  "SECURITY_SECRET_KEY",
+  "API_HOST",
+  "API_PORT",
+  "SECURITY_CORS_ORIGINS",
+  "SECURITY_TRUSTED_PROXIES",
+  "SECURITY_RATE_LIMIT",
+  "API_MAX_ACTIVE_WORKFLOWS",
+  "API_MAX_ACTIVE_WORKFLOWS_PER_PROJECT",
+];
 
 // Matches `helper(env, "KEY")` across line breaks — the only shape in which
 // the config loaders pass a variable name. Helper definitions (`function
@@ -50,16 +88,16 @@ function extractEnvKeys(root, relativePath) {
 }
 
 /**
- * Environment keys of every service in compose.yaml, from the map-style
+ * Environment keys of every service in a compose file, from the map-style
  * (`KEY: value`) and list-style (`- KEY=value`) entries; comments are
  * skipped, and a sibling key at the block's indent closes the block.
  */
-function composeEnvironmentKeys(root) {
+function composeEnvironmentKeys(root, relativePath) {
   const keys = new Set();
   let inServices = false;
   let inEnvironment = false;
   let environmentIndent = 0;
-  for (const line of readTextLines(join(root, COMPOSE_FILE))) {
+  for (const line of readTextLines(join(root, relativePath))) {
     const content = line.trim();
     if (content === "" || content.startsWith("#")) continue;
     const indent = line.length - line.trimStart().length;
@@ -88,40 +126,52 @@ function composeEnvironmentKeys(root) {
 const root = repoRoot();
 const providerKeys = extractEnvKeys(root, PROVIDER_CONFIG);
 const serverKeys = extractEnvKeys(root, SERVER_CONFIG);
-const composeKeys = composeEnvironmentKeys(root);
 const failures = [];
 
-for (const [label, keys, anchors] of [
-  ["provider_config.ts", providerKeys, PROVIDER_ANCHORS],
-  ["server_config.ts", serverKeys, SERVER_ANCHORS],
+for (const [relativePath, keys, anchors] of [
+  [PROVIDER_CONFIG, providerKeys, PROVIDER_ANCHORS],
+  [SERVER_CONFIG, serverKeys, SERVER_ANCHORS],
 ]) {
   if (keys.size === 0) {
-    failures.push(`env-key extraction found no variables in ${label}; the gate is blind`);
+    failures.push(`env-key extraction found no variables in ${relativePath}; the gate is blind`);
   }
   for (const anchor of anchors) {
     if (!keys.has(anchor)) {
       failures.push(
-        `env-key extraction missed anchor ${anchor} in ${label}; the extraction rotted`,
+        `env-key extraction missed anchor ${anchor} in ${relativePath}; the extraction rotted — ` +
+          `update compose.yaml entries and this gate's anchor list together`,
       );
     }
   }
 }
-if (composeKeys.size === 0) {
-  failures.push(
-    `${COMPOSE_FILE} exposes no service environment keys; passthrough cannot be verified`,
-  );
-}
-for (const key of providerKeys) {
-  if (!composeKeys.has(key)) {
+
+for (const composeFile of COMPOSE_FILES) {
+  if (!existsSync(join(root, composeFile))) {
     failures.push(
-      `${COMPOSE_FILE} environment is missing provider variable ${key} read by provider_config.ts`,
+      `required compose file is missing: ${composeFile} — the passthrough contract is ` +
+        `fail-closed; restore the file or update COMPOSE_FILES in this gate`,
     );
+    continue;
+  }
+  const composeKeys = composeEnvironmentKeys(root, composeFile);
+  if (composeKeys.size === 0) {
+    failures.push(
+      `${composeFile} exposes no service environment keys; passthrough cannot be verified`,
+    );
+  }
+  for (const key of providerKeys) {
+    if (!composeKeys.has(key)) {
+      failures.push(
+        `${composeFile} environment is missing provider variable ${key} read by provider_config.ts`,
+      );
+    }
   }
 }
 
 if (reportFailures("compose-passthrough", failures)) {
   console.log(
-    `[compose-passthrough] clean: ${COMPOSE_FILE} covers all ${providerKeys.size} provider variables ` +
-      `read by the config loaders (${serverKeys.size} server-side variables extracted in total)`,
+    `[compose-passthrough] clean: all ${providerKeys.size} provider variables read by the config ` +
+      `loaders are covered in ${COMPOSE_FILES.join(" and ")} ` +
+      `(${serverKeys.size} server-side variables extracted in total)`,
   );
 }
