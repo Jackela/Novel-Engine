@@ -50,8 +50,8 @@ starts, and `docker compose logs novel-engine` shows a provider failure.
 
 Work through this list:
 
-1. Did you run `docker compose up -d` **after** editing
-   `compose.override.yaml`? A restart alone does not apply new environment
+1. Did you run `docker compose up -d` **after** editing `.env` (or
+   `compose.override.yaml`)? A restart alone does not apply new environment
    variables; the container must be recreated.
 2. Is the API key complete — no truncation, no stray space — and still valid
    at the provider's console?

@@ -17,9 +17,10 @@ disk failure during the upgrade.
 - **If you cloned the repository**: from the checkout folder, run
   `git pull`.
 - **If you downloaded the ZIP**: download the new ZIP and unzip it into a
-  **new** folder, then copy your `compose.override.yaml` (and `.env`, if you
-  made one) into that folder — that file holds your provider keys and any
-  port change. The old folder can stay or be deleted; your data is not in it.
+  **new** folder, then copy your `.env` into that folder — it holds your
+  provider keys. If you also made a `compose.override.yaml` for structural
+  changes such as a different port, copy that too. The old folder can stay
+  or be deleted; your data is not in it.
 
 ## Rebuild and restart
 
