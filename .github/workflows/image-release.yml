@@ -243,7 +243,7 @@ jobs:
         run: |
           docker buildx imagetools create \
             $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$META_JSON") \
-            $(printf '%s@sha256:%s ' "$GHCR_IMAGE" *)
+            $(printf "$GHCR_IMAGE@sha256:%s " *)
       - name: Inspect image
         run: |
           docker buildx imagetools inspect "${GHCR_IMAGE}:${{ needs.prepare.outputs.version }}"
