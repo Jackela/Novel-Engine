@@ -7,9 +7,12 @@
  * are also the exact strings the e2e suite locates against — edit them
  * only together with the matching e2e specs.
  *
- * Key families (phase-2 convention): `<screen>.<group>.<camelCaseLeaf>`
- * — `entry.*`, `library.*`, `settings.*`, `shell.*`, plus the shared
- * `common.*`, `theme.*`, `language.*`, and `provider.*` families. When a
+ * Key families (phase-2 convention): two or three segments —
+ * `<screen>.<group>.<camelCaseLeaf>` for the leaf screens `entry.*`,
+ * `library.*`, `settings.*`, and `shell.*`, plus the shared `common.*`,
+ * `theme.*`, `language.*`, and `provider.*` families. The two-segment form
+ * is legal wherever a group would add nothing (`theme.legend`,
+ * `library.intro`, `settings.heading`, every `provider.*` key). When a
  * dictionary outgrows the file-size budget, split it per screen and
  * re-merge the key types here.
  */
@@ -68,6 +71,7 @@ export const en = {
   "library.action.loadingOlder": "Loading older projects...",
 
   "settings.heading": "Project settings",
+  "settings.error.unableToUpdate": "Unable to update project.",
   "settings.field.provider": "Provider",
   "settings.field.storage": "Storage",
   "settings.field.documentSyntax": "Document syntax",

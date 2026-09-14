@@ -58,6 +58,7 @@ export const zh: Dictionary = {
   "library.action.loadingOlder": "正在加载更早的项目...",
 
   "settings.heading": "项目设置",
+  "settings.error.unableToUpdate": "无法更新项目。",
   "settings.field.provider": "生成服务",
   "settings.field.storage": "存储",
   "settings.field.documentSyntax": "文档语法",

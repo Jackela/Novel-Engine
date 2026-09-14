@@ -2,6 +2,7 @@ import { act, type FormEvent, useState } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { api, HttpError } from "@/app/api";
+import { LANGUAGE_STORAGE_KEY } from "@/app/i18n/language";
 import type { Project, ProjectListItem } from "@/app/types/studio";
 import { project as projectFixture, volume } from "@/test/factories";
 import { createMountHarness, deferred } from "@/test/harness";
@@ -245,5 +246,15 @@ describe("useProjectSettingsUpdate", () => {
     await act(view.submit);
     expect(api.updateProject).toHaveBeenCalledTimes(2);
     expect(view.result().error).toBeNull();
+  });
+
+  it("localizes the fallback message when a non-Error rejection surfaces (#629)", async () => {
+    window.localStorage.setItem(LANGUAGE_STORAGE_KEY, "zh");
+    const view = renderSettings(projectFixture());
+    vi.mocked(api.updateProject).mockRejectedValue("boom");
+
+    await act(view.submit);
+
+    expect(view.result().error).toBe("无法更新项目。");
   });
 });

@@ -2,6 +2,7 @@ import type { Dispatch, FormEvent, SetStateAction } from "react";
 import { useCallback, useLayoutEffect, useRef, useState } from "react";
 
 import { api, HttpError } from "@/app/api";
+import { translateActive } from "@/app/i18n/translate";
 import type { Project } from "@/app/types/studio";
 import type { SettingsFormState } from "../studioInspectorTypes";
 import { mergeProjectSettings } from "./projectState";
@@ -127,7 +128,7 @@ export function useProjectSettingsUpdate({
           onProjectMissing?.();
           return;
         }
-        setSettingsError(toErrorMessage(reason, "Unable to update project."));
+        setSettingsError(toErrorMessage(reason, translateActive("settings.error.unableToUpdate")));
       } finally {
         owner.controllers.delete(controller);
         if (isCurrentIntent()) {
