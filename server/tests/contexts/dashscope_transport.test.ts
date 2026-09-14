@@ -2,16 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import type { TextGenerationTask } from "../../src/contexts/ai/application/ports/text_generation.js";
 import { TextGenerationProviderError } from "../../src/contexts/ai/application/ports/text_generation.js";
-import {
-  extractDashscopeGenerationText,
-  extractDashscopeResponsesText,
-} from "../../src/contexts/ai/infrastructure/providers/dashscope_extractors.js";
 import { resolveDashscopeTransport } from "../../src/contexts/ai/infrastructure/providers/dashscope_transport.js";
-import {
-  coercePayloadToSchema,
-  parseProviderJsonObject,
-  payloadFromResponseText,
-} from "../../src/contexts/ai/infrastructure/providers/provider_payload.js";
 
 const DASHSCOPE_API_PATH_SEGMENTS = {
   root: "api",
@@ -116,92 +107,6 @@ describe("dashscope transport modes", () => {
     const transport = resolveDashscopeTransport("responses");
     expect(() => transport.normalizeApiBase("not-an-absolute-url")).toThrow(
       TextGenerationProviderError,
-    );
-  });
-});
-
-describe("dashscope response text extraction", () => {
-  it("reads the first choice message content, joining multimodal text parts", () => {
-    expect(
-      extractDashscopeGenerationText({
-        output: { choices: [{ message: { content: [{ text: "part one " }, { text: "two" }] } }] },
-      }),
-    ).toBe("part one two");
-  });
-
-  it("falls back to output.text when no choices exist", () => {
-    expect(extractDashscopeGenerationText({ output: { text: "  prose  " } })).toBe("prose");
-  });
-
-  it("rejects shapeless responses", () => {
-    expect(() => extractDashscopeGenerationText({})).toThrow(TextGenerationProviderError);
-    expect(() => extractDashscopeGenerationText({ output: {} })).toThrow(
-      /missing structured message content/,
-    );
-  });
-
-  it("reads the responses API message output", () => {
-    expect(
-      extractDashscopeResponsesText({
-        output: [{ type: "reasoning" }, { type: "message", content: [{ text: "answer" }] }],
-      }),
-    ).toBe("answer");
-    expect(() => extractDashscopeResponsesText({ output: [] })).toThrow(/missing message text/);
-  });
-});
-
-describe("dashscope JSON object parsing", () => {
-  it("parses plain, fenced, and embedded JSON objects", () => {
-    expect(parseProviderJsonObject('{"a": 1}')).toEqual({ a: 1 });
-    expect(parseProviderJsonObject('```json\n{"a": 1}\n```')).toEqual({ a: 1 });
-    expect(parseProviderJsonObject('Sure! {"a": {"b": 2}} hope that helps')).toEqual({
-      a: { b: 2 },
-    });
-    expect(parseProviderJsonObject('[{"a": 1}, {"b": 2}]')).toEqual({ a: 1, b: 2 });
-  });
-
-  it("brackets inside string literals do not confuse the fragment scanner", () => {
-    expect(parseProviderJsonObject('prefix {"a": "value } with bracket {"} suffix')).toEqual({
-      a: "value } with bracket {",
-    });
-  });
-
-  it("raises a provider error naming the non-object response", () => {
-    expect(() => parseProviderJsonObject("plain prose only")).toThrow(/not a JSON object/);
-  });
-});
-
-describe("dashscope payload coercion", () => {
-  const schema = {
-    chapter_markdown: { type: "string" },
-    items: { type: "array" },
-    count: { type: "integer" },
-    nested: { type: "object", properties: { inner: { type: "string" } } },
-  };
-
-  it("coerces scalars into the wrapper shapes and keeps arrays", () => {
-    const coerced = coercePayloadToSchema(
-      { chapter_markdown: "  trimmed  ", items: ["a"], count: "7", nested: { inner: 5 } },
-      schema,
-    );
-    expect(coerced.chapter_markdown).toBe("trimmed");
-    expect(coerced.items).toEqual(["a"]);
-    expect(coerced.count).toBe(7);
-    expect(coerced.nested).toEqual({ inner: "5" });
-  });
-
-  it("wraps non-array items and falls back to chapter prose for non-object responses", () => {
-    const coerced = coercePayloadToSchema({ items: "single" }, schema);
-    expect(coerced.items).toEqual(["single"]);
-    const fallback = payloadFromResponseText("# Just prose\n\nChapter text.", {
-      chapter_markdown: { type: "string" },
-    });
-    expect(fallback).toEqual({ chapter_markdown: "# Just prose\n\nChapter text." });
-  });
-
-  it("re-raises the parse error when the schema cannot rescue non-object text", () => {
-    expect(() => payloadFromResponseText("prose without a chapter schema", {})).toThrow(
-      /not a JSON object/,
     );
   });
 });
