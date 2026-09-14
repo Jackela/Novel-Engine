@@ -171,6 +171,10 @@ export const enStudio = {
   "lore.candidates.action.confirm": "Add {count} selected to lorebook",
   "lore.candidates.action.confirming": "Adding entries…",
   "lore.candidates.action.abandon": "Discard suggestions",
+  "lore.candidates.error.aliasCount":
+    "“{title}” has more than {count} aliases. Remove some before confirming.",
+  "lore.candidates.error.aliasLength":
+    "“{title}” has an alias longer than {count} characters. Shorten it before confirming.",
   "lore.results.heading": "Confirmation results",
   "lore.results.created": "Created as draft",
   "lore.results.createdWithFailedAliases": "Created — alias write failed",

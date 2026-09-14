@@ -27,7 +27,8 @@ export interface LoreSegmentState {
  * completed segments fold into one merged candidate list, and confirmation
  * runs the two existing steps per selected candidate (`lorebookConfirm.ts`).
  * Candidates live only in this session; `reset` abandons the wizard and
- * leaves the project untouched.
+ * leaves the project untouched, while `clearResults` starts a new run over
+ * the same extracted segments.
  */
 export function useLorebookWizard(projectId: string, provider: string) {
   const [segments, setSegments] = useState<LoreSegmentState[]>([]);
@@ -36,6 +37,7 @@ export function useLorebookWizard(projectId: string, provider: string) {
   const [results, setResults] = useState<LoreConfirmResult[]>([]);
   const [isConfirming, setIsConfirming] = useState(false);
   const runningTextsRef = useRef<ReadonlySet<string>>(new Set());
+  const runningDocumentIdsRef = useRef<ReadonlySet<string>>(new Set());
 
   const resolveSegment = useCallback((id: string, next: Partial<LoreSegmentState>) => {
     setSegments((current) =>
@@ -98,9 +100,11 @@ export function useLorebookWizard(projectId: string, provider: string) {
     [extractText],
   );
 
-  /** Read one existing document's current content and extract it as a segment. */
+  /** Read one existing document's current content and extract it as a new segment; a document already being extracted is a no-op. */
   const submitDocumentSegment = useCallback(
     async (document: Pick<DocumentSummary, "id" | "title">) => {
+      if (runningDocumentIdsRef.current.has(document.id)) return;
+      runningDocumentIdsRef.current = new Set([...runningDocumentIdsRef.current, document.id]);
       try {
         const loaded = await api.document(projectId, document.id);
         const segment: LoreSegmentState = {
@@ -125,35 +129,48 @@ export function useLorebookWizard(projectId: string, provider: string) {
           candidates: [],
         };
         setSegments((current) => [...current, segment]);
+      } finally {
+        runningDocumentIdsRef.current = new Set(
+          [...runningDocumentIdsRef.current].filter((entry) => entry !== document.id),
+        );
       }
     },
     [extractText, projectId],
   );
 
-  /** Recover a failed segment by re-running it (re-reading a picked document's content). */
+  /** Recover a failed segment in place on its own row; a picked document's content is re-read first. */
   const retrySegment = useCallback(
     async (segmentId: string) => {
       const segment = segments.find((entry) => entry.id === segmentId);
       if (segment === undefined || segment.status !== "failed") return;
       resolveSegment(segmentId, { status: "running", error: null });
-      if (segment.documentId !== null) {
-        await submitDocumentSegment({ id: segment.documentId, title: segment.label });
+      if (segment.documentId === null) {
+        await extractText({ ...segment, status: "running" });
         return;
       }
-      await extractText({ ...segment, status: "running" });
+      try {
+        const loaded = await api.document(projectId, segment.documentId);
+        resolveSegment(segmentId, { text: loaded.content_markdown });
+        await extractText({ ...segment, text: loaded.content_markdown, status: "running" });
+      } catch (reason) {
+        resolveSegment(segmentId, {
+          status: "failed",
+          error: toErrorMessage(reason, translateActive("lore.error.extract")),
+        });
+      }
     },
-    [extractText, resolveSegment, segments, submitDocumentSegment],
+    [extractText, projectId, resolveSegment, segments],
   );
 
-  const candidates = useMemo(
-    () =>
-      mergeLoreCandidates(
-        segments
-          .filter((segment) => segment.status === "completed")
-          .map((segment) => ({ segmentId: segment.id, candidates: segment.candidates })),
-      ),
-    [segments],
-  );
+  const candidates = useMemo(() => {
+    const completed: Array<{ segmentId: string; candidates: readonly LoreExtractCandidate[] }> = [];
+    for (const segment of segments) {
+      if (segment.status === "completed") {
+        completed.push({ segmentId: segment.id, candidates: segment.candidates });
+      }
+    }
+    return mergeLoreCandidates(completed);
+  }, [segments]);
 
   const toggleCandidate = useCallback((key: string) => {
     setDeselected((current) => {
@@ -186,17 +203,22 @@ export function useLorebookWizard(projectId: string, provider: string) {
     [candidates, deselected],
   );
 
-  /** Confirm every selected candidate: creation then alias write, per candidate. */
+  /**
+   * Confirm every selected candidate. The per-candidate steps (creation then
+   * alias write) stay ordered inside `confirmLoreCandidate`; the candidates
+   * run concurrently and settle into `results` in the presented order.
+   */
   const confirmSelected = useCallback(async () => {
     if (isConfirming || selectedCandidates.length === 0) return;
     setIsConfirming(true);
-    const settled: LoreConfirmResult[] = [];
     try {
-      for (const candidate of selectedCandidates) {
-        settled.push(await confirmLoreCandidate(projectId, candidate, aliasesFor(candidate)));
-      }
-    } finally {
+      const settled = await Promise.all(
+        selectedCandidates.map((candidate) =>
+          confirmLoreCandidate(projectId, candidate, aliasesFor(candidate)),
+        ),
+      );
       setResults(settled);
+    } finally {
       setIsConfirming(false);
     }
   }, [aliasesFor, isConfirming, projectId, selectedCandidates]);
@@ -222,9 +244,16 @@ export function useLorebookWizard(projectId: string, provider: string) {
     [projectId, results],
   );
 
+  /** Start a new run over the same extracted segments: only the confirmation results clear. */
+  const clearResults = useCallback(() => {
+    setResults([]);
+    setIsConfirming(false);
+  }, []);
+
   /** Abandon the wizard session: candidates and results cease to exist. */
   const reset = useCallback(() => {
     runningTextsRef.current = new Set();
+    runningDocumentIdsRef.current = new Set();
     setSegments([]);
     setDeselected(new Set());
     setAliasDrafts({});
@@ -248,6 +277,7 @@ export function useLorebookWizard(projectId: string, provider: string) {
     aliasesFor,
     confirmSelected,
     retryAliases,
+    clearResults,
     reset,
   };
 }

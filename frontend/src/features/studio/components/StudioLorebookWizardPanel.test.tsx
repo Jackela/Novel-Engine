@@ -204,4 +204,70 @@ describe("StudioLorebookWizardPanel", () => {
     expect(api.createDocument).not.toHaveBeenCalled();
     expect(container.textContent).not.toContain("Mira");
   });
+
+  it.each([
+    [
+      "an alias over the write-side length limit",
+      `The ${"Clerk".repeat(60)}`,
+      "“Mira” has an alias longer than 240 characters. Shorten it before confirming.",
+    ],
+    [
+      "more aliases than the write-side count limit",
+      Array.from({ length: 65 }, (_, index) => `alias${index}`).join(","),
+      "“Mira” has more than 64 aliases. Remove some before confirming.",
+    ],
+  ])(
+    "pre-checks %s before confirming instead of waiting for the write's 422",
+    async (_label, draft, expectedError) => {
+      const container = renderPanel("mock");
+      await runExtraction(container, [
+        { kind: "character", title: "Mira", aliases: [], summary: "a" },
+      ]);
+
+      await act(async () => {
+        fireEvent.change(
+          getByRole(container, "textbox", { name: "Aliases (comma-separated) — Mira" }),
+          { target: { value: draft } },
+        );
+        await Promise.resolve();
+      });
+      await act(async () => {
+        fireEvent.click(getByRole(container, "button", { name: "Add 1 selected to lorebook" }));
+        await flushEffects();
+      });
+
+      expect(getByRole(container, "alert")).toHaveTextContent(expectedError);
+      expect(api.createDocument).not.toHaveBeenCalled();
+      expect(api.saveDocumentAliases).not.toHaveBeenCalled();
+    },
+  );
+
+  it("keeps the candidates reachable after a confirmation through Start over", async () => {
+    const container = renderPanel("mock");
+    await runExtraction(container, [
+      { kind: "character", title: "Mira", aliases: [], summary: "a" },
+    ]);
+    vi.mocked(api.createDocument).mockResolvedValueOnce({
+      id: "doc-mira",
+    } as Awaited<ReturnType<typeof api.createDocument>>);
+    vi.mocked(api.saveDocumentAliases).mockResolvedValueOnce({ aliases: [] } as Awaited<
+      ReturnType<typeof api.saveDocumentAliases>
+    >);
+
+    await act(async () => {
+      fireEvent.click(getByRole(container, "button", { name: "Add 1 selected to lorebook" }));
+      await flushEffects();
+    });
+    expect(getByText(container, "Created as draft")).toBeVisible();
+
+    await act(async () => {
+      fireEvent.click(getByRole(container, "button", { name: "Start over" }));
+      await Promise.resolve();
+    });
+
+    // The segments — and the merged candidates they fold into — survive the
+    // cleared results, so the author can run another confirmation.
+    expect(getByText(container, "Mira")).toBeVisible();
+    expect(getByRole(container, "button", { name: "Add 1 selected to lorebook" })).toBeEnabled();
+  });
 });

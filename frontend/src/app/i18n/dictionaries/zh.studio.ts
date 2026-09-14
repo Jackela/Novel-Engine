@@ -160,6 +160,8 @@ export const zhStudio = {
   "lore.candidates.action.confirm": "将选中的 {count} 条加入设定集",
   "lore.candidates.action.confirming": "正在添加条目…",
   "lore.candidates.action.abandon": "丢弃建议",
+  "lore.candidates.error.aliasCount": "“{title}”的别名超过 {count} 条。请先删减再确认。",
+  "lore.candidates.error.aliasLength": "“{title}”存在超过 {count} 字符的别名。请先缩短再确认。",
   "lore.results.heading": "确认结果",
   "lore.results.created": "已创建为草稿",
   "lore.results.createdWithFailedAliases": "已创建 — 别名写入失败",

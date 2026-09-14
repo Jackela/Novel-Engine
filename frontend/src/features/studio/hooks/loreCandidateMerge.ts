@@ -62,10 +62,14 @@ export function candidateKey(kind: LoreExtractCandidate["kind"], title: string):
   return `${kind}\n${title}`;
 }
 
+/** Union with exact-match dedup; a Set keeps the lookup linear-time while the array preserves first-seen order. */
 function unionAliases(current: readonly string[], added: readonly string[]): string[] {
+  const seen = new Set(current);
   const merged = [...current];
   for (const alias of added) {
-    if (!merged.includes(alias)) merged.push(alias);
+    if (seen.has(alias)) continue;
+    seen.add(alias);
+    merged.push(alias);
   }
   return merged;
 }

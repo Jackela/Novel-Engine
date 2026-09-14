@@ -3,6 +3,26 @@ import { translateActive } from "@/app/i18n/translate";
 import type { MergedLoreCandidate } from "./loreCandidateMerge";
 import { toErrorMessage } from "./toErrorMessage";
 
+/** The alias write side's fixed limits (#315), mirrored for the wizard's confirm-time pre-check. */
+export const LORE_ALIAS_MAX_COUNT = 64;
+export const LORE_ALIAS_MAX_LENGTH = 240;
+
+/** Which write-side alias limit a candidate's effective aliases violate, if any. */
+export type LoreAliasLimitError = "count" | "length";
+
+/**
+ * Pre-check one candidate's effective aliases against the alias write's
+ * fixed limits so the author is told before confirming, instead of waiting
+ * for the write's 422 after the entry already exists.
+ */
+export function loreAliasLimitError(aliases: readonly string[]): LoreAliasLimitError | null {
+  if (aliases.length > LORE_ALIAS_MAX_COUNT) return "count";
+  for (const alias of aliases) {
+    if (alias.length > LORE_ALIAS_MAX_LENGTH) return "length";
+  }
+  return null;
+}
+
 /** The three honest per-candidate outcomes of the two-step confirmation. */
 export type LoreConfirmOutcome = "created" | "created-with-failed-aliases" | "failed";
 

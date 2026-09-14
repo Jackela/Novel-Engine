@@ -30,6 +30,14 @@ export function LorebookWizardSegments({
   const [documentId, setDocumentId] = useState("");
   const chapters = documents.filter((document) => document.kind === "chapter");
   const anyRunning = segments.some((segment) => segment.status === "running");
+  // A document already being extracted must not be double-submitted — the
+  // hook guards the request; the disabled button keeps the UI honest.
+  const extractingDocumentIds = new Set<string>();
+  for (const segment of segments) {
+    if (segment.status === "running" && segment.documentId !== null) {
+      extractingDocumentIds.add(segment.documentId);
+    }
+  }
   const trimmed = paste.trim();
 
   const submitPaste = (event: FormEvent<HTMLFormElement>) => {
@@ -83,7 +91,11 @@ export function LorebookWizardSegments({
               </option>
             ))}
           </select>
-          <button className="ui-command" disabled={documentId === ""} type="submit">
+          <button
+            className="ui-command"
+            disabled={documentId === "" || extractingDocumentIds.has(documentId)}
+            type="submit"
+          >
             {t("lore.input.action.extractDocument")}
           </button>
         </form>

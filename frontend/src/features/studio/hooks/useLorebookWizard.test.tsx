@@ -2,11 +2,15 @@ import { act } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { api } from "@/app/api";
-import type { LoreExtractCandidate } from "@/app/types/lore";
 import type { StudioJob } from "@/app/types/studio";
-import { createMountHarness, deferred } from "@/test/harness";
+import { deferred } from "@/test/harness";
 
-import { useLorebookWizard } from "./useLorebookWizard";
+import {
+  candidate,
+  loreJob,
+  submitSegment,
+  wizardHookHarness,
+} from "./useLorebookWizardTestHarness";
 
 vi.mock("@/app/api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/app/api")>();
@@ -17,73 +21,16 @@ vi.mock("@/app/api", async (importOriginal) => {
       extractLore: vi.fn<typeof actual.api.extractLore>(),
       createDocument: vi.fn<typeof actual.api.createDocument>(),
       saveDocumentAliases: vi.fn<typeof actual.api.saveDocumentAliases>(),
+      document: vi.fn<typeof actual.api.document>(),
     },
   };
 });
 
-type HookResult = ReturnType<typeof useLorebookWizard>;
-
-const mountHarness = createMountHarness();
-
 afterEach(() => {
-  mountHarness.cleanup();
   vi.resetAllMocks();
 });
 
-function loreJob(
-  candidates: LoreExtractCandidate[],
-  overrides: Partial<StudioJob> = {},
-): StudioJob {
-  return {
-    id: "job-1",
-    project_id: "project-1",
-    document_id: null,
-    kind: "lore-extract",
-    operation: "extract",
-    status: "completed",
-    provider: "mock",
-    model: "scripted-model",
-    request: {},
-    result: { candidates },
-    error: null,
-    retry_of_job_id: null,
-    events: [],
-    created_at: "2026-09-14T00:00:00.000Z",
-    updated_at: "2026-09-14T00:00:00.000Z",
-    ...overrides,
-  };
-}
-
-function candidate(
-  kind: LoreExtractCandidate["kind"],
-  title: string,
-  aliases: string[],
-): LoreExtractCandidate {
-  return { kind, title, aliases, summary: `${title} summary.` };
-}
-
-function renderWizardHook() {
-  let current: HookResult | undefined;
-  function Harness(): null {
-    current = useLorebookWizard("project-1", "mock");
-    return null;
-  }
-  mountHarness.mount(<Harness />);
-  return {
-    result: (): HookResult => {
-      if (current === undefined) throw new Error("Expected wizard hook result after render.");
-      return current;
-    },
-  };
-}
-
-async function submit(hook: HookResult, text: string): Promise<void> {
-  await act(async () => {
-    await hook.submitSegment(text, "Pasted text");
-  });
-}
-
-describe("useLorebookWizard", () => {
+describe("useLorebookWizard segments", () => {
   it("submits each segment as its own extraction job and merges completed results", async () => {
     vi.mocked(api.extractLore)
       .mockResolvedValueOnce(
@@ -93,75 +40,85 @@ describe("useLorebookWizard", () => {
         ]),
       )
       .mockResolvedValueOnce(loreJob([candidate("character", "Mira", ["Ledger Keeper"])]));
-    const hook = renderWizardHook();
+    const hook = wizardHookHarness();
+    try {
+      await submitSegment(hook.result(), "segment one");
+      await submitSegment(hook.result(), "segment two");
 
-    await submit(hook.result(), "segment one");
-    await submit(hook.result(), "segment two");
-
-    expect(api.extractLore).toHaveBeenCalledTimes(2);
-    expect(vi.mocked(api.extractLore).mock.calls.map((call) => call[1])).toEqual([
-      "segment one",
-      "segment two",
-    ]);
-    expect(hook.result().segments.map((segment) => segment.status)).toEqual([
-      "completed",
-      "completed",
-    ]);
-    // Same (kind, title) collapses with the union of aliases, ordered by
-    // kind then title.
-    expect(hook.result().candidates).toEqual([
-      {
-        key: "character\nMira",
-        kind: "character",
-        title: "Mira",
-        aliases: ["The Clerk", "Ledger Keeper"],
-        summary: "Mira summary.",
-        segmentCount: 2,
-      },
-      {
-        key: "world\nFlood Market",
-        kind: "world",
-        title: "Flood Market",
-        aliases: ["Market"],
-        summary: "Flood Market summary.",
-        segmentCount: 1,
-      },
-    ]);
+      expect(api.extractLore).toHaveBeenCalledTimes(2);
+      expect(vi.mocked(api.extractLore).mock.calls.map((call) => call[1])).toEqual([
+        "segment one",
+        "segment two",
+      ]);
+      expect(hook.result().segments.map((segment) => segment.status)).toEqual([
+        "completed",
+        "completed",
+      ]);
+      // Same (kind, title) collapses with the union of aliases, ordered by
+      // kind then title.
+      expect(hook.result().candidates).toEqual([
+        {
+          key: "character\nMira",
+          kind: "character",
+          title: "Mira",
+          aliases: ["The Clerk", "Ledger Keeper"],
+          summary: "Mira summary.",
+          segmentCount: 2,
+        },
+        {
+          key: "world\nFlood Market",
+          kind: "world",
+          title: "Flood Market",
+          aliases: ["Market"],
+          summary: "Flood Market summary.",
+          segmentCount: 1,
+        },
+      ]);
+    } finally {
+      hook.mountHarness.cleanup();
+    }
   });
 
   it("keeps the merge deterministic: recomputing over the same completed segments yields the same list", async () => {
     vi.mocked(api.extractLore).mockResolvedValue(
       loreJob([candidate("world", "Zeta", ["z"]), candidate("character", "Ada", ["a"])]),
     );
-    const hook = renderWizardHook();
-    await submit(hook.result(), "s1");
-    const first = hook.result().candidates;
-    // Any state change (selection toggle) recomputes the merged view.
-    act(() => {
-      hook.result().toggleCandidate("character\nAda");
-    });
-    expect(hook.result().candidates).toEqual(first);
-    expect(hook.result().selectedCandidates.map((entry) => entry.title)).toEqual(["Zeta"]);
+    const hook = wizardHookHarness();
+    try {
+      await submitSegment(hook.result(), "s1");
+      const first = hook.result().candidates;
+      // Any state change (selection toggle) recomputes the merged view.
+      act(() => {
+        hook.result().toggleCandidate("character\nAda");
+      });
+      expect(hook.result().candidates).toEqual(first);
+      expect(hook.result().selectedCandidates.map((entry) => entry.title)).toEqual(["Zeta"]);
+    } finally {
+      hook.mountHarness.cleanup();
+    }
   });
 
   it("guards against duplicate submission of an identical in-flight paste", async () => {
     const pending = deferred<StudioJob>();
     vi.mocked(api.extractLore).mockReturnValueOnce(pending.promise);
-    const hook = renderWizardHook();
+    const hook = wizardHookHarness();
+    try {
+      await act(async () => {
+        void hook.result().submitSegment("same text", "Pasted text");
+        await Promise.resolve();
+      });
+      await act(async () => {
+        await hook.result().submitSegment("same text", "Pasted text");
+      });
 
-    await act(async () => {
-      void hook.result().submitSegment("same text", "Pasted text");
-      await Promise.resolve();
-    });
-    await act(async () => {
-      await hook.result().submitSegment("same text", "Pasted text");
-    });
-
-    expect(api.extractLore).toHaveBeenCalledTimes(1);
-    await act(async () => {
-      pending.resolve(loreJob([]));
-      await Promise.resolve();
-    });
+      expect(api.extractLore).toHaveBeenCalledTimes(1);
+      await act(async () => {
+        pending.resolve(loreJob([]));
+        await Promise.resolve();
+      });
+    } finally {
+      hook.mountHarness.cleanup();
+    }
   });
 
   it("records a failed job or transport error per segment and recovers through retry", async () => {
@@ -169,94 +126,123 @@ describe("useLorebookWizard", () => {
       .mockResolvedValueOnce(loreJob([], { status: "failed", error: "provider unavailable" }))
       .mockRejectedValueOnce(new Error("network down"))
       .mockResolvedValueOnce(loreJob([candidate("world", "Flood Market", ["Market"])]));
-    const hook = renderWizardHook();
+    const hook = wizardHookHarness();
+    try {
+      await submitSegment(hook.result(), "first");
+      await submitSegment(hook.result(), "second");
 
-    await submit(hook.result(), "first");
-    await submit(hook.result(), "second");
+      expect(hook.result().segments.map((segment) => segment.status)).toEqual(["failed", "failed"]);
+      expect(hook.result().segments.map((segment) => segment.error)).toEqual([
+        "provider unavailable",
+        "network down",
+      ]);
+      expect(hook.result().candidates).toEqual([]);
 
-    expect(hook.result().segments.map((segment) => segment.status)).toEqual(["failed", "failed"]);
-    expect(hook.result().segments.map((segment) => segment.error)).toEqual([
-      "provider unavailable",
-      "network down",
-    ]);
-    expect(hook.result().candidates).toEqual([]);
+      const failedId = hook.result().segments[0]?.id;
+      if (failedId === undefined) throw new Error("Expected the first segment id.");
+      await act(async () => {
+        await hook.result().retrySegment(failedId);
+      });
 
-    const failedId = hook.result().segments[0]?.id;
-    if (failedId === undefined) throw new Error("Expected the first segment id.");
-    await act(async () => {
-      await hook.result().retrySegment(failedId);
-    });
+      expect(api.extractLore).toHaveBeenCalledTimes(3);
+      expect(hook.result().segments[0]).toMatchObject({ status: "completed" });
+      expect(hook.result().candidates.map((entry) => entry.title)).toEqual(["Flood Market"]);
+    } finally {
+      hook.mountHarness.cleanup();
+    }
+  });
 
-    expect(api.extractLore).toHaveBeenCalledTimes(3);
-    expect(hook.result().segments[0]).toMatchObject({ status: "completed" });
-    expect(hook.result().candidates.map((entry) => entry.title)).toEqual(["Flood Market"]);
+  it("retries a failed document segment in place, re-reading its current content", async () => {
+    vi.mocked(api.document)
+      .mockRejectedValueOnce(new Error("document read failed"))
+      .mockResolvedValueOnce({
+        content_markdown: "the re-read chapter content",
+      } as Awaited<ReturnType<typeof api.document>>);
+    vi.mocked(api.extractLore).mockResolvedValueOnce(
+      loreJob([candidate("world", "Flood Market", ["Market"])]),
+    );
+    const hook = wizardHookHarness();
+    try {
+      await act(async () => {
+        await hook.result().submitDocumentSegment({ id: "doc-chapter-1", title: "Chapter 1" });
+      });
+
+      expect(hook.result().segments).toHaveLength(1);
+      expect(hook.result().segments[0]).toMatchObject({
+        documentId: "doc-chapter-1",
+        status: "failed",
+        error: "document read failed",
+      });
+      expect(api.extractLore).not.toHaveBeenCalled();
+
+      const failedId = hook.result().segments[0]?.id;
+      if (failedId === undefined) throw new Error("Expected the document segment id.");
+      await act(async () => {
+        await hook.result().retrySegment(failedId);
+      });
+
+      // The retry updates the same row — no appended ghost or duplicate row —
+      // and extracts the re-read current content.
+      expect(hook.result().segments).toHaveLength(1);
+      expect(hook.result().segments[0]).toMatchObject({ status: "completed" });
+      expect(api.extractLore).toHaveBeenCalledTimes(1);
+      expect(api.extractLore).toHaveBeenCalledWith(
+        "project-1",
+        "the re-read chapter content",
+        "mock",
+      );
+      expect(hook.result().candidates.map((entry) => entry.title)).toEqual(["Flood Market"]);
+    } finally {
+      hook.mountHarness.cleanup();
+    }
+  });
+
+  it("ignores a duplicate in-flight document submission for the same document", async () => {
+    const pending = deferred<StudioJob>();
+    const documentRead = deferred<{ content_markdown: string }>();
+    vi.mocked(api.document).mockReturnValueOnce(documentRead.promise as never);
+    vi.mocked(api.extractLore).mockReturnValueOnce(pending.promise);
+    const hook = wizardHookHarness();
+    try {
+      await act(async () => {
+        void hook.result().submitDocumentSegment({ id: "doc-chapter-1", title: "Chapter 1" });
+        await Promise.resolve();
+      });
+      await act(async () => {
+        await hook.result().submitDocumentSegment({ id: "doc-chapter-1", title: "Chapter 1" });
+      });
+
+      expect(api.document).toHaveBeenCalledTimes(1);
+      await act(async () => {
+        documentRead.resolve({ content_markdown: "text" });
+        await Promise.resolve();
+      });
+      await act(async () => {
+        pending.resolve(loreJob([]));
+        await Promise.resolve();
+      });
+    } finally {
+      hook.mountHarness.cleanup();
+    }
   });
 
   it("abandons the session on reset, clearing segments, candidates, and selection", async () => {
     vi.mocked(api.extractLore).mockResolvedValue(loreJob([candidate("character", "Mira", [])]));
-    const hook = renderWizardHook();
-    await submit(hook.result(), "text");
-    expect(hook.result().candidates).toHaveLength(1);
+    const hook = wizardHookHarness();
+    try {
+      await submitSegment(hook.result(), "text");
+      expect(hook.result().candidates).toHaveLength(1);
 
-    act(() => {
-      hook.result().reset();
-    });
+      act(() => {
+        hook.result().reset();
+      });
 
-    expect(hook.result().segments).toEqual([]);
-    expect(hook.result().candidates).toEqual([]);
-    expect(hook.result().results).toEqual([]);
-    expect(api.createDocument).not.toHaveBeenCalled();
-  });
-
-  it("confirms selected candidates through creation then alias write and reports partial success", async () => {
-    vi.mocked(api.extractLore).mockResolvedValue(
-      loreJob([
-        candidate("character", "Mira", ["The Clerk"]),
-        candidate("world", "Ridge", ["Pass"]),
-      ]),
-    );
-    vi.mocked(api.createDocument).mockResolvedValueOnce({
-      id: "doc-ridge",
-    } as Awaited<ReturnType<typeof api.createDocument>>);
-    const aliasWrite = vi.mocked(api.saveDocumentAliases);
-    aliasWrite.mockRejectedValueOnce(new Error("alias write failed"));
-    const hook = renderWizardHook();
-    await submit(hook.result(), "text");
-    act(() => {
-      hook.result().toggleCandidate("character\nMira");
-    });
-
-    await act(async () => {
-      await hook.result().confirmSelected();
-    });
-
-    expect(api.createDocument).toHaveBeenCalledTimes(1);
-    expect(api.createDocument).toHaveBeenCalledWith("project-1", {
-      kind: "world",
-      title: "Ridge",
-      content_markdown: "Ridge summary.",
-    });
-    expect(aliasWrite).toHaveBeenCalledWith("project-1", "doc-ridge", ["Pass"]);
-    expect(hook.result().results).toEqual([
-      {
-        key: "world\nRidge",
-        kind: "world",
-        title: "Ridge",
-        aliases: ["Pass"],
-        outcome: "created-with-failed-aliases",
-        error: "alias write failed",
-        documentId: "doc-ridge",
-      },
-    ]);
-
-    // The retry keeps the aliases and upgrades the outcome on success.
-    aliasWrite.mockResolvedValueOnce({ aliases: [] } as Awaited<
-      ReturnType<typeof api.saveDocumentAliases>
-    >);
-    await act(async () => {
-      await hook.result().retryAliases("world\nRidge");
-    });
-    expect(aliasWrite).toHaveBeenLastCalledWith("project-1", "doc-ridge", ["Pass"]);
-    expect(hook.result().results[0]).toMatchObject({ outcome: "created", error: null });
+      expect(hook.result().segments).toEqual([]);
+      expect(hook.result().candidates).toEqual([]);
+      expect(hook.result().results).toEqual([]);
+      expect(api.createDocument).not.toHaveBeenCalled();
+    } finally {
+      hook.mountHarness.cleanup();
+    }
   });
 });

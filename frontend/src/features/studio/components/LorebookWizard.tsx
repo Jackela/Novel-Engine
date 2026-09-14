@@ -17,7 +17,9 @@ interface LorebookWizardProps {
  * picked chapter documents) each run as their own extraction Job, completed
  * segments fold into one merged candidate list, and confirmation reports
  * each candidate's two-step outcome. The session lives in this component's
- * hook; unmounting the project abandons it.
+ * hook; unmounting the project abandons it. After a confirmation, Start
+ * over clears only the results — the extracted segments stay, so the merged
+ * candidates remain reachable for another run.
  */
 export function LorebookWizard({ projectId, provider, documents }: LorebookWizardProps) {
   const wizard = useLorebookWizard(projectId, provider);
@@ -38,7 +40,7 @@ export function LorebookWizard({ projectId, provider, documents }: LorebookWizar
         <LorebookWizardResults
           results={wizard.results}
           onRetryAliases={wizard.retryAliases}
-          onStartOver={wizard.reset}
+          onStartOver={wizard.clearResults}
         />
       ) : (
         <LorebookWizardCandidates
@@ -47,6 +49,7 @@ export function LorebookWizard({ projectId, provider, documents }: LorebookWizar
           selectedCount={wizard.selectedCandidates.length}
           aliasDrafts={wizard.aliasDrafts}
           isConfirming={wizard.isConfirming}
+          aliasesFor={wizard.aliasesFor}
           onToggle={wizard.toggleCandidate}
           onAliasDraft={wizard.setAliasDraft}
           onConfirm={wizard.confirmSelected}
