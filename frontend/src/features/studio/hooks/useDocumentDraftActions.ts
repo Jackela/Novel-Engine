@@ -2,8 +2,8 @@ import type { Dispatch, MutableRefObject, SetStateAction } from "react";
 import { useCallback } from "react";
 
 import { HttpError } from "@/app/api";
+import { translateActive } from "@/app/i18n/translate";
 import type { Project, SaveState, StudioDocument } from "@/app/types/studio";
-
 import type {
   DocumentDraftOwner,
   DraftSnapshot,
@@ -109,7 +109,7 @@ export function useDocumentDraftActions({
     } catch (reason) {
       if (isCurrentOwner(owner)) {
         setCurrentSaveState("error");
-        setError(toErrorMessage(reason, "Unable to load the latest document."));
+        setError(toErrorMessage(reason, translateActive("errors.loadLatestDocument")));
       }
     } finally {
       finishConflictAction();
@@ -159,7 +159,7 @@ export function useDocumentDraftActions({
         setCurrentSaveState(
           reason instanceof HttpError && reason.status === 409 ? "conflict" : "error",
         );
-        setError(toErrorMessage(reason, "Unable to overwrite the latest document."));
+        setError(toErrorMessage(reason, translateActive("errors.overwriteDocument")));
       }
     } finally {
       saveInFlightRef.current.delete(owner.key);
@@ -220,14 +220,14 @@ export function useDocumentDraftActions({
           } catch (refreshReason) {
             if (isCurrentOwner(owner)) {
               setRestoreError(
-                toErrorMessage(refreshReason, "Unable to refresh the latest document."),
+                toErrorMessage(refreshReason, translateActive("errors.refreshDocument")),
               );
             }
           }
           return;
         }
         if (isCurrentOwner(owner)) {
-          setRestoreError(toErrorMessage(reason, "Unable to restore revision."));
+          setRestoreError(toErrorMessage(reason, translateActive("errors.restoreRevision")));
         }
       }
     },

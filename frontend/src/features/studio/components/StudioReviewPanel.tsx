@@ -1,6 +1,7 @@
 import { RotateCcw } from "lucide-react";
 import { useRef } from "react";
 
+import { useTranslation } from "@/app/i18n/useTranslation";
 import type { Review, ReviewSummary } from "@/app/types/studio";
 import { useCommandFocusRestoration } from "../hooks/useCommandFocusRestoration";
 import type { InspectorReviewHistoryPaging } from "../studioInspectorTypes";
@@ -46,6 +47,7 @@ export function StudioReviewPanel({
   isRunning = false,
 }: StudioReviewPanelProps) {
   const { isLoading: isLoadingHistory, hasOlder: hasOlderReviews, isLoadingOlder } = historyPaging;
+  const { t } = useTranslation();
   const runWithFocusRestoration = useCommandFocusRestoration(isRunning);
   const retryWithFocusRestoration = useCommandFocusRestoration(isLoadingHistory);
   const headingRef = useRef<HTMLHeadingElement | null>(null);
@@ -55,26 +57,26 @@ export function StudioReviewPanel({
       <header className="studio-inspector__heading">
         <div>
           <h2 ref={headingRef} tabIndex={-1}>
-            Review findings
+            {t("review.heading")}
           </h2>
-          <p>Snapshot-bound and non-mutating.</p>
+          <p>{t("review.hint")}</p>
         </div>
         <button
           aria-busy={isRunning}
-          aria-label={isRunning ? "Running review" : "Run review"}
+          aria-label={isRunning ? t("review.action.running") : t("review.action.run")}
           className="ui-command--icon"
           disabled={isRunning}
           onClick={(event) => {
             void runWithFocusRestoration(event.currentTarget, onRunReview);
           }}
-          title="Run review"
+          title={t("review.action.run")}
           type="button"
         >
           <RotateCcw aria-hidden="true" />
         </button>
       </header>
-      {isRunning ? <p role="status">Running review…</p> : null}
-      {isLoadingHistory ? <p role="status">Loading review history…</p> : null}
+      {isRunning ? <p role="status">{t("review.status.running")}</p> : null}
+      {isLoadingHistory ? <p role="status">{t("review.status.loadingHistory")}</p> : null}
       {historyError ? (
         <div aria-live="assertive" className="studio-inspector__error" role="alert">
           <p>{historyError}</p>
@@ -92,7 +94,7 @@ export function StudioReviewPanel({
               }}
               type="button"
             >
-              Try again
+              {t("common.action.tryAgain")}
             </button>
           ) : null}
         </div>
@@ -102,7 +104,7 @@ export function StudioReviewPanel({
           {actionError}
         </div>
       ) : null}
-      {detailLoading ? <p role="status">Loading review findings…</p> : null}
+      {detailLoading ? <p role="status">{t("review.status.loadingDetail")}</p> : null}
       {detailError ? (
         <div aria-live="assertive" className="studio-inspector__error" role="alert">
           <p>{detailError}</p>
@@ -114,7 +116,7 @@ export function StudioReviewPanel({
               onClick={() => void onRetryDetail()}
               type="button"
             >
-              Try again
+              {t("common.action.tryAgain")}
             </button>
           ) : null}
         </div>
@@ -134,7 +136,7 @@ export function StudioReviewPanel({
           </article>
         ))
       ) : historyInitialized && !detailLoading && !detailError && summaries.length === 0 ? (
-        <p className="studio-inspector__empty">No review findings. Run a review when ready.</p>
+        <p className="studio-inspector__empty">{t("review.empty")}</p>
       ) : null}
       <StudioReviewHistoryList
         hasOlderReviews={hasOlderReviews}

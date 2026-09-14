@@ -7,6 +7,7 @@ import {
   useRef,
 } from "react";
 
+import { useTranslation } from "@/app/i18n/useTranslation";
 import { INSPECTOR_TABS, type InspectorTab } from "./studioConstants";
 
 interface StudioInspectorTabsProps {
@@ -22,6 +23,7 @@ export function StudioInspectorTabs({
   panelId,
   setInspector,
 }: StudioInspectorTabsProps) {
+  const { t } = useTranslation();
   // #411: focus via refs instead of DOM queries.
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
 
@@ -70,17 +72,17 @@ export function StudioInspectorTabs({
 
   return (
     <div
-      aria-label="Inspector panels"
+      aria-label={t("inspector.tablist")}
       aria-orientation="horizontal"
       className="studio-inspector__tabs"
       role="tablist"
     >
-      {tabButton("copilot", "Copilot", <Bot aria-hidden="true" />)}
-      {tabButton("review", "Review", <ShieldCheck aria-hidden="true" />)}
-      {tabButton("history", "History", <History aria-hidden="true" />)}
-      {tabButton("export", "Export", <Download aria-hidden="true" />)}
-      {tabButton("jobs", "Jobs", <Briefcase aria-hidden="true" />)}
-      {tabButton("usage", "Usage", <BarChart3 aria-hidden="true" />)}
+      {tabButton("copilot", t("inspector.tab.copilot"), <Bot aria-hidden="true" />)}
+      {tabButton("review", t("inspector.tab.review"), <ShieldCheck aria-hidden="true" />)}
+      {tabButton("history", t("inspector.tab.history"), <History aria-hidden="true" />)}
+      {tabButton("export", t("inspector.tab.export"), <Download aria-hidden="true" />)}
+      {tabButton("jobs", t("inspector.tab.jobs"), <Briefcase aria-hidden="true" />)}
+      {tabButton("usage", t("inspector.tab.usage"), <BarChart3 aria-hidden="true" />)}
     </div>
   );
 }

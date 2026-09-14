@@ -1,6 +1,7 @@
 import type { FormEvent, MouseEvent, RefObject } from "react";
 import { useCallback, useLayoutEffect, useRef, useState } from "react";
 
+import { useTranslation } from "@/app/i18n/useTranslation";
 import { useCommandFocusRestoration } from "../hooks/useCommandFocusRestoration";
 
 interface StudioBeatPanelProps {
@@ -87,6 +88,7 @@ function BeatEntryForm({
   linkButtonRef,
 }: BeatEntryFormProps) {
   const [title, setTitle] = useState(attemptedTitle ?? beatRef ?? "");
+  const { t } = useTranslation();
   const requested = title.trim();
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
@@ -102,11 +104,11 @@ function BeatEntryForm({
   };
 
   return (
-    <form aria-label="Chapter beat" className="studio-beat" onSubmit={handleSubmit}>
+    <form aria-label={t("beat.form.label")} className="studio-beat" onSubmit={handleSubmit}>
       <label className="studio-inspector__settings-field">
-        <span>Beat</span>
+        <span>{t("beat.field.label")}</span>
         <input
-          aria-label="Beat title"
+          aria-label={t("beat.field.title")}
           disabled={isSaving}
           onChange={(event) => setTitle(event.target.value)}
           ref={inputRef}
@@ -114,9 +116,7 @@ function BeatEntryForm({
           value={title}
         />
       </label>
-      <p className="studio-beat__hint">
-        Links the chapter to an outline beat by its heading title.
-      </p>
+      <p className="studio-beat__hint">{t("beat.hint")}</p>
       <div className="studio-inspector__actions">
         <button
           aria-busy={isSaving}
@@ -125,7 +125,7 @@ function BeatEntryForm({
           ref={linkButtonRef}
           type="submit"
         >
-          {isSaving ? "Saving…" : "Link beat"}
+          {isSaving ? t("common.action.saving") : t("beat.action.link")}
         </button>
         <button
           className="ui-command"
@@ -133,7 +133,7 @@ function BeatEntryForm({
           onClick={clearBeat}
           type="button"
         >
-          Clear
+          {t("beat.action.clear")}
         </button>
       </div>
       {error ? (
@@ -142,7 +142,7 @@ function BeatEntryForm({
         </p>
       ) : null}
       <p aria-live="polite" className="sr-only">
-        {isSaving ? "Saving chapter beat." : ""}
+        {isSaving ? t("beat.status.saving") : ""}
       </p>
     </form>
   );

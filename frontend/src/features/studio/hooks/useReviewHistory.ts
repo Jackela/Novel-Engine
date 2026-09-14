@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useRef } from "react";
 
 import { api } from "@/app/api";
+import { translateActive } from "@/app/i18n/translate";
 import type { Review, ReviewSummary, ReviewsPage } from "@/app/types/studio";
 import type { InspectorReviewModel } from "../studioInspectorTypes";
-
 import { appendUniqueById, useKeysetOlderPages } from "./keysetHistory";
 import { useLazyInspectorResource } from "./useLazyInspectorResource";
 
@@ -59,8 +59,8 @@ export function useReviewHistory({
     request: requestPage,
     recheckProject,
     onSessionLost,
-    missingResourceMessage: "Review history is unavailable for this project.",
-    loadErrorMessage: "Unable to load review history.",
+    missingResourceMessage: translateActive("errors.missingReviewHistory"),
+    loadErrorMessage: translateActive("errors.loadReviewHistory"),
   });
 
   const olderPages = useKeysetOlderPages<ReviewsPage>({
@@ -73,7 +73,7 @@ export function useReviewHistory({
         reviews: appendUniqueById(current.reviews, olderPage.reviews, (summary) => summary.id),
         next_cursor: olderPage.next_cursor,
       })),
-    busyErrorMessage: "Unable to load older reviews.",
+    busyErrorMessage: translateActive("errors.loadOlderReviews"),
   });
   const abortInFlightOlder = olderPages.abortInFlight;
 
@@ -111,8 +111,8 @@ export function useReviewHistory({
     request: requestDetail,
     recheckProject,
     onSessionLost,
-    missingResourceMessage: "Review findings are unavailable for this review.",
-    loadErrorMessage: "Unable to load review findings.",
+    missingResourceMessage: translateActive("errors.missingReviewFindings"),
+    loadErrorMessage: translateActive("errors.loadReviewFindings"),
   });
 
   useEffect(() => {

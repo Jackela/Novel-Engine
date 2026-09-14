@@ -3,11 +3,11 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { NavigateFunction } from "react-router-dom";
 
 import { api, HttpError } from "@/app/api";
+import { translateActive } from "@/app/i18n/translate";
 import type { Project } from "@/app/types/studio";
-
 import { toErrorMessage } from "./toErrorMessage";
 
-const DEFAULT_LOAD_ERROR = "Unable to load the project. Please retry.";
+const DEFAULT_LOAD_ERROR = (): string => translateActive("errors.loadProject");
 
 interface ScopedErrorState {
   readonly projectId: string;
@@ -130,7 +130,7 @@ export function useProjectShellLoad(
           navigateRef.current("/projects", { replace: true });
           return;
         }
-        const message = toErrorMessage(reason, DEFAULT_LOAD_ERROR);
+        const message = toErrorMessage(reason, DEFAULT_LOAD_ERROR());
         if (shellPublished) setError(message);
         else setLoadErrorState({ projectId, value: message });
       } finally {

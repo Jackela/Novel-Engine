@@ -1,9 +1,8 @@
 import type { Dispatch, SetStateAction } from "react";
 import { useCallback, useRef, useState } from "react";
-
+import { translateActive } from "@/app/i18n/translate";
 import { ProposalOutcomeUnknownError, streamProposal } from "@/app/proposalStream";
 import type { Project, StudioDocument, StudioJob } from "@/app/types/studio";
-
 import { toErrorMessage } from "./toErrorMessage";
 import type { PendingActionController } from "./usePendingAction";
 import type { ProposalAuditControl } from "./useStudioJobs";
@@ -195,7 +194,7 @@ export function useProposalStreamSession({
         } else if (proposalAudit.epoch() !== auditEpoch) {
           return;
         } else if (isCurrentRequest(ownerKey, requestEpoch) && !controller.signal.aborted) {
-          setError(toErrorMessage(reason, "Unable to create proposal."));
+          setError(toErrorMessage(reason, translateActive("errors.createProposal")));
         }
       } finally {
         if (streamRequestRef.current === request) streamRequestRef.current = null;

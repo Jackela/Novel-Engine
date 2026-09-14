@@ -1,5 +1,6 @@
 import { AlertCircle, Check, Loader2 } from "lucide-react";
 
+import { useTranslation } from "@/app/i18n/useTranslation";
 import { productLabel } from "@/app/productIdentity";
 import type { SaveState, StudioDocument } from "@/app/types/studio";
 
@@ -14,6 +15,8 @@ export function StudioStatusbar({
   loadedRevisionId,
   saveState,
 }: StudioStatusbarProps) {
+  const { t } = useTranslation();
+  const wordCount = activeDocument?.word_count ?? 0;
   return (
     <footer className="studio-statusbar">
       <span>
@@ -25,16 +28,21 @@ export function StudioStatusbar({
           <Check />
         )}{" "}
         {saveState === "saving"
-          ? "Saving"
+          ? t("statusbar.saving")
           : saveState === "conflict"
-            ? "Conflict"
+            ? t("statusbar.conflict")
             : saveState === "error"
-              ? "Error"
-              : "Saved"}
+              ? t("statusbar.error")
+              : t("statusbar.saved")}
       </span>
-      <span>Revision {loadedRevisionId?.slice(0, 8) ?? "none"}</span>
+      <span>{t("statusbar.revision", { id: loadedRevisionId?.slice(0, 8) ?? "none" })}</span>
       <span className="studio-statusbar__spacer" />
-      <span>{activeDocument?.word_count ?? 0} words</span>
+      <span>
+        {t("statusbar.words", {
+          count: wordCount,
+          unit: wordCount === 1 ? t("noun.word") : t("noun.words"),
+        })}
+      </span>
       <span>{productLabel}</span>
     </footer>
   );

@@ -1,6 +1,6 @@
 import { api } from "@/app/api";
+import { translateActive } from "@/app/i18n/translate";
 import type { RevisionSummary } from "@/app/types/studio";
-
 import {
   addRevisionSubscriber,
   clearRevisionNotifications,
@@ -202,7 +202,7 @@ function beginRequest(
         if (page.next_cursor === cursor) {
           outcome = {
             kind: "error",
-            reason: new Error("The revision service repeated its continuation cursor."),
+            reason: new Error(translateActive("errors.revisionCursorLoop")),
           };
           return;
         }

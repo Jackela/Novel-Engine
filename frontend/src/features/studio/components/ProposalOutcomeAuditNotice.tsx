@@ -1,3 +1,5 @@
+import { useTranslation } from "@/app/i18n/useTranslation";
+
 import type { ProposalAuditStatus } from "../hooks/useStudioJobs";
 
 interface ProposalOutcomeAuditNoticeProps {
@@ -11,10 +13,12 @@ export function ProposalOutcomeAuditNotice({
   onRetry,
   onGenerateAnother,
 }: ProposalOutcomeAuditNoticeProps) {
+  const { t } = useTranslation();
+
   if (status === "auditing") {
     return (
       <section className="ui-form-error" role="status">
-        <p>The proposal outcome is unknown. Checking job history for audit evidence…</p>
+        <p>{t("audit.checking")}</p>
       </section>
     );
   }
@@ -22,12 +26,9 @@ export function ProposalOutcomeAuditNotice({
   if (status === "audit_failed") {
     return (
       <section className="ui-form-error" role="alert">
-        <p>
-          The proposal outcome is unknown, and job history could not be refreshed. Retry only the
-          audit refresh before generating again.
-        </p>
+        <p>{t("audit.failed")}</p>
         <button className="ui-command" onClick={() => void onRetry?.()} type="button">
-          Retry audit refresh
+          {t("audit.action.retryRefresh")}
         </button>
       </section>
     );
@@ -35,17 +36,13 @@ export function ProposalOutcomeAuditNotice({
 
   return (
     <section className="ui-form-error" role="alert">
-      <p>
-        The previous proposal may already have been saved. This job-history snapshot cannot confirm
-        which job came from that attempt or whether the earlier stream has finished. Generating
-        again can create another job and usage event.
-      </p>
+      <p>{t("audit.unknown")}</p>
       <button
         className="ui-command"
         onClick={(event) => void onGenerateAnother?.(event.currentTarget)}
         type="button"
       >
-        Generate another proposal
+        {t("audit.action.generateAnother")}
       </button>
     </section>
   );

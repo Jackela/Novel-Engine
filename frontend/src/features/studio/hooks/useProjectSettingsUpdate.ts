@@ -106,7 +106,7 @@ export function useProjectSettingsUpdate({
         const updated = await api.updateProject(projectId, payload, { signal: controller.signal });
         if (!isCurrentIntent()) return;
         if (updated.id !== projectId || projectRef.current?.id !== projectId) {
-          throw new Error("Invalid project settings response identity.");
+          throw new Error(translateActive("errors.settingsIdentity"));
         }
 
         const merged = mergeProjectSettings(projectRef.current, updated);

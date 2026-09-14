@@ -1,6 +1,7 @@
 import { ExternalLink } from "lucide-react";
 import { useRef } from "react";
 
+import { useTranslation } from "@/app/i18n/useTranslation";
 import type { StudioExport } from "@/app/types/studio";
 import { useCommandFocusRestoration } from "../hooks/useCommandFocusRestoration";
 
@@ -30,14 +31,15 @@ export function StudioExportHistorySection({
 }: StudioExportHistorySectionProps) {
   const retryHistoryWithFocusRestoration = useCommandFocusRestoration(isLoadingHistory);
   const loadOlderWithFocusRestoration = useCommandFocusRestoration(isLoadingOlderExports);
+  const { t } = useTranslation();
   const historyHeadingRef = useRef<HTMLHeadingElement | null>(null);
 
   return (
     <section aria-labelledby="export-history-heading" className="export-history">
       <h3 id="export-history-heading" ref={historyHeadingRef} tabIndex={-1}>
-        Export history
+        {t("export.history.heading")}
       </h3>
-      {isLoadingHistory ? <p role="status">Loading export history…</p> : null}
+      {isLoadingHistory ? <p role="status">{t("export.history.loading")}</p> : null}
       {historyError ? (
         <div aria-live="assertive" className="studio-inspector__error" role="alert">
           <p>{historyError}</p>
@@ -55,7 +57,7 @@ export function StudioExportHistorySection({
               }}
               type="button"
             >
-              Try again
+              {t("common.action.tryAgain")}
             </button>
           ) : null}
         </div>
@@ -67,8 +69,10 @@ export function StudioExportHistorySection({
               <span>
                 <strong>{item.format.toUpperCase()}</strong>
                 <small>
-                  {Math.ceil(item.size_bytes / 1024)} KB ·{" "}
-                  {new Date(item.created_at).toLocaleString()}
+                  {t("export.history.rowMeta", {
+                    size: Math.ceil(item.size_bytes / 1024),
+                    date: new Date(item.created_at).toLocaleString(),
+                  })}
                 </small>
               </span>
               <ExternalLink aria-hidden="true" />
@@ -76,7 +80,7 @@ export function StudioExportHistorySection({
           ))}
         </div>
       ) : historyInitialized ? (
-        <p className="studio-inspector__empty">No exports yet.</p>
+        <p className="studio-inspector__empty">{t("export.history.empty")}</p>
       ) : null}
       {olderExportsError ? (
         <div aria-live="assertive" className="studio-inspector__error" role="alert">
@@ -99,12 +103,12 @@ export function StudioExportHistorySection({
           }}
           type="button"
         >
-          {isLoadingOlderExports ? "Loading older exports" : "Load older exports"}
+          {isLoadingOlderExports ? t("export.history.loadingOlder") : t("export.history.loadOlder")}
         </button>
       ) : null}
       {historyInitialized && exports.length > 0 && !hasOlderExports ? (
         <p className="studio-inspector__empty" role="status">
-          End of export history.
+          {t("export.history.end")}
         </p>
       ) : null}
     </section>

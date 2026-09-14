@@ -1,6 +1,7 @@
 import { ArrowDown, ArrowUp } from "lucide-react";
 import { useRef } from "react";
 
+import { useTranslation } from "@/app/i18n/useTranslation";
 import type { DocumentSummary, Volume } from "@/app/types/studio";
 
 import { useCommandFocusRestoration } from "../hooks/useCommandFocusRestoration";
@@ -47,6 +48,7 @@ export function StudioNavigatorDocumentRows({
   confirmingDeleteId,
   onConfirmingDeleteChange,
 }: StudioNavigatorDocumentRowsProps) {
+  const { t } = useTranslation();
   const runWithFocusRestoration = useCommandFocusRestoration(isMovingDocument);
   const moveButtonRefs = useRef(new Map<string, HTMLButtonElement>());
   const rowButtonRefs = useRef(new Map<string, HTMLButtonElement>());
@@ -76,7 +78,11 @@ export function StudioNavigatorDocumentRows({
         />
         <span className="document-row__order">
           <button
-            aria-label={`${movingUp ? "Moving" : "Move"} ${document.title} up`}
+            aria-label={
+              movingUp
+                ? t("navigator.row.movingUp", { title: document.title })
+                : t("navigator.row.moveUp", { title: document.title })
+            }
             aria-busy={movingUp || undefined}
             disabled={isMovingDocument || index === 0}
             onClick={(event) => {
@@ -91,13 +97,17 @@ export function StudioNavigatorDocumentRows({
               if (node) moveButtonRefs.current.set(key, node);
               else moveButtonRefs.current.delete(key);
             }}
-            title={movingUp ? "Moving up" : "Move up"}
+            title={movingUp ? t("navigator.row.movingUpTitle") : t("navigator.row.moveUpTitle")}
             type="button"
           >
             <ArrowUp aria-hidden="true" />
           </button>
           <button
-            aria-label={`${movingDown ? "Moving" : "Move"} ${document.title} down`}
+            aria-label={
+              movingDown
+                ? t("navigator.row.movingDown", { title: document.title })
+                : t("navigator.row.moveDown", { title: document.title })
+            }
             aria-busy={movingDown || undefined}
             disabled={isMovingDocument || index === rows.length - 1}
             onClick={(event) => {
@@ -112,7 +122,9 @@ export function StudioNavigatorDocumentRows({
               if (node) moveButtonRefs.current.set(key, node);
               else moveButtonRefs.current.delete(key);
             }}
-            title={movingDown ? "Moving down" : "Move down"}
+            title={
+              movingDown ? t("navigator.row.movingDownTitle") : t("navigator.row.moveDownTitle")
+            }
             type="button"
           >
             <ArrowDown aria-hidden="true" />

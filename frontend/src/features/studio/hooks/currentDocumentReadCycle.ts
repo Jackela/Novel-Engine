@@ -1,4 +1,5 @@
 import { api, HttpError } from "@/app/api";
+import { translateActive } from "@/app/i18n/translate";
 import type { DocumentSummary, ProjectShell, StudioDocument } from "@/app/types/studio";
 
 import type { CurrentDocumentReadKey } from "./currentDocumentReadRegistry";
@@ -6,9 +7,9 @@ import type { ProjectShellReadAuthority } from "./projectShellReadAuthority";
 import { reportUnexpectedError } from "./reportUnexpectedError";
 import { toErrorMessage } from "./toErrorMessage";
 
-const DEFAULT_ERROR = "Unable to load this document. Please retry.";
-const CHURN_ERROR = "This document changed again while loading. Please retry.";
-const INCONSISTENT_ERROR = "This document is listed but could not be loaded. Please retry.";
+const DEFAULT_ERROR = (): string => translateActive("errors.loadDocument");
+const CHURN_ERROR = (): string => translateActive("errors.churnDocument");
+const INCONSISTENT_ERROR = (): string => translateActive("errors.loadDocumentInconsistent");
 
 type CommitShellResult = "published" | "superseded" | "unexpected";
 type CommitShell = () => CommitShellResult;
@@ -64,7 +65,7 @@ function classifyFailure(
 ): Extract<CurrentDocumentReadOutcome, { readonly status: "session-lost" | "failure" }> {
   if (reason instanceof HttpError && reason.status === 401)
     return { status: "session-lost", commitShell };
-  return { status: "failure", message: toErrorMessage(reason, DEFAULT_ERROR), commitShell, key };
+  return { status: "failure", message: toErrorMessage(reason, DEFAULT_ERROR()), commitShell, key };
 }
 
 async function refreshShell(
@@ -107,7 +108,7 @@ async function convergeAfterRead(
   if (document === null)
     return {
       status: "failure",
-      message: INCONSISTENT_ERROR,
+      message: INCONSISTENT_ERROR(),
       key: { ...key, expectedRevisionId: freshSummary.current_revision_id },
       commitShell: refreshed.commitShell,
     };
@@ -121,14 +122,14 @@ async function convergeAfterRead(
     if (!validIdentity(replacement, freshKey))
       return {
         status: "failure",
-        message: INCONSISTENT_ERROR,
+        message: INCONSISTENT_ERROR(),
         key: freshKey,
         commitShell: refreshed.commitShell,
       };
     if (replacement.current_revision_id !== freshKey.expectedRevisionId)
       return {
         status: "failure",
-        message: CHURN_ERROR,
+        message: CHURN_ERROR(),
         key: freshKey,
         commitShell: refreshed.commitShell,
       };
@@ -142,7 +143,7 @@ async function convergeAfterRead(
     if (reason instanceof HttpError && reason.status === 404)
       return {
         status: "failure",
-        message: INCONSISTENT_ERROR,
+        message: INCONSISTENT_ERROR(),
         key: freshKey,
         commitShell: refreshed.commitShell,
       };
@@ -162,7 +163,7 @@ export async function runCurrentDocumentReadCycle(
 ): Promise<CurrentDocumentReadOutcome> {
   try {
     const document = await api.document(key.projectId, key.documentId, { signal });
-    if (!validIdentity(document, key)) return { status: "failure", message: INCONSISTENT_ERROR };
+    if (!validIdentity(document, key)) return { status: "failure", message: INCONSISTENT_ERROR() };
     if (document.current_revision_id === key.expectedRevisionId)
       return { status: "document", key, document };
     return convergeAfterRead(key, document, authority, signal);

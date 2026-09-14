@@ -1,9 +1,8 @@
 import type { Dispatch, SetStateAction } from "react";
 import { useCallback, useLayoutEffect, useRef } from "react";
-
+import { translateActive } from "@/app/i18n/translate";
 import { ProposalOutcomeUnknownError, streamProposal } from "@/app/proposalStream";
 import type { Project, StudioDocument } from "@/app/types/studio";
-
 import { AcceptedProposalRefreshError, acceptProposalAndRefresh } from "./acceptProposalAndRefresh";
 import { toErrorMessage } from "./toErrorMessage";
 import type { ProposalAuditControl } from "./useStudioJobs";
@@ -176,7 +175,7 @@ export function useWholeBookChapterRun({
               kind: "failed",
               generated,
               failedChapterTitle: failingTitle,
-              message: toErrorMessage(reason, "Unable to generate the chapter."),
+              message: toErrorMessage(reason, translateActive("errors.generateChapter")),
             });
           }
         } finally {

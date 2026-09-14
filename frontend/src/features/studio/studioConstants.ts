@@ -4,16 +4,33 @@ import type { MessageKey } from "@/app/i18n/dictionaries/en";
 import { translateActive } from "@/app/i18n/translate";
 import type { DocumentKind, ProviderInfo } from "@/app/types/studio";
 
+/**
+ * `label` is the language-independent content name used when *creating*
+ * documents ("Characters 2" as stored data, see `useStudioDocumentActions`);
+ * `messageKey` is the UI chrome label, resolved through the dictionaries so
+ * the Navigator follows the active UI language.
+ */
 export const GROUPS: Array<{
   kind: DocumentKind;
   label: string;
+  messageKey: MessageKey;
   icon: typeof FileText;
 }> = [
-  { kind: "chapter", label: "Manuscript", icon: BookOpen },
-  { kind: "outline", label: "Outline", icon: FileText },
-  { kind: "character", label: "Characters", icon: Users },
-  { kind: "world", label: "World", icon: Globe2 },
-  { kind: "note", label: "Notes", icon: FileText },
+  {
+    kind: "chapter",
+    label: "Manuscript",
+    messageKey: "navigator.group.manuscript",
+    icon: BookOpen,
+  },
+  { kind: "outline", label: "Outline", messageKey: "navigator.group.outline", icon: FileText },
+  {
+    kind: "character",
+    label: "Characters",
+    messageKey: "navigator.group.characters",
+    icon: Users,
+  },
+  { kind: "world", label: "World", messageKey: "navigator.group.world", icon: Globe2 },
+  { kind: "note", label: "Notes", messageKey: "navigator.group.notes", icon: FileText },
 ];
 
 /**
@@ -38,13 +55,17 @@ export const INSPECTOR_TABS: Exclude<InspectorTab, "settings">[] = [
   "usage",
 ];
 
+/**
+ * Section display labels resolve through the dictionaries; the first tuple
+ * element stays the URL-owned route segment.
+ */
 export const SECTIONS = [
-  ["manuscript", "Manuscript"],
-  ["outline", "Outline"],
-  ["characters", "Characters"],
-  ["world", "World"],
-  ["settings", "Settings"],
-] as const;
+  ["manuscript", "navigator.section.manuscript"],
+  ["outline", "navigator.section.outline"],
+  ["characters", "navigator.section.characters"],
+  ["world", "navigator.section.world"],
+  ["settings", "navigator.section.settings"],
+] as const satisfies readonly (readonly [string, MessageKey])[];
 
 /** The document kinds that serve as lorebook entries (#315); lifecycle-gated (#444). */
 const LOREBOOK_ENTRY_KINDS: readonly DocumentKind[] = ["character", "world"];

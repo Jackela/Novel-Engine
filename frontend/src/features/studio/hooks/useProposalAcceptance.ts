@@ -1,8 +1,7 @@
 import type { Dispatch, SetStateAction } from "react";
 import { useCallback, useRef } from "react";
-
+import { translateActive } from "@/app/i18n/translate";
 import type { Project, StudioDocument, StudioJob } from "@/app/types/studio";
-
 import { acceptProposalAndRefresh } from "./acceptProposalAndRefresh";
 import { toErrorMessage } from "./toErrorMessage";
 import type { PendingActionController } from "./usePendingAction";
@@ -104,7 +103,7 @@ export function useProposalAcceptance({
       }
     } catch (reason) {
       if (isProjectLive(projectId) && !controller.signal.aborted) {
-        setError(toErrorMessage(reason, "Unable to accept proposal."));
+        setError(toErrorMessage(reason, translateActive("errors.acceptProposal")));
       }
     } finally {
       if (acceptRequestRef.current === request) acceptRequestRef.current = null;

@@ -2,7 +2,7 @@ import type { Dispatch, FormEvent, SetStateAction } from "react";
 import { useCallback, useEffect, useReducer, useRef } from "react";
 
 import { api } from "@/app/api";
-
+import { translateActive } from "@/app/i18n/translate";
 import { toErrorMessage } from "./toErrorMessage";
 
 interface SearchResult {
@@ -130,7 +130,7 @@ export function useStudioSearch(
         setError(null);
       } catch (reason) {
         if (!isCurrentRequest()) return;
-        setError(toErrorMessage(reason, "Search failed."));
+        setError(toErrorMessage(reason, translateActive("errors.search")));
         dispatch({ type: "searchFailed", projectId });
       }
     },

@@ -1,6 +1,8 @@
 import { Download } from "lucide-react";
 import { useRef } from "react";
 
+import type { MessageKey } from "@/app/i18n/dictionaries/en";
+import { useTranslation } from "@/app/i18n/useTranslation";
 import type { ExportFormat, StudioExport } from "@/app/types/studio";
 import { useCommandFocusRestoration } from "../hooks/useCommandFocusRestoration";
 import { StudioExportHistorySection } from "./StudioExportHistorySection";
@@ -25,16 +27,16 @@ interface StudioExportPanelProps {
 
 const FORMATS: Array<{
   format: ExportFormat;
-  label: string;
-  description: string;
+  labelKey: MessageKey;
+  hintKey: MessageKey;
 }> = [
   {
     format: "markdown",
-    label: "Markdown",
-    description: "Portable source text",
+    labelKey: "export.format.markdown",
+    hintKey: "export.format.markdownHint",
   },
-  { format: "docx", label: "Word document", description: "Editable document" },
-  { format: "epub", label: "EPUB", description: "E-reader package" },
+  { format: "docx", labelKey: "export.format.docx", hintKey: "export.format.docxHint" },
+  { format: "epub", labelKey: "export.format.epub", hintKey: "export.format.epubHint" },
 ];
 
 export function StudioExportPanel({
@@ -55,6 +57,7 @@ export function StudioExportPanel({
   onRetry,
 }: StudioExportPanelProps) {
   const isExporting = exportingFormat !== null;
+  const { t } = useTranslation();
   const runWithFocusRestoration = useCommandFocusRestoration(isExporting);
   const formatButtonRefs = useRef(new Map<ExportFormat, HTMLButtonElement>());
 
@@ -65,15 +68,15 @@ export function StudioExportPanel({
     >
       <header className="studio-inspector__heading">
         <div>
-          <h2>Export project</h2>
-          <p>Generate a file from the current immutable snapshot.</p>
+          <h2>{t("export.heading")}</h2>
+          <p>{t("export.hint")}</p>
         </div>
         <Download aria-hidden="true" />
       </header>
 
       {/* biome-ignore lint/a11y/useSemanticElements: this button group is not a form control group; <fieldset> would misrepresent semantics and drag in default fieldset styling. */}
-      <div aria-label="Export formats" className="export-format-list" role="group">
-        {FORMATS.map(({ format, label, description }) => {
+      <div aria-label={t("export.formats.legend")} className="export-format-list" role="group">
+        {FORMATS.map(({ format, labelKey, hintKey }) => {
           const isCurrentFormat = exportingFormat === format && retryingFormat !== format;
           return (
             <button
@@ -93,10 +96,12 @@ export function StudioExportPanel({
               type="button"
             >
               <span>
-                <strong>{label}</strong>
-                <small>{description}</small>
+                <strong>{t(labelKey)}</strong>
+                <small>{t(hintKey)}</small>
               </span>
-              <span aria-hidden="true">{isCurrentFormat ? "Working…" : "Export"}</span>
+              <span aria-hidden="true">
+                {isCurrentFormat ? t("export.action.working") : t("export.action.run")}
+              </span>
             </button>
           );
         })}
@@ -107,7 +112,7 @@ export function StudioExportPanel({
           <p>{error}</p>
           {failedFormat && onRetry ? (
             <button
-              aria-label={`Retry ${failedFormat} export`}
+              aria-label={t("export.action.retry", { format: failedFormat })}
               aria-busy={retryingFormat === failedFormat}
               className="ui-command"
               disabled={isExporting}
@@ -120,7 +125,7 @@ export function StudioExportPanel({
               }}
               type="button"
             >
-              Try again
+              {t("common.action.tryAgain")}
             </button>
           ) : null}
         </div>

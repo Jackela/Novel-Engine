@@ -1,6 +1,7 @@
 import { ChevronDown } from "lucide-react";
 import { type Dispatch, type SetStateAction, useId } from "react";
 
+import { useTranslation } from "@/app/i18n/useTranslation";
 import { StudioInspectorPanels } from "./StudioInspectorPanels";
 import { StudioInspectorTabs } from "./StudioInspectorTabs";
 import type { InspectorTab } from "./studioConstants";
@@ -30,6 +31,7 @@ export function StudioInspector({
   model,
 }: StudioInspectorProps) {
   const inspectorId = useId();
+  const { t } = useTranslation();
   const tabId = (tab: Exclude<InspectorTab, "settings">) => `${inspectorId}-${tab}-tab`;
   const panelId = (tab: Exclude<InspectorTab, "settings">) => `${inspectorId}-${tab}-panel`;
   const loreError = model.loreStatus?.error ?? null;
@@ -46,7 +48,7 @@ export function StudioInspector({
     <aside className="studio-inspector">
       <details className="studio-inspector__disclosure" open>
         <summary className="studio-inspector__summary">
-          <span>Inspector</span>
+          <span>{t("inspector.label")}</span>
           <ChevronDown aria-hidden="true" />
         </summary>
         <div className="studio-inspector__content">

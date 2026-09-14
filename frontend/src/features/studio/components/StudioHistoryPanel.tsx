@@ -1,6 +1,7 @@
 import { RotateCcw } from "lucide-react";
 import { useEffect, useRef } from "react";
 
+import { useTranslation } from "@/app/i18n/useTranslation";
 import type { RevisionSummary } from "@/app/types/studio";
 import { useCommandFocusRestoration } from "../hooks/useCommandFocusRestoration";
 
@@ -28,6 +29,7 @@ export function StudioHistoryPanel({
   onLoadOlderRevisions,
 }: StudioHistoryPanelProps) {
   const isBusy = restoringRevisionId !== null || isLoadingHistory || isLoadingOlder;
+  const { t } = useTranslation();
   const runWithFocusRestoration = useCommandFocusRestoration(isBusy);
   const headingRef = useRef<HTMLHeadingElement>(null);
   const restoreButtonRefs = useRef(new Map<string, HTMLButtonElement>());
@@ -73,9 +75,9 @@ export function StudioHistoryPanel({
   return (
     <div aria-busy={isBusy} className="studio-inspector__panel">
       <h2 ref={headingRef} tabIndex={-1}>
-        Revision history
+        {t("history.heading")}
       </h2>
-      <p>Restoring creates a new revision and preserves the chain.</p>
+      <p>{t("history.hint")}</p>
       <div className="studio-inspector__revision-list">
         {revisions.map((revision) => (
           <article key={revision.id}>
@@ -83,7 +85,11 @@ export function StudioHistoryPanel({
               <strong>{revision.source}</strong>
               <time>{new Date(revision.created_at).toLocaleString()}</time>
               <small>
-                {revision.word_count} words · {revision.id.slice(0, 8)}
+                {t("history.row.meta", {
+                  count: revision.word_count,
+                  unit: revision.word_count === 1 ? t("noun.word") : t("noun.words"),
+                  id: revision.id.slice(0, 8),
+                })}
               </small>
             </div>
             {revision.id !== loadedRevisionId ? (
@@ -91,8 +97,8 @@ export function StudioHistoryPanel({
                 aria-busy={restoringRevisionId === revision.id}
                 aria-label={
                   restoringRevisionId === revision.id
-                    ? `Restoring revision ${revision.id.slice(0, 8)}`
-                    : `Restore revision ${revision.id.slice(0, 8)}`
+                    ? t("history.row.restoring", { id: revision.id.slice(0, 8) })
+                    : t("history.row.restore", { id: revision.id.slice(0, 8) })
                 }
                 className="ui-command--icon"
                 disabled={isBusy}
@@ -107,13 +113,13 @@ export function StudioHistoryPanel({
                   if (node) restoreButtonRefs.current.set(revision.id, node);
                   else restoreButtonRefs.current.delete(revision.id);
                 }}
-                title="Restore revision"
+                title={t("history.row.restoreTitle")}
                 type="button"
               >
                 <RotateCcw />
               </button>
             ) : (
-              <span className="studio-inspector__current-revision">Current</span>
+              <span className="studio-inspector__current-revision">{t("history.row.current")}</span>
             )}
           </article>
         ))}
@@ -133,18 +139,18 @@ export function StudioHistoryPanel({
           type="button"
         >
           {isLoadingOlder
-            ? "Loading older revisions…"
+            ? t("history.action.loadingOlder")
             : isLoadingHistory
-              ? "Refreshing revision history…"
-              : "Load older revisions"}
+              ? t("history.status.refreshing")
+              : t("history.action.loadOlder")}
         </button>
       ) : isLoadingHistory ? (
         <p className="studio-inspector__history-status" role="status">
-          Refreshing revision history…
+          {t("history.status.refreshing")}
         </p>
       ) : historyInitialized ? (
         <p className="studio-inspector__history-status" role="status">
-          All revisions loaded
+          {t("history.status.allLoaded")}
         </p>
       ) : null}
     </div>

@@ -1,4 +1,5 @@
 import { HttpError } from "@/app/httpClient";
+import { translateActive } from "@/app/i18n/translate";
 import { isRecord } from "@/app/typeGuards";
 
 const STRUCTURE_CAPACITY_EXCEEDED_CODE = "STRUCTURE_CAPACITY_EXCEEDED";
@@ -17,7 +18,7 @@ function structureCapacitySuffix(reason: Error): string {
   const { resource, limit } = reason.detail;
   if (typeof resource !== "string" || resource === "") return "";
   if (typeof limit !== "number" || !Number.isSafeInteger(limit) || limit < 0) return "";
-  return ` ${resource} limit is ${limit}.`;
+  return ` ${translateActive("errors.structureCapacity", { resource, limit })}`;
 }
 
 /**

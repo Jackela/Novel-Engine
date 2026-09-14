@@ -1,6 +1,7 @@
 import { Check, Sparkles, X } from "lucide-react";
 import { type Dispatch, type SetStateAction, useRef, useState } from "react";
 
+import { useTranslation } from "@/app/i18n/useTranslation";
 import type { StudioJob } from "@/app/types/studio";
 import { useCommandFocusRestoration } from "../hooks/useCommandFocusRestoration";
 import type { ProposalAuditStatus } from "../hooks/useStudioJobs";
@@ -43,6 +44,7 @@ export function StudioCopilotPanel({
   unknownAttemptOperation = "continue",
   onRetryProposalAudit,
 }: StudioCopilotPanelProps) {
+  const { t } = useTranslation();
   const pendingProposalOperationRef = useRef<"continue" | "rewrite" | null>(null);
   const [pendingProposalOperation, setPendingProposalOperation] = useState<
     "continue" | "rewrite" | null
@@ -82,16 +84,14 @@ export function StudioCopilotPanel({
 
   return (
     <div aria-busy={isBusy} className="studio-inspector__panel">
-      <h2>AI proposal</h2>
-      <p>Copilot never changes the manuscript until you accept a proposal.</p>
-      <p>
-        Rewrite or Continue drafts a proposal to preview here; Accept applies it to the manuscript.
-      </p>
+      <h2>{t("copilot.heading")}</h2>
+      <p>{t("copilot.hint.guard")}</p>
+      <p>{t("copilot.hint.flow")}</p>
       <textarea
-        aria-label="Proposal instruction"
+        aria-label={t("copilot.field.instruction")}
         disabled={isBusy || (proposalOutcomeUnknown && proposalAuditStatus !== "audit_succeeded")}
         onChange={(event) => setInstruction(event.target.value)}
-        placeholder='e.g. "Continue this scene with a quieter, more ominous tone"'
+        placeholder={t("copilot.placeholder.example")}
         ref={instructionRef}
         rows={5}
         value={instruction}
@@ -113,7 +113,10 @@ export function StudioCopilotPanel({
             }}
             type="button"
           >
-            <Sparkles /> {pendingProposalOperation === "rewrite" ? "Rewriting…" : "Rewrite"}
+            <Sparkles />{" "}
+            {pendingProposalOperation === "rewrite"
+              ? t("copilot.action.rewriting")
+              : t("copilot.action.rewrite")}
           </button>
           <button
             aria-busy={pendingProposalOperation === "continue" || undefined}
@@ -125,15 +128,17 @@ export function StudioCopilotPanel({
             ref={continueButtonRef}
             type="button"
           >
-            {pendingProposalOperation === "continue" ? "Generating…" : "Continue"}
+            {pendingProposalOperation === "continue"
+              ? t("copilot.action.generating")
+              : t("copilot.action.continue")}
           </button>
         </div>
       )}
       {isStreaming ? (
         <section aria-busy="true" className="studio-inspector__proposal">
           <header>
-            <strong>Proposed Markdown</strong>
-            <span>Streaming…</span>
+            <strong>{t("copilot.proposal.heading")}</strong>
+            <span>{t("copilot.proposal.streaming")}</span>
           </header>
           <pre aria-live="polite">{streamingText}</pre>
           <div className="studio-inspector__actions">
@@ -150,15 +155,15 @@ export function StudioCopilotPanel({
               }}
               type="button"
             >
-              <X /> Stop
+              <X /> {t("copilot.action.stop")}
             </button>
           </div>
         </section>
       ) : proposal?.result.proposal_markdown ? (
         <section className="studio-inspector__proposal">
           <header>
-            <strong>Proposed Markdown</strong>
-            <span>Preview only</span>
+            <strong>{t("copilot.proposal.heading")}</strong>
+            <span>{t("copilot.proposal.previewOnly")}</span>
           </header>
           <pre>{proposal.result.proposal_markdown}</pre>
           <div className="studio-inspector__actions">
@@ -175,7 +180,7 @@ export function StudioCopilotPanel({
               }}
               type="button"
             >
-              <Check /> Accept
+              <Check /> {t("copilot.action.accept")}
             </button>
             <button
               className="ui-command"
@@ -183,7 +188,7 @@ export function StudioCopilotPanel({
               onClick={() => setProposal(null)}
               type="button"
             >
-              <X /> Reject
+              <X /> {t("copilot.action.reject")}
             </button>
           </div>
         </section>

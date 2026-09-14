@@ -1,5 +1,5 @@
 import { useCallback, useSyncExternalStore } from "react";
-import type { MessageKey } from "./dictionaries/en";
+import type { MessageKey, MessageParams } from "./dictionaries/en";
 import {
   getActiveLanguage,
   type Language,
@@ -9,8 +9,11 @@ import {
 import { translate as translateMessage } from "./translate";
 
 export interface Translation {
-  /** Resolve a message key in the language captured for this render. */
-  readonly t: (key: MessageKey) => string;
+  /**
+   * Resolve a message key in the language captured for this render;
+   * `params` fills `{name}` placeholders (see `translate`).
+   */
+  readonly t: (key: MessageKey, params?: MessageParams) => string;
   readonly language: Language;
   readonly setLanguage: (language: Language) => void;
 }
@@ -28,7 +31,10 @@ export interface Translation {
  */
 export function useTranslation(): Translation {
   const language = useSyncExternalStore(subscribeActiveLanguage, getActiveLanguage);
-  const t = useCallback((key: MessageKey) => translateMessage(language, key), [language]);
+  const t = useCallback(
+    (key: MessageKey, params?: MessageParams) => translateMessage(language, key, params),
+    [language],
+  );
   const setLanguage = useCallback((next: Language) => {
     setActiveLanguage(next);
   }, []);
