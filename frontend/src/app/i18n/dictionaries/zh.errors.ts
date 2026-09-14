@@ -13,6 +13,7 @@ export const zhErrors = {
   "errors.restoreRevision": "无法恢复修订。",
   "errors.loadRevisions": "无法加载修订。",
   "errors.exportProject": "无法导出项目。",
+  "errors.exportDiagnostics": "无法导出诊断信息。",
   "errors.loadExportHistory": "无法加载导出历史。",
   "errors.loadOlderExports": "无法加载更早的导出。",
   "errors.missingExportHistory": "这个项目没有可用的导出历史。",

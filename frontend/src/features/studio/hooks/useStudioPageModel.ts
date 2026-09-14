@@ -6,6 +6,7 @@ import {
   buildStudioInspectorModel,
   buildStudioNavigatorProps,
 } from "./studioPageModelView";
+import { useDiagnosticsDownload } from "./useDiagnosticsDownload";
 import { useExportDownload } from "./useExportDownload";
 import { useLazyInspectorHistories } from "./useLazyInspectorHistories";
 import { usePageActiveDocument } from "./usePageActiveDocument";
@@ -133,6 +134,7 @@ export function useStudioPageModel(projectId: string, route: StudioRouteState, n
     projectId,
     exportHistory.applyRefreshedFirstPage,
   );
+  const diagnosticsDownload = useDiagnosticsDownload(projectId);
   const studioActions = useStudioActions({
     project,
     projectId,
@@ -270,6 +272,11 @@ export function useStudioPageModel(projectId: string, route: StudioRouteState, n
             error: projectErrors.errors.settings,
             onUpdateSettings: updateProjectSettings,
             setSettingsForm,
+            diagnostics: {
+              onExport: diagnosticsDownload.exportDiagnostics,
+              isExporting: diagnosticsDownload.isExportingDiagnostics,
+              error: diagnosticsDownload.diagnosticsError,
+            },
           },
           narrowCommands: {
             activeSummary,

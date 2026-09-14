@@ -231,6 +231,32 @@ export interface ProjectUsage {
   daily?: UsageDailyBucket[];
 }
 
+/**
+ * The opt-in diagnostics export (#654): structurally redacted — configuration
+ * state is booleans only and the error summary carries persisted messages
+ * only, so no field can hold a secret value or manuscript content.
+ */
+export interface DiagnosticsSummary {
+  generated_at: string;
+  product: { name: string; version: string };
+  runtime: { platform: string; architecture: string; node_version: string };
+  configuration: {
+    provider: { id: string; label: string; configured: boolean };
+    keys: {
+      session_secret: boolean;
+      dashscope_api_key: boolean;
+      openai_compatible_api_key: boolean;
+    };
+  };
+  database: {
+    quick_check: string;
+    journal_mode: string;
+    foreign_keys: boolean;
+    owner_configured: boolean;
+  };
+  recent_errors: Array<{ message: string; occurred_at: string }>;
+}
+
 export interface StudioJobEvent {
   id: string;
   status: StudioJobStatus;

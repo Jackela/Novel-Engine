@@ -55,6 +55,7 @@ function inspectorModel(loreStatus: InspectorLoreStatusModel): StudioInspectorMo
       providers: [],
       onUpdateSettings: vi.fn(),
       setSettingsForm: vi.fn(),
+      diagnostics: { onExport: vi.fn(), isExporting: false, error: null },
     },
     loreStatus,
     // #466: no active chapter in this fixture, so no beat panel renders.

@@ -741,6 +741,103 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/projects/{projectId}/diagnostics": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    projectId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            configuration: {
+                                keys: {
+                                    dashscope_api_key: boolean;
+                                    openai_compatible_api_key: boolean;
+                                    session_secret: boolean;
+                                };
+                                provider: {
+                                    configured: boolean;
+                                    id: string;
+                                    label: string;
+                                };
+                            };
+                            database: {
+                                foreign_keys: boolean;
+                                journal_mode: string;
+                                owner_configured: boolean;
+                                quick_check: string;
+                            };
+                            generated_at: string;
+                            product: {
+                                name: string;
+                                version: string;
+                            };
+                            recent_errors: {
+                                message: string;
+                                occurred_at: string;
+                            }[];
+                            runtime: {
+                                architecture: string;
+                                node_version: string;
+                                platform: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/projects/{projectId}/documents": {
         parameters: {
             query?: never;

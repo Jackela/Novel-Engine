@@ -168,6 +168,11 @@ interface StudioInspectorModelInputs {
     readonly error: string | null;
     readonly onUpdateSettings: (event: FormEvent) => Promise<void>;
     readonly setSettingsForm: Dispatch<SetStateAction<SettingsFormState>>;
+    readonly diagnostics: {
+      readonly onExport: () => void | Promise<void>;
+      readonly isExporting: boolean;
+      readonly error: string | null;
+    };
   };
   readonly narrowCommands: InspectorNarrowCommands;
 }
@@ -259,6 +264,7 @@ export function buildStudioInspectorModel({
       error: settings.error,
       onUpdateSettings: settings.onUpdateSettings,
       setSettingsForm: settings.setSettingsForm,
+      diagnostics: settings.diagnostics,
     },
     loreStatus: buildLoreStatusModel(
       narrowDocument,

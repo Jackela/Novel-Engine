@@ -130,6 +130,12 @@ interface InspectorSettingsModel {
   error: string | null;
   onUpdateSettings: (event: FormEvent) => Promise<void>;
   setSettingsForm: Dispatch<SetStateAction<SettingsFormState>>;
+  /** #654: the opt-in diagnostics export command and its local states. */
+  diagnostics: {
+    onExport: () => void | Promise<void>;
+    isExporting: boolean;
+    error: string | null;
+  };
 }
 
 /** #444: document-scoped lifecycle gate for the active lore entry. */

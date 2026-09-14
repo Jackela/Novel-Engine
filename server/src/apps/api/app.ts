@@ -144,15 +144,16 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
 
     const environment =
       options.environment ?? options.config?.environment ?? process.env.NODE_ENV ?? "development";
+    // One resolution for the whole app: the session secret is either explicit
+    // (options or config) or a per-start rotation; the diagnostics export
+    // reports only which of the two it was (#654), never the value.
+    const resolvedSessionSecret = options.sessionSecret ?? options.config?.sessionSecret;
     const authService =
       persistence === undefined
         ? undefined
         : new AuthService({
             store: new DrizzleAuthStore(persistence.db.db),
-            sessionSecret:
-              options.sessionSecret ??
-              options.config?.sessionSecret ??
-              randomBytes(32).toString("base64url"),
+            sessionSecret: resolvedSessionSecret ?? randomBytes(32).toString("base64url"),
             now: options.clock,
           });
     const provider = buildProviderRuntime(options.config, options);
@@ -164,6 +165,8 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
             provider,
             operationCapacity,
             options,
+            productIdentity,
+            sessionSecretConfigured: resolvedSessionSecret !== undefined,
           });
 
     const versionInfo: VersionInfo = {

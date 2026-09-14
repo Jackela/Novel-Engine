@@ -15,6 +15,10 @@ interface StudioSettingsPanelProps {
   providers?: ProviderInfo[];
   isSaving?: boolean;
   error?: string | null;
+  /** #654: activates the opt-in diagnostics export (local download only). */
+  onExportDiagnostics?: () => void | Promise<void>;
+  isExportingDiagnostics?: boolean;
+  diagnosticsError?: string | null;
 }
 
 export function StudioSettingsPanel({
@@ -24,10 +28,15 @@ export function StudioSettingsPanel({
   providers = DEFAULT_PROVIDER_OPTIONS,
   isSaving = false,
   error = null,
+  onExportDiagnostics,
+  isExportingDiagnostics = false,
+  diagnosticsError = null,
 }: StudioSettingsPanelProps) {
   const saveButtonRef = useRef<HTMLButtonElement>(null);
+  const diagnosticsButtonRef = useRef<HTMLButtonElement>(null);
   const errorId = useId();
   const runWithFocusRestoration = useCommandFocusRestoration(isSaving);
+  const runDiagnosticsWithFocusRestoration = useCommandFocusRestoration(isExportingDiagnostics);
   const { t } = useTranslation();
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
@@ -122,6 +131,54 @@ export function StudioSettingsPanel({
       </div>
       <p aria-live="polite" className="sr-only">
         {isSaving ? t("settings.status.saving") : ""}
+      </p>
+      <p>{t("settings.diagnostics.privacy")}</p>
+      <div className="studio-inspector__actions">
+        <button
+          aria-busy={isExportingDiagnostics}
+          className="ui-command"
+          disabled={isExportingDiagnostics || !onExportDiagnostics}
+          onClick={(event) => {
+            if (onExportDiagnostics) {
+              void runDiagnosticsWithFocusRestoration(
+                event.currentTarget,
+                onExportDiagnostics,
+                () => diagnosticsButtonRef.current,
+              );
+            }
+          }}
+          ref={diagnosticsButtonRef}
+          type="button"
+        >
+          {isExportingDiagnostics
+            ? t("settings.diagnostics.action.exporting")
+            : t("settings.diagnostics.action.export")}
+        </button>
+      </div>
+      {diagnosticsError ? (
+        <div aria-live="assertive" className="studio-inspector__error" role="alert">
+          <p>{diagnosticsError}</p>
+          {onExportDiagnostics ? (
+            <button
+              aria-busy={isExportingDiagnostics}
+              className="ui-command"
+              disabled={isExportingDiagnostics}
+              onClick={(event) => {
+                void runDiagnosticsWithFocusRestoration(
+                  event.currentTarget,
+                  onExportDiagnostics,
+                  () => diagnosticsButtonRef.current,
+                );
+              }}
+              type="button"
+            >
+              {t("common.action.tryAgain")}
+            </button>
+          ) : null}
+        </div>
+      ) : null}
+      <p aria-live="polite" className="sr-only">
+        {isExportingDiagnostics ? t("settings.diagnostics.status.exporting") : ""}
       </p>
     </form>
   );

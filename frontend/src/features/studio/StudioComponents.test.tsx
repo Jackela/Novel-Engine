@@ -53,6 +53,7 @@ function buildInspectorModel(): StudioInspectorModel {
       providers: [],
       onUpdateSettings: vi.fn(),
       setSettingsForm: vi.fn(),
+      diagnostics: { onExport: vi.fn(), isExporting: false, error: null },
     },
     // #444: no active Lore document in this fixture, so no panel renders.
     loreStatus: null,
