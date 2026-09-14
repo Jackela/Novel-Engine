@@ -17,6 +17,7 @@
     "cli": "pnpm run build && node dist/apps/cli/main.js",
     "gate:ssot": "node scripts/qa/check_ssot.mjs",
     "gate:hygiene": "node scripts/qa/check_repo_hygiene.mjs",
+    "gate:compose-passthrough": "node scripts/qa/check_compose_passthrough.mjs",
     "gate:sizes": "node scripts/qa/check_file_sizes.mjs",
     "gate:migrations": "node scripts/qa/check_migration_channel.mjs",
     "gate:llms-txt": "node scripts/qa/check_llms_txt.mjs",
@@ -24,7 +25,7 @@
     "gate:openapi": "vitest run tests/qa/openapi_snapshot.test.ts",
     "openapi:snapshot": "OPENAPI_SNAPSHOT_WRITE=1 vitest run tests/qa/openapi_snapshot.test.ts",
     "db:generate": "drizzle-kit generate",
-    "gates": "pnpm run gate:ssot && pnpm run gate:hygiene && pnpm run gate:sizes && pnpm run gate:migrations && pnpm run gate:llms-txt && pnpm run gate:error-codes && pnpm run gate:openapi"
+    "gates": "pnpm run gate:ssot && pnpm run gate:hygiene && pnpm run gate:compose-passthrough && pnpm run gate:sizes && pnpm run gate:migrations && pnpm run gate:llms-txt && pnpm run gate:error-codes && pnpm run gate:openapi"
   },
   "dependencies": {
     "@fastify/cookie": "^11.1.2",
