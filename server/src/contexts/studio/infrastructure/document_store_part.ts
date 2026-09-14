@@ -13,6 +13,7 @@ import type {
 } from "../application/ports/document_store.js";
 import { revisionPageLimit } from "../application/ports/document_store.js";
 import type { ProjectScope } from "../application/ports/studio_store.js";
+import type { WritingStatsHistory } from "../application/ports/writing_stats.js";
 import { DuplicateDocumentError, NotFoundError, SnapshotConflict } from "../domain/exceptions.js";
 import { assertStoredRevisionWordCount } from "../domain/revision_word_count.js";
 import { advanceDocumentInTransaction } from "./db/document_revision_writes.js";
@@ -33,6 +34,7 @@ import {
   scopedDocument,
   scopedProject,
 } from "./db/studio_query_helpers.js";
+import { writingStatsHistory } from "./db/writing_stats_reads.js";
 import { buildRevisionSummariesQuery } from "./revision_page_queries.js";
 
 /**
@@ -238,6 +240,14 @@ export class DocumentStorePart implements DocumentStore {
         throw new NotFoundError(`Revision not found: ${revisionId}.`);
       }
       return row.revision;
+    });
+  }
+
+  /** The bounded stats read of the whole project (#653); see the db helper. */
+  readWritingStatsHistory(scope: ProjectScope, projectId: string): WritingStatsHistory {
+    return this.db.transaction((tx) => {
+      scopedProject(tx, scope, projectId);
+      return writingStatsHistory(tx, projectId);
     });
   }
 }

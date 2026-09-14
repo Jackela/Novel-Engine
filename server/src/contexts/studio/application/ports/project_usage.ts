@@ -6,6 +6,13 @@ interface ProjectUsageBreakdownEntry {
   completionTokens: number;
 }
 
+/**
+ * The trailing-UTC-day count of `daily` (#384). The writing-statistics day
+ * rows (#653) reuse the same window so both surfaces' day keys stay
+ * aligned — one constant, never two.
+ */
+export const USAGE_DAILY_WINDOW_DAYS = 30;
+
 /** One UTC day of usage in the trailing-30-day window (#384). */
 export interface ProjectUsageDailyBucket {
   /** UTC calendar day, `YYYY-MM-DD`. */
