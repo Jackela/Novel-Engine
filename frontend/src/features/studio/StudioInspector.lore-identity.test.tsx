@@ -50,6 +50,7 @@ function inspectorModel(loreStatus: InspectorLoreStatusModel): StudioInspectorMo
     },
     usage: { projectId: "project-1" },
     stats: { projectId: "project-1" },
+    lore: { projectId: "project-1", provider: "mock", documents: [] },
     settings: {
       settingsForm: { title: "Novel", description: "", provider: "mock" },
       error: null,

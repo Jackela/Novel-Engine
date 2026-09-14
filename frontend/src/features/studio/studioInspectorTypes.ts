@@ -1,6 +1,7 @@
 import type { Dispatch, FormEvent, SetStateAction } from "react";
 
 import type {
+  DocumentSummary,
   ExportFormat,
   LoreStatus,
   ProviderInfo,
@@ -129,6 +130,16 @@ interface InspectorStatsModel {
   projectId: string;
 }
 
+/** #614: the lorebook wizard tab's session inputs. */
+export interface InspectorLoreModel {
+  /** Project scope for the wizard's extraction and confirmation calls. */
+  readonly projectId: string;
+  /** The project's configured provider; `mock` is the trial provider. */
+  readonly provider: string;
+  /** The project shell's document summaries: picker chapters + empty state. */
+  readonly documents: DocumentSummary[];
+}
+
 interface InspectorSettingsModel {
   settingsForm: SettingsFormState;
   providers: ProviderInfo[];
@@ -187,6 +198,7 @@ export interface StudioInspectorModel {
   jobs: InspectorJobsModel;
   usage: InspectorUsageModel;
   stats: InspectorStatsModel;
+  lore: InspectorLoreModel;
   settings: InspectorSettingsModel;
   loreStatus: InspectorLoreStatusModel | null;
   beat: InspectorBeatModel | null;

@@ -3394,6 +3394,163 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/projects/{projectId}/lore-extractions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    projectId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        /**
+                         * @default mock
+                         * @enum {string}
+                         */
+                        provider?: "mock" | "dashscope" | "openai_compatible";
+                        segment: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            created_at: string;
+                            document_id: string | null;
+                            error: string | null;
+                            /** @description Chronological trail (oldest first) on a single job payload; the jobs LIST endpoint is the spec-mandated newest-first surface. */
+                            events: {
+                                created_at: string;
+                                details: {
+                                    [key: string]: unknown;
+                                };
+                                id: string;
+                                status: string;
+                            }[];
+                            id: string;
+                            kind: string;
+                            model: string;
+                            operation: string;
+                            project_id: string;
+                            provider: string;
+                            request: {
+                                [key: string]: unknown;
+                            };
+                            result: {
+                                [key: string]: unknown;
+                            };
+                            retry_of_job_id: string | null;
+                            status: string;
+                            updated_at: string;
+                        };
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Invalid extraction input or permanent generation-capacity refusal. */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error: {
+                                /** @enum {string} */
+                                code: "GENERATION_CAPACITY_EXCEEDED";
+                                details: {
+                                    /** @enum {integer} */
+                                    limit: 8388608;
+                                    /** @enum {integer} */
+                                    observed: 8388609;
+                                    /** @enum {string} */
+                                    resource: "prompt_bytes";
+                                } | {
+                                    /** @enum {integer} */
+                                    limit: 100000;
+                                    /** @enum {integer} */
+                                    observed: 100001;
+                                    /** @enum {string} */
+                                    resource: "lore_extract_segment";
+                                };
+                                /** @enum {string} */
+                                message: "Generation capacity exceeded.";
+                            };
+                        } | {
+                            error: {
+                                /** @enum {string} */
+                                code: "VALIDATION_ERROR";
+                                details: {
+                                    errors: {
+                                        field: string;
+                                        message: string;
+                                        type: string;
+                                    }[];
+                                };
+                                /** @enum {string} */
+                                message: "Request validation failed.";
+                            };
+                        };
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/projects/{projectId}/reviews": {
         parameters: {
             query?: never;

@@ -73,6 +73,22 @@ export const proposalGeneration422ResponseSchema: JsonResponseSchema = {
   },
 } as const;
 
+/**
+ * The lorebook wizard's extraction refusal surface (#614): schema validation
+ * failures and the two permanent generation-capacity refusals (segment code
+ * points, assembled prompt bytes) share the unified 422 envelope.
+ */
+export const loreExtraction422ResponseSchema: JsonResponseSchema = {
+  description: "Invalid extraction input or permanent generation-capacity refusal.",
+  content: {
+    "application/json": {
+      schema: {
+        oneOf: [generationCapacityEnvelope, validationErrorEnvelope],
+      },
+    },
+  },
+} as const;
+
 export const jobRetry422ResponseSchema: JsonResponseSchema = {
   description: "Invalid retry input or permanent export/generation capacity outcome.",
   content: {

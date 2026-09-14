@@ -35,7 +35,7 @@ export const GROUPS: Array<{
 
 /**
  * Inspector selection is URL-owned. Review, history, and export use project
- * paths; Copilot, jobs, usage, and stats use the authoring route query.
+ * paths; Copilot, jobs, usage, stats, and lore use the authoring route query.
  */
 export type InspectorTab =
   | "copilot"
@@ -45,6 +45,7 @@ export type InspectorTab =
   | "jobs"
   | "usage"
   | "stats"
+  | "lore"
   | "settings";
 
 export const INSPECTOR_TABS: Exclude<InspectorTab, "settings">[] = [
@@ -55,6 +56,7 @@ export const INSPECTOR_TABS: Exclude<InspectorTab, "settings">[] = [
   "jobs",
   "usage",
   "stats",
+  "lore",
 ];
 
 /**

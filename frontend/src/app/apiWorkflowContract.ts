@@ -6,6 +6,7 @@ import {
   nullableStringField,
   numberField,
   objectValue,
+  parseLoreCandidates,
   recordField,
   stringField,
   stringValue,
@@ -31,8 +32,8 @@ import type {
 } from "@/app/types/studio";
 
 const exportFormats = ["markdown", "docx", "epub"] as const;
-const jobKinds = ["proposal", "review", "export"] as const;
-const jobOperations = ["continue", "rewrite", "generate", "review", "export"] as const;
+const jobKinds = ["proposal", "review", "export", "lore-extract"] as const;
+const jobOperations = ["continue", "rewrite", "generate", "review", "export", "extract"] as const;
 const jobStatuses = ["pending", "running", "completed", "failed", "interrupted"] as const;
 const jobSummaryKinds = [...jobKinds, "import"] as const;
 const jobSummaryOperations = [...jobOperations, "import"] as const;
@@ -185,6 +186,7 @@ export function parseJob(value: unknown, label = "job"): StudioJob {
           : nullableString(result.accepted_revision_id, `${label}.result.accepted_revision_id`),
       export_id: optionalString(result, "export_id", `${label}.result.export_id`),
       review_id: optionalString(result, "review_id", `${label}.result.review_id`),
+      candidates: parseLoreCandidates(result, `${label}.result`),
     },
     error: nullableStringField(item, "error", label),
     retry_of_job_id: nullableStringField(item, "retry_of_job_id", label),

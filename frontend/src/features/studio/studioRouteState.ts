@@ -2,7 +2,7 @@ import type { InspectorTab } from "./studioConstants";
 
 const AUTHORING_SECTIONS = ["manuscript", "outline", "characters", "world"] as const;
 const ROUTE_INSPECTORS = ["review", "history", "export", "settings"] as const;
-const LOCAL_INSPECTORS = ["copilot", "jobs", "usage", "stats"] as const;
+const LOCAL_INSPECTORS = ["copilot", "jobs", "usage", "stats", "lore"] as const;
 
 type StudioSection = (typeof AUTHORING_SECTIONS)[number] | (typeof ROUTE_INSPECTORS)[number];
 

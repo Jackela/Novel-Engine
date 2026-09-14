@@ -138,6 +138,11 @@ interface InspectorNarrowCommands {
 /** Per-tab inputs the page model already owns (#412). */
 interface StudioInspectorModelInputs {
   readonly projectId: string;
+  /** #614: the lorebook wizard tab's session inputs. */
+  readonly lore: {
+    readonly provider: string;
+    readonly documents: DocumentSummary[];
+  };
   readonly copilot: ReturnType<typeof useStudioGeneration>["copilot"];
   readonly jobs: {
     readonly jobs: StudioJobSummary[];
@@ -195,6 +200,7 @@ const IDLE_BEAT_LIFECYCLE: BeatLifecycleState = {
  */
 export function buildStudioInspectorModel({
   projectId,
+  lore,
   copilot,
   jobs,
   export: exportPanel,
@@ -259,6 +265,7 @@ export function buildStudioInspectorModel({
     },
     usage: { projectId },
     stats: { projectId },
+    lore: { projectId, provider: lore.provider, documents: lore.documents },
     settings: {
       settingsForm: settings.settingsForm,
       providers: settings.providers,

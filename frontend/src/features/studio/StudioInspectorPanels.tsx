@@ -3,6 +3,7 @@ import { StudioCopilotPanel } from "./components/StudioCopilotPanel";
 import { StudioExportPanel } from "./components/StudioExportPanel";
 import { StudioHistoryPanel } from "./components/StudioHistoryPanel";
 import { StudioJobsPanel } from "./components/StudioJobsPanel";
+import { StudioLorebookWizardPanel } from "./components/StudioLorebookWizardPanel";
 import { StudioLoreStatusPanel } from "./components/StudioLoreStatusPanel";
 import { StudioReviewPanel } from "./components/StudioReviewPanel";
 import { StudioSettingsPanel } from "./components/StudioSettingsPanel";
@@ -195,6 +196,18 @@ export function StudioInspectorPanels({
         role="tabpanel"
       >
         <StudioWritingStatsPanel active={inspector === "stats"} projectId={model.stats.projectId} />
+      </div>
+      <div
+        aria-labelledby={tabId("lore")}
+        hidden={inspector !== "lore"}
+        id={panelId("lore")}
+        role="tabpanel"
+      >
+        <StudioLorebookWizardPanel
+          documents={model.lore.documents}
+          projectId={model.lore.projectId}
+          provider={model.lore.provider}
+        />
       </div>
     </>
   );
