@@ -8111,6 +8111,262 @@
         }
       }
     },
+    "/api/projects/{projectId}/stats": {
+      "get": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "chapters": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "started": {
+                          "minimum": 0,
+                          "type": "integer"
+                        },
+                        "total": {
+                          "minimum": 0,
+                          "type": "integer"
+                        }
+                      },
+                      "required": [
+                        "total",
+                        "started"
+                      ],
+                      "type": "object"
+                    },
+                    "daily": {
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "date": {
+                            "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
+                            "type": "string"
+                          },
+                          "words": {
+                            "additionalProperties": false,
+                            "properties": {
+                              "ai_accepted": {
+                                "type": "integer"
+                              },
+                              "author": {
+                                "type": "integer"
+                              },
+                              "restore": {
+                                "type": "integer"
+                              }
+                            },
+                            "required": [
+                              "author",
+                              "ai_accepted",
+                              "restore"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "date",
+                          "words"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "project_id": {
+                      "type": "string"
+                    },
+                    "streak_days": {
+                      "minimum": 0,
+                      "type": "integer"
+                    },
+                    "usage": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "completion_tokens": {
+                          "minimum": 0,
+                          "type": "integer"
+                        },
+                        "daily": {
+                          "description": "The last 30 UTC days (today included), zero-filled: one bucket per day, oldest first (#384).",
+                          "items": {
+                            "additionalProperties": false,
+                            "properties": {
+                              "completion_tokens": {
+                                "minimum": 0,
+                                "type": "integer"
+                              },
+                              "date": {
+                                "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
+                                "type": "string"
+                              },
+                              "prompt_tokens": {
+                                "minimum": 0,
+                                "type": "integer"
+                              },
+                              "request_count": {
+                                "minimum": 0,
+                                "type": "integer"
+                              }
+                            },
+                            "required": [
+                              "date",
+                              "request_count",
+                              "prompt_tokens",
+                              "completion_tokens"
+                            ],
+                            "type": "object"
+                          },
+                          "type": "array"
+                        },
+                        "per_model": {
+                          "items": {
+                            "additionalProperties": false,
+                            "properties": {
+                              "completion_tokens": {
+                                "minimum": 0,
+                                "type": "integer"
+                              },
+                              "model": {
+                                "type": "string"
+                              },
+                              "prompt_tokens": {
+                                "minimum": 0,
+                                "type": "integer"
+                              },
+                              "requests": {
+                                "minimum": 0,
+                                "type": "integer"
+                              }
+                            },
+                            "required": [
+                              "model",
+                              "requests",
+                              "prompt_tokens",
+                              "completion_tokens"
+                            ],
+                            "type": "object"
+                          },
+                          "type": "array"
+                        },
+                        "project_id": {
+                          "type": "string"
+                        },
+                        "prompt_tokens": {
+                          "minimum": 0,
+                          "type": "integer"
+                        },
+                        "request_count": {
+                          "minimum": 0,
+                          "type": "integer"
+                        }
+                      },
+                      "required": [
+                        "project_id",
+                        "request_count",
+                        "prompt_tokens",
+                        "completion_tokens",
+                        "per_model"
+                      ],
+                      "type": "object"
+                    },
+                    "weekly": {
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "start_date": {
+                            "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
+                            "type": "string"
+                          },
+                          "words": {
+                            "additionalProperties": false,
+                            "properties": {
+                              "ai_accepted": {
+                                "type": "integer"
+                              },
+                              "author": {
+                                "type": "integer"
+                              },
+                              "restore": {
+                                "type": "integer"
+                              }
+                            },
+                            "required": [
+                              "author",
+                              "ai_accepted",
+                              "restore"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "start_date",
+                          "words"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    }
+                  },
+                  "required": [
+                    "project_id",
+                    "daily",
+                    "weekly",
+                    "streak_days",
+                    "chapters",
+                    "usage"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          }
+        }
+      }
+    },
     "/api/projects/{projectId}/usage": {
       "get": {
         "parameters": [

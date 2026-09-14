@@ -26,6 +26,7 @@ export const enErrors = {
   "errors.missingReviewHistory": "Review history is unavailable for this project.",
   "errors.missingReviewFindings": "Review findings are unavailable for this review.",
   "errors.loadUsage": "Unable to load usage.",
+  "errors.loadStats": "Unable to load writing stats.",
   "errors.loadReviewHistory": "Unable to load review history.",
   "errors.loadOlderReviews": "Unable to load older reviews.",
   "errors.loadReviewFindings": "Unable to load review findings.",

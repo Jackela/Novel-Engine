@@ -1,6 +1,6 @@
 /**
  * Studio workspace messages: inspector tabs and every panel (`copilot`,
- * `audit`, `review`, `history`, `export`, `jobs`, `usage`), the editor
+ * `audit`, `review`, `history`, `export`, `jobs`, `usage`, `stats`), the editor
  * chrome (`editor`, `statusbar`), the navigator (`navigator.*`), the
  * whole-book control, and the side forms (`beat`, `lore`, `inspector`).
  * EN values double as the e2e locators — templates use `{param}`
@@ -16,6 +16,7 @@ export const enStudio = {
   "inspector.tab.export": "Export",
   "inspector.tab.jobs": "Jobs",
   "inspector.tab.usage": "Usage",
+  "inspector.tab.stats": "Stats",
 
   "copilot.heading": "AI proposal",
   "copilot.hint.guard": "Copilot never changes the manuscript until you accept a proposal.",
@@ -116,6 +117,29 @@ export const enStudio = {
   "usage.daily.heading": "Last 30 days",
   "usage.daily.region": "Daily usage, last 30 days",
   "usage.daily.rowLabel": "{date}: {count} tokens",
+
+  "stats.heading": "Writing stats",
+  "stats.hint": "Words per UTC day, attributed by source.",
+  "stats.action.refresh": "Refresh stats",
+  "stats.action.refreshing": "Refreshing stats",
+  "stats.status.loading": "Loading writing stats…",
+  "stats.empty": "No writing recorded yet.",
+  "stats.cardLabel": "{label}: {value}",
+  "stats.summary.streak": "Day streak",
+  "stats.summary.chaptersStarted": "Chapters started",
+  "stats.summary.chaptersShare": "{started} of {total} chapters started",
+  "stats.summary.today": "Words today",
+  "stats.usage.heading": "AI usage",
+  "stats.daily.heading": "Words per day",
+  "stats.daily.region": "Daily words by source, last 30 days",
+  "stats.weekly.heading": "Weekly rollups",
+  "stats.weekly.region": "Weekly words by source",
+  "stats.table.day": "Day",
+  "stats.table.week": "Week",
+  "stats.words.author": "Author",
+  "stats.words.accepted": "Accepted",
+  "stats.words.restored": "Restored",
+  "stats.words.total": "Total",
 
   "editor.field.title": "Document title",
   "editor.saveState.saved": "Saved",

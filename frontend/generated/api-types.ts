@@ -3790,6 +3790,112 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/projects/{projectId}/stats": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    projectId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            chapters: {
+                                started: number;
+                                total: number;
+                            };
+                            daily: {
+                                date: string;
+                                words: {
+                                    ai_accepted: number;
+                                    author: number;
+                                    restore: number;
+                                };
+                            }[];
+                            project_id: string;
+                            streak_days: number;
+                            usage: {
+                                completion_tokens: number;
+                                /** @description The last 30 UTC days (today included), zero-filled: one bucket per day, oldest first (#384). */
+                                daily?: {
+                                    completion_tokens: number;
+                                    date: string;
+                                    prompt_tokens: number;
+                                    request_count: number;
+                                }[];
+                                per_model: {
+                                    completion_tokens: number;
+                                    model: string;
+                                    prompt_tokens: number;
+                                    requests: number;
+                                }[];
+                                project_id: string;
+                                prompt_tokens: number;
+                                request_count: number;
+                            };
+                            weekly: {
+                                start_date: string;
+                                words: {
+                                    ai_accepted: number;
+                                    author: number;
+                                    restore: number;
+                                };
+                            }[];
+                        };
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/projects/{projectId}/usage": {
         parameters: {
             query?: never;

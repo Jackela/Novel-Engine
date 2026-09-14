@@ -258,6 +258,7 @@ export function buildStudioInspectorModel({
       onRetryJob: jobs.onRetryJob,
     },
     usage: { projectId },
+    stats: { projectId },
     settings: {
       settingsForm: settings.settingsForm,
       providers: settings.providers,

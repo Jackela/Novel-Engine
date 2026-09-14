@@ -77,6 +77,7 @@ describe("dictionaries", () => {
       "inspector.tab.history": "History",
       "inspector.tab.jobs": "Jobs",
       "inspector.tab.review": "Review",
+      "inspector.tab.stats": "Stats",
       "inspector.tab.usage": "Usage",
       "inspector.tablist": "Inspector panels",
       "navigator.group.add": "Add {group}",

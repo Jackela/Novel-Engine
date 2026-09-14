@@ -1,0 +1,61 @@
+/* BEM-ish only: feature-prefixed blocks with block__element--modifier; no legacy flat classes (#442). */
+/* Reuses the base.css token set (lines, muted ink, glass surfaces) — no new colors (#653). */
+.stats__totals {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 7px;
+  margin-top: 14px;
+}
+.stats__total-card {
+  display: grid;
+  gap: 2px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  background: var(--surface-glass-strong);
+  text-align: center;
+}
+.stats__total-card strong {
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+.stats__total-card span {
+  color: var(--muted);
+  font-size: 10px;
+}
+.stats__chapters-share {
+  margin: 7px 0 0;
+  color: var(--muted);
+  font-size: 10px;
+  text-align: center;
+}
+.stats__section {
+  margin-top: 14px;
+}
+.stats__section h3 {
+  margin: 0 0 4px;
+  color: var(--muted);
+  font-size: 10px;
+  text-transform: uppercase;
+}
+.stats__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+}
+.stats__table th,
+.stats__table td {
+  padding: 6px 7px;
+  border-bottom: 1px solid var(--line);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.stats__table th:first-child,
+.stats__table td:first-child {
+  text-align: left;
+}
+.stats__table thead th {
+  color: var(--muted);
+  font-size: 10px;
+  text-transform: uppercase;
+}

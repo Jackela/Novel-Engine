@@ -20,6 +20,7 @@ export const zhErrors = {
   "errors.missingReviewHistory": "这个项目没有可用的评审历史。",
   "errors.missingReviewFindings": "这次评审没有可用的评审发现。",
   "errors.loadUsage": "无法加载用量。",
+  "errors.loadStats": "无法加载写作统计。",
   "errors.loadReviewHistory": "无法加载评审历史。",
   "errors.loadOlderReviews": "无法加载更早的评审。",
   "errors.loadReviewFindings": "无法加载评审发现。",

@@ -34,6 +34,7 @@ import { type ProjectsRequestOptions, projectCatalogRequest } from "@/app/projec
 import { clearRetryAttemptSession, parseAndRecordRetrySession } from "@/app/retryAttemptRegistry";
 import { type ReviewListOptions, reviewDetailPath, reviewsRequest } from "@/app/reviewApiRequest";
 import { documentRevisionsRequest, type RevisionRequestOptions } from "@/app/revisionApiRequest";
+import { parseWritingStats } from "@/app/statsContract";
 import type { DocumentKind, ExportFormat, LoreStatus, ProjectUpdateBody } from "@/app/types/studio";
 
 export { apiUrl, getCsrfToken, HttpError } from "@/app/httpClient";
@@ -175,6 +176,8 @@ export const api = {
   },
   usage: (projectId: string, init?: RequestInit) =>
     request(`/api/projects/${projectId}/usage`, init, parseUsage),
+  writingStats: (projectId: string, init?: RequestInit) =>
+    request(`/api/projects/${projectId}/stats`, init, parseWritingStats),
   diagnostics: (projectId: string, init?: RequestInit) =>
     request(`/api/projects/${projectId}/diagnostics`, init, parseDiagnostics),
   retryJob: (projectId: string, jobId: string, idempotencyKey: string) => {

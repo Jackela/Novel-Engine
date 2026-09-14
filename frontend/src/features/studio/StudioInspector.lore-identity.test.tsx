@@ -49,6 +49,7 @@ function inspectorModel(loreStatus: InspectorLoreStatusModel): StudioInspectorMo
       onRetryJob: vi.fn(),
     },
     usage: { projectId: "project-1" },
+    stats: { projectId: "project-1" },
     settings: {
       settingsForm: { title: "Novel", description: "", provider: "mock" },
       error: null,

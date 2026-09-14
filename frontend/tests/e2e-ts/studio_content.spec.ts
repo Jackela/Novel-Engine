@@ -90,7 +90,7 @@ test.describe
       const tabs = tablist.getByRole("tab");
 
       await expect(summary).toBeVisible();
-      await expect(tabs).toHaveCount(6);
+      await expect(tabs).toHaveCount(7);
       const tablistBox = await tablist.boundingBox();
       const tabBoxes = await tabs.evaluateAll((elements) =>
         elements.map((element) => {
@@ -105,7 +105,8 @@ test.describe
         expect(box.y).toBeGreaterThanOrEqual(tablistBox.y - 0.5);
         expect(box.bottom).toBeLessThanOrEqual(tablistBox.y + tablistBox.height + 0.5);
       }
-      expect(new Set(tabBoxes.map((box) => Math.round(box.y))).size).toBe(2);
+      // Seven tabs fill the fixed three-column grid as three rows (#653).
+      expect(new Set(tabBoxes.map((box) => Math.round(box.y))).size).toBe(3);
 
       const reviewTab = tablist.getByRole("tab", { name: "Review" });
       const historyTab = tablist.getByRole("tab", { name: "History" });

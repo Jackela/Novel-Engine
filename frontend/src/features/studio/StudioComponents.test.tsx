@@ -47,6 +47,7 @@ function buildInspectorModel(): StudioInspectorModel {
       onRetryJob: vi.fn(),
     },
     usage: { projectId: "project-1" },
+    stats: { projectId: "project-1" },
     settings: {
       settingsForm: { title: "", description: "", provider: "" },
       error: null,
@@ -125,16 +126,16 @@ describe("Studio split components", () => {
     expect(disclosure).not.toBeNull();
     expect(disclosure?.querySelector("summary")?.textContent).toContain("Inspector");
     expect(disclosure?.hasAttribute("open")).toBe(true);
-    expect(tabs).toHaveLength(6);
-    expect(panels).toHaveLength(6);
+    expect(tabs).toHaveLength(7);
+    expect(panels).toHaveLength(7);
     expect(activeTab?.textContent).toContain("Copilot");
-    expect(tabs.filter((tab) => tab.getAttribute("aria-selected") === "false")).toHaveLength(5);
+    expect(tabs.filter((tab) => tab.getAttribute("aria-selected") === "false")).toHaveLength(6);
     expect(activeTab?.getAttribute("aria-controls")).toBe(activePanel?.id);
     expect(activePanel?.getAttribute("aria-labelledby")).toBe(activeTab?.id);
     expect(
       tabs.every((tab) => panels.some((panel) => panel.id === tab.getAttribute("aria-controls"))),
     ).toBe(true);
-    expect(panels.filter((panel) => panel.hasAttribute("hidden"))).toHaveLength(5);
+    expect(panels.filter((panel) => panel.hasAttribute("hidden"))).toHaveLength(6);
     expect(container.querySelector('form[aria-label="Lore status"]')).toBeNull();
 
     click(tabs.find((tab) => tab.textContent?.includes("Review")) ?? null);
@@ -165,8 +166,8 @@ describe("Studio split components", () => {
     act(() => {
       tabs[0].dispatchEvent(new KeyboardEvent("keydown", { key: "End", bubbles: true }));
     });
-    expect(setInspector).toHaveBeenCalledWith("usage");
-    expect(document.activeElement).toBe(tabs[5]);
+    expect(setInspector).toHaveBeenCalledWith("stats");
+    expect(document.activeElement).toBe(tabs[6]);
 
     act(() => {
       tabs[2].dispatchEvent(new KeyboardEvent("keydown", { key: "Home", bubbles: true }));
