@@ -3,7 +3,9 @@ import type {
   AddUsageEventInput,
   ClaimJobRetryInput,
   CompleteJobWithUsageInput,
+  FailedJobErrorRecord,
   JobPageInput,
+  JobPageLimit,
   JobRecord,
   JobRetryClaim,
   JobSummaryPage,
@@ -51,6 +53,17 @@ export interface StudioJobLedgerStore {
     projectId: string,
     input: JobPageInput,
   ): JobSummaryPage;
+  /**
+   * The diagnostics export's failure scan (#654): this project's most
+   * recent failed Jobs (`updated_at DESC`, id tiebreak) with their
+   * persisted error messages — a bounded parameterized query, not a
+   * paging-window approximation, so "no failures" always means none.
+   */
+  collectRecentFailedJobErrors(
+    scope: ProjectScope,
+    projectId: string,
+    limit: JobPageLimit,
+  ): FailedJobErrorRecord[];
   /** Transition a persisted job and append its matching event atomically. */
   markJobOutcome(
     scope: ProjectScope,

@@ -55,6 +55,9 @@ export function StudioInspectorPanels({
         providers={model.settings.providers}
         isSaving={pending.settings}
         error={model.settings.error}
+        onExportDiagnostics={model.settings.diagnostics.onExport}
+        isExportingDiagnostics={model.settings.diagnostics.isExporting}
+        diagnosticsError={model.settings.diagnostics.error}
       />
     );
   }

@@ -13,5 +13,11 @@ export const zhSettings = {
   "settings.action.saving": "正在保存…",
   "settings.status.saving": "正在保存项目设置。",
 
+  "settings.diagnostics.privacy":
+    "诊断信息包含版本、运行环境、配置状态、近期错误摘要与数据库健康状态——不含你写的任何内容，也不含 API key。它只会以文件形式保存在你的电脑上；Novel Engine 绝不会将它发送到任何地方。是否分享由你自行决定。",
+  "settings.diagnostics.action.export": "导出诊断信息",
+  "settings.diagnostics.action.exporting": "正在导出…",
+  "settings.diagnostics.status.exporting": "正在导出诊断信息。",
+
   "shell.action.backToProjects": "返回项目列表",
 } satisfies Record<keyof typeof enSettings, string>;

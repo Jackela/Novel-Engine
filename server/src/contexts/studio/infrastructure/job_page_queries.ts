@@ -1,4 +1,4 @@
-import { and, desc, eq, sql } from "drizzle-orm";
+import { and, desc, eq, isNotNull, sql } from "drizzle-orm";
 import type { JobPageInput } from "../application/ports/job_records.js";
 import { jobs } from "./db/schema.js";
 import type { Tx } from "./db/studio_query_helpers.js";
@@ -28,4 +28,17 @@ export function buildProjectJobSummariesQuery(tx: Tx, projectId: string, input: 
     .where(and(eq(jobs.project_id, projectId), cursorRange))
     .orderBy(desc(jobs.created_at), desc(jobs.id))
     .limit(input.limit + 1);
+}
+
+/**
+ * The diagnostics export's failure scan (#654): failed Jobs only, newest
+ * terminal transition first, parameterized and bounded.
+ */
+export function buildRecentFailedJobErrorsQuery(tx: Tx, projectId: string, limit: number) {
+  return tx
+    .select({ error: jobs.error, updatedAt: jobs.updated_at })
+    .from(jobs)
+    .where(and(eq(jobs.project_id, projectId), eq(jobs.status, "failed"), isNotNull(jobs.error)))
+    .orderBy(desc(jobs.updated_at), desc(jobs.id))
+    .limit(limit);
 }

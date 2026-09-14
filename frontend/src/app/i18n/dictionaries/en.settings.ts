@@ -11,5 +11,11 @@ export const enSettings = {
   "settings.action.saving": "Saving…",
   "settings.status.saving": "Saving project settings.",
 
+  "settings.diagnostics.privacy":
+    "Diagnostics contains version, environment, configuration status, recent error summaries, and database health — nothing you wrote, no API keys. It is saved as a file on your computer; Novel Engine never sends it anywhere. Share it only if you choose to.",
+  "settings.diagnostics.action.export": "Export diagnostics",
+  "settings.diagnostics.action.exporting": "Exporting…",
+  "settings.diagnostics.status.exporting": "Exporting diagnostics.",
+
   "shell.action.backToProjects": "Back to projects",
 } as const;

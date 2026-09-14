@@ -1,5 +1,6 @@
 import type { TextGenerationProviderFactory } from "../../../contexts/ai/application/ports/text_generation.js";
 import { BeatAssociationService } from "./beat_association_service.js";
+import { type DiagnosticsFacts, DiagnosticsService } from "./diagnostics_service.js";
 import { DocumentService } from "./document_service.js";
 import { SnapshotArtifactService } from "./export_artifact_service.js";
 import { ImportService } from "./import_service.js";
@@ -7,6 +8,7 @@ import { JobHistoryService } from "./job_history_service.js";
 import { LoreAliasService } from "./lore_alias_service.js";
 import { InFlightOperationGuard, type OperationCapacityPolicy } from "./operation_in_flight.js";
 import type { ExportArtifactGateway } from "./ports/artifact_gateway.js";
+import type { DiagnosticsHealthProbe } from "./ports/diagnostics_health.js";
 import type { DocumentStore } from "./ports/document_store.js";
 import type { ExportOutcomeStore } from "./ports/export_store.js";
 import type { StudioJobLedgerStore } from "./ports/job_ledger_store.js";
@@ -40,6 +42,12 @@ export interface StudioServices {
   imports: ImportService;
   jobHistory: JobHistoryService;
   writingStats: WritingStatsService;
+  /**
+   * The opt-in diagnostics export (#654): present exactly when the
+   * composition root supplied its facts and health probe; the API always
+   * does, the CLI's service graph (which never serves HTTP) does not.
+   */
+  diagnostics?: DiagnosticsService | undefined;
 }
 
 /**
@@ -77,6 +85,18 @@ interface CreateStudioServicesOptions {
   loreBudgetCharacters?: number | undefined;
   /** App-local admission limits for expensive Studio workflows. */
   operationCapacity?: OperationCapacityPolicy | undefined;
+  /**
+   * Diagnostics export inputs (#654): plain-value identity/runtime/
+   * configuration facts plus the health probe over the app's own database
+   * handle. Absent leaves the diagnostics service out of the graph (503 at
+   * the route) — only the HTTP composition root wires it.
+   */
+  diagnostics?:
+    | {
+        readonly facts: DiagnosticsFacts;
+        readonly health: DiagnosticsHealthProbe;
+      }
+    | undefined;
 }
 
 export function createStudioServices(
@@ -133,5 +153,15 @@ export function createStudioServices(
     ),
     imports: new ImportService(persistence.projects, options.legacyWorkspaceReader, now),
     writingStats: new WritingStatsService(persistence.documents, persistence.jobs, { now }),
+    ...(options.diagnostics === undefined
+      ? {}
+      : {
+          diagnostics: new DiagnosticsService(
+            persistence.jobs,
+            options.diagnostics.health,
+            options.diagnostics.facts,
+            { now },
+          ),
+        }),
   };
 }

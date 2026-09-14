@@ -19,6 +19,7 @@ export const enErrors = {
   "errors.restoreRevision": "Unable to restore revision.",
   "errors.loadRevisions": "Unable to load revisions.",
   "errors.exportProject": "Unable to export project.",
+  "errors.exportDiagnostics": "Unable to export diagnostics.",
   "errors.loadExportHistory": "Unable to load export history.",
   "errors.loadOlderExports": "Unable to load older exports.",
   "errors.missingExportHistory": "Export history is unavailable for this project.",

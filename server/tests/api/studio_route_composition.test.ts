@@ -8,6 +8,7 @@ const existingStudioRoutes = [
   { method: "GET", url: "/api/projects/project-1/documents/document-1/revisions" },
   { method: "POST", url: "/api/projects/project-1/ai-proposals/job-1/accept" },
   { method: "GET", url: "/api/projects/project-1/reviews" },
+  { method: "GET", url: "/api/projects/project-1/diagnostics" },
 ] as const;
 
 describe("Studio route composition", () => {

@@ -26,6 +26,7 @@ import {
   parseReviews,
   parseUsage,
 } from "@/app/apiWorkflowContract";
+import { parseDiagnostics } from "@/app/diagnosticsContract";
 import { type ExportsRequestOptions, projectExportsRequest } from "@/app/exportApiRequest";
 import { downloadBlob, json, patchJson, postJson, putJson, request } from "@/app/httpClient";
 import { type JobsRequestOptions, projectJobsRequest, retryJobRequest } from "@/app/jobApiRequest";
@@ -174,6 +175,8 @@ export const api = {
   },
   usage: (projectId: string, init?: RequestInit) =>
     request(`/api/projects/${projectId}/usage`, init, parseUsage),
+  diagnostics: (projectId: string, init?: RequestInit) =>
+    request(`/api/projects/${projectId}/diagnostics`, init, parseDiagnostics),
   retryJob: (projectId: string, jobId: string, idempotencyKey: string) => {
     const [path, init] = retryJobRequest(projectId, jobId, idempotencyKey);
     return request(path, init, parseJob);

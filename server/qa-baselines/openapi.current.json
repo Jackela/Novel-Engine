@@ -1546,6 +1546,201 @@
         }
       }
     },
+    "/api/projects/{projectId}/diagnostics": {
+      "get": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "configuration": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "keys": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "dashscope_api_key": {
+                              "type": "boolean"
+                            },
+                            "openai_compatible_api_key": {
+                              "type": "boolean"
+                            },
+                            "session_secret": {
+                              "type": "boolean"
+                            }
+                          },
+                          "required": [
+                            "session_secret",
+                            "dashscope_api_key",
+                            "openai_compatible_api_key"
+                          ],
+                          "type": "object"
+                        },
+                        "provider": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "configured": {
+                              "type": "boolean"
+                            },
+                            "id": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "configured"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "provider",
+                        "keys"
+                      ],
+                      "type": "object"
+                    },
+                    "database": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "foreign_keys": {
+                          "type": "boolean"
+                        },
+                        "journal_mode": {
+                          "type": "string"
+                        },
+                        "owner_configured": {
+                          "type": "boolean"
+                        },
+                        "quick_check": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "quick_check",
+                        "journal_mode",
+                        "foreign_keys",
+                        "owner_configured"
+                      ],
+                      "type": "object"
+                    },
+                    "generated_at": {
+                      "type": "string"
+                    },
+                    "product": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "name": {
+                          "type": "string"
+                        },
+                        "version": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "name",
+                        "version"
+                      ],
+                      "type": "object"
+                    },
+                    "recent_errors": {
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "message": {
+                            "type": "string"
+                          },
+                          "occurred_at": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "message",
+                          "occurred_at"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "runtime": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "architecture": {
+                          "type": "string"
+                        },
+                        "node_version": {
+                          "type": "string"
+                        },
+                        "platform": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "platform",
+                        "architecture",
+                        "node_version"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "generated_at",
+                    "product",
+                    "runtime",
+                    "configuration",
+                    "database",
+                    "recent_errors"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          }
+        }
+      }
+    },
     "/api/projects/{projectId}/documents": {
       "post": {
         "parameters": [

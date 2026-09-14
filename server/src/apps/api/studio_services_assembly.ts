@@ -1,3 +1,5 @@
+import { arch, platform } from "node:os";
+
 import type { OperationCapacityPolicy } from "../../contexts/studio/application/operation_in_flight.js";
 import type { ExportArtifactGateway } from "../../contexts/studio/application/ports/artifact_gateway.js";
 import type { ExportOutcomeStore } from "../../contexts/studio/application/ports/export_store.js";
@@ -11,8 +13,10 @@ import { DatabaseExportPublicationCleanupJournal } from "../../contexts/studio/i
 import { ExportStorePart } from "../../contexts/studio/infrastructure/export_store_part.js";
 import { FsLegacyWorkspaceReader } from "../../contexts/studio/infrastructure/fs_legacy_workspace_reader.js";
 import { FilesystemProjectArtifactCleaner } from "../../contexts/studio/infrastructure/project_artifact_files.js";
+import { sqliteDiagnosticsHealth } from "../../contexts/studio/infrastructure/sqlite_diagnostics_health.js";
 import type { ServerConfig } from "../../shared/infrastructure/config/server_config.js";
 import type { StudioSqliteDatabase } from "../../shared/infrastructure/db/connection.js";
+import type { ProductIdentity } from "../../shared/infrastructure/workspace_manifest.js";
 import { createStudioPersistence } from "../studio_persistence.js";
 import type { PersistenceHandles } from "./persistence.js";
 import type { ProviderRuntime } from "./provider_runtime.js";
@@ -40,6 +44,31 @@ interface StudioServicesAssemblyInputs {
   operationCapacity?: OperationCapacityPolicy | undefined;
   /** Test seams and budget overrides (the same shape AppOptions re-exports). */
   options: StudioServicesAssemblyOptions;
+  /** Release identity from the manifest SSOT; feeds the diagnostics export. */
+  productIdentity: ProductIdentity;
+  /** Whether an explicit session secret is resolved (per-app rotation otherwise). */
+  sessionSecretConfigured: boolean;
+}
+
+/** Credential presence as a boolean; never the value (#654 redaction rule). */
+function keyConfigured(value: string | undefined): boolean {
+  return value !== undefined && value.trim() !== "";
+}
+
+/**
+ * The resolved provider's credential state for the diagnostics export
+ * (#654), computed here in the composition root so the application service
+ * holds no second copy of the rule: the deterministic mock is always
+ * configured; an HTTP provider exactly when its key is set.
+ */
+function providerConfigured(
+  id: string,
+  keys: { dashscope?: string | undefined; openaiCompatible?: string | undefined },
+): boolean {
+  if (id === "mock") return true;
+  if (id === "dashscope") return keyConfigured(keys.dashscope);
+  if (id === "openai_compatible") return keyConfigured(keys.openaiCompatible);
+  return false;
 }
 
 /**
@@ -51,10 +80,30 @@ export function assembleStudioServices(
   persistence: PersistenceHandles,
   inputs: StudioServicesAssemblyInputs,
 ): StudioServices {
-  const { config, provider, operationCapacity, options } = inputs;
+  const { config, provider, operationCapacity, options, productIdentity } = inputs;
   const loreBudgetCharacters =
     options.lorebookBudgetCharacters ?? config?.llm.lorebookBudgetCharacters;
   return createStudioServices(createStudioPersistence(persistence.db.db), {
+    diagnostics: {
+      facts: {
+        product: { name: productIdentity.name, version: productIdentity.version },
+        runtime: {
+          platform: platform(),
+          architecture: arch(),
+          nodeVersion: process.versions.node,
+        },
+        provider: {
+          id: provider.defaultProvider,
+          configured: providerConfigured(provider.defaultProvider, provider.providerApiKeys),
+        },
+        keys: {
+          sessionSecret: inputs.sessionSecretConfigured,
+          dashscopeApiKey: keyConfigured(provider.providerApiKeys.dashscope),
+          openaiCompatibleApiKey: keyConfigured(provider.providerApiKeys.openaiCompatible),
+        },
+      },
+      health: sqliteDiagnosticsHealth(persistence.db.raw, persistence.db.db),
+    },
     now: options.clock,
     providerFactory: provider.providerFactory,
     legacyWorkspaceReader: new FsLegacyWorkspaceReader(),

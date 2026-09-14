@@ -36,6 +36,28 @@ function fail(label: string): never {
   throw new ApiContractError(label);
 }
 
+const isoUtcTimestamp = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.\d+)?Z$/;
+
+/** A string field that must be an exact UTC ISO timestamp. */
+export function isoUtcStringField(source: JsonRecord, key: string, parent: string): string {
+  const value = stringField(source, key, parent);
+  const match = isoUtcTimestamp.exec(value);
+  const parsed = new Date(value);
+  if (
+    match === null ||
+    Number.isNaN(parsed.getTime()) ||
+    parsed.getUTCFullYear() !== Number(match[1]) ||
+    parsed.getUTCMonth() + 1 !== Number(match[2]) ||
+    parsed.getUTCDate() !== Number(match[3]) ||
+    parsed.getUTCHours() !== Number(match[4]) ||
+    parsed.getUTCMinutes() !== Number(match[5]) ||
+    parsed.getUTCSeconds() !== Number(match[6])
+  ) {
+    throw new Error(`Invalid ${parent}.${key}`);
+  }
+  return value;
+}
+
 export function exactKeys(source: JsonRecord, keys: readonly string[], label: string): void {
   for (const key of keys) {
     if (!Object.hasOwn(source, key)) fail(`${label}.${key}`);
