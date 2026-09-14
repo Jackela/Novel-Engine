@@ -23,7 +23,10 @@ import { readTextLines, repoRoot, reportFailures } from "./common.mjs";
 
 const PROVIDER_CONFIG = "server/src/shared/infrastructure/config/provider_config.ts";
 const SERVER_CONFIG = "server/src/shared/infrastructure/config/server_config.ts";
-const COMPOSE_FILES = ["compose.yaml"];
+// Both compose files that run the server: the repository root (builds from
+// source) and the deploy copy (runs the published image); #631 keeps their
+// passthrough blocks isomorphic, and each must cover the provider read set.
+const COMPOSE_FILES = ["compose.yaml", "deploy/compose.yaml"];
 
 // Complete current provider read set of provider_config.ts; every entry
 // must surface from the extraction or the gate fails loudly.

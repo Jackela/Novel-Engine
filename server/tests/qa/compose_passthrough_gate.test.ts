@@ -180,18 +180,20 @@ async function writeLoaderFixtures(root: string): Promise<void> {
 }
 
 describe("compose passthrough gate", () => {
-  it("accepts a compose file whose environment covers the provider read set", async () => {
+  it("accepts both compose files whose environment covers the provider read set", async () => {
     const root = await createQaRepository();
 
     try {
       initializeGitRepository(root);
       await writeLoaderFixtures(root);
       await writeCandidate(root, "compose.yaml", COMPOSE_FIXTURE);
+      await writeCandidate(root, "deploy/compose.yaml", COMPOSE_FIXTURE);
 
       const result = runGate(root);
 
       expect(result.status).toBe(0);
       expect(result.stdout).toContain("[compose-passthrough] clean");
+      expect(result.stdout).toContain("compose.yaml and deploy/compose.yaml");
       expect(result.stdout).toContain("all 18 provider variables");
     } finally {
       await rm(root, { recursive: true, force: true });
@@ -204,9 +206,10 @@ describe("compose passthrough gate", () => {
     try {
       initializeGitRepository(root);
       await writeLoaderFixtures(root);
+      await writeCandidate(root, "compose.yaml", COMPOSE_FIXTURE);
       await writeCandidate(
         root,
-        "compose.yaml",
+        "deploy/compose.yaml",
         COMPOSE_FIXTURE.replace(/^ {6}DASHSCOPE_REVIEW_MODEL:.*\n/m, ""),
       );
 
@@ -214,7 +217,7 @@ describe("compose passthrough gate", () => {
 
       expect(result.status).toBe(1);
       expect(result.stderr).toContain(
-        "compose.yaml environment is missing provider variable DASHSCOPE_REVIEW_MODEL",
+        "deploy/compose.yaml environment is missing provider variable DASHSCOPE_REVIEW_MODEL",
       );
     } finally {
       await rm(root, { recursive: true, force: true });
@@ -242,6 +245,7 @@ describe("compose passthrough gate", () => {
         SERVER_LOADER_FIXTURE,
       );
       await writeCandidate(root, "compose.yaml", COMPOSE_FIXTURE);
+      await writeCandidate(root, "deploy/compose.yaml", COMPOSE_FIXTURE);
 
       const result = runGate(root);
 
@@ -259,11 +263,12 @@ describe("compose passthrough gate", () => {
     try {
       initializeGitRepository(root);
       await writeLoaderFixtures(root);
+      await writeCandidate(root, "compose.yaml", COMPOSE_FIXTURE);
 
       const result = runGate(root);
 
       expect(result.status).toBe(1);
-      expect(result.stderr).toContain("required compose file is missing: compose.yaml");
+      expect(result.stderr).toContain("required compose file is missing: deploy/compose.yaml");
     } finally {
       await rm(root, { recursive: true, force: true });
     }
