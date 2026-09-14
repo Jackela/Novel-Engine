@@ -50,6 +50,7 @@ release. No breaking changes.
   resolve the same files from any cwd (#560).
 - The Python-era startup guard is removed: the 0.3.x support window stays
   closed and startup no longer probes retired data layouts (#576).
+- The unused `x-total-count` CORS exposure is dropped (#559).
 
 ### Fixed
 
@@ -69,15 +70,14 @@ release. No breaking changes.
   landing, retry capacity, keyset cursors, and document-seed writes
   deduplicated behind shared protocols (#571, #577, #579, #580, #582,
   #584–#586); usage-aggregation SQL and jobs/usage table ownership moved
-  into the studio context's db helpers (#542, #589); DashScope stream
-  extraction split by transport mode (#585); frontend hooks split into
-  focused domains with a shared type-guard module (#572, #590, #593–#597,
-  #602); dead code, needless exports, and single-use unexports swept
-  (#556, #559, #566, #600, #601, #603); failure-semantics contracts and
+  into the studio context's db helpers (#542, #589); frontend hooks split
+  into focused domains with a shared type-guard module (#572, #590,
+  #593–#597, #602); dead code, needless exports, and single-use unexports
+  swept (#556, #566, #600, #601, #603); failure-semantics contracts and
   knowledge-base docs filled in (#543, #550–#552, #563, #567, #568); test
-  contracts pinned for stream CSRF/malformed-JSON, token-bucket refill,
-  and the CORS header list (#544–#546, #569); naming conventions frozen
-  for new code (#573).
+  contracts pinned for the accept-proposal REVISION_CONFLICT 409 surface,
+  stream CSRF/malformed-JSON, token-bucket refill, and the CORS header
+  list (#544–#546, #569); naming conventions frozen for new code (#573).
 - Continued decomposition after the wave: five remaining route files
   migrate onto the shared response combinators (#619), `dashscope_protocol`
   splits into extractor and transport siblings (#618), one `errorCode`
