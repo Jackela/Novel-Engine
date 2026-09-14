@@ -16,13 +16,17 @@
 #    novel-engine → Package settings → Danger Zone → change visibility to
 #    public.
 # 2. Verify anonymous access from an outside machine, without `docker login`:
-#    `docker pull ghcr.io/jackela/novel-engine:<tag>` followed by
-#    `docker buildx imagetools inspect ghcr.io/jackela/novel-engine:<tag>`
-#    (must list linux/amd64 + linux/arm64).
+#    `docker pull ghcr.io/jackela/novel-engine:0.7.0` followed by
+#    `docker buildx imagetools inspect ghcr.io/jackela/novel-engine:0.7.0`
+#    (must list linux/amd64 + linux/arm64). Published image tags carry no
+#    v prefix: dispatch input `v0.8.0-rc.1` publishes `0.8.0-rc.1`.
 # 3. Before an official v-tag, validate the whole chain via workflow_dispatch
 #    (input `image_tag`, e.g. `v0.8.0-rc.1`); the semver core must already
-#    match server/package.json on the default branch, so the release PR bumps
-#    the version first.
+#    match server/package.json, so the release PR bumps the version first.
+#    Dispatch only from the default branch: the assertion reads
+#    server/package.json from whichever ref the run is dispatched on, so
+#    dispatching from a feature branch could publish unmerged code under a
+#    release tag name.
 
 name: Image release
 
@@ -34,13 +38,14 @@ on:
       image_tag:
         description: >-
           Image tag to publish, e.g. v0.8.0-rc.1 (v prefix optional). Its
-          semver core must match server/package.json version.
+          semver core must match server/package.json version. Dispatch only
+          from the default branch: the version assertion reads
+          server/package.json from the ref the run is dispatched on.
         required: true
         type: string
 
 permissions:
   contents: read
-  packages: write
 
 # A publish must never be cancelled mid-run; a second trigger for the same ref
 # queues behind it instead.
@@ -135,6 +140,9 @@ jobs:
     needs: prepare
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 30
+    permissions:
+      contents: read
+      packages: write
     env:
       GHCR_IMAGE: ${{ needs.prepare.outputs.image_name }}
     strategy:
@@ -174,6 +182,10 @@ jobs:
           context: .
           platforms: ${{ matrix.platform }}
           labels: ${{ steps.meta.outputs.labels }}
+          # v7 injects --attest type=provenance,mode=max by default on public
+          # repos, which would wrap each platform result in an OCI index and
+          # surface unknown/unknown entries in the merged manifest list.
+          provenance: false
           # Per-platform scopes keep the two runners from evicting each
           # other's cache blobs under the shared gha cache namespace.
           cache-from: type=gha,scope=image-${{ env.PLATFORM_PAIR }}
@@ -197,6 +209,9 @@ jobs:
     needs: [prepare, build]
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    permissions:
+      contents: read
+      packages: write
     env:
       GHCR_IMAGE: ${{ needs.prepare.outputs.image_name }}
     steps:
