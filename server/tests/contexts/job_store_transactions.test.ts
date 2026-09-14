@@ -92,7 +92,7 @@ async function openHarness() {
 describe("atomic completed-proposal landing (#392)", () => {
   it("commits the job row and its usage event together", async () => {
     const { scope, clock, store, projectId } = await openHarness();
-    const job = store.jobs.recordCompletedProposalJob(scope, {
+    const job = store.jobs.recordCompletedJobWithUsage(scope, {
       job: completedJobInput(projectId, clock()),
       usage: usageInput(),
     });
@@ -113,7 +113,7 @@ describe("atomic completed-proposal landing (#392)", () => {
     // The same underlying database handle; only the usage write differs.
     const exploding = new ExplodingUsageStore(db);
     expect(() =>
-      exploding.recordCompletedProposalJob(scope, {
+      exploding.recordCompletedJobWithUsage(scope, {
         job: completedJobInput(projectId, clock()),
         usage: usageInput(),
       }),

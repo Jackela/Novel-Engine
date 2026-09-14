@@ -10,7 +10,7 @@ import type {
   JobRetryClaim,
   JobSummaryPage,
   MarkJobOutcomeInput,
-  RecordCompletedProposalJobInput,
+  RecordCompletedJobWithUsageInput,
 } from "./job_records.js";
 import type { ProjectUsageAggregate } from "./project_usage.js";
 import type { ProjectScope } from "./studio_store.js";
@@ -33,10 +33,14 @@ export interface StudioJobLedgerStore {
   /** Reserve a retry and its first event atomically, or replay its terminal Job. */
   claimJobRetry(scope: ProjectScope, input: ClaimJobRetryInput): JobRetryClaim;
   addUsageEvent(scope: ProjectScope, input: AddUsageEventInput): void;
-  /** The atomic completed-proposal landing: job row plus usage event, or nothing. */
-  recordCompletedProposalJob(
+  /**
+   * The atomic completed-job-with-usage landing (#392): job row plus usage
+   * event, or nothing. Shared by every provider-backed kind that records
+   * usage (proposal, lore-extract).
+   */
+  recordCompletedJobWithUsage(
     scope: ProjectScope,
-    input: RecordCompletedProposalJobInput,
+    input: RecordCompletedJobWithUsageInput,
   ): JobRecord;
   /** The atomic retry completion: outcome transition plus usage event, or nothing. */
   markJobOutcomeWithUsage(

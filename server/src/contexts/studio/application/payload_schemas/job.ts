@@ -40,13 +40,20 @@ export const jobPayloadSchema = Type.Object(
   { additionalProperties: false },
 );
 
-export const JOB_SUMMARY_KINDS = ["proposal", "review", "export", "import"] as const;
+export const JOB_SUMMARY_KINDS = [
+  "proposal",
+  "review",
+  "export",
+  "lore-extract",
+  "import",
+] as const;
 export const JOB_SUMMARY_OPERATIONS = [
   "continue",
   "rewrite",
   "generate",
   "review",
   "export",
+  "extract",
   "import",
 ] as const;
 export const JOB_SUMMARY_STATUSES = [

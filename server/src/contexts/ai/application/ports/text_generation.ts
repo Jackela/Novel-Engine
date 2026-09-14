@@ -6,7 +6,12 @@
  */
 
 /** The closed provider-step vocabulary at the port boundary. */
-export const PROVIDER_STEPS = ["chapter_draft", "chapter_revision", "editorial_review"] as const;
+export const PROVIDER_STEPS = [
+  "chapter_draft",
+  "chapter_revision",
+  "editorial_review",
+  "lore_extract",
+] as const;
 
 export type ProviderStep = (typeof PROVIDER_STEPS)[number];
 

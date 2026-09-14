@@ -3286,33 +3286,66 @@
                               "type": "string"
                             },
                             "details": {
-                              "additionalProperties": false,
-                              "properties": {
-                                "limit": {
-                                  "enum": [
-                                    8388608
+                              "oneOf": [
+                                {
+                                  "additionalProperties": false,
+                                  "properties": {
+                                    "limit": {
+                                      "enum": [
+                                        8388608
+                                      ],
+                                      "type": "integer"
+                                    },
+                                    "observed": {
+                                      "enum": [
+                                        8388609
+                                      ],
+                                      "type": "integer"
+                                    },
+                                    "resource": {
+                                      "enum": [
+                                        "prompt_bytes"
+                                      ],
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "resource",
+                                    "limit",
+                                    "observed"
                                   ],
-                                  "type": "integer"
+                                  "type": "object"
                                 },
-                                "observed": {
-                                  "enum": [
-                                    8388609
+                                {
+                                  "additionalProperties": false,
+                                  "properties": {
+                                    "limit": {
+                                      "enum": [
+                                        100000
+                                      ],
+                                      "type": "integer"
+                                    },
+                                    "observed": {
+                                      "enum": [
+                                        100001
+                                      ],
+                                      "type": "integer"
+                                    },
+                                    "resource": {
+                                      "enum": [
+                                        "lore_extract_segment"
+                                      ],
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "resource",
+                                    "limit",
+                                    "observed"
                                   ],
-                                  "type": "integer"
-                                },
-                                "resource": {
-                                  "enum": [
-                                    "prompt_bytes"
-                                  ],
-                                  "type": "string"
+                                  "type": "object"
                                 }
-                              },
-                              "required": [
-                                "resource",
-                                "limit",
-                                "observed"
-                              ],
-                              "type": "object"
+                              ]
                             },
                             "message": {
                               "enum": [
@@ -3728,33 +3761,66 @@
                               "type": "string"
                             },
                             "details": {
-                              "additionalProperties": false,
-                              "properties": {
-                                "limit": {
-                                  "enum": [
-                                    8388608
+                              "oneOf": [
+                                {
+                                  "additionalProperties": false,
+                                  "properties": {
+                                    "limit": {
+                                      "enum": [
+                                        8388608
+                                      ],
+                                      "type": "integer"
+                                    },
+                                    "observed": {
+                                      "enum": [
+                                        8388609
+                                      ],
+                                      "type": "integer"
+                                    },
+                                    "resource": {
+                                      "enum": [
+                                        "prompt_bytes"
+                                      ],
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "resource",
+                                    "limit",
+                                    "observed"
                                   ],
-                                  "type": "integer"
+                                  "type": "object"
                                 },
-                                "observed": {
-                                  "enum": [
-                                    8388609
+                                {
+                                  "additionalProperties": false,
+                                  "properties": {
+                                    "limit": {
+                                      "enum": [
+                                        100000
+                                      ],
+                                      "type": "integer"
+                                    },
+                                    "observed": {
+                                      "enum": [
+                                        100001
+                                      ],
+                                      "type": "integer"
+                                    },
+                                    "resource": {
+                                      "enum": [
+                                        "lore_extract_segment"
+                                      ],
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "resource",
+                                    "limit",
+                                    "observed"
                                   ],
-                                  "type": "integer"
-                                },
-                                "resource": {
-                                  "enum": [
-                                    "prompt_bytes"
-                                  ],
-                                  "type": "string"
+                                  "type": "object"
                                 }
-                              },
-                              "required": [
-                                "resource",
-                                "limit",
-                                "observed"
-                              ],
-                              "type": "object"
+                              ]
                             },
                             "message": {
                               "enum": [
@@ -6402,6 +6468,7 @@
                               "proposal",
                               "review",
                               "export",
+                              "lore-extract",
                               "import"
                             ],
                             "type": "string"
@@ -6416,6 +6483,7 @@
                               "generate",
                               "review",
                               "export",
+                              "extract",
                               "import"
                             ],
                             "type": "string"
@@ -7037,33 +7105,66 @@
                               "type": "string"
                             },
                             "details": {
-                              "additionalProperties": false,
-                              "properties": {
-                                "limit": {
-                                  "enum": [
-                                    8388608
+                              "oneOf": [
+                                {
+                                  "additionalProperties": false,
+                                  "properties": {
+                                    "limit": {
+                                      "enum": [
+                                        8388608
+                                      ],
+                                      "type": "integer"
+                                    },
+                                    "observed": {
+                                      "enum": [
+                                        8388609
+                                      ],
+                                      "type": "integer"
+                                    },
+                                    "resource": {
+                                      "enum": [
+                                        "prompt_bytes"
+                                      ],
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "resource",
+                                    "limit",
+                                    "observed"
                                   ],
-                                  "type": "integer"
+                                  "type": "object"
                                 },
-                                "observed": {
-                                  "enum": [
-                                    8388609
+                                {
+                                  "additionalProperties": false,
+                                  "properties": {
+                                    "limit": {
+                                      "enum": [
+                                        100000
+                                      ],
+                                      "type": "integer"
+                                    },
+                                    "observed": {
+                                      "enum": [
+                                        100001
+                                      ],
+                                      "type": "integer"
+                                    },
+                                    "resource": {
+                                      "enum": [
+                                        "lore_extract_segment"
+                                      ],
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "resource",
+                                    "limit",
+                                    "observed"
                                   ],
-                                  "type": "integer"
-                                },
-                                "resource": {
-                                  "enum": [
-                                    "prompt_bytes"
-                                  ],
-                                  "type": "string"
+                                  "type": "object"
                                 }
-                              },
-                              "required": [
-                                "resource",
-                                "limit",
-                                "observed"
-                              ],
-                              "type": "object"
+                              ]
                             },
                             "message": {
                               "enum": [

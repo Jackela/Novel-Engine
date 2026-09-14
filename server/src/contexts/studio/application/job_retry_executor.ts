@@ -15,6 +15,7 @@ import { exportRetryCapacityOutcome } from "./export_retry_capacity_outcome.js";
 import { failedJobOutcome } from "./failed_job_input.js";
 import { generationRetryCapacityOutcome } from "./generation_retry_capacity_outcome.js";
 import { replayedJobPayload } from "./job_replay_payload.js";
+import type { LoreExtractService } from "./lore_extract_service.js";
 import { jobPayload, safeLoadJson } from "./payloads.js";
 import type { StudioJobLedgerStore } from "./ports/job_ledger_store.js";
 import type { JobRecord } from "./ports/job_records.js";
@@ -29,6 +30,8 @@ interface JobRetryExecutorOptions {
   readonly now?: (() => Date) | undefined;
   /** Owns the proposal generation sequence and its prompt/landing configuration. */
   readonly proposals: ProposalGenerationPipeline;
+  /** Owns the lorebook wizard's extraction sequence and its landing configuration. */
+  readonly loreExtractions: LoreExtractService;
 }
 
 /**
@@ -38,6 +41,7 @@ interface JobRetryExecutorOptions {
  */
 export class JobRetryExecutor {
   private readonly proposals: ProposalGenerationPipeline;
+  private readonly loreExtractions: LoreExtractService;
   private readonly now: () => Date;
 
   constructor(
@@ -48,6 +52,7 @@ export class JobRetryExecutor {
     options: JobRetryExecutorOptions,
   ) {
     this.proposals = options.proposals;
+    this.loreExtractions = options.loreExtractions;
     this.now = options.now ?? (() => new Date());
   }
 
@@ -126,17 +131,30 @@ export class JobRetryExecutor {
       if (retry.kind === "export") {
         return await this.reexecuteExportJob(principal, retry, reportCleanupFailure);
       }
+      if (retry.kind === "lore-extract") {
+        return await this.reexecuteLoreExtractJob(scope, retry, reportCleanupFailure);
+      }
       throw new InvalidOperationError(`Unsupported job kind for retry: ${retry.kind}`);
     } catch (error) {
-      if (
-        error instanceof ExportCapacityExceededError ||
-        error instanceof GenerationCapacityExceededError
-      ) {
-        const outcome =
-          error instanceof ExportCapacityExceededError
-            ? exportRetryCapacityOutcome(retry, error, this.now())
-            : generationRetryCapacityOutcome(retry, error, this.now());
-        this.jobs.markJobOutcome(scope, projectId, retry.id, outcome);
+      if (error instanceof ExportCapacityExceededError) {
+        this.jobs.markJobOutcome(
+          scope,
+          projectId,
+          retry.id,
+          exportRetryCapacityOutcome(retry, error, this.now()),
+        );
+        throw error;
+      }
+      // Only proposal retries carry the structured prompt-byte capacity
+      // protocol; a lore-extract retry re-admits its stored segment, so its
+      // capacity refusal lands through the plain failed outcome below.
+      if (error instanceof GenerationCapacityExceededError && retry.kind === "proposal") {
+        this.jobs.markJobOutcome(
+          scope,
+          projectId,
+          retry.id,
+          generationRetryCapacityOutcome(retry, error, this.now()),
+        );
         throw error;
       }
       if (
@@ -145,7 +163,8 @@ export class JobRetryExecutor {
         !(error instanceof ExportArtifactWriteError) &&
         !(error instanceof ExportSourceInvalidatedError) &&
         !(error instanceof ReviewSourceInvalidatedError) &&
-        !(error instanceof TextGenerationProviderError)
+        !(error instanceof TextGenerationProviderError) &&
+        !(error instanceof GenerationCapacityExceededError)
       ) {
         throw error;
       }
@@ -170,6 +189,19 @@ export class JobRetryExecutor {
     // lives in the pipeline, shared with the synchronous draft and the stream.
     return jobPayload(
       await this.proposals.retry({ scope, retry, reportCleanupFailure, now: this.now }),
+    );
+  }
+
+  private async reexecuteLoreExtractJob(
+    scope: ProjectScope,
+    retry: JobRecord,
+    reportCleanupFailure: (failure: unknown) => void,
+  ): Promise<Record<string, unknown>> {
+    // The lore-extract retry sequence — stored-segment recovery, admission,
+    // provider generation, and the reserved-row landing with its single usage
+    // event — lives in the service, shared with the fresh extraction.
+    return jobPayload(
+      await this.loreExtractions.retry({ scope, retry, reportCleanupFailure, now: this.now }),
     );
   }
 

@@ -6,6 +6,7 @@ import { SnapshotArtifactService } from "./export_artifact_service.js";
 import { ImportService } from "./import_service.js";
 import { JobHistoryService } from "./job_history_service.js";
 import { LoreAliasService } from "./lore_alias_service.js";
+import { LoreExtractService } from "./lore_extract_service.js";
 import { InFlightOperationGuard, type OperationCapacityPolicy } from "./operation_in_flight.js";
 import type { ExportArtifactGateway } from "./ports/artifact_gateway.js";
 import type { DiagnosticsHealthProbe } from "./ports/diagnostics_health.js";
@@ -35,6 +36,7 @@ export interface StudioServices {
   volumes: VolumeService;
   beats: BeatAssociationService;
   lore: LoreAliasService;
+  loreExtractions: LoreExtractService;
   revisions: RevisionService;
   proposals: AiProposalService;
   reviewAssessments: ReviewService;
@@ -119,6 +121,7 @@ export function createStudioServices(
     options.loreBudgetCharacters,
   );
   const documents = new DocumentService(persistence.documents, persistence.volumes, now);
+  const loreExtractions = new LoreExtractService(persistence.jobs, options.providerFactory, now);
   const reviewAssessments = new ReviewService(persistence.reviewOutcomes, {
     now,
     provenance: options.reviewProvenance,
@@ -136,6 +139,7 @@ export function createStudioServices(
     volumes: new VolumeService(persistence.volumes, now),
     beats: new BeatAssociationService(persistence.documents, now),
     lore: new LoreAliasService(persistence.documents, persistence.lore, now),
+    loreExtractions,
     revisions: new RevisionService(persistence.documents, documents),
     proposals: new AiProposalService(persistence.proposalAcceptance, proposals, now),
     reviewAssessments,
@@ -149,6 +153,7 @@ export function createStudioServices(
         now,
         inFlight,
         proposals,
+        loreExtractions,
       },
     ),
     imports: new ImportService(persistence.projects, options.legacyWorkspaceReader, now),

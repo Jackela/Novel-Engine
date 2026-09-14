@@ -140,17 +140,18 @@ export interface AddUsageEventInput {
   now: Date;
 }
 
-/** The usage fields of a completed proposal, keyed to its job (#392). */
-export type CompletedProposalUsageInput = Omit<AddUsageEventInput, "projectId" | "jobId" | "now">;
+/** The usage fields of one completed provider-backed job, keyed to its row (#392). */
+export type CompletedJobUsageInput = Omit<AddUsageEventInput, "projectId" | "jobId" | "now">;
 
 /**
- * The atomic completed-proposal landing (#392): the job row and its usage
- * event commit in one transaction, so a crash between the two writes can
- * never leave a completed job without its usage event.
+ * The atomic completed-job-with-usage landing (#392): the job row and its
+ * usage event commit in one transaction, so a crash between the two writes
+ * can never leave a completed job without its usage event. Shared by every
+ * provider-backed kind that records usage (proposal, lore-extract).
  */
-export interface RecordCompletedProposalJobInput {
+export interface RecordCompletedJobWithUsageInput {
   job: AddJobInput;
-  usage: CompletedProposalUsageInput;
+  usage: CompletedJobUsageInput;
 }
 
 /**
@@ -159,5 +160,5 @@ export interface RecordCompletedProposalJobInput {
  */
 export interface CompleteJobWithUsageInput {
   outcome: MarkJobOutcomeInput;
-  usage: CompletedProposalUsageInput;
+  usage: CompletedJobUsageInput;
 }

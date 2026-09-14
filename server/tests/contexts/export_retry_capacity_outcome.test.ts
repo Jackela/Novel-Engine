@@ -175,6 +175,7 @@ describe("keyed export retry capacity outcome", () => {
             new InFlightOperationGuard(),
             now,
           ),
+          loreExtractions: services.loreExtractions,
         },
       );
       await expect(
