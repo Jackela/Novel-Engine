@@ -27,15 +27,23 @@
       // two implementations in sync.
       var language = null;
       var candidates = [];
+      var languages = null;
       var i;
       try {
         language = localStorage.getItem("novel_engine_language");
       } catch { /* storage unavailable: detection below decides */ }
       if (language !== "en" && language !== "zh") {
         language = "en";
+        // An empty `languages` list must fall through to `navigator.language`
+        // (mirrors language.ts's `length > 0` guard; an empty array is truthy
+        // and would otherwise block the fallback).
+        languages = typeof navigator !== "undefined" ? navigator.languages : null;
         candidates =
-          (typeof navigator !== "undefined" && navigator.languages) ||
-          (typeof navigator !== "undefined" && navigator.language ? [navigator.language] : []);
+          languages && languages.length > 0
+            ? languages
+            : typeof navigator !== "undefined" && navigator.language
+              ? [navigator.language]
+              : [];
         for (i = 0; i < candidates.length; i++) {
           if (String(candidates[i]).split("-")[0].toLowerCase() === "zh") {
             language = "zh";

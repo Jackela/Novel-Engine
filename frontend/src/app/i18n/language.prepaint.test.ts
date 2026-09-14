@@ -28,7 +28,10 @@ function runPrepaintScript(options: {
   script: string;
   stored: string | null;
   storageThrows?: boolean;
+  /** `navigator.languages`; `[]` must fall through to `language`. */
   languages?: string[];
+  /** `navigator.language`, consulted only when `languages` is empty/absent. */
+  language?: string;
 }): string {
   const storage = {
     getItem: (key: string) => {
@@ -36,7 +39,7 @@ function runPrepaintScript(options: {
       return key === LANGUAGE_STORAGE_KEY ? options.stored : null;
     },
   };
-  const navigatorStub = { languages: options.languages ?? [], language: options.languages?.[0] };
+  const navigatorStub = { languages: options.languages ?? [], language: options.language };
   const documentStub: { documentElement: { lang: string } } = {
     documentElement: { lang: "" },
   };
@@ -48,20 +51,41 @@ function runPrepaintScript(options: {
   return documentStub.documentElement.lang;
 }
 
-/** Mirror `language.ts`'s OS-streamed inputs onto the test navigator. */
-function stubNavigatorLanguages(languages: string[]): void {
-  Object.defineProperty(window.navigator, "languages", {
-    value: languages,
-    configurable: true,
-  });
+interface NavigatorOverride {
+  readonly descriptor: PropertyDescriptor | undefined;
+  restore(): void;
 }
+
+function stubNavigatorProp(name: "languages" | "language", value: unknown): void {
+  Object.defineProperty(window.navigator, name, { value, configurable: true });
+}
+
+/** Restore the jsdom-installed `navigator` properties after each test. */
+const navigatorOverrides: Array<NavigatorOverride> = (["languages", "language"] as const).map(
+  (name) => {
+    const owner = Object.hasOwn(window.navigator, name)
+      ? window.navigator
+      : Object.getPrototypeOf(window.navigator);
+    return {
+      descriptor: Object.getOwnPropertyDescriptor(owner, name),
+      restore(): void {
+        const { descriptor } = this;
+        if (descriptor) {
+          Object.defineProperty(owner, name, descriptor);
+        } else {
+          Reflect.deleteProperty(window.navigator, name);
+        }
+      },
+    };
+  },
+);
 
 describe("index.html pre-paint language script", () => {
   const script = languagePrepaintScript();
 
   afterEach(() => {
     window.localStorage.clear();
-    stubNavigatorLanguages([]);
+    for (const override of navigatorOverrides) override.restore();
   });
 
   it("applies the stored language to <html lang> before any mount", () => {
@@ -75,6 +99,21 @@ describe("index.html pre-paint language script", () => {
     expect(runPrepaintScript({ script, stored: "bogus", languages: ["zh-TW"] })).toBe("zh");
   });
 
+  it("consults navigator.language when the languages list is empty", () => {
+    // Edge case shared with language.ts: an empty `languages` array is
+    // truthy, so the fallback must key on `length > 0`, not on the array
+    // itself — otherwise first paint says `en` while the runtime says `zh`.
+    expect(runPrepaintScript({ script, stored: null, languages: [], language: "zh-CN" })).toBe(
+      "zh",
+    );
+    expect(runPrepaintScript({ script, stored: null, languages: [], language: "en-GB" })).toBe(
+      "en",
+    );
+    expect(runPrepaintScript({ script, stored: null, languages: [], language: undefined })).toBe(
+      "en",
+    );
+  });
+
   it("keeps the English default when storage is unreadable and detection is empty", () => {
     expect(runPrepaintScript({ script, stored: null, storageThrows: true })).toBe("en");
   });
@@ -82,22 +121,35 @@ describe("index.html pre-paint language script", () => {
   it("resolves the same language as language.ts for the shared decision table", () => {
     // Mirrored-semantics guard: the inline script and `getActiveLanguage`
     // must agree on every combination a real session can present.
-    const cases: Array<{ stored: string | null; languages: string[] }> = [
+    const cases: Array<{
+      stored: string | null;
+      languages: string[];
+      language?: string;
+    }> = [
       { stored: "zh", languages: ["en-US"] },
       { stored: "en", languages: ["zh-CN"] },
       { stored: null, languages: ["fr-FR", "zh-CN"] },
       { stored: null, languages: ["de-DE"] },
       { stored: null, languages: [] },
+      { stored: null, languages: [], language: "zh-CN" },
+      { stored: null, languages: [], language: "en-GB" },
+      { stored: "bogus", languages: [], language: "zh-TW" },
     ];
     for (const testCase of cases) {
       window.localStorage.clear();
       if (testCase.stored !== null) {
         window.localStorage.setItem(LANGUAGE_STORAGE_KEY, testCase.stored);
       }
-      stubNavigatorLanguages(testCase.languages);
+      stubNavigatorProp("languages", testCase.languages);
+      stubNavigatorProp("language", testCase.language);
       const expected = getActiveLanguage();
       expect(
-        runPrepaintScript({ script, stored: testCase.stored, languages: testCase.languages }),
+        runPrepaintScript({
+          script,
+          stored: testCase.stored,
+          languages: testCase.languages,
+          language: testCase.language,
+        }),
         JSON.stringify(testCase),
       ).toBe(expected);
     }
