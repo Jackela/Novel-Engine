@@ -1,4 +1,13 @@
-import { BarChart3, Bot, Briefcase, Download, History, LineChart, ShieldCheck } from "lucide-react";
+import {
+  BarChart3,
+  Bot,
+  Briefcase,
+  Download,
+  History,
+  LineChart,
+  ScrollText,
+  ShieldCheck,
+} from "lucide-react";
 import {
   type Dispatch,
   type KeyboardEvent,
@@ -84,6 +93,7 @@ export function StudioInspectorTabs({
       {tabButton("jobs", t("inspector.tab.jobs"), <Briefcase aria-hidden="true" />)}
       {tabButton("usage", t("inspector.tab.usage"), <BarChart3 aria-hidden="true" />)}
       {tabButton("stats", t("inspector.tab.stats"), <LineChart aria-hidden="true" />)}
+      {tabButton("lore", t("inspector.tab.lore"), <ScrollText aria-hidden="true" />)}
     </div>
   );
 }

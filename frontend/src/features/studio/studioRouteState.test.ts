@@ -19,6 +19,11 @@ describe("Studio route state", () => {
       inspector: "stats",
       canonicalPath: "/projects/project%201/world?inspector=stats",
     });
+    expect(resolveStudioRoute("project 1", "manuscript", "?inspector=lore")).toEqual({
+      section: "manuscript",
+      inspector: "lore",
+      canonicalPath: "/projects/project%201/manuscript?inspector=lore",
+    });
   });
 
   it("fails closed to canonical Manuscript and Copilot routes", () => {
@@ -51,6 +56,9 @@ describe("Studio route state", () => {
     );
     expect(studioInspectorPath("project-1", "characters", "stats")).toBe(
       "/projects/project-1/characters?inspector=stats",
+    );
+    expect(studioInspectorPath("project-1", "characters", "lore")).toBe(
+      "/projects/project-1/characters?inspector=lore",
     );
     expect(studioInspectorPath("project-1", "export", "copilot")).toBe(
       "/projects/project-1/manuscript",

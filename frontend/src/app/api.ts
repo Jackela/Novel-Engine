@@ -30,6 +30,7 @@ import { parseDiagnostics } from "@/app/diagnosticsContract";
 import { type ExportsRequestOptions, projectExportsRequest } from "@/app/exportApiRequest";
 import { downloadBlob, json, patchJson, postJson, putJson, request } from "@/app/httpClient";
 import { type JobsRequestOptions, projectJobsRequest, retryJobRequest } from "@/app/jobApiRequest";
+import { parseLoreExtractJob } from "@/app/loreExtractContract";
 import { type ProjectsRequestOptions, projectCatalogRequest } from "@/app/projectApiRequest";
 import { clearRetryAttemptSession, parseAndRecordRetrySession } from "@/app/retryAttemptRegistry";
 import { type ReviewListOptions, reviewDetailPath, reviewsRequest } from "@/app/reviewApiRequest";
@@ -178,6 +179,12 @@ export const api = {
     request(`/api/projects/${projectId}/usage`, init, parseUsage),
   writingStats: (projectId: string, init?: RequestInit) =>
     request(`/api/projects/${projectId}/stats`, init, parseWritingStats),
+  extractLore: (projectId: string, segment: string, provider: string) =>
+    postJson(
+      `/api/projects/${projectId}/lore-extractions`,
+      { segment, provider },
+      parseLoreExtractJob,
+    ),
   diagnostics: (projectId: string, init?: RequestInit) =>
     request(`/api/projects/${projectId}/diagnostics`, init, parseDiagnostics),
   retryJob: (projectId: string, jobId: string, idempotencyKey: string) => {

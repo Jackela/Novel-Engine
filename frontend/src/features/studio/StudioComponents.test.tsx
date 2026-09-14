@@ -48,6 +48,7 @@ function buildInspectorModel(): StudioInspectorModel {
     },
     usage: { projectId: "project-1" },
     stats: { projectId: "project-1" },
+    lore: { projectId: "project-1", provider: "mock", documents: [] },
     settings: {
       settingsForm: { title: "", description: "", provider: "" },
       error: null,
@@ -126,16 +127,16 @@ describe("Studio split components", () => {
     expect(disclosure).not.toBeNull();
     expect(disclosure?.querySelector("summary")?.textContent).toContain("Inspector");
     expect(disclosure?.hasAttribute("open")).toBe(true);
-    expect(tabs).toHaveLength(7);
-    expect(panels).toHaveLength(7);
+    expect(tabs).toHaveLength(8);
+    expect(panels).toHaveLength(8);
     expect(activeTab?.textContent).toContain("Copilot");
-    expect(tabs.filter((tab) => tab.getAttribute("aria-selected") === "false")).toHaveLength(6);
+    expect(tabs.filter((tab) => tab.getAttribute("aria-selected") === "false")).toHaveLength(7);
     expect(activeTab?.getAttribute("aria-controls")).toBe(activePanel?.id);
     expect(activePanel?.getAttribute("aria-labelledby")).toBe(activeTab?.id);
     expect(
       tabs.every((tab) => panels.some((panel) => panel.id === tab.getAttribute("aria-controls"))),
     ).toBe(true);
-    expect(panels.filter((panel) => panel.hasAttribute("hidden"))).toHaveLength(6);
+    expect(panels.filter((panel) => panel.hasAttribute("hidden"))).toHaveLength(7);
     expect(container.querySelector('form[aria-label="Lore status"]')).toBeNull();
 
     click(tabs.find((tab) => tab.textContent?.includes("Review")) ?? null);
@@ -166,8 +167,9 @@ describe("Studio split components", () => {
     act(() => {
       tabs[0].dispatchEvent(new KeyboardEvent("keydown", { key: "End", bubbles: true }));
     });
-    expect(setInspector).toHaveBeenCalledWith("stats");
-    expect(document.activeElement).toBe(tabs[6]);
+    // Lore is the newest last tab (#614), so End lands on it after stats (#653).
+    expect(setInspector).toHaveBeenCalledWith("lore");
+    expect(document.activeElement).toBe(tabs[7]);
 
     act(() => {
       tabs[2].dispatchEvent(new KeyboardEvent("keydown", { key: "Home", bubbles: true }));

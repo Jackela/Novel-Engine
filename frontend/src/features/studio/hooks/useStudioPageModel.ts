@@ -242,6 +242,10 @@ export function useStudioPageModel(projectId: string, route: StudioRouteState, n
         // props corridor through StudioPageView -> Inspector -> Panels.
         model: buildStudioInspectorModel({
           projectId,
+          lore: {
+            provider: String(project.settings.provider ?? "mock"),
+            documents: project.documents,
+          },
           copilot,
           jobs: {
             jobs,

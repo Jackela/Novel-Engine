@@ -1,4 +1,5 @@
 import { LORE_STATUSES } from "@/app/loreStatus";
+import type { LoreExtractCandidate } from "@/app/types/lore";
 import type {
   LoreStatus,
   ProviderInfo,
@@ -206,6 +207,33 @@ export function parseAliases(value: unknown): { aliases: string[] } {
       stringValue(entry, `aliases[${index}]`),
     ),
   };
+}
+
+const loreCandidateKinds = ["character", "world"] as const;
+
+/**
+ * The lore-extract job's candidate set (#614): present only on terminal
+ * `lore-extract` jobs, always a `{kind, title, aliases, summary}` array —
+ * suggestions, never persisted content. Absent on every other job result.
+ */
+export function parseLoreCandidates(
+  source: Record<string, unknown>,
+  label: string,
+): LoreExtractCandidate[] | undefined {
+  const value = source.candidates;
+  if (value === undefined) return undefined;
+  const rowLabel = (index: number) => `${label}.candidates[${index}]`;
+  return arrayField(source, "candidates", label, (entry, index) => {
+    const item = objectValue(entry, rowLabel(index));
+    return {
+      kind: literalField(item, "kind", rowLabel(index), loreCandidateKinds),
+      title: stringField(item, "title", rowLabel(index)),
+      aliases: arrayField(item, "aliases", rowLabel(index), (alias, aliasIndex) =>
+        stringValue(alias, `${rowLabel(index)}.aliases[${aliasIndex}]`),
+      ),
+      summary: stringField(item, "summary", rowLabel(index)),
+    };
+  });
 }
 
 export function parseSetupStatus(value: unknown): SetupStatus {

@@ -1,0 +1,102 @@
+/* BEM-ish only: feature-prefixed blocks with block__element--modifier; no legacy flat classes (#442). */
+/* Reuses the base.css token set (lines, muted ink, glass surfaces) — no new colors (#614). */
+
+.lore-wizard {
+  display: grid;
+  gap: 14px;
+}
+
+.lore-wizard__section {
+  display: grid;
+  gap: 7px;
+}
+
+.lore-wizard__section h3 {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.lore-wizard__trial-note {
+  margin: 0;
+  padding: 7px 10px;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  background: var(--surface-glass-strong);
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.lore-wizard__paste,
+.lore-wizard__documents,
+.lore-wizard__segment,
+.lore-wizard__candidate,
+.lore-wizard__result {
+  display: grid;
+  gap: 7px;
+}
+
+.lore-wizard__paste textarea {
+  width: 100%;
+  resize: vertical;
+}
+
+.lore-wizard__muted {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.lore-wizard__error {
+  color: var(--danger);
+  font-size: 11px;
+}
+
+.lore-wizard__segments,
+.lore-wizard__candidates,
+.lore-wizard__results {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.lore-wizard__segment {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  padding: 7px 10px;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+}
+
+.lore-wizard__candidate,
+.lore-wizard__result {
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  background: var(--surface-glass-strong);
+}
+
+.lore-wizard__candidate-select {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.lore-wizard__candidate-select span {
+  display: grid;
+}
+
+.lore-wizard__candidate-aliases span {
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.lore-wizard__candidate-summary p {
+  margin: 7px 0 0;
+  color: var(--muted);
+  font-size: 11px;
+  white-space: pre-wrap;
+}

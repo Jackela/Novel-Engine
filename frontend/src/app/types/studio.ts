@@ -1,4 +1,7 @@
 import type { paths } from "../../../generated/api-types";
+import type { LoreExtractCandidate, LoreStatus } from "./lore";
+
+export type { LoreStatus };
 
 /**
  * Contract types are derived from the TS server OpenAPI baseline
@@ -11,9 +14,6 @@ import type { paths } from "../../../generated/api-types";
 type DocumentCreateBody = NonNullable<
   paths["/api/projects/{projectId}/documents"]["post"]
 >["requestBody"]["content"]["application/json"];
-type LoreStatusWriteBody = NonNullable<
-  paths["/api/projects/{projectId}/documents/{documentId}/lore-status"]["put"]
->["requestBody"]["content"]["application/json"];
 type ExportRequestBody = NonNullable<
   paths["/api/projects/{projectId}/exports"]["post"]
 >["requestBody"]["content"]["application/json"];
@@ -25,10 +25,8 @@ type GeneratedProjectUpdateBody = NonNullable<
 >["requestBody"]["content"]["application/json"];
 
 export type DocumentKind = DocumentCreateBody["kind"];
-/** The lore lifecycle status (#444); only `stable` entries inject (ADR-0006). */
-export type LoreStatus = LoreStatusWriteBody["lore_status"];
 export type ExportFormat = ExportRequestBody["format"];
-export type StudioJobOperation = AIProposalBody["operation"] | "review" | "export";
+export type StudioJobOperation = AIProposalBody["operation"] | "review" | "export" | "extract";
 export type SessionKind = "owner";
 export type SaveState = "idle" | "saving" | "saved" | "conflict" | "error";
 export type StudioJobStatus = "pending" | "running" | "completed" | "failed" | "interrupted";
@@ -47,7 +45,7 @@ export interface ProviderInfo {
   model: string | null;
   is_default: boolean;
 }
-export type StudioJobKind = "proposal" | "review" | "export";
+export type StudioJobKind = "proposal" | "review" | "export" | "lore-extract";
 export type StudioJobSummaryKind = StudioJobKind | "import";
 export type StudioJobSummaryOperation = StudioJobOperation | "import";
 
@@ -311,6 +309,8 @@ export interface StudioJob {
     export_id?: string;
     /** Present on terminal review jobs (#272 job-wrapped review responses). */
     review_id?: string;
+    /** Present on terminal lore-extract jobs (#614); suggestions only. */
+    candidates?: LoreExtractCandidate[];
   };
   error: string | null;
   retry_of_job_id: string | null;
