@@ -7,6 +7,7 @@ import { StudioLoreStatusPanel } from "./components/StudioLoreStatusPanel";
 import { StudioReviewPanel } from "./components/StudioReviewPanel";
 import { StudioSettingsPanel } from "./components/StudioSettingsPanel";
 import { StudioUsagePanel } from "./components/StudioUsagePanel";
+import { StudioWritingStatsPanel } from "./components/StudioWritingStatsPanel";
 import type { InspectorTab } from "./studioConstants";
 import type { InspectorPendingState, StudioInspectorModel } from "./studioInspectorTypes";
 
@@ -186,6 +187,14 @@ export function StudioInspectorPanels({
         role="tabpanel"
       >
         <StudioUsagePanel active={inspector === "usage"} projectId={model.usage.projectId} />
+      </div>
+      <div
+        aria-labelledby={tabId("stats")}
+        hidden={inspector !== "stats"}
+        id={panelId("stats")}
+        role="tabpanel"
+      >
+        <StudioWritingStatsPanel active={inspector === "stats"} projectId={model.stats.projectId} />
       </div>
     </>
   );

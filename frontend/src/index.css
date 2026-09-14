@@ -15,4 +15,7 @@
 @import "./styles/editor.css";
 @import "./styles/inspector.css";
 @import "./styles/usage.css";
+/* New feature modules append after their sibling panel styles; `stats__*`
+   selectors (#653) do not overlap any earlier block, so order stays inert. */
+@import "./styles/stats.css";
 @import "./styles/layout.css";

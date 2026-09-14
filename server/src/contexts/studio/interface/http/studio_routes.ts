@@ -13,6 +13,7 @@ import { proposalRoutes } from "./proposal_routes.js";
 import { reviewRoutes } from "./review_routes.js";
 import { revisionRoutes } from "./revision_routes.js";
 import { volumeRoutes } from "./volume_routes.js";
+import { writingStatsRoutes } from "./writing_stats_routes.js";
 
 /** Registers the existing Studio HTTP surfaces in their public route order. */
 export const studioRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (app, options) => {
@@ -28,5 +29,6 @@ export const studioRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (app,
   await app.register(exportRoutes, options);
   await app.register(importRoutes, options);
   await app.register(jobRoutes, options);
+  await app.register(writingStatsRoutes, options);
   await app.register(diagnosticsRoutes, options);
 };

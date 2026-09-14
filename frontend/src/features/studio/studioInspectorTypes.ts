@@ -124,6 +124,11 @@ interface InspectorUsageModel {
   projectId: string;
 }
 
+interface InspectorStatsModel {
+  /** #653: project scope for the lazily loaded writing-stats panel. */
+  projectId: string;
+}
+
 interface InspectorSettingsModel {
   settingsForm: SettingsFormState;
   providers: ProviderInfo[];
@@ -181,6 +186,7 @@ export interface StudioInspectorModel {
   history: InspectorHistoryModel;
   jobs: InspectorJobsModel;
   usage: InspectorUsageModel;
+  stats: InspectorStatsModel;
   settings: InspectorSettingsModel;
   loreStatus: InspectorLoreStatusModel | null;
   beat: InspectorBeatModel | null;

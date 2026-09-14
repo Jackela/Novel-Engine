@@ -3,6 +3,7 @@ import type { FastifyPluginAsync } from "fastify";
 import { principalGuard, requirePrincipal } from "../../../../shared/interface/http/auth_guard.js";
 import { errorEnvelopeResponse } from "../../../../shared/interface/http/error_envelope.js";
 import { jobPageLimit } from "../../application/ports/job_records.js";
+import type { ProjectUsageAggregate } from "../../application/ports/project_usage.js";
 import { jobRetry422ResponseSchema } from "./generation_capacity_schemas.js";
 import { decodeJobCursor, encodeJobCursor } from "./job_cursor.js";
 import {
@@ -21,6 +22,32 @@ import {
   keyedRetryInFlightResponseSchema,
   operationCapacityResponseSchema,
 } from "./studio_schemas.js";
+
+/**
+ * The snake_case wire view of one usage aggregation, shared by the usage
+ * endpoint and the writing-statistics response's `usage` member (#653) so
+ * both surfaces can never disagree on the mapping.
+ */
+export function usageWirePayload(usage: ProjectUsageAggregate) {
+  return {
+    project_id: usage.projectId,
+    request_count: usage.requestCount,
+    prompt_tokens: usage.promptTokens,
+    completion_tokens: usage.completionTokens,
+    per_model: usage.perModel.map((entry) => ({
+      model: entry.model,
+      requests: entry.requests,
+      prompt_tokens: entry.promptTokens,
+      completion_tokens: entry.completionTokens,
+    })),
+    daily: usage.daily.map((bucket) => ({
+      date: bucket.date,
+      request_count: bucket.requestCount,
+      prompt_tokens: bucket.promptTokens,
+      completion_tokens: bucket.completionTokens,
+    })),
+  };
+}
 
 /**
  * The synchronous jobs audit surface: the persisted listing (newest first)
@@ -139,30 +166,14 @@ export const jobRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fastify
       },
     },
     async (request) => {
-      return withStudioErrors(() => {
-        const usage = requireServices(options).jobHistory.aggregateProjectUsage(
-          requirePrincipal(request),
-          request.params.projectId,
-        );
-        return {
-          project_id: usage.projectId,
-          request_count: usage.requestCount,
-          prompt_tokens: usage.promptTokens,
-          completion_tokens: usage.completionTokens,
-          per_model: usage.perModel.map((entry) => ({
-            model: entry.model,
-            requests: entry.requests,
-            prompt_tokens: entry.promptTokens,
-            completion_tokens: entry.completionTokens,
-          })),
-          daily: usage.daily.map((bucket) => ({
-            date: bucket.date,
-            request_count: bucket.requestCount,
-            prompt_tokens: bucket.promptTokens,
-            completion_tokens: bucket.completionTokens,
-          })),
-        };
-      });
+      return withStudioErrors(() =>
+        usageWirePayload(
+          requireServices(options).jobHistory.aggregateProjectUsage(
+            requirePrincipal(request),
+            request.params.projectId,
+          ),
+        ),
+      );
     },
   );
 };

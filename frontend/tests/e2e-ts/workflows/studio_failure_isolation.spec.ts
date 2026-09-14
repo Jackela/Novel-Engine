@@ -227,7 +227,8 @@ test.describe
       await studio.keyboard.press("Home");
       await expect(studio).toHaveURL(/\/manuscript$/);
       await studio.keyboard.press("End");
-      await expect(studio).toHaveURL(/\/manuscript\?inspector=usage$/);
+      // Stats is the newest last tab (#653), so End lands on its local query.
+      await expect(studio).toHaveURL(/\/manuscript\?inspector=stats$/);
 
       // Freeze the first whole-book stream so the run is observably running,
       // then prove Stop stays visible while the lazy panels hydrate.

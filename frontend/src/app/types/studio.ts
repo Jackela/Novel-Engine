@@ -231,6 +231,17 @@ export interface ProjectUsage {
   daily?: UsageDailyBucket[];
 }
 
+/** The writing-statistics summary (#653), derived from the generated API
+ * contract; UTC-day buckets, source-attributed deltas that may be negative. */
+type WritingStatsResponse = NonNullable<
+  paths["/api/projects/{projectId}/stats"]["get"]
+>["responses"][200]["content"]["application/json"];
+
+export type WritingStats = WritingStatsResponse;
+export type WritingStatsWords = WritingStatsResponse["daily"][number]["words"];
+export type WritingStatsDayRow = WritingStatsResponse["daily"][number];
+export type WritingStatsWeekRow = WritingStatsResponse["weekly"][number];
+
 /**
  * The opt-in diagnostics export (#654): structurally redacted — configuration
  * state is booleans only and the error summary carries persisted messages
