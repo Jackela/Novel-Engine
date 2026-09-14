@@ -57,7 +57,7 @@ reviews the additive-only diff.
 
 ## T2: HTTP surface
 
-- [ ] T2.1 Add the extraction route (owner-guarded, TypeBox schemas,
+- [x] T2.1 Add the extraction route (owner-guarded, TypeBox schemas,
       thin-handler discipline) submitting one segment and returning its
       terminal `lore-extract` Job, reusing the existing job result and
       retry surfaces where they already fit. Include executor-level
@@ -67,7 +67,7 @@ reviews the additive-only diff.
       `pnpm --dir server test -- <route file>` green including auth,
       validation, capacity-envelope, and error-envelope cases, plus the
       executor-level retry cases.
-- [ ] T2.2 Regenerate the OpenAPI baseline deliberately
+- [x] T2.2 Regenerate the OpenAPI baseline deliberately
       (`pnpm --dir server openapi:snapshot`) and review the diff for
       additive-only changes, serially with any other route-adding change
       in the window. API types regenerate in lockstep with every baseline
@@ -82,7 +82,7 @@ reviews the additive-only diff.
 
 ## T3: Frontend wizard flow
 
-- [ ] T3.1 Add the wizard data hook: build input segments (paste box +
+- [x] T3.1 Add the wizard data hook: build input segments (paste box +
       existing-document picker reading current content), submit each
       segment as its own extraction Job, retain per-segment busy/error
       state under the explicit asynchronous operation state discipline,
@@ -93,7 +93,7 @@ reviews the additive-only diff.
       `pnpm --dir frontend test:unit -- LorebookWizard` green (hook tests:
       per-segment submit, merge determinism, failure recovery,
       duplicate-submission guard).
-- [ ] T3.2 Add the wizard component flow: input step, per-segment pending,
+- [x] T3.2 Add the wizard component flow: input step, per-segment pending,
       merged candidate list (kind, title, editable aliases, summary
       preview), confirm step, and per-candidate results with the three
       outcome states — created, created-with-failed-aliases (aliases kept
@@ -103,14 +103,14 @@ reviews the additive-only diff.
       200-line rule. Acceptance: `pnpm --dir frontend test:unit --
       LorebookWizard` green (component tests: candidate toggle, confirm,
       alias-write failure partial success, abandon leaves nothing).
-- [ ] T3.3 Render the trial-mode label on the wizard session when the
+- [x] T3.3 Render the trial-mode label on the wizard session when the
       project's provider is the trial provider, using the #615
       trial-mode wording family. Acceptance: component tests assert the
       label appears only for the trial provider.
 
 ## T4: Inspector `lore` tab
 
-- [ ] T4.1 Add the `lore` tab to the Inspector tab union
+- [x] T4.1 Add the `lore` tab to the Inspector tab union
       (`INSPECTOR_TABS` / `InspectorTab` in `studioConstants.ts`), wire
       URL-backed activation in `studioRouteState.ts`, and mount the panel
       through `StudioInspectorPanels.tsx` / `studioInspectorTypes.ts` —
@@ -118,7 +118,7 @@ reviews the additive-only diff.
       tab with a rebase check for both tabs coexisting. Acceptance:
       `pnpm --dir frontend test:unit -- StudioInspector studioRouteState`
       green with both-tab cases, APG tablist contract intact.
-- [ ] T4.2 Inside the tab, surface the empty-lorebook guidance entry (a
+- [x] T4.2 Inside the tab, surface the empty-lorebook guidance entry (a
       project with no `character`/`world` documents shows the wizard as
       the primary action) and the persistent entry for projects that
       already have entries. Acceptance: `pnpm --dir frontend test:unit --
@@ -127,14 +127,14 @@ reviews the additive-only diff.
 
 ## T5: Workflows, gates, and evidence
 
-- [ ] T5.1 Add a TypeScript-backend Playwright workflow: paste a draft,
+- [x] T5.1 Add a TypeScript-backend Playwright workflow: paste a draft,
       run extraction (deterministic stub), toggle candidates, confirm,
       see `draft` entries appear with per-candidate results including a
       routed alias-write failure reporting created-with-failed-aliases
       with retry; abandon a second run and verify the lorebook is
       unchanged. Acceptance: `pnpm --dir frontend test:e2e-ts --
       lorebook_wizard` green.
-- [ ] T5.2 Run the full owning gates (`pnpm --dir server gates`;
+- [x] T5.2 Run the full owning gates (`pnpm --dir server gates`;
       `pnpm --dir frontend lint && pnpm --dir frontend format:check &&
       pnpm --dir frontend type-check && pnpm --dir frontend test:unit &&
       pnpm --dir frontend build`; `pnpm spec:validate`), record exact
