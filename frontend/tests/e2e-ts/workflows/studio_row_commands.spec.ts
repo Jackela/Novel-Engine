@@ -169,6 +169,16 @@ test.describe
 
       // The chapter's current volume is never offered as a target.
       const select = studio.getByRole("combobox", { name: "Place Chapter 2 in volume" });
+      // Volumes arrive with the asynchronous project load, and the placement
+      // select mounts atomically with its option elements in one React commit
+      // once `otherVolumes` is non-empty (StudioNavigatorRowActions renders
+      // the whole <select> subtree behind that gate). A bare evaluateAll
+      // therefore races the mount and observed an empty option list on loaded
+      // CI workers (runs 34813461273 and 34815516421, 2026-09-14). Waiting
+      // for the select to be visible is the deterministic signal that its
+      // options are attached; the deep-equality assertion below then reads a
+      // stable DOM and stays byte-identical.
+      await expect(select).toBeVisible({ timeout: 15_000 });
       const optionTitles = await select
         .locator("option")
         .evaluateAll((options) =>
