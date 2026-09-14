@@ -24,6 +24,7 @@ import { AiProposalService } from "./proposal_service.js";
 import { type ReviewProviderProvenance, ReviewService } from "./review_service.js";
 import { RevisionService } from "./revision_service.js";
 import { VolumeService } from "./volume_service.js";
+import { WritingStatsService } from "./writing_stats_service.js";
 
 /** The per-capability service graph handed to the studio HTTP surface. */
 export interface StudioServices {
@@ -38,6 +39,7 @@ export interface StudioServices {
   artifacts: SnapshotArtifactService;
   imports: ImportService;
   jobHistory: JobHistoryService;
+  writingStats: WritingStatsService;
 }
 
 /**
@@ -130,5 +132,6 @@ export function createStudioServices(
       },
     ),
     imports: new ImportService(persistence.projects, options.legacyWorkspaceReader, now),
+    writingStats: new WritingStatsService(persistence.documents, persistence.jobs, { now }),
   };
 }

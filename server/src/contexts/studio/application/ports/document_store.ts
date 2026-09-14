@@ -1,6 +1,7 @@
 import type { StudioBeatStore } from "./beat_store.js";
 import { pageLimit } from "./page_limit.js";
 import type { ProjectScope } from "./studio_store.js";
+import type { WritingStatsHistory } from "./writing_stats.js";
 
 /** Persistence-neutral row shape handed to the application layer. */
 interface DocumentRecord {
@@ -165,6 +166,12 @@ export interface DocumentStore extends StudioBeatStore {
     documentId: string,
     revisionId: string,
   ): RevisionRecord;
+  /**
+   * The bounded revision-and-structure read the writing-statistics
+   * aggregation folds (#653): every revision's stats evidence plus the
+   * chapter documents' current word counts.
+   */
+  readWritingStatsHistory(scope: ProjectScope, projectId: string): WritingStatsHistory;
 
   /**
    * Run a pre-reduced MATCH expression against the project's FTS index.
