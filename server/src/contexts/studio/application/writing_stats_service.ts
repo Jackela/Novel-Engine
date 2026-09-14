@@ -2,6 +2,7 @@ import type { Principal } from "../../../shared/application/ports/auth.js";
 import type { RevisionSource } from "../domain/kinds.js";
 import type { DocumentStore } from "./ports/document_store.js";
 import type { StudioJobLedgerStore } from "./ports/job_ledger_store.js";
+import { USAGE_DAILY_WINDOW_DAYS } from "./ports/project_usage.js";
 import { scopeForPrincipal } from "./ports/studio_store.js";
 import type {
   WritingStatsDayRow,
@@ -13,8 +14,6 @@ import type {
 
 /** One UTC day in milliseconds; every calendar bucket anchors on UTC days. */
 const DAY_MS = 86_400_000;
-/** The trailing daily window, mirroring the usage aggregation's (#384). */
-const DAILY_WINDOW_DAYS = 30;
 /** A weekly rollup is exactly seven UTC days. */
 const WEEK_DAYS = 7;
 
@@ -38,8 +37,12 @@ function addWords(total: WritingStatsWords, source: RevisionSource, delta: numbe
     total.author += delta;
   } else if (source === "ai-accepted") {
     total.aiAccepted += delta;
-  } else {
+  } else if (source === "restore") {
     total.restore += delta;
+  } else {
+    // A closed enum with an unhandled member is a programming error: keep it
+    // visible instead of silently misattributing a future source.
+    throw new Error(`Unsupported revision source for stats attribution: ${source}.`);
   }
 }
 
@@ -74,10 +77,10 @@ function attributedDeltas(revisions: WritingStatsHistory["revisions"]): Attribut
   });
 }
 
-/** The trailing-30-UTC-day rows, zero-filled and oldest first (#653). */
+/** The trailing usage-window day rows, zero-filled and oldest first (#653). */
 function dailyRows(deltas: AttributedDelta[], now: Date): WritingStatsDayRow[] {
   const todayIndex = utcDayIndex(now);
-  const firstIndex = todayIndex - (DAILY_WINDOW_DAYS - 1);
+  const firstIndex = todayIndex - (USAGE_DAILY_WINDOW_DAYS - 1);
   const rows = new Map<number, WritingStatsDayRow>();
   for (let index = firstIndex; index <= todayIndex; index += 1) {
     rows.set(index, { date: utcDayKey(index), words: zeroWords() });
