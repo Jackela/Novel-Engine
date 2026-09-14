@@ -4,8 +4,9 @@ Novel Engine `0.7.0` is a self-hosted single-author novel writing IDE. SQLite is
 the content authority and Markdown is the document syntax. One Node.js process
 serves the Studio SPA and the JSON API.
 
-[Documentation](docs/README.md) · [Contributing](CONTRIBUTING.md) ·
-[Security](.github/SECURITY.md) · [License](LICENSE)
+[Documentation](docs/README.md) · [中文文档](README.zh-CN.md) ·
+[Contributing](CONTRIBUTING.md) · [Security](.github/SECURITY.md) ·
+[License](LICENSE)
 
 ## For Writers
 

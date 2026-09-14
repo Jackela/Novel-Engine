@@ -18,6 +18,15 @@ evidence for its named commit, not the status of a later checkout.
   [upgrading](../openwiki/guides/upgrading.md),
   [troubleshooting](../openwiki/guides/troubleshooting.md), and the
   [FAQ](../openwiki/guides/faq.md).
+- Chinese editions of the writer guides: [quick start](../README.zh-CN.md),
+  [getting started](../openwiki/guides/zh/getting-started.md),
+  [provider setup](../openwiki/guides/zh/provider-setup.md),
+  [writing](../openwiki/guides/zh/writing-guide.md),
+  [exporting](../openwiki/guides/zh/exporting.md),
+  [backup and restore](../openwiki/guides/zh/backup-and-restore.md),
+  [upgrading](../openwiki/guides/zh/upgrading.md),
+  [troubleshooting](../openwiki/guides/zh/troubleshooting.md), and the
+  [FAQ](../openwiki/guides/zh/faq.md).
 - [Studio workspace](../openwiki/frontend/studio-workspace.md): authoring,
   navigation, Inspector behavior, and responsive layouts.
 - [Security policy](../.github/SECURITY.md) and [license](../LICENSE).
