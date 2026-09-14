@@ -157,6 +157,17 @@ jobs:
     needs: validate
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+      # Compose interpolation smoke (#616 review P3-2): the rest of this job
+      # exercises only the Dockerfile, so a broken interpolation or structure
+      # in either compose file had no CI surface. `config -q` renders both
+      # files and fails on interpolation or schema errors; every interpolation
+      # is a `:-` empty default, so no environment variables are required.
+      # Runs before the build to fail fast instead of paying for a doomed
+      # docker build first.
+      - name: Compose interpolation smoke (compose.yaml and deploy/compose.yaml)
+        run: |
+          docker compose -f compose.yaml config -q
+          docker compose -f deploy/compose.yaml config -q
       - run: docker build -t novel-engine:ci .
       - name: Verify fresh install, persistence, restart, and deep link
         run: |
