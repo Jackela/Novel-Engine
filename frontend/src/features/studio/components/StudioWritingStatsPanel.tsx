@@ -78,6 +78,14 @@ export function StudioWritingStatsPanel({ projectId, active }: StudioWritingStat
               labelKey="stats.summary.chaptersStarted"
               value={stats.chapters.started}
             />
+            {/*
+             * Words today is the net figure of all three sources on the
+             * current UTC day — the same sum as the daily table's Total
+             * column. Restore deltas stay their own line in that split
+             * (history movement, per the design), but this headline card
+             * reports the day's net movement, so a restore rollback offsets
+             * it exactly as it offsets the day's total.
+             */}
             <StatsTotalCard
               labelKey="stats.summary.today"
               value={

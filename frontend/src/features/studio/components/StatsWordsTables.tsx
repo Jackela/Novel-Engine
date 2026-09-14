@@ -12,6 +12,15 @@ function totalWords(words: WritingStatsWords): number {
   return words.author + words.ai_accepted + words.restore;
 }
 
+/**
+ * A bucket is active when any source moved — a net-zero day (an author
+ * write offset by a restore rollback) still shows its split, because the
+ * movement itself is the content; only never-touched buckets stay implicit.
+ */
+function hasSourceMovement(words: WritingStatsWords): boolean {
+  return words.author !== 0 || words.ai_accepted !== 0 || words.restore !== 0;
+}
+
 interface StatsWordsTableProps {
   /** The visible heading above the table. */
   headingKey: MessageKey;
@@ -67,13 +76,17 @@ interface StatsWordsTablesProps {
 
 /**
  * The daily and weekly attributed-words sections of the stats panel (#653).
- * Only UTC days with words render — zero-filled days are the aggregation's
- * alignment contract, not content — and an entirely quiet window renders the
- * panel's defined empty state instead of two all-zero tables.
+ * Only buckets with source movement render — zero-filled days are the
+ * aggregation's alignment contract, not content — and an entirely quiet
+ * window renders the panel's defined empty state instead of two all-zero
+ * tables. Both tables apply the same movement rule, so a net-zero day (an
+ * author write offset by a restore rollback) stays visible in the daily
+ * table while its week keeps rolling the signed figures into one sum.
  */
 export function StatsWordsTables({ daily, weekly }: StatsWordsTablesProps) {
   const { t } = useTranslation();
-  const activeDays = daily.filter((day) => totalWords(day.words) !== 0);
+  const activeDays = daily.filter((day) => hasSourceMovement(day.words));
+  const activeWeeks = weekly.filter((week) => hasSourceMovement(week.words));
   if (activeDays.length === 0) {
     return <p className="studio-inspector__empty">{t("stats.empty")}</p>;
   }
@@ -89,7 +102,7 @@ export function StatsWordsTables({ daily, weekly }: StatsWordsTablesProps) {
         headingKey="stats.weekly.heading"
         regionKey="stats.weekly.region"
         firstColumnKey="stats.table.week"
-        rows={weekly.map((week) => ({ label: week.start_date, words: week.words }))}
+        rows={activeWeeks.map((week) => ({ label: week.start_date, words: week.words }))}
       />
     </>
   );

@@ -117,6 +117,9 @@ describe("StudioWritingStatsPanel", () => {
           0: { author: 500, ai_accepted: 300, restore: -100 },
           // Yesterday: author-only words.
           [-1]: { author: 220, ai_accepted: 0, restore: 0 },
+          // Two days ago: a net-zero but active day — an author write fully
+          // offset by a restore rollback stays visible as its own row.
+          [-2]: { author: 100, ai_accepted: 0, restore: -100 },
         },
         {
           streak_days: 3,
@@ -140,13 +143,18 @@ describe("StudioWritingStatsPanel", () => {
     expect(tables).toHaveLength(2);
     const [dailyTable, weeklyTable] = tables;
     const dailyRows = Array.from(dailyTable?.querySelectorAll("tbody tr") ?? []);
-    // Only days with words render; zero-filled days stay implicit.
-    expect(dailyRows).toHaveLength(2);
-    expect(dailyRows[0]?.textContent).toBe(`${dayKey(-1)}22000220`);
-    expect(dailyRows[1]?.textContent).toBe(`${dayKey(0)}500300-100700`);
-    // The newest whole week sums its seven UTC days, signed figures and all.
+    // Only buckets with source movement render; zero-filled days stay
+    // implicit, and a net-zero active day keeps its row.
+    expect(dailyRows).toHaveLength(3);
+    expect(dailyRows[0]?.textContent).toBe(`${dayKey(-2)}1000-1000`);
+    expect(dailyRows[1]?.textContent).toBe(`${dayKey(-1)}22000220`);
+    expect(dailyRows[2]?.textContent).toBe(`${dayKey(0)}500300-100700`);
+    // The newest whole week sums its seven UTC days, signed figures and all
+    // (the net-zero day rolls in as +100/-100); the three all-zero weeks
+    // stay out of the weekly table entirely.
     const weeklyRows = Array.from(weeklyTable?.querySelectorAll("tbody tr") ?? []);
-    expect(weeklyRows.at(-1)?.textContent).toBe(`${dayKey(-6)}720300-100920`);
+    expect(weeklyRows).toHaveLength(1);
+    expect(weeklyRows.at(-1)?.textContent).toBe(`${dayKey(-6)}820300-200920`);
     // Summary cards reflect the same aggregation.
     expect(container.textContent).toContain("3Day streak");
     expect(container.textContent).toContain("700Words today");
