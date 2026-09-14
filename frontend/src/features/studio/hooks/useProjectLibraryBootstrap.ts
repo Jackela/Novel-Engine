@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { api, HttpError } from "@/app/api";
+import { translateActive } from "@/app/i18n/translate";
 import type { ProjectsPage } from "@/app/projectShellContract";
 import type { ProjectCatalogItem } from "@/app/types/studio";
 
@@ -47,7 +48,7 @@ export function useProjectLibraryBootstrap(onUnauthenticated: () => void) {
         nextCursor: page.next_cursor,
       })),
     onSessionLost: onUnauthenticated,
-    busyErrorMessage: "Unable to load older projects.",
+    busyErrorMessage: translateActive("library.error.unableToLoadOlder"),
   });
   const abortInFlightOlder = olderPages.abortInFlight;
 
@@ -85,7 +86,7 @@ export function useProjectLibraryBootstrap(onUnauthenticated: () => void) {
         }
         setState((current) => ({
           ...current,
-          error: toErrorMessage(reason, "Unable to load projects."),
+          error: toErrorMessage(reason, translateActive("library.error.unableToLoad")),
           isLoading: false,
         }));
       } finally {

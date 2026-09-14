@@ -3,6 +3,8 @@ import { type FormEvent, useCallback, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { api } from "@/app/api";
+import { useTranslation } from "@/app/i18n/useTranslation";
+import { LanguageSwitch } from "@/app/LanguageSwitch";
 import { productIdentity, productLabel } from "@/app/productIdentity";
 import { ThemeSwitch } from "@/app/ThemeSwitch";
 
@@ -17,6 +19,7 @@ const PASSWORD_AUTOCOMPLETE = {
 
 export function EntryPage() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [username, setUsername] = useState("author");
   const [password, setPassword] = useState("");
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -47,7 +50,9 @@ export function EntryPage() {
       await api.login(username, password);
       if (mountedRef.current) navigate("/projects");
     } catch (reason) {
-      if (mountedRef.current) setSubmitError(toErrorMessage(reason, "Unable to continue."));
+      if (mountedRef.current) {
+        setSubmitError(toErrorMessage(reason, t("entry.error.unableToContinue")));
+      }
     } finally {
       busyRef.current = false;
       if (mountedRef.current) setSubmitPhase("idle");
@@ -64,6 +69,7 @@ export function EntryPage() {
     <main className="entry">
       <section className="entry__panel">
         <div className="entry__theme">
+          <LanguageSwitch />
           <ThemeSwitch />
         </div>
         <div className="entry__brand">
@@ -73,23 +79,18 @@ export function EntryPage() {
         <h1 ref={headingRef} tabIndex={-1}>
           {setup
             ? setup.owner_configured
-              ? "Open your writing studio"
-              : "Create the local owner"
+              ? t("entry.heading.signedIn")
+              : t("entry.heading.createOwner")
             : error
-              ? "Unable to open your writing studio"
-              : "Opening your writing studio"}
+              ? t("entry.heading.unavailable")
+              : t("entry.heading.loading")}
         </h1>
-        <p>
-          Your projects, Markdown revisions, reviews, and exports stay in this self-hosted instance.
-        </p>
-        <p>
-          No API key? Generation runs on the built-in trial provider — connect a real one in a
-          project's Settings when you're ready.
-        </p>
+        <p>{t("entry.intro.selfHosted")}</p>
+        <p>{t("entry.intro.trialProvider")}</p>
         {setup ? (
           <form className="entry__form" onSubmit={submit}>
             <label>
-              <span>Username</span>
+              <span>{t("entry.field.username")}</span>
               <input
                 autoComplete="username"
                 disabled={busy}
@@ -99,7 +100,7 @@ export function EntryPage() {
               />
             </label>
             <label>
-              <span>Password</span>
+              <span>{t("entry.field.password")}</span>
               <input
                 autoComplete={
                   setup.owner_configured
@@ -129,11 +130,11 @@ export function EntryPage() {
               <LogIn aria-hidden="true" />
               {busy
                 ? setup.owner_configured
-                  ? "Signing in..."
-                  : "Creating owner..."
+                  ? t("entry.action.signingIn")
+                  : t("entry.action.creatingOwner")
                 : setup.owner_configured
-                  ? "Sign in"
-                  : "Create owner"}
+                  ? t("entry.action.signIn")
+                  : t("entry.action.createOwner")}
             </button>
           </form>
         ) : error ? (
@@ -143,7 +144,7 @@ export function EntryPage() {
             </p>
             <button
               aria-busy={isLoading || undefined}
-              aria-label="Try again"
+              aria-label={t("common.action.tryAgain")}
               className="ui-command ui-command--primary"
               disabled={isLoading}
               onClick={(event) => {
@@ -156,12 +157,12 @@ export function EntryPage() {
               type="button"
             >
               {isLoading ? <Loader2 aria-hidden="true" className="ui-spin" /> : null}
-              {isLoading ? "Trying again..." : "Try again"}
+              {isLoading ? t("common.action.tryingAgain") : t("common.action.tryAgain")}
             </button>
           </div>
         ) : (
           <p aria-live="polite" className="entry__state" role="status">
-            <Loader2 aria-hidden="true" className="ui-spin" /> Checking your session...
+            <Loader2 aria-hidden="true" className="ui-spin" /> {t("entry.status.checkingSession")}
           </p>
         )}
         <footer>{productLabel}</footer>
