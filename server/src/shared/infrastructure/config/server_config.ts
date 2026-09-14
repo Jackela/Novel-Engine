@@ -2,6 +2,7 @@ import { readFileSync, statSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 
 import { DEFAULT_CORS_ORIGINS } from "../../domain/cors_contract.js";
+import { errorCode } from "../error_code.js";
 import { locateWorkspaceRoot } from "../workspace_manifest.js";
 import { ConfigurationError } from "./configuration_error.js";
 import { parseEnvFile } from "./env_file.js";
@@ -224,7 +225,7 @@ function readOptionalEnvironmentFile(filePath: string): string | undefined {
 }
 
 function isMissingFileError(error: unknown): boolean {
-  return typeof error === "object" && error !== null && "code" in error && error.code === "ENOENT";
+  return errorCode(error) === "ENOENT";
 }
 
 /** Case-insensitive lookup: merged environment keys are stored lowercased. */
