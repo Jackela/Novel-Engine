@@ -159,9 +159,38 @@ function buildEditorialReview(task: TextGenerationTask): {
 const STREAM_WORDS_PER_DELTA = 4;
 
 /**
- * Deterministic (mock) provider: real prose for the chapter steps and
- * deterministic dimensioned findings for the review step, so the offline
- * default experience yields manuscripts and reviews without network. Any
+ * Deterministic placeholder candidates for the lore-extract step. The trial
+ * provider is the default first-run experience (#615), so the wizard loop must
+ * work end to end on it: every valid segment yields the same fixed candidate
+ * set, and each summary labels itself with the same trial-provider wording
+ * family so the author knows real extraction needs a configured provider.
+ */
+function buildLoreExtractCandidates(): { candidates: unknown[] } {
+  const trialNote =
+    "Built-in trial provider placeholder; connect a real provider to extract lore from your draft.";
+  return {
+    candidates: [
+      {
+        kind: "character",
+        title: "Placeholder Character",
+        aliases: ["Trial Candidate"],
+        summary: `Sample character suggestion. ${trialNote}`,
+      },
+      {
+        kind: "world",
+        title: "Placeholder World",
+        aliases: ["Trial Setting"],
+        summary: `Sample world suggestion. ${trialNote}`,
+      },
+    ],
+  };
+}
+
+/**
+ * Deterministic (mock) provider: real prose for the chapter steps, deterministic
+ * dimensioned findings for the review step, and fixed placeholder lore
+ * candidates for the lore-extract step, so the offline default experience
+ * yields manuscripts, reviews, and wizard candidates without network. Any
  * step outside its supported set fails with a provider error — an unknown
  * step is never echoed back as a placeholder payload.
  */
@@ -185,6 +214,18 @@ export class DeterministicStoryProvider implements TextGenerationProvider {
         model: this.model,
         rawText,
         content: findings,
+        promptTokens: null,
+        completionTokens: null,
+      };
+    }
+    if (step === "lore_extract") {
+      const candidates = buildLoreExtractCandidates();
+      return {
+        step: task.step,
+        provider: this.providerName,
+        model: this.model,
+        rawText: JSON.stringify(candidates),
+        content: candidates,
         promptTokens: null,
         completionTokens: null,
       };

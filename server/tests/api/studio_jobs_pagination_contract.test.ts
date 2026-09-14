@@ -269,13 +269,20 @@ describe("jobs pagination HTTP contract", () => {
       );
       expect(summary.required).toHaveLength(12);
       expect(summary.additionalProperties).toBe(false);
-      expect(summary.properties.kind.enum).toEqual(["proposal", "review", "export", "import"]);
+      expect(summary.properties.kind.enum).toEqual([
+        "proposal",
+        "review",
+        "export",
+        "lore-extract",
+        "import",
+      ]);
       expect(summary.properties.operation.enum).toEqual([
         "continue",
         "rewrite",
         "generate",
         "review",
         "export",
+        "extract",
         "import",
       ]);
       expect(summary.properties.status.enum).toEqual([

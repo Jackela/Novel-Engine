@@ -17,7 +17,7 @@ reviews the additive-only diff.
 
 ## T1: Server extraction pipeline
 
-- [ ] T1.1 Add the extraction application service (studio context, behind
+- [x] T1.1 Add the extraction application service (studio context, behind
       a port to the ai context's structured text generation): one input
       segment per call — a 100,000 Unicode code-point cap checked before
       provider construction, and the segment's assembled extraction prompt
@@ -29,7 +29,7 @@ reviews the additive-only diff.
       including boundary tests (99,999 passes, 100,000 passes, 100,001
       rejects with the exact envelope) and prompt-byte boundary tests for
       the assembled segment prompt.
-- [ ] T1.2 Register the `lore-extract` Job type, one Job per segment, under
+- [x] T1.2 Register the `lore-extract` Job type, one Job per segment, under
       the synchronous job execution model: events for every transition,
       keyed retry with stored outcomes, and exactly one usage event per
       completed provider request. Extend the Job enum SSOT —
@@ -41,12 +41,12 @@ reviews the additive-only diff.
       `pnpm --dir server test -- job` green with new cases for replay
       idempotency, usage singularity, and summary/detail round-trip of
       `lore-extract` jobs.
-- [ ] T1.3 Wire the mock (trial) provider path: deterministic placeholder
+- [x] T1.3 Wire the mock (trial) provider path: deterministic placeholder
       candidates for any valid segment. Acceptance: `pnpm --dir server
       test` cases proving mock extraction returns the fixed placeholder
       set and real-provider failures stay inside the provider diagnostics
       boundary (no body exposure).
-- [ ] T1.4 Confirm the retrieval contract: the wizard's document selection
+- [x] T1.4 Confirm the retrieval contract: the wizard's document selection
       reads through existing read services and adds no search surface of
       its own; if any retrieval is introduced, its observable behavior
       must follow the full-text search requirement (operator-laden input

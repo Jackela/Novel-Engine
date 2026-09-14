@@ -12,14 +12,21 @@ import { InvalidOperationError } from "../../src/shared/domain/exceptions.js";
 import { DrizzleAuthStore } from "../../src/shared/infrastructure/db/auth_store.js";
 import { openStudioDatabase } from "../../src/shared/infrastructure/db/startup.js";
 
-const SUPPORTED_KINDS = ["proposal", "review", "export"] as const;
+const SUPPORTED_KINDS = ["proposal", "review", "export", "lore-extract"] as const;
+
+/** The summary-operation each retryable kind carries on its stored rows. */
+function operationForKind(kind: string): string {
+  if (kind === "proposal") return "continue";
+  if (kind === "lore-extract") return "extract";
+  return kind;
+}
 
 function failedJob(projectId: string, kind: string, now: Date): AddJobInput {
   return {
     projectId,
     documentId: null,
     kind,
-    operation: kind === "proposal" ? "continue" : kind,
+    operation: operationForKind(kind),
     status: "failed",
     provider: kind === "export" ? "studio" : "mock",
     model: "fixture-model",

@@ -15,7 +15,7 @@ import {
   type JobSummaryPage,
   jobPageLimit,
   type MarkJobOutcomeInput,
-  type RecordCompletedProposalJobInput,
+  type RecordCompletedJobWithUsageInput,
 } from "../application/ports/job_records.js";
 import type { ProjectUsageAggregate } from "../application/ports/project_usage.js";
 import type { ProjectScope } from "../application/ports/studio_store.js";
@@ -110,13 +110,15 @@ export class JobStorePart implements StudioJobLedgerStore {
   }
 
   /**
-   * The atomic completed-proposal landing (#392): the job row and its usage
-   * event share one transaction, so a failure between the writes rolls back
-   * both and never strands a completed job without its usage event.
+   * The atomic completed-job-with-usage landing (#392): the job row and its
+   * usage event share one transaction, so a failure between the writes rolls
+   * back both and never strands a completed job without its usage event.
+   * Shared by every provider-backed kind that records usage (proposal,
+   * lore-extract).
    */
-  recordCompletedProposalJob(
+  recordCompletedJobWithUsage(
     scope: ProjectScope,
-    input: RecordCompletedProposalJobInput,
+    input: RecordCompletedJobWithUsageInput,
   ): JobRecord {
     return this.db.transaction((tx) => {
       scopedProject(tx, scope, input.job.projectId);
@@ -292,7 +294,12 @@ export class JobStorePart implements StudioJobLedgerStore {
     if (source.kind === "import") {
       throw new InvalidOperationError("Import jobs cannot be retried.");
     }
-    if (source.kind !== "proposal" && source.kind !== "review" && source.kind !== "export") {
+    if (
+      source.kind !== "proposal" &&
+      source.kind !== "review" &&
+      source.kind !== "export" &&
+      source.kind !== "lore-extract"
+    ) {
       throw new InvalidOperationError(`Unsupported job kind for retry: ${source.kind}`);
     }
   }

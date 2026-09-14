@@ -11,7 +11,7 @@ import { BoundedPromptWriter } from "./generation_capacity.js";
 import { loreEntriesFromDocuments } from "./lorebook.js";
 import { dumpJson } from "./payloads.js";
 import type { StudioJobLedgerStore } from "./ports/job_ledger_store.js";
-import type { CompletedProposalUsageInput, JobRecord } from "./ports/job_records.js";
+import type { CompletedJobUsageInput, JobRecord } from "./ports/job_records.js";
 import type { ProposalContextSource } from "./ports/proposal_context_store.js";
 import type { ProjectScope } from "./ports/studio_store.js";
 import { assertProposalCodePointLimit, proposalCodePointCount } from "./proposal_code_points.js";
@@ -150,7 +150,7 @@ export function completedProposalJob(
   });
   // #392: the job row and its usage event commit in one transaction so a
   // failure between the two writes can never strand a completed job.
-  return jobs.recordCompletedProposalJob(scope, {
+  return jobs.recordCompletedJobWithUsage(scope, {
     job: {
       projectId: seed.projectId,
       documentId: seed.documentId,
@@ -185,7 +185,7 @@ interface CompletedProposalLanding {
     readonly eventDetailsJson: string;
     readonly now: Date;
   };
-  readonly usage: CompletedProposalUsageInput;
+  readonly usage: CompletedJobUsageInput;
 }
 
 export function completedProposalLanding(

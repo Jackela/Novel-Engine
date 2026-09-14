@@ -11,6 +11,7 @@ import type { SnapshotArtifactService } from "./export_artifact_service.js";
 import { failedJobInput } from "./failed_job_input.js";
 import { replayedJobPayload } from "./job_replay_payload.js";
 import { JobRetryExecutor } from "./job_retry_executor.js";
+import type { LoreExtractService } from "./lore_extract_service.js";
 import type { InFlightOperationGuard } from "./operation_in_flight.js";
 import type { JobPayload, JobSummaryPayload } from "./payload_schemas/job.js";
 import { dumpJson, jobPayload, jobSummaryPayload } from "./payloads.js";
@@ -33,6 +34,8 @@ interface JobHistoryServiceOptions {
   readonly inFlight: InFlightOperationGuard;
   /** Owns the proposal generation sequence shared with the proposal surface. */
   readonly proposals: ProposalGenerationPipeline;
+  /** Owns the lorebook wizard's extraction sequence shared with its surface. */
+  readonly loreExtractions: LoreExtractService;
 }
 
 interface JobHistoryPage {
@@ -69,6 +72,7 @@ export class JobHistoryService {
     this.retries = new JobRetryExecutor(jobs, reviewOutcomes, reviews, artifacts, {
       now: options.now,
       proposals: options.proposals,
+      loreExtractions: options.loreExtractions,
     });
     this.inFlight = options.inFlight;
     this.now = options.now ?? (() => new Date());
