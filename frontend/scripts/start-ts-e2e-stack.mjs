@@ -52,6 +52,12 @@ const serverEnv = {
   DB_URL: `sqlite:///${databasePath}`,
   SECURITY_SECRET_KEY:
     process.env.SECURITY_SECRET_KEY ?? "test-secret-key-for-ts-playwright-1234567890",
+  // #654 diagnostics redaction coverage: seed a known DashScope key so the
+  // diagnostics-export workflow can assert a configured API key is reported
+  // as a boolean and its value never occurs in the export file. The default
+  // provider stays the deterministic mock — the key only marks the
+  // credential as configured; no spec drives a dashscope generation.
+  DASHSCOPE_API_KEY: process.env.DASHSCOPE_API_KEY ?? "ne-e2e-diagnostics-redaction-dashscope-key",
   SECURITY_CORS_ORIGINS: process.env.SECURITY_CORS_ORIGINS ?? `${baseURL},http://localhost:${PORT}`,
   // Parallel browser files poll the unauthenticated setup status while the
   // owner fixture is being created. Auth throttling has dedicated server
