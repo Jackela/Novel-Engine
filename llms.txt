@@ -15,6 +15,15 @@ A self-hosted writing studio: a TypeScript/Fastify + SQLite backend with a React
 - [Upgrading](https://raw.githubusercontent.com/Jackela/Novel-Engine/main/openwiki/guides/upgrading.md): Pull new code, rebuild the image, and keep the data volume.
 - [Troubleshooting](https://raw.githubusercontent.com/Jackela/Novel-Engine/main/openwiki/guides/troubleshooting.md): Symptom-to-fix for common self-hosting problems.
 - [FAQ](https://raw.githubusercontent.com/Jackela/Novel-Engine/main/openwiki/guides/faq.md): Short answers about storage, models, and offline use.
+- [README (Chinese)](https://raw.githubusercontent.com/Jackela/Novel-Engine/main/README.zh-CN.md): Chinese quick start with both Docker paths, trial mode, and provider pointers.
+- [Getting started (Docker) — Chinese](https://raw.githubusercontent.com/Jackela/Novel-Engine/main/openwiki/guides/zh/getting-started.md): Chinese edition of the writer-first path from Docker Desktop to the first AI-assisted chapter.
+- [Provider setup — Chinese](https://raw.githubusercontent.com/Jackela/Novel-Engine/main/openwiki/guides/zh/provider-setup.md): Chinese edition of trial mode, DashScope, and OpenAI-compatible provider configuration.
+- [Writing guide — Chinese](https://raw.githubusercontent.com/Jackela/Novel-Engine/main/openwiki/guides/zh/writing-guide.md): Chinese edition of the authoring workflow: projects, Copilot proposals, the whole-book loop, lore, review, and history.
+- [Exporting — Chinese](https://raw.githubusercontent.com/Jackela/Novel-Engine/main/openwiki/guides/zh/exporting.md): Chinese edition of the Markdown, DOCX, and EPUB export guide.
+- [Backup and restore — Chinese](https://raw.githubusercontent.com/Jackela/Novel-Engine/main/openwiki/guides/zh/backup-and-restore.md): Chinese edition of where the data lives and how to back it up and restore it.
+- [Upgrading — Chinese](https://raw.githubusercontent.com/Jackela/Novel-Engine/main/openwiki/guides/zh/upgrading.md): Chinese edition of the upgrade guide: pull new code, rebuild the image, keep the data volume.
+- [Troubleshooting — Chinese](https://raw.githubusercontent.com/Jackela/Novel-Engine/main/openwiki/guides/zh/troubleshooting.md): Chinese edition of symptom-to-fix for common self-hosting problems.
+- [FAQ — Chinese](https://raw.githubusercontent.com/Jackela/Novel-Engine/main/openwiki/guides/zh/faq.md): Chinese edition of short answers about storage, models, and offline use.
 - [Architecture overview](https://raw.githubusercontent.com/Jackela/Novel-Engine/main/openwiki/architecture/overview.md): End-to-end tour of the TypeScript backend, bounded contexts, and runtime composition.
 - [Streaming and the whole-book loop](https://raw.githubusercontent.com/Jackela/Novel-Engine/main/openwiki/architecture/streaming-and-whole-book.md): How the SSE proposal stream and the chapter-by-chapter whole-book loop ride on one proposal pipeline.
 - [Lorebook](https://raw.githubusercontent.com/Jackela/Novel-Engine/main/openwiki/architecture/lorebook.md): Keyword-triggered lore injection: entry keys, substring matching, lifecycle gating, and deterministic ordering.
