@@ -55,9 +55,15 @@ function jsonResponse(body: unknown): Response {
 }
 
 describe("provider step vocabulary", () => {
-  it("is closed to the three adjudicated steps", () => {
-    expect([...PROVIDER_STEPS]).toEqual(["chapter_draft", "chapter_revision", "editorial_review"]);
+  it("is closed to the four adjudicated steps", () => {
+    expect([...PROVIDER_STEPS]).toEqual([
+      "chapter_draft",
+      "chapter_revision",
+      "editorial_review",
+      "lore_extract",
+    ]);
     expect(isProviderStep("chapter_draft")).toBe(true);
+    expect(isProviderStep("lore_extract")).toBe(true);
     expect(isProviderStep("continue")).toBe(false);
     expect(isProviderStep("generate")).toBe(false);
   });

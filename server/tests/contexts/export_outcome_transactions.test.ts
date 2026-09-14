@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it } from "vitest";
 
 import { SnapshotArtifactService } from "../../src/contexts/studio/application/export_artifact_service.js";
 import { JobHistoryService } from "../../src/contexts/studio/application/job_history_service.js";
+import { LoreExtractService } from "../../src/contexts/studio/application/lore_extract_service.js";
 import { InFlightOperationGuard } from "../../src/contexts/studio/application/operation_in_flight.js";
 import { scopeForPrincipal } from "../../src/contexts/studio/application/ports/studio_store.js";
 import { ProposalGenerationPipeline } from "../../src/contexts/studio/application/proposal_pipeline.js";
@@ -115,6 +116,7 @@ function exportHistory(
         inFlight,
         harness.now,
       ),
+      loreExtractions: new LoreExtractService(harness.parts.jobs, providerFactory, harness.now),
     },
   );
 }

@@ -17,7 +17,7 @@ reviews the additive-only diff.
 
 ## T1: Server extraction pipeline
 
-- [ ] T1.1 Add the extraction application service (studio context, behind
+- [x] T1.1 Add the extraction application service (studio context, behind
       a port to the ai context's structured text generation): one input
       segment per call — a 100,000 Unicode code-point cap checked before
       provider construction, and the segment's assembled extraction prompt
@@ -29,7 +29,7 @@ reviews the additive-only diff.
       including boundary tests (99,999 passes, 100,000 passes, 100,001
       rejects with the exact envelope) and prompt-byte boundary tests for
       the assembled segment prompt.
-- [ ] T1.2 Register the `lore-extract` Job type, one Job per segment, under
+- [x] T1.2 Register the `lore-extract` Job type, one Job per segment, under
       the synchronous job execution model: events for every transition,
       keyed retry with stored outcomes, and exactly one usage event per
       completed provider request. Extend the Job enum SSOT —
@@ -41,12 +41,12 @@ reviews the additive-only diff.
       `pnpm --dir server test -- job` green with new cases for replay
       idempotency, usage singularity, and summary/detail round-trip of
       `lore-extract` jobs.
-- [ ] T1.3 Wire the mock (trial) provider path: deterministic placeholder
+- [x] T1.3 Wire the mock (trial) provider path: deterministic placeholder
       candidates for any valid segment. Acceptance: `pnpm --dir server
       test` cases proving mock extraction returns the fixed placeholder
       set and real-provider failures stay inside the provider diagnostics
       boundary (no body exposure).
-- [ ] T1.4 Confirm the retrieval contract: the wizard's document selection
+- [x] T1.4 Confirm the retrieval contract: the wizard's document selection
       reads through existing read services and adds no search surface of
       its own; if any retrieval is introduced, its observable behavior
       must follow the full-text search requirement (operator-laden input
@@ -60,17 +60,23 @@ reviews the additive-only diff.
 - [ ] T2.1 Add the extraction route (owner-guarded, TypeBox schemas,
       thin-handler discipline) submitting one segment and returning its
       terminal `lore-extract` Job, reusing the existing job result and
-      retry surfaces where they already fit. Acceptance:
+      retry surfaces where they already fit. Include executor-level
+      integration cases for the lore-extract retry chain through
+      `JobHistoryService.reexecuteProjectJob` (one completing and one
+      failing retry). Acceptance:
       `pnpm --dir server test -- <route file>` green including auth,
-      validation, capacity-envelope, and error-envelope cases.
+      validation, capacity-envelope, and error-envelope cases, plus the
+      executor-level retry cases.
 - [ ] T2.2 Regenerate the OpenAPI baseline deliberately
       (`pnpm --dir server openapi:snapshot`) and review the diff for
       additive-only changes, serially with any other route-adding change
-      in the window. Extend the frontend job types to match the new enums:
-      `StudioJobKind` / `StudioJobSummaryKind` gain `lore-extract` and
-      `StudioJobSummaryOperation` gains `extract` in
-      `frontend/src/app/types/studio.ts`, regenerating API types
-      (`pnpm --dir frontend gen:api-types`). Acceptance:
+      in the window. API types regenerate in lockstep with every baseline
+      change (`pnpm --dir frontend gen:api-types` committed together with
+      the baseline — the T1 enum extension already regenerated both); T2
+      regenerates both again for the route. Extend the frontend job types
+      to match the new enums: `StudioJobKind` / `StudioJobSummaryKind`
+      gain `lore-extract` and `StudioJobSummaryOperation` gains `extract`
+      in `frontend/src/app/types/studio.ts`. Acceptance:
       `pnpm --dir server gates` green including the OpenAPI snapshot gate;
       `pnpm --dir frontend type-check` green.
 

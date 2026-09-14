@@ -245,12 +245,16 @@ Each input segment MUST be capped at 100,000 Unicode code points. A segment
 over the cap, or a segment whose assembled extraction prompt exceeds the
 shared UTF-8 byte authority of proposal generation, MUST fail before
 provider construction with the stable 422 `GENERATION_CAPACITY_EXCEEDED`
-envelope whose details carry `resource: lore_extract_segment`, `limit:
-100000`, and an `observed` value bounded to the limit plus one — never
-through silent truncation. Any retrieval the wizard performs over project
-content MUST behave like the product's full-text search: operator-laden
-input safely reduced to strict tokens, irreducible input returning no
-results, and every query running as a token-reduced parameterized search.
+envelope and an `observed` value bounded to the refusing limit plus one —
+never through silent truncation. The envelope details carry the fixed
+combination of the refusing resource: a segment over the code-point cap
+carries `resource: lore_extract_segment` with `limit: 100000`, and an
+assembled prompt over the shared byte authority carries the shared
+`prompt_bytes` combination of proposal generation. Any retrieval the wizard
+performs over project content MUST behave like the product's full-text
+search: operator-laden input safely reduced to strict tokens, irreducible
+input returning no results, and every query running as a token-reduced
+parameterized search.
 
 #### Scenario: Draft material yields candidates
 
@@ -298,11 +302,18 @@ results, and every query running as a token-reduced parameterized search.
 
 #### Scenario: Over-budget segments fail closed
 
-- **GIVEN** a segment exceeding 100,000 Unicode code points, or a segment whose assembled extraction prompt exceeds the shared UTF-8 byte authority
+- **GIVEN** a segment exceeding 100,000 Unicode code points
 - **WHEN** extraction is requested for that segment
 - **THEN** the request fails before provider construction with 422 `GENERATION_CAPACITY_EXCEEDED` whose details carry `resource: lore_extract_segment`, `limit: 100000`, and an `observed` value of at most the limit plus one
 - **AND** no provider work, no usage event, and no partial candidate set is produced for that segment
 - **AND** the author is told to split or trim the segment rather than receiving silently truncated results
+
+#### Scenario: Over-budget assembled prompts carry the shared refusal
+
+- **GIVEN** a segment whose assembled extraction prompt exceeds the shared UTF-8 byte authority
+- **WHEN** extraction is requested for that segment
+- **THEN** the request fails before provider construction with 422 `GENERATION_CAPACITY_EXCEEDED` carrying the shared `prompt_bytes` combination of proposal generation, with `observed` bounded to that limit plus one
+- **AND** no provider work, no usage event, and no partial candidate set is produced for that segment
 
 #### Scenario: Multi-segment candidates merge deterministically
 

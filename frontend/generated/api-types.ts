@@ -1559,6 +1559,13 @@ export interface paths {
                                     observed: 8388609;
                                     /** @enum {string} */
                                     resource: "prompt_bytes";
+                                } | {
+                                    /** @enum {integer} */
+                                    limit: 100000;
+                                    /** @enum {integer} */
+                                    observed: 100001;
+                                    /** @enum {string} */
+                                    resource: "lore_extract_segment";
                                 };
                                 /** @enum {string} */
                                 message: "Generation capacity exceeded.";
@@ -1737,6 +1744,13 @@ export interface paths {
                                     observed: 8388609;
                                     /** @enum {string} */
                                     resource: "prompt_bytes";
+                                } | {
+                                    /** @enum {integer} */
+                                    limit: 100000;
+                                    /** @enum {integer} */
+                                    observed: 100001;
+                                    /** @enum {string} */
+                                    resource: "lore_extract_segment";
                                 };
                                 /** @enum {string} */
                                 message: "Generation capacity exceeded.";
@@ -3000,10 +3014,10 @@ export interface paths {
                                 error: string | null;
                                 id: string;
                                 /** @enum {string} */
-                                kind: "proposal" | "review" | "export" | "import";
+                                kind: "proposal" | "review" | "export" | "lore-extract" | "import";
                                 model: string;
                                 /** @enum {string} */
-                                operation: "continue" | "rewrite" | "generate" | "review" | "export" | "import";
+                                operation: "continue" | "rewrite" | "generate" | "review" | "export" | "extract" | "import";
                                 project_id: string;
                                 provider: string;
                                 retry_of_job_id: string | null;
@@ -3309,6 +3323,13 @@ export interface paths {
                                     observed: 8388609;
                                     /** @enum {string} */
                                     resource: "prompt_bytes";
+                                } | {
+                                    /** @enum {integer} */
+                                    limit: 100000;
+                                    /** @enum {integer} */
+                                    observed: 100001;
+                                    /** @enum {string} */
+                                    resource: "lore_extract_segment";
                                 };
                                 /** @enum {string} */
                                 message: "Generation capacity exceeded.";

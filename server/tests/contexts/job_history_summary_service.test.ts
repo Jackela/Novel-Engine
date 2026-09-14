@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it } from "vitest";
 
 import { SnapshotArtifactService } from "../../src/contexts/studio/application/export_artifact_service.js";
 import { JobHistoryService } from "../../src/contexts/studio/application/job_history_service.js";
+import { LoreExtractService } from "../../src/contexts/studio/application/lore_extract_service.js";
 import { InFlightOperationGuard } from "../../src/contexts/studio/application/operation_in_flight.js";
 import type { JobRecord } from "../../src/contexts/studio/application/ports/job_records.js";
 import type { ProjectScope } from "../../src/contexts/studio/application/ports/studio_store.js";
@@ -58,6 +59,7 @@ function history(store: StudioPersistence, exportStore: ExportStorePart): JobHis
         providerFactory,
         inFlight,
       ),
+      loreExtractions: new LoreExtractService(store.jobs, providerFactory),
     },
   );
 }

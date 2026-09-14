@@ -27,11 +27,38 @@ import {
 } from "./studio_helpers.js";
 
 const PROMPT_LIMIT = 8_388_608;
+const SEGMENT_LIMIT = 100_000;
 const CAPACITY_ERROR = {
   code: "GENERATION_CAPACITY_EXCEEDED",
   message: "Generation capacity exceeded.",
   details: { resource: "prompt_bytes", limit: PROMPT_LIMIT, observed: PROMPT_LIMIT + 1 },
 } as const;
+
+/** The complete (resource, limit, observed) refusal pairs the envelope admits. */
+function capacityRefusalShapes() {
+  return [
+    {
+      type: "object",
+      additionalProperties: false,
+      properties: {
+        resource: { type: "string", enum: ["prompt_bytes"] },
+        limit: { type: "integer", enum: [PROMPT_LIMIT] },
+        observed: { type: "integer", enum: [PROMPT_LIMIT + 1] },
+      },
+      required: ["resource", "limit", "observed"],
+    },
+    {
+      type: "object",
+      additionalProperties: false,
+      properties: {
+        resource: { type: "string", enum: ["lore_extract_segment"] },
+        limit: { type: "integer", enum: [SEGMENT_LIMIT] },
+        observed: { type: "integer", enum: [SEGMENT_LIMIT + 1] },
+      },
+      required: ["resource", "limit", "observed"],
+    },
+  ];
+}
 
 function observedProviderFactory(): {
   factory: TextGenerationProviderFactory;
@@ -221,12 +248,8 @@ describe("generation capacity HTTP contract", () => {
           "GENERATION_CAPACITY_EXCEEDED",
           "VALIDATION_ERROR",
         ]);
-        const capacityDetails = alternatives[1].properties.error.properties.details.properties;
-        expect(capacityDetails.limit).toEqual({ type: "integer", enum: [PROMPT_LIMIT] });
-        expect(capacityDetails.observed).toEqual({
-          type: "integer",
-          enum: [PROMPT_LIMIT + 1],
-        });
+        const capacityDetails = alternatives[1].properties.error.properties.details;
+        expect(capacityDetails.oneOf).toEqual(capacityRefusalShapes());
       }
       const retryAlternatives =
         document.paths["/api/projects/{projectId}/jobs/{jobId}/retry"].post.responses["422"]
@@ -242,13 +265,8 @@ describe("generation capacity HTTP contract", () => {
         "GENERATION_CAPACITY_EXCEEDED",
         "VALIDATION_ERROR",
       ]);
-      const retryCapacityDetails =
-        retryAlternatives[2].properties.error.properties.details.properties;
-      expect(retryCapacityDetails.limit).toEqual({ type: "integer", enum: [PROMPT_LIMIT] });
-      expect(retryCapacityDetails.observed).toEqual({
-        type: "integer",
-        enum: [PROMPT_LIMIT + 1],
-      });
+      const retryCapacityDetails = retryAlternatives[2].properties.error.properties.details;
+      expect(retryCapacityDetails.oneOf).toEqual(capacityRefusalShapes());
     } finally {
       await app.close();
     }

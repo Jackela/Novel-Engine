@@ -174,7 +174,7 @@ function coherentHarness() {
   } as unknown as ProposalContextStore;
   const jobs = {
     addJob: legacyRead,
-    recordCompletedProposalJob: legacyRead,
+    recordCompletedJobWithUsage: legacyRead,
   } as unknown as StudioJobLedgerStore;
   const proposalAcceptance = {
     acceptCompletedProposal: legacyRead,

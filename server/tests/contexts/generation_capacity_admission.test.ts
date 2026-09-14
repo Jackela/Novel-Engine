@@ -67,7 +67,7 @@ function admissionHarness(): {
     addJob: () => {
       throw new Error("admission refusal must not record jobs");
     },
-    recordCompletedProposalJob: () => {
+    recordCompletedJobWithUsage: () => {
       throw new Error("admission refusal must not record jobs");
     },
   } as unknown as StudioJobLedgerStore;
