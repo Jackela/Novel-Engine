@@ -159,6 +159,27 @@ describe("restore CLI", () => {
     expect(ownerUsernames(harness.databasePath)).toEqual(["current"]);
   });
 
+  it("refuses a structurally valid unrelated SQLite database", async () => {
+    const harness = await restoreHarness();
+    await seedOwner(harness.databasePath, "current");
+    const input = join(harness.directory, "foreign.sqlite3");
+    const foreign = new Database(input);
+    try {
+      foreign.exec("CREATE TABLE address_book (id text PRIMARY KEY, name text NOT NULL)");
+    } finally {
+      foreign.close();
+    }
+
+    const code = await runCli(["restore", "--input", input], harness.context);
+
+    expect(code).toBe(1);
+    expect(harness.lines.join("\n")).toMatch(
+      /Restore input is not a Novel Engine database: missing "jobs" table/i,
+    );
+    expect(ownerUsernames(harness.databasePath)).toEqual(["current"]);
+    expect(existsSync(join(harness.dataDirectory, "backups"))).toBe(false);
+  });
+
   it("reports a missing --input flag as usage error exit 2", async () => {
     const harness = await restoreHarness();
 

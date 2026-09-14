@@ -15,10 +15,20 @@ import { backupDatabaseFile } from "./backup.js";
 const WAL_SIDECAR_SUFFIXES = ["-wal", "-shm"] as const;
 
 /**
+ * Earliest Novel Engine core table, created by the very first migration
+ * (`0000_init_persistence_core.sql`) and never renamed or dropped since.
+ * Its presence in `sqlite_master` is the minimal proof that a restore input
+ * carries the Novel Engine schema instead of being any structurally valid
+ * unrelated SQLite file.
+ */
+const NOVEL_ENGINE_CORE_TABLE = "jobs";
+
+/**
  * Replace the configured database file with a verified backup file. The input
- * is opened read-only for `PRAGMA quick_check` before anything is touched; a
- * missing, unreadable, empty, or corrupt input refuses the restore with no
- * side effects. The current database then receives a safety backup through the
+ * is opened read-only for `PRAGMA quick_check` and a minimal Novel Engine
+ * schema assertion before anything is touched; a missing, unreadable, empty,
+ * corrupt, or foreign-schema input refuses the restore with no side effects.
+ * The current database then receives a safety backup through the
  * same online-backup path as `novel-engine backup` (a missing or empty
  * database is a clean bootstrap and produces none), so a failed backup never
  * reaches the replacement step. The replacement itself copies the verified
@@ -50,9 +60,13 @@ export async function restoreDatabaseFile(
 }
 
 /**
- * Refuse any input that is missing, unreadable, empty, or fails the SQLite
- * integrity check. Only this module's refusal errors are raised here; every
- * branch names the exact input and why it was rejected.
+ * Refuse any input that is missing, unreadable, empty, fails the SQLite
+ * integrity check, or lacks the Novel Engine schema. Only this module's
+ * refusal errors are raised here; every branch names the exact input and why
+ * it was rejected. The schema assertion cannot reject a legitimate artifact:
+ * a genuinely empty new database is zero bytes and produces no backup at all
+ * (`backupDatabaseFile` treats size 0 as a clean bootstrap), while every
+ * product backup is taken from a migrated live database.
  */
 async function verifyRestoreInput(backupPath: string): Promise<void> {
   let size: number;
@@ -77,8 +91,10 @@ async function verifyRestoreInput(backupPath: string): Promise<void> {
     throw error;
   }
   let check: string;
+  let hasCoreTable: boolean;
   try {
     check = String(input.pragma("quick_check", { simple: true }));
+    hasCoreTable = sqliteTableExists(input, NOVEL_ENGINE_CORE_TABLE);
   } catch (error) {
     if (error instanceof Database.SqliteError) {
       throw new Error(
@@ -93,6 +109,23 @@ async function verifyRestoreInput(backupPath: string): Promise<void> {
   if (check !== "ok") {
     throw new Error(`Restore input failed the integrity check (${check}): ${backupPath}`);
   }
+  if (!hasCoreTable) {
+    throw new Error(
+      `Restore input is not a Novel Engine database: missing "${NOVEL_ENGINE_CORE_TABLE}" table: ${backupPath}`,
+    );
+  }
+}
+
+/**
+ * Whether the named table exists in the input's schema. The lookup is a
+ * parameterized read of `sqlite_master` — never string-concatenated SQL —
+ * and touches no table data.
+ */
+function sqliteTableExists(input: Database.Database, tableName: string): boolean {
+  const row = input
+    .prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?")
+    .get(tableName);
+  return row !== undefined;
 }
 
 /** Stage the verified copy inside the data directory so the rename is atomic. */
