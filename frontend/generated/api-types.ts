@@ -775,7 +775,6 @@ export interface paths {
                                 provider: {
                                     configured: boolean;
                                     id: string;
-                                    label: string;
                                 };
                             };
                             database: {

@@ -58,7 +58,6 @@ function parseDiagnosticsConfiguration(
   return {
     provider: {
       id: stringField(provider, "id", `${label}.provider`),
-      label: stringField(provider, "label", `${label}.provider`),
       configured: booleanMember(provider, "configured", `${label}.provider`),
     },
     keys: {

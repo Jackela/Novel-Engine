@@ -46,6 +46,12 @@ export interface JobSummaryRecord {
   updatedAt: Date;
 }
 
+/** One persisted failure message of a failed Job (#654 diagnostics). */
+export interface FailedJobErrorRecord {
+  readonly error: string;
+  readonly updatedAt: Date;
+}
+
 /** The validated row budget of one bounded project-job history page. */
 export type JobPageLimit = number & { readonly __jobPageLimit: unique symbol };
 

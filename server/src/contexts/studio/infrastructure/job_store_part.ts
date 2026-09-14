@@ -7,7 +7,9 @@ import {
   type AddUsageEventInput,
   type ClaimJobRetryInput,
   type CompleteJobWithUsageInput,
+  type FailedJobErrorRecord,
   type JobPageInput,
+  type JobPageLimit,
   type JobRecord,
   type JobRetryClaim,
   type JobSummaryPage,
@@ -32,7 +34,10 @@ import {
 import { jobs } from "./db/schema.js";
 import { type ProjectRow, scopedProject, type Tx } from "./db/studio_query_helpers.js";
 import { projectUsageAggregate } from "./db/usage_aggregation.js";
-import { buildProjectJobSummariesQuery } from "./job_page_queries.js";
+import {
+  buildProjectJobSummariesQuery,
+  buildRecentFailedJobErrorsQuery,
+} from "./job_page_queries.js";
 
 export { jobWithEvents };
 
@@ -189,6 +194,22 @@ export class JobStorePart implements StudioJobLedgerStore {
           ? { createdAtMs: boundary.createdAt.getTime(), id: boundary.id }
           : null;
       return { jobs: returnedRows, nextCursor };
+    });
+  }
+
+  /** The diagnostics failure scan (#654): newest persisted failures first. */
+  collectRecentFailedJobErrors(
+    scope: ProjectScope,
+    projectId: string,
+    limit: JobPageLimit,
+  ): FailedJobErrorRecord[] {
+    return this.db.transaction((tx) => {
+      const project: ProjectRow = scopedProject(tx, scope, projectId);
+      // The query filters `error IS NOT NULL`; the predicate keeps the row
+      // type honest without casting away the column's nullability.
+      return buildRecentFailedJobErrorsQuery(tx, project.id, jobPageLimit(limit))
+        .all()
+        .filter((row): row is FailedJobErrorRecord => row.error !== null);
     });
   }
 

@@ -1596,14 +1596,10 @@
                             },
                             "id": {
                               "type": "string"
-                            },
-                            "label": {
-                              "type": "string"
                             }
                           },
                           "required": [
                             "id",
-                            "label",
                             "configured"
                           ],
                           "type": "object"

@@ -56,6 +56,22 @@ function keyConfigured(value: string | undefined): boolean {
 }
 
 /**
+ * The resolved provider's credential state for the diagnostics export
+ * (#654), computed here in the composition root so the application service
+ * holds no second copy of the rule: the deterministic mock is always
+ * configured; an HTTP provider exactly when its key is set.
+ */
+function providerConfigured(
+  id: string,
+  keys: { dashscope?: string | undefined; openaiCompatible?: string | undefined },
+): boolean {
+  if (id === "mock") return true;
+  if (id === "dashscope") return keyConfigured(keys.dashscope);
+  if (id === "openai_compatible") return keyConfigured(keys.openaiCompatible);
+  return false;
+}
+
+/**
  * Private assembly of the Studio service container for the composition root:
  * one store part per narrow port plus the export/artifact boundaries, with
  * test seams overriding each filesystem or persistence edge.
@@ -76,7 +92,10 @@ export function assembleStudioServices(
           architecture: arch(),
           nodeVersion: process.versions.node,
         },
-        provider: { id: provider.defaultProvider },
+        provider: {
+          id: provider.defaultProvider,
+          configured: providerConfigured(provider.defaultProvider, provider.providerApiKeys),
+        },
         keys: {
           sessionSecret: inputs.sessionSecretConfigured,
           dashscopeApiKey: keyConfigured(provider.providerApiKeys.dashscope),

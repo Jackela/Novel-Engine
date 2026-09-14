@@ -234,14 +234,16 @@ export interface ProjectUsage {
 /**
  * The opt-in diagnostics export (#654): structurally redacted — configuration
  * state is booleans only and the error summary carries persisted messages
- * only, so no field can hold a secret value or manuscript content.
+ * only, so no field can hold a secret value or manuscript content. The
+ * provider's human-readable label is a display concern derived from the id
+ * through `providerLabel`, never a second server-side copy.
  */
 export interface DiagnosticsSummary {
   generated_at: string;
   product: { name: string; version: string };
   runtime: { platform: string; architecture: string; node_version: string };
   configuration: {
-    provider: { id: string; label: string; configured: boolean };
+    provider: { id: string; configured: boolean };
     keys: {
       session_secret: boolean;
       dashscope_api_key: boolean;

@@ -33,7 +33,7 @@ export const diagnosticsResponseSchema = Type.Object(
     configuration: Type.Object(
       {
         provider: Type.Object(
-          { id: Type.String(), label: Type.String(), configured: Type.Boolean() },
+          { id: Type.String(), configured: Type.Boolean() },
           { additionalProperties: false },
         ),
         keys: Type.Object(

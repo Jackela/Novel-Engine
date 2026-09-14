@@ -7,7 +7,7 @@ const diagnosticsPayload = {
   product: { name: "Novel Engine", version: "1.2.3" },
   runtime: { platform: "darwin", architecture: "arm64", node_version: "24.11.0" },
   configuration: {
-    provider: { id: "mock", label: "Mock (trial — no API key)", configured: true },
+    provider: { id: "mock", configured: true },
     keys: { session_secret: true, dashscope_api_key: false, openai_compatible_api_key: false },
   },
   database: {

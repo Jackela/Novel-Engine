@@ -1,3 +1,5 @@
+import { join } from "node:path";
+import Database from "better-sqlite3";
 import { describe, expect, it } from "vitest";
 
 import type { TextGenerationProviderFactory } from "../../src/contexts/ai/application/ports/text_generation.js";
@@ -14,7 +16,35 @@ import { buildStudioApp, call, ownerJar, seedDocument, seedProject } from "./stu
 
 const MANUSCRIPT_CANARY = "DIAGNOSTICS_MANUSCRIPT_CANARY_CLOCKWORK";
 
-/** Every object key reachable in the value, proving no error-code field ships. */
+interface RawJobRow {
+  readonly id: string;
+  readonly status: string;
+  readonly error: string | null;
+  readonly updatedAtMs: number;
+}
+
+// Seed job rows directly (the paging-window regression fixture).
+function insertRawJobs(directory: string, projectId: string, rows: readonly RawJobRow[]): void {
+  const raw = new Database(join(directory, "novel-engine.sqlite3"));
+  try {
+    const insert = raw.prepare(
+      `INSERT INTO jobs
+        (id, project_id, kind, operation, status, provider, model,
+         request_json, result_json, error, created_at, updated_at)
+       VALUES (?, ?, 'proposal', 'continue', ?, 'mock', '',
+               '{}', '{}', ?, ?, ?)`,
+    );
+    raw.transaction(() => {
+      for (const row of rows) {
+        insert.run(row.id, projectId, row.status, row.error, row.updatedAtMs, row.updatedAtMs);
+      }
+    })();
+  } finally {
+    raw.close();
+  }
+}
+
+// Every object key reachable in the value, proving no error-code field ships.
 function collectKeys(value: unknown, into: Set<string> = new Set()): Set<string> {
   if (Array.isArray(value)) {
     for (const entry of value) collectKeys(entry, into);
@@ -82,7 +112,7 @@ describe("opt-in diagnostics export (#654)", () => {
           node_version: expect.any(String),
         },
         configuration: {
-          provider: { id: "mock", label: "Mock (trial — no API key)", configured: true },
+          provider: { id: "mock", configured: true },
           keys: {
             session_secret: true,
             dashscope_api_key: false,
@@ -235,6 +265,40 @@ describe("opt-in diagnostics export (#654)", () => {
             `DashScope generation failed for step 'chapter_revision': provider returned HTTP ${status}.`,
         ),
       );
+    } finally {
+      await app.close();
+    }
+  });
+
+  it("still reports a failure buried under more than a page of newer jobs", async () => {
+    const { app, directory } = await buildStudioApp();
+    try {
+      const jar = await ownerJar(app);
+      const project = await seedProject(app, jar, "Buried failure");
+      const failureMessage = "DashScope generation failed before the quiet streak.";
+      // One failed job, then 120 completed jobs with strictly newer
+      // timestamps: the failure scan is a dedicated failed-only query, so the
+      // empty state can never be produced by paging past old failures.
+      insertRawJobs(directory, project.id, [
+        {
+          id: "job-failed-buried",
+          status: "failed",
+          error: failureMessage,
+          updatedAtMs: 1_000,
+        },
+        ...Array.from({ length: 120 }, (_, index) => ({
+          id: `job-completed-${index}`,
+          status: "completed",
+          error: null,
+          updatedAtMs: 2_000 + index,
+        })),
+      ]);
+
+      const response = await call(app, jar, "GET", `/api/projects/${project.id}/diagnostics`);
+      expect(response.statusCode, response.body).toBe(200);
+      expect(response.json().recent_errors).toEqual([
+        { message: failureMessage, occurred_at: expect.any(String) },
+      ]);
     } finally {
       await app.close();
     }

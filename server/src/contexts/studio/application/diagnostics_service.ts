@@ -4,32 +4,15 @@ import type { StudioJobLedgerStore } from "./ports/job_ledger_store.js";
 import { jobPageLimit } from "./ports/job_records.js";
 import { scopeForPrincipal } from "./ports/studio_store.js";
 
-/**
- * Human-readable provider labels mirroring the Settings surface's English
- * dictionary values (#606); unknown provider ids fall back to their raw id so
- * providers added later stay readable in support files.
- */
-const PROVIDER_LABELS: Readonly<Record<string, string>> = {
-  mock: "Mock (trial — no API key)",
-  dashscope: "DashScope",
-  openai_compatible: "OpenAI-compatible",
-};
-
 /** How many persisted failure messages the export carries. */
-const RECENT_ERROR_LIMIT = 5;
-
-/**
- * The bounded audit window the failure scan reads: the newest job summaries,
- * newest first. Failures older than this window fall out of the "recent"
- * horizon by design — diagnostics describes the machine's present, not its
- * complete history.
- */
-const RECENT_ERROR_WINDOW = jobPageLimit(100);
+const RECENT_ERROR_LIMIT = jobPageLimit(5);
 
 /**
  * The composition-root-supplied facts of the diagnostics export (#654):
  * identity, runtime, and configuration state as plain values, so the service
- * never reads the filesystem or the process itself.
+ * never reads the filesystem or the process itself — and holds no second
+ * copy of the provider-configuration rule (the composition root computes
+ * the resolved provider's `configured` boolean).
  */
 export interface DiagnosticsFacts {
   readonly product: { readonly name: string; readonly version: string };
@@ -38,7 +21,8 @@ export interface DiagnosticsFacts {
     readonly architecture: string;
     readonly nodeVersion: string;
   };
-  readonly provider: { readonly id: string };
+  /** The resolved provider selection; its label is a display concern (#654). */
+  readonly provider: { readonly id: string; readonly configured: boolean };
   /**
    * Set/unset booleans only — the structural redaction rule: the summary has
    * no field capable of carrying a secret value, so the session secret and
@@ -63,11 +47,7 @@ export interface DiagnosticsSummary {
   readonly product: DiagnosticsFacts["product"];
   readonly runtime: DiagnosticsFacts["runtime"];
   readonly configuration: {
-    readonly provider: {
-      readonly id: string;
-      readonly label: string;
-      readonly configured: boolean;
-    };
+    readonly provider: { readonly id: string; readonly configured: boolean };
     readonly keys: {
       readonly sessionSecret: boolean;
       readonly dashscopeApiKey: boolean;
@@ -123,44 +103,19 @@ export class DiagnosticsService {
    */
   collectDiagnostics(principal: Principal, projectId: string): DiagnosticsSummary {
     const scope = scopeForPrincipal(principal);
-    const window = this.jobs.collectProjectJobSummaries(scope, projectId, {
-      limit: RECENT_ERROR_WINDOW,
-    });
-    const recentErrors = window.jobs
-      .flatMap((job) =>
-        job.status === "failed" && job.error !== null
-          ? [{ message: job.error, occurredAt: job.updatedAt.toISOString() }]
-          : [],
-      )
-      .slice(0, RECENT_ERROR_LIMIT);
+    const recentErrors = this.jobs
+      .collectRecentFailedJobErrors(scope, projectId, RECENT_ERROR_LIMIT)
+      .map((job) => ({ message: job.error, occurredAt: job.updatedAt.toISOString() }));
     return {
       generatedAt: this.now().toISOString(),
       product: this.facts.product,
       runtime: this.facts.runtime,
       configuration: {
-        provider: {
-          id: this.facts.provider.id,
-          label: PROVIDER_LABELS[this.facts.provider.id] ?? this.facts.provider.id,
-          configured: this.providerConfigured(),
-        },
+        provider: this.facts.provider,
         keys: this.facts.keys,
       },
       database: this.health(),
       recentErrors,
     };
-  }
-
-  /**
-   * The resolved provider's credential state, mirroring the provider catalog:
-   * the deterministic mock is always configured; an HTTP provider exactly
-   * when its key is set. Computed from the boolean facts — never from a
-   * credential value.
-   */
-  private providerConfigured(): boolean {
-    const id = this.facts.provider.id;
-    if (id === "mock") return true;
-    if (id === "dashscope") return this.facts.keys.dashscopeApiKey;
-    if (id === "openai_compatible") return this.facts.keys.openaiCompatibleApiKey;
-    return false;
   }
 }
