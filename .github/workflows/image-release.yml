@@ -16,8 +16,8 @@
 #    novel-engine → Package settings → Danger Zone → change visibility to
 #    public.
 # 2. Verify anonymous access from an outside machine, without `docker login`:
-#    `docker pull ghcr.io/jackela/novel-engine:0.7.0` followed by
-#    `docker buildx imagetools inspect ghcr.io/jackela/novel-engine:0.7.0`
+#    `docker pull ghcr.io/jackela/novel-engine:0.8.0` followed by
+#    `docker buildx imagetools inspect ghcr.io/jackela/novel-engine:0.8.0`
 #    (must list linux/amd64 + linux/arm64). Published image tags carry no
 #    v prefix: dispatch input `v0.8.0-rc.1` publishes `0.8.0-rc.1`.
 # 3. Before an official v-tag, validate the whole chain via workflow_dispatch
