@@ -14,7 +14,7 @@ off the existing Settings surface.
 
 ## T1: Diagnostics assembly service
 
-- [ ] T1.1 Add the diagnostics assembly service (shared or studio
+- [x] T1.1 Add the diagnostics assembly service (shared or studio
       application layering per the architecture policy): product identity
       and version via the release-version authority, runtime environment
       summary, configuration summary built from booleans (resolved
@@ -24,12 +24,12 @@ off the existing Settings surface.
       `pnpm --dir server test -- diagnostics` green, including a test that
       seeds a session secret and a provider API key and asserts neither
       string occurs anywhere in the serialized output.
-- [ ] T1.2 Add the database health summary reading the `doctor` field
+- [x] T1.2 Add the database health summary reading the `doctor` field
       family (quick check, journal mode, foreign keys, owner configured)
       through the app's own database handle — no CLI subprocess.
       Acceptance: server tests assert field parity with the doctor
       report fields for a healthy database and an unopenable/corrupt one.
-- [ ] T1.3 Add the recent error summary scoped to the requesting project:
+- [x] T1.3 Add the recent error summary scoped to the requesting project:
       the persisted error messages of that project's most recent failed
       Jobs, bounded to a fixed count. Only durably recorded data is
       presented — the HTTP envelope's error code is response-time-only
@@ -42,13 +42,13 @@ off the existing Settings surface.
 
 ## T2: HTTP surface
 
-- [ ] T2.1 Add the owner-guarded read-only project-scoped route
+- [x] T2.1 Add the owner-guarded read-only project-scoped route
       (`/api/projects/:projectId/diagnostics`, TypeBox response schema,
       thin-handler discipline) matching the Settings mount point.
       Acceptance: `pnpm --dir server test -- diagnostics` green including
       authentication (401 without session), owner data isolation (unknown
       identifiers are not found), and error-envelope cases.
-- [ ] T2.2 Regenerate the OpenAPI baseline deliberately
+- [x] T2.2 Regenerate the OpenAPI baseline deliberately
       (`pnpm --dir server openapi:snapshot`), serially with the other
       route-adding changes in the window, review additive-only diffs,
       and regenerate frontend API types (`pnpm --dir frontend
@@ -56,7 +56,7 @@ off the existing Settings surface.
 
 ## T3: Settings action and download
 
-- [ ] T3.1 Add the "Export diagnostics" action to the Settings panel with
+- [x] T3.1 Add the "Export diagnostics" action to the Settings panel with
       the privacy statement copy (EN + zh-CN dictionary entries), busy and
       error states under the explicit asynchronous operation state
       discipline, and a client-derived download
@@ -65,19 +65,19 @@ off the existing Settings surface.
       `pnpm --dir frontend test:unit -- Diagnostics` green (action
       renders the statement, download fires with the derived filename,
       failure surfaces with retry, duplicate-submission guarded).
-- [ ] T3.2 Assert the local-only contract at the client: the action's only
+- [x] T3.2 Assert the local-only contract at the client: the action's only
       request targets the Studio's own diagnostics endpoint. Acceptance:
       component tests assert the request path family; review confirms no
       other network surface is introduced.
 
 ## T4: Workflows, gates, and evidence
 
-- [ ] T4.1 Add a TypeScript-backend Playwright workflow: activate the
+- [x] T4.1 Add a TypeScript-backend Playwright workflow: activate the
       action, capture the download, parse the JSON, assert version and
       database-health fields are present and the configured API key's
       value does not occur in the file. Acceptance:
       `pnpm --dir frontend test:e2e-ts -- diagnostics_export` green.
-- [ ] T4.2 Run the full owning gates (`pnpm --dir server gates`;
+- [x] T4.2 Run the full owning gates (`pnpm --dir server gates`;
       `pnpm --dir frontend lint && pnpm --dir frontend format:check &&
       pnpm --dir frontend type-check && pnpm --dir frontend test:unit &&
       pnpm --dir frontend build`; `pnpm spec:validate`), record exact

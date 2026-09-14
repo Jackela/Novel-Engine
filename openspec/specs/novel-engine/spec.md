@@ -1160,32 +1160,34 @@ resolve strictly within the data root.
 
 ### Requirement: Synchronous job execution model
 
-Proposal, review, and export jobs MUST execute synchronously within their HTTP
-request, and the response MUST carry the job's terminal state (`completed` or
-`failed`) — never an in-progress state requiring polling. Jobs and job events
-MUST be persisted as an audit log; `running` is an in-request transient, not a
-coordination primitive, and the system MUST NOT add lease fields, heartbeats,
-or worker registration. At startup, jobs left `running` MUST be marked
-`interrupted` with the fixed restart error message and a matching job event.
+Proposal, review, export, and lore-extract jobs MUST execute synchronously
+within their HTTP request, and the response MUST carry the job's terminal
+state (`completed` or `failed`) — never an in-progress state requiring
+polling. Jobs and job events MUST be persisted as an audit log; `running` is
+an in-request transient, not a coordination primitive, and the system MUST
+NOT add lease fields, heartbeats, or worker registration. At startup, jobs
+left `running` MUST be marked `interrupted` with the fixed restart error
+message and a matching job event.
 
 Project job listings MUST return newest-first strict JobSummary items containing
 only `id`, `project_id`, `document_id`, `kind`, `operation`, `status`,
 `provider`, `model`, `error`, `retry_of_job_id`, `created_at`, and `updated_at`.
 Summary items MUST NOT contain `request`, `result`, or `events`. Complete
-proposal, review, export, retry, acceptance, and streamed terminal responses
-MUST retain the complete Job payload. Project-scoped Job detail MUST return that
-same complete payload with each event as `{id, status, details, created_at}` in
-oldest-first order. Because the frontend performs no polling, any move to
-asynchronous execution is a new decision that MUST jointly reopen the frontend
-behavior contract.
+proposal, review, export, lore-extract, retry, acceptance, and streamed
+terminal responses MUST retain the complete Job payload. Project-scoped Job
+detail MUST return that same complete payload with each event as
+`{id, status, details, created_at}` in oldest-first order. Because the
+frontend performs no polling, any move to asynchronous execution is a new
+decision that MUST jointly reopen the frontend behavior contract.
 
 In a JobSummary, `id`, `project_id`, `provider`, `model`, `created_at`, and
-`updated_at` MUST be strings; `document_id`, `error`, and `retry_of_job_id` MUST
-be string or null. `kind` MUST be one of `proposal`, `review`, `export`, or
-`import`; `operation` MUST be one of `continue`, `rewrite`, `generate`, `review`,
-`export`, or `import`; and `status` MUST be one of `pending`, `running`,
-`completed`, `failed`, or `interrupted`. Timestamps MUST retain the existing
-ISO-8601 UTC string serialization.
+`updated_at` MUST be strings; `document_id`, `error`, and `retry_of_job_id`
+MUST be string or null. `kind` MUST be one of `proposal`, `review`, `export`,
+`lore-extract`, or `import`; `operation` MUST be one of `continue`,
+`rewrite`, `generate`, `review`, `export`, `extract`, or `import`; and
+`status` MUST be one of `pending`, `running`, `completed`, `failed`, or
+`interrupted`. Timestamps MUST retain the existing ISO-8601 UTC string
+serialization.
 
 #### Scenario: One request reaches a terminal state
 
@@ -1239,7 +1241,7 @@ to the source via `retry_of_job_id`, durably records the key, and records a
 first job event naming the source. The source Job is never mutated. Admission
 MUST be concurrency-safe and durable across restart: at most one retry Job may
 exist for the same owner/project/source/key, and only the request that creates
-that Job may execute proposal, review, or export work.
+that Job may execute proposal, review, export, or lore-extract work.
 
 A replay of the same key after its retry Job is `completed`, `failed`, or
 `interrupted` MUST return 200 with that same complete Job and its existing
@@ -1253,7 +1255,8 @@ existing retryability, project-pipeline, and capacity rules.
 
 The identity MUST be scoped without disclosure across owners and projects. It
 MUST apply when the source is either a fresh or earlier retry Job of kind
-`proposal`, `review`, or `export`. Import jobs MUST NOT be retryable.
+`proposal`, `review`, `export`, or `lore-extract`. Import jobs MUST NOT be
+retryable.
 
 The Studio MUST generate a bounded cryptographically random key before
 dispatch and retain it for the owner/project/source attempt across ambiguous
@@ -1325,9 +1328,9 @@ mutate another project's visible state.
 #### Scenario: Proposal, review, and export replay stored outcomes only
 
 - **GIVEN** a terminal keyed retry whose source was a fresh or prior retry Job
-- **WHEN** the same key is replayed for proposal, review, or export
+- **WHEN** the same key is replayed for proposal, review, export, or lore-extract
 - **THEN** the stored terminal Job is returned for every supported kind
-- **AND** no provider, review, render, snapshot, assessment, issue, artifact, file, compensation, or usage work runs again
+- **AND** no provider, extraction, review, render, snapshot, assessment, issue, artifact, file, compensation, or usage work runs again
 
 #### Scenario: Only terminal failures are retryable
 
@@ -5073,3 +5076,264 @@ no-`backdrop-filter` fallbacks in both themes.
 - **WHEN** a manuscript is opened in the editor
 - **THEN** the CodeMirror editor, its syntax theme, and the surrounding studio chrome all render dark
 - **AND** the editor surface remains opaque with no `backdrop-filter` applied
+
+### Requirement: Local writing statistics
+
+The Studio MUST offer a project-scoped writing statistics view as an
+Inspector tab with URL-backed activation, computed server-side by one
+owner-guarded read-only endpoint. All word figures MUST use the unified
+word-count definition. Daily and weekly word counts MUST be attributed by
+Revision source so author edits and accepted proposal text are
+distinguishable: each Revision MUST contribute the word-count delta against
+its parent revision, attributed to that Revision's source, with a first
+Revision attributed in full to its own source. Every calendar bucket —
+daily rows, weekly rollups, and streak days — MUST use UTC days, the same
+anchor as the existing usage aggregation's daily buckets. The view MUST
+show the chapter count and the share of chapters with non-empty current
+content, MUST show a writing streak defined as consecutive UTC days, ending
+on the current UTC day or the one before, each containing at least one
+`author` Revision, and MUST present an AI usage summary reusing the
+existing project usage aggregation rather than a second accounting. The
+statistics MUST be derived only from already-recorded data — Revisions,
+project structure, and usage events — and the feature MUST NOT add data
+collection, telemetry, or any outbound network request.
+
+#### Scenario: Daily words split by source
+
+- **GIVEN** a project where on one UTC day the author saves 500 new words by hand and accepts a proposal adding 300 words
+- **WHEN** the statistics view renders
+- **THEN** that UTC day shows 500 words attributed to author edits and 300 words attributed to accepted proposal text
+- **AND** both figures use the unified word-count definition
+
+#### Scenario: Weekly rollup matches its days
+
+- **GIVEN** daily word counts for the UTC days of one week
+- **WHEN** the weekly figure renders for that week
+- **THEN** it equals the sum of that week's per-day attributed figures
+
+#### Scenario: Streak counts author writing days only
+
+- **GIVEN** the author saved an `author` revision every UTC day for five consecutive UTC days, and the previous UTC day ended with only an accepted proposal
+- **WHEN** the streak renders
+- **THEN** UTC days containing only AI-accepted text do not extend the streak
+- **AND** the chain counts consecutive `author`-revision UTC days ending on the current UTC day or the one before it
+
+#### Scenario: Chapter completion reflects existing content
+
+- **GIVEN** a project with ten chapter documents of which seven have non-empty current content
+- **WHEN** the statistics view renders
+- **THEN** it reports ten chapters and a 7-of-10 started share
+- **AND** no word-count target or plan input is requested or stored
+
+#### Scenario: Usage summary reuses the usage aggregation
+
+- **GIVEN** a project with recorded usage events
+- **WHEN** the statistics view renders its AI usage summary
+- **THEN** request and token figures match the existing project usage aggregation for the same project
+- **AND** its daily buckets use the same UTC days as the statistics view's day rows
+- **AND** no second accounting path exists
+
+#### Scenario: Empty project renders a defined state
+
+- **GIVEN** a project with no revisions and no usage events
+- **WHEN** the statistics view renders
+- **THEN** it shows defined zero states for words, chapters, streak, and usage instead of errors or placeholders
+
+#### Scenario: Statistics stay local
+
+- **GIVEN** the statistics view is open
+- **WHEN** it renders and refreshes
+- **THEN** it issues no network request beyond the Studio's own read-only statistics endpoint
+- **AND** nothing is recorded that did not already exist as a Revision, job, or usage event
+
+### Requirement: Opt-in diagnostics export
+
+The Studio Settings surface MUST offer an explicit "Export diagnostics"
+action that, on activation, requests a diagnostics summary from one
+owner-guarded read-only endpoint scoped to the current project and saves it
+locally as a JSON file with a client-derived name. The summary MUST contain
+the product identity and version from the release-version authority, a
+runtime environment summary, a configuration summary reporting the resolved
+provider selection and the set/unset state of recognized configuration
+keys, a recent error summary listing the persisted error messages of the
+current project's most recent failed Jobs when any exist, and a database
+health summary with the same field family as the `doctor` command
+(integrity check, journal mode, foreign-key enforcement, owner status).
+The error summary MUST present only what Jobs durably record — the
+envelope's error code exists only at HTTP response time and MUST NOT be
+invented for the export. Secret values — the session secret and any
+provider API key — MUST NOT appear anywhere in the exported file, and
+provider failures included in the error summary MUST stay inside the
+provider failure diagnostics boundary with no provider response body
+exposed. The export MUST NOT include manuscript content, document bodies,
+or Lore entries. The action MUST display the diagnostics privacy statement,
+generation MUST NOT perform any network activity beyond the Studio's own
+read-only endpoint, and the product MUST NOT transmit the exported file
+anywhere — where the file goes is the author's decision alone.
+
+#### Scenario: Export contains the support field families
+
+- **GIVEN** an instance with a configured provider and a healthy database
+- **WHEN** the author activates "Export diagnostics"
+- **THEN** the saved JSON contains the product version, a runtime environment summary, the resolved provider with its label and configured state, the database health fields matching the `doctor` field family, and a generated-at timestamp
+
+#### Scenario: Secrets never appear in the export
+
+- **GIVEN** an instance with a session secret set and a provider API key configured
+- **WHEN** the author exports diagnostics
+- **THEN** neither the secret nor the API key value occurs anywhere in the serialized file
+- **AND** their configuration state is reported only as a configured/set boolean
+
+#### Scenario: Recent errors respect the provider boundary
+
+- **GIVEN** the provider transport receives an error response whose body the provider failure diagnostics boundary discards, and the resulting failure is one of the project's most recent failed Jobs
+- **WHEN** the author exports diagnostics
+- **THEN** the error summary lists that job's persisted error message
+- **AND** the discarded upstream body text does not appear anywhere in the export
+- **AND** the summary presents no error code that was not durably recorded
+
+#### Scenario: No errors yields an empty error summary
+
+- **GIVEN** the current project's job history has no failed Jobs
+- **WHEN** the author exports diagnostics
+- **THEN** the error summary is an explicitly empty state, not an error or a missing field
+
+#### Scenario: The book stays out of diagnostics
+
+- **GIVEN** a project with chapters, character documents, and Lore entries
+- **WHEN** the author exports diagnostics
+- **THEN** the file contains no document bodies, manuscript text, or Lore content
+
+#### Scenario: Export is strictly local
+
+- **WHEN** the author activates the export
+- **THEN** the only network activity is the request to the Studio's own read-only diagnostics endpoint
+- **AND** the file is saved through the browser's download mechanism with a client-derived filename
+- **AND** the product transmits the file nowhere
+
+#### Scenario: The privacy statement is visible with the action
+
+- **WHEN** the Settings surface renders the export action
+- **THEN** the privacy statement is displayed with it, stating that the file stays on the author's computer, contains no writing and no API keys, and is shared only by the author's choice
+
+### Requirement: Guided lorebook initialization
+
+The Studio MUST offer a project-scoped lorebook initialization wizard inside
+a `lore` Inspector tab with URL-backed activation, turning draft material
+the author already has into candidate Lore entries through a configured
+provider. The wizard MUST accept text the author pastes and content of
+already-existing project documents as extraction input, organized as
+segments where each segment is one paste or one document's current content,
+and MUST present extraction results as candidates — each carrying a
+document kind limited to `character` or `world`, a title, suggested
+aliases, and a summary body — that are suggestions, not persisted content.
+Each segment MUST be extracted by its own `lore-extract` Job under the
+synchronous job execution model, recording exactly one usage event per
+completed provider request, and cross-segment candidate merging MUST happen
+in the wizard session over the completed segment Jobs: same-kind,
+same-title candidates collapse to one candidate carrying the union of
+suggested aliases, in a deterministic order. Until the author explicitly
+confirms, the wizard MUST NOT create any document, revision, or Lore
+lifecycle state, and abandoning the wizard MUST leave the project's
+lorebook unchanged.
+
+On confirmation, each selected candidate MUST run two existing steps in
+sequence — the existing lorebook document creation call, then the existing
+Lore alias write path for that candidate's aliases — and the wizard MUST
+report each candidate's outcome independently. The two steps MUST NOT be
+presented as atomic: when the alias write fails after creation succeeds,
+the wizard MUST report the candidate as created with failed aliases, keep
+the suggested aliases available for retry, and MUST NOT silently drop
+them. Confirmed entries MUST be created at `draft` lifecycle status. With
+the trial (mock) provider the wizard MUST still produce deterministic
+placeholder candidates per segment and MUST label the session with the
+trial-mode wording used by the first-run explainer.
+
+Each input segment MUST be capped at 100,000 Unicode code points. A segment
+over the cap, or a segment whose assembled extraction prompt exceeds the
+shared UTF-8 byte authority of proposal generation, MUST fail before
+provider construction with the stable 422 `GENERATION_CAPACITY_EXCEEDED`
+envelope and an `observed` value bounded to the refusing limit plus one —
+never through silent truncation. The envelope details carry the fixed
+combination of the refusing resource: a segment over the code-point cap
+carries `resource: lore_extract_segment` with `limit: 100000`, and an
+assembled prompt over the shared byte authority carries the shared
+`prompt_bytes` combination of proposal generation. Any retrieval the wizard
+performs over project content MUST behave like the product's full-text
+search: operator-laden input safely reduced to strict tokens, irreducible
+input returning no results, and every query running as a token-reduced
+parameterized search.
+
+#### Scenario: Draft material yields candidates
+
+- **GIVEN** a project with a real provider configured
+- **WHEN** the author pastes a draft excerpt and runs extraction for that segment
+- **THEN** the segment's `lore-extract` Job completes and the wizard presents its candidate entries of kind `character` or `world`, each with a title, suggested aliases, and a summary body
+- **AND** no document, revision, or Lore lifecycle state exists yet
+
+#### Scenario: Trial provider yields labeled placeholder candidates
+
+- **GIVEN** a project still on the built-in trial provider
+- **WHEN** the author runs the wizard end to end
+- **THEN** deterministic placeholder candidates are presented for each segment
+- **AND** the session is labeled with the trial-mode wording so the author knows real extraction requires a configured provider
+
+#### Scenario: Nothing persists before confirmation
+
+- **GIVEN** the wizard has presented merged candidates from completed segment Jobs
+- **WHEN** the author abandons the wizard without confirming
+- **THEN** the project's lorebook, documents, and revisions are unchanged
+- **AND** candidates cease to exist with the wizard session; only the segment Jobs' own audit records remain
+
+#### Scenario: Confirmed candidates become draft Lore entries
+
+- **GIVEN** the author selects a subset of the presented candidates and confirms
+- **WHEN** confirmation completes
+- **THEN** each selected candidate exists as a `character` or `world` document created through the existing creation path at `draft` lifecycle status, followed by the existing alias write for its suggested aliases
+- **AND** unselected candidates create nothing
+- **AND** each candidate's outcome is reported independently, so one candidate's failure does not hide another's result
+
+#### Scenario: Alias write failure reports partial success
+
+- **GIVEN** a confirmed candidate whose document creation succeeds but whose alias write fails
+- **WHEN** the wizard reports that candidate's outcome
+- **THEN** it reports the entry as created with failed aliases, not as failed and not as silently alias-less
+- **AND** the suggested aliases remain available so the author can retry the alias write
+
+#### Scenario: Confirmed entries reach prompts only through the existing gate
+
+- **GIVEN** a confirmed wizard-created entry is still `draft`
+- **WHEN** a proposal is generated whose corpus matches the entry's keys
+- **THEN** the entry contributes nothing, exactly like any other `draft` entry
+- **WHEN** the author promotes the entry to `stable` using the existing lifecycle editing
+- **THEN** the entry participates in keyword-triggered injection like any other `stable` entry
+
+#### Scenario: Over-budget segments fail closed
+
+- **GIVEN** a segment exceeding 100,000 Unicode code points
+- **WHEN** extraction is requested for that segment
+- **THEN** the request fails before provider construction with 422 `GENERATION_CAPACITY_EXCEEDED` whose details carry `resource: lore_extract_segment`, `limit: 100000`, and an `observed` value of at most the limit plus one
+- **AND** no provider work, no usage event, and no partial candidate set is produced for that segment
+- **AND** the author is told to split or trim the segment rather than receiving silently truncated results
+
+#### Scenario: Over-budget assembled prompts carry the shared refusal
+
+- **GIVEN** a segment whose assembled extraction prompt exceeds the shared UTF-8 byte authority
+- **WHEN** extraction is requested for that segment
+- **THEN** the request fails before provider construction with 422 `GENERATION_CAPACITY_EXCEEDED` carrying the shared `prompt_bytes` combination of proposal generation, with `observed` bounded to that limit plus one
+- **AND** no provider work, no usage event, and no partial candidate set is produced for that segment
+
+#### Scenario: Multi-segment candidates merge deterministically
+
+- **GIVEN** two completed segment Jobs whose candidate sets both include a character with the same title
+- **WHEN** the wizard presents the merged list
+- **THEN** one merged candidate of that kind and title appears, carrying the union of both segments' suggested aliases
+- **AND** re-running the merge over the same completed segments yields the same list
+
+#### Scenario: Extraction failures stay inside the provider diagnostics boundary
+
+- **GIVEN** the provider transport receives an error response whose body the provider failure diagnostics boundary discards
+- **WHEN** a segment's extraction fails and the wizard reports the failure
+- **THEN** the failure surfaces through the Studio error surface with the standard error envelope
+- **AND** the discarded upstream body text does not appear in the job error, the envelope, or any author-visible surface
+- **AND** no Lore entry is created from the failed run
