@@ -2,8 +2,8 @@ import { useCallback, useLayoutEffect, useRef, useState } from "react";
 
 import { api } from "@/app/api";
 import type { ExportsPage } from "@/app/apiWorkflowContract";
+import { translateActive } from "@/app/i18n/translate";
 import type { ExportFormat, Project } from "@/app/types/studio";
-
 import { downloadBrowserBlob } from "./downloadBrowserBlob";
 import { toErrorMessage } from "./toErrorMessage";
 
@@ -118,14 +118,14 @@ export function useExportDownload(
         const job = await api.createExport(owner.projectId, format, requestInit);
         if (!isCurrentInvocation(invocation)) return;
         if (job.status !== "completed" || !job.result.export_id) {
-          throw new Error(job.error ?? "Unable to export project.");
+          throw new Error(job.error ?? translateActive("errors.exportProject"));
         }
         const catalog = await api.exports(owner.projectId, requestInit);
         if (!isCurrentInvocation(invocation)) return;
         if (isCurrentEpoch(invocation)) applyCompletedCatalogPage(catalog);
         const item = catalog.exports.find((candidate) => candidate.id === job.result.export_id);
         if (!item) {
-          throw new Error("Export artifact is not available.");
+          throw new Error(translateActive("errors.exportArtifactMissing"));
         }
         const blob = await api.download(item.download_url, requestInit);
         if (!isCurrentInvocation(invocation)) return;
@@ -141,7 +141,7 @@ export function useExportDownload(
         if (!isCurrentInvocation(invocation)) return;
         setFailed({
           ...ownedFormat,
-          message: toErrorMessage(reason, "Unable to export project."),
+          message: toErrorMessage(reason, translateActive("errors.exportProject")),
         });
       } finally {
         if (isCurrentInvocation(invocation)) {

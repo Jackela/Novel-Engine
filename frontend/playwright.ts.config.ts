@@ -32,6 +32,10 @@ export default defineConfig({
   fullyParallel: false,
   use: {
     baseURL: "http://127.0.0.1:4274",
+    // The suite locates the EN dictionary values byte-exactly; pin the
+    // context locale so language detection (`getActiveLanguage` with no
+    // stored choice) deterministically resolves `en` on every runner.
+    locale: "en-US",
     trace: "retain-on-failure",
   },
   // A passing run leaves nothing behind (scripts/ts-e2e-teardown.mjs);

@@ -1,6 +1,7 @@
 import { Sparkles } from "lucide-react";
 import { useCallback, useLayoutEffect, useRef } from "react";
 
+import { useTranslation } from "@/app/i18n/useTranslation";
 import type { ProposalAuditStatus } from "../hooks/useStudioJobs";
 import type { WholeBookPhase } from "../hooks/useWholeBookLoop";
 import { ProposalOutcomeAuditNotice } from "./ProposalOutcomeAuditNotice";
@@ -17,10 +18,6 @@ interface StudioWholeBookControlProps {
   proposalOutcomeUnknown?: boolean;
   proposalAuditStatus?: ProposalAuditStatus;
   onRetryProposalAudit?: WholeBookCommand;
-}
-
-function chaptersLabel(count: number): string {
-  return count === 1 ? "1 chapter" : `${count} chapters`;
 }
 
 interface PendingFocusReturn {
@@ -125,23 +122,24 @@ export function StudioWholeBookControl({
   proposalAuditStatus = "idle",
   onRetryProposalAudit,
 }: StudioWholeBookControlProps) {
+  const { t } = useTranslation();
   const isBusy = phase.kind === "running";
   const canStart = remaining > 0;
   const { outcomeFallbackRef, startButtonRef, runCommand } = useWholeBookFocusReturn(
     isBusy,
     canStart,
   );
+  /** The plural-aware count unit ("chapter"/"chapters") for outcome sentences. */
+  const chaptersUnit = (count: number) => (count === 1 ? t("noun.chapter") : t("noun.chapters"));
 
   return (
     <section
-      aria-label="Whole book generation"
+      aria-label={t("wholeBook.region")}
       className="whole-book"
       ref={outcomeFallbackRef}
       tabIndex={-1}
     >
-      <p className="whole-book__hint">
-        Drafts and auto-accepts every chapter still missing an AI revision, in reading order.
-      </p>
+      <p className="whole-book__hint">{t("wholeBook.hint")}</p>
       {proposalOutcomeUnknown ? (
         <ProposalOutcomeAuditNotice
           onGenerateAnother={() => runCommand(onStart)}
@@ -151,14 +149,14 @@ export function StudioWholeBookControl({
       ) : isBusy ? (
         <>
           <p className="whole-book__status" role="status">
-            Generating chapter {phase.current} of {phase.total}…
+            {t("wholeBook.status.generating", { current: phase.current, total: phase.total })}
           </p>
           <button
             className="ui-command whole-book__stop"
             onClick={() => runCommand(onStop)}
             type="button"
           >
-            Stop generating
+            {t("wholeBook.action.stop")}
           </button>
         </>
       ) : (
@@ -168,26 +166,34 @@ export function StudioWholeBookControl({
             disabled={!canStart}
             onClick={() => runCommand(onStart)}
             ref={startButtonRef}
-            title={
-              remaining === 0 ? "Every chapter already has an accepted AI revision" : undefined
-            }
+            title={remaining === 0 ? t("wholeBook.title.done") : undefined}
             type="button"
           >
-            <Sparkles aria-hidden="true" /> Generate whole book
+            <Sparkles aria-hidden="true" /> {t("wholeBook.action.start")}
           </button>
           {phase.kind === "done" ? (
             <p className="whole-book__outcome" role="status">
               {phase.stoppedEarly
-                ? `Stopped — ${chaptersLabel(phase.generated)} accepted this run.`
+                ? t("wholeBook.outcome.stoppedEarly", {
+                    count: phase.generated,
+                    unit: chaptersUnit(phase.generated),
+                  })
                 : phase.generated === 0
-                  ? "Every chapter already has an accepted AI revision."
-                  : `Completed — ${chaptersLabel(phase.generated)} accepted.`}
+                  ? t("wholeBook.outcome.alreadyDone")
+                  : t("wholeBook.outcome.completed", {
+                      count: phase.generated,
+                      unit: chaptersUnit(phase.generated),
+                    })}
             </p>
           ) : null}
           {phase.kind === "failed" ? (
             <p className="ui-form-error whole-book__failure" role="alert">
-              Failed on “{phase.failedChapterTitle}” after {chaptersLabel(phase.generated)}{" "}
-              accepted: {phase.message}
+              {t("wholeBook.failure", {
+                title: phase.failedChapterTitle,
+                count: phase.generated,
+                unit: chaptersUnit(phase.generated),
+                message: phase.message,
+              })}
             </p>
           ) : null}
         </>

@@ -20,6 +20,31 @@
         }
       } catch { /* storage unavailable: system path, CSS decides */ }
     </script>
+    <script>
+      // Pre-paint language resolution — mirrors src/app/i18n/language.ts
+      // (stored choice wins, then zh* browser tags, then English default) so
+      // assistive tech reads the right `lang` before React mounts. Keep the
+      // two implementations in sync.
+      var language = null;
+      var candidates = [];
+      var i;
+      try {
+        language = localStorage.getItem("novel_engine_language");
+      } catch { /* storage unavailable: detection below decides */ }
+      if (language !== "en" && language !== "zh") {
+        language = "en";
+        candidates =
+          (typeof navigator !== "undefined" && navigator.languages) ||
+          (typeof navigator !== "undefined" && navigator.language ? [navigator.language] : []);
+        for (i = 0; i < candidates.length; i++) {
+          if (String(candidates[i]).split("-")[0].toLowerCase() === "zh") {
+            language = "zh";
+            break;
+          }
+        }
+      }
+      document.documentElement.lang = language;
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </head>
   <body>

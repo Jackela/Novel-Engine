@@ -1,6 +1,6 @@
 import type { FormEvent, RefObject } from "react";
 import { useCallback, useLayoutEffect, useRef, useState } from "react";
-
+import { useTranslation } from "@/app/i18n/useTranslation";
 import { LORE_STATUS_OPTIONS } from "@/app/loreStatus";
 import type { LoreStatus } from "@/app/types/studio";
 import { useCommandFocusRestoration } from "../hooks/useCommandFocusRestoration";
@@ -80,6 +80,7 @@ function LoreStatusEntryForm({
   selectRef,
 }: LoreStatusEntryFormProps) {
   const [selectedStatus, setSelectedStatus] = useState<LoreStatus>(attemptedStatus ?? savedStatus);
+  const { t } = useTranslation();
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -93,14 +94,14 @@ function LoreStatusEntryForm({
   return (
     <form
       aria-busy={isSaving}
-      aria-label="Lore status"
+      aria-label={t("lore.form.label")}
       className="studio-lore-status"
       onSubmit={(event) => void handleSubmit(event)}
     >
       <label className="studio-inspector__settings-field">
-        <span>Lore status</span>
+        <span>{t("lore.field.label")}</span>
         <select
-          aria-label="Lore status"
+          aria-label={t("lore.field.label")}
           disabled={isSaving}
           onChange={(event) => setSelectedStatus(event.target.value as LoreStatus)}
           ref={selectRef}
@@ -108,14 +109,12 @@ function LoreStatusEntryForm({
         >
           {LORE_STATUS_OPTIONS.map((option) => (
             <option key={option.value} value={option.value}>
-              {option.label}
+              {t(option.messageKey)}
             </option>
           ))}
         </select>
       </label>
-      <p className="studio-lore-status__hint">
-        Only stable entries are injected into generation prompts.
-      </p>
+      <p className="studio-lore-status__hint">{t("lore.hint")}</p>
       <div className="studio-inspector__actions">
         <button
           aria-busy={isSaving}
@@ -124,11 +123,11 @@ function LoreStatusEntryForm({
           ref={saveButtonRef}
           type="submit"
         >
-          {isSaving ? "Saving…" : "Save status"}
+          {isSaving ? t("common.action.saving") : t("lore.action.save")}
         </button>
       </div>
       <p aria-live="polite" className="sr-only">
-        {isSaving ? "Saving lore status." : ""}
+        {isSaving ? t("lore.status.saving") : ""}
       </p>
     </form>
   );

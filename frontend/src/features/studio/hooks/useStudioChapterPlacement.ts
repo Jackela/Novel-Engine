@@ -2,8 +2,8 @@ import type { Dispatch, SetStateAction } from "react";
 import { useCallback, useRef, useState } from "react";
 
 import { api } from "@/app/api";
+import { translateActive } from "@/app/i18n/translate";
 import type { Project, StudioDocument } from "@/app/types/studio";
-
 import { projectDocumentOwnerKey } from "./projectDocumentOwnerKey";
 import { mergeProjectDocumentPlacement, type NarrowFieldCapture } from "./projectState";
 import { toErrorMessage } from "./toErrorMessage";
@@ -118,7 +118,7 @@ export function useStudioChapterPlacement<Owner extends ChapterPlacementOwner>({
           );
         } catch (reason) {
           if (isCurrentOwner(owner) && isLatestIntent()) {
-            failure = toErrorMessage(reason, "Unable to place the chapter.");
+            failure = toErrorMessage(reason, translateActive("errors.placeChapter"));
           }
         } finally {
           if (isLatestIntent()) {

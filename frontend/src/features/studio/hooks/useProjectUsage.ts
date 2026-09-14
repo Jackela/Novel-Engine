@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { api } from "@/app/api";
+import { translateActive } from "@/app/i18n/translate";
 import type { ProjectUsage } from "@/app/types/studio";
-
 import { toErrorMessage } from "./toErrorMessage";
 
 interface UsageState {
@@ -77,7 +77,7 @@ export function useProjectUsage(projectId: string, active: boolean) {
         projectId,
         usage: current.projectId === projectId ? current.usage : null,
         isLoading: false,
-        error: toErrorMessage(reason, "Unable to load usage."),
+        error: toErrorMessage(reason, translateActive("errors.loadUsage")),
       }));
     }
   }, [projectId]);

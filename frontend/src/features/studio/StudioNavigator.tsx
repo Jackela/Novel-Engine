@@ -1,6 +1,7 @@
 import { ChevronDown, Loader2, Plus } from "lucide-react";
 import { type ComponentProps, type FormEvent, useState } from "react";
 
+import { useTranslation } from "@/app/i18n/useTranslation";
 import type { DocumentKind, Project } from "@/app/types/studio";
 import {
   type PendingDocumentMove,
@@ -54,6 +55,7 @@ export function StudioNavigator({
   rowCommands = null,
   wholeBook,
 }: StudioNavigatorProps) {
+  const { t } = useTranslation();
   const [confirmingDeleteId, setConfirmingDeleteId] = useState<string | null>(null);
   const createGroupBusy = isCreatingDocument || creatingDocumentKind !== null;
   const rowCommandsBusy =
@@ -86,12 +88,12 @@ export function StudioNavigator({
     <aside className="studio-nav">
       <details className="studio-nav__disclosure" open>
         <summary className="studio-nav__summary">
-          <span>Project navigation</span>
+          <span>{t("navigator.disclosure")}</span>
           <ChevronDown aria-hidden="true" />
         </summary>
         <div className="studio-nav__content">
-          <nav className="studio-nav__sections" aria-label="Project sections">
-            {SECTIONS.map(([path, label]) => (
+          <nav className="studio-nav__sections" aria-label={t("navigator.sections.label")}>
+            {SECTIONS.map(([path, labelKey]) => (
               <button
                 aria-current={section === path ? "page" : undefined}
                 className={
@@ -103,7 +105,7 @@ export function StudioNavigator({
                 onClick={() => onNavigateSection(path)}
                 type="button"
               >
-                {label}
+                {t(labelKey)}
               </button>
             ))}
           </nav>
@@ -117,7 +119,7 @@ export function StudioNavigator({
           />
           {showWholeBook ? <StudioWholeBookControl {...wholeBook} /> : null}
           <div className="studio-nav__tree">
-            {visibleGroups.map(({ kind, label, icon: Icon }) => {
+            {visibleGroups.map(({ kind, messageKey, icon: Icon }) => {
               const isCreatingThisKind = creatingDocumentKind === kind;
               const documents =
                 project.documents?.filter((document) => document.kind === kind) ?? [];
@@ -130,18 +132,26 @@ export function StudioNavigator({
                 <section className="studio-nav__document-group" key={kind}>
                   <header>
                     <span>
-                      <Icon aria-hidden="true" /> {label}
+                      <Icon aria-hidden="true" /> {t(messageKey)}
                     </span>
                     <button
                       aria-busy={isCreatingThisKind || undefined}
-                      aria-label={isCreatingThisKind ? `Adding ${label}` : `Add ${label}`}
+                      aria-label={
+                        isCreatingThisKind
+                          ? t("navigator.group.adding", { group: t(messageKey) })
+                          : t("navigator.group.add", { group: t(messageKey) })
+                      }
                       disabled={documentMutationBusy}
                       onClick={(event) => {
                         void runCreateWithFocusRestoration(event.currentTarget, () =>
                           onCreateDocument(kind),
                         );
                       }}
-                      title={isCreatingThisKind ? `Adding ${label}` : `Add ${label}`}
+                      title={
+                        isCreatingThisKind
+                          ? t("navigator.group.adding", { group: t(messageKey) })
+                          : t("navigator.group.add", { group: t(messageKey) })
+                      }
                       type="button"
                     >
                       {isCreatingThisKind ? (

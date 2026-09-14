@@ -2,8 +2,8 @@ import type { Dispatch, SetStateAction } from "react";
 import { useCallback } from "react";
 
 import { api } from "@/app/api";
+import { translateActive } from "@/app/i18n/translate";
 import type { LoreStatus, Project } from "@/app/types/studio";
-
 import type { NarrowSummaryPatch } from "./projectState";
 import { useNarrowSummaryField } from "./useNarrowSummaryField";
 
@@ -59,7 +59,7 @@ export function useStudioLoreStatusActions<Owner extends LoreStatusOwner>({
     currentOwner,
     isCurrentOwner,
     clearSharedError,
-    failureMessage: "Unable to update the lore status.",
+    failureMessage: translateActive("errors.updateLoreStatus"),
     invoke: invokeLoreStatus,
     patchFor: lorePatch,
   });

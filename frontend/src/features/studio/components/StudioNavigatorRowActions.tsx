@@ -1,6 +1,7 @@
 import { Loader2, Trash2 } from "lucide-react";
 import { type KeyboardEvent, useEffect, useRef } from "react";
 
+import { useTranslation } from "@/app/i18n/useTranslation";
 import type { DocumentSummary, Volume } from "@/app/types/studio";
 
 import type {
@@ -56,6 +57,7 @@ export function StudioNavigatorRowActions({
   runCommand,
   focusFallback,
 }: StudioNavigatorRowActionsProps) {
+  const { t } = useTranslation();
   const deleteButtonRef = useRef<HTMLButtonElement | null>(null);
   const confirmButtonRef = useRef<HTMLButtonElement | null>(null);
   const selectRef = useRef<HTMLSelectElement | null>(null);
@@ -101,8 +103,11 @@ export function StudioNavigatorRowActions({
             aria-busy={placingThis || undefined}
             aria-label={
               placingThis && attemptedVolumeTitle !== null
-                ? `Placing ${document.title} in ${attemptedVolumeTitle}`
-                : `Place ${document.title} in volume`
+                ? t("navigator.row.placingVolume", {
+                    title: document.title,
+                    volume: attemptedVolumeTitle,
+                  })
+                : t("navigator.row.placeVolume", { title: document.title })
             }
             disabled={isMutationBusy}
             onChange={(event) => {
@@ -118,7 +123,7 @@ export function StudioNavigatorRowActions({
             value=""
           >
             <option disabled value="">
-              Move to volume…
+              {t("navigator.row.moveToVolume")}
             </option>
             {otherVolumes.map((volume) => (
               <option key={volume.id} value={volume.id}>
@@ -129,11 +134,15 @@ export function StudioNavigatorRowActions({
         ) : null}
         <button
           aria-busy={deletingThis || undefined}
-          aria-label={`${deletingThis ? "Deleting" : "Delete"} ${document.title}`}
+          aria-label={
+            deletingThis
+              ? t("navigator.row.deleting", { title: document.title })
+              : t("navigator.row.delete", { title: document.title })
+          }
           disabled={isMutationBusy}
           onClick={() => onConfirmingDeleteChange(true)}
           ref={deleteButtonRef}
-          title={deletingThis ? "Deleting" : "Delete"}
+          title={deletingThis ? t("navigator.row.deletingTitle") : t("navigator.row.deleteTitle")}
           type="button"
         >
           {deletingThis ? (
@@ -146,16 +155,20 @@ export function StudioNavigatorRowActions({
       {isConfirmingDelete ? (
         // biome-ignore lint/a11y/useSemanticElements: this confirmation strip is not a form control group; <fieldset> would misrepresent semantics and drag in default fieldset styling.
         <div
-          aria-label={`Delete ${document.title} confirmation`}
+          aria-label={t("navigator.row.confirmHeading", { title: document.title })}
           className="document-row__confirm"
           onKeyDown={onConfirmKeyDown}
           role="group"
         >
-          <p>Permanently delete {document.title}? Unsaved changes are lost.</p>
+          <p>{t("navigator.row.confirmBody", { title: document.title })}</p>
           <span className="document-row__confirm-actions">
             <button
               aria-busy={deletingThis || undefined}
-              aria-label={`${deletingThis ? "Deleting" : "Confirm delete"} ${document.title}`}
+              aria-label={
+                deletingThis
+                  ? t("navigator.row.deleting", { title: document.title })
+                  : t("navigator.row.confirmDelete", { title: document.title })
+              }
               disabled={isMutationBusy}
               onClick={(event) => {
                 if (!rowCommands) return;
@@ -168,15 +181,17 @@ export function StudioNavigatorRowActions({
               ref={confirmButtonRef}
               type="button"
             >
-              {deletingThis ? "Deleting…" : "Delete"}
+              {deletingThis
+                ? t("navigator.row.confirmingAction")
+                : t("navigator.row.confirmAction")}
             </button>
             <button
-              aria-label={`Cancel delete ${document.title}`}
+              aria-label={t("navigator.row.cancelDelete", { title: document.title })}
               disabled={deletingThis}
               onClick={cancelDelete}
               type="button"
             >
-              Cancel
+              {t("navigator.row.cancel")}
             </button>
           </span>
           {deletionError !== null ? (

@@ -3,8 +3,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { api } from "@/app/api";
 import type { JobsPage } from "@/app/apiWorkflowContract";
+import { translateActive } from "@/app/i18n/translate";
 import type { StudioJobSummary } from "@/app/types/studio";
-
 import { appendUniqueById, useKeysetOlderPages } from "./keysetHistory";
 import { toErrorMessage } from "./toErrorMessage";
 
@@ -127,7 +127,7 @@ export function useStudioJobs(
         loadingInitiator: null,
       })),
     onOutcome: (error) => setError(error),
-    busyErrorMessage: "Unable to load older jobs.",
+    busyErrorMessage: translateActive("errors.loadOlderJobs"),
   });
   const abortInFlightOlder = olderPages.abortInFlight;
 
@@ -178,7 +178,7 @@ export function useStudioJobs(
             loadingInitiator: null,
           }));
           if (audit) publishProposalAuditStatus("audit_failed");
-          if (!audit) setError(toErrorMessage(reason, "Unable to load jobs."));
+          if (!audit) setError(toErrorMessage(reason, translateActive("errors.loadJobs")));
           return false;
         } finally {
           if (controllerRef.current === request) controllerRef.current = null;

@@ -1,5 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 
+import { translateActive } from "@/app/i18n/translate";
+import { useTranslation } from "@/app/i18n/useTranslation";
+
 interface MarkdownEditorProps {
   value: string;
   onChange: (value: string) => void;
@@ -11,6 +14,7 @@ interface CodeMirrorRuntime {
 }
 
 export function MarkdownEditor({ value, onChange }: MarkdownEditorProps) {
+  const { t } = useTranslation();
   const parent = useRef<HTMLDivElement>(null);
   const view = useRef<import("@codemirror/view").EditorView | null>(null);
   const runtime = useRef<CodeMirrorRuntime | null>(null);
@@ -47,7 +51,7 @@ export function MarkdownEditor({ value, onChange }: MarkdownEditorProps) {
             language.markdown(),
             editorView.EditorView.lineWrapping,
             editorView.EditorView.contentAttributes.of({
-              "aria-label": "Markdown editor",
+              "aria-label": translateActive("editor.field.markdownEditor"),
               "aria-multiline": "true",
             }),
             editorView.EditorView.updateListener.of((update) => {
@@ -122,13 +126,16 @@ export function MarkdownEditor({ value, onChange }: MarkdownEditorProps) {
     });
   }, [value]);
 
+  // The CodeMirror view is created once, so a language switch cannot flow
+  // through a re-created content attribute; sync the label directly.
+  useEffect(() => {
+    const content = parent.current?.querySelector(".cm-content");
+    if (content) content.setAttribute("aria-label", t("editor.field.markdownEditor"));
+  }, [t]);
+
   return (
     <div className="editor__markdown" ref={parent}>
-      {failed ? (
-        <p className="ui-form-error">
-          The markdown editor failed to load. Please refresh the page.
-        </p>
-      ) : null}
+      {failed ? <p className="ui-form-error">{t("editor.error.markdownFailed")}</p> : null}
     </div>
   );
 }

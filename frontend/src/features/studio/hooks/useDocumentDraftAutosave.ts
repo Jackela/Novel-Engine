@@ -7,8 +7,8 @@ import {
 } from "react";
 
 import { api, HttpError } from "@/app/api";
+import { translateActive } from "@/app/i18n/translate";
 import type { SaveState, StudioDocument } from "@/app/types/studio";
-
 import type { DraftSnapshot, PersistedDraft } from "./documentDraftState";
 import { toErrorMessage } from "./toErrorMessage";
 
@@ -116,7 +116,8 @@ export function useDocumentDraftAutosave({
         const isConflict = reason instanceof HttpError && reason.status === 409;
         if (!isConflict) {
           setCurrentSaveState("error");
-          if (isCurrentOwner()) setError(toErrorMessage(reason, "Unable to save."));
+          if (isCurrentOwner())
+            setError(toErrorMessage(reason, translateActive("errors.saveDocument")));
           return;
         }
         // Land the winning body before publishing the conflict surface (#472):
@@ -128,10 +129,11 @@ export function useDocumentDraftAutosave({
         try {
           await refreshLatestDocument(currentDocument.id);
         } catch (refreshReason) {
-          recoveryError = toErrorMessage(refreshReason, "Unable to refresh the latest document.");
+          recoveryError = toErrorMessage(refreshReason, translateActive("errors.refreshDocument"));
         }
         setCurrentSaveState("conflict");
-        if (isCurrentOwner()) setError(recoveryError ?? toErrorMessage(reason, "Unable to save."));
+        if (isCurrentOwner())
+          setError(recoveryError ?? toErrorMessage(reason, translateActive("errors.saveDocument")));
       } finally {
         saveInFlightRef.current.delete(ownerKey);
         // Recheck a new lifecycle's Draft when the old request releases its

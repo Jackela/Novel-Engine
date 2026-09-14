@@ -1,9 +1,9 @@
 import { useCallback, useState } from "react";
 
 import { api, HttpError } from "@/app/api";
+import { translateActive } from "@/app/i18n/translate";
 import { clearRetryAttempt, getOrCreateRetryAttemptKey } from "@/app/retryAttemptRegistry";
 import type { ReviewsPage } from "@/app/types/studio";
-
 import { toErrorMessage } from "./toErrorMessage";
 import { usePendingAction } from "./usePendingAction";
 import type { StudioActionsOwner } from "./useStudioActionOwner";
@@ -65,7 +65,7 @@ export function useStudioJobActions({
       // review job; one cursorless first-page refresh follows (#459).
       const job = await api.createReview(projectId);
       if (job.status !== "completed") {
-        throw new Error(job.error ?? "Unable to run review.");
+        throw new Error(job.error ?? translateActive("errors.runReview"));
       }
       if (!isCurrentOwner(owner)) return;
       reviewController = new AbortController();
@@ -74,7 +74,7 @@ export function useStudioJobActions({
       if (!isCurrentOwner(owner) || reviewController.signal.aborted) return;
       setReviewPage(response);
     } catch (reason) {
-      publishError(owner, "review", toErrorMessage(reason, "Unable to run review."));
+      publishError(owner, "review", toErrorMessage(reason, translateActive("errors.runReview")));
     } finally {
       if (reviewController) owner.controllers.delete(reviewController);
       finishForOwner(owner, "runReview");
@@ -103,7 +103,7 @@ export function useStudioJobActions({
         ) {
           clearRetryAttempt(projectId, jobId, idempotencyKey);
         }
-        publishError(owner, "retryJob", toErrorMessage(reason, "Unable to retry job."));
+        publishError(owner, "retryJob", toErrorMessage(reason, translateActive("errors.retryJob")));
       } finally {
         if (isCurrentOwner(owner)) setRetryingJobId(null);
         finishForOwner(owner, "retryJob");

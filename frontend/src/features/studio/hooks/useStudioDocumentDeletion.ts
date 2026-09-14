@@ -2,8 +2,8 @@ import type { Dispatch, SetStateAction } from "react";
 import { useCallback, useState } from "react";
 
 import { api } from "@/app/api";
+import { translateActive } from "@/app/i18n/translate";
 import type { Project } from "@/app/types/studio";
-
 import { projectDocumentOwnerKey } from "./projectDocumentOwnerKey";
 import { removeProjectDocument } from "./projectState";
 import { toErrorMessage } from "./toErrorMessage";
@@ -82,7 +82,7 @@ export function useStudioDocumentDeletion<Owner extends DocumentDeletionOwner>({
         if (isCurrentOwner(owner)) {
           setFailure({
             key: projectDocumentOwnerKey(owner.projectId, documentId),
-            message: toErrorMessage(reason, "Unable to delete the document."),
+            message: toErrorMessage(reason, translateActive("errors.deleteDocument")),
           });
         }
       } finally {

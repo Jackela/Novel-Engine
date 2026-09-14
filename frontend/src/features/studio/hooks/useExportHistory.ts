@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef } from "react";
 
 import { api } from "@/app/api";
 import type { ExportsPage } from "@/app/apiWorkflowContract";
-
+import { translateActive } from "@/app/i18n/translate";
 import {
   appendUniqueById,
   mergeRefreshedKeysetFirstPage,
@@ -64,8 +64,8 @@ export function useExportHistory({
     request: requestExports,
     recheckProject,
     onSessionLost,
-    missingResourceMessage: "Export history is unavailable for this project.",
-    loadErrorMessage: "Unable to load export history.",
+    missingResourceMessage: translateActive("errors.missingExportHistory"),
+    loadErrorMessage: translateActive("errors.loadExportHistory"),
   });
   const setData = resource.setData;
   const nextCursor = resource.initialized ? resource.data.next_cursor : null;
@@ -79,7 +79,7 @@ export function useExportHistory({
         exports: appendUniqueById(current.exports, page.exports, (item) => item.id),
         next_cursor: page.next_cursor,
       })),
-    busyErrorMessage: "Unable to load older exports.",
+    busyErrorMessage: translateActive("errors.loadOlderExports"),
   });
 
   const abortInFlightOlder = olderPages.abortInFlight;

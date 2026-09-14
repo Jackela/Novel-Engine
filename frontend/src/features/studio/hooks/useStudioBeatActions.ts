@@ -2,8 +2,8 @@ import type { Dispatch, SetStateAction } from "react";
 import { useCallback } from "react";
 
 import { api } from "@/app/api";
+import { translateActive } from "@/app/i18n/translate";
 import type { Project } from "@/app/types/studio";
-
 import type { NarrowSummaryPatch } from "./projectState";
 import { useNarrowSummaryField } from "./useNarrowSummaryField";
 
@@ -68,7 +68,7 @@ export function useStudioBeatActions<Owner extends BeatOwner>({
     currentOwner,
     isCurrentOwner,
     clearSharedError,
-    failureMessage: "Unable to update the chapter beat.",
+    failureMessage: translateActive("errors.updateBeat"),
     invoke: invokeBeatLink,
     patchFor: beatPatch,
   });

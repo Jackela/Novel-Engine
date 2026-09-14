@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 
+import { useTranslation } from "@/app/i18n/useTranslation";
 import type { ReviewSummary } from "@/app/types/studio";
 
 import { providerLabel } from "../studioConstants";
@@ -25,6 +26,7 @@ export function StudioReviewHistoryList({
   onLoadOlderReviews,
 }: StudioReviewHistoryListProps) {
   const isBusy = isLoadingOlder || isLoadingHistory;
+  const { t } = useTranslation();
   const headingRef = useRef<HTMLHeadingElement | null>(null);
   const loadOlderButtonRef = useRef<HTMLButtonElement | null>(null);
   const keyboardLoadTriggerRef = useRef<HTMLButtonElement | null>(null);
@@ -61,7 +63,7 @@ export function StudioReviewHistoryList({
   return (
     <section aria-busy={isBusy || undefined} className="studio-inspector__review-history">
       <h3 ref={headingRef} tabIndex={-1}>
-        Review history
+        {t("review.history.heading")}
       </h3>
       {summaries.length ? (
         <ul>
@@ -69,14 +71,17 @@ export function StudioReviewHistoryList({
             <li key={summary.id}>
               <span>{new Date(summary.created_at).toLocaleString()}</span>
               <small>
-                {summary.issue_count} {summary.issue_count === 1 ? "finding" : "findings"} ·{" "}
-                {providerLabel(summary.provider)}
+                {t("review.history.meta", {
+                  count: summary.issue_count,
+                  unit: summary.issue_count === 1 ? t("noun.finding") : t("noun.findings"),
+                  provider: providerLabel(summary.provider),
+                })}
               </small>
             </li>
           ))}
         </ul>
       ) : historyInitialized ? (
-        <p className="studio-inspector__empty">No reviews yet.</p>
+        <p className="studio-inspector__empty">{t("review.history.empty")}</p>
       ) : null}
       {olderError ? (
         <div aria-live="assertive" className="studio-inspector__error" role="alert">
@@ -87,7 +92,7 @@ export function StudioReviewHistoryList({
             onClick={() => void onLoadOlderReviews()}
             type="button"
           >
-            Try again
+            {t("common.action.tryAgain")}
           </button>
         </div>
       ) : null}
@@ -105,11 +110,11 @@ export function StudioReviewHistoryList({
           ref={loadOlderButtonRef}
           type="button"
         >
-          {isLoadingOlder ? "Loading older reviews…" : "Load older reviews"}
+          {isLoadingOlder ? t("review.history.loadingOlder") : t("review.history.loadOlder")}
         </button>
       ) : isLoadingOlder ? null : historyInitialized && summaries.length ? (
         <p className="studio-inspector__history-status" role="status">
-          All reviews loaded
+          {t("review.history.allLoaded")}
         </p>
       ) : null}
     </section>

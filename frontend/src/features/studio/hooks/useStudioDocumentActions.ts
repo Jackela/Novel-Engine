@@ -2,8 +2,8 @@ import type { Dispatch, SetStateAction } from "react";
 import { useCallback, useRef, useState } from "react";
 
 import { api } from "@/app/api";
+import { translateActive } from "@/app/i18n/translate";
 import type { DocumentKind, Project } from "@/app/types/studio";
-
 import { GROUPS } from "../studioConstants";
 import {
   mergeProjectDocumentOrder,
@@ -99,7 +99,11 @@ export function useStudioDocumentActions<Owner extends DocumentActionsOwner>({
         );
         setActiveId((current) => (isCurrentOwner(owner) ? document.id : current));
       } catch (reason) {
-        publishError(owner, "createDocument", toErrorMessage(reason, "Unable to create document."));
+        publishError(
+          owner,
+          "createDocument",
+          toErrorMessage(reason, translateActive("errors.createDocument")),
+        );
       } finally {
         if (isCurrentOwner(owner)) {
           setCreatingState((current) =>
@@ -149,7 +153,11 @@ export function useStudioDocumentActions<Owner extends DocumentActionsOwner>({
             : current,
         );
       } catch (reason) {
-        publishError(owner, "moveDocument", toErrorMessage(reason, "Unable to reorder documents."));
+        publishError(
+          owner,
+          "moveDocument",
+          toErrorMessage(reason, translateActive("errors.reorderDocuments")),
+        );
       } finally {
         if (isCurrentOwner(owner)) {
           setMovingState((current) =>

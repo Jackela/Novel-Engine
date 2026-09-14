@@ -1,8 +1,7 @@
 import type { Dispatch, SetStateAction } from "react";
 import { useCallback } from "react";
-
+import { translateActive } from "@/app/i18n/translate";
 import type { StudioDocument } from "@/app/types/studio";
-
 import type { DocumentDraftOwner, ReconcileCommittedDocument } from "./documentDraftState";
 import { toErrorMessage } from "./toErrorMessage";
 import { saveDocumentDraft } from "./useDocumentDraftAutosave";
@@ -113,7 +112,7 @@ export function useDocumentRevisionHistory(
   const reportRevisionError = useCallback(
     (reason: unknown) => {
       if (isCurrentOwner(owner)) {
-        setRevisionError(toErrorMessage(reason, "Unable to load revisions."));
+        setRevisionError(toErrorMessage(reason, translateActive("errors.loadRevisions")));
       }
     },
     [isCurrentOwner, owner, setRevisionError],

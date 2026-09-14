@@ -1,6 +1,8 @@
 import { Loader2, Search } from "lucide-react";
 import type { FormEvent } from "react";
 
+import { useTranslation } from "@/app/i18n/useTranslation";
+
 interface SearchResult {
   document_id: string;
   title: string;
@@ -25,6 +27,7 @@ export function StudioNavigatorSearch({
   onSearchSubmit,
   onSelectDocument,
 }: StudioNavigatorSearchProps) {
+  const { t } = useTranslation();
   return (
     <>
       <form
@@ -45,18 +48,18 @@ export function StudioNavigatorSearch({
         )}
         <input
           aria-busy={isSearching}
-          aria-label="Search project"
+          aria-label={t("navigator.search.label")}
           onChange={(event) => onSearchChange(event.target.value)}
-          placeholder="Search documents"
+          placeholder={t("navigator.search.placeholder")}
           readOnly={isSearching}
           value={search}
         />
       </form>
       {searchResults.length ? (
-        <section aria-label="Search results" className="studio-nav__search-results">
+        <section aria-label={t("navigator.search.results")} className="studio-nav__search-results">
           {searchResults.map((result) => (
             <button
-              aria-label={`Open ${result.title}`}
+              aria-label={t("navigator.search.open", { title: result.title })}
               key={result.document_id}
               onClick={() => onSelectDocument(result.document_id)}
               type="button"
