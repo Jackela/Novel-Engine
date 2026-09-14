@@ -4,23 +4,26 @@
 
 The Studio Settings surface MUST offer an explicit "Export diagnostics"
 action that, on activation, requests a diagnostics summary from one
-owner-guarded read-only endpoint and saves it locally as a JSON file with a
-client-derived name. The summary MUST contain the product identity and
-version from the release-version authority, a runtime environment summary,
-a configuration summary reporting the resolved provider selection and the
-set/unset state of recognized configuration keys, a recent error summary
-listing error codes and messages of the most recent failed Jobs when any
-exist, and a database health summary with the same field family as the
-`doctor` command (integrity check, journal mode, foreign-key enforcement,
-owner status). Secret values — the session secret and any provider API key
-— MUST NOT appear anywhere in the exported file, and provider failures
-included in the error summary MUST stay inside the provider failure
-diagnostics boundary with no provider response body exposed. The export
-MUST NOT include manuscript content, document bodies, or Lore entries. The
-action MUST display the diagnostics privacy statement, generation MUST NOT
-perform any network activity beyond the Studio's own read-only endpoint,
-and the product MUST NOT transmit the exported file anywhere — where the
-file goes is the author's decision alone.
+owner-guarded read-only endpoint scoped to the current project and saves it
+locally as a JSON file with a client-derived name. The summary MUST contain
+the product identity and version from the release-version authority, a
+runtime environment summary, a configuration summary reporting the resolved
+provider selection and the set/unset state of recognized configuration
+keys, a recent error summary listing the persisted error messages of the
+current project's most recent failed Jobs when any exist, and a database
+health summary with the same field family as the `doctor` command
+(integrity check, journal mode, foreign-key enforcement, owner status).
+The error summary MUST present only what Jobs durably record — the
+envelope's error code exists only at HTTP response time and MUST NOT be
+invented for the export. Secret values — the session secret and any
+provider API key — MUST NOT appear anywhere in the exported file, and
+provider failures included in the error summary MUST stay inside the
+provider failure diagnostics boundary with no provider response body
+exposed. The export MUST NOT include manuscript content, document bodies,
+or Lore entries. The action MUST display the diagnostics privacy statement,
+generation MUST NOT perform any network activity beyond the Studio's own
+read-only endpoint, and the product MUST NOT transmit the exported file
+anywhere — where the file goes is the author's decision alone.
 
 #### Scenario: Export contains the support field families
 
@@ -37,14 +40,15 @@ file goes is the author's decision alone.
 
 #### Scenario: Recent errors respect the provider boundary
 
-- **GIVEN** the most recent failed Jobs include a provider failure carrying a response body
+- **GIVEN** the provider transport receives an error response whose body the provider failure diagnostics boundary discards, and the resulting failure is one of the project's most recent failed Jobs
 - **WHEN** the author exports diagnostics
-- **THEN** the error summary lists that job's error code and message
-- **AND** the provider response body does not appear in the export
+- **THEN** the error summary lists that job's persisted error message
+- **AND** the discarded upstream body text does not appear anywhere in the export
+- **AND** the summary presents no error code that was not durably recorded
 
 #### Scenario: No errors yields an empty error summary
 
-- **GIVEN** an instance whose job history has no failed Jobs
+- **GIVEN** the current project's job history has no failed Jobs
 - **WHEN** the author exports diagnostics
 - **THEN** the error summary is an explicitly empty state, not an error or a missing field
 

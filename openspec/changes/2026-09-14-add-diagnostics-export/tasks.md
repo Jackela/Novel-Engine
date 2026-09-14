@@ -2,11 +2,15 @@
 
 Dependency graph: `T1` (server assembly service) blocks `T2` (route) and
 `T3` (frontend action); `T2` blocks `T3`; `T4` is workflows and gates,
-blocked by `T2`–`T3`. Write sets are disjoint: T1 owns
-`server/src/` diagnostics assembly files; T2 owns the new route file and
-the regenerated OpenAPI baseline; T3 owns the Settings panel action in
-`frontend/src/features/studio/` plus the zh-CN/EN dictionary entries; T4
-owns `frontend/tests/e2e-ts/` and evidence docs.
+blocked by `T2`–`T3`.
+
+Coordination: server assembly files (T1) and the Settings action files
+(T3) are file-disjoint within this change. The OpenAPI baseline is a
+shared regenerate-once surface across route-adding changes in the same
+window (the lorebook-wizard and writing-stats changes also add routes);
+regenerate serially, last writer reviews the additive-only diff. This
+change touches no Inspector tab union, route state, or panels — it hangs
+off the existing Settings surface.
 
 ## T1: Diagnostics assembly service
 
@@ -25,21 +29,28 @@ owns `frontend/tests/e2e-ts/` and evidence docs.
       through the app's own database handle — no CLI subprocess.
       Acceptance: server tests assert field parity with the doctor
       report fields for a healthy database and an unopenable/corrupt one.
-- [ ] T1.3 Add the recent error summary from failed Job records through
-      the existing error envelope (error codes + messages, bounded to the
-      most recent N), honoring the provider failure diagnostics boundary
-      (no provider body). Acceptance: server tests with a failed provider
-      job whose response body must not appear; empty history yields an
-      explicit empty state.
+- [ ] T1.3 Add the recent error summary scoped to the requesting project:
+      the persisted error messages of that project's most recent failed
+      Jobs, bounded to a fixed count. Only durably recorded data is
+      presented — the HTTP envelope's error code is response-time-only
+      and is not synthesized into the export; the provider failure
+      diagnostics boundary keeps provider bodies out. Acceptance: server
+      tests with a failed provider job whose discarded body must not
+      appear, an assertion that no error-code field is emitted, project
+      scoping (another project's failed jobs are absent), and empty
+      history yielding an explicit empty state.
 
 ## T2: HTTP surface
 
-- [ ] T2.1 Add the owner-guarded read-only route (`/api/diagnostics`,
-      TypeBox response schema, thin-handler discipline). Acceptance:
-      `pnpm --dir server test -- diagnostics` green including
-      authentication (401 without session) and error-envelope cases.
+- [ ] T2.1 Add the owner-guarded read-only project-scoped route
+      (`/api/projects/:projectId/diagnostics`, TypeBox response schema,
+      thin-handler discipline) matching the Settings mount point.
+      Acceptance: `pnpm --dir server test -- diagnostics` green including
+      authentication (401 without session), owner data isolation (unknown
+      identifiers are not found), and error-envelope cases.
 - [ ] T2.2 Regenerate the OpenAPI baseline deliberately
-      (`pnpm --dir server openapi:snapshot`), review additive-only diffs,
+      (`pnpm --dir server openapi:snapshot`), serially with the other
+      route-adding changes in the window, review additive-only diffs,
       and regenerate frontend API types (`pnpm --dir frontend
       gen:api-types`). Acceptance: `pnpm --dir server gates` green.
 

@@ -24,7 +24,7 @@ Revisions are immutable and server-stamped with `source` (`author`,
 
 - Each revision contributes the word-count delta against its parent
   revision of the same document (created-at timestamp buckets it into a
-  calendar day, project-local dates).
+  UTC day).
 - The delta is attributed to that revision's `source`.
 - A document's first revision has no parent; its full word count is
   attributed to its source as-is.
@@ -37,13 +37,26 @@ This is honest about precision: AI-accepted text is "text the author
 accepted", author text is "text saved from the editor" — exactly what the
 data can prove, with no heuristic re-labeling.
 
+## Time anchor: stats days are UTC days
+
+Every calendar bucket in the view — daily words, weekly rollups, streak
+days — uses UTC days, because that is the anchor the existing usage
+aggregation's daily buckets already use. One anchor everywhere means the
+stats view's day rows line up with the usage panel's day rows for the same
+project instead of disagreeing around midnight boundaries, adds zero
+configuration (no timezone setting exists in the product and none is
+introduced), and is honest for the self-hosted reality: the author,
+server, and browser share one machine, so UTC is a stable bucketing
+boundary rather than a foreign clock. The streak's "today" and "yesterday"
+are therefore the current UTC day and the one before it.
+
 ## Streak definition
 
-A writing day is a calendar day (project-local) with at least one
-`author` revision. The streak is the length of the consecutive chain of
-writing days ending today, or ending yesterday when today has no author
-revision yet (so the streak survives until the day is over). Display-only;
-no persistence, no notifications.
+A writing day is a UTC day with at least one `author` revision. The streak
+is the length of the consecutive chain of writing days ending on the
+current UTC day, or ending on the previous UTC day when the current one
+has no author revision yet (so the streak survives until the UTC day is
+over). Display-only; no persistence, no notifications.
 
 ## Completion definition
 

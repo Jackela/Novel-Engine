@@ -29,42 +29,31 @@ derives from data on the author's machine and collects nothing.
   to that Revision's source (`author` = the author's own edits,
   `ai-accepted` = accepted proposal text). Revisions whose source cannot
   support attribution are never silently re-labeled.
+- One time anchor for every calendar bucket: days are UTC days, the same
+  anchor the existing usage aggregation's daily buckets already use — one
+  definition, zero new configuration, and honest for a self-hosted studio
+  whose author, server, and browser share one machine. The streak's
+  "today" and "yesterday" are judged on the current UTC day.
 - Chapter count and completion: the number of chapter documents and the
   share of chapters that have been started (non-empty current content).
   Completion is defined against existing content only — no word-count
   targets, no plans, no new author input.
-- A writing streak: the count of consecutive calendar days, ending today
-  or yesterday, on which the project received at least one `author`
-  revision. Days with only AI-accepted text do not extend the streak; the
-  streak is display-only and derives from the same revision history.
+- A writing streak: the count of consecutive UTC days, ending on the
+  current UTC day or the one before, on which the project received at
+  least one `author` revision. Days with only AI-accepted text do not
+  extend the streak; the streak is display-only and derives from the same
+  revision history.
 - An AI usage summary reusing the existing project usage aggregation
   (request count, prompt/completion tokens, per-model and daily buckets) —
-  the same authority as the usage panel, not a second accounting.
+  the same authority as the usage panel, not a second accounting, and the
+  same UTC buckets so stats days and usage days line up.
 - The statistics are computed server-side by one new owner-guarded
-  read-only endpoint so the attribution rules have one implementation, and
-  the tab renders lazily on first activation like the usage panel.
+  read-only endpoint so the attribution rules and the UTC bucketing have
+  exactly one implementation, and the tab renders lazily on first
+  activation like the usage panel.
 - Purely local derivation: no new data collection, no telemetry, no
   outbound network requests, and no behavior change to how revisions,
   jobs, or usage are recorded.
-
-## Decisions
-
-These constraints bind the implementation tickets:
-
-- **Word-count SSOT.** All word figures use the unified word-count
-  definition already fixed for usage fallback — never a second counting
-  rule.
-- **Attribution follows Revision source.** AI-versus-author splitting is
-  derived from the server-assigned `source` on immutable Revisions; where
-  the history cannot attribute (for example the first revision of a
-  document), the figure reports under that revision's source without
-  invented precision.
-- **Inspector tab, not a new page.** The stats surface joins the existing
-  Inspector tab list and URL contract; no new route shell, no project-level
-  navigation change.
-- **Read-only derivation.** No schema migration, no new recorded state;
-  the endpoint aggregates revisions, structure, and usage in one bounded
-  read.
 
 ## Impact
 
@@ -72,7 +61,14 @@ These constraints bind the implementation tickets:
   `frontend/src/features/studio/`; generated API types regenerate. Backend:
   one studio application statistics aggregation service and one read-only
   route under the existing thin-route discipline.
-- The OpenAPI baseline regenerates (route-adding change).
+- The `stats` tab touches three frontend families shared with the
+  lorebook-wizard change's `lore` tab — the Inspector tab union
+  (`studioConstants.ts`), route state (`studioRouteState.ts`), and the
+  Inspector panels (`StudioInspectorPanels.tsx` /
+  `studioInspectorTypes.ts`); the two changes serialize on those files
+  (stats first, lore second) rather than editing them in parallel.
+- The OpenAPI baseline regenerates (route-adding change), serially with
+  any other route-adding change in the same window.
 - No database migration, no new dependency, no environment variable, no
   change to revision recording, usage accounting, job semantics, or the
   export/import surfaces.

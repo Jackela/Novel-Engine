@@ -3,24 +3,33 @@
 Dependency graph: `T1` (server aggregation) blocks `T2` (route) and `T3`
 (frontend hook + panel); `T2` blocks `T3` and `T4`; `T4` (tab wiring)
 depends on `T3`'s component contract; `T5` is workflows and gates, blocked
-by `T2`–`T4`. Write sets are disjoint: T1 owns
-`server/src/contexts/studio/application/` statistics files; T2 owns the
-new route file and the regenerated OpenAPI baseline; T3–T4 own
-`frontend/src/features/studio/` stats files and the tab constants; T5 owns
-`frontend/tests/e2e-ts/` and evidence docs.
+by `T2`–`T4`.
+
+Coordination: server files (T1) and stats frontend files (T3) are
+file-disjoint within this change, but three frontend families are shared
+with the lorebook-wizard change and are serialized with it — this change
+lands first: the Inspector tab union (`studioConstants.ts` INSPECTOR_TABS /
+`InspectorTab`), route state (`studioRouteState.ts`), and the Inspector
+panels (`StudioInspectorPanels.tsx` / `studioInspectorTypes.ts`). The
+OpenAPI baseline is a shared regenerate-once surface across route-adding
+changes in the same window; regenerate serially, last writer reviews the
+additive-only diff.
 
 ## T1: Server aggregation service
 
 - [ ] T1.1 Add the statistics aggregation service (studio application):
       word-count deltas per revision against its parent using the unified
       word-count definition, source attribution (`author`, `ai-accepted`,
-      `restore`), first-revision full-count attribution, daily/weekly
-      calendar bucketing (project-local dates), chapter count and
+      `restore`), first-revision full-count attribution, UTC calendar
+      bucketing for daily rows and weekly rollups (the same UTC-day anchor
+      as the usage aggregation's daily buckets), chapter count and
       started-chapters share, and the streak rule (consecutive
-      `author`-revision days ending today or yesterday). Acceptance:
-      `pnpm --dir server test -- writing_stats` green, including the
-      five-day streak with an AI-only day, first-revision attribution,
-      and weekly-sum-equals-days cases.
+      `author`-revision UTC days ending on the current UTC day or the one
+      before). Acceptance: `pnpm --dir server test -- writing_stats` green,
+      including the five-day streak with an AI-only day, first-revision
+      attribution, weekly-sum-equals-days, and a UTC-midnight bucket
+      boundary case, plus an assertion that stats day rows and usage
+      daily buckets agree on the same revision history.
 - [ ] T1.2 Compose the AI usage summary from the existing
       `aggregateProjectUsage` aggregation — no second accounting path.
       Acceptance: server tests assert the stats payload's usage figures
@@ -56,11 +65,16 @@ new route file and the regenerated OpenAPI baseline; T3–T4 own
 
 ## T4: Inspector tab wiring
 
-- [ ] T4.1 Add the `stats` tab to the Inspector tab list (APG-compliant
-      tabs contract, URL-backed activation, keyboard navigation) and mount
-      the panel with lazy first-activation loading. Acceptance:
-      `pnpm --dir frontend test:unit -- StudioInspector` green including
-      tablist, activation, and panel wiring cases.
+- [ ] T4.1 Add the `stats` tab to the Inspector tab union
+      (`INSPECTOR_TABS` / `InspectorTab` in `studioConstants.ts`), wire
+      URL-backed activation in `studioRouteState.ts`, and mount the panel
+      through `StudioInspectorPanels.tsx` / `studioInspectorTypes.ts`
+      (APG-compliant tabs contract, keyboard navigation, lazy
+      first-activation loading) — these are the shared files the
+      lorebook-wizard change's `lore` tab lands on after this change;
+      leave both-tab coexistence verifiable. Acceptance:
+      `pnpm --dir frontend test:unit -- StudioInspector studioRouteState`
+      green including tablist, activation, and panel wiring cases.
 
 ## T5: Workflows, gates, and evidence
 
