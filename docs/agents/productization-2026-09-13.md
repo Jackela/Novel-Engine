@@ -454,3 +454,32 @@ snapshot. Open items for the Owner remain exactly: release publish + ghcr
 visibility (when unfreezing), zh quality sign-off, CodeQL default-setup
 toggle, `.env.example` LLM_MODEL line, and installing a container runtime
 to unlock the iteration-3 live checks.
+
+## Iteration 3 extension (2026-09-14/15, Owner directive: "彻底解决全部")
+
+The parked #614 and the agent-side iteration-3 capabilities were built to
+completion under the same campaign discipline (specs → review-adjudicated →
+waves → independent review per PR → serial merge rings):
+
+| PR | Concern | Result |
+|---|---|---|
+| #650 | C10 interview kit (docs/research/interview-kit.md) | merged 77a3efae |
+| #651 | OpenSpec proposals ×3 with review adjudications (job-kind MODIFIED delta, alias two-step, UTC anchor, error-message-only diagnostics, lore tab placement, per-segment jobs) | merged 6fd8be98 |
+| #655 | stats T1 aggregation (UTC buckets, source attribution, streak) | merged d81f20b7 |
+| #656 | diagnostics full-stack (structural redaction; review: single configured-rule, label single-source, true recent-failures query) | merged 0ef28480 |
+| #657 | wizard T1 lore-extract pipeline (per-segment jobs, usage singularity, 100k cap envelope) | merged 92b7647c |
+| #658 | diagnostics T4.1 e2e (download workflow, seeded-key redaction assertions) | merged fc4e8316 |
+| #659 | stats route + Inspector stats tab (usage reuse, contract boundary tests) | merged 5c0de84f |
+| #660 | wizard full-stack (trigger route, lore tab, wizard flow; review: react-doctor clean, in-place document retry, alias prechecks) | merged d4a5dc66 |
+| #661 | stats e2e workflow (attribution chain, true zero state) | merged b0e08d92 |
+| #662 | wizard e2e workflow (confirm + alias-failure retry, abandon) | merged d57dfab5 |
+| #663 | OpenSpec archive ×3 (spec is SSOT again; tasks honestly ticked) | merged b27d05b0 |
+
+Tickets closed with evidence: #652, #653, #654, #614 — **the tracker has
+zero open issues**. Final-main validation (8/8 green at b27d05b0): server
+gates + full server suite + frontend lint/format/type-check/702 unit
+tests/build (identity 0.8.0) + spec:validate.
+
+Release freeze remains: the v0.8.0 Release draft and ghcr visibility stay
+as-is pending Owner. Everything built after the v0.8.0 tag (wind-down +
+this iteration-3 extension) ships with the next version — do not re-tag.
