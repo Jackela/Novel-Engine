@@ -368,3 +368,61 @@ machine (Owner item).
 - `dashscope_protocol.test.ts` filename now covers two modules (#618 note)
 
 
+
+## Iteration 2 (2026-09-14) — distribution & release
+
+Owner checkpoint H answers (recorded 2026-09-14): H1 positioning = the A2
+variant ("an AI novel studio that runs on the author's own computer — the
+manuscript stays local, the model is your choice, no subscription, no
+per-word billing"); H2 = v0.8.0 release authorized (Release draft shown to
+Owner before publish); H3 = prepare deploy config, do not deploy; i18n =
+bilingual EN/zh UI + docs in v0.8.0; H4 = stay PUBLIC + MIT.
+
+| PR | Concern | Result |
+|---|---|---|
+| #631 | deploy/compose.yaml one-liner + host-deployment notes (#630) | merged 46f3837c |
+| #632 | env-first guide wording + compose-passthrough guard gate (anchors full-set, covers root+deploy, 4 regression tests) (#626) | merged d52bee1b |
+| #633 | ghcr multi-arch image pipeline (native runners, version assertion, provenance:false, narrowed perms) (#628) | merged 7aa0ec65 |
+| #634 | i18n stage 1: zero-dependency typed dictionaries + core screens (#629) | merged a1e5ccdb |
+| #638 | Chinese guide family (8 pages) + README.zh-CN (#636) | merged 816c9633 |
+| #639 | i18n stage 2: all studio surfaces + pre-paint language (#635) | merged b2347674 |
+| #641 | release PR: version four-piece 0.8.0 + CHANGELOG (86 PRs verified covered) (#640) | merged 1aaa513c |
+| #642 | pipeline fix: imagetools source format (found by first rc run) | merged 520be9a8 |
+
+## v0.8.0 release record (2026-09-14)
+
+- rc validation: `workflow_dispatch image_tag=v0.8.0-rc.1` — first attempt
+  failed in merge step (`printf '%s@sha256:%s'` dangling-arg malformed
+  source; run 34803244517), root-caused to a one-line format bug, fixed in
+  #642; second attempt succeeded — `0.8.0-rc.1` manifest lists
+  linux/amd64 + linux/arm64 with no attestation noise (run 34804239780).
+- tag `v0.8.0` (annotated) pushed at 520be9a8; tag-triggered pipeline
+  succeeded (run 34804349594): `ghcr.io/jackela/novel-engine:0.8.0`
+  multi-arch manifest verified via the workflow's imagetools inspect.
+- C9 on the tag commit: server ✓ validate ✓ CodeQL Analyze ✓ image
+  pipeline ✓; container persistence + fresh-install behavior carried by
+  the ci container job (green on every merge); no local container runtime
+  on the dev machine (recorded skip; live TTFW/Safari/screenshots wait on
+  the Owner installing a runtime).
+- Release DRAFT created against v0.8.0 (notes = changelog + one-liner
+  quickstart + zh pointer); publish click is the Owner's.
+- Known follow-ups at release time (Owner actions): flip the first ghcr
+  package to public then verify anonymous `docker pull` (the README
+  one-liner depends on it); zh docs quality sign-off; optional: disable
+  CodeQL default setup (its orphan "configuration not found" check turned
+  failure on 2026-09-14 and is excluded from the merge ring as noise);
+  `.env.example` `LLM_MODEL` comment-out (absolute forbidden zone).
+
+## Campaign totals (2026-09-13 → 2026-09-14)
+
+- 20 campaign PRs merged green (#615-#625, #627, #631-#634, #638, #639,
+  #641, #642) + tag v0.8.0 + draft Release; every PR carried independent
+  review, and 8 of them carried review-driven fix rounds.
+- TTFW: documented path is now 2 commands (obtain code + one compose
+  command) with zero-config trial mode; with the GHCR image live the
+  no-build one-liner is a single command. Live timing still pending a
+  local container runtime (iteration-3 re-walk).
+- Open items after the campaign: #614 (parked lorebook wizard), #637
+  (theme first-paint e2e flake), #626 remainder (`.env.example`, Owner),
+  iteration-3 HITL work (interviews, feedback channel, retention stats,
+  cold-start re-walk).
