@@ -50,8 +50,8 @@ starts, and `docker compose logs novel-engine` shows a provider failure.
 
 Work through this list:
 
-1. Did you run `docker compose up -d` **after** editing
-   `compose.override.yaml`? A restart alone does not apply new environment
+1. Did you run `docker compose up -d` **after** editing `.env` (or
+   `compose.override.yaml`)? A restart alone does not apply new environment
    variables; the container must be recreated.
 2. Is the API key complete — no truncation, no stray space — and still valid
    at the provider's console?
@@ -110,8 +110,8 @@ docker run --rm -v novel-engine-data:/data alpine rm /data/.secret
 docker compose up -d
 ```
 
-or set `SECURITY_SECRET_KEY` to a long random value in your
-`compose.override.yaml` and run `docker compose up -d`. A related refusal:
+or set `SECURITY_SECRET_KEY` to a long random value in your `.env` (or
+`compose.override.yaml`) and run `docker compose up -d`. A related refusal:
 an explicitly set secret that is too short is rejected at startup with
 `SECURITY_SECRET_KEY must be at least 16 characters long` — use a longer
 value. (Setting the key counts as an intentional logout: log in again after

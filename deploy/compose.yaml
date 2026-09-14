@@ -1,0 +1,53 @@
+# Remote-image Compose file: run the published GHCR image without cloning
+# the repository. Fetch it with the one-liner in deploy/README.md:
+#   curl -fsSL https://raw.githubusercontent.com/Jackela/Novel-Engine/<tag>/deploy/compose.yaml | docker compose -f - up -d
+# The environment pass-through, volume, healthcheck, and restart policy are
+# kept isomorphic with the repository-root compose.yaml (which builds from
+# source instead of pulling this image).
+services:
+  novel-engine:
+    image: ghcr.io/jackela/novel-engine:${NE_VERSION:-0.8.0}
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      APP_ENVIRONMENT: production
+      # Empty by default so the container entrypoint can bootstrap a secret
+      # into the persistent volume; an explicitly exported value always wins.
+      SECURITY_SECRET_KEY: ${SECURITY_SECRET_KEY:-}
+      SECURITY_CORS_ORIGINS: ${SECURITY_CORS_ORIGINS:-https://app.example.com}
+      DB_URL: sqlite:///./data/novel-engine.sqlite3
+      LLM_PROVIDER: ${LLM_PROVIDER:-mock}
+      # Provider settings pass through from the shell environment or the
+      # project .env file, so writing a key into .env and running
+      # `docker compose up -d` is enough. This list mirrors every provider
+      # variable the server reads (see server provider_config.ts, aliases
+      # included); blank means unset because the server config loaders fall
+      # back to their defaults on empty strings.
+      LLM_MODEL: ${LLM_MODEL:-}
+      DASHSCOPE_API_KEY: ${DASHSCOPE_API_KEY:-}
+      DASHSCOPE_API_BASE: ${DASHSCOPE_API_BASE:-}
+      DASHSCOPE_MODEL: ${DASHSCOPE_MODEL:-}
+      DASHSCOPE_REVIEW_MODEL: ${DASHSCOPE_REVIEW_MODEL:-}
+      DASHSCOPE_TRANSPORT_MODE: ${DASHSCOPE_TRANSPORT_MODE:-}
+      LLM_API_KEY: ${LLM_API_KEY:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      LLM_API_BASE: ${LLM_API_BASE:-}
+      OPENAI_API_BASE: ${OPENAI_API_BASE:-}
+      OPENAI_COMPATIBLE_MODEL: ${OPENAI_COMPATIBLE_MODEL:-}
+      LLM_TIMEOUT: ${LLM_TIMEOUT:-}
+      LLM_RETRY_ATTEMPTS: ${LLM_RETRY_ATTEMPTS:-}
+      LLM_RETRY_DELAY: ${LLM_RETRY_DELAY:-}
+      LLM_STREAM_FIRST_BYTE_TIMEOUT_MS: ${LLM_STREAM_FIRST_BYTE_TIMEOUT_MS:-}
+      LLM_STREAM_IDLE_TIMEOUT_MS: ${LLM_STREAM_IDLE_TIMEOUT_MS:-}
+      LLM_LOREBOOK_BUDGET_CHARACTERS: ${LLM_LOREBOOK_BUDGET_CHARACTERS:-}
+    volumes:
+      - novel-engine-data:/app/data
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8000/health/ready').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  novel-engine-data:
