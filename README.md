@@ -88,10 +88,20 @@ Frontend-only variables live in `frontend/.env.example`:
 
 ## Docker
 
-Docker is the recommended way to run Novel Engine. First get the code: clone
-this repository, or download it via the **Code** → **Download ZIP** button on
-GitHub and unzip it. Then, from the folder containing `compose.yaml` (the
-first start builds the image and can take a few minutes):
+Docker is the recommended way to run Novel Engine. Once v0.8.0 is published,
+the quickest path needs no clone and no build: a prebuilt image on GHCR is
+started by a single command (see [deploy/README.md](deploy/README.md) for the
+walkthrough, upgrades, and hosting a demo server):
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/Jackela/Novel-Engine/v0.8.0/deploy/compose.yaml | docker compose -f - up -d
+```
+
+Until that image is published — and any time you want to run from source —
+use the clone path below. First get the code: clone this repository, or
+download it via the **Code** → **Download ZIP** button on GitHub and unzip
+it. Then, from the folder containing `compose.yaml` (the first start builds
+the image and can take a few minutes):
 
 ```bash
 docker compose up -d
