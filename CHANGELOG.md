@@ -1,5 +1,94 @@
 # Changelog
 
+## 0.8.0
+
+Productization and distribution pass: the server deploys with one command
+through a multi-arch GHCR image with first-boot secret bootstrap and
+provider environment passthrough; the Studio becomes fully bilingual
+(English/Chinese) with pre-paint language application and a complete dark
+theme; the data lifecycle gains a restore command; and first-run guidance,
+a demo workspace, and a bilingual author guide family round out the
+release. No breaking changes.
+
+### Added
+
+- One-command deployment: a remote compose one-liner with host deployment
+  notes (#631) backed by a multi-arch GHCR image publish pipeline (#633);
+  the container bootstraps its admin secret on first boot with a
+  streamlined image build (#616), provider environment variables pass
+  through to the container (#625), and a guard gate keeps the env-first
+  documentation and the passthrough surface in lockstep (#632).
+- Bilingual Studio and docs: EN/zh internationalization foundation
+  covering the core screens (#634), extended to every studio workspace
+  surface with the chosen language applied before first paint (#639); the
+  author guide family ships Chinese editions alongside a Chinese README
+  (#638).
+- Dark theme: a dual-theme token foundation with a theme controller and
+  guards (#510) rolled across the entry and library screens (#511),
+  navigation chrome (#512), and editor and inspector surfaces (#513),
+  verified by an end-to-end workflow with design-SSOT and ADR acceptance
+  (#514) and its spec bookends (#503, #515).
+- First-run experience: a trial-mode explainer with provider guidance
+  (#615), plus actionable error messages that name the missing resource
+  id and surface capacity limits inline (#599).
+- `restore` CLI command: restores a backup archive with an integrity
+  check and an automatic pre-restore backup (#617).
+- Demo content: an example workspace with a seeding guide and a
+  screenshot script (#620).
+- Author documentation: an author-facing guide family (#621).
+- Error-codes lockstep gate: `docs/agents/error-codes.md`, the server
+  error-code table, and the HTTP status mapping must stay aligned,
+  enforced by the QA gates (#557).
+
+### Changed
+
+- DashScope calls target the official compatible-mode Responses path, and
+  explicitly configured base URLs pass through to the provider client
+  (#575).
+- `.env.local` and `data/` defaults anchor to the workspace root instead
+  of the current working directory, so CLI commands and startup guards
+  resolve the same files from any cwd (#560).
+- The Python-era startup guard is removed: the 0.3.x support window stays
+  closed and startup no longer probes retired data layouts (#576).
+
+### Fixed
+
+- Dependency-audit advisories cleared (#516).
+- A stale editor width override (72ch) that duplicated the stylesheet's
+  75ch rule is removed (#558).
+
+### Internal
+
+- Backend-excellence wave (#540–#604): dependency-cruiser policy gaps
+  closed and `ai` exemptions narrowed (#540, #588); `buildApp` assembly
+  and studio record types modularized (#548, #587, #598); table-driven
+  error mapping, route files split into focused plugins, and shared
+  response combinators with one page-limit engine (#541, #549, #574,
+  #581, #592); export orchestration, durable-fs primitives, and recovery
+  chains decomposed into named steps (#547, #555, #578, #583); proposal
+  landing, retry capacity, keyset cursors, and document-seed writes
+  deduplicated behind shared protocols (#571, #577, #579, #580, #582,
+  #584–#586); usage-aggregation SQL and jobs/usage table ownership moved
+  into the studio context's db helpers (#542, #589); DashScope stream
+  extraction split by transport mode (#585); frontend hooks split into
+  focused domains with a shared type-guard module (#572, #590, #593–#597,
+  #602); dead code, needless exports, and single-use unexports swept
+  (#556, #559, #566, #600, #601, #603); failure-semantics contracts and
+  knowledge-base docs filled in (#543, #550–#552, #563, #567, #568); test
+  contracts pinned for stream CSRF/malformed-JSON, token-bucket refill,
+  and the CORS header list (#544–#546, #569); naming conventions frozen
+  for new code (#573).
+- Continued decomposition after the wave: five remaining route files
+  migrate onto the shared response combinators (#619), `dashscope_protocol`
+  splits into extractor and transport siblings (#618), one `errorCode`
+  definition covers the fs-support and db-authority guards (#623), and
+  reviewer failed-job outcomes route through the shared assembler (#624).
+- Campaign and release bookkeeping: v0.7.0 release artifacts recorded
+  (#499), post-release hygiene and a CodeQL-neutral check noted (#500), a
+  DashScope Responses-mode tolerance audit recorded (#501),
+  backend-excellence and productization campaign evidence captured (#570,
+  #604, #627), and a Cloud Agent development environment added (#454).
+
 ## 0.7.0
 
 Design-system and deepening pass: the Studio is restyled on a frosted-glass
