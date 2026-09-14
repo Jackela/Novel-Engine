@@ -438,6 +438,7 @@ resolved to zero agent-actionable items:
 | #644 | compose config smoke in the CI container job (root + deploy) + runbook example refresh (#616 review P3-2, #642 note) | merged 452c1a75 — first CI run validated the smoke green |
 | #645 | theme first-paint e2e flake (#637): root cause proven from CI attempt logs (test-side `page.evaluate` raced ahead of the first rendering update; product bootstrap structurally sound) — `expect.poll` event gate before the original unweakened assertions | merged 21a62701, closes #637 |
 | #646 | server residual sweep (#617/#618/#623 review P3s): `isMissingFileError` → errorCode SSOT; restore schema assertion upgraded to the `__drizzle_migrations` journal discriminator (a Python 0.3.x database also has a `jobs` table and would pass a jobs check — the journal is the only TS-stack marker, created by drizzle migrate()'s first statement); dashscope test file split to match the split modules | merged 1abbd912 |
+| #648 | second e2e flake (studio_row_commands #481, two CI failures on docs-only trees): read-side race — bare `evaluateAll` beat the atomic mount of the placement select; deterministic route-delay reproduction before/after; `toBeVisible` gate, assertion untouched | merged 6e018754 |
 
 #614 (lorebook init wizard) formally parked on the issue with ready-state
 requirements (OpenSpec change, resident-context reuse, FTS5 red lines,
@@ -445,7 +446,8 @@ multi-ticket epic) — the only open feature-class ticket, by design.
 
 Closeout evidence: final main `1abbd912` passed the full local validation
 chain (server gates, frontend lint/format/type-check/test:unit/build,
-spec:validate — 7/7 green). The three wind-down PRs sit after the v0.8.0
+spec:validate — 7/7 green); a fourth wind-down PR (#648) landed after that
+run, test-only. The wind-down PRs sit after the v0.8.0
 tag (`520be9a8`): their hardening ships with the next version; re-tagging
 is not recommended and the Release draft continues to describe the tagged
 snapshot. Open items for the Owner remain exactly: release publish + ghcr
