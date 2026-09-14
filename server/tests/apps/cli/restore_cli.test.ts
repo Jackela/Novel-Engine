@@ -159,6 +159,55 @@ describe("restore CLI", () => {
     expect(ownerUsernames(harness.databasePath)).toEqual(["current"]);
   });
 
+  it("refuses a structurally valid unrelated SQLite database", async () => {
+    const harness = await restoreHarness();
+    await seedOwner(harness.databasePath, "current");
+    const input = join(harness.directory, "foreign.sqlite3");
+    const foreign = new Database(input);
+    try {
+      foreign.exec("CREATE TABLE address_book (id text PRIMARY KEY, name text NOT NULL)");
+    } finally {
+      foreign.close();
+    }
+
+    const code = await runCli(["restore", "--input", input], harness.context);
+
+    expect(code).toBe(1);
+    expect(harness.lines.join("\n")).toMatch(
+      /Restore input is not a Novel Engine database: missing "__drizzle_migrations" table/i,
+    );
+    expect(ownerUsernames(harness.databasePath)).toEqual(["current"]);
+    expect(existsSync(join(harness.dataDirectory, "backups"))).toBe(false);
+  });
+
+  it("refuses a retired Python-stack database that shares the jobs table", async () => {
+    const harness = await restoreHarness();
+    await seedOwner(harness.databasePath, "current");
+    // The 0.3.x Python authority also named its workflow table `jobs`
+    // (python-final: src/contexts/studio/infrastructure/workflow_models.py),
+    // so table-name presence alone cannot discriminate. Only the drizzle
+    // migration journal, created by the first TS-stack startup, proves the
+    // input belongs to this stack.
+    const input = join(harness.directory, "python-era.sqlite3");
+    const pythonEra = new Database(input);
+    try {
+      pythonEra.exec(
+        "CREATE TABLE jobs (id text PRIMARY KEY, kind text NOT NULL, status text NOT NULL, created_at integer NOT NULL)",
+      );
+    } finally {
+      pythonEra.close();
+    }
+
+    const code = await runCli(["restore", "--input", input], harness.context);
+
+    expect(code).toBe(1);
+    expect(harness.lines.join("\n")).toMatch(
+      /Restore input is not a Novel Engine database: missing "__drizzle_migrations" table/i,
+    );
+    expect(ownerUsernames(harness.databasePath)).toEqual(["current"]);
+    expect(existsSync(join(harness.dataDirectory, "backups"))).toBe(false);
+  });
+
   it("reports a missing --input flag as usage error exit 2", async () => {
     const harness = await restoreHarness();
 
