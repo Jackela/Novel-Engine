@@ -10,7 +10,8 @@ DashScope 和任意 OpenAI 兼容接口（以 DeepSeek 为例）的精确环境�
 
 ## How providers are selected
 
-每个项目在项目**设置**面板里选择自己的 provider。面板会列出所有 provider
+每个项目在项目**设置**面板里选择自己的 provider（界面中标注为「生成服
+务」）。面板会列出所有 provider
 类型——`mock`、DashScope 和 OpenAI 兼容——但只有服务器已经拿到其 API key
 的那几个（见下文）才能成功生成；选了一个未配置的 provider 会让每次生成
 都失败。在你配置好 key 之前，让项目保持在内置的试用 provider（`mock`）
