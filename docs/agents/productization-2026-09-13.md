@@ -426,3 +426,29 @@ bilingual EN/zh UI + docs in v0.8.0; H4 = stay PUBLIC + MIT.
   (theme first-paint e2e flake), #626 remainder (`.env.example`, Owner),
   iteration-3 HITL work (interviews, feedback channel, retention stats,
   cold-start re-walk).
+
+## Wind-down (2026-09-14, Owner directive: hold the release, resolve leftovers)
+
+Owner decision: the v0.8.0 Release stays a draft and the ghcr package keeps
+its current visibility — all outward publishing actions frozen. Leftovers
+resolved to zero agent-actionable items:
+
+| PR | Item | Result |
+|---|---|---|
+| #644 | compose config smoke in the CI container job (root + deploy) + runbook example refresh (#616 review P3-2, #642 note) | merged 452c1a75 — first CI run validated the smoke green |
+| #645 | theme first-paint e2e flake (#637): root cause proven from CI attempt logs (test-side `page.evaluate` raced ahead of the first rendering update; product bootstrap structurally sound) — `expect.poll` event gate before the original unweakened assertions | merged 21a62701, closes #637 |
+| #646 | server residual sweep (#617/#618/#623 review P3s): `isMissingFileError` → errorCode SSOT; restore schema assertion upgraded to the `__drizzle_migrations` journal discriminator (a Python 0.3.x database also has a `jobs` table and would pass a jobs check — the journal is the only TS-stack marker, created by drizzle migrate()'s first statement); dashscope test file split to match the split modules | merged 1abbd912 |
+
+#614 (lorebook init wizard) formally parked on the issue with ready-state
+requirements (OpenSpec change, resident-context reuse, FTS5 red lines,
+multi-ticket epic) — the only open feature-class ticket, by design.
+
+Closeout evidence: final main `1abbd912` passed the full local validation
+chain (server gates, frontend lint/format/type-check/test:unit/build,
+spec:validate — 7/7 green). The three wind-down PRs sit after the v0.8.0
+tag (`520be9a8`): their hardening ships with the next version; re-tagging
+is not recommended and the Release draft continues to describe the tagged
+snapshot. Open items for the Owner remain exactly: release publish + ghcr
+visibility (when unfreezing), zh quality sign-off, CodeQL default-setup
+toggle, `.env.example` LLM_MODEL line, and installing a container runtime
+to unlock the iteration-3 live checks.
