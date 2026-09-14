@@ -1,6 +1,7 @@
 import type { Dispatch, FormEvent, SetStateAction } from "react";
 import { useId, useRef } from "react";
 
+import { useTranslation } from "@/app/i18n/useTranslation";
 import type { ProviderInfo } from "@/app/types/studio";
 
 import { useCommandFocusRestoration } from "../hooks/useCommandFocusRestoration";
@@ -27,6 +28,7 @@ export function StudioSettingsPanel({
   const saveButtonRef = useRef<HTMLButtonElement>(null);
   const errorId = useId();
   const runWithFocusRestoration = useCommandFocusRestoration(isSaving);
+  const { t } = useTranslation();
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     const saveButton = saveButtonRef.current;
@@ -44,14 +46,14 @@ export function StudioSettingsPanel({
       className="studio-inspector__panel"
       onSubmit={(event) => void handleSubmit(event)}
     >
-      <h2>Project settings</h2>
+      <h2>{t("settings.heading")}</h2>
       {error ? (
         <p aria-live="assertive" className="studio-inspector__error" id={errorId} role="alert">
           {error}
         </p>
       ) : null}
       <label className="studio-inspector__settings-field">
-        <span>Title</span>
+        <span>{t("common.field.title")}</span>
         <input
           disabled={isSaving}
           maxLength={240}
@@ -65,7 +67,7 @@ export function StudioSettingsPanel({
         />
       </label>
       <label className="studio-inspector__settings-field">
-        <span>Description</span>
+        <span>{t("common.field.description")}</span>
         <textarea
           disabled={isSaving}
           maxLength={10000}
@@ -80,9 +82,9 @@ export function StudioSettingsPanel({
         />
       </label>
       <label className="studio-inspector__settings-field">
-        <span>Provider</span>
+        <span>{t("settings.field.provider")}</span>
         <select
-          aria-label="Provider"
+          aria-label={t("settings.field.provider")}
           disabled={isSaving}
           onChange={(event) =>
             setSettingsForm((current) => ({
@@ -100,12 +102,12 @@ export function StudioSettingsPanel({
         </select>
       </label>
       <div className="studio-inspector__settings-field">
-        <span>Storage</span>
-        <span>SQLite</span>
+        <span>{t("settings.field.storage")}</span>
+        <span>{t("settings.value.sqlite")}</span>
       </div>
       <div className="studio-inspector__settings-field">
-        <span>Document syntax</span>
-        <span>Markdown</span>
+        <span>{t("settings.field.documentSyntax")}</span>
+        <span>{t("settings.value.markdown")}</span>
       </div>
       <div className="studio-inspector__actions">
         <button
@@ -115,11 +117,11 @@ export function StudioSettingsPanel({
           ref={saveButtonRef}
           type="submit"
         >
-          {isSaving ? "Saving…" : "Save settings"}
+          {isSaving ? t("settings.action.saving") : t("settings.action.save")}
         </button>
       </div>
       <p aria-live="polite" className="sr-only">
-        {isSaving ? "Saving project settings." : ""}
+        {isSaving ? t("settings.status.saving") : ""}
       </p>
     </form>
   );

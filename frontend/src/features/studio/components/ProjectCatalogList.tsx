@@ -1,5 +1,6 @@
 import { BookOpen, Loader2 } from "lucide-react";
 
+import { useTranslation } from "@/app/i18n/useTranslation";
 import type { ProjectCatalogItem } from "@/app/types/studio";
 
 interface ProjectCatalogListProps {
@@ -22,6 +23,7 @@ export function ProjectCatalogList({
   onOpenProject,
   onActivateOlder,
 }: ProjectCatalogListProps) {
+  const { t } = useTranslation();
   // Mirrors the export/review/history terminal copy: a populated catalog with
   // no continuation announces its end instead of going silent.
   const isCatalogExhausted = projects.length > 0 && !hasOlderProjects && !olderError;
@@ -38,7 +40,7 @@ export function ProjectCatalogList({
           <BookOpen aria-hidden="true" />
           <span>
             <strong>{project.title}</strong>
-            <small>{project.description || "No premise yet"}</small>
+            <small>{project.description || t("library.catalog.noPremise")}</small>
           </span>
           <time>{new Date(project.updated_at).toLocaleDateString()}</time>
         </button>
@@ -59,12 +61,12 @@ export function ProjectCatalogList({
               type="button"
             >
               {isLoadingOlder ? <Loader2 aria-hidden="true" className="ui-spin" /> : null}
-              {isLoadingOlder ? "Loading older projects..." : "Load older projects"}
+              {isLoadingOlder ? t("library.action.loadingOlder") : t("library.action.loadOlder")}
             </button>
           ) : null}
           {isCatalogExhausted ? (
             <p className="library__catalog-end" role="status">
-              End of project catalog.
+              {t("library.catalog.end")}
             </p>
           ) : null}
         </div>

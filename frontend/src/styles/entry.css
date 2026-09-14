@@ -18,6 +18,7 @@
 .entry__theme {
   display: flex;
   justify-content: flex-end;
+  gap: 8px;
   margin-bottom: 16px;
 }
 .entry__brand {

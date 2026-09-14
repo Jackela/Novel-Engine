@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { api, HttpError } from "@/app/api";
+import { translateActive } from "@/app/i18n/translate";
 import type { SetupStatus } from "@/app/types/studio";
 
 import { toErrorMessage } from "./toErrorMessage";
@@ -53,7 +54,7 @@ export function useEntryBootstrap(onAuthenticated: () => void) {
         if (!isCurrent()) return;
         setState({
           setup: null,
-          error: toErrorMessage(reason, "Unable to check the local owner."),
+          error: toErrorMessage(reason, translateActive("entry.error.unableToCheckOwner")),
           isLoading: false,
         });
       }

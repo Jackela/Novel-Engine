@@ -3,6 +3,8 @@ import { type FormEvent, useCallback, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { api } from "@/app/api";
+import { useTranslation } from "@/app/i18n/useTranslation";
+import { LanguageSwitch } from "@/app/LanguageSwitch";
 import { productIdentity } from "@/app/productIdentity";
 import { ThemeSwitch } from "@/app/ThemeSwitch";
 
@@ -17,6 +19,7 @@ type LibraryCommand = LibraryOperation | "retry";
 
 export function ProjectLibraryPage() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [actionError, setActionError] = useState<string | null>(null);
@@ -73,7 +76,7 @@ export function ProjectLibraryPage() {
       if (mountedRef.current) navigate(`/projects/${project.id}/manuscript`);
     } catch (reason) {
       if (mountedRef.current) {
-        setActionError(toErrorMessage(reason, "Unable to create project."));
+        setActionError(toErrorMessage(reason, t("library.error.unableToCreate")));
       }
     } finally {
       finishOperation();
@@ -85,7 +88,9 @@ export function ProjectLibraryPage() {
     try {
       await api.logout();
     } catch (reason) {
-      if (mountedRef.current) setActionError(toErrorMessage(reason, "Unable to sign out."));
+      if (mountedRef.current) {
+        setActionError(toErrorMessage(reason, t("library.error.unableToSignOut")));
+      }
       return;
     } finally {
       finishOperation();
@@ -111,17 +116,18 @@ export function ProjectLibraryPage() {
           <BookOpen aria-hidden="true" /> {productIdentity.name}
         </div>
         <div className="library__header-actions">
+          <LanguageSwitch />
           <ThemeSwitch />
           <button
             aria-busy={operation === "logout" || undefined}
-            aria-label="Sign out"
+            aria-label={t("library.action.signOut")}
             className="ui-command--icon"
             disabled={operation !== null || isLoading}
             onClick={(event) => {
               if (commandRef.current !== null) return;
               void runOperationWithFocusRestoration(event.currentTarget, logout);
             }}
-            title="Sign out"
+            title={t("library.action.signOut")}
             type="button"
           >
             {operation === "logout" ? (
@@ -137,9 +143,9 @@ export function ProjectLibraryPage() {
         <div className="library__heading">
           <div>
             <h1 ref={headingRef} tabIndex={-1}>
-              Projects
+              {t("library.heading.projects")}
             </h1>
-            <p>Open a manuscript or start a new novel.</p>
+            <p>{t("library.intro")}</p>
           </div>
         </div>
         {actionError ? (
@@ -164,9 +170,9 @@ export function ProjectLibraryPage() {
               <div className="library-create__icon">
                 <Plus aria-hidden="true" />
               </div>
-              <h2>New project</h2>
+              <h2>{t("library.create.newProject")}</h2>
               <label>
-                <span>Title</span>
+                <span>{t("common.field.title")}</span>
                 <input
                   disabled={operation !== null}
                   value={title}
@@ -175,7 +181,7 @@ export function ProjectLibraryPage() {
                 />
               </label>
               <label>
-                <span>Premise</span>
+                <span>{t("library.create.premise")}</span>
                 <textarea
                   value={description}
                   disabled={operation !== null}
@@ -191,7 +197,7 @@ export function ProjectLibraryPage() {
                 type="submit"
               >
                 {operation === "create" ? <Loader2 aria-hidden="true" className="ui-spin" /> : null}
-                {operation === "create" ? "Creating project..." : "Create project"}
+                {operation === "create" ? t("library.action.creating") : t("library.action.create")}
               </button>
             </form>
             <ProjectCatalogList

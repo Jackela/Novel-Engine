@@ -1,6 +1,7 @@
 import { BookOpen, ChevronLeft } from "lucide-react";
 import type { Ref } from "react";
-
+import { useTranslation } from "@/app/i18n/useTranslation";
+import { LanguageSwitch } from "@/app/LanguageSwitch";
 import { productIdentity } from "@/app/productIdentity";
 import { ThemeSwitch } from "@/app/ThemeSwitch";
 import type { Project } from "@/app/types/studio";
@@ -12,10 +13,11 @@ interface StudioTopbarProps {
 }
 
 export function StudioTopbar({ project, onBack, headingRef }: StudioTopbarProps) {
+  const { t } = useTranslation();
   return (
     <header className="studio-topbar">
       <button
-        aria-label="Back to projects"
+        aria-label={t("shell.action.backToProjects")}
         className="ui-command--icon"
         onClick={onBack}
         type="button"
@@ -34,6 +36,7 @@ export function StudioTopbar({ project, onBack, headingRef }: StudioTopbarProps)
         {project.title}
       </h1>
       <div className="studio-topbar__spacer" />
+      <LanguageSwitch />
       <ThemeSwitch />
     </header>
   );

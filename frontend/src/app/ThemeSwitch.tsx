@@ -1,6 +1,7 @@
 import { Monitor, Moon, Sun } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
-
+import type { MessageKey } from "./i18n/dictionaries/en";
+import { useTranslation } from "./i18n/useTranslation";
 import {
   applyTheme,
   onSystemThemeChange,
@@ -12,18 +13,27 @@ import {
 
 const OPTIONS: readonly {
   readonly value: ThemePreference;
-  readonly label: string;
   readonly Icon: typeof Sun;
 }[] = [
-  { value: "system", label: "System", Icon: Monitor },
-  { value: "light", label: "Light", Icon: Sun },
-  { value: "dark", label: "Dark", Icon: Moon },
+  { value: "system", Icon: Monitor },
+  { value: "light", Icon: Sun },
+  { value: "dark", Icon: Moon },
 ] as const;
 
-function optionLabel(value: ThemePreference, systemScheme: "light" | "dark"): string {
-  return value === "system"
-    ? `System (${systemScheme})`
-    : (OPTIONS.find((option) => option.value === value)?.label ?? value);
+/**
+ * The resolved option label. The `system` option folds the current OS
+ * scheme into one label (e.g. "System (dark)") instead of introducing an
+ * interpolation mechanism; the paired keys live in the dictionaries.
+ */
+function optionLabel(
+  t: (key: MessageKey) => string,
+  value: ThemePreference,
+  systemScheme: "light" | "dark",
+): string {
+  if (value === "system") {
+    return t(systemScheme === "dark" ? "theme.option.systemDark" : "theme.option.systemLight");
+  }
+  return t(`theme.option.${value}`);
 }
 
 /**
@@ -33,6 +43,7 @@ function optionLabel(value: ThemePreference, systemScheme: "light" | "dark"): st
  * in the `ui-theme-switch` styles in base.css.
  */
 export function ThemeSwitch() {
+  const { t } = useTranslation();
   const [preference, setPreference] = useState<ThemePreference>(readThemePreference);
   // The resolved OS scheme lives in its own state so the system label keeps
   // reflecting reality across OS flips even while the stored preference is
@@ -57,7 +68,7 @@ export function ThemeSwitch() {
 
   return (
     <fieldset className="ui-theme-switch">
-      <legend className="ui-theme-switch__legend">Theme</legend>
+      <legend className="ui-theme-switch__legend">{t("theme.legend")}</legend>
       {OPTIONS.map(({ value, Icon }) => (
         <label
           key={value}
@@ -75,7 +86,7 @@ export function ThemeSwitch() {
             }}
           />
           <Icon aria-hidden="true" />
-          <span>{optionLabel(value, systemScheme)}</span>
+          <span>{optionLabel(t, value, systemScheme)}</span>
         </label>
       ))}
     </fieldset>

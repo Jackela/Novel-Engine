@@ -1,5 +1,7 @@
 import { BookOpen, FileText, Globe2, Users } from "lucide-react";
 
+import type { MessageKey } from "@/app/i18n/dictionaries/en";
+import { translateActive } from "@/app/i18n/translate";
 import type { DocumentKind, ProviderInfo } from "@/app/types/studio";
 
 export const GROUPS: Array<{
@@ -63,16 +65,24 @@ export const DEFAULT_PROVIDER_OPTIONS: ProviderInfo[] = [
 ];
 
 /**
- * Display-only labels for the raw provider IDs surfaced by the API (#606).
- * Unknown IDs fall back to their raw value so providers added server-side
- * later remain visible and selectable without a frontend change.
+ * Display-only labels for the raw provider IDs surfaced by the API (#606),
+ * resolved through the i18n dictionaries (`provider.*` family) so the
+ * settings panel follows the active UI language. Unknown IDs fall back to
+ * their raw value so providers added server-side later remain visible and
+ * selectable without a frontend change.
+ *
+ * Reactivity note: the lookup reads the active language at call time, so
+ * labels refresh in any component that re-renders on a language switch
+ * (via `useTranslation`). Panels not yet wired to the hook keep rendering
+ * the last-resolved language until their phase-2 conversion.
  */
-const PROVIDER_LABELS: Record<string, string> = {
-  mock: "Mock (trial — no API key)",
-  dashscope: "DashScope",
-  openai_compatible: "OpenAI-compatible",
+const PROVIDER_MESSAGE_KEYS: Record<string, MessageKey> = {
+  mock: "provider.mock",
+  dashscope: "provider.dashscope",
+  openai_compatible: "provider.openaiCompatible",
 };
 
 export function providerLabel(provider: string): string {
-  return PROVIDER_LABELS[provider] ?? provider;
+  const key = PROVIDER_MESSAGE_KEYS[provider];
+  return key ? translateActive(key) : provider;
 }

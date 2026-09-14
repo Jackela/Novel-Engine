@@ -398,6 +398,65 @@ svg {
   outline: 2px solid var(--teal-strong);
   outline-offset: 1px;
 }
+/* Language selection (#629): text-only segmented control primitive on
+   native radios, mirroring the theme-switch material with the same
+   tokens — no separate palette of its own. */
+.ui-language-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  margin: 0;
+  padding: 2px;
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  background: var(--surface-glass-strong);
+}
+.ui-language-switch__legend {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.ui-language-switch__option {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  position: relative;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 10px;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  transition:
+    background 0.15s,
+    color 0.15s;
+}
+.ui-language-switch__input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+.ui-language-switch__option:hover,
+.ui-language-switch__option[data-checked] {
+  background: var(--surface-hover);
+  color: var(--ink-soft);
+}
+.ui-language-switch__option[data-checked] {
+  background: var(--teal-soft);
+  color: var(--ink);
+}
+.ui-language-switch__option:has(.ui-language-switch__input:focus-visible) {
+  outline: 2px solid var(--teal-strong);
+  outline-offset: 1px;
+}
 .ui-spin {
   animation: spin 1s linear infinite;
 }
