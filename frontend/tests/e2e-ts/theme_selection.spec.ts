@@ -186,6 +186,23 @@ test.describe
       });
       await page.reload();
 
+      // The first rendering update is scheduled by the compositor, so it can
+      // land after `reload()` resolves (the load event is not frame-gated);
+      // #637 observed exactly that on loaded CI runners, where this test's
+      // own evaluate task ran before the first animation frame and read the
+      // raw sentinel. Poll until the first frame has been sampled, then
+      // assert on the recorded value — a genuinely post-paint application
+      // still records "(no-attribute)" and keeps failing this guard.
+      await expect
+        .poll(
+          () =>
+            page.evaluate(
+              () =>
+                (window as unknown as { __prePaintTheme: { theme: string } }).__prePaintTheme.theme,
+            ),
+          { timeout: 15_000 },
+        )
+        .not.toBe("(before-first-frame)");
       const prePaint = await page.evaluate(
         () => (window as unknown as { __prePaintTheme: { theme: string } }).__prePaintTheme,
       );
