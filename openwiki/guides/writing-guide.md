@@ -25,8 +25,9 @@ Opening a project shows the writing workbench:
   indicator near the title shows the save state; text you type is stored a
   moment after you stop typing.
 - **Right Inspector** holds the tool tabs: **Copilot**, **Review**,
-  **History**, **Export**, **Jobs**, and **Usage**. The selected tab follows
-  the page address, so you can bookmark or refresh without losing your place.
+  **History**, **Export**, **Jobs**, **Usage**, **Stats**, and **Lore**. The
+  selected tab follows the page address, so you can bookmark or refresh
+  without losing your place.
 
 The project title and the provider it uses are changed in the **Settings**
 section.
@@ -101,12 +102,45 @@ Two controls matter:
   as draft; switch them to stable once you trust them. The status control
   lives under the Copilot tab while an entry is open.
 
-Additional trigger names beyond the title (aliases) are supported by the
-underlying API but do not yet have a screen in the studio; titles are the
-reliable path today.
+Additional trigger names beyond the title (aliases) have no standalone
+editor: you set them when confirming entries through the lorebook wizard
+below. Titles remain the always-available path.
 
 If the AI keeps contradicting your setting, the fix is usually a thin or
 draft-status world sheet: fill it in and mark it stable.
+
+### The lorebook wizard
+
+Hand-typing every character and world sheet is slow when the cast already
+exists in your draft. The **Lore** tab of the Inspector hosts the lorebook
+wizard: feed it draft material, review its suggestions, confirm the entries
+you want.
+
+1. Feed it material under **Draft material**: paste text into **Paste a
+   draft segment** and press **Extract segment**, or pick an imported
+   chapter with **Choose a chapter…** and press **Extract chapter**. Each
+   segment extracts on its own; a failed segment shows the error and a
+   **Retry segment** button while the rest keep working.
+2. Review the list under **Suggested lore entries**. Every candidate says
+   whether it is a character or a world entry and carries a title, a
+   summary, and editable **Aliases (comma-separated)** — extra trigger
+   names beyond the title. Uncheck what you do not want. Suggestions stay
+   in this session — nothing is saved until you confirm.
+3. Press **Add 2 selected to lorebook** — the count in the button follows
+   your selection. Each selected entry is created in two steps — the
+   document first, then its aliases — and the wizard reports every outcome
+   on its own: "Created as draft", "Created — alias write failed" (the
+   aliases are kept so you can **Retry alias write**), or "Failed".
+
+On the built-in trial provider the wizard still runs end to end and
+produces deterministic placeholder candidates; connect a real provider in
+Settings for real extraction.
+
+Confirmed entries land as `draft`, exactly like a hand-typed sheet — they
+reach the AI only after you switch them to stable as described above.
+**Discard suggestions** throws the session away and leaves the project
+unchanged; after a confirmation, **Start over** clears the results while
+keeping the extracted segments for another run.
 
 ## Review: a second pair of eyes
 
@@ -135,6 +169,27 @@ went too far.
   trailing 30-day window, so metered provider plans hold no surprises.
 - **Search** (top of the navigation) finds text across all documents in the
   project and jumps straight to the hit.
+
+## Stats: what you wrote, and what the AI wrote
+
+The **Stats** tab splits every word by source, so your own writing stays
+visible next to the AI's contribution:
+
+- **Author** — words you typed and saved yourself.
+- **Accepted** — words in Copilot proposals you accepted.
+- **Restored** — the movement carried by history restores; a rollback counts
+  against the day's total.
+
+**Words per day** covers the last 30 days and the **Weekly rollups** sum the
+same split per week. Above the tables, the cards show **Words today**, the
+share of **Chapters started** — chapters that have any content, out of every
+chapter in the project — and the **Day streak**: consecutive days that each
+contain at least one save you made yourself. A day whose only writing is an
+accepted proposal does not extend the streak. All statistics bucket days by
+UTC — the same calendar the **Usage** tab's daily totals use — so "today" is
+the current UTC day even where your local clock differs. The **AI usage**
+cards repeat the project's request and token figures; the per-model detail
+lives in the **Usage** tab.
 
 ## When the editor disagrees with the server
 

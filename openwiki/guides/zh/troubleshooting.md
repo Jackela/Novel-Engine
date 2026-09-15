@@ -108,6 +108,13 @@ docker compose up -d
 `SECURITY_SECRET_KEY must be at least 16 characters long`——换一个更长的
 值。（设置密钥视为一次主动登出：重启后请重新登录。）
 
+## Before you ask for help: export diagnostics
+
+如果以上都没解决、你准备求助，先去项目的**设置**区块：**导出诊断信息**会
+在你的电脑上保存一个 JSON 文件，其中包含版本、运行环境、配置状态、近期错
+误摘要与数据库健康状态——不含你写的任何内容，也不含 API key。Novel Engine
+绝不会把这个文件发送到任何地方；是否分享由你自行决定。
+
 ## Anything else
 
 1. `docker compose logs novel-engine` —— 服务器日志会指出是哪个组件在失
@@ -117,3 +124,6 @@ docker compose up -d
 3. `doctor` 命令以 JSON 报告版本、数据库完整性和账户状态；它需要先停掉
    工作室
    （[顺序见此](backup-and-restore.md#running-cli-commands-in-docker)）。
+4. 求助时附上诊断导出——见
+   [export diagnostics before asking for
+   help](#before-you-ask-for-help-export-diagnostics)。
