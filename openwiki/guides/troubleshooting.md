@@ -117,6 +117,15 @@ an explicitly set secret that is too short is rejected at startup with
 value. (Setting the key counts as an intentional logout: log in again after
 the restart.)
 
+## Before you ask for help: export diagnostics
+
+If none of this fixes it and you want to report the problem, start with the
+project's **Settings** section: **Export diagnostics** saves a JSON file on
+your computer containing the version, the runtime environment, the
+configuration status, recent error summaries, and database health — nothing
+you wrote and no API keys. Novel Engine never sends the file anywhere;
+whether you share it is your decision alone.
+
 ## Anything else
 
 1. `docker compose logs novel-engine` — the server log names the failing
@@ -126,3 +135,6 @@ the restart.)
 3. The `doctor` command reports version, database integrity, and account
    state as JSON; it needs the studio stopped first
    ([sequence](backup-and-restore.md#running-cli-commands-in-docker)).
+4. When you report the problem, attach the diagnostics export — see
+   [export diagnostics before asking for
+   help](#before-you-ask-for-help-export-diagnostics).
