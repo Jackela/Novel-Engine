@@ -29,7 +29,7 @@
 
 ## A safe publishing ritual
 
-1. 写完，等编辑器显示 **saved**。
+1. 写完，等编辑器显示**已保存**。
 2. 导出 Markdown——你的文字那份无损、面向未来的副本。
 3. 把这个文件和你的[备份](backup-and-restore.md)放在一起，可能的话放到机
    器之外。

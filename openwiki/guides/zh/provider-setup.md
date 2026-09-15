@@ -131,7 +131,7 @@ OPENAI_COMPATIBLE_MODEL=gpt-4o-mini
 ## Checking that it works
 
 1. 打开一个项目，在**设置**里选好 provider，新建或打开一章，跑一次
-   Copilot **Continue**。一段流式提案就是 key、base URL、模型全部正常工
+   Copilot 的**继续**。一段流式提案就是 key、base URL、模型全部正常工
    作的端到端证明。
 2. 如果生成失败，看服务器日志里具体的 provider 错误：
 
