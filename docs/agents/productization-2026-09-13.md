@@ -515,3 +515,21 @@ mode → EN switch → diagnostics journey. Findings and outcomes:
 Remaining Owner-only items are unchanged (release publish, ghcr
 visibility, CodeQL default-setup toggle, `.env.example` LLM_MODEL,
 container runtime for live TTFW timing, the 10 interviews).
+
+### Post-tag PR index (for the next release PR)
+
+The range `git log v0.8.0..main` holds 22 PR merges (through `569a39f0`).
+The tables and sections above account for all of them except the PRs that
+carry this record or its documentation themselves:
+
+- #643 — iteration-2 and release evidence record (this ledger, `d73733c5`)
+- #647 — wind-down record and closeout evidence (`aca3e629`)
+- #649 — second e2e flake-fix ledger entry (`23f737d3`)
+- #664 — iteration-3 extension evidence record (`5495d054`)
+- #666 — EN+zh guide coverage for the three new capabilities, closing
+  issue #665 (`941d8f22`)
+
+The next version's changelog section can be authored from this ledger plus
+that log range; `check_ssot` pins the changelog's top header to the
+current version, so an `Unreleased` section is not valid in this repo —
+the section appears with the release version bump.
