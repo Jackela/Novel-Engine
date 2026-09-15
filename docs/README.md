@@ -8,6 +8,8 @@ evidence for its named commit, not the status of a later checkout.
 ## Use and operate Novel Engine
 
 - [Project overview](../README.md): installation, configuration, CLI, and upgrades.
+- [UI screenshots](screenshots/): live captures of the Studio in Chinese and
+  English, light and dark themes.
 - [Quickstart](../openwiki/quickstart.md): cross-platform setup, first Owner
   session, local development, and validation prerequisites.
 - Writer guides for the self-hosting author: [getting started](../openwiki/guides/getting-started.md),
