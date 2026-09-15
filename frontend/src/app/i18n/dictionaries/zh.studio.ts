@@ -11,7 +11,7 @@ export const zhStudio = {
   "inspector.tab.jobs": "任务",
   "inspector.tab.usage": "用量",
   "inspector.tab.stats": "统计",
-  "inspector.tab.lore": "设定",
+  "inspector.tab.lore": "设定集",
 
   "copilot.heading": "AI 提案",
   "copilot.hint.guard": "在你接受提案之前，Copilot 不会改动手稿。",
