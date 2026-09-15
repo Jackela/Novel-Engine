@@ -483,3 +483,35 @@ tests/build (identity 0.8.0) + spec:validate.
 Release freeze remains: the v0.8.0 Release draft and ghcr visibility stay
 as-is pending Owner. Everything built after the v0.8.0 tag (wind-down +
 this iteration-3 extension) ships with the next version — do not re-tag.
+
+## Post-release visual verification & gallery (2026-09-15, residual A4-5)
+
+A live walkthrough of the shipped product ran on the native local stack
+(emitted CLI + built SPA, `APP_ENVIRONMENT=testing`, temp SQLite), covering
+the full zh first-run → demo import → Copilot → lore wizard → stats → dark
+mode → EN switch → diagnostics journey. Findings and outcomes:
+
+- **Lore wizard live-verified end to end** (paste segment → trial
+  candidates → confirm → draft entries land in the Navigator). An initial
+  422 was a stale `server/dist` (v0.7.0-era) in the main checkout, not a
+  product defect — `pnpm --dir server build` and a restart resolved it.
+  Lesson: rebuild both dists in the main checkout before native
+  walkthroughs.
+- **zh defect found and fixed (#667, merged `2d4d77c1`)**: the lore
+  Inspector tab was labeled `设定`, colliding with settings vocabulary;
+  renamed to the family term `设定集`. e2e (EN dictionary) never caught it.
+- **Stats live-verified with real data** (author streak, chapters started,
+  words today); diagnostics export panel verified in EN settings.
+- **Screenshot gallery landed (#668)**: nine 1200×618 captures in
+  `docs/screenshots/` (zh first-run/library/studio/Copilot/wizard/stats/
+  dark + EN studio/diagnostics), embedded in `README.md` and
+  `README.zh-CN.md`, indexed from `docs/README.md`. The zh shots showing
+  the Inspector were recaptured after #667 so the gallery shows the fixed
+  label. The blanket `screenshots/` gitignore rule gained a
+  `!docs/screenshots/` negation (harness droppings stay ignored).
+- This gallery doubles as the visual evidence package for the Owner's
+  zh-quality sign-off item.
+
+Remaining Owner-only items are unchanged (release publish, ghcr
+visibility, CodeQL default-setup toggle, `.env.example` LLM_MODEL,
+container runtime for live TTFW timing, the 10 interviews).
