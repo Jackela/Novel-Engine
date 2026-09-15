@@ -38,6 +38,8 @@ coverage/
 .nyc_output/
 junit-results.xml
 screenshots/
+# ...but the curated UI gallery under docs/ is tracked
+!docs/screenshots/
 videos/
 test_artifacts/
 /reports/

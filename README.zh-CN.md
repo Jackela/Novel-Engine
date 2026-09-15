@@ -5,6 +5,15 @@
 这是一份精简的中文快速开始。完整说明见 [README.md](README.md)（英文），作者指南的中文版在
 [openwiki/guides/zh/](openwiki/guides/zh/)。
 
+## 界面速览
+
+以下截图来自 `0.8.0` 演示工作区的实际运行界面；更多画面（首次初始化、项目库、暗色模式、
+诊断导出）在 [docs/screenshots/](docs/screenshots/)。
+
+| 写作视图 | 设定集向导 |
+| --- | --- |
+| ![中文写作视图：导航、手稿与检查器](docs/screenshots/studio-manuscript-zh.png) | ![中文设定集向导：从草稿建议设定条目](docs/screenshots/lore-wizard-zh.png) |
+
 ## 两条启动路径（Docker）
 
 装好并打开 [Docker Desktop](https://www.docker.com/products/docker-desktop/)，然后二选一：

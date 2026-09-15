@@ -22,6 +22,22 @@ end: [writing](openwiki/guides/writing-guide.md),
 [troubleshooting](openwiki/guides/troubleshooting.md), and the
 [FAQ](openwiki/guides/faq.md).
 
+## Screenshots
+
+Captured from a live `0.8.0` stack with the demo workspace; the UI ships in
+Chinese and English with light and dark themes.
+
+| Studio (EN) | Lore wizard (zh) |
+| --- | --- |
+| ![Studio manuscript view in English, light theme](docs/screenshots/studio-en.png) | ![Lorebook wizard suggesting entries in Chinese](docs/screenshots/lore-wizard-zh.png) |
+
+| Copilot proposal (zh) | Writing stats (zh) |
+| --- | --- |
+| ![AI proposal preview in Chinese](docs/screenshots/copilot-proposal-zh.png) | ![Writing statistics view in Chinese](docs/screenshots/writing-stats-zh.png) |
+
+First-run setup, the project library, dark mode, and the diagnostics export
+panel are in [docs/screenshots/](docs/screenshots/).
+
 ## First-Time Setup
 
 Prerequisites: Node.js 24 and the pnpm version pinned in
