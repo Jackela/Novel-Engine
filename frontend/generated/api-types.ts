@@ -5036,10 +5036,8 @@ export interface paths {
                         "application/json": {
                             components?: {
                                 [key: string]: {
-                                    details?: Record<string, never>;
                                     error?: string | null;
                                     message?: string;
-                                    response_time_ms?: number;
                                     /** @enum {string} */
                                     status?: "healthy" | "unhealthy";
                                 };

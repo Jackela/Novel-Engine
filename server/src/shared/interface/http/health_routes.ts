@@ -13,10 +13,8 @@ interface HealthRoutesOptions {
 
 interface SerializedComponent {
   status: HealthStatus;
-  response_time_ms: number;
   message: string;
   error: string | null;
-  details: Record<string, unknown>;
 }
 
 interface DetailedHealthPayload {
@@ -29,10 +27,8 @@ const componentSchema = {
   type: "object",
   properties: {
     status: { type: "string", enum: ["healthy", "unhealthy"] },
-    response_time_ms: { type: "number" },
     message: { type: "string" },
     error: { type: "string", nullable: true },
-    details: { type: "object" },
   },
 };
 
@@ -56,13 +52,17 @@ async function collectReport(probe: HealthProbe): Promise<HealthReport> {
   }
 }
 
+/**
+ * Projects a probe component onto the wire shape. The wire shape stays exactly as
+ * wide as the port: `HealthComponent` carries no timing and no structured detail,
+ * so a `response_time_ms` or `details` field here would publish a constant as if it
+ * had been measured. Extend the port first if either is genuinely wanted.
+ */
 function serializeComponent(component: HealthComponent): SerializedComponent {
   return {
     status: component.status,
-    response_time_ms: 0,
     message: component.message ?? "",
     error: component.error ?? null,
-    details: {},
   };
 }
 
