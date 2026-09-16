@@ -149,7 +149,7 @@ describe("StudioLoreStatusPanel (#444)", () => {
     document.body.appendChild(otherButton);
     saveButton.focus();
 
-    act(() => fireEvent.submit(saveButton));
+    void act(() => fireEvent.submit(saveButton));
     otherButton.focus();
     await act(async () => {
       save.resolve(undefined);
@@ -199,7 +199,7 @@ describe("StudioLoreStatusPanel (#444)", () => {
     const saveButton = getByRole(container, "button", { name: "Save status" });
     saveButton.focus();
 
-    act(() => fireEvent.submit(saveButton));
+    void act(() => fireEvent.submit(saveButton));
     await act(async () => {
       save.resolve(undefined);
       await save.promise;

@@ -1,6 +1,12 @@
 import type { FastifyInstance } from "fastify";
 
-/** Close a resource without discarding either the primary or cleanup failure. */
+/**
+ * Close a resource without discarding either the primary or cleanup failure.
+ *
+ * The aggregate is thrown only because the cleanup failed — when `close()`
+ * succeeds the original error propagates alone — so the cleanup failure is also
+ * attached as the `cause`, while `errors` keeps both failures reachable.
+ */
 export async function closeResourceAndRethrow(
   close: () => Promise<unknown> | unknown,
   originalError: unknown,
@@ -9,7 +15,9 @@ export async function closeResourceAndRethrow(
   try {
     await close();
   } catch (cleanupError) {
-    throw new AggregateError([originalError, cleanupError], aggregateMessage);
+    throw new AggregateError([originalError, cleanupError], aggregateMessage, {
+      cause: cleanupError,
+    });
   }
   throw originalError;
 }

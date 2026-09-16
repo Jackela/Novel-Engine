@@ -151,7 +151,9 @@ async function discardStagedCopyAndRethrow(stagedPath: string, error: unknown): 
     await unlink(stagedPath);
   } catch (cleanupError) {
     if (errorCode(cleanupError) !== "ENOENT") {
-      throw new AggregateError([error, cleanupError], "Restore staging and cleanup both failed.");
+      throw new AggregateError([error, cleanupError], "Restore staging and cleanup both failed.", {
+        cause: cleanupError,
+      });
     }
   }
   throw error;

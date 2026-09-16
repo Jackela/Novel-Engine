@@ -122,7 +122,12 @@ export const proposalRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fa
         socket: request.raw.socket,
         frames: streamSession.frames,
         disconnect,
-        hijack: () => reply.hijack(),
+        // The hijack result is discarded on purpose: the option contract is
+        // `() => void`, and Fastify types hijack() as returning the reply for
+        // chaining. Returning it here would hand a thenable to a void slot.
+        hijack: () => {
+          reply.hijack();
+        },
         pullFirst: () => withAsyncStudioErrors(() => streamSession.frames.next()),
         releaseCapacity: streamSession.releaseCapacity,
       });

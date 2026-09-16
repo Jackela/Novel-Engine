@@ -119,6 +119,7 @@ async function restoreReplacement(
     throw new AggregateError(
       [originalError, restoreError],
       "Export sidecar replacement was quarantined for operator recovery.",
+      { cause: restoreError },
     );
   }
   throw new Error("Export sidecar cleanup preserved a replacement.", { cause: originalError });

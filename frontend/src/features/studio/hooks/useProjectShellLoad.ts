@@ -123,11 +123,11 @@ export function useProjectShellLoad(
         if (!isCurrentRequest()) return;
         controller.abort();
         if (reason instanceof HttpError && reason.status === 401) {
-          navigateRef.current("/", { replace: true });
+          void navigateRef.current("/", { replace: true });
           return;
         }
         if (!shellPublished && reason instanceof HttpError && reason.status === 404) {
-          navigateRef.current("/projects", { replace: true });
+          void navigateRef.current("/projects", { replace: true });
           return;
         }
         const message = toErrorMessage(reason, DEFAULT_LOAD_ERROR());

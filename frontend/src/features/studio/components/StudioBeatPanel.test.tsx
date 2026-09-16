@@ -54,7 +54,7 @@ describe("StudioBeatPanel (#466)", () => {
     fireEvent.change(input, { target: { value: "The Harbor" } });
 
     linkButton.focus();
-    act(() => fireEvent.submit(linkButton));
+    void act(() => fireEvent.submit(linkButton));
     await act(async () => {
       save.resolve(undefined);
       await save.promise;
@@ -98,7 +98,7 @@ describe("StudioBeatPanel (#466)", () => {
     document.body.appendChild(otherButton);
     linkButton.focus();
 
-    act(() => fireEvent.submit(linkButton));
+    void act(() => fireEvent.submit(linkButton));
     otherButton.focus();
     await act(async () => {
       save.resolve(undefined);
@@ -119,7 +119,7 @@ describe("StudioBeatPanel (#466)", () => {
     fireEvent.change(inputA, { target: { value: "The Harbor" } });
     const linkButton = getByRole(container, "button", { name: "Link beat" });
     linkButton.focus();
-    act(() => fireEvent.submit(linkButton));
+    void act(() => fireEvent.submit(linkButton));
 
     // The same persistent owner now carries document B; its keyed form
     // remounts, and the author's focus belongs to the new document.
@@ -145,7 +145,7 @@ describe("StudioBeatPanel (#466)", () => {
     fireEvent.change(inputA, { target: { value: "The Harbor" } });
     const linkButton = getByRole(container, "button", { name: "Link beat" });
     linkButton.focus();
-    act(() => fireEvent.submit(linkButton));
+    void act(() => fireEvent.submit(linkButton));
 
     // The Safari click-without-focus shape: the keyed remount for document B
     // leaves focus on body, so only the same-document guard stops the settled

@@ -27,7 +27,9 @@ export function acquireDataDirectoryLock(directory: string): DataDirectoryLock {
     try {
       ownership.close();
     } catch (closeError) {
-      throw new AggregateError([error, closeError], "Data-directory ownership cleanup failed.");
+      throw new AggregateError([error, closeError], "Data-directory ownership cleanup failed.", {
+        cause: closeError,
+      });
     }
     const code = sqliteErrorCode(error);
     if (code !== undefined && LOCK_CONFLICT_CODES.has(code)) {

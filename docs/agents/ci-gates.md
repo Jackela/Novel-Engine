@@ -15,9 +15,10 @@ current commands from the pnpm package scripts and live workflows.
 | --- | --- | --- |
 | `CI` / Validate dependency security | `pnpm audit --audit-level high --prod` (production deps only) | The PR introduces or keeps a *production* dependency with a known high advisory |
 | `Dependency Audit` (scheduled, daily 03:17 UTC + manual dispatch) | Full audit including dev tooling; tracks failures in one reusable issue until green | A new upstream advisory affects any locked dependency, including dev-only paths |
-| `CI` / `validate` job | Dependency security; server SSOT, hygiene, size, migration, llms-txt, error-codes, and OpenAPI gates, architecture, TypeScript, Biome, and full tests; strict OpenSpec; frontend Biome, TypeScript, unit tests, build, generated API-type drift, React diagnostics, and the browser workflow | One or more validation surfaces failed; inspect the failing step on that exact SHA |
+| `CI` / `validate` job | Dependency security; server SSOT, hygiene, size, migration, llms-txt, error-codes, and OpenAPI gates, architecture, TypeScript, Biome, type-aware lint, and full tests; strict OpenSpec; frontend Biome, TypeScript, type-aware lint, unit tests, build, generated API-type drift, React diagnostics, and the browser workflow | One or more validation surfaces failed; inspect the failing step on that exact SHA |
 | `CI` / Validate React static diagnostics | `react-doctor` with **zero tolerance: warnings fail too**, not just errors | Any diagnostic, including `warning` severity (`unused-export`, `async-defer-await`, …) |
 | `CI` / Validate frontend | Biome check and format, TypeScript, Vitest, and Vite build | Conventional lint, format, type, test, or build failure |
+| `CI` / Validate server + frontend types and lint (`pnpm lint:types`) | The oxlint type-aware pass (tsgolint on `typescript-go`) over the rules Biome cannot express — see the scope policy below | A type-aware finding: an unhandled promise, a promise in a `void` slot, or a dropped `cause` |
 | `CI` / Check generated API types drift | regenerates `frontend/generated/api-types.ts` from `server/qa-baselines/openapi.current.json` and compares byte-identical | The committed generated types are stale — run `pnpm --dir frontend gen:api-types` |
 | `CI` / Validate Studio workflow against the TS backend | Playwright (`playwright.ts.config.ts`) against the emitted CLI serving `frontend/dist` | A browser-level Studio workflow or content-acceptance assertion broke |
 | `CI` / `server` job | Duplicate server gates, dependency-cruiser, TypeScript, Biome, and Vitest validation retained as defense in depth | A server contract or conventional check failed independently of the `validate` job |
@@ -77,6 +78,47 @@ Any route-affecting server change must regenerate the frozen baseline with
 frontend api-types drift gate both fail otherwise. Regeneration is
 deliberate — never hand-edit `server/qa-baselines/openapi.current.json` or
 `frontend/generated/api-types.ts`.
+
+## Policy: type-aware lint (oxlint) scope
+
+Biome has no type-aware linter, so `lint:types` runs a second, deliberately narrow
+pass: `oxlint --type-aware`, configured per package in `server/.oxlintrc.json` and
+`frontend/.oxlintrc.json`. It is powered by tsgolint on `typescript-go`, which is
+the only reason it can run here at all — the workspace pins TypeScript 7.0.x, which
+ships no JS compiler API (`require("typescript")` exposes only `version` and
+`versionMajorMinor`), so typescript-eslint cannot load. `server/.dependency-cruiser.cjs`
+records the same TypeScript 7 constraint for its parser.
+
+Every oxlint default category is off, so the pass reports nothing Biome already
+reports; it exists only for rules Biome structurally cannot express. Enabled today:
+`typescript/no-floating-promises`, `typescript/await-thenable`,
+`typescript/no-misused-promises`, and `preserve-caught-error` (both packages).
+
+Fix direction when it goes red: reach for the `void` operator to mark a deliberate
+discard — that is the rule's own documented escape hatch — rather than loosening
+the config.
+
+Two scope decisions are recorded here with measured reasons rather than silence:
+
+- **`require-await` (both packages, disabled)** — 265 findings, of which 195 are test
+  doubles and the rest Fastify/React handlers declared `async` to satisfy an async
+  contract without awaiting anything (for example `async () => ({ status: "alive" })`).
+  Enabling it would push authors toward `Promise.resolve(...)` wrappers, which are
+  strictly worse than an `async` function that fulfils an async contract.
+- **`typescript/no-misused-promises` (frontend, narrowed)** — the full rule produced
+  22 findings, none of them a defect: they all describe a promise-returning function
+  placed in a `void` slot, which is the dominant React idiom and which this codebase
+  already accepts as a convention (`StudioNavigator.tsx` types such callbacks
+  `() => void | Promise<void>`). The four `checksVoidReturn` sub-checks that encode
+  exactly that shape (`arguments`, `attributes`, `properties`, `variables`) are
+  therefore off, while the `returns` sub-check stays **on** — it asks a different
+  question (a promise returned where a synchronous value is expected) and is clean.
+  The server runs the rule at full strength, where it caught a genuine contract
+  mismatch (`reply.hijack()` returns the reply, not `void`).
+
+Real floating rejections remain enforced in both packages by
+`typescript/no-floating-promises`, so narrowing the frontend rule does not open that
+gap.
 
 ## Policy: file-size gate — split first, baseline exceptional
 

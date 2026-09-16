@@ -153,7 +153,7 @@ describe("StudioSettingsPanel", () => {
     const provider = getByRole(container, "combobox", { name: "Provider" });
     saveButton.focus();
 
-    act(() => fireEvent.submit(saveButton));
+    void act(() => fireEvent.submit(saveButton));
     provider.focus();
     await act(async () => {
       completion.resolve(undefined);

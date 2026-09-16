@@ -69,6 +69,13 @@ of copying mutable command or status lists into multiple documents. Keep
 historical evidence and archived proposals tied to their original dates and
 commits. The changelog records version history, not unverified release claims.
 
+Known debt belongs in [GitHub Issues](docs/agents/issue-tracker.md), not in inline
+`TODO`/`FIXME`/`XXX`/`HACK` comments. Source is deliberately free of debt markers:
+a marker states a problem with no owner, no state, and no closure path, while an
+issue carries all three. When you find unowned work, file it rather than
+annotating the code, and record any non-actionable findings in an audit or waiver
+register under [docs/audits](docs/audits).
+
 Store disposable validation output in an ignored output directory. Preserve
 failure traces before rerunning tools that clean their output directories;
 record a stable artifact link or its local path and retention limit. Local

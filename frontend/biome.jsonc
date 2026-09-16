@@ -54,10 +54,16 @@
       //    (allowConstantExport): biome has no rule enforcing that a
       //    fast-refresh module exports only components/constants. No current
       //    source file violates the intent; enforcement relies on review.
-      // 2. Type-aware semantics recently added to typescript-eslint
-      //    (e.g. `preserve-caught-error`): biome has no type-aware linter.
-      //    That protection is carried by `tsc -p tsconfig.typecheck.json`
-      //    plus code review instead.
+      // 2. Type-aware semantics: biome has no type-aware linter. They are
+      //    covered by a separate oxlint pass instead — see .oxlintrc.json and
+      //    the `lint:types` script. That pass runs on tsgolint/typescript-go,
+      //    which is why it works on the pinned TypeScript 7.0.x: that pin ships
+      //    no JS compiler API (`require("typescript")` exposes only `version`
+      //    and `versionMajorMinor`), so typescript-eslint cannot load here at
+      //    all. This config deliberately stays formatter + `recommended`; the
+      //    type-aware rules live in the oxlint pass, not here.
+      //    server/.dependency-cruiser.cjs records the same TS 7 constraint for
+      //    its parser.
     }
   },
   "assist": {

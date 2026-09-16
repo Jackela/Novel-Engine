@@ -35,6 +35,7 @@ export async function openPersistence(
       throw new AggregateError(
         [error, cleanupError],
         "Database opened but lifecycle registration and cleanup both failed.",
+        { cause: cleanupError },
       );
     }
     throw error;

@@ -109,7 +109,7 @@ describe("StudioLoreStatusPanel document focus identity", () => {
     const saveButton = getByRole(view.container, "button", { name: "Save status" });
     saveButton.focus();
 
-    act(() => fireEvent.submit(saveButton));
+    void act(() => fireEvent.submit(saveButton));
     await act(async () => {
       await Promise.resolve();
     });

@@ -118,11 +118,11 @@ export function useProjectShellState(projectId: string, navigate: NavigateFuncti
       } catch (reason) {
         if (signal.aborted || activeProjectIdRef.current !== projectId) return false;
         if (reason instanceof HttpError && reason.status === 401) {
-          navigateRef.current("/", { replace: true });
+          void navigateRef.current("/", { replace: true });
           return false;
         }
         if (reason instanceof HttpError && reason.status === 404) {
-          navigateRef.current("/projects", { replace: true });
+          void navigateRef.current("/projects", { replace: true });
           return false;
         }
         throw reason;

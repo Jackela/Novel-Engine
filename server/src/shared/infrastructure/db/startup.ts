@@ -105,6 +105,7 @@ function releaseAfterStartupFailure(
       throw new AggregateError(
         [startupError, closeError],
         "Studio database startup failed and the content database did not close.",
+        { cause: closeError },
       );
     }
   }
@@ -114,6 +115,7 @@ function releaseAfterStartupFailure(
     throw new AggregateError(
       [startupError, ownershipError],
       "Studio database startup and ownership release failed.",
+      { cause: ownershipError },
     );
   }
   throw startupError;

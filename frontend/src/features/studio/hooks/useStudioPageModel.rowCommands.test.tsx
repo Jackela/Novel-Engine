@@ -82,8 +82,10 @@ describe("Studio page model navigator row commands (#481)", () => {
     const { container, view, model } = await mountNavigatorPage();
 
     expect(getByRole(container, "button", { name: "Delete Opening" })).toBeDefined();
-    act(() => fireEvent.click(getByRole(container, "button", { name: "Delete Opening" })));
-    act(() => fireEvent.click(getByRole(container, "button", { name: "Confirm delete Opening" })));
+    void act(() => fireEvent.click(getByRole(container, "button", { name: "Delete Opening" })));
+    void act(() =>
+      fireEvent.click(getByRole(container, "button", { name: "Confirm delete Opening" })),
+    );
     await flushEffects();
 
     expect(api.deleteDocument).toHaveBeenCalledWith(project.id, opening.id);
@@ -100,8 +102,10 @@ describe("Studio page model navigator row commands (#481)", () => {
     );
     const { container, view } = await mountNavigatorPage();
 
-    act(() => fireEvent.click(getByRole(container, "button", { name: "Delete Opening" })));
-    act(() => fireEvent.click(getByRole(container, "button", { name: "Confirm delete Opening" })));
+    void act(() => fireEvent.click(getByRole(container, "button", { name: "Delete Opening" })));
+    void act(() =>
+      fireEvent.click(getByRole(container, "button", { name: "Confirm delete Opening" })),
+    );
     await flushEffects();
 
     expect(view().navigator.rowCommands?.deletionErrorFor(opening.id)).toBe(
@@ -123,7 +127,7 @@ describe("Studio page model navigator row commands (#481)", () => {
     const { container, model } = await mountNavigatorPage();
 
     const select = getByRole(container, "combobox", { name: "Place Opening in volume" });
-    act(() => fireEvent.change(select, { target: { value: volumeTwo.id } }));
+    void act(() => fireEvent.change(select, { target: { value: volumeTwo.id } }));
     await flushEffects();
 
     expect(api.moveChapterToVolume).toHaveBeenCalledWith(project.id, opening.id, volumeTwo.id);
@@ -139,7 +143,7 @@ describe("Studio page model navigator row commands (#481)", () => {
     const { container, view } = await mountNavigatorPage();
 
     const select = getByRole(container, "combobox", { name: "Place Opening in volume" });
-    act(() => fireEvent.change(select, { target: { value: volumeTwo.id } }));
+    void act(() => fireEvent.change(select, { target: { value: volumeTwo.id } }));
     await flushEffects();
 
     expect(view().navigator.rowCommands?.placementErrorFor(opening.id)).toBe(

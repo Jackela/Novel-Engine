@@ -168,7 +168,7 @@ describe("useRevisionCache", () => {
 
     let settled = false;
     const refresh = cache.result().hook.refreshDocumentRevisions("document-1", revisionOne.id);
-    refresh.then(() => {
+    void refresh.then(() => {
       settled = true;
     });
 

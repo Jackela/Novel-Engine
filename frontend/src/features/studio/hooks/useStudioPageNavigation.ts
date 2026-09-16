@@ -39,7 +39,7 @@ export function useStudioPageNavigation({
   const onSelectInspector = useCallback(
     (nextInspector: Parameters<typeof studioInspectorPath>[2]) => {
       if (nextInspector === routeInspector) return;
-      navigate(studioInspectorPath(projectId, section, nextInspector));
+      void navigate(studioInspectorPath(projectId, section, nextInspector));
     },
     [navigate, projectId, routeInspector, section],
   );

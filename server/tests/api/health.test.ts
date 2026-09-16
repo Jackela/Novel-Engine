@@ -52,6 +52,23 @@ describe("health surface", () => {
     }
   });
 
+  it("publishes only the fields the health probe port can supply", async () => {
+    const app = await buildApp({ logger: false, healthProbe: healthyDatabaseProbe });
+
+    try {
+      const response = await app.inject({ method: "GET", url: "/health" });
+
+      expect(response.statusCode).toBe(200);
+      expect(response.json().components.database).toEqual({
+        status: "healthy",
+        message: "SQLite ready",
+        error: null,
+      });
+    } finally {
+      await app.close();
+    }
+  });
+
   it("marks /health unhealthy when the probe reports a down component", async () => {
     const app = await buildApp({ logger: false, healthProbe: failingDatabaseProbe });
 

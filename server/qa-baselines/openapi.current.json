@@ -10252,18 +10252,12 @@
                     "components": {
                       "additionalProperties": {
                         "properties": {
-                          "details": {
-                            "type": "object"
-                          },
                           "error": {
                             "nullable": true,
                             "type": "string"
                           },
                           "message": {
                             "type": "string"
-                          },
-                          "response_time_ms": {
-                            "type": "number"
                           },
                           "status": {
                             "enum": [
