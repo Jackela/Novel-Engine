@@ -259,7 +259,7 @@ describe("EntryPage theme selection mount", () => {
       ...container.querySelectorAll<HTMLInputElement>(".entry__theme .ui-theme-switch input"),
     ];
     expect(options.map((option) => option.value)).toEqual(["system", "light", "dark"]);
-    act(() => fireEvent.click(options[2]));
+    void act(() => fireEvent.click(options[2]));
     expect(window.localStorage.getItem(THEME_STORAGE_KEY)).toBe("dark");
     expect(document.documentElement.dataset.theme).toBe("dark");
   });

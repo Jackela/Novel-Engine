@@ -136,11 +136,13 @@ These naming rules apply to new code; existing mismatches are tracked in #536.
 pnpm --dir server gates
 pnpm --dir server type-check
 pnpm --dir server lint
+pnpm --dir server lint:types
 pnpm --dir server arch
 pnpm --dir server test
 
 # Frontend
 pnpm --dir frontend lint
+pnpm --dir frontend lint:types
 pnpm --dir frontend format:check
 pnpm --dir frontend type-check
 pnpm --dir frontend test:unit

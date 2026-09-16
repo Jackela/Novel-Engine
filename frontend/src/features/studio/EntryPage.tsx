@@ -28,7 +28,7 @@ export function EntryPage() {
   const submitRef = useRef<HTMLButtonElement | null>(null);
   const headingRef = useRef<HTMLHeadingElement | null>(null);
   const onAuthenticated = useCallback(() => {
-    navigate("/projects", { replace: true });
+    void navigate("/projects", { replace: true });
   }, [navigate]);
   const { setup, error, isLoading, reload, mountedRef, markOwnerConfigured } =
     useEntryBootstrap(onAuthenticated);
@@ -48,7 +48,9 @@ export function EntryPage() {
         markOwnerConfigured();
       }
       await api.login(username, password);
-      if (mountedRef.current) navigate("/projects");
+      if (mountedRef.current) {
+        void navigate("/projects");
+      }
     } catch (reason) {
       if (mountedRef.current) {
         setSubmitError(toErrorMessage(reason, t("entry.error.unableToContinue")));

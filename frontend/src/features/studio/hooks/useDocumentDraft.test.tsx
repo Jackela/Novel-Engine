@@ -190,7 +190,7 @@ describe("useDocumentDraft", () => {
 
     let settled = false;
     const restore = hook.result().hook.restoreRevision("revision-old");
-    restore.then(() => {
+    void restore.then(() => {
       settled = true;
     });
     await flushMicrotasks();

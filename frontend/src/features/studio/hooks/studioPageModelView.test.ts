@@ -32,8 +32,8 @@ describe("buildStudioNavigatorProps", () => {
     );
 
     props.onNavigateSection("review");
-    props.onCreateDocument("chapter");
-    props.onMoveDocument("document-1", -1);
+    void props.onCreateDocument("chapter");
+    void props.onMoveDocument("document-1", -1);
 
     expect(navigate).toHaveBeenCalledWith("/projects/project-1/review");
     expect(createDocument).toHaveBeenCalledWith("chapter");

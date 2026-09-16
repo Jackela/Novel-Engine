@@ -53,11 +53,13 @@ jobs:
           pnpm --dir server arch
           pnpm --dir server type-check
           pnpm --dir server lint
+          pnpm --dir server lint:types
           pnpm --dir server test
       - name: Validate frontend
         working-directory: frontend
         run: |
           pnpm lint
+          pnpm lint:types
           pnpm format:check
           pnpm type-check
           pnpm test:unit
@@ -148,6 +150,7 @@ jobs:
         run: |
           pnpm --dir server type-check
           pnpm --dir server lint
+          pnpm --dir server lint:types
       - name: Test server
         run: pnpm --dir server test
 

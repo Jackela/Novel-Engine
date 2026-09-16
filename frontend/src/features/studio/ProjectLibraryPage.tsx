@@ -28,7 +28,7 @@ export function ProjectLibraryPage() {
   const createButtonRef = useRef<HTMLButtonElement | null>(null);
   const headingRef = useRef<HTMLHeadingElement | null>(null);
   const onUnauthenticated = useCallback(() => {
-    navigate("/", { replace: true });
+    void navigate("/", { replace: true });
   }, [navigate]);
   const {
     projects,
@@ -73,7 +73,9 @@ export function ProjectLibraryPage() {
     if (!beginOperation("create")) return;
     try {
       const project = await api.createProject(title, description);
-      if (mountedRef.current) navigate(`/projects/${project.id}/manuscript`);
+      if (mountedRef.current) {
+        void navigate(`/projects/${project.id}/manuscript`);
+      }
     } catch (reason) {
       if (mountedRef.current) {
         setActionError(toErrorMessage(reason, t("library.error.unableToCreate")));
@@ -95,7 +97,9 @@ export function ProjectLibraryPage() {
     } finally {
       finishOperation();
     }
-    if (mountedRef.current) navigate("/");
+    if (mountedRef.current) {
+      void navigate("/");
+    }
   };
 
   const submitProject = (event: FormEvent) => {

@@ -86,7 +86,7 @@ describe("Studio page Lore status authority", () => {
     const save = () => getByRole(container, "button", { name: "Save status" }) as HTMLButtonElement;
     expect(save().disabled).toBe(true);
 
-    act(() => fireEvent.change(select, { target: { value: "stable" } }));
+    void act(() => fireEvent.change(select, { target: { value: "stable" } }));
     await act(async () => fireEvent.click(save()));
 
     expect(api.saveLoreStatus).toHaveBeenLastCalledWith(project.id, character.id, "stable");
@@ -98,7 +98,7 @@ describe("Studio page Lore status authority", () => {
     expect(view().inspector.model.loreStatus?.savedStatus).toBe("stable");
     expect(save().disabled).toBe(true);
 
-    act(() => fireEvent.change(select, { target: { value: "draft" } }));
+    void act(() => fireEvent.change(select, { target: { value: "draft" } }));
     expect(save().disabled).toBe(false);
     await act(async () => fireEvent.click(save()));
 

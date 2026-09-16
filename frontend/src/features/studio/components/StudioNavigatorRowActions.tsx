@@ -113,7 +113,7 @@ export function StudioNavigatorRowActions({
             onChange={(event) => {
               const volumeId = event.target.value;
               if (volumeId === "") return;
-              runCommand(
+              void runCommand(
                 event.currentTarget,
                 () => rowCommands.onPlaceChapter(document.id, volumeId),
                 () => selectRef.current,
