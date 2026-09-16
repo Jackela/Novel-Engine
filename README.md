@@ -82,7 +82,7 @@ guide](openwiki/guides/provider-setup.md).
 | `SECURITY_RATE_LIMIT` | `5/minute` | Auth endpoint rate limit. |
 | `SECURITY_TRUSTED_PROXIES` | empty | Comma-separated trusted proxies (exact IP, CIDR, or host) for forwarded client identity. |
 | `LLM_PROVIDER` | `mock` | `mock`, `dashscope`, or `openai_compatible`. |
-| `LLM_MODEL` | `studio-copilot-v1` | Default model label for mock/local flows; intermediate model fallback for real providers. |
+| `LLM_MODEL` | unset | Generic model override applied to every provider, between the per-provider override and the hard default. Left unset, the mock provider resolves to `deterministic-story-v1`; `.env.example` pins it to `studio-copilot-v1` as an example override. |
 | `DASHSCOPE_API_KEY` | unset | Required when `LLM_PROVIDER=dashscope`. |
 | `DASHSCOPE_TRANSPORT_MODE` | `multimodal_generation` | `text_generation`, `multimodal_generation`, or `responses`. |
 | `DASHSCOPE_MODEL` | unset | DashScope generation model; falls back to `LLM_MODEL`, then `qwen3.5-flash`. |
@@ -197,10 +197,12 @@ source and idempotent per principal.
 pnpm --dir server gates
 pnpm --dir server type-check
 pnpm --dir server lint
+pnpm --dir server lint:types
 pnpm --dir server arch
 pnpm --dir server test
 pnpm spec:validate
 pnpm --dir frontend lint
+pnpm --dir frontend lint:types
 pnpm --dir frontend format:check
 pnpm --dir frontend type-check
 pnpm --dir frontend test:unit
