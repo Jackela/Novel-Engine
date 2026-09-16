@@ -70,7 +70,10 @@ describe("owner and guest sessions", () => {
   });
 
   it("logs in the owner and sets the adjudicated cookies", async () => {
-    const { app } = await buildAuthApp();
+    // Pin the environment: the app falls back to process.env.NODE_ENV, so an
+    // ambient production value would mark these cookies Secure and make the
+    // assertion below depend on the shell rather than on the code under test.
+    const { app } = await buildAuthApp({ environment: "development" });
     try {
       const setup = await setupOwner(app);
       const ownerId = setup.json().id;
