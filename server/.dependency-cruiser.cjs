@@ -7,6 +7,11 @@
  *       wiring files in src/apps (they wire concrete providers), and ai never
  *       imports the studio context.
  *
+ * Plus a reachability contract the layer rules structurally cannot express: the
+ * layer rules constrain where a dependency may point, so a module that nothing
+ * imports and that imports nothing is invisible to all of them. no-orphans
+ * closes that gap.
+ *
  * Paths are relative to server/ (cruise target: src).
  *
  * @type {import('dependency-cruiser').IConfiguration}
@@ -98,6 +103,14 @@ module.exports = {
       severity: "error",
       from: { path: "^src/contexts/ai/infrastructure/providers/provider_[^/]+\\.ts$" },
       to: { path: "^src/contexts/ai/infrastructure/providers/(?!provider_)[^/]+\\.ts$" },
+    },
+    {
+      name: "no-orphans",
+      comment:
+        "Reachability contract: every module under src/ must be imported by something or import something. A module with no incoming and no outgoing edges is unreachable dead weight — the layer rules cannot see it, because they only constrain the direction of dependencies that exist. No exemption is declared for entry points on purpose: src/apps/cli/main.ts and src/apps/api/app.ts import heavily, so they are adjacent to the graph and never orphans. If a genuinely standalone module is ever needed, exempt that single file here rather than the src/apps directory.",
+      severity: "error",
+      from: { orphan: true },
+      to: {},
     },
   ],
   options: {
