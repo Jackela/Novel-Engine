@@ -161,7 +161,7 @@
 
 ### DR-005 [P0] 中文字数口径错误（跨产品面）
 
-- [ ] 未开始
+- [x] 已完成（2026-10-02）
 - **问题**：字数按 `[\p{L}\p{N}_'-]+` 匹配"词"，中文连续文本被按标点分段计数（约 1/7 低估），但 UI 在中文下把它当"字"显示，英文下当 "words"。
 - **证据**：`server/src/contexts/studio/domain/revision_word_count.ts:3`；测试钉死 `"你好世界"→1`（`tests/contexts/revision_word_count.test.ts:15-18`）；实测 31 汉字 → 4；UI `zh.shared.ts:30-31`、`StudioStatusbar.tsx:41-44`、`StudioHistoryPanel.tsx:89-90`；下游 `THIN_CHAPTER_WORDS=250`（`review_rules.ts:84`）导致中文约 1700–2000 字前一直报"章节过薄"；usage 缺失回退也复用该函数（`proposal_landing.ts:114-118`）。
 - **影响**：连载作者的心跳数字失真；同时污染评审阈值、统计与成本估算。
@@ -169,6 +169,7 @@
 - **验收标准**：CJK 用例（如 31 汉字）计数符合新定义；既有英文用例不回归；规格补充"word"定义条目。
 - **验证**：`pnpm --dir server exec vitest run tests/contexts/revision_word_count.test.ts tests/api/studio_writing_stats.test.ts`；`pnpm --dir server gates`（若涉及 spec 改动则含 `pnpm spec:validate`）。
 - **备注**：涉及 `docs/agents/error-codes.md` 之外的文档无需门禁；改动面横跨 domain/UI/测试/规格，按 AGENTS.md 一次性完成。
+- **交付记录**：2026-10-02 | `8e59e9b6` | 统一口径：汉字符逐字计数 + 非 Han 字母/数字/下划线/撇号/连字符 run 按词，混排求和（`domain/revision_word_count.ts`，JSDoc 与 spec 同文）；`reconcileRevisionWordCounts` 从"仅补 NULL"升级为"keyset 分批全量重算、仅在存储值≠重算值时写入"（启动时自动修正旧口径存量计数，幂等零写入，`RevisionWordCountInvariantError` 语义保留）；`THIN_CHAPTER_WORDS` 维持 250 并文档化（中文即 250 字符下限，语言差异化阈值属产品决策）；`proposal_landing` 回退注释注明 CJK ≈1 token/字；前端文案经核查无需改（纯中文"字"、纯英文 words、混排伞形口径） | 复现：31 汉字段落旧口径计 1（应 31）、`"你好世界"` 1（应 4）、`"hello，世界！"` 2（应 3）；修复后对应 31/4/3 | spec 新增 "Stale counts ... recomputed" 场景 + 逐字计数断言 | 验证：`pnpm --dir server exec vitest run tests/contexts/revision_word_count.test.ts tests/api/studio_writing_stats.test.ts tests/db/revision_word_count_reconciliation.test.ts tests/contexts/project_shell_store.test.ts`（27 用例）、`server gates`/`type-check`/`lint`/`lint:types`/`arch`/`test`（237 文件/1432 用例）、frontend 全套 + react-doctor(100)、`pnpm spec:validate` 全绿 | 设计代价（有意）：启动对账每次 open 全量重算 revision（keyset 256/批、可中断续跑、一致库零写入）；未跑：全量套件由 integrator 于屏障执行（已执行）
 
 ### DR-006 [P0] 流式生成失败不可恢复（重试 + 保命）
 
@@ -699,3 +700,4 @@
 - 2026-10-01 | 工作区（基线 `607a092e`，未提交） | DR-001 | `pnpm --dir frontend test:unit`（131/709）、`type-check`、`biome check`、`format:check`、`pnpm --dir frontend build`、`pnpm --dir server gates` | 通过：退避重试 + 手动重试按钮 + 新回归
 - 2026-10-01 | 工作区（基线 `607a092e`，未提交） | DR-002 | 同上 | 通过：beforeunload 守卫 + 切换/卸载救援写入；5 处旧"丢弃"用例按新语义重写
 - 2026-10-02 | `eea6f3d4` | DR-003 + DR-004 | `pnpm --dir server exec vitest run tests/api/studio_search.test.ts tests/apps/cli/cli.test.ts`；`pnpm --dir server gates && pnpm --dir server type-check && pnpm --dir server lint && pnpm --dir server lint:types && pnpm --dir server arch && pnpm --dir server test`；frontend lint/lint:types/format:check/type-check/test:unit/build + react-doctor(100) + `pnpm spec:validate` | 通过：CJK 逐字分词（无迁移）+ 16 字符窗口 + `reindex`/doctor 对账；server 237 文件/1426 用例、frontend 131 文件/709 用例；升级提示：旧库需一次性 `reindex`
+- 2026-10-02 | `8e59e9b6` | DR-005 | `pnpm --dir server exec vitest run tests/contexts/revision_word_count.test.ts tests/api/studio_writing_stats.test.ts tests/db/revision_word_count_reconciliation.test.ts tests/contexts/project_shell_store.test.ts`；`pnpm --dir server gates/type-check/lint/lint:types/arch/test`；frontend 全套 + react-doctor + `pnpm spec:validate` | 通过：统一字数口径（Han 逐字 + 拉丁按词）+ 启动对账自动修正旧口径存量；server 237 文件/1432 用例、frontend 131/709；spec 增"Stale counts recomputed"场景
