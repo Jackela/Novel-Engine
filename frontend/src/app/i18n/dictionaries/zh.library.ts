@@ -18,4 +18,18 @@ export const zhLibrary = {
   "library.catalog.end": "项目目录到此为止。",
   "library.action.loadOlder": "加载更早的项目",
   "library.action.loadingOlder": "正在加载更早的项目...",
+  "library.row.delete": "删除{title}",
+  "library.row.deleteTitle": "删除项目",
+  "library.row.deleting": "正在删除{title}…",
+  "library.row.deletingTitle": "正在删除…",
+  "library.row.confirmHeading": "删除{title}确认",
+  "library.row.confirmBody":
+    "永久删除{title}？其文档、修订、导出与快照将一并移除，已有备份不会被删除。",
+  "library.row.confirmDelete": "确认删除{title}",
+  "library.row.confirmAction": "删除项目",
+  "library.row.confirmingAction": "正在删除…",
+  "library.row.cancelDelete": "取消删除{title}",
+  "library.row.cancel": "取消",
+  "library.error.unableToDelete": "无法删除项目。",
+  "library.status.deleted": "已删除{title}。",
 } satisfies Record<keyof typeof enLibrary, string>;

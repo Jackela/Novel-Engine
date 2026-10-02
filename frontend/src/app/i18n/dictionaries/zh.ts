@@ -4,6 +4,7 @@ import { zhEntry } from "./zh.entry";
 import { zhErrors } from "./zh.errors";
 import { zhJobs } from "./zh.jobs";
 import { zhLibrary } from "./zh.library";
+import { zhNavigator } from "./zh.navigator";
 import { zhSettings } from "./zh.settings";
 import { zhShared } from "./zh.shared";
 import { zhStudio } from "./zh.studio";
@@ -22,6 +23,7 @@ export const zh: Dictionary = {
   ...zhSettings,
   ...zhEditor,
   ...zhJobs,
+  ...zhNavigator,
   ...zhStudio,
   ...zhErrors,
 };

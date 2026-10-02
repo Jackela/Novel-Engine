@@ -9,6 +9,9 @@ import {
 } from "./components/StudioNavigatorDocumentRows";
 import type { NavigatorRowCommands } from "./components/StudioNavigatorRowActions";
 import { StudioNavigatorSearch } from "./components/StudioNavigatorSearch";
+import { StudioNavigatorVolumeCreate } from "./components/StudioNavigatorVolumeCreate";
+import type { NavigatorVolumeCommands } from "./components/StudioNavigatorVolumeHeader";
+import { StudioNavigatorVolumeList } from "./components/StudioNavigatorVolumeList";
 import { StudioWholeBookControl } from "./components/StudioWholeBookControl";
 import { useCommandFocusRestoration } from "./hooks/useCommandFocusRestoration";
 import { GROUPS, SECTIONS } from "./studioConstants";
@@ -32,6 +35,8 @@ interface StudioNavigatorProps {
   movingDocument?: PendingDocumentMove | null;
   /** Per-row delete/placement commands (#481); absent renders neither. */
   rowCommands?: NavigatorRowCommands | null;
+  /** Volume management (DR-017); absent renders titles without controls. */
+  volumeCommands?: NavigatorVolumeCommands | null;
   wholeBook?: ComponentProps<typeof StudioWholeBookControl>;
 }
 
@@ -53,6 +58,7 @@ export function StudioNavigator({
   creatingDocumentKind = null,
   movingDocument = null,
   rowCommands = null,
+  volumeCommands = null,
   wholeBook,
 }: StudioNavigatorProps) {
   const { t } = useTranslation();
@@ -61,8 +67,18 @@ export function StudioNavigator({
   const rowCommandsBusy =
     rowCommands !== null &&
     (rowCommands.deletingDocument !== null || rowCommands.placingDocument !== null);
+  const volumeCommandsBusy =
+    volumeCommands !== null &&
+    (volumeCommands.isCreatingVolume ||
+      volumeCommands.renamingVolume !== null ||
+      volumeCommands.deletingVolume !== null ||
+      volumeCommands.movingVolume !== null);
   const documentMutationBusy =
-    createGroupBusy || isMovingDocument || movingDocument !== null || rowCommandsBusy;
+    createGroupBusy ||
+    isMovingDocument ||
+    movingDocument !== null ||
+    rowCommandsBusy ||
+    volumeCommandsBusy;
   const runCreateWithFocusRestoration = useCommandFocusRestoration(documentMutationBusy);
   const showWholeBook =
     wholeBook !== undefined && (section === "manuscript" || wholeBook.phase.kind !== "idle");
@@ -161,17 +177,25 @@ export function StudioNavigator({
                       )}
                     </button>
                   </header>
+                  {kind === "chapter" && volumeCommands !== null ? (
+                    <StudioNavigatorVolumeCreate
+                      commands={volumeCommands}
+                      isMutationBusy={documentMutationBusy}
+                    />
+                  ) : null}
                   {volumes && volumes.length > 0 ? (
-                    volumes.map((volume) => (
-                      <div className="volume-group" key={volume.id}>
-                        <p className="studio-nav__volume-header">{volume.title}</p>
+                    <StudioNavigatorVolumeList
+                      commands={volumeCommands}
+                      isMutationBusy={documentMutationBusy}
+                      renderRows={(volume) => (
                         <StudioNavigatorDocumentRows
                           rows={inVolume(volume.id)}
                           volumes={volumes}
                           {...rowProps}
                         />
-                      </div>
-                    ))
+                      )}
+                      volumes={volumes}
+                    />
                   ) : (
                     <StudioNavigatorDocumentRows rows={documents} volumes={volumes} {...rowProps} />
                   )}

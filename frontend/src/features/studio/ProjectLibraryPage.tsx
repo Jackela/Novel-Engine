@@ -13,8 +13,9 @@ import { ProjectLibraryLoadState } from "./components/ProjectLibraryLoadState";
 import { toErrorMessage } from "./hooks/toErrorMessage";
 import { useCommandFocusRestoration } from "./hooks/useCommandFocusRestoration";
 import { useProjectLibraryBootstrap } from "./hooks/useProjectLibraryBootstrap";
+import { useProjectLibraryDeletion } from "./hooks/useProjectLibraryDeletion";
 
-type LibraryOperation = "create" | "logout";
+type LibraryOperation = "create" | "logout" | "delete";
 type LibraryCommand = LibraryOperation | "retry";
 
 export function ProjectLibraryPage() {
@@ -58,6 +59,16 @@ export function ProjectLibraryPage() {
     commandRef.current = null;
     if (mountedRef.current) setOperation(null);
   };
+
+  const deletion = useProjectLibraryDeletion({
+    reload,
+    isMounted: mountedRef,
+    beginDelete: () => beginOperation("delete"),
+    finishDelete: finishOperation,
+  });
+  const runDeleteWithFocusRestoration = useCommandFocusRestoration(
+    deletion.deletingProjectId !== null,
+  );
 
   const retryLoad = async () => {
     if (commandRef.current !== null) return;
@@ -157,6 +168,11 @@ export function ProjectLibraryPage() {
             {actionError}
           </p>
         ) : null}
+        {deletion.deletionNotice !== null ? (
+          <p aria-live="polite" className="library__deletion-notice" role="status">
+            {deletion.deletionNotice}
+          </p>
+        ) : null}
         {!hasLoaded ? (
           <ProjectLibraryLoadState
             commandsLocked={operation !== null}
@@ -205,11 +221,22 @@ export function ProjectLibraryPage() {
               </button>
             </form>
             <ProjectCatalogList
+              confirmingDeleteId={deletion.confirmingProjectId}
+              deleteErrorFor={deletion.deleteErrorFor}
+              deletingProjectId={deletion.deletingProjectId}
               disabled={operation !== null || isLoadingOlder}
               hasOlderProjects={nextCursor !== null}
               isLoadingOlder={isLoadingOlder}
               olderError={olderError}
               onActivateOlder={activateLoadOlder}
+              onConfirmingDeleteChange={deletion.setConfirmingProjectId}
+              onDeleteProject={(target, projectId, projectTitle) => {
+                void runDeleteWithFocusRestoration(
+                  target,
+                  () => deletion.deleteProject(projectId, projectTitle),
+                  () => headingRef.current,
+                );
+              }}
               onOpenProject={(projectId) => navigate(`/projects/${projectId}/manuscript`)}
               projects={projects}
             />

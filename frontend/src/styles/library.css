@@ -92,6 +92,12 @@
 .library-create textarea {
   resize: vertical;
 }
+.library__project-row-wrap {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  margin-bottom: 10px;
+}
 .library__project-row {
   width: 100%;
   min-height: 88px;
@@ -107,7 +113,6 @@
   gap: 13px;
   text-align: left;
   align-items: center;
-  margin-bottom: 10px;
 }
 .library__project-row:hover {
   border-color: var(--library-row-hover);
@@ -130,6 +135,75 @@
 }
 .library__project-row small,
 .library__project-row time {
+  color: var(--muted-soft);
+  font-size: 12px;
+}
+.library__project-actions {
+  display: flex;
+  align-items: center;
+  opacity: 0;
+}
+.library__project-row-wrap:hover .library__project-actions,
+.library__project-row-wrap:focus-within .library__project-actions {
+  opacity: 1;
+}
+.library__project-actions button {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+.library__project-actions button:disabled {
+  opacity: 0.25;
+  cursor: default;
+}
+.library__project-actions svg {
+  width: 16px;
+}
+.library__project-confirm {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 8px;
+  margin-top: 2px;
+  padding: 12px 14px;
+  border: 1px solid var(--warn);
+  border-radius: 8px;
+  background: var(--warn-soft);
+}
+.library__project-confirm p {
+  margin: 0;
+  color: var(--warn-ink);
+  font-size: 12px;
+}
+.library__project-confirm-actions {
+  display: flex;
+  gap: 8px;
+}
+.library__project-confirm-actions button {
+  min-height: 32px;
+  padding: 4px 12px;
+  border: 1px solid var(--muted);
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+.library__project-confirm-actions button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.library__project-error {
+  color: var(--danger);
+  font-size: 12px;
+}
+.library__deletion-notice {
+  margin: -16px 0 24px;
   color: var(--muted-soft);
   font-size: 12px;
 }

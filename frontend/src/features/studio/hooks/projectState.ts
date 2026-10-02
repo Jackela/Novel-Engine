@@ -78,6 +78,74 @@ export function swapReadingGroupNeighborIds(
   );
 }
 
+/**
+ * Whole-set reorder ids for one volume Move up/down: the moving volume swaps
+ * with its reading-order neighbor. Null means it sits at an edge or is
+ * unknown, and no request should be submitted.
+ */
+export function swapVolumeNeighborIds(
+  volumes: readonly Volume[],
+  volumeId: string,
+  direction: -1 | 1,
+): string[] | null {
+  const index = volumes.findIndex((volume) => volume.id === volumeId);
+  if (index === -1) return null;
+  const neighbor = volumes[index + direction];
+  if (neighbor === undefined) return null;
+  return volumes.map((volume) =>
+    volume.id === volumeId ? neighbor.id : volume.id === neighbor.id ? volumeId : volume.id,
+  );
+}
+
+/** Replace the whole volume set with the server's reorder/list authority. */
+export function replaceProjectVolumes(project: Project, volumes: readonly Volume[]): Project {
+  return { ...project, volumes: [...volumes] };
+}
+
+/** Patch exactly the renamed volume's fields the retitle response owns. */
+export function mergeProjectVolume(project: Project, updated: Volume): Project {
+  if (!project.volumes.some((volume) => volume.id === updated.id)) return project;
+  return {
+    ...project,
+    volumes: project.volumes.map((volume) => (volume.id === updated.id ? updated : volume)),
+  };
+}
+
+/**
+ * Remove one deleted volume from the shell and apply the server's merge
+ * contract locally (VolumeStorePart#dropVolume): the deleted volume's
+ * chapters move to the tail of the preceding volume, else the following one.
+ * The server refuses the last volume, so the no-survivor case never reaches a
+ * successful response; a defensive empty result keeps the last-volume guard
+ * visible instead of dropping chapters.
+ */
+export function removeProjectVolume(project: Project, volumeId: string): Project {
+  const index = project.volumes.findIndex((volume) => volume.id === volumeId);
+  if (index === -1) return project;
+  const survivor = project.volumes[index - 1] ?? project.volumes[index + 1];
+  const volumes: Volume[] = [];
+  for (const volume of project.volumes) {
+    if (volume.id === volumeId) continue;
+    volumes.push({ ...volume, position: volumes.length + 1 });
+  }
+  if (survivor === undefined) return { ...project, volumes };
+  const orphans = project.documents.filter((document) => document.volume_id === volumeId);
+  if (orphans.length === 0) return { ...project, volumes };
+  const orphanIds = new Set(orphans.map((document) => document.id));
+  const without = project.documents.filter((document) => !orphanIds.has(document.id));
+  const lastSurvivorIndex = without.reduce(
+    (last, document, position) => (document.volume_id === survivor.id ? position : last),
+    -1,
+  );
+  const insertion = lastSurvivorIndex === -1 ? without.length : lastSurvivorIndex + 1;
+  const documents = [
+    ...without.slice(0, insertion),
+    ...orphans.map((document) => ({ ...document, volume_id: survivor.id })),
+    ...without.slice(insertion),
+  ];
+  return { ...project, volumes, documents };
+}
+
 /** Apply only fields owned by the project-settings mutation. */
 export function mergeProjectSettings(project: Project, updated: ProjectListItem): Project {
   return {

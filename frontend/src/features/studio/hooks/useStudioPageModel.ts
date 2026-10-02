@@ -1,12 +1,9 @@
 import type { NavigateFunction } from "react-router-dom";
 
 import type { StudioRouteState } from "../studioRouteState";
+import { buildNavigatorCommands } from "./navigatorCommands";
 import { buildProposalUndo } from "./proposalUndo";
-import {
-  buildNavigatorRowCommands,
-  buildStudioInspectorModel,
-  buildStudioNavigatorProps,
-} from "./studioPageModelView";
+import { buildStudioInspectorModel, buildStudioNavigatorProps } from "./studioPageModelView";
 import { useDiagnosticsDownload } from "./useDiagnosticsDownload";
 import { useExportDownload } from "./useExportDownload";
 import { useLazyInspectorHistories } from "./useLazyInspectorHistories";
@@ -215,9 +212,9 @@ export function useStudioPageModel(projectId: string, route: StudioRouteState, n
           isMovingDocument,
           creatingDocumentKind,
           movingDocument,
-          // #481: the Navigator's per-row delete/placement commands with
-          // their exact pending identities and inline error surfaces.
-          rowCommands: buildNavigatorRowCommands(studioActions),
+          // #481/DR-017: the Navigator's row and volume commands with their
+          // exact pending identities and inline error surfaces.
+          ...buildNavigatorCommands(studioActions),
           wholeBook: buildWholeBookNavigatorModel(project, wholeBookLoop),
         },
         navigate,

@@ -8,10 +8,11 @@ import { createProject, studioChapters, typeChapter } from "../content_acceptanc
 // polling below cannot starve it (see #467 PR notes).
 //
 // #467 reorder workflow (shell tasks 5.1/5.2): chapter placement through the
-// Navigator's move commands, and volume placement/order through the API —
-// the Studio UI exposes no volume create/move/reorder controls (see the #467
-// triage), so the volume half is verified at the API level and judged by the
-// shell projection the browser then renders.
+// Navigator's move commands, and volume placement/order through the API.
+// DR-017 now exposes volume create/rename/delete/reorder controls in the
+// Navigator (covered by the navigator unit suites); this spec keeps driving
+// the volume half at the API level and judges the shell projection the
+// browser then renders.
 test.describe
   .serial("#467 navigator reorder", () => {
     test.setTimeout(120_000);

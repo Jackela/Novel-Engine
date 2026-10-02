@@ -79,7 +79,9 @@ test.describe
       // the late save at the network layer: no PUT ever reaches A or B.
       await studio.getByRole("button", { name: "Back to projects" }).click();
       await expect(studio).toHaveURL(/\/projects$/);
-      await studio.getByRole("button", { name: /Switch Ledger B/ }).click();
+      // Starts-with: the same title also prefixes the row's delete command
+      // (DR-018), which would otherwise make this locator ambiguous.
+      await studio.getByRole("button", { name: /^Switch Ledger B/ }).click();
       await expect(studio).toHaveURL(new RegExp(`/projects/${projectIdB}/manuscript`));
       await expect(studio.locator(".cm-content")).toContainText("ledger B");
       await expect(studio.getByText(draftMarker)).toHaveCount(0);

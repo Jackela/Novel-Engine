@@ -335,6 +335,151 @@
   font-size: 11px;
 }
 
+/* Volume management (DR-017): header row controls, inline rename/create
+   strips, and the delete confirmation mirroring the document row surface. */
+.volume-group__head-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.volume-group__head-row .studio-nav__volume-header {
+  margin-right: 0;
+}
+
+.volume-group__actions {
+  display: flex;
+  align-items: center;
+  opacity: 0;
+}
+
+.volume-group__head:hover .volume-group__actions,
+.volume-group__head:focus-within .volume-group__actions {
+  opacity: 1;
+}
+
+.volume-group__actions button {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.volume-group__actions button:disabled {
+  opacity: 0.25;
+  cursor: default;
+}
+
+.volume-group__actions svg {
+  width: 16px;
+  height: 16px;
+}
+
+.volume-group__create {
+  margin: 2px 6px 4px;
+}
+
+.volume-group__create > button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 4px 10px;
+  border: 1px dashed var(--line-strong);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.volume-group__create > button:disabled {
+  opacity: 0.25;
+  cursor: default;
+}
+
+.volume-group__create svg {
+  width: 14px;
+  height: 14px;
+}
+
+.volume-group__form,
+.volume-group__confirm {
+  display: grid;
+  gap: 6px;
+  margin: 2px 6px 6px;
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--surface-hover);
+}
+
+.volume-group__confirm {
+  border-color: var(--warn);
+  background: var(--warn-soft);
+}
+
+.volume-group__form input {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  padding: 8px 9px;
+  outline: none;
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 13px;
+}
+
+.volume-group__form input:focus {
+  border-color: var(--teal-strong);
+  box-shadow: 0 0 0 3px var(--focus-ring);
+}
+
+.volume-group__form button,
+.volume-group__confirm-actions button {
+  min-height: 30px;
+  padding: 2px 10px;
+  border: 1px solid var(--muted);
+  border-radius: 4px;
+  background: transparent;
+  color: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.volume-group__form button[aria-busy="true"],
+.volume-group__confirm-actions button[aria-busy="true"] {
+  opacity: 0.6;
+}
+
+.volume-group__confirm p {
+  margin: 0;
+  color: var(--warn-ink);
+  font-size: 12px;
+}
+
+.volume-group__confirm-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.volume-group__error {
+  margin: 2px 8px 4px;
+  color: var(--danger);
+  font-size: 11px;
+}
+
+.volume-group__form .volume-group__error,
+.volume-group__confirm .volume-group__error {
+  margin: 0;
+  color: var(--danger);
+}
+
 .studio-inspector__settings-field {
   display: grid;
   gap: 7px;

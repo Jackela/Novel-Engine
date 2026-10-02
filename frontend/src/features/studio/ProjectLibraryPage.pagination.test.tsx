@@ -88,7 +88,7 @@ describe("ProjectLibraryPage bounded catalog traversal", () => {
 
     expect(api.projects).toHaveBeenCalledTimes(1);
     expect(vi.mocked(api.projects).mock.calls[0]?.[0]).not.toHaveProperty("cursor");
-    expect(getByRole(container, "button", { name: /Newer draft/ })).toBeDefined();
+    expect(getByRole(container, "button", { name: /^Newer draft/ })).toBeDefined();
 
     const loadOlder = getByRole(container, "button", { name: "Load older projects" });
     await act(async () => {
@@ -100,7 +100,7 @@ describe("ProjectLibraryPage bounded catalog traversal", () => {
     expect(api.projects).toHaveBeenCalledTimes(2);
     expect(vi.mocked(api.projects).mock.calls[1]?.[0]?.cursor).toBe("cursor-1");
     expect(container.querySelectorAll(".library__project-row")).toHaveLength(2);
-    expect(getByRole(container, "button", { name: /Older draft/ })).toBeDefined();
+    expect(getByRole(container, "button", { name: /^Older draft/ })).toBeDefined();
     expect(queryByRole(container, "button", { name: "Load older projects" })).toBeNull();
   });
 
@@ -129,7 +129,7 @@ describe("ProjectLibraryPage bounded catalog traversal", () => {
     });
 
     expect(getByRole(container, "alert").textContent).toContain("Older projects unavailable.");
-    expect(getByRole(container, "button", { name: /Kept draft/ })).toBeEnabled();
+    expect(getByRole(container, "button", { name: /^Kept draft/ })).toBeEnabled();
     const retryOlder = getByRole(container, "button", { name: "Load older projects" });
     expect(retryOlder).toBeEnabled();
     expect(document.activeElement).toBe(retryOlder);
@@ -139,7 +139,7 @@ describe("ProjectLibraryPage bounded catalog traversal", () => {
       await Promise.resolve();
       await Promise.resolve();
     });
-    expect(getByRole(container, "button", { name: /Recovered draft/ })).toBeDefined();
+    expect(getByRole(container, "button", { name: /^Recovered draft/ })).toBeDefined();
     expect(container.querySelector('[role="alert"]')).toBeNull();
   });
 
@@ -186,7 +186,7 @@ describe("ProjectLibraryPage bounded catalog traversal", () => {
     const busy = getByRole(container, "button", { name: "Loading older projects..." });
     expect(busy).toBeDisabled();
     expect(busy).toHaveAttribute("aria-busy", "true");
-    expect(getByRole(container, "button", { name: /Page one/ })).toBeDisabled();
+    expect(getByRole(container, "button", { name: /^Page one/ })).toBeDisabled();
 
     act(() => {
       busy.click();
@@ -197,7 +197,7 @@ describe("ProjectLibraryPage bounded catalog traversal", () => {
       olderPage.resolve({ projects: [catalogRow("older", "Older draft")], next_cursor: null });
       await olderPage.promise;
     });
-    expect(getByRole(container, "button", { name: /Older draft/ })).toBeEnabled();
+    expect(getByRole(container, "button", { name: /^Older draft/ })).toBeEnabled();
   });
 
   it("does not publish a stale older page after leaving the library", async () => {
