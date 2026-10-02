@@ -12,6 +12,7 @@ import {
   baseProject,
   firstChapter,
   proposalJobFor,
+  safeChapterPlan,
   secondChapter,
 } from "./useWholeBookLoop.test-harness";
 
@@ -115,7 +116,7 @@ describe("useWholeBookLoop unknown outcome audit", () => {
     let run: Promise<void> = Promise.resolve();
 
     act(() => {
-      run = view.result().loop.start([firstChapter, secondChapter]);
+      run = view.result().loop.start(safeChapterPlan(firstChapter, secondChapter));
     });
     act(() => view.result().loop.stop());
     await act(async () => {
@@ -137,7 +138,7 @@ describe("useWholeBookLoop unknown outcome audit", () => {
       await run;
     });
     expect(view.result().jobs.proposalAuditStatus).toBe("audit_failed");
-    act(() => void view.result().loop.start([firstChapter, secondChapter]));
+    act(() => void view.result().loop.start(safeChapterPlan(firstChapter, secondChapter)));
     expect(streamProposal).toHaveBeenCalledTimes(1);
 
     await act(async () => {
@@ -148,7 +149,7 @@ describe("useWholeBookLoop unknown outcome audit", () => {
     expect(view.result().jobs.proposalAuditStatus).toBe("audit_succeeded");
     expect(view.result().loop.proposalOutcomeUnknown).toBe(true);
 
-    act(() => void view.result().loop.start([firstChapter, secondChapter]));
+    act(() => void view.result().loop.start(safeChapterPlan(firstChapter, secondChapter)));
     expect(streamProposal).toHaveBeenCalledTimes(2);
     expect(view.result().jobs.proposalAuditStatus).toBe("idle");
     secondStream.resolve(proposalJobFor(firstChapter.id));
@@ -160,7 +161,7 @@ describe("useWholeBookLoop unknown outcome audit", () => {
     const view = renderUnknownLoop();
     const projectB: Project = { ...baseProject, id: "project-b" };
 
-    act(() => void view.result().loop.start([firstChapter]));
+    act(() => void view.result().loop.start(safeChapterPlan(firstChapter)));
     view.rerender(projectB);
     await act(async () => {
       oldStream.reject(new ProposalOutcomeUnknownError(new Error("old response lost")));
@@ -179,7 +180,7 @@ describe("useWholeBookLoop unknown outcome audit", () => {
     let run: Promise<void> = Promise.resolve();
 
     act(() => {
-      run = view.result().loop.start([firstChapter, secondChapter]);
+      run = view.result().loop.start(safeChapterPlan(firstChapter, secondChapter));
     });
     await act(async () => {
       await expect(view.result().jobs.auditProposalOutcome()).resolves.toBe(true);

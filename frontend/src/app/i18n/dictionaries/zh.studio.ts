@@ -25,8 +25,10 @@ export const zhStudio = {
   "copilot.action.accept": "接受",
   "copilot.action.reject": "拒绝",
   "copilot.action.stop": "停止",
+  "copilot.action.copy": "复制",
   "copilot.proposal.heading": "提案 Markdown",
   "copilot.proposal.streaming": "正在流式输出…",
+  "copilot.proposal.interrupted": "已中断 — 文本已保留",
   "copilot.proposal.previewOnly": "仅预览",
 
   "audit.checking": "提案结果未知。正在检查任务历史以获取审计证据…",
@@ -200,9 +202,15 @@ export const zhStudio = {
   "statusbar.words": "{count} {unit}",
 
   "wholeBook.region": "整本生成",
-  "wholeBook.hint": "按阅读顺序起草并自动接受所有还缺少 AI 修订的章节。",
+  "wholeBook.hint": "按阅读顺序为空白章节起草；已有正文的章节只会在你确认后才被替换。",
+  "wholeBook.confirm.message":
+    "整本生成会自动接受生成的草稿。以下章节的现有正文不是已接受的 AI 修订：",
+  "wholeBook.confirm.listLabel": "将被替换的章节",
   "wholeBook.action.start": "生成整本书",
   "wholeBook.action.stop": "停止生成",
+  "wholeBook.action.generateEmpty": "只生成 {count} 个空白章节",
+  "wholeBook.action.replaceOccupied": "用 AI 草稿替换这 {count} {unit}",
+  "wholeBook.action.cancel": "取消",
   "wholeBook.status.generating": "正在生成第 {current} 章，共 {total} 章…",
   "wholeBook.title.done": "每一章都已有已接受的 AI 修订",
   "wholeBook.outcome.stoppedEarly": "已停止 — 本次运行接受了 {count} {unit}。",

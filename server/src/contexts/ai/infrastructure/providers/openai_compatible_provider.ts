@@ -200,6 +200,7 @@ export class OpenAICompatibleTextProvider implements TextGenerationProvider {
         model: this.model,
         firstByteTimeoutMs: this.firstByteTimeoutMs,
         idleTimeoutMs: this.idleTimeoutMs,
+        retry: this.retry,
       },
       (url, init) => this.dispatch(url, init ?? {}),
       (data) => unwrapper.feed(streamDeltaContent(data) ?? ""),

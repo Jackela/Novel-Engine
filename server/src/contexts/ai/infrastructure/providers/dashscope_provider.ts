@@ -153,6 +153,7 @@ export class DashScopeTextProvider implements TextGenerationProvider {
         model: this.model,
         firstByteTimeoutMs: this.firstByteTimeoutMs,
         idleTimeoutMs: this.idleTimeoutMs,
+        retry: this.retry,
       },
       (url, init) => this.dispatch(url, init ?? {}),
       (data) => unwrapper.feed(extractDashscopeIncrementalText(data) ?? ""),

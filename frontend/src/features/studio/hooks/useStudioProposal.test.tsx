@@ -224,13 +224,16 @@ describe("useStudioProposal", () => {
     expect(harness.result().error).toBeNull();
   });
 
-  it("surfaces stream failures as the inspector error and clears the preview", async () => {
+  it("keeps the interrupted preview and surfaces the stream failure", async () => {
     // Given
     const harness = renderProposalHook();
     const deferred = deferredStream();
     await act(async () => {
       void harness.result().hook.runProposal("rewrite");
       await Promise.resolve();
+    });
+    await act(async () => {
+      deferred.requests[0]?.onDelta("A partial scene");
     });
 
     // When
@@ -239,7 +242,26 @@ describe("useStudioProposal", () => {
     // Then
     expect(harness.result().error).toBe("provider exploded");
     expect(harness.result().hook.proposal).toBeNull();
+    // DR-006: a mid-stream failure keeps the text the author already has.
+    expect(harness.result().hook.streamingText).toBe("A partial scene");
+    expect(harness.result().hook.streamingInterrupted).toBe(true);
+  });
+
+  it("leaves no preview to interrupt when the stream fails before any text", async () => {
+    // Given
+    const harness = renderProposalHook();
+    const deferred = deferredStream();
+    await act(async () => {
+      void harness.result().hook.runProposal("continue");
+      await Promise.resolve();
+    });
+
+    // When
+    await deferred.settle(proposalJob, new Error("provider exploded"));
+
+    // Then
     expect(harness.result().hook.streamingText).toBeNull();
+    expect(harness.result().hook.streamingInterrupted).toBe(false);
   });
 
   it("refreshes project state and the accepted document after accepting a proposal", async () => {

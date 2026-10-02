@@ -246,6 +246,9 @@ test.describe
       });
       await studio.keyboard.press("Home");
       await studio.getByRole("button", { name: "Generate whole book" }).click();
+      // Both chapters already hold author text, so the run starts only after
+      // the explicit replacement choice (#DR-007).
+      await studio.getByRole("button", { name: "Replace the 2 chapters with AI drafts" }).click();
       await expect(studio.getByText("Generating chapter 1 of 2…")).toBeVisible();
       await reviewTab.click();
       await expect(studio.getByText("Loading review history…")).toBeVisible();

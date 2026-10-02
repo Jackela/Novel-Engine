@@ -70,12 +70,13 @@ async function* accumulateStreamedDeltas(
   ) => AsyncGenerator<string, void, void>,
   task: TextGenerationTask,
   signal: AbortSignal | undefined,
+  // Caller-owned sink so a mid-stream failure can still read the text (#DR-006).
+  accumulated: string[],
 ): AsyncGenerator<
   ProposalStreamFramePayload,
-  { accumulated: string[]; reported: TextGenerationStreamOutcome | undefined },
+  { reported: TextGenerationStreamOutcome | undefined },
   void
 > {
-  const accumulated: string[] = [];
   const codePoints = createProposalCodePointCounter();
   let reported: TextGenerationStreamOutcome | undefined;
   for await (const delta of generate(task, {
@@ -88,7 +89,7 @@ async function* accumulateStreamedDeltas(
     accumulated.push(delta);
     yield { type: "delta", text: delta };
   }
-  return { accumulated, reported };
+  return { reported };
 }
 
 export class ProposalGenerationPipeline {
@@ -137,13 +138,7 @@ export class ProposalGenerationPipeline {
         if (!(error instanceof TextGenerationProviderError)) {
           throw error;
         }
-        return failedProposalJob(
-          this.jobs,
-          request.scope,
-          target.seed,
-          target.revisionId,
-          error.message,
-        );
+        return failedProposalJob(this.jobs, request.scope, target, error.message);
       }
     } finally {
       try {
@@ -180,6 +175,7 @@ export class ProposalGenerationPipeline {
       }),
     );
     let provider: TextGenerationProvider | undefined;
+    const accumulated: string[] = [];
     try {
       const target = this.resolveTarget(request, step, providerName);
       try {
@@ -190,14 +186,18 @@ export class ProposalGenerationPipeline {
             `Provider '${providerName}' does not support streaming generation.`,
           );
         }
-        const { accumulated, reported } = yield* accumulateStreamedDeltas(
+        const { reported } = yield* accumulateStreamedDeltas(
           stream,
           target.task,
           options.signal,
+          accumulated,
         );
+        // Drain the sink: a completed stream keeps no partial, so only text from
+        // a stream that actually broke mid-flight survives for the failed job.
+        const streamedMarkdown = accumulated.splice(0).join("");
         if (options.signal?.aborted === true) return;
         const { proposal } = validatedProposalOrThrow({
-          content: { chapter_markdown: accumulated.join("") },
+          content: { chapter_markdown: streamedMarkdown },
         });
         yield {
           type: "done",
@@ -217,7 +217,10 @@ export class ProposalGenerationPipeline {
         if (!(error instanceof TextGenerationProviderError)) {
           throw error;
         }
-        failedProposalJob(this.jobs, request.scope, target.seed, target.revisionId, error.message);
+        // DR-006: a stream that broke mid-flight persists its accumulated text
+        // (sanitized) as `partial_markdown`; a completed stream drained the sink
+        // above and persists none.
+        failedProposalJob(this.jobs, request.scope, target, error.message, accumulated.join(""));
         yield { type: "error", error: { code: "PROVIDER_FAILED", message: error.message } };
       }
     } finally {

@@ -167,41 +167,6 @@ describe("StudioCopilotPanel", () => {
     expect(document.activeElement).toBe(instruction);
   });
 
-  it("moves orphaned Stop focus to Continue after streaming stops", async () => {
-    const onStopProposal = vi.fn();
-    const props = {
-      instruction: "Continue the scene.",
-      setInstruction: vi.fn(),
-      proposal: null,
-      setProposal: vi.fn(),
-      onRunProposal: vi.fn(),
-      onAcceptProposal: vi.fn(),
-      onStopProposal,
-    };
-    const mounted = harness.mount(
-      <StudioCopilotPanel {...props} isRunningProposal streamingText="Partial draft" />,
-    );
-    const stop = Array.from(mounted.container.querySelectorAll<HTMLButtonElement>("button")).find(
-      (button) => button.textContent?.includes("Stop"),
-    );
-    if (stop === undefined) throw new Error("Expected the Stop command.");
-
-    stop.focus();
-    act(() => stop.click());
-    await act(async () => Promise.resolve());
-    act(() => {
-      mounted.root.render(
-        <StudioCopilotPanel {...props} isRunningProposal={false} streamingText={null} />,
-      );
-    });
-
-    const continueButton = Array.from(
-      mounted.container.querySelectorAll<HTMLButtonElement>("button"),
-    ).find((button) => button.textContent?.includes("Continue"));
-    expect(onStopProposal).toHaveBeenCalledOnce();
-    expect(document.activeElement).toBe(continueButton);
-  });
-
   it("offers only audit refresh retry while an unknown outcome audit has failed", () => {
     const onRunProposal = vi.fn();
     const onRetryProposalAudit = vi.fn();

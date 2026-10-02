@@ -215,6 +215,8 @@ describe("Studio page whole-book resume planning (#464)", () => {
       getByRole(container, "button", { name: "Generate whole book" }) as HTMLButtonElement;
     const stopButton = () =>
       getByRole(container, "button", { name: "Stop generating" }) as HTMLButtonElement;
+    // #DR-007: the replacement scope is labelled with the affected count.
+    const replaceButton = () => getByText(container, /^Replace the \d+ chapters? with AI drafts$/);
     const wholeBook = () => {
       const model = current?.viewProps?.navigator.wholeBook;
       if (!model) throw new Error("Expected a loaded whole-book navigator model.");
@@ -253,10 +255,17 @@ describe("Studio page whole-book resume planning (#464)", () => {
     expect(vi.mocked(api.document)).toHaveBeenCalledTimes(1);
     expect(documentReads).toEqual(["accepted-leader"]);
 
+    // Run 1 asks first: every remaining chapter here holds persisted author
+    // text, so the plan is confirmation-gated and nothing is drafted yet.
+    await act(async () => {
+      fireEvent.click(startButton());
+    });
+    expect(drafted).toEqual([]);
+    expect(acceptedDocuments).toEqual([]);
     // Run 1 drafts in reading order: author-one (volume one, position 1)
     // first even though the shell lists author-two earlier.
     await act(async () => {
-      fireEvent.click(startButton());
+      fireEvent.click(replaceButton());
     });
     await waitForText("Generating chapter 2 of 3…");
     expect(drafted).toEqual(["author-one", "restore-one"]);
@@ -286,10 +295,14 @@ describe("Studio page whole-book resume planning (#464)", () => {
 
     // Resume: the second run recomputes a two-chapter plan from the shell
     // summaries and starts at the first unaccepted chapter. Constructing
-    // that plan issued no body or shell read of its own.
+    // that plan issued no body or shell read of its own, and the stopped
+    // chapter still needs its fresh confirmation (#DR-007).
     expect(startButton().disabled).toBe(false);
     await act(async () => {
       fireEvent.click(startButton());
+    });
+    await act(async () => {
+      fireEvent.click(replaceButton());
     });
     await waitForText("Generating chapter 1 of 2…");
     expect(drafted).toEqual(["author-one", "restore-one", "restore-one"]);

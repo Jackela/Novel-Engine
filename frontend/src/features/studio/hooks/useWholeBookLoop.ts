@@ -7,6 +7,7 @@ import { useWholeBookChapterRun } from "./useWholeBookChapterRun";
 import { useWholeBookRunLedger } from "./useWholeBookRunLedger";
 
 export type { WholeBookPhase } from "./useWholeBookRunLedger";
+export type { WholeBookChapter } from "./wholeBookPlan";
 
 const INACTIVE_PROPOSAL_AUDIT: ProposalAuditControl = {
   status: "idle",
@@ -32,7 +33,10 @@ interface UseWholeBookLoopArgs {
  * Facade for the whole-book loop (#318): composes the run ledger (owner
  * project, run epoch, active run, published phase, stop) with the per-chapter
  * run executor behind the pre-split return shape, and owns the shared
- * jobs-audit gate surface both consumers observe.
+ * jobs-audit gate surface both consumers observe. `start` runs the empty
+ * chapters of the plan by default; replacing chapters that already hold
+ * non-AI text requires the explicit `{ replaceOccupied: true }` scope the
+ * control grants only after the author confirms (#DR-007).
  */
 export function useWholeBookLoop({
   projectId,

@@ -8,6 +8,7 @@ import { chapter, job, projectWith } from "@/test/factories";
 import { createMountHarness, deferred as sharedDeferred } from "@/test/harness";
 
 import { useWholeBookLoop } from "./useWholeBookLoop";
+import type { WholeBookChapter } from "./wholeBookPlan";
 
 export type HookResult = ReturnType<typeof useWholeBookLoop>;
 
@@ -30,6 +31,19 @@ export const secondChapter = chapter("two", {
   position: 1,
 });
 export const baseProject = projectWith([firstChapter, secondChapter]);
+
+/**
+ * Hand-built plan entries for tests that exercise the executor without a
+ * project shell: the empty chapters of the shared fixtures, so every entry is
+ * authorized to start without confirmation (#DR-007).
+ */
+export function safeChapterPlan(...documents: readonly StudioDocument[]): WholeBookChapter[] {
+  return documents.map((document) => ({
+    id: document.id,
+    title: document.title,
+    requiresConfirmation: false,
+  }));
+}
 
 export function proposalJobFor(documentId: string): StudioJob {
   return job({

@@ -103,8 +103,11 @@ describe("dictionaries", () => {
       "usage.daily.region": "Daily usage, last 30 days",
       "usage.empty": "No usage recorded yet.",
       "usage.table.label": "Usage per model",
+      "wholeBook.action.generateEmpty": "Generate the {count} empty {unit} only",
+      "wholeBook.action.replaceOccupied": "Replace the {count} {unit} with AI drafts",
       "wholeBook.action.start": "Generate whole book",
       "wholeBook.action.stop": "Stop generating",
+      "wholeBook.confirm.listLabel": "Chapters that would be replaced",
       "wholeBook.status.generating": "Generating chapter {current} of {total}…",
     } satisfies Partial<Record<MessageKey, string>>;
     for (const [key, expected] of Object.entries(anchors) as [MessageKey, string][]) {

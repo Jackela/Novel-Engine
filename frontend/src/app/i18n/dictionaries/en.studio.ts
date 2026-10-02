@@ -32,8 +32,10 @@ export const enStudio = {
   "copilot.action.accept": "Accept",
   "copilot.action.reject": "Reject",
   "copilot.action.stop": "Stop",
+  "copilot.action.copy": "Copy",
   "copilot.proposal.heading": "Proposed Markdown",
   "copilot.proposal.streaming": "Streaming…",
+  "copilot.proposal.interrupted": "Interrupted — text preserved",
   "copilot.proposal.previewOnly": "Preview only",
 
   "audit.checking": "The proposal outcome is unknown. Checking job history for audit evidence…",
@@ -214,9 +216,15 @@ export const enStudio = {
 
   "wholeBook.region": "Whole book generation",
   "wholeBook.hint":
-    "Drafts and auto-accepts every chapter still missing an AI revision, in reading order.",
+    "Drafts empty chapters in reading order; chapters that already have text are replaced only after you confirm.",
+  "wholeBook.confirm.message":
+    "Whole-book drafts are accepted automatically. These chapters already have text that was not accepted from AI:",
+  "wholeBook.confirm.listLabel": "Chapters that would be replaced",
   "wholeBook.action.start": "Generate whole book",
   "wholeBook.action.stop": "Stop generating",
+  "wholeBook.action.generateEmpty": "Generate the {count} empty {unit} only",
+  "wholeBook.action.replaceOccupied": "Replace the {count} {unit} with AI drafts",
+  "wholeBook.action.cancel": "Cancel",
   "wholeBook.status.generating": "Generating chapter {current} of {total}…",
   "wholeBook.title.done": "Every chapter already has an accepted AI revision",
   "wholeBook.outcome.stoppedEarly": "Stopped — {count} {unit} accepted this run.",

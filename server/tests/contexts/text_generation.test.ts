@@ -271,6 +271,8 @@ describe("server-configured stream silence budgets (#443)", () => {
           firstByteTimeoutMs: 5_000,
           idleTimeoutMs: 10_000,
           transport: sseTransport(hangingStream()),
+          // One attempt: this case pins the budget, not the retry policy.
+          retry: { maxAttempts: 1, delayMs: 0, sleep: async () => undefined },
         },
       },
     });
@@ -308,7 +310,13 @@ describe("server-configured stream silence budgets (#443)", () => {
     const provider = createTextGenerationProvider({
       provider: "openai_compatible",
       apiKeys: { openaiCompatible: testCredential("openai-compatible") },
-      adapterOptions: { openaiCompatible: { transport: sseTransport(hangingStream()) } },
+      adapterOptions: {
+        openaiCompatible: {
+          transport: sseTransport(hangingStream()),
+          // One attempt: this case pins the default budget, not the retry policy.
+          retry: { maxAttempts: 1, delayMs: 0, sleep: async () => undefined },
+        },
+      },
     });
     const pending = consume(provider);
     const settled = expect(pending).rejects.toThrow(/first-byte timeout after 30s/);

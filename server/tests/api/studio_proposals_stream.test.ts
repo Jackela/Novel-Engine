@@ -193,7 +193,10 @@ describe("proposal stream endpoint (#308)", () => {
       const row = rows[0] as { status: string; error: string; result_json: string };
       expect(row.status).toBe("failed");
       expect(row.error).toBe("stream exploded");
-      expect(JSON.parse(row.result_json)).toMatchObject({ proposal_markdown: "" });
+      const result = JSON.parse(row.result_json) as Record<string, string>;
+      expect(result.proposal_markdown).toBe("");
+      // DR-006: the mid-stream failure keeps the sanitized text it accumulated.
+      expect(result.partial_markdown).toBe("A quiet beginning");
       expect(database.select().from(usageEvents).all()).toHaveLength(usageBefore);
     } finally {
       await app.close();

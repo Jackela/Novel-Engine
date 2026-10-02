@@ -2341,8 +2341,13 @@ range, the read MUST fail loudly through the existing opaque
 
 The Studio MUST offer a whole-book generation mode driven by the frontend over
 the existing proposal and accept endpoints: it drafts a proposal for the next
-chapter needing one, accepts it automatically, and proceeds in reading order.
-The loop MUST be stoppable and resumable. Stop or a project-identity change
+chapter needing one and proceeds in reading order. A chapter whose current
+revision holds an empty body is drafted and accepted automatically. A chapter
+whose current revision holds non-empty author, imported, or restored text is
+replaced only after an explicit per-run confirmation that lists the affected
+chapters, and a stopped or refreshed run asks again instead of silently
+regenerating. The loop MUST be stoppable and resumable. Stop or a
+project-identity change
 before an in-flight proposal durably produces its terminal job MUST abort that
 proposal before it lands a job or usage event, MUST prevent any later chapter
 from starting, and MUST preserve every acceptance that already completed. An
@@ -2364,9 +2369,17 @@ and usage event.
 
 #### Scenario: The loop advances chapter by chapter
 
-- **GIVEN** a project with an outline and one completed chapter
+- **GIVEN** a project with an outline, one completed chapter, and empty chapters after it
 - **WHEN** the whole-book loop runs
-- **THEN** each subsequent chapter receives a generated proposal that is accepted automatically in reading order
+- **THEN** each empty chapter receives a generated proposal that is accepted automatically in reading order
+- **AND** the completed chapter is not drafted or replaced
+
+#### Scenario: Occupied chapters require explicit confirmation
+
+- **GIVEN** a project whose chapters hold hand-written, imported, or restored text without an accepted AI revision
+- **WHEN** the author starts the whole-book loop
+- **THEN** the control lists every chapter a run would replace and the run starts only after the author confirms the replacement
+- **AND** a stopped or refreshed run drafts no unconfirmed chapter
 
 #### Scenario: Stop preserves completed work
 

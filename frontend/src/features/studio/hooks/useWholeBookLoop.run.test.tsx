@@ -10,6 +10,7 @@ import {
   firstChapter,
   proposalJobFor,
   renderLoopHook,
+  safeChapterPlan,
   secondChapter,
   traceApiCalls,
 } from "./useWholeBookLoop.test-harness";
@@ -36,7 +37,7 @@ vi.mock("@/app/proposalStream", async (importOriginal) => {
 });
 
 describe("useWholeBookLoop run lifecycle (#318)", () => {
-  it("drafts and auto-accepts every planned chapter in reading order", async () => {
+  it("drafts and auto-accepts every planned empty chapter in reading order", async () => {
     const events: string[] = [];
     traceApiCalls(events);
     const harness = renderLoopHook(baseProject, (documentId) => {
@@ -44,7 +45,7 @@ describe("useWholeBookLoop run lifecycle (#318)", () => {
     });
 
     await act(async () => {
-      await harness.result().hook.start(wholeBookPlan(baseProject));
+      await harness.result().hook.start(wholeBookPlan(baseProject).chapters);
     });
 
     expect(events).toEqual([
@@ -78,7 +79,7 @@ describe("useWholeBookLoop run lifecycle (#318)", () => {
     const harness = renderLoopHook(baseProject);
 
     await act(async () => {
-      await harness.result().hook.start(wholeBookPlan(baseProject));
+      await harness.result().hook.start(wholeBookPlan(baseProject).chapters);
     });
 
     expect(harness.result().hook.phase).toEqual({
@@ -119,7 +120,7 @@ describe("useWholeBookLoop run lifecycle (#318)", () => {
     const harness = renderLoopHook(threeChapterProject);
 
     await act(async () => {
-      await harness.result().hook.start(wholeBookPlan(threeChapterProject));
+      await harness.result().hook.start(wholeBookPlan(threeChapterProject).chapters);
     });
 
     expect(events).toEqual(["proposal:one", "accept:job-one", "refresh", "proposal:two"]);
@@ -141,7 +142,7 @@ describe("useWholeBookLoop run lifecycle (#318)", () => {
     harness.rerender(reducedProject);
 
     await act(async () => {
-      await harness.result().hook.start(wholeBookPlan(reducedProject));
+      await harness.result().hook.start(wholeBookPlan(reducedProject).chapters);
     });
 
     expect(events).toEqual([
@@ -199,7 +200,7 @@ describe("useWholeBookLoop run lifecycle (#318)", () => {
     const harness = renderLoopHook(baseProject);
 
     await act(async () => {
-      await harness.result().hook.start(wholeBookPlan(baseProject));
+      await harness.result().hook.start(wholeBookPlan(baseProject).chapters);
     });
 
     expect(events.slice(0, 3)).toEqual(["proposal:one", "accept:job-one", "refresh"]);
@@ -224,8 +225,8 @@ describe("useWholeBookLoop run lifecycle (#318)", () => {
     let realStart: Promise<void> = Promise.resolve();
 
     act(() => {
-      realStart = harness.result().hook.start(wholeBookPlan(baseProject));
-      ignoredStart = harness.result().hook.start(wholeBookPlan(baseProject));
+      realStart = harness.result().hook.start(wholeBookPlan(baseProject).chapters);
+      ignoredStart = harness.result().hook.start(wholeBookPlan(baseProject).chapters);
     });
     expect(harness.result().hook.phase).toEqual({
       kind: "running",
@@ -263,7 +264,7 @@ describe("useWholeBookLoop run lifecycle (#318)", () => {
     const harness = renderLoopHook(baseProject);
 
     await act(async () => {
-      await harness.result().hook.start([firstChapter, secondChapter]);
+      await harness.result().hook.start(safeChapterPlan(firstChapter, secondChapter));
     });
 
     expect(harness.result().hook.phase).toEqual({
@@ -276,7 +277,7 @@ describe("useWholeBookLoop run lifecycle (#318)", () => {
     expect(draftedDocuments).toEqual([firstChapter.id]);
 
     await act(async () => {
-      await harness.result().hook.start([firstChapter, secondChapter]);
+      await harness.result().hook.start(safeChapterPlan(firstChapter, secondChapter));
     });
 
     expect(draftedDocuments).toEqual([firstChapter.id, secondChapter.id]);

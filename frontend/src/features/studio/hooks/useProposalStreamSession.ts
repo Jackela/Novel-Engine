@@ -22,6 +22,8 @@ interface StreamingProposal {
   readonly auditEpoch: number;
   readonly requestEpoch: number;
   readonly text: string;
+  /** DR-006: a failure after text arrived keeps the preview readable. */
+  readonly interrupted: boolean;
 }
 
 export interface ProposalRequest {
@@ -88,6 +90,10 @@ export function useProposalStreamSession({
     streaming?.ownerKey === ownerKey && streaming.auditEpoch === currentAuditEpoch
       ? streaming.text
       : null;
+  const streamingInterrupted =
+    streaming?.ownerKey === ownerKey &&
+    streaming.auditEpoch === currentAuditEpoch &&
+    streaming.interrupted;
   const unknownAttemptOperation =
     unknownAttempt?.projectId === projectId ? unknownAttempt.operation : "continue";
 
@@ -139,7 +145,7 @@ export function useProposalStreamSession({
       const requestEpoch = nextRequestEpoch();
       const request = { ownerKey, requestEpoch, controller };
       streamRequestRef.current = request;
-      setStreaming({ ownerKey, auditEpoch, requestEpoch, text: "" });
+      setStreaming({ ownerKey, auditEpoch, requestEpoch, text: "", interrupted: false });
       try {
         const nextProposal = await streamProposal({
           projectId,
@@ -195,6 +201,16 @@ export function useProposalStreamSession({
           return;
         } else if (isCurrentRequest(ownerKey, requestEpoch) && !controller.signal.aborted) {
           setError(toErrorMessage(reason, translateActive("errors.createProposal")));
+          // DR-006: keep the accumulated preview instead of discarding it; the
+          // finally below leaves any entry marked interrupted in place.
+          setStreaming((current) =>
+            current?.ownerKey === ownerKey &&
+            current.auditEpoch === auditEpoch &&
+            current.requestEpoch === requestEpoch &&
+            current.text.length > 0
+              ? { ...current, interrupted: true }
+              : current,
+          );
         }
       } finally {
         if (streamRequestRef.current === request) streamRequestRef.current = null;
@@ -202,7 +218,8 @@ export function useProposalStreamSession({
           setStreaming((current) =>
             current?.ownerKey === ownerKey &&
             current.auditEpoch === auditEpoch &&
-            current.requestEpoch === requestEpoch
+            current.requestEpoch === requestEpoch &&
+            !current.interrupted
               ? null
               : current,
           );
@@ -239,6 +256,7 @@ export function useProposalStreamSession({
     runProposal,
     stopProposal,
     streamingText,
+    streamingInterrupted,
     unknownAttemptOperation,
     reconcileOwnerState,
     detachStream,

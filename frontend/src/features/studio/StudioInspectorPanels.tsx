@@ -84,6 +84,7 @@ export function StudioInspectorPanels({
           isRunningProposal={pending.proposal.running}
           isAcceptingProposal={pending.proposal.accepting}
           streamingText={model.copilot.streamingText}
+          streamingInterrupted={model.copilot.streamingInterrupted}
           onStopProposal={model.copilot.onStopProposal}
           proposalOutcomeUnknown={model.copilot.proposalOutcomeUnknown}
           proposalAuditStatus={model.copilot.proposalAuditStatus}

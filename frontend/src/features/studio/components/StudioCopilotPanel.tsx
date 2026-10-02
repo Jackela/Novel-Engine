@@ -1,4 +1,4 @@
-import { Check, Sparkles, X } from "lucide-react";
+import { Check, Copy, Sparkles, X } from "lucide-react";
 import { type Dispatch, type SetStateAction, useRef, useState } from "react";
 
 import { useTranslation } from "@/app/i18n/useTranslation";
@@ -20,6 +20,8 @@ interface StudioCopilotPanelProps {
   isAcceptingProposal?: boolean;
   /** #308: markdown received so far while the proposal stream is running. */
   streamingText?: string | null;
+  /** DR-006: the stream failed mid-flight; `streamingText` is the preserved partial text. */
+  streamingInterrupted?: boolean;
   /** #308: stops this client from observing the running stream. */
   onStopProposal?: () => void | Promise<void>;
   proposalOutcomeUnknown?: boolean;
@@ -38,6 +40,7 @@ export function StudioCopilotPanel({
   isRunningProposal = false,
   isAcceptingProposal = false,
   streamingText = null,
+  streamingInterrupted = false,
   onStopProposal,
   proposalOutcomeUnknown = false,
   proposalAuditStatus = "idle",
@@ -80,6 +83,11 @@ export function StudioCopilotPanel({
           ? (instructionRef.current ?? continueButtonRef.current)
           : (continueButtonRef.current ?? instructionRef.current),
     );
+  };
+
+  const copyStreamedText = () => {
+    if (streamingText === null) return;
+    void navigator.clipboard.writeText(streamingText);
   };
 
   return (
@@ -135,28 +143,41 @@ export function StudioCopilotPanel({
         </div>
       )}
       {isStreaming ? (
-        <section aria-busy="true" className="studio-inspector__proposal">
+        <section
+          aria-busy={streamingInterrupted ? undefined : true}
+          className="studio-inspector__proposal"
+        >
           <header>
             <strong>{t("copilot.proposal.heading")}</strong>
-            <span>{t("copilot.proposal.streaming")}</span>
+            <span>
+              {streamingInterrupted
+                ? t("copilot.proposal.interrupted")
+                : t("copilot.proposal.streaming")}
+            </span>
           </header>
           <pre aria-live="polite">{streamingText}</pre>
           <div className="studio-inspector__actions">
-            <button
-              className="ui-command"
-              onClick={(event) => {
-                if (onStopProposal) {
-                  void runWithFocusRestoration(
-                    event.currentTarget,
-                    onStopProposal,
-                    () => continueButtonRef.current ?? instructionRef.current,
-                  );
-                }
-              }}
-              type="button"
-            >
-              <X /> {t("copilot.action.stop")}
-            </button>
+            {streamingInterrupted ? (
+              <button className="ui-command" onClick={copyStreamedText} type="button">
+                <Copy /> {t("copilot.action.copy")}
+              </button>
+            ) : (
+              <button
+                className="ui-command"
+                onClick={(event) => {
+                  if (onStopProposal) {
+                    void runWithFocusRestoration(
+                      event.currentTarget,
+                      onStopProposal,
+                      () => continueButtonRef.current ?? instructionRef.current,
+                    );
+                  }
+                }}
+                type="button"
+              >
+                <X /> {t("copilot.action.stop")}
+              </button>
+            )}
           </div>
         </section>
       ) : proposal?.result.proposal_markdown ? (

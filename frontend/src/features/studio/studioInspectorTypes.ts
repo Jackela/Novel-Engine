@@ -45,6 +45,8 @@ interface InspectorCopilotModel {
   proposal: StudioJob | null;
   /** #308: markdown received so far while the proposal stream is running. */
   streamingText: string | null;
+  /** DR-006: the stream failed mid-flight; `streamingText` is the preserved partial text. */
+  streamingInterrupted: boolean;
   onRunProposal: (operation: "continue" | "rewrite") => void | Promise<void>;
   onAcceptProposal: () => void | Promise<void>;
   /** #308: aborts the running proposal stream. */

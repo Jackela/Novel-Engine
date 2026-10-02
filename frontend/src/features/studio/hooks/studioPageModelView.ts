@@ -216,6 +216,7 @@ export function buildStudioInspectorModel({
       instruction: copilot.instruction,
       proposal: copilot.proposal,
       streamingText: copilot.streamingText,
+      streamingInterrupted: copilot.streamingInterrupted,
       onRunProposal: copilot.runProposal,
       onAcceptProposal: copilot.acceptProposal,
       onStopProposal: () => copilot.stopProposal(),

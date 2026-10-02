@@ -224,27 +224,31 @@ export function completedProposalLanding(
 export function failedProposalJob(
   jobs: StudioJobLedgerStore,
   scope: ProjectScope,
-  seed: ProposalJobSeed,
-  revisionId: string,
+  // The captured landing target: the job seed plus its immutable base revision.
+  target: { readonly seed: ProposalJobSeed; readonly revisionId: string },
   message: string,
+  // DR-006: raw text accumulated before a mid-stream failure; the persisted
+  // `partial_markdown` is its sanitized form, "" when nothing was accumulated.
+  partialMarkdown = "",
 ): JobRecord {
   return jobs.addJob(
     scope,
     failedJobInput({
-      projectId: seed.projectId,
-      documentId: seed.documentId,
+      projectId: target.seed.projectId,
+      documentId: target.seed.documentId,
       kind: "proposal",
-      operation: seed.operation,
-      provider: seed.provider,
+      operation: target.seed.operation,
+      provider: target.seed.provider,
       model: "",
-      requestJson: seed.requestJson,
+      requestJson: target.seed.requestJson,
       resultJson: dumpJson({
         proposal_markdown: "",
-        base_revision_id: revisionId,
+        partial_markdown: sanitizeProposalMarkdown(partialMarkdown),
+        base_revision_id: target.revisionId,
         accepted_revision_id: null,
       }),
       error: message,
-      now: seed.now,
+      now: target.seed.now,
     }),
   );
 }

@@ -17,6 +17,7 @@ function buildInspectorModel(): StudioInspectorModel {
       instruction: "",
       proposal: null,
       streamingText: null,
+      streamingInterrupted: false,
       onRunProposal: vi.fn(),
       onAcceptProposal: vi.fn(),
       setInstruction: vi.fn(),
