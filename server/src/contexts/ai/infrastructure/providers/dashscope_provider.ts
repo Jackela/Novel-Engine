@@ -7,6 +7,7 @@ import type {
 } from "../../application/ports/text_generation.js";
 import {
   extractDashscopeIncrementalText,
+  extractDashscopeStreamFailure,
   extractDashscopeUsageTokens,
 } from "./dashscope_extractors.js";
 import {
@@ -24,6 +25,7 @@ import {
   type ProviderRetryPolicy,
   type ProviderTransport,
   ProviderTransportError,
+  providerStreamFailure,
   requiredApiKey,
   runWithRetryPolicy,
 } from "./provider_http.js";
@@ -136,6 +138,7 @@ export class DashScopeTextProvider implements TextGenerationProvider {
   ): AsyncGenerator<string, void, void> {
     const step = supportedStep(task.step);
     const apiBase = this.protocol.normalizeApiBase(this.apiBase);
+    const context = `DashScope generation failed for step '${step}'`;
     const unwrapper = createChapterMarkdownUnwrapper();
     yield* streamProviderTextDeltas(
       {
@@ -148,7 +151,7 @@ export class DashScopeTextProvider implements TextGenerationProvider {
         },
         body: JSON.stringify(streamingPayload(this.protocol.buildRequestPayload(this.model, task))),
         signal: options?.signal,
-        context: `DashScope generation failed for step '${step}'`,
+        context,
         timeoutSeconds: effectiveTimeoutSeconds(this.timeoutSeconds, step),
         model: this.model,
         firstByteTimeoutMs: this.firstByteTimeoutMs,
@@ -158,7 +161,13 @@ export class DashScopeTextProvider implements TextGenerationProvider {
       (url, init) => this.dispatch(url, init ?? {}),
       (data) => unwrapper.feed(extractDashscopeIncrementalText(data) ?? ""),
       extractDashscopeUsageTokens,
-      options,
+      {
+        ...options,
+        extractStreamFailure: (data) => {
+          const failure = extractDashscopeStreamFailure(data);
+          return failure === undefined ? undefined : providerStreamFailure(context, failure);
+        },
+      },
     );
     unwrapper.finish();
   }

@@ -14,9 +14,11 @@ import {
   isJsonObject,
   isResponseLike,
   normalizedTimeoutSeconds,
+  openAiCompatibleStreamFailure,
   type ProviderRetryPolicy,
   type ProviderTransport,
   ProviderTransportError,
+  providerStreamFailure,
   requiredApiKey,
   runWithRetryPolicy,
   usageToken,
@@ -180,6 +182,7 @@ export class OpenAICompatibleTextProvider implements TextGenerationProvider {
     options?: TextGenerationStreamOptions,
   ): AsyncGenerator<string, void, void> {
     const step = supportedStep(task.step);
+    const context = `OpenAI-compatible generation failed for step '${step}'`;
     const unwrapper = createChapterMarkdownUnwrapper();
     yield* streamProviderTextDeltas(
       {
@@ -195,7 +198,7 @@ export class OpenAICompatibleTextProvider implements TextGenerationProvider {
           stream_options: { include_usage: true },
         }),
         signal: options?.signal,
-        context: `OpenAI-compatible generation failed for step '${step}'`,
+        context,
         timeoutSeconds: effectiveTimeoutSeconds(this.timeoutSeconds, step),
         model: this.model,
         firstByteTimeoutMs: this.firstByteTimeoutMs,
@@ -205,7 +208,13 @@ export class OpenAICompatibleTextProvider implements TextGenerationProvider {
       (url, init) => this.dispatch(url, init ?? {}),
       (data) => unwrapper.feed(streamDeltaContent(data) ?? ""),
       usageTokens,
-      options,
+      {
+        ...options,
+        extractStreamFailure: (data) => {
+          const failure = openAiCompatibleStreamFailure(data);
+          return failure === undefined ? undefined : providerStreamFailure(context, failure);
+        },
+      },
     );
     unwrapper.finish();
   }

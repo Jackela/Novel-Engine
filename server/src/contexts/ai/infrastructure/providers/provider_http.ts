@@ -2,6 +2,7 @@ import {
   isSafeUsageToken,
   type ProviderStep,
   TextGenerationProviderError,
+  type TextGenerationStreamOptions,
 } from "../../application/ports/text_generation.js";
 
 const RETRYABLE_HTTP_STATUSES = new Set([429, 500, 502, 503, 504]);
@@ -219,6 +220,56 @@ export function timeoutFailure(context: string, timeoutSeconds: number): Provide
   return new ProviderTransportError(`${context} timed out after ${timeoutSeconds}s.`, {
     timedOut: true,
   });
+}
+
+/** A provider-reported failure payload embedded in a 200 SSE stream (DR-026). */
+export interface ProviderStreamFailure {
+  readonly message: string;
+  readonly code: string;
+}
+
+/** Normalize an in-stream provider failure; stable phrasing feeds the job error. */
+export function providerStreamFailure(
+  context: string,
+  failure: ProviderStreamFailure,
+): ProviderTransportError {
+  return new ProviderTransportError(
+    `${context}: provider reported ${failure.message} (code ${failure.code})`,
+  );
+}
+
+function errorPayloadCode(error: Record<string, unknown>): string {
+  for (const candidate of [error.code, error.type]) {
+    if (typeof candidate === "string" && candidate.trim() !== "") return candidate.trim();
+    if (typeof candidate === "number" && Number.isFinite(candidate)) return String(candidate);
+  }
+  return "unknown";
+}
+
+/**
+ * Recognize an OpenAI-compatible error payload (`{"error":{...}}`); a payload
+ * without a readable message is left to the existing extraction path, so
+ * mixed or provider-specific shapes keep their previous behavior.
+ */
+export function openAiCompatibleStreamFailure(
+  data: Record<string, unknown>,
+): ProviderStreamFailure | undefined {
+  const error = data.error;
+  if (!isJsonObject(error)) return undefined;
+  const message = typeof error.message === "string" ? error.message.trim() : "";
+  return message === "" ? undefined : { message, code: errorPayloadCode(error) };
+}
+
+/**
+ * Engine options for the streaming path: the application stream options plus
+ * the adapter's in-stream failure detector. The engine runs the detector on
+ * every parsed frame before extraction; a returned error is raised immediately
+ * and never retried, because a frame has already flowed into the consumer.
+ */
+export interface ProviderStreamOptions extends TextGenerationStreamOptions {
+  readonly extractStreamFailure?:
+    | ((chunk: Record<string, unknown>) => ProviderTransportError | undefined)
+    | undefined;
 }
 
 /**

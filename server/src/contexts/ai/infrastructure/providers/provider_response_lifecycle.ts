@@ -21,6 +21,13 @@ export interface ProviderResponseDeadline {
   readonly timeoutSeconds: number;
   interrupt(failure: ProviderTransportError): ProviderTransportError;
   assertActive(): void;
+  /**
+   * DR-026: reset the absolute timer after a delivered frame. In streaming the
+   * budget then bounds dispatch plus silence (the per-frame silence budgets are
+   * the tighter cap), instead of the total wall time of a healthy stream. A
+   * deadline that already failed or finished stays inert.
+   */
+  rearm(): void;
   finish(): void;
 }
 
@@ -64,6 +71,11 @@ export function startProviderResponseDeadline(
     interrupt,
     assertActive: () => {
       if (firstFailure !== undefined) throw firstFailure;
+    },
+    rearm: () => {
+      if (firstFailure !== undefined || timer === undefined) return;
+      clearTimeout(timer);
+      timer = setTimeout(() => settle(timeout), timeoutSeconds * 1_000);
     },
     finish: () => {
       if (timer !== undefined) clearTimeout(timer);

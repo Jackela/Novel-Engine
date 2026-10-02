@@ -1,10 +1,10 @@
-import type { TextGenerationStreamOptions } from "../../application/ports/text_generation.js";
 import {
   discardHttpFailureResponse,
   isJsonObject,
   isResponseLike,
   malformedJsonFailure,
   type ProviderRetryPolicy,
+  type ProviderStreamOptions,
   type ProviderTransport,
   ProviderTransportError,
   runWithRetryPolicy,
@@ -184,6 +184,7 @@ function silenceTimeoutFailure(
  * Await one stream frame, but never longer than the given silence budget:
  * when it elapses the guard aborts the dispatch, the loser of the race is
  * torn down, and the wait rejects with a normalized transport timeout.
+ * DR-026: a received frame re-arms the absolute deadline (silence budget, not wall time).
  */
 async function nextFrameWithin(
   pending: Promise<IteratorResult<string>>,
@@ -202,6 +203,7 @@ async function nextFrameWithin(
     deadline.assertActive();
     const result = await Promise.race([pending, elapsed, deadline.interrupted]);
     deadline.assertActive();
+    deadline.rearm();
     return result;
   } catch (error) {
     pending.catch(() => undefined); // the raced read rejects only through teardown
@@ -275,13 +277,14 @@ async function openStreamAttempt(
  * stream completes. DR-006: a transient pre-first-frame failure is retried
  * through the adapter's policy; after the first frame reached the extractor a
  * stream is never retried — a replay would corrupt the incremental unwrapper.
+ * DR-026: the adapter's `extractStreamFailure` hook raises provider failure frames.
  */
 export async function* streamProviderTextDeltas(
   request: StreamingTextRequest,
   transport: ProviderTransport,
   extractDelta: (chunk: JsonObject) => string | undefined,
   extractUsage: (chunk: JsonObject) => readonly [number | null, number | null],
-  options?: TextGenerationStreamOptions,
+  options?: ProviderStreamOptions,
 ): AsyncGenerator<string, void, void> {
   const open = () => openStreamAttempt(request, transport);
   const { deadline, frames, firstFrame } =
@@ -294,6 +297,8 @@ export async function* streamProviderTextDeltas(
       const payload = step.value;
       if (payload.trim() === "[DONE]") break;
       const data = streamChunkObject(payload, request.context);
+      const failure = options?.extractStreamFailure?.(data);
+      if (failure !== undefined) throw failure;
       const [prompt, completion] = extractUsage(data);
       if (prompt !== null) promptTokens = prompt;
       if (completion !== null) completionTokens = completion;
