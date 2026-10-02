@@ -138,7 +138,7 @@
 
 ### DR-003 [P0] 中文全文搜索静默失效
 
-- [ ] 未开始
+- [x] 已完成（2026-10-02）
 - **问题**：`document_search` 建表未指定 tokenizer（默认 unicode61），连续 CJK 字符被切成"整段一个 token"；查询侧 `buildFtsMatchQuery` 把中文包成短语做精确 token 匹配，导致日常中文查询几乎全部 0 命中。
 - **证据**：`server/drizzle/0000_init_persistence_core.sql:41`；`server/src/contexts/studio/application/fts_match_query.ts:10,25`；实测（真实 Fastify inject）`q="林黛玉"/"黛玉"/"宝玉"` → `results=[]`，`q="葬花"` 命中；一篇三段中文小说命中率 4/14；`tests/api/studio_search.test.ts` CJK 用例数 = 0。
 - **影响**：中文作者的核心检索能力事实上不存在；"搜索"是写作指南推荐功能，静默失败比缺失更伤信任。
@@ -146,16 +146,18 @@
 - **验收标准**：`"林黛玉"`、`"黛玉"`、`"宝玉"` 均命中断言进入 `studio_search.test.ts`；英文既有用例零回归；搜索头/查询构造在中文下不再整段成 token。
 - **验证**：`pnpm --dir server exec vitest run tests/api/studio_search.test.ts`；新增 CJK 用例先在基线上复现 0 命中。
 - **依赖**：**必须与 DR-004 同批交付**（换 tokenizer 需要全量重建索引）。
+- **交付记录**：2026-10-02 | `eea6f3d4`（wave 2，与 DR-004 同批） | 共享分词模块 `server/src/contexts/studio/domain/fts_segmentation.ts`（索引侧 Han 字符单独成 token、查询侧 Han 串→引号字短语；Latin 行为不变）；标题/摘要经 `restoreFtsDisplayText` 还原；CJK 摘要窗口即 16 字符 | 复现：CJK 用例在基线上 0 命中（`林黛玉` → `[]`）；修复后 `tests/api/studio_search.test.ts` 10/10（林黛玉/黛玉/宝玉/黛/葬花 均命中，英文零回归） | 偏离：未采用 `Intl.Segmenter`（实测其把「林黛玉」保持为单一词，黛玉/宝玉子词仍 0 命中），改逐字符方案；无 schema 迁移 | 验证：`pnpm --dir server exec vitest run tests/api/studio_search.test.ts`、`server gates`、`type-check`、`lint`、`lint:types`、`arch`、`server test`（237 文件/1426 用例）、frontend 全套 + react-doctor(100) + `pnpm spec:validate` 全绿。
 
 ### DR-004 [P0] FTS 索引重建通道与 doctor 对账缺失
 
-- [ ] 未开始
+- [x] 已完成（2026-10-02）
 - **问题**：全仓无 FTS `rebuild`/`integrity-check` 代码路径；`document_search` 是自含内容表，FTS5 内置 rebuild 指令不可用；`doctor` 只报 4 项、不查索引。
 - **证据**：`grep -rn "rebuild|fts5vocab|integrity-check" server/src` 仅命中无关代码；`apps/cli/main.ts:210-239`；`sqlite_diagnostics_health.ts:20-42`。
 - **影响**：换机（手工拷 DB）、索引损坏、或 DR-003 换 tokenizer 时无重建手段；用户完全不可见不可修。
 - **修复方向**：新增 `novel-engine reindex` 子命令（从 `documents.current_revision_id` + `document_revisions.content_markdown` 重灌索引）；`doctor` 增加"索引行数 vs 文档数"对账项。
 - **验收标准**：reindex 在有/无漂移库上均幂等；doctor 能报告漂移；CLI 测试覆盖。
 - **验证**：`pnpm --dir server exec vitest run tests/apps/cli/cli.test.ts`（新增用例）；`pnpm --dir server exec vitest run tests/api/studio_search.test.ts`。
+- **交付记录**：2026-10-02 | `eea6f3d4`（wave 2，与 DR-003 同批） | 新增 `novel-engine reindex`（`server/src/apps/cli/reindex_command.ts`：单事务全量重建、幂等、复用 `refreshDocumentIndex` 写入路径；与 backup 同数据目录独占，服务器运行中拒绝执行）；`doctor` 新增 `document_index: {documents, indexed, drifted}` 对账项（CLI 报告字段；HTTP diagnostics 载荷未变动，未触发 OpenAPI 基线变更） | 测试：漂移库（2 文档/1 孤儿行）→ doctor 报 `drifted:true` → 连续两次 `reindex` 幂等 → `黛玉`/`葬花` MATCH 命中、孤儿行清除；损坏库 `document_index: null` | 升级提示：旧库需一次性执行 `reindex` 后 CJK 搜索才生效（doctor 计数对账不检测"格式陈旧"行）。
 
 ### DR-005 [P0] 中文字数口径错误（跨产品面）
 
@@ -476,7 +478,7 @@
 - **修复方向**：补三类回归；把字典测试改为"键对齐 + 非空 + 关键锚点白名单"，不再全量钉文案。
 - **验收**：新增用例在修复前失败、修复后通过；字典测试只锁必要契约。
 - **验证**：`pnpm --dir server test && pnpm --dir frontend test:unit`。
-- **进展**：autosave 失败/恢复路径已随 DR-001/DR-002 交付回归覆盖（2026-10-01）；CJK 搜索用例与 413 用例仍待 Wave 2 与 DR-048。
+- **进展**：autosave 失败/恢复路径已随 DR-001/DR-002 交付回归覆盖（2026-10-01）；CJK 搜索用例已随 DR-003 交付（2026-10-02）；413 用例仍待 DR-048。
 
 ### DR-039 [P1] 文档-实现对齐
 
@@ -696,3 +698,4 @@
 - 2026-10-01 | `607a092e` | 评审基线 | 9 个 subagent 评审 + 编排者复核 | 本文件生成
 - 2026-10-01 | 工作区（基线 `607a092e`，未提交） | DR-001 | `pnpm --dir frontend test:unit`（131/709）、`type-check`、`biome check`、`format:check`、`pnpm --dir frontend build`、`pnpm --dir server gates` | 通过：退避重试 + 手动重试按钮 + 新回归
 - 2026-10-01 | 工作区（基线 `607a092e`，未提交） | DR-002 | 同上 | 通过：beforeunload 守卫 + 切换/卸载救援写入；5 处旧"丢弃"用例按新语义重写
+- 2026-10-02 | `eea6f3d4` | DR-003 + DR-004 | `pnpm --dir server exec vitest run tests/api/studio_search.test.ts tests/apps/cli/cli.test.ts`；`pnpm --dir server gates && pnpm --dir server type-check && pnpm --dir server lint && pnpm --dir server lint:types && pnpm --dir server arch && pnpm --dir server test`；frontend lint/lint:types/format:check/type-check/test:unit/build + react-doctor(100) + `pnpm spec:validate` | 通过：CJK 逐字分词（无迁移）+ 16 字符窗口 + `reindex`/doctor 对账；server 237 文件/1426 用例、frontend 131 文件/709 用例；升级提示：旧库需一次性 `reindex`
