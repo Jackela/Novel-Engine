@@ -343,21 +343,23 @@
 
 ### DR-022 [P1] provider 配置可见性与错误语义
 
-- [ ] 未开始
+- [x] 已完成（2026-10-03）
 - **问题**：设置页渲染全部 provider，未配置不禁用不标注；`/api/providers` 已返回 `model/configured/is_default` 但前端不读；未配置时生成报 `Provider '<x>' does not support streaming generation.`（掩盖缺 key 的真实原因）。
 - **证据**：`StudioSettingsPanel.tsx:94-118`；`model_resolution.ts:74-80`；`proposal_pipeline.ts:186-191`；`provider-setup.md` 自认"选未配置 provider 会让所有生成失败"。
 - **修复方向**：未配置项置灰 + 标注"（未配置 API key）"+ 链接指南；显示当前 model；未配置错误改为明确的凭证缺失 code/message。
 - **验收**：未配置 provider 不可选；错误消息指向缺失凭证；测试覆盖。
 - **验证**：`pnpm --dir server exec vitest run tests/api/provider_catalog.test.ts tests/api/studio_proposals_stream.test.ts`。
+- **交付记录**：2026-10-03 | `b1151803`（wave 10a，与 DR-023 同批） | 新 `StudioProviderField`：按服务端目录（`configured/model/is_default`）渲染——未配置项禁用并在选项中标注"（未配置，缺少 API key）"，选中未配置项显示指向 provider 设置指南的警示，并展示解析后的 model；内置回退目录不含凭证事实，保持可选（禁用/标注只属于服务端目录路径） | 未配置生成：新增错误码 `PROVIDER_NOT_CONFIGURED`（`UnconfiguredTextProvider` 现在也提供 streaming 方法，在首帧前抛凭证错误；同步 `error-codes.md`/`ERROR_HTTP_STATUS`/前端 `localizeError` 映射）；SSE 与同步提案端点返回该码并带 `provider-setup` 指引，不再报"不支持流式" | 复现：`provider_catalog`/`studio_proposals_stream`/settings 用例先红（目录事实被忽略、错误码是能力文案）；修复后全绿（`studio_proposals_stream_unconfigured.test.ts` 独立承载新契约） | 测试拆分：`generation_capacity_api` 的 422 目录断言同步加入新码；`text_generation` 拆出 stream-budgets 与 helpers（行数门禁） | 验证：server 249 文件/1496 用例、frontend 145/808、gates/arch/react-doctor(100)/spec 全绿
 
 ### DR-023 [P1] 生成语言跟随（"双语"的最后一公里）
 
-- [ ] 未开始
+- [x] 已完成（2026-10-03）
 - **问题**：任务无 locale、SYSTEM_PROMPT 无语言要求；mock provider 全英文且 revision 不引用作者正文；清理器只删英文模板前缀（"好的，以下是……"不会被剥离）。
 - **证据**：`ports/text_generation.ts:53-58`；`proposal_prompts.ts:19-28`；`deterministic_story_provider.ts:88,94-116`；`sanitization.ts:4-25`。
 - **修复方向**：项目级"写作语言"（默认取 UI 语言/大纲语言）注入 prompt；zh trial 模板与占位候选；清理器补中文模板前缀。
 - **验收**：zh 项目用中文指令生成中文正文（mock 可断言）；清理器覆盖中文前缀用例。
 - **验证**：`pnpm --dir server exec vitest run tests/contexts/`（prompt/sanitization 相关）。
+- **交付记录**：2026-10-03 | `b1151803`（wave 10a，与 DR-022 同批） | 新 `application/writing_language.ts`：由项目大纲/正文推断写作语言（Han 为主→zh，否则 en；无迁移/无新设置字段），随 `TextGenerationTask` 携带（`deterministic_task_language.ts` 归一化）；prompt 层（`proposal_prompts.ts`）与 review 服务把语言写进 system/instruction，zh 项目请求中文正文、en 项目请求英文 | mock provider 拆分出 `deterministic_story_content.ts`/`deterministic_review_content.ts`：zh 任务产出确定性中文散文（仍引用章节号与标题、步骤语义不变），英文任务保持原行为 | `sanitization.ts` 增补中文模板前缀剥离（"好的，以下是…"等），合法正文不受影响 | 复现：`proposal_writing_language`/`deterministic_story_language`/`studio_proposals_language`/`review_service`（语言入 review 任务）/`sanitization` 中文用例先红后绿；`text_generation.test.ts` 的英文固定断言按语言分流更新并点名 | 验证：同 DR-022（全绿）
 
 ### DR-024 [P1] Review 归属 provider
 
