@@ -313,30 +313,33 @@
 
 ### DR-019 [P1] 密码体验（确认/修改/无找回提示）
 
-- [ ] 未开始
+- [x] 已完成（2026-10-03）
 - **问题**：密码框无确认字段（打错即永久锁死）；全仓无"忘记密码/重置"路径；只有 setup 与 login。
 - **证据**：`EntryPage.tsx:105-117`；`grep "忘记密码|reset.*password|forgot"` 全仓零命中。
 - **修复方向**：setup 加二次确认；`cli owner` 提供改密/重置（与 DR-008 的 reset 合并设计）；首登提示"本工具无邮件找回，请妥善保存密码"。
 - **验收**：setup 两次输入一致才通过；有文档化的重置路径。
 - **验证**：`pnpm --dir server exec vitest run tests/api/auth_setup.test.ts`；`pnpm --dir frontend exec vitest run src/features/studio/EntryPage.lifecycle.test.tsx`。
+- **交付记录**：2026-10-03 | `5795feb9` | setup 新增确认密码字段（不一致时阻止提交并内联报错；`EntrySetupFields.tsx`）；并按 DR-008 遗留项补上"首启 setup token"输入（`api.setupOwner(u,p,token?)` 非空时发送 `x-setup-token` 头，`SETUP_TOKEN_INVALID`/403 显示可操作中文提示：从日志或 `.setup-token` 读取、loopback 无需）；setup 与首登表单常驻"无邮箱找回，请保存密码；恢复路径为停止服务器后 `novel-engine owner reset`（书稿不受影响）"提示（对齐 README） | 复现：6 个新用例先红（无确认框、无 token 头、提示缺失）；修复后全绿 | 改动面：EntryPage/EntrySetupFields/api/httpClient(postJson 支持可选 init)/entrySubmitMessage/字典/entry.css；README 与 deploy README 的"setup 界面无法发送 token"表述同步修正 | 改密端点未新增（recovery 即 DR-008 的 owner reset，文档化） | 测试：EntryPage 套件 + api.test（30 用例）、`auth_setup.test.ts` 17 用例无回归 | 验证：frontend 145 文件/805 用例、server 244/1472、gates/arch/react-doctor(100)/spec 全绿
 
 ### DR-020 [P1] 会话过期体验
 
-- [ ] 未开始
+- [x] 已完成（2026-10-03）
 - **问题**：任一 401 直接 `navigate("/", {replace:true})`，无提示、丢草稿与当前位置；登录后固定回 `/projects`。
 - **证据**：`useStudioPageNavigation.ts:31-34`、`useProjectShellState.ts:120-123`、`useCurrentDocument.ts:139-141`；dictionaries 无 session-expired 文案。
 - **修复方向**：入口页显示"会话已过期"；保留来源路由（`state.from`），登录后回跳；配合 DR-002 降低草稿损失。
 - **验收**：过期→提示→登录→回到原文档路径；测试覆盖。
 - **验证**：`pnpm --dir frontend exec vitest run src/features/studio/EntryPage.lifecycle.test.tsx`。
+- **交付记录**：2026-10-03 | `5795feb9` | 新增 `app/sessionExpiry.ts`：401 强制返回时写入 history state `{from, reason:"session-expired"}`（replace 语义，防止后退弹回过期页），入口页据此渲染本地化"会话已过期"提示（`EntrySessionNotice`，主动登出/首次访问不带标记、不显示）；登录成功后回跳被保留的站内路由（`from` 经形状校验，拒绝非站内/协议相对路径），无来源时回落 `/projects`；受影响路径统一改走 `useSessionExpiredRedirect`（导航/项目壳/当前文档） | 复现：5 个新用例先红（无提示、无回跳）；修复后全绿（含"自愿访问无提示""非法来源忽略"） | 测试拆分：`EntryPage.test-helpers.tsx`（共享挂载/夹具）消除复制，`EntryPage.session-expiry.test.tsx` 承载 DR-020 用例，lifecycle 文件回落到 300 行内 | 验证：同 DR-019（全绿）
 
 ### DR-021 [P1] 错误文案中文化
 
-- [ ] 未开始
+- [x] 已完成（2026-10-03）
 - **问题**：服务端英文 message 直出，且夹带内部标识符（如 `project_settings_bytes`、`provider returned HTTP 401`、`Owner session required.`）；契约层 `Invalid <label>.<key>` 21 处。
 - **证据**：`frontend/src/app/toErrorMessage.ts:28-36`；`httpClient.ts:41-44`；`zh.errors.ts:44` 与 `structure_capacity.ts:69` 拼出中英混句。
 - **修复方向**：按 `error.code` 前端映射中文文案；provider 原始消息降为"技术详情"折叠区；契约错误改为用户可读。
 - **验收**：中文界面常见错误（401/413/422/限速/容量）不再出现英文；测试覆盖映射表。
 - **验证**：`pnpm --dir frontend exec vitest run src/app/`（错误处理相关）。
+- **交付记录**：2026-10-03 | `5795feb9` | 新增 `app/localizeError.ts`：按信封稳定 `error.code` 映射双语消息（23 码 = 服务端 21 目录码 + 流末帧 `PROVIDER_FAILED` + Fastify 413 传输码；`localizeError.test.ts` 读取服务端目录并在漂移时失败，名称锁步 `docs/agents/error-codes.md`）；`toErrorMessage` 改为经 `localizeError` 归约——有码错误返回本地化消息，原始服务端/provider 英文与内部标识符不再作为主文案，改经诊断通道（`reportUnexpectedError`）保留为"技术详情"（`StudioJobsPanel` 的 `<details>` 折叠 + 失败行） ；契约层 `Invalid <label>.<key>` 归约为可读文案（apiContract/apiWorkflowContract/diagnosticsContract/loreExtractContract/proposalStream 同步走本地化）；未知码降级为通用可读消息且原始文本仅进技术详情 | 复现：`localizeError.test.ts`（21 用例）与 toErrorMessage（7）先红（英文直出/标识符泄漏）；修复后全绿 | 验证：frontend 145 文件/805 用例（含 zh 渲染断言）、`error_codes_gate` 无回归、gates/react-doctor(100)/spec 全绿
 
 ### DR-022 [P1] provider 配置可见性与错误语义
 
@@ -719,3 +722,4 @@
 - 2026-10-02 | `2baed8a9` | DR-010 + DR-011 + DR-012 + DR-016 | 定向：server `studio_revisions.test.ts`；frontend copilot/jobs/history/conflict/editor 相关 10 文件 52 用例；全套 `server gates/type-check/lint/lint:types/arch/test`（241 文件/1459 用例）、frontend lint/lint:types/format/type-check/test:unit/build（138 文件/745 用例）+ react-doctor(100) + `pnpm spec:validate` | 通过：修订正文端点 + 预览/diff + 恢复确认（DR-011）；冲突只读查看服务器版本（DR-012）；停止保留/一次性撤销/拒绝文本可回看（DR-010）；查找替换 + Ctrl/Cmd+S + 格式命令（DR-016，新增 `@codemirror/search`）；过程修复：文件行数拆分（字典 jobs 分块、proposalUndo 助手、测试 harness/拆分）、react-doctor/格式化/导出排序、撤销提议在瞬时 owner 切换被清空；人工浏览器验证待 Owner
 - 2026-10-02 | `238a1cab` | DR-013 + DR-014 + DR-015 | 定向：`pnpm --dir server exec vitest run tests/contexts/export`（30 文件/137 用例）；全套 `server gates/type-check/lint/lint:types/arch/test`（244 文件/1472 用例）、frontend lint/lint:types/format/type-check/test:unit/build（138 文件/745 用例）+ react-doctor(100) + `pnpm spec:validate` | 通过：DOCX 东文字体/2 字符缩进/章前分页/TOC/去重标题（纯 docx API）；EPUB 语言推断 + dcterms:modified + 内置中文 CSS + 代码块/图片占位；Markdown `## {title}` + 导出范围文档对齐（全量归档标注未实现）；跳过：EPUBCheck（本地不可用，结构断言替代）、Word/WPS 人工打开（待 Owner）
 - 2026-10-02 | `aa551e01` | DR-017 + DR-018 | 定向：frontend 卷 18 用例 + 项目删除 4 用例；server `studio_volumes`（7）+ 项目删除 3 文件（11）无回归；全套 `server gates/type-check/lint/lint:types/arch/test`（244 文件/1472 用例）、frontend lint/lint:types/format/type-check/test:unit/build（141 文件/767 用例）+ react-doctor(100) + `pnpm spec:validate` | 通过：卷新建/改名/删除确认/排序 + "移至卷"可达（DR-017）；项目库删除确认 + 刷新（DR-018）；过程修复：4 条 react-doctor（完成态 effect → 渲染期调节 + 事件侧 ref 标志）、1 处单遍循环重构、测试/E2E 正则消歧；人工浏览器验证待 Owner
+- 2026-10-03 | `5795feb9` | DR-019 + DR-020 + DR-021 | 定向：EntryPage 系列 + `localizeError`/`toErrorMessage`/jobs 错误详情（12 文件/89 用例）、`auth_setup`（17）与 `error_codes_gate` 无回归；全套 `server gates/type-check/lint/lint:types/arch/test`（244 文件/1472 用例）、frontend lint/lint:types/format/type-check/test:unit/build（145 文件/805 用例）+ react-doctor(100) + `pnpm spec:validate` | 通过：setup 确认密码 + 首启 token 输入 + 无找回提示（DR-019）；401 过期提示 + 来源回跳（DR-020）；23 错误码双语映射 + 技术详情折叠（DR-021）；过程修复：EntryPage 测试拆分与共享 harness（行数门禁）；README/deploy 文案同步；人工浏览器验证待 Owner
