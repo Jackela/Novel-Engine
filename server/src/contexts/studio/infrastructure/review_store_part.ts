@@ -30,11 +30,18 @@ import { buildReviewSummariesQuery } from "./review_page_queries.js";
 export class ReviewStorePart implements ReviewOutcomeStore {
   constructor(protected readonly db: StudioSqliteDatabase) {}
 
+  readProjectProvider(scope: ProjectScope, projectId: string): string {
+    return this.db.transaction((tx) =>
+      storedProjectProvider(scopedProject(tx, scope, projectId).settingsJson),
+    );
+  }
+
   readReviewSource(scope: ProjectScope, projectId: string, capturedAt: Date): ReviewSource {
     return this.db.transaction((tx) => {
       const project = scopedProject(tx, scope, projectId);
       return {
         projectId: project.id,
+        provider: storedProjectProvider(project.settingsJson),
         capturedAt,
         documents: readReviewSourceDocuments(tx, project.id),
       };
@@ -189,4 +196,24 @@ function reviewResultJson(assessment: ReviewCompletionRecord["assessment"]): str
     snapshot_id: assessment.snapshotId,
     summary: assessment.summary,
   });
+}
+
+/**
+ * The provider a project's stored settings name (DR-024). The settings column
+ * is client-written JSON, so anything that is not a non-empty string collapses
+ * to "" — the application layer then keeps its server-level default rather
+ * than failing a read that only wanted the project's selection.
+ */
+function storedProjectProvider(settingsJson: string): string {
+  let settings: unknown;
+  try {
+    settings = JSON.parse(settingsJson);
+  } catch {
+    return "";
+  }
+  if (typeof settings !== "object" || settings === null || Array.isArray(settings)) {
+    return "";
+  }
+  const provider = (settings as Record<string, unknown>).provider;
+  return typeof provider === "string" ? provider.trim() : "";
 }

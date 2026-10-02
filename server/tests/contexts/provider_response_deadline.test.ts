@@ -54,9 +54,12 @@ describe("synchronous provider response deadline", () => {
       transport,
     });
     const generation = provider.generateStructured(reviewTask());
-    const settled = expect(generation).rejects.toThrow(/timed out after 1s/);
+    // DR-025: an editorial review never runs on the 1s base — the long-form
+    // floor raises it to 180s — so the assertion pins the floored deadline and
+    // the body still stays under it for the complete read.
+    const settled = expect(generation).rejects.toThrow(/timed out after 180s/);
 
-    await vi.advanceTimersByTimeAsync(999);
+    await vi.advanceTimersByTimeAsync(179_999);
     expect(signal?.aborted).toBe(false);
     await vi.advanceTimersByTimeAsync(1);
     expect(signal?.aborted).toBe(true);

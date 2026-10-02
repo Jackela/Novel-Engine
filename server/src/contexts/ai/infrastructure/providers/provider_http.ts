@@ -8,8 +8,12 @@ const RETRYABLE_HTTP_STATUSES = new Set([429, 500, 502, 503, 504]);
 const MAX_PROVIDER_ATTEMPTS = 3;
 const PROVIDER_CLEANUP_GRACE_MS = 1_000;
 
-/** Chapter generation calls must outlive the enclosing request timeout. */
-export const GENERATION_TIMEOUT_FLOOR_SECONDS = 180;
+/**
+ * Whole-manuscript provider calls (draft, revision, editorial review, lore
+ * extraction) must outlive the enclosing request timeout: the default 30s
+ * transport deadline cuts real work on any non-trivial manuscript.
+ */
+export const LONG_FORM_TIMEOUT_FLOOR_SECONDS = 180;
 
 /** Adapter fallback when neither composition nor options carry a timeout. */
 export const DEFAULT_PROVIDER_TIMEOUT_SECONDS = 30;
@@ -217,12 +221,24 @@ export function timeoutFailure(context: string, timeoutSeconds: number): Provide
   });
 }
 
-/** Chapter generation has a hard transport floor; editorial review keeps its base timeout. */
+/**
+ * Long-form steps hand the provider a whole manuscript; every step of the
+ * closed vocabulary is one today, so the floor applies to all of them. Keep
+ * the list explicit: a future short-lived step must not inherit a floor it
+ * does not need.
+ */
+const LONG_FORM_STEPS: ReadonlySet<ProviderStep> = new Set<ProviderStep>([
+  "chapter_draft",
+  "chapter_revision",
+  "editorial_review",
+  "lore_extract",
+]);
+
+/** Long-form steps have a hard transport floor; every other step keeps its base timeout. */
 export function effectiveTimeoutSeconds(timeoutSeconds: number, step: ProviderStep): number {
-  if (step === "chapter_draft" || step === "chapter_revision") {
-    return Math.max(timeoutSeconds, GENERATION_TIMEOUT_FLOOR_SECONDS);
-  }
-  return timeoutSeconds;
+  return LONG_FORM_STEPS.has(step)
+    ? Math.max(timeoutSeconds, LONG_FORM_TIMEOUT_FLOOR_SECONDS)
+    : timeoutSeconds;
 }
 
 function rejectionName(rejection: unknown): string | undefined {

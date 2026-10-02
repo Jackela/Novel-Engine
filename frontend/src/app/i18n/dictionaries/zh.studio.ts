@@ -42,6 +42,7 @@ export const zhStudio = {
   "audit.action.generateAnother": "生成另一份提案",
 
   "review.heading": "评审发现",
+  "review.provenance": "由 {provider} · {model} 审阅",
   "review.hint": "绑定快照且不修改稿件。",
   "review.action.run": "运行评审",
   "review.action.running": "正在运行评审",

@@ -50,6 +50,7 @@ export const enStudio = {
   "audit.action.generateAnother": "Generate another proposal",
 
   "review.heading": "Review findings",
+  "review.provenance": "Reviewed by {provider} · {model}",
   "review.hint": "Snapshot-bound and non-mutating.",
   "review.action.run": "Run review",
   "review.action.running": "Running review",

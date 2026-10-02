@@ -192,6 +192,83 @@ describe("ReviewService (#316 provider-driven review)", () => {
     }
   });
 
+  it("runs on the project's stored provider instead of the server default (DR-024)", async () => {
+    const harness = await openHarness();
+    try {
+      const project = harness.projects.newProject(harness.principal, {
+        title: "Project provider review",
+      }) as { id: string };
+      harness.projects.updateProject(harness.principal, project.id, {
+        settings: { provider: "dashscope" },
+      });
+      const requested: string[] = [];
+      const factory: TextGenerationProviderFactory = (provider) => {
+        requested.push(provider);
+        return {
+          generateStructured: async () => ({
+            step: "editorial_review",
+            provider,
+            model: "project-provider-model",
+            rawText: '{"findings":[]}',
+            content: { findings: [] },
+            promptTokens: null,
+            completionTokens: null,
+          }),
+        };
+      };
+      const reviews = new ReviewService(harness.reviewOutcomes, {
+        now: monotonicClock(),
+        provenance: { provider: "mock", model: "deterministic-story-v1" },
+        providerFactory: factory,
+      });
+
+      const evaluation = await reviews.evaluateProject(harness.principal, project.id);
+      expect(requested).toEqual(["dashscope"]);
+      expect(evaluation.provider).toBe("dashscope");
+      expect(reviews.providerNameForProject(harness.principal, project.id)).toBe("dashscope");
+    } finally {
+      await harness.cleanup();
+    }
+  });
+
+  it("keeps the server default when the stored provider is not in the catalog (DR-024)", async () => {
+    const harness = await openHarness();
+    try {
+      const project = harness.projects.newProject(harness.principal, {
+        title: "Unknown stored provider",
+      }) as { id: string };
+      harness.projects.updateProject(harness.principal, project.id, {
+        settings: { provider: "custom_relay" },
+      });
+      const requested: string[] = [];
+      const factory: TextGenerationProviderFactory = (provider) => {
+        requested.push(provider);
+        return {
+          generateStructured: async () => ({
+            step: "editorial_review",
+            provider,
+            model: "server-default-model",
+            rawText: '{"findings":[]}',
+            content: { findings: [] },
+            promptTokens: null,
+            completionTokens: null,
+          }),
+        };
+      };
+      const reviews = new ReviewService(harness.reviewOutcomes, {
+        now: monotonicClock(),
+        provenance: { provider: "mock", model: "deterministic-story-v1" },
+        providerFactory: factory,
+      });
+
+      const evaluation = await reviews.evaluateProject(harness.principal, project.id);
+      expect(requested).toEqual(["mock"]);
+      expect(evaluation.provider).toBe("mock");
+    } finally {
+      await harness.cleanup();
+    }
+  });
+
   it("carries the manuscript writing language into the review task (DR-023)", async () => {
     const harness = await openHarness();
     try {

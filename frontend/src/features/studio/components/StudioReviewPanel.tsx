@@ -4,6 +4,7 @@ import { useRef } from "react";
 import { useTranslation } from "@/app/i18n/useTranslation";
 import type { Review, ReviewSummary } from "@/app/types/studio";
 import { useCommandFocusRestoration } from "../hooks/useCommandFocusRestoration";
+import { providerLabel } from "../studioConstants";
 import type { InspectorReviewHistoryPaging } from "../studioInspectorTypes";
 import { StudioReviewHistoryList } from "./StudioReviewHistoryList";
 
@@ -120,6 +121,14 @@ export function StudioReviewPanel({
             </button>
           ) : null}
         </div>
+      ) : null}
+      {historyInitialized && latestReview ? (
+        <p className="review__provenance">
+          {t("review.provenance", {
+            provider: providerLabel(latestReview.provider),
+            model: latestReview.model,
+          })}
+        </p>
       ) : null}
       {historyInitialized && latestReview?.issues.length ? (
         latestReview.issues.map((issue) => (

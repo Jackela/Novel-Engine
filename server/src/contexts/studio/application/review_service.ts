@@ -3,7 +3,10 @@ import type {
   TextGenerationProviderFactory,
   TextProviderName,
 } from "../../../contexts/ai/application/ports/text_generation.js";
-import { TextGenerationProviderError } from "../../../contexts/ai/application/ports/text_generation.js";
+import {
+  isTextProviderName,
+  TextGenerationProviderError,
+} from "../../../contexts/ai/application/ports/text_generation.js";
 import type { Principal } from "../../../shared/application/ports/auth.js";
 import { dumpJson, safeLoadJson } from "./payloads.js";
 import type {
@@ -57,6 +60,11 @@ export interface EditorialAssessment {
 
 interface ReviewServiceOptions {
   readonly now?: (() => Date) | undefined;
+  /**
+   * The server-level default provider and model (the environment's
+   * `LLM_PROVIDER` chain). It answers only for projects whose stored settings
+   * name no catalog provider; a project's own selection always wins (DR-024).
+   */
   readonly provenance?: ReviewProviderProvenance | undefined;
   /** Per-request provider factory; the composition root injects the concrete one. */
   readonly providerFactory: TextGenerationProviderFactory;
@@ -72,6 +80,18 @@ const DEFAULT_PROVENANCE: ReviewProviderProvenance = {
   model: "deterministic-story-v1",
 };
 
+/**
+ * Narrow a stored project selection to the closed provider catalog (DR-024).
+ * Reviews follow the provider the author selected for the project — the same
+ * selection generation runs on — and only a value the catalog does not know
+ * (a legacy or hand-edited settings row) resolves to undefined so the
+ * server-level default keeps answering. The persisted assessment and job
+ * always record the provider that actually ran, so a fallback stays visible.
+ */
+function projectProviderName(stored: string): TextProviderName | undefined {
+  return isTextProviderName(stored) ? stored : undefined;
+}
+
 const REVIEW_SYSTEM_PROMPT = [
   "You are a novel-writing editor. Assess the attached chapter snapshot and report editorial findings.",
   'Return JSON with a single "findings" array; each entry carries document_id, severity ("blocker" or "warning"), dimension (one of: pacing, continuity, pov, foreshadowing, dialogue), message, and suggestion.',
@@ -81,7 +101,9 @@ const REVIEW_SYSTEM_PROMPT = [
 /**
  * Evaluates one point-in-time manuscript source through the editorial_review
  * provider step (#316). The source read is non-mutating; durable snapshot and
- * job evidence are committed later by the atomic outcome store.
+ * job evidence are committed later by the atomic outcome store. The provider
+ * follows the project's own selection (DR-024) unless a caller pins one (a
+ * job retry re-runs on the provider its original job recorded).
  */
 export class ReviewService {
   private readonly store: ReviewOutcomeStore;
@@ -97,9 +119,15 @@ export class ReviewService {
     this.providerFactory = options.providerFactory;
   }
 
-  /** The configured review provider (failed-job provenance for the bridge). */
-  get providerName(): string {
-    return this.provenance.provider;
+  /**
+   * The provider a fresh review of this project resolves to (DR-024), before
+   * any provider work: the project's stored selection when the catalog knows
+   * it, else the server-level default. The failure path labels its job with
+   * this value, so a failed review is retried on the provider it named.
+   */
+  providerNameForProject(principal: Principal, projectId: string): string {
+    const stored = this.store.readProjectProvider(scopeForPrincipal(principal), projectId);
+    return projectProviderName(stored) ?? this.provenance.provider;
   }
 
   /** Read and evaluate one visible project without persisting review evidence. */
@@ -110,7 +138,8 @@ export class ReviewService {
   ): Promise<EvaluatedReview> {
     const scope = scopeForPrincipal(principal);
     const source = this.store.readReviewSource(scope, projectId, this.now());
-    const provider = options.provider ?? this.provenance.provider;
+    const provider =
+      options.provider ?? projectProviderName(source.provider) ?? this.provenance.provider;
     let taskProvider: TextGenerationProvider | undefined;
     try {
       taskProvider = this.providerFactory(provider);

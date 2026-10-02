@@ -136,6 +136,10 @@ export class JobHistoryService {
     projectId: string,
     reportCleanupFailure?: (failure: unknown) => void,
   ): Promise<Record<string, unknown>> {
+    // DR-024: the review runs on the project's own provider, so its job row
+    // must name that provider even when the attempt fails before an evaluation
+    // exists — the retry chain re-admits the row's provider.
+    const projectProvider = this.reviews.providerNameForProject(principal, projectId);
     let evaluation: EvaluatedReview | undefined;
     try {
       evaluation = await this.reviews.evaluateProject(principal, projectId, {
@@ -158,7 +162,7 @@ export class JobHistoryService {
             documentId: null,
             kind: "review",
             operation: "review",
-            provider: evaluation?.provider ?? this.reviews.providerName,
+            provider: evaluation?.provider ?? projectProvider,
             model: evaluation?.model ?? "",
             requestJson: dumpJson({}),
             resultJson: dumpJson({ review_id: null, snapshot_id: null, summary: "", issues: [] }),

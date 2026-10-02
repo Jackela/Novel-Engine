@@ -1,6 +1,7 @@
 import { act } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { review } from "@/test/factories";
 import { createMountHarness, deferred } from "@/test/harness";
 
 import { StudioReviewPanel } from "./StudioReviewPanel";
@@ -89,5 +90,17 @@ describe("StudioReviewPanel", () => {
     });
     expect(document.activeElement).toBe(otherButton);
     otherButton.remove();
+  });
+
+  it("labels the provider and model that produced the current review (DR-024)", () => {
+    const mounted = harness.mount(
+      <StudioReviewPanel
+        latestReview={review({ provider: "dashscope", model: "qwen3.5-flash" })}
+        summaries={[]}
+        onRunReview={vi.fn()}
+      />,
+    );
+
+    expect(mounted.container.textContent).toContain("Reviewed by DashScope · qwen3.5-flash");
   });
 });

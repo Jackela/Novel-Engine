@@ -16,6 +16,14 @@ export interface ReviewSourceDocument {
 /** The ordered point-in-time source evaluated by one review request. */
 export interface ReviewSource {
   readonly projectId: string;
+  /**
+   * The project's stored provider selection (DR-024), read in the same
+   * transaction as the documents so review and generation follow one
+   * author-visible choice. It is the raw settings value: an empty string
+   * means the stored settings name no provider, and the application falls
+   * back to its server-level default instead of failing the read.
+   */
+  readonly provider: string;
   readonly capturedAt: Date;
   readonly documents: readonly ReviewSourceDocument[];
 }
@@ -121,6 +129,12 @@ export interface ReviewCompletionRecord {
  * valid result can atomically create immutable evidence and a completed job.
  */
 export interface ReviewOutcomeStore {
+  /**
+   * The project's stored provider selection without reading its manuscript
+   * (DR-024): the failure path labels a review job with the provider the
+   * attempt actually used, so a retry never silently changes provider.
+   */
+  readProjectProvider(scope: ProjectScope, projectId: string): string;
   readReviewSource(scope: ProjectScope, projectId: string, capturedAt: Date): ReviewSource;
   recordCompletedReviewJob(scope: ProjectScope, input: EvaluatedReview): ReviewCompletionRecord;
   completeReviewRetryJob(
