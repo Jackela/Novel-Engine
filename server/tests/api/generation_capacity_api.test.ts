@@ -245,10 +245,13 @@ describe("generation capacity HTTP contract", () => {
         );
         expect(codes).toEqual([
           "INVALID_OPERATION",
+          // DR-022: the stream and sync proposal surfaces name the missing
+          // credential instead of misreporting the provider capability.
+          "PROVIDER_NOT_CONFIGURED",
           "GENERATION_CAPACITY_EXCEEDED",
           "VALIDATION_ERROR",
         ]);
-        const capacityDetails = alternatives[1].properties.error.properties.details;
+        const capacityDetails = alternatives[2].properties.error.properties.details;
         expect(capacityDetails.oneOf).toEqual(capacityRefusalShapes());
       }
       const retryAlternatives =

@@ -1,4 +1,4 @@
-import { fireEvent, getByRole, queryByRole } from "@testing-library/dom";
+import { fireEvent, getByRole, getByText, queryByRole } from "@testing-library/dom";
 import { act } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -106,6 +106,60 @@ describe("StudioSettingsPanel", () => {
     expect(getByRole(container, "textbox", { name: "Description" })).toBeDisabled();
     expect(getByRole(container, "combobox", { name: "Provider" })).toBeDisabled();
     expect(getByRole(container, "button", { name: "Saving…" })).toBeDisabled();
+  });
+
+  it("disables and labels an unconfigured provider row (DR-022)", () => {
+    const providers: ProviderInfo[] = [
+      { provider: "mock", configured: true, model: "deterministic-story-v1", is_default: true },
+      { provider: "dashscope", configured: false, model: "qwen3.5-flash", is_default: false },
+    ];
+
+    const container = render(<StudioSettingsPanel {...baseProps} providers={providers} />);
+
+    const unconfigured = getByRole(container, "option", {
+      name: "DashScope — not configured (missing API key)",
+    });
+    expect(unconfigured).toBeDisabled();
+    expect(getByRole(container, "option", { name: "Mock (trial — no API key)" })).toBeEnabled();
+  });
+
+  it("shows the resolved model for the selected provider (DR-022)", () => {
+    const providers: ProviderInfo[] = [
+      { provider: "mock", configured: true, model: "deterministic-story-v1", is_default: false },
+      { provider: "dashscope", configured: true, model: "qwen3.5-flash", is_default: true },
+    ];
+    const container = render(
+      <StudioSettingsPanel
+        {...baseProps}
+        settingsForm={{ ...baseProps.settingsForm, provider: "dashscope" }}
+        providers={providers}
+      />,
+    );
+
+    expect(getByText(container, "qwen3.5-flash")).toBeInTheDocument();
+    expect(getByText(container, "Model")).toBeInTheDocument();
+  });
+
+  it("warns when the selected provider has no credential and points at the setup guide (DR-022)", () => {
+    const providers: ProviderInfo[] = [
+      { provider: "mock", configured: true, model: "deterministic-story-v1", is_default: false },
+      { provider: "dashscope", configured: false, model: "qwen3.5-flash", is_default: true },
+    ];
+    const container = render(
+      <StudioSettingsPanel
+        {...baseProps}
+        settingsForm={{ ...baseProps.settingsForm, provider: "dashscope" }}
+        providers={providers}
+      />,
+    );
+
+    const warning = getByRole(container, "status");
+    expect(warning).toHaveTextContent("This provider has no API key on the server.");
+    const guide = getByRole(container, "link", { name: "Provider setup guide" });
+    expect(guide).toHaveAttribute(
+      "href",
+      "https://github.com/Jackela/Novel-Engine/blob/main/openwiki/guides/provider-setup.md",
+    );
   });
 
   it("keeps a save failure in the form and associates it with the form", () => {

@@ -115,6 +115,8 @@ export const enErrors = {
     "An unexpected server error occurred. Retry; if it persists, check the server log.",
   "errors.codeProviderFailed":
     "The AI provider request failed (HTTP {status}). Check the provider configuration and retry.",
+  "errors.codeProviderNotConfigured":
+    "This provider has no API key configured. Add the credential (see the provider setup guide), then retry.",
   "errors.codeProviderFailedGeneric":
     "The AI provider request failed. Check the provider configuration and retry.",
   "errors.codePayloadTooLarge": "The request body is too large for the server to accept.",

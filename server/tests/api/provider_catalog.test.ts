@@ -80,4 +80,54 @@ describe("provider catalog API", () => {
       await app.close();
     }
   });
+
+  it("marks credential-backed providers as unconfigured without a key (DR-022)", async () => {
+    const directory = await makeDataDirectory();
+    const config = loadServerConfig({
+      envFile: null,
+      workingDirectory: directory,
+      env: {
+        APP_ENVIRONMENT: "testing",
+        SECURITY_SECRET_KEY: TEST_SESSION_SECRET,
+        DB_URL: "sqlite:///./novel-engine.sqlite3",
+        LLM_PROVIDER: "dashscope",
+      },
+    });
+    const app = await buildApp({ logger: false, config });
+    try {
+      await setupOwner(app);
+      const login = await loginOwner(app);
+      const response = await app.inject({
+        method: "GET",
+        url: "/api/providers",
+        headers: { cookie: cookieHeader(cookieJar(login)) },
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(response.json()).toEqual({
+        providers: [
+          {
+            provider: "mock",
+            configured: true,
+            model: "deterministic-story-v1",
+            is_default: false,
+          },
+          {
+            provider: "dashscope",
+            configured: false,
+            model: "qwen3.5-flash",
+            is_default: true,
+          },
+          {
+            provider: "openai_compatible",
+            configured: false,
+            model: "gpt-4o-mini",
+            is_default: false,
+          },
+        ],
+      });
+    } finally {
+      await app.close();
+    }
+  });
 });

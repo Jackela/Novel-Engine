@@ -1,6 +1,7 @@
 import { BookOpen, FileText, Globe2, Users } from "lucide-react";
 
 import type { MessageKey } from "@/app/i18n/dictionaries/en";
+import { getActiveLanguage } from "@/app/i18n/language";
 import { translateActive } from "@/app/i18n/translate";
 import type { DocumentKind, ProviderInfo } from "@/app/types/studio";
 
@@ -78,12 +79,19 @@ export function isLoreEntryKind(kind: DocumentKind): boolean {
   return LOREBOOK_ENTRY_KINDS.includes(kind);
 }
 
+/**
+ * Built-in provider names for surfaces rendered before (or without) the
+ * server catalog. This list carries no credential facts, so every entry must
+ * stay selectable: the DR-022 disable/label treatment is reserved for a
+ * provider the server catalog explicitly reports as unconfigured, and
+ * claiming "not configured" here would disable the list on a failed fetch.
+ */
 export const DEFAULT_PROVIDER_OPTIONS: ProviderInfo[] = [
   { provider: "mock", configured: true, model: null, is_default: true },
-  { provider: "dashscope", configured: false, model: null, is_default: false },
+  { provider: "dashscope", configured: true, model: null, is_default: false },
   {
     provider: "openai_compatible",
-    configured: false,
+    configured: true,
     model: null,
     is_default: false,
   },
@@ -110,4 +118,17 @@ const PROVIDER_MESSAGE_KEYS: Record<string, MessageKey> = {
 export function providerLabel(provider: string): string {
   const key = PROVIDER_MESSAGE_KEYS[provider];
   return key ? translateActive(key) : provider;
+}
+
+/**
+ * DR-022: the provider setup guide an unconfigured settings row points at.
+ * The public repository keeps the writer guides with the source, so the
+ * pointer is a stable link; the active UI language picks the matching guide
+ * at render time.
+ */
+const PROVIDER_SETUP_GUIDE_BASE =
+  "https://github.com/Jackela/Novel-Engine/blob/main/openwiki/guides";
+
+export function providerSetupGuideUrl(): string {
+  return `${PROVIDER_SETUP_GUIDE_BASE}/${getActiveLanguage() === "zh" ? "zh/" : ""}provider-setup.md`;
 }

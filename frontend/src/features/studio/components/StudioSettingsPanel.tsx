@@ -5,8 +5,9 @@ import { useTranslation } from "@/app/i18n/useTranslation";
 import type { ProviderInfo } from "@/app/types/studio";
 
 import { useCommandFocusRestoration } from "../hooks/useCommandFocusRestoration";
-import { DEFAULT_PROVIDER_OPTIONS, providerLabel } from "../studioConstants";
+import { DEFAULT_PROVIDER_OPTIONS } from "../studioConstants";
 import type { SettingsFormState } from "../studioInspectorTypes";
+import { StudioProviderField } from "./StudioProviderField";
 
 interface StudioSettingsPanelProps {
   settingsForm: SettingsFormState;
@@ -90,26 +91,12 @@ export function StudioSettingsPanel({
           value={settingsForm.description}
         />
       </label>
-      <label className="studio-inspector__settings-field">
-        <span>{t("settings.field.provider")}</span>
-        <select
-          aria-label={t("settings.field.provider")}
-          disabled={isSaving}
-          onChange={(event) =>
-            setSettingsForm((current) => ({
-              ...current,
-              provider: event.target.value,
-            }))
-          }
-          value={settingsForm.provider}
-        >
-          {providers.map((provider) => (
-            <option key={provider.provider} value={provider.provider}>
-              {providerLabel(provider.provider)}
-            </option>
-          ))}
-        </select>
-      </label>
+      <StudioProviderField
+        disabled={isSaving}
+        onSelect={(provider) => setSettingsForm((current) => ({ ...current, provider }))}
+        provider={settingsForm.provider}
+        providers={providers}
+      />
       <div className="studio-inspector__settings-field">
         <span>{t("settings.field.storage")}</span>
         <span>{t("settings.value.sqlite")}</span>

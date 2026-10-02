@@ -25,6 +25,9 @@ describe("StudioSettingsPanel bilingual rendering", () => {
 
     expect(getByRole(container, "heading", { name: "Project settings" })).toBeVisible();
     expect(getByRole(container, "option", { name: "Mock (trial — no API key)" })).toBeVisible();
+    // DR-022: the fallback catalog carries no credential facts, so it must
+    // not claim a missing key; the disable/label treatment belongs to the
+    // server catalog path (covered by StudioSettingsPanel.test.tsx).
     expect(getByRole(container, "option", { name: "OpenAI-compatible" })).toBeVisible();
     expect(getByRole(container, "button", { name: "Save settings" })).toBeEnabled();
   });

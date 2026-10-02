@@ -6,6 +6,7 @@ import { GenerationCapacityExceededError } from "../domain/exceptions.js";
 import { LORE_EXTRACT_SEGMENT_CODE_POINT_LIMIT } from "../domain/generation_capacity_policy.js";
 import { BoundedPromptWriter } from "./generation_capacity.js";
 import { formatUntrustedManuscript } from "./sanitization.js";
+import { inferWritingLanguage } from "./writing_language.js";
 
 /**
  * The request-shape half of the lorebook initialization wizard's extraction
@@ -75,6 +76,9 @@ export function buildLoreExtractTask(segment: string): TextGenerationTask {
   writer.writeLine(formatUntrustedManuscript(segment));
   return {
     step: "lore_extract",
+    // DR-023: the submitted segment itself decides the language, so a Chinese
+    // manuscript gets Chinese placeholder candidates from the trial provider.
+    language: inferWritingLanguage([segment]),
     systemPrompt: LORE_EXTRACT_SYSTEM_PROMPT,
     userPrompt: writer.finish(),
     responseSchema: {

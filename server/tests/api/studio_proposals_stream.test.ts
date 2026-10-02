@@ -266,31 +266,6 @@ describe("proposal stream endpoint (#308)", () => {
     }
   });
 
-  it("answers unconfigured providers with the envelope error before any stream", async () => {
-    const { app } = await buildStudioApp();
-    try {
-      const jar = await ownerJar(app);
-      const project = await seedProject(app, jar, "Unconfigured");
-      const document = project.documents[0] as DocumentPayload;
-      const database = app.studioDb?.db;
-      if (database === undefined) throw new Error("studio test app must expose its database");
-
-      const response = await call(app, jar, "POST", STREAM_PATH(project.id, document.id), {
-        operation: "continue",
-        provider: "dashscope",
-      });
-      expect(response.statusCode).toBe(422);
-      expect(response.headers["content-type"]).toContain("application/json");
-      expect(response.json()).toMatchObject({
-        error: { code: "INVALID_OPERATION" },
-      });
-      expect(response.json().error.message).toMatch(/does not support streaming/);
-      expect(database.select().from(jobs).all()).toHaveLength(0);
-    } finally {
-      await app.close();
-    }
-  });
-
   it("rejects anonymous, CSRF-less, and unknown-document streams before any job", async () => {
     const { app } = await buildStudioApp();
     try {

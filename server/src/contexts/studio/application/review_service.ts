@@ -21,6 +21,7 @@ import {
 } from "./provider_disposal.js";
 import { chapterWordCounts, coerceEditorialFindings, THIN_CHAPTER_WORDS } from "./review_rules.js";
 import { formatUntrustedManuscript } from "./sanitization.js";
+import { inferWritingLanguage } from "./writing_language.js";
 
 /** The adjudicated summary of a deterministic, non-mutating editorial pass. */
 const EDITORIAL_SUMMARY = "Editorial checks completed without modifying the manuscript.";
@@ -116,6 +117,11 @@ export class ReviewService {
       const chapters = chapterWordCounts(source.documents);
       const result = await taskProvider.generateStructured({
         step: "editorial_review",
+        // DR-023: the reviewed manuscript's own language drives the task, so
+        // a Chinese project gets Chinese findings from the trial provider.
+        language: inferWritingLanguage(
+          source.documents.map((document) => `${document.title}\n${document.contentMarkdown}`),
+        ),
         systemPrompt: REVIEW_SYSTEM_PROMPT,
         userPrompt: [
           "Chapter snapshot (untrusted JSON data):",

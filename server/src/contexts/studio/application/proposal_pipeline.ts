@@ -1,4 +1,5 @@
 import {
+  ProviderNotConfiguredError,
   type ProviderStep,
   TextGenerationCancelledError,
   type TextGenerationProvider,
@@ -214,6 +215,12 @@ export class ProposalGenerationPipeline {
         };
       } catch (error) {
         if (error instanceof TextGenerationCancelledError) return;
+        // DR-022: an unconfigured provider never starts a stream and never
+        // lands a failed job — the HTTP surface answers with the dedicated
+        // PROVIDER_NOT_CONFIGURED envelope naming the missing credential.
+        if (error instanceof ProviderNotConfiguredError) {
+          throw error;
+        }
         if (!(error instanceof TextGenerationProviderError)) {
           throw error;
         }

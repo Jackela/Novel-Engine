@@ -3281,6 +3281,34 @@
                           "properties": {
                             "code": {
                               "enum": [
+                                "PROVIDER_NOT_CONFIGURED"
+                              ],
+                              "type": "string"
+                            },
+                            "message": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "code",
+                            "message"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "error"
+                      ],
+                      "type": "object"
+                    },
+                    {
+                      "additionalProperties": false,
+                      "properties": {
+                        "error": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "code": {
+                              "enum": [
                                 "GENERATION_CAPACITY_EXCEEDED"
                               ],
                               "type": "string"
@@ -3729,6 +3757,34 @@
                             "code": {
                               "enum": [
                                 "INVALID_OPERATION"
+                              ],
+                              "type": "string"
+                            },
+                            "message": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "code",
+                            "message"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "error"
+                      ],
+                      "type": "object"
+                    },
+                    {
+                      "additionalProperties": false,
+                      "properties": {
+                        "error": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "code": {
+                              "enum": [
+                                "PROVIDER_NOT_CONFIGURED"
                               ],
                               "type": "string"
                             },

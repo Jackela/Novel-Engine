@@ -12,7 +12,7 @@ import { isRecord } from "./typeGuards";
  * primary message and stays reachable as `technical` detail for the
  * diagnostics channel and the UI's technical-details affordances.
  *
- * The 21 catalog codes mirror `server/src/shared/domain/error_codes.ts`
+ * The catalog codes mirror `server/src/shared/domain/error_codes.ts`
  * (rendered in `docs/agents/error-codes.md`); the two extra entries are the
  * proposal stream's terminal frame code (`PROVIDER_FAILED`, declared in
  * `server/src/contexts/studio/application/payload_schemas/proposal_frame.ts`)
@@ -28,6 +28,7 @@ export const ERROR_CODE_MESSAGE_KEYS = {
   RATE_LIMIT_EXCEEDED: "errors.codeRateLimited",
   NOT_FOUND: "errors.codeNotFound",
   INVALID_OPERATION: "errors.codeInvalidOperation",
+  PROVIDER_NOT_CONFIGURED: "errors.codeProviderNotConfigured",
   EXPORT_CAPACITY_EXCEEDED: "errors.codeExportCapacity",
   GENERATION_CAPACITY_EXCEEDED: "errors.codeGenerationCapacity",
   IMPORT_CAPACITY_EXCEEDED: "errors.codeImportCapacity",
@@ -172,6 +173,11 @@ function mappedMessage(
   raw: string,
   language: Language,
 ): string {
+  // DR-022: the provider family's credential gap has its own message; every
+  // other PROVIDER_* failure keeps the transport-status mapping below.
+  if (code === "PROVIDER_NOT_CONFIGURED") {
+    return translate(language, "errors.codeProviderNotConfigured");
+  }
   if (code.startsWith("PROVIDER_")) {
     const status = providerHttpStatus(raw);
     return status === null

@@ -77,6 +77,8 @@ export const zhErrors = {
   "errors.codeInternal": "服务器发生未预期的错误。请重试；若持续出现，请附上错误编号 {error_id}。",
   "errors.codeInternalGeneric": "服务器发生未预期的错误。请重试；若持续出现，请查看服务器日志。",
   "errors.codeProviderFailed": "AI 服务请求失败（HTTP {status}）。请检查 provider 配置后重试。",
+  "errors.codeProviderNotConfigured":
+    "该 provider 尚未配置 API Key。请先按 provider 配置指南添加密钥，然后重试。",
   "errors.codeProviderFailedGeneric": "AI 服务请求失败。请检查 provider 配置后重试。",
   "errors.codePayloadTooLarge": "请求内容过大，服务器无法接收。",
   "errors.codeUnknown": "请求失败（{code}）。请重试；若持续出现，请报告此错误代码。",

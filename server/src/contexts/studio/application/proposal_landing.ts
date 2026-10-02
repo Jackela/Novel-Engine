@@ -15,12 +15,13 @@ import type { CompletedJobUsageInput, JobRecord } from "./ports/job_records.js";
 import type { ProposalContextSource } from "./ports/proposal_context_store.js";
 import type { ProjectScope } from "./ports/studio_store.js";
 import { assertProposalCodePointLimit, proposalCodePointCount } from "./proposal_code_points.js";
-import { INVALID_PROPOSAL_PROSE, SYSTEM_PROMPT } from "./proposal_prompts.js";
+import { INVALID_PROPOSAL_PROSE, proposalSystemPrompt } from "./proposal_prompts.js";
 import {
   buildProposalUserPrompt,
   residentContextSourceFromProposalContext,
 } from "./resident_context.js";
 import { isProposalMarkdownProse, sanitizeProposalMarkdown } from "./sanitization.js";
+import { projectWritingLanguage } from "./writing_language.js";
 
 export {
   createProposalCodePointCounter,
@@ -36,7 +37,9 @@ export {
 export {
   INVALID_PROPOSAL_PROSE,
   OPERATION_STEPS,
+  proposalSystemPrompt,
   SYSTEM_PROMPT,
+  SYSTEM_PROMPT_ZH,
 } from "./proposal_prompts.js";
 export {
   disposeProvider,
@@ -64,9 +67,15 @@ export function buildProposalTask(
   if (revision === null) {
     throw new Error("Proposal task requires a captured current revision.");
   }
+  // DR-023: the project's inferred writing language drives both the provider
+  // task and the system prompt; the user-prompt budget keeps sharing the
+  // selected system prompt's bytes.
+  const language = projectWritingLanguage(context);
+  const systemPrompt = proposalSystemPrompt(language);
   return {
     step,
-    systemPrompt: SYSTEM_PROMPT,
+    language,
+    systemPrompt,
     userPrompt: buildProposalUserPrompt(
       {
         operation,
@@ -76,7 +85,7 @@ export function buildProposalTask(
         loreEntries: loreEntriesFromDocuments(context.documents),
         loreBudgetCharacters,
       },
-      new BoundedPromptWriter(SYSTEM_PROMPT),
+      new BoundedPromptWriter(systemPrompt),
     ),
     responseSchema: { chapter_markdown: { type: "string" } },
     metadata: {

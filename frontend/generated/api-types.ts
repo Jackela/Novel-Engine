@@ -1551,6 +1551,12 @@ export interface paths {
                         } | {
                             error: {
                                 /** @enum {string} */
+                                code: "PROVIDER_NOT_CONFIGURED";
+                                message: string;
+                            };
+                        } | {
+                            error: {
+                                /** @enum {string} */
                                 code: "GENERATION_CAPACITY_EXCEEDED";
                                 details: {
                                     /** @enum {integer} */
@@ -1731,6 +1737,12 @@ export interface paths {
                             error: {
                                 /** @enum {string} */
                                 code: "INVALID_OPERATION";
+                                message: string;
+                            };
+                        } | {
+                            error: {
+                                /** @enum {string} */
+                                code: "PROVIDER_NOT_CONFIGURED";
                                 message: string;
                             };
                         } | {
