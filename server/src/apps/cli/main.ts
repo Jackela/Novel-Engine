@@ -2,6 +2,10 @@
 import { pathToFileURL } from "node:url";
 
 import type { FastifyInstance } from "fastify";
+import {
+  type DocumentIndexReconciliation,
+  documentIndexReconciliation,
+} from "../../contexts/studio/infrastructure/db/document_search.js";
 import { openReconciledStudioDatabase } from "../../contexts/studio/infrastructure/reconciled_studio_database.js";
 import {
   type LoadServerConfigInput,
@@ -19,6 +23,7 @@ import { readProductIdentity } from "../../shared/infrastructure/workspace_manif
 import { buildApp } from "../api/app.js";
 import { closeResourceAndRethrow } from "../api/app_lifecycle.js";
 import { runLegacyImportCommand } from "./legacy_import_command.js";
+import { runReindexCommand } from "./reindex_command.js";
 import { runRestoreCommand } from "./restore_command.js";
 import {
   processShutdownSignalSource,
@@ -28,8 +33,8 @@ import {
 
 /**
  * The single emitted TS CLI root (#272): `serve`, `import`, `backup`,
- * `restore`, and `doctor`. #273's legacy-import runner registers through
- * `importRunner`; there is no competing executable root.
+ * `restore`, `reindex`, and `doctor`. #273's legacy-import runner registers
+ * through `importRunner`; there is no competing executable root.
  */
 
 type WriteLine = (line: string) => void;
@@ -84,6 +89,8 @@ const USAGE = [
   "      Write a SQLite backup beneath the backups directory and print its path.",
   "  restore --input BACKUP",
   "      Verify a backup file, back up the current database, then replace it atomically.",
+  "  reindex",
+  "      Rebuild the full-text index from every document's current revision.",
   "  doctor",
   "      Report product identity, database integrity, journal mode, foreign keys, owner.",
 ].join("\n");
@@ -205,6 +212,8 @@ interface DoctorReport {
   journal_mode: string;
   foreign_keys: boolean;
   owner_configured: boolean;
+  // Index reconciliation (#DR-004); null when the database could not be read.
+  document_index: DocumentIndexReconciliation | null;
 }
 
 async function doctorCommand(context: CliContext, writeLine: WriteLine): Promise<number> {
@@ -218,6 +227,7 @@ async function doctorCommand(context: CliContext, writeLine: WriteLine): Promise
     journal_mode: "unknown",
     foreign_keys: false,
     owner_configured: false,
+    document_index: null,
   };
   try {
     const studio = await openReconciledStudioDatabase(config.databasePath);
@@ -226,6 +236,7 @@ async function doctorCommand(context: CliContext, writeLine: WriteLine): Promise
       report.journal_mode = String(studio.raw.pragma("journal_mode", { simple: true }));
       report.foreign_keys = Boolean(studio.raw.pragma("foreign_keys", { simple: true }));
       report.owner_configured = new DrizzleAuthStore(studio.db).ownerExists();
+      report.document_index = documentIndexReconciliation(studio.raw);
     } finally {
       studio.close();
     }
@@ -286,6 +297,8 @@ export async function runCli(argv: readonly string[], context: CliContext = {}):
           { input: flagValue(parsed.flags, "--input") },
           { config: configFor(context), writeLine },
         );
+      case "reindex":
+        return await runReindexCommand({ config: configFor(context), writeLine });
       case "doctor":
         return await doctorCommand(context, writeLine);
       case "import":

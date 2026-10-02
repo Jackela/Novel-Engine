@@ -1,15 +1,15 @@
+import { reduceFtsQueryElements } from "../domain/fts_segmentation.js";
+
 /**
  * Safe FTS5 MATCH expression builder. User input is reduced to case-folded
- * word tokens, de-duplicated preserving first occurrence, capped at eight,
- * then each token is quoted and the tokens are joined with AND semantics.
- * FTS5 operators, column filters, NEAR groups, wildcards, and punctuation
- * never cross this boundary.
+ * match elements — one per Latin word, one character phrase per CJK run (see
+ * fts_segmentation) — de-duplicated preserving first occurrence, capped at
+ * eight, then each element is quoted and the elements are joined with AND
+ * semantics. FTS5 operators, column filters, NEAR groups, wildcards, and
+ * punctuation never cross this boundary.
  */
 
-/** Unicode word tokens, the `\w+` twin (letters, digits, underscore). */
-const FTS_TOKEN_PATTERN = /[\p{L}\p{N}_]+/gu;
-
-const MAX_MATCH_TOKENS = 8;
+const MAX_MATCH_ELEMENTS = 8;
 
 /**
  * `toLowerCase` (not the stronger `casefold` folding) is deliberate: it
@@ -17,10 +17,10 @@ const MAX_MATCH_TOKENS = 8;
  * ligatures like ß either, so quoted tokens stay findable.
  */
 export function buildFtsMatchQuery(query: string): string | null {
-  const tokens = query.toLowerCase().match(FTS_TOKEN_PATTERN);
-  if (tokens === null) {
+  const elements = reduceFtsQueryElements(query.toLowerCase());
+  if (elements.length === 0) {
     return null;
   }
-  const unique = [...new Set(tokens)].slice(0, MAX_MATCH_TOKENS);
-  return unique.map((token) => `"${token}"`).join(" ");
+  const unique = [...new Set(elements)].slice(0, MAX_MATCH_ELEMENTS);
+  return unique.map((element) => `"${element}"`).join(" ");
 }
