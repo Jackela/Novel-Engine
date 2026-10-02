@@ -164,7 +164,7 @@ describe("useDocumentDraft external commit reconciliation", () => {
     expect(api.saveDocument).not.toHaveBeenCalled();
   });
 
-  it("discards a switched local draft and returns to the accepted revision", async () => {
+  it("rescues a switched local draft and returns to the accepted revision", async () => {
     const acceptedA = {
       ...documentA,
       current_revision_id: "revision-a-accepted",
@@ -172,18 +172,29 @@ describe("useDocumentDraft external commit reconciliation", () => {
       updated_at: documentA.updated_at,
     };
     const acceptedProject = projectWith([acceptedA, documentB]);
+    vi.mocked(api.saveDocument).mockResolvedValue({
+      ...acceptedA,
+      content_markdown: "Document A newer local draft",
+      current_revision_id: "revision-a-rescued",
+    });
     const draft = renderDraft();
     await flushMicrotasks();
 
     act(() => draft.result().setDraft("Document A newer local draft"));
     draft.rerender(documentB, acceptedProject);
+    expect(api.saveDocument).toHaveBeenCalledTimes(1);
+    expect(api.saveDocument).toHaveBeenCalledWith(initialProject.id, documentA.id, {
+      content_markdown: "Document A newer local draft",
+      base_revision_id: documentA.current_revision_id,
+      title: documentA.title,
+    });
     draft.rerender(acceptedA, acceptedProject);
 
     expect(draft.result().draft).toBe(acceptedA.content_markdown);
     expect(draft.result().loadedRevision.current).toBe(acceptedA.current_revision_id);
     expect(draft.result().saveState).toBe("idle");
     await advanceAutosave();
-    expect(api.saveDocument).not.toHaveBeenCalled();
+    expect(api.saveDocument).toHaveBeenCalledTimes(1);
   });
 
   it("does not start a second document A save after A to B to A", async () => {

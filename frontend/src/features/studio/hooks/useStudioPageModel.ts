@@ -87,6 +87,7 @@ export function useStudioPageModel(projectId: string, route: StudioRouteState, n
     isConflictActionPending,
     loadLatest,
     retryOverwrite,
+    retrySave,
   } = usePageDocumentDraft({
     projectId,
     activeDocument,
@@ -229,6 +230,7 @@ export function useStudioPageModel(projectId: string, route: StudioRouteState, n
         onTitleChange: setTitleDraft,
         onLoadLatest: loadLatest,
         onRetryOverwrite: retryOverwrite,
+        onRetrySave: retrySave,
         isLoadingDocument: currentDocument.isLoading,
         documentLoadError: currentDocument.error,
         onRetryDocument: currentDocument.retry,

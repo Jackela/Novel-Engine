@@ -2,9 +2,9 @@ import type { Dispatch, SetStateAction } from "react";
 import { useCallback } from "react";
 import { translateActive } from "@/app/i18n/translate";
 import type { StudioDocument } from "@/app/types/studio";
+import { saveDocumentDraft } from "./documentDraftPersistence";
 import type { DocumentDraftOwner, ReconcileCommittedDocument } from "./documentDraftState";
 import { toErrorMessage } from "./toErrorMessage";
-import { saveDocumentDraft } from "./useDocumentDraftAutosave";
 import { useRevisionCache } from "./useRevisionCache";
 
 interface PersistDocumentDraftAndRefreshHistoryContext {

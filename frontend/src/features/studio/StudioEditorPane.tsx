@@ -23,8 +23,11 @@ interface StudioEditorPaneProps {
   onTitleChange: (value: string) => void;
   onLoadLatest?: () => void | Promise<void>;
   onRetryOverwrite?: () => void | Promise<void>;
+  onRetrySave?: () => void | Promise<void>;
   onRetryDocument?: () => void;
 }
+
+type EditorCommand = "loadLatest" | "retryOverwrite" | "retrySave";
 
 export function StudioEditorPane({
   activeDocument,
@@ -39,14 +42,13 @@ export function StudioEditorPane({
   onTitleChange,
   onLoadLatest,
   onRetryOverwrite,
+  onRetrySave,
   onRetryDocument,
 }: StudioEditorPaneProps) {
   const { t } = useTranslation();
   const titleRef = useRef<HTMLInputElement>(null);
-  const pendingCommandRef = useRef<"loadLatest" | "retryOverwrite" | null>(null);
-  const [pendingCommand, setPendingCommand] = useState<"loadLatest" | "retryOverwrite" | null>(
-    null,
-  );
+  const pendingCommandRef = useRef<EditorCommand | null>(null);
+  const [pendingCommand, setPendingCommand] = useState<EditorCommand | null>(null);
   const saveNeedsAttention = saveState === "conflict" || saveState === "error";
   const conflictActionsDisabled =
     pendingCommand !== null || isConflictActionPending || saveState === "saving";
@@ -61,7 +63,7 @@ export function StudioEditorPane({
   const runWithFocusRestoration = useCommandFocusRestoration(conflictActionsDisabled);
 
   const runConflictCommand = (
-    commandKey: "loadLatest" | "retryOverwrite",
+    commandKey: EditorCommand,
     target: HTMLButtonElement,
     command: (() => void | Promise<void>) | undefined,
   ) => {
@@ -146,6 +148,24 @@ export function StudioEditorPane({
                   type="button"
                 >
                   {t("editor.conflict.action.keepLocal")}
+                </button>
+              </div>
+            </div>
+          ) : null}
+          {saveState === "error" ? (
+            <div aria-live="assertive" className="editor-conflict" role="alert">
+              <strong>{t("editor.saveState.error")}</strong>
+              {error ? <span>{error}</span> : null}
+              <div className="editor-conflict__actions">
+                <button
+                  aria-busy={pendingCommand === "retrySave" || undefined}
+                  disabled={conflictActionsDisabled || onRetrySave === undefined}
+                  onClick={(event) =>
+                    runConflictCommand("retrySave", event.currentTarget, onRetrySave)
+                  }
+                  type="button"
+                >
+                  {t("editor.action.retrySave")}
                 </button>
               </div>
             </div>

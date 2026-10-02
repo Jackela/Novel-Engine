@@ -1,5 +1,5 @@
 import type { Dispatch, SetStateAction } from "react";
-import { useCallback, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 
 import type { Project, StudioDocument } from "@/app/types/studio";
 
@@ -116,7 +116,7 @@ export function useDocumentDraft(
     setRestoreError,
   });
 
-  useDocumentDraftAutosave({
+  const { retrySave } = useDocumentDraftAutosave({
     ownerKey: owner.key,
     ownerToken: owner.token,
     isCurrentOwner: isCurrentDraftOwner,
@@ -138,6 +138,21 @@ export function useDocumentDraft(
     setError,
   });
 
+  // Browser-close guard for the debounce window and any failed or in-flight
+  // save: only unpersisted text raises it, so a settled Document never nags.
+  const hasUnpersistedEdits =
+    activeDocument !== null &&
+    (draft !== activeDocument.content_markdown || titleDraft !== activeDocument.title);
+  useEffect(() => {
+    if (!hasUnpersistedEdits) return;
+    const warnBeforeUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    window.addEventListener("beforeunload", warnBeforeUnload);
+    return () => window.removeEventListener("beforeunload", warnBeforeUnload);
+  }, [hasUnpersistedEdits]);
+
   return {
     draft,
     setDraft,
@@ -156,5 +171,6 @@ export function useDocumentDraft(
     isConflictActionPending,
     loadLatest,
     retryOverwrite,
+    retrySave,
   };
 }

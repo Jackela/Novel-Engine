@@ -189,6 +189,7 @@ export const zhStudio = {
   "editor.error.heading": "无法打开这份文档",
   "editor.error.markdownFailed": "Markdown 编辑器加载失败，请刷新页面。",
   "editor.action.retryDocument": "重试加载文档",
+  "editor.action.retrySave": "重试保存",
   "editor.empty": "先创建一个文档，开始写作。",
 
   "statusbar.saved": "已保存",

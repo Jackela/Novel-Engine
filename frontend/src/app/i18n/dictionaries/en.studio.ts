@@ -202,6 +202,7 @@ export const enStudio = {
   "editor.error.heading": "Unable to open this document",
   "editor.error.markdownFailed": "The markdown editor failed to load. Please refresh the page.",
   "editor.action.retryDocument": "Retry document",
+  "editor.action.retrySave": "Retry save",
   "editor.empty": "Create a document to begin writing.",
 
   "statusbar.saved": "Saved",
