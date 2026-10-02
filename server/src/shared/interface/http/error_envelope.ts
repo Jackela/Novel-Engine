@@ -13,6 +13,7 @@ type ErrorEnvelopeDetails = Record<string, unknown>;
 export const ERROR_HTTP_STATUS = {
   UNAUTHORIZED: 401,
   FORBIDDEN: 403,
+  SETUP_TOKEN_INVALID: 403,
   CSRF_TOKEN_MISSING: 403,
   CSRF_TOKEN_INVALID: 403,
   RATE_LIMIT_EXCEEDED: 429,

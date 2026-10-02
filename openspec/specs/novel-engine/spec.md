@@ -43,8 +43,9 @@ The behavior specified here covers:
 - The platform contract: owner session/CSRF/setup policy with rate limiting
   and production configuration guards, a unified error envelope, synchronous
   job execution with retry, health/version surfaces, the operational CLI
-  (`serve`, `import`, `backup`, `doctor`), read-only idempotent legacy
-  import, and a route-driven, editor-first, APG-compliant Studio UI.
+  (`serve`, `import`, `backup`, `restore`, `reindex`, `doctor`, `owner reset`),
+  read-only idempotent legacy import, and a route-driven, editor-first,
+  APG-compliant Studio UI.
 
 ## Requirements
 
@@ -1482,7 +1483,9 @@ Owner setup MUST accept a stripped, non-empty username and a password of
 10–72 UTF-8 bytes; violations MUST be rejected with 422 and MUST NOT create
 an owner. The store MUST hold at most one owner: setup after an owner exists
 MUST fail with 422, and concurrent first-run setups MUST produce exactly one
-owner.
+owner. Recovery from a lost owner credential MUST be explicit and local:
+`novel-engine owner reset` deletes the Owner and its sessions so setup
+becomes available again — there is no email recovery by design.
 
 #### Scenario: Weak credentials are rejected
 - **GIVEN** no owner is configured
@@ -1502,6 +1505,12 @@ owner.
 - **THEN** exactly one request succeeds with 201
 - **AND** the other fails with 422
 - **AND** the store contains a single owner afterwards
+
+#### Scenario: Setup is available again after an owner reset
+- **GIVEN** an Owner exists and its credential is lost
+- **WHEN** `novel-engine owner reset` runs against the stopped server
+- **THEN** the Owner and its sessions are deleted
+- **AND** a subsequent setup creates a fresh Owner
 
 ### Requirement: Lazy session expiry
 Session expiry MUST be enforced at validation time. A presented session past
@@ -1539,8 +1548,9 @@ configured CORS origins. Origins that are the literal `null`, carry
 userinfo, use a non-HTTP(S) scheme, carry a path, query, or fragment in
 `Origin`, or declare an out-of-range port MUST be rejected with 403.
 Localhost wildcard entries expand to the local development ports. Requests
-without origin metadata, such as CLI and bootstrap clients, MUST remain
-allowed.
+without origin metadata remain subject to the first-boot setup token gate
+from non-loopback peers (see below); from loopback peers, such as local CLI
+and bootstrap clients, they MUST remain allowed.
 
 #### Scenario: Foreign origin is rejected
 - **GIVEN** first-run setup with default CORS origins
@@ -1558,19 +1568,66 @@ allowed.
 - **WHEN** the setup request arrives from `http://localhost:5173`
 - **THEN** the request proceeds
 
-#### Scenario: Origin-less bootstrap client is allowed
+#### Scenario: Origin-less loopback bootstrap client is allowed
 - **GIVEN** first-run setup
-- **WHEN** a local bootstrap client submits setup with neither `Origin` nor `Referer`
+- **WHEN** a local bootstrap client submits setup from a loopback peer with neither `Origin` nor `Referer`
 - **THEN** the request proceeds
+
+### Requirement: First-boot setup token gate
+While no Owner is configured, the server MUST arm a one-time setup token on
+startup: 32 random bytes rendered as base64url, written to `.setup-token` in
+the data directory with mode 0600, and printed once in the server log as the
+`first-start setup token`. `POST /api/setup` from a non-loopback peer MUST
+present the token in the `x-setup-token` header and MUST be rejected with 403
+`SETUP_TOKEN_INVALID` when the header is missing or does not match; the
+comparison MUST be constant time. The loopback exemption MUST be decided on
+the raw socket peer address — never on a forwarded or proxied address — and
+loopback peers keep the origin-checked flow without a token. A successful
+setup MUST invalidate the token and delete its file; a token file left behind
+once an Owner exists MUST be removed at startup. A missing, unreadable, or
+unwritable token file MUST fail closed: non-loopback setup stays rejected
+while loopback setup remains available.
+
+#### Scenario: Non-loopback setup without the token is rejected
+- **GIVEN** no Owner is configured and the first-start token is armed
+- **WHEN** `POST /api/setup` arrives from a non-loopback peer without an `x-setup-token` header
+- **THEN** the status is 403 under the unified error envelope with code `SETUP_TOKEN_INVALID`
+- **AND** no Owner is created
+
+#### Scenario: Wrong token is rejected
+- **GIVEN** no Owner is configured and the first-start token is armed
+- **WHEN** `POST /api/setup` arrives from a non-loopback peer with a token that does not match
+- **THEN** the status is 403 with `SETUP_TOKEN_INVALID`
+- **AND** no Owner is created
+
+#### Scenario: Correct token completes the one-time setup
+- **GIVEN** no Owner is configured and the token file exists with mode 0600
+- **WHEN** `POST /api/setup` arrives from a non-loopback peer presenting the token
+- **THEN** the Owner is created with 201
+- **AND** the token is invalidated and its file is deleted
+
+#### Scenario: Loopback setup needs no token
+- **GIVEN** no Owner is configured and the token gate is armed
+- **WHEN** `POST /api/setup` arrives from a loopback peer (including `::1`) without the header
+- **THEN** the origin-checked setup flow proceeds unchanged
+
+#### Scenario: Stale token file is removed once an Owner exists
+- **GIVEN** an Owner is configured and a `.setup-token` file remains in the data directory
+- **WHEN** the server starts
+- **THEN** the stale token file is removed and the gate is disarmed
 
 ### Requirement: Authentication endpoint rate limiting
 The setup and login endpoints MUST be rate limited per client IP with a
 token bucket defaulting to five requests per minute. Excess requests MUST
 receive 429 with a `Retry-After` header in seconds under the unified error
 envelope, and MUST NOT trigger authentication side effects. Client identity
-MUST use the first `X-Forwarded-For` entry only when the immediate peer is a
-configured trusted proxy (IP, CIDR network, or host); otherwise the peer
-address itself. Preflight `OPTIONS` requests are exempt.
+MUST use the rightmost `X-Forwarded-For` hop that is not itself a trusted
+proxy, and only when the immediate peer is a configured trusted proxy;
+otherwise it MUST be the peer address itself. Trusted proxy entries MUST be
+exact IP addresses or hosts — network ranges are refused at configuration
+load, because a range that covers clients would let a client pose as a proxy
+and rotate forged chains into fresh buckets. Preflight `OPTIONS` requests are
+exempt.
 
 #### Scenario: Burst exhausted
 - **GIVEN** the default five-per-minute limit
@@ -1582,6 +1639,17 @@ address itself. Preflight `OPTIONS` requests are exempt.
 - **GIVEN** no trusted proxies are configured
 - **WHEN** requests from one peer address present differing `X-Forwarded-For` values
 - **THEN** they share a single bucket keyed by the peer address
+
+#### Scenario: Forged leading segments cannot mint identities
+- **GIVEN** a trusted proxy is configured and requests arrive through it from one client
+- **WHEN** the client varies the leading `X-Forwarded-For` segments on every request
+- **THEN** every request shares the bucket of the rightmost untrusted hop
+- **AND** the sixth request is rejected with 429
+
+#### Scenario: Network ranges are refused as trusted proxies
+- **GIVEN** `SECURITY_TRUSTED_PROXIES` contains a network range
+- **WHEN** the configuration loads
+- **THEN** it fails with a configuration error instead of trusting the range
 
 ### Requirement: Production configuration guards
 Production and staging MUST refuse to start when the session secret is
@@ -1726,24 +1794,31 @@ system MUST NOT choose, move, merge, or silently fall back to either file.
 
 ### Requirement: CLI operational surface
 
-The CLI MUST provide four commands. Every command MUST establish the configured
-database authority and pass the legacy-sibling ambiguity gate before database
-backup, migration, reconciliation, import, or inspection. After that gate
-passes, `serve` MUST back up the SQLite store before applying pending
-migrations, then start the API. Once listening, the first `SIGINT` or `SIGTERM`
-MUST initiate one controlled shutdown. The command MUST await application
-resource release, later shutdown signals MUST NOT start a second shutdown
-cycle, and the command MUST leave none of its own signal subscriptions on a
-terminal path. Controlled shutdown MUST already be available when the listener
-becomes reachable. A successful signal shutdown MUST return `130` for `SIGINT`
-or `143` for `SIGTERM`; a resource-release failure MUST remain visible and
-return `1` instead.
+The CLI MUST provide the operational commands `serve`, `import`, `backup`,
+`restore`, `reindex`, `doctor`, and `owner reset`. Every command MUST
+establish the configured database authority and pass the legacy-sibling
+ambiguity gate before database backup, migration, reconciliation, import, or
+inspection. After that gate passes, `serve` MUST back up the SQLite store
+before applying pending migrations, then start the API. Once listening, the
+first `SIGINT` or `SIGTERM` MUST initiate one controlled shutdown. The command
+MUST await application resource release, later shutdown signals MUST NOT start
+a second shutdown cycle, and the command MUST leave none of its own signal
+subscriptions on a terminal path. Controlled shutdown MUST already be
+available when the listener becomes reachable. A successful signal shutdown
+MUST return `130` for `SIGINT` or `143` for `SIGTERM`; a resource-release
+failure MUST remain visible and return `1` instead.
 
 `import` MUST take an explicit source path and owner, run as the owner principal
 without HTTP authentication, and print the imported project. `backup` MUST
 write a backup and print its path. `doctor` MUST report the version, database
 path, integrity check, journal mode, foreign-key enforcement, and owner status,
 exiting non-zero unless the integrity check passes and foreign keys are enabled.
+`owner reset` MUST hold the same exclusive data-directory ownership as every
+maintenance command — a running server holds that lock, so the command is
+refused before anything is read or written — delete the Owner and its sessions
+in one transaction, and print a machine-readable summary with `owners_deleted`,
+`sessions_deleted`, and the removed `username`. It is the owner-credential
+recovery path; there is no email recovery by design.
 
 #### Scenario: Serve backs up before migrating
 
@@ -1804,6 +1879,20 @@ exiting non-zero unless the integrity check passes and foreign keys are enabled.
 - **WHEN** CLI import succeeds
 - **THEN** it prints only the bounded import summary and exits 0
 - **AND** a repeated import reports the same project id with `created: false`
+
+#### Scenario: Owner reset deletes the Owner and its sessions
+
+- **GIVEN** a configured Owner with live sessions and a stopped server
+- **WHEN** `owner reset` runs
+- **THEN** the owner row and every session row are deleted
+- **AND** the summary reports the counts
+- **AND** a subsequent `POST /api/setup` creates a fresh Owner
+
+#### Scenario: Owner reset is refused while the data directory is owned
+
+- **GIVEN** a running server holding data-directory ownership
+- **WHEN** `owner reset` runs
+- **THEN** the command fails non-zero and deletes nothing
 
 ### Requirement: Entry flow session probe
 The Studio entry MUST probe the session on mount. A valid session MUST replace

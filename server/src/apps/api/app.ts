@@ -10,6 +10,7 @@ import type { HealthProbe } from "../../shared/application/ports/health.js";
 import { assertStartupGuards } from "../../shared/infrastructure/config/server_config.js";
 import { DrizzleAuthStore } from "../../shared/infrastructure/db/auth_store.js";
 import type { StudioQueryLogger } from "../../shared/infrastructure/db/connection.js";
+import { armFirstBootSetupToken } from "../../shared/infrastructure/db/setup_token.js";
 import { sqliteHealthProbe } from "../../shared/infrastructure/db/sqlite_health_probe.js";
 import type { StudioDatabase } from "../../shared/infrastructure/db/startup.js";
 import { readProductIdentity } from "../../shared/infrastructure/workspace_manifest.js";
@@ -21,7 +22,11 @@ import {
 } from "../../shared/interface/http/spa_serving.js";
 import { type VersionInfo, versionRoutes } from "../../shared/interface/http/version_route.js";
 import { closeAppAndRethrow } from "./app_lifecycle.js";
-import { type AuthRegistrationOptions, registerAuthRoutes } from "./auth_registration.js";
+import {
+  type AuthRegistrationOptions,
+  registerAuthRoutes,
+  resolveTrustedProxies,
+} from "./auth_registration.js";
 import {
   type CorsOriginsAppOptions,
   registerCors,
@@ -116,8 +121,14 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
   const operationCapacity = resolveOperationCapacity(options);
 
   const productIdentity = readProductIdentity();
+  // One trusted-proxy resolution for the whole app: the HTTP server's
+  // trustProxy option and the rate limiter's client identity must agree.
+  const trustedProxies = resolveTrustedProxies(options);
   const app = Fastify({
-    ...fastifyOptionsForHttpServerPolicy(options.httpServerPolicy ?? DEFAULT_HTTP_SERVER_POLICY),
+    ...fastifyOptionsForHttpServerPolicy(
+      options.httpServerPolicy ?? DEFAULT_HTTP_SERVER_POLICY,
+      trustedProxies,
+    ),
     logger: loggerWithProductIdentity(options.logger, productIdentity),
     genReqId: (request) => correlationIdFrom(request.headers[REQUEST_ID_HEADER]) ?? randomUUID(),
   }).withTypeProvider<TypeBoxTypeProvider>();
@@ -148,11 +159,25 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
     // (options or config) or a per-start rotation; the diagnostics export
     // reports only which of the two it was (#654), never the value.
     const resolvedSessionSecret = options.sessionSecret ?? options.config?.sessionSecret;
+    const authStore =
+      persistence === undefined ? undefined : new DrizzleAuthStore(persistence.db.db);
+    // First-boot takeover gate (DR-008): while no owner exists the one-time
+    // setup token is armed and logged here; the raw socket peer decides the
+    // loopback exemption inside the route, never a forwarded address.
+    const setupTokenGuard =
+      persistence === undefined || authStore === undefined
+        ? undefined
+        : armFirstBootSetupToken({
+            directory: persistence.dataDirectory,
+            ownerExists: authStore.ownerExists(),
+            onToken: (token) => app.log.info({ setup_token: token }, "first-start setup token"),
+            onWarning: (message, error) => app.log.warn({ err: error }, message),
+          });
     const authService =
-      persistence === undefined
+      persistence === undefined || authStore === undefined
         ? undefined
         : new AuthService({
-            store: new DrizzleAuthStore(persistence.db.db),
+            store: authStore,
             sessionSecret: resolvedSessionSecret ?? randomBytes(32).toString("base64url"),
             now: options.clock,
           });
@@ -187,7 +212,7 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
     await registerCors(app, corsOrigins);
     await registerAuthRoutes(
       app,
-      { authService, productIdentity, environment, corsOrigins },
+      { authService, productIdentity, environment, corsOrigins, setupTokenGuard },
       options,
     );
     await app.register(healthRoutes, {

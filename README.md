@@ -80,7 +80,7 @@ guide](openwiki/guides/provider-setup.md).
 | `SECURITY_SECRET_KEY` | sample value | Required in production; generate a unique value. |
 | `SECURITY_CORS_ORIGINS` | localhost origins | Must be explicit and non-localhost in production. |
 | `SECURITY_RATE_LIMIT` | `5/minute` | Auth endpoint rate limit. |
-| `SECURITY_TRUSTED_PROXIES` | empty | Comma-separated trusted proxies (exact IP, CIDR, or host) for forwarded client identity. |
+| `SECURITY_TRUSTED_PROXIES` | empty | Comma-separated trusted proxy addresses (exact IPs, or host strings for local sockets) whose forwarding chain may be trusted for client identity; the client is the rightmost untrusted hop, never the client-controlled leading segment. Network ranges are refused at startup — a range that covers clients would let them forge identities. |
 | `LLM_PROVIDER` | `mock` | `mock`, `dashscope`, or `openai_compatible`. |
 | `LLM_MODEL` | unset | Generic model override applied to every provider, between the per-provider override and the hard default. Left unset, the mock provider resolves to `deterministic-story-v1`; `.env.example` pins it to `studio-copilot-v1` as an example override. |
 | `DASHSCOPE_API_KEY` | unset | Required when `LLM_PROVIDER=dashscope`. |
@@ -124,13 +124,26 @@ the image and can take a few minutes):
 docker compose up -d
 ```
 
-Open `http://localhost:8000` in Chrome or Firefox and create the Owner
-account on the setup screen, then log in. Safari works but has a known
-rendering limitation in the frosted-glass visual style, so Chrome or Firefox
-is recommended. No secret or other manual configuration is needed: on first
-start the container generates a session secret into the `novel-engine-data`
-volume, and because that volume persists, sessions keep working across
-restarts. A healthcheck polls `/health/ready` inside the container.
+On a fresh volume the first start logs a one-time **first-start setup token**.
+Because the published port makes the browser a non-loopback peer, the Owner
+setup request must present that token in the `x-setup-token` header. Read it
+from the container logs and complete the setup once through the API (the setup
+screen does not send the header; the local non-Docker flow above connects over
+loopback and needs no token):
+
+```bash
+TOKEN=$(docker compose logs novel-engine | sed -n 's/.*"setup_token":"\([^"]*\)".*/\1/p' | tail -1)
+curl -H "content-type: application/json" -H "x-setup-token: $TOKEN" \
+  -d '{"username":"author","password":"choose-a-strong-password"}' \
+  http://localhost:8000/api/setup
+```
+
+Then open `http://localhost:8000` in Chrome or Firefox and log in. Safari works
+but has a known rendering limitation in the frosted-glass visual style, so
+Chrome or Firefox is recommended. The token file is deleted after setup, and
+because the `novel-engine-data` volume persists (the session secret is
+generated into it on first start), sessions keep working across restarts. A
+healthcheck polls `/health/ready` inside the container.
 
 The container runs with `restart: unless-stopped`, so it comes back on its
 own after a crash or a machine reboot (unless you stopped it yourself). To
@@ -167,6 +180,7 @@ pnpm --dir server cli serve
 pnpm --dir server cli doctor
 pnpm --dir server cli backup
 pnpm --dir server cli restore --input <backup-file>
+pnpm --dir server cli owner reset
 ```
 
 `backup` writes a consistent online backup beneath `data/backups/` and prints
@@ -175,6 +189,12 @@ the current database, then replaces it atomically. Both commands take
 exclusive ownership of the data directory: stop the running server first.
 Backups are never removed automatically. For the Docker equivalents, see the
 [backup and restore guide](openwiki/guides/backup-and-restore.md).
+
+`owner reset` deletes the local Owner and its sessions so a fresh setup can
+create a new Owner. It is the recovery path when the Owner password is lost —
+there is no email recovery by design. Like `backup` and `restore`, it takes
+exclusive ownership of the data directory, so stop the running server first;
+book content is never touched.
 
 Legacy import expects a directory containing `story.yaml` and optional chapter
 files under `manuscript/chapters/chapter-*.md`:

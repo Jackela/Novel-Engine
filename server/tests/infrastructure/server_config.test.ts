@@ -174,12 +174,20 @@ describe("environment configuration surface", () => {
   it("reads settings from the .env.local file without shell exports", async () => {
     const workspace = await makeWorkspace();
     const envFile = join(workspace, ".env.local");
-    await writeFile(envFile, "APP_ENVIRONMENT=testing\nSECURITY_TRUSTED_PROXIES=10.0.0.0/8\n");
+    await writeFile(envFile, "APP_ENVIRONMENT=testing\nSECURITY_TRUSTED_PROXIES=10.0.0.7\n");
 
     const config = load({ envFile, workingDirectory: workspace }) as ServerConfig;
 
     expect(config.environment).toBe("testing");
-    expect(config.trustedProxies).toEqual(["10.0.0.0/8"]);
+    expect(config.trustedProxies).toEqual(["10.0.0.7"]);
+  });
+
+  it("refuses trusted proxy network ranges at load time", () => {
+    const rejected = expectRejected(
+      load({ env: { SECURITY_TRUSTED_PROXIES: "10.0.0.0/8, 127.0.0.1" } }),
+    );
+    expect(rejected.message).toContain("SECURITY_TRUSTED_PROXIES");
+    expect(rejected.message).toContain("10.0.0.0/8");
   });
 
   it("lets the process environment win over the .env.local file", async () => {

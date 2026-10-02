@@ -3,6 +3,7 @@ import { dirname, join, resolve } from "node:path";
 
 import { DEFAULT_CORS_ORIGINS } from "../../domain/cors_contract.js";
 import { errorCode } from "../error_code.js";
+import { isTrustedProxyRange } from "../rate_limit/client_identity.js";
 import { locateWorkspaceRoot } from "../workspace_manifest.js";
 import { ConfigurationError } from "./configuration_error.js";
 import { parseEnvFile } from "./env_file.js";
@@ -46,6 +47,11 @@ export interface ServerConfig {
   readonly host: string;
   readonly port: number;
   readonly corsOrigins: string[];
+  /**
+   * Concrete proxy addresses only. Network ranges are refused: a range that
+   * covers clients would let a client pose as a trusted proxy and rotate
+   * forged forwarding chains into fresh rate-limit buckets.
+   */
   readonly trustedProxies: string[];
   readonly authRateLimitPerMinute: number;
   readonly maxActiveWorkflows: number;
@@ -125,6 +131,7 @@ export function assertStartupGuards(config: ServerConfig): void {
     applicationLimit: config.maxActiveWorkflows,
     projectLimit: config.maxActiveWorkflowsPerProject,
   });
+  assertTrustedProxyAddresses(config.trustedProxies);
   if (config.environment !== "production" && config.environment !== "staging") {
     return;
   }
@@ -167,6 +174,21 @@ function assertCapacityValue(name: string, value: number): void {
     throw new ConfigurationError(
       `Workflow capacity ${name} limit must be an integer between ${MIN_ACTIVE_WORKFLOWS} and ${MAX_ACTIVE_WORKFLOWS}`,
     );
+  }
+}
+
+/**
+ * Trusted proxies must be concrete addresses: a network range can cover
+ * clients, and a client inside it would then be treated as a forwarding proxy
+ * (fresh rate-limit bucket per forged forwarding chain).
+ */
+function assertTrustedProxyAddresses(entries: readonly string[]): void {
+  for (const entry of entries) {
+    if (isTrustedProxyRange(entry)) {
+      throw new ConfigurationError(
+        `SECURITY_TRUSTED_PROXIES must list exact proxy addresses, not network ranges (got "${entry}")`,
+      );
+    }
   }
 }
 

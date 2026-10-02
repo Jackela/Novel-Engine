@@ -23,6 +23,7 @@ import { readProductIdentity } from "../../shared/infrastructure/workspace_manif
 import { buildApp } from "../api/app.js";
 import { closeResourceAndRethrow } from "../api/app_lifecycle.js";
 import { runLegacyImportCommand } from "./legacy_import_command.js";
+import { runOwnerResetCommand } from "./owner_reset_command.js";
 import { runReindexCommand } from "./reindex_command.js";
 import { runRestoreCommand } from "./restore_command.js";
 import {
@@ -31,11 +32,8 @@ import {
   type ShutdownSignalSource,
 } from "./shutdown_signals.js";
 
-/**
- * The single emitted TS CLI root (#272): `serve`, `import`, `backup`,
- * `restore`, `reindex`, and `doctor`. #273's legacy-import runner registers
- * through `importRunner`; there is no competing executable root.
- */
+/** The single emitted TS CLI root (#272): `serve`, `import`, `backup`, `restore`,
+ * `reindex`, `doctor`, and `owner reset` — no competing executable root. */
 
 type WriteLine = (line: string) => void;
 
@@ -93,6 +91,8 @@ const USAGE = [
   "      Rebuild the full-text index from every document's current revision.",
   "  doctor",
   "      Report product identity, database integrity, journal mode, foreign keys, owner.",
+  "  owner reset",
+  "      Delete the local Owner and its sessions so first-run setup is available again.",
 ].join("\n");
 
 const NO_DATABASE_MESSAGE = "No database exists yet.";
@@ -301,6 +301,8 @@ export async function runCli(argv: readonly string[], context: CliContext = {}):
         return await runReindexCommand({ config: configFor(context), writeLine });
       case "doctor":
         return await doctorCommand(context, writeLine);
+      case "owner":
+        return await runOwnerResetCommand(parsed.flags, configFor(context), writeLine);
       case "import":
         return await importCommand(parsed, context, writeLine);
       default:
@@ -316,8 +318,7 @@ export async function runCli(argv: readonly string[], context: CliContext = {}):
 }
 
 async function main(): Promise<void> {
-  const invoked = process.argv[1];
-  if (invoked === undefined) return;
+  // `invokedDirectly` below already proved process.argv[1] is defined.
   process.exitCode = await runCli(process.argv.slice(2));
 }
 

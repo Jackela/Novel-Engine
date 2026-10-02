@@ -19,9 +19,26 @@ curl -fsSL https://raw.githubusercontent.com/Jackela/Novel-Engine/v0.8.0/deploy/
 The image (`ghcr.io/jackela/novel-engine`, tag `0.8.0` by default) is pulled
 automatically, the studio listens on port 8000, and the first start needs no
 manual configuration: the container generates a session secret into the
-persistent volume, applies database migrations, and then serves the app. Open
-`http://localhost:8000`, create the Owner account on the setup screen, and log
-in. The built-in `mock` AI provider works out of the box.
+persistent volume, applies database migrations, and then serves the app.
+
+On a fresh volume the server logs a one-time **first-start setup token**.
+Because the published port makes the browser a non-loopback peer, the Owner
+setup must present that token in the `x-setup-token` header; read it from the
+container logs and complete the setup once through the API (the setup screen
+does not send the header):
+
+```bash
+TOKEN=$(docker compose logs novel-engine | sed -n 's/.*"setup_token":"\([^"]*\)".*/\1/p' | tail -1)
+curl -H "content-type: application/json" -H "x-setup-token: $TOKEN" \
+  -d '{"username":"author","password":"choose-a-strong-password"}' \
+  http://localhost:8000/api/setup
+```
+
+Then open `http://localhost:8000` and log in; the token file is deleted once
+the Owner exists. There is no email recovery by design — if the Owner password
+is ever lost, `novel-engine owner reset` against the stopped container is the
+recovery path (see the root [README commands table](../README.md#commands)).
+The built-in `mock` AI provider works out of the box.
 
 On Windows PowerShell, use `curl.exe` — the plain `curl` name is an alias for
 `Invoke-WebRequest` and does not accept these flags:
@@ -115,16 +132,29 @@ demo or public host, mind these points:
   to the container. Do not expose port 8000 directly to the internet: publish
   it to loopback only (`127.0.0.1:8000:8000` in an override file) or firewall
   it, so the only public entry is the encrypted proxy route.
-- **Trusted proxies.** Set `SECURITY_TRUSTED_PROXIES` to your proxy's address
-  (exact IP, CIDR, or host; comma-separated for several) so the server trusts
-  forwarded client identity — this is what keeps per-client rate limiting
-  meaningful behind a proxy.
+- **Trusted proxies.** Set `SECURITY_TRUSTED_PROXIES` to your proxy's exact
+  address (comma-separated for several) so the server trusts forwarded client
+  identity — this is what keeps per-client rate limiting meaningful behind a
+  proxy. Only concrete addresses are accepted: a network range is refused at
+  startup, because trust that covers clients would let a client pose as a
+  proxy and rotate forged `X-Forwarded-For` segments into fresh rate-limit
+  buckets. The identity is the rightmost untrusted hop of the chain, so keep
+  the proxy appending to `X-Forwarded-For` (nginx's default
+  `$proxy_add_x_forwarded_for`); a proxy that passes the client's header
+  through unchanged still trusts the client's own claim.
 - **Explicit session secret.** The first-boot secret bootstrap (generated
   into the volume) satisfies the production guard, but on a public host set
   `SECURITY_SECRET_KEY` explicitly — for example `openssl rand -hex 32` — so
   the credential is operator-owned and survives even a volume reset. Any
   explicit value must be at least 16 characters; shorter values refuse to
   start.
+- **First-start setup token.** On a fresh volume the first start logs a
+  one-time `first-start setup token`, and every non-loopback `POST /api/setup`
+  — including the browser through your TLS proxy — must present it in the
+  `x-setup-token` header. Read it from `docker compose logs novel-engine` (or
+  from `.setup-token` inside the volume) and run the curl setup call above;
+  the token is deleted once the Owner exists. There is no email recovery by
+  design: `novel-engine owner reset` is the recovery path.
 - **Real CORS origins.** The startup guard rejects wildcard origins and any
   `localhost`/`127.0.0.1` origin in production. When the browser reaches the
   API from a different origin than the one serving it, `SECURITY_CORS_ORIGINS`
@@ -141,7 +171,9 @@ Everything stateful lives in the named volume `novel-engine-data`, mounted at
 
 - `novel-engine.sqlite3` — the SQLite database (the content authority),
 - `backups/` — timestamped automatic backups taken before every migration,
-- `.secret` — the generated session secret (mode 0600).
+- `.secret` — the generated session secret (mode 0600),
+- `.setup-token` — the one-time first-start setup token (mode 0600), created
+  while no Owner exists and deleted after setup.
 
 `docker compose down` keeps the volume; `docker compose down -v` deletes it
 permanently — that is the only routine way to lose your novels. Find the
