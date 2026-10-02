@@ -166,6 +166,7 @@ export class SnapshotArtifactService {
         format,
         projectTitle: source.projectTitle,
         chapters,
+        capturedAt: source.capturedAt,
       },
       reportCleanupFailure,
     );
