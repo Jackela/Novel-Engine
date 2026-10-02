@@ -253,30 +253,33 @@
 
 ### DR-013 [P1] DOCX 中文排版
 
-- [ ] 未开始
+- [x] 已完成（2026-10-02）
 - **问题**：DOCX 只有 TITLE + HEADING_1 + 裸段落；无 `w:rFonts eastAsia`、无 2 字符首行缩进、无章前分页、无 TOC 域；正文首行与章节标题重复（H1 被 plainText 去标记后与标题行重复）。
 - **证据**：`server/src/contexts/studio/infrastructure/bounded_export_rendering.ts:86-101`；grep `rFonts|eastAsia|indent|pageBreak` 零命中；实测 styles.xml 空 `<w:rPrDefault/>`。
 - **修复方向**：显式东文字体（宋体/思源宋体）+ 首行缩进 2 字符 + 章前分页 + TOC；跳过与章节标题重复的首行；补结构断言测试。
 - **验收**：导出 DOCX 在 Word/WPS 打开即具备中文段落样式；标题不重复；测试覆盖字体与缩进标记。
 - **验证**：`pnpm --dir server test`（导出相关）；人工打开一次产物。
+- **交付记录**：2026-10-02 | `238a1cab` | 新模块 `docx_manuscript.ts`（纯 docx API，无原始 OOXML 逃逸）：docDefaults + 每个 run 显式 `w:rFonts eastAsia="SimSun"` + Latin Times New Roman + `w:hint="eastAsia"`；正文段落 2 字符首行缩进（`w:firstLineChars="200"` 且 `w:firstLine="480"` twips），Title/Heading1 覆盖为 0 保持标题齐头；每章标题 `w:pageBreakBefore`；TOC 经库的 `TableOfContents`（`w:sdt` + `TOC \h \o "1-1"`）+ `settings.xml` `w:updateFields` 让 Word/WPS 打开时重建；跳过与章节标题重复的首行（H1 或普通重复行，复用 `stripRepeatedTitleLine`） | 复现：结构断言先红（无 eastAsia、无 ind、无 pageBreak、标题重复、无 CSS/语言被写死等 9 条）；修复后全绿 | 测试：`export_artifact_docx_layout.test.ts`（6 条结构断言） | 人工 gate：Word/WPS 打开一次待 Owner（OOXML 标记已解包断言并留存 dump） | 验证：导出套件 30 文件/137 用例 + 全套（server 244/1472、frontend 138/745、gates/arch/react-doctor(100)/spec 全绿）
 
 ### DR-014 [P1] EPUB 合规与中文 CSS
 
-- [ ] 未开始
+- [x] 已完成（2026-10-02）
 - **问题**：`<dc:language>en</dc:language>` 硬编码；缺 `<meta property="dcterms:modified">`（EPUB 3 必需）；无任何 CSS（无缩进/行高/字体）；图片与代码块被整段删除。
 - **证据**：`epub_xml.ts:113,29-37,62-68`；解包实测（mimetype 合规、缺 dcterms:modified）。
 - **修复方向**：语言可配置或按内容/项目语言推断；补 dcterms:modified（用导出时间 ISO-8601）；内置中文阅读 CSS；明确图片策略。
 - **验收**：EPUBCheck 类校验通过（或结构断言等价）；中文书语言正确。
 - **验证**：`pnpm --dir server test`（导出相关）；有条件时跑 EPUBCheck。
+- **交付记录**：2026-10-02 | `238a1cab` | `dc:language` 按正文推断（Han→zh、假名占比≥20% 判 ja、Hangul→ko、Cyrillic→ru、Latin→en；代码块/URL/链接目标排除在统计外；无法识别时回退 en）；`<meta property="dcterms:modified">` 取导出时间 ISO-8601 UTC（`ArtifactWriteRequest.capturedAt` 由 `ExportSource.capturedAt` 注入，测试断言快照时间抵达网关）；内置 `OEBPS/styles/reading.css`（宋体/思源宋体栈、`text-indent: 2em`、行高 1.75）在 OPF manifest 声明并由每章链接，章节带 `xml:lang`；围栏代码输出 `<pre><code>`；图片保留为可见占位 `[image: alt] src`（快照仅含 markdown 文本、远端抓取超出容量边界，已在代码注释说明策略） | 复现：结构断言先红（4 条：缺 CSS、语言写死、缺 dcterms:modified、代码块丢失）；修复后全绿 | 测试：`export_artifact_epub_package.test.ts`（4 条：mimetype/container/OPF/manifest/CSS/chapter 标记） | 跳过：EPUBCheck 本地不可用（以等价结构断言替代，记录为环境跳过） | 验证：同 DR-013
 
 ### DR-015 [P1] Markdown 导出丢标题与导出范围
 
-- [ ] 未开始
+- [x] 已完成（2026-10-02）
 - **问题**：Markdown 只拼 `chapter.contentMarkdown`，丢 `chapter.title`；且所有格式只含 chapter，character/world/outline/note 与 lore 字段只留在 SQLite；指南称 Markdown 是"无损副本"（不成立）。
 - **证据**：`bounded_export_rendering.ts:73-84`；`export_artifact_service.ts:155-157`；实测输出无章节标题。
 - **修复方向**：Markdown 每章输出 `## {title}`；决策并实现"全量归档导出"（含非章节文档）或修正文档承诺。
 - **验收**：Markdown 含章节标题；导出范围与文档一致。
 - **验证**：`pnpm --dir server test`（导出相关）。
+- **交付记录**：2026-10-02 | `238a1cab` | `markdownChapterSegment`：每章输出 `## {title}` + 去除与标题重复的首行后的正文（空正文仍保留标题，章节不消失；顺序与 `\n\n` 分隔、单结尾换行的既有确定性不变）；方向决策＝文档对齐（不做全量归档新功能）：`openwiki/guides/exporting.md` 与 zh 镜像改为精确范围（仅章节文档；notes/characters/world/outline/lore 留在数据库；**full-archive export 未实现**，全量请备份数据库），删去 "lossless/future-proof/无损副本" 承诺 | 复现：新用例先红（标题缺失、空正文章节塌缩为空行）；修复后 `export_artifact_markdown.test.ts` 3/3；`export_artifact_files.test.ts` 的 byte-stable 期望按新输出更新（原期望固化的是无标题旧行为） | 验证：`pnpm --dir server exec vitest run tests/contexts/export`（30 文件/137 用例）+ 全套同 DR-013（全绿）
 
 ### DR-016 [P1] 查找/替换与快捷键
 
@@ -712,3 +715,4 @@
 - 2026-10-02 | `3771724e` | DR-006 + DR-007 | 定向：server `studio_proposals_stream*`、`provider_streaming_retry`、`provider_streaming_deadline`、`text_generation`；frontend copilot/whole-book 7 文件；全套：`server gates/type-check/lint/lint:types/arch/test`（239 文件/1436 用例）、frontend lint/lint:types/format/type-check/test:unit/build（134 文件/723 用例）+ react-doctor(100) + `pnpm spec:validate` | 通过；过程修复：重试引入的 4 个定时预算用例（显式单次尝试，断言不变）、3 处格式化、1 处 react-doctor 链式迭代告警；spec 与 2 个 e2e 规格同步新语义
 - 2026-10-02 | `b10e02c6` | DR-008 + DR-009 | 定向 7 文件 78 用例；全套 `server gates/type-check/lint/lint:types/arch/test`（241 文件/1457 用例）、frontend lint/lint:types/format/type-check/test:unit/build（134 文件/723 用例）+ react-doctor(100) + `pnpm spec:validate` | 通过：首启 setup token + `owner reset`（DR-008）；XFF 最右未受信跳 + 范围拒绝 + trustProxy 推导（DR-009）；新错误码 SETUP_TOKEN_INVALID 锁步；README/deploy/spec 同步；已知后续：浏览器 setup token 输入并入 DR-019
 - 2026-10-02 | `2baed8a9` | DR-010 + DR-011 + DR-012 + DR-016 | 定向：server `studio_revisions.test.ts`；frontend copilot/jobs/history/conflict/editor 相关 10 文件 52 用例；全套 `server gates/type-check/lint/lint:types/arch/test`（241 文件/1459 用例）、frontend lint/lint:types/format/type-check/test:unit/build（138 文件/745 用例）+ react-doctor(100) + `pnpm spec:validate` | 通过：修订正文端点 + 预览/diff + 恢复确认（DR-011）；冲突只读查看服务器版本（DR-012）；停止保留/一次性撤销/拒绝文本可回看（DR-010）；查找替换 + Ctrl/Cmd+S + 格式命令（DR-016，新增 `@codemirror/search`）；过程修复：文件行数拆分（字典 jobs 分块、proposalUndo 助手、测试 harness/拆分）、react-doctor/格式化/导出排序、撤销提议在瞬时 owner 切换被清空；人工浏览器验证待 Owner
+- 2026-10-02 | `238a1cab` | DR-013 + DR-014 + DR-015 | 定向：`pnpm --dir server exec vitest run tests/contexts/export`（30 文件/137 用例）；全套 `server gates/type-check/lint/lint:types/arch/test`（244 文件/1472 用例）、frontend lint/lint:types/format/type-check/test:unit/build（138 文件/745 用例）+ react-doctor(100) + `pnpm spec:validate` | 通过：DOCX 东文字体/2 字符缩进/章前分页/TOC/去重标题（纯 docx API）；EPUB 语言推断 + dcterms:modified + 内置中文 CSS + 代码块/图片占位；Markdown `## {title}` + 导出范围文档对齐（全量归档标注未实现）；跳过：EPUBCheck（本地不可用，结构断言替代）、Word/WPS 人工打开（待 Owner）
