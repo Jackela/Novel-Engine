@@ -383,21 +383,23 @@
 
 ### DR-026 [P1] 流式时限与诊断
 
-- [ ] 未开始
+- [x] 已完成（2026-10-03）
 - **问题**：180s 是从 dispatch 起算的绝对截止（不随帧重置），健康长流会被斩；SSE 无心跳帧、首个 delta 前不写 header；provider 在 200 的 SSE 里回错误负载被静默忽略（最终报 JSON contract 错）；客户端 30s 不读即 destroy（笔记本休眠即失去生成）。
 - **证据**：`streaming_generation.ts:212-232`；`provider_response_lifecycle.ts:39-47`；`proposal_stream_response.ts:6-11,13,110-120,155-158`；`dashscope_extractors.ts:74-96`。
 - **修复方向**：区分"绝对上限"与"静默预算"（或按 step 放宽并暴露设置）；补 `:` 心跳；识别 SSE 内错误帧并透出稳定 code；drain 超时区分客户端卡死与可续传。
 - **验收**：长流不再被静默周期杀；错误帧有可读诊断；测试覆盖。
 - **验证**：`pnpm --dir server exec vitest run tests/contexts/provider_streaming_deadline.test.ts tests/api/proposal_stream_response.test.ts`。
+- **交付记录**：2026-10-03 | `301db695` + `2c8393b0`（wave 10c + 补齐 10c2） | ① 心跳与诊断（301db695）：服务端在等待下一帧期间每 15s 发 `: heartbeat` 注释帧（首个 delta 前仍不写 header，保留 pre-stream 错误信封；写失败走同一 monitor）；客户端墙钟看门狗（静默 90s 默认，0 关闭）→ `ProposalStreamStalledError` 中止 + `[proposal-stream]` 异常日志，容忍注释帧，EOF/中断报告"已收 N delta 帧/M 字节"。② 补齐（2c8393b0）：`ProviderResponseDeadline` 增加 `rearm()`，每收到一帧即重置绝对预算——dispatch+首帧仍受绝对上限，之后由逐帧静默预算（首字节/空闲）治理，健康长流不再被 180s 静默斩（旧钉子 "does not reset the absolute deadline while a stream keeps dripping frames" 被具名替换为两条：健康长流存活 + 超静默仍中止）；DashScope 与 OpenAI 兼容适配器识别 200 SSE 内的错误负载（`error.message`/原生 `code`+`message`）→ 归一化 `PROVIDER_FAILED` 携带 provider message+code，不再退化为 JSON contract 错 | 复现：长流在绝对预算处被拒 / 错误帧静默成功或报 contract 错（原始输出在 `$COMMANDCODE_SCRATCHPAD/gap-repro.txt`）| 回归：`provider_streaming_timeouts`（11）、`provider_streaming_failures`（4）、`provider_streaming_deadline/retry`、`provider_sse_boundaries`、`provider_http`（22）等 20 文件 144 用例；API 级 `studio_provider_failure_diagnostics`、`proposal_stream_stall_reason`（job.error 逐字含 stall 原因）| 已知边界（后续条目候选）：适配器仍把"无终止帧的 EOF"当正常结束；客户端主动中止与 job 完成间的语义维持 DR-006 约定 | 验证：server 255 文件/1517 用例、frontend 148/819、gates/arch/react-doctor(100)/spec 全绿
 
 ### DR-027 [P1] 生成端点幂等键
 
-- [ ] 未开始
+- [x] 已完成（2026-10-03）
 - **问题**：in-flight guard 只挡"同 target 的并发同请求"且是进程内的；顺序重复提交（网络抖动后重发）必然产生第二份 job 与 usage（双份计费）。retry 端点强制 Idempotency-Key，形成不对称契约。
 - **证据**：`operation_in_flight.ts:17,44-98`（自认 process-local）；`job_routes.ts:104-140`。
 - **修复方向**：生成端点接受可选 `Idempotency-Key`，命中已存在 job 时返回同一 job（复用 retry 幂等机制）。
 - **验收**：同 key 重放不产生新 job/usage；测试覆盖。
 - **验证**：`pnpm --dir server exec vitest run tests/api/studio_proposals.test.ts tests/api/job_retry_idempotency_contract.test.ts`。
+- **交付记录**：2026-10-03 | `04ab5d74`（wave 10d） | 两个生成端点（同步 + SSE）接受可选 `Idempotency-Key`（16–128 字符、与 retry 同格式），经 `job_request_claim.ts` 复用 retry claim 模式：`jobs.request_idempotency_key` 列 + `(project_id, request_idempotency_key)` 部分唯一索引（迁移 `0023`，经 `db:generate` 生成）——重复请求要么等待并加入赢家（并发插入经唯一冲突回归），要么重放已存 job/usage/终帧；服务端不重复调用 provider、不写第二条 usage。客户端在 `useProposalStreamSession`/`useWholeBookChapterRun` 各生成点铸造"每逻辑生成一个"键（sessionStorage 按 project+document+operation 作用域），未知结果保留（重发即重放），成功或确定性失败清除。重做说明：初版曾实现进程内 guard（`request_idempotency.ts`），因遮蔽持久 claim 的重放路径且违背"复用 retry 幂等机制"被整体替换（guard 与测试已删除，`proposal_retry_replay_boundaries` 原样恢复通过）。范围：仅提案生成端点；review/lore/export 的 job 创建维持既有 in-flight + 容量准入。 | 复现：同 key 连发两次在基线产生两条 job（修复后同 id、单次 provider 调用、单条 usage）；并发同 key 先查后插竞态回归赢家 | 回归：`proposal_generation_idempotency`（8：同步重放、流式 done/失败重放、竞态、异 key/跨项目独立、无 key 不变 + 键格式校验）、`proposal_generation_idempotency_contract`（OpenAPI：生成键可选、retry 键必需）、`restart_persistence`（jobs 列清单含新列）| 联动：OpenAPI 基线 + 前端生成类型更新；README 无过时幂等承诺（已核对） | 验证：server 255 文件/1517 用例、frontend 148/819（新增 `proposalStream.idempotency`、`useStudioProposal.idempotency`、`retryAttemptRegistry` 生成作用域用例）、gates/arch/react-doctor(100)/spec 全绿
 
 ### DR-028 [P1] usage 语义与成本
 
@@ -729,3 +731,6 @@
 - 2026-10-03 | `5795feb9` | DR-019 + DR-020 + DR-021 | 定向：EntryPage 系列 + `localizeError`/`toErrorMessage`/jobs 错误详情（12 文件/89 用例）、`auth_setup`（17）与 `error_codes_gate` 无回归；全套 `server gates/type-check/lint/lint:types/arch/test`（244 文件/1472 用例）、frontend lint/lint:types/format/type-check/test:unit/build（145 文件/805 用例）+ react-doctor(100) + `pnpm spec:validate` | 通过：setup 确认密码 + 首启 token 输入 + 无找回提示（DR-019）；401 过期提示 + 来源回跳（DR-020）；23 错误码双语映射 + 技术详情折叠（DR-021）；过程修复：EntryPage 测试拆分与共享 harness（行数门禁）；README/deploy 文案同步；人工浏览器验证待 Owner
 - 2026-10-03 | `b1151803` | DR-022 + DR-023 | 定向：server `provider_catalog`/`studio_proposals_stream*`/语言与清理器 8 文件 96 用例、frontend settings/localizeError 35 用例；全套 `server gates/type-check/lint/lint:types/arch/test`（249 文件/1496 用例）、frontend（145 文件/808 用例）+ react-doctor(100) + `pnpm spec:validate` | 通过：provider 目录驱动设置（禁用/标注/model）+ `PROVIDER_NOT_CONFIGURED` 凭证错误（DR-022）；写作语言入 prompt/mock/清理器（DR-023）；过程修复：422 目录断言同步、3 个测试文件拆分（行数门禁）
 - 2026-10-03 | `dcbb42dd` | DR-024 + DR-025 | 定向：review/provider 8 文件 53 用例 + 前端评审面板 3 用例；全套 `server gates/type-check/lint/lint:types/arch/test`（250 文件/1500 用例）、frontend（145 文件/809 用例）+ react-doctor(100) + `pnpm spec:validate` | 通过：review 随项目 provider（可见标注 + 失败按记录 provider 重试）（DR-024）；长文步骤（含 review/lore）180s 超时地板（DR-025）；过程修复：dashscope 测试拆分（行数门禁）
+- 2026-10-03 | `301db695` | DR-026（主体） | 定向 5+3 文件（server 28、frontend 46 用例）；全套 `server gates/type-check/lint/lint:types/arch/test`（252 文件/1503 用例）、frontend（146 文件/812 用例）+ react-doctor(100) + `pnpm spec:validate` | 通过：SSE `: heartbeat`（15s）+ 客户端停摆看门狗（90s，可关）+ 中断诊断（帧数/字节 + 异常日志）；过程修复：oxlint mock 类型 + 格式化
+- 2026-10-03 | `2c8393b0` | DR-026（补齐验收） | 定向 20 文件 144 用例 + API 诊断；全套 `server gates/type-check/lint/lint:types/arch/test`（255 文件/1517 用例）、frontend（148 文件/819 用例）+ react-doctor(100) + `pnpm spec:validate` | 通过：`rearm()` 逐帧重置绝对预算（健康长流不再被斩；超静默仍中止）；DashScope/OpenAI 兼容识别 200 SSE 内错误帧 → `PROVIDER_FAILED`(message+code)；旧行为钉子具名替换
+- 2026-10-03 | `04ab5d74` | DR-027 | 定向：生成幂等（`proposal_generation_idempotency*` 9 用例 + retry 边界 + proposals/stream 回归）+ 前端幂等 3 文件 10 用例；全套同上一行口径（server 255/1517、frontend 148/819、react-doctor 100、spec 通过）| 通过：生成端点可选 `Idempotency-Key` + 持久 claim（迁移 0023，部分唯一索引）+ 流式/同步重放 + 竞态回归；客户端按逻辑生成铸造/保留/清除键；重做移除进程内 guard（恢复 retry 持久重放路径）
