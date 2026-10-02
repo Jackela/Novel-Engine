@@ -195,7 +195,7 @@
 
 ### DR-008 [P0] 首启 Owner 抢占（无 setup token）
 
-- [ ] 未开始
+- [x] 已完成（2026-10-02）
 - **问题**：`POST /api/setup` 的唯一门是 same-origin 校验；不带 Origin/Referer 的非浏览器客户端被直接放行。任何扫描器/首个访问者可在作者之前创建 Owner；第二次 setup 被单 Owner 不变式拒绝 → 作者被永久锁死，且无 CLI 自助恢复。
 - **证据**：`server/src/shared/interface/http/auth_routes.ts:128-155`（注释自认）、`auth_store.ts:55-72`；容器实测：无 Origin 的 `POST /api/setup` → 201，真实作者随后 → 422；两个 compose 文件默认发布 `0.0.0.0:8000`。
 - **影响**：正常部署直接变成"实例被接管且无法自救"（恢复只能删库，等于丢内容）。
@@ -203,16 +203,18 @@
 - **验收标准**：带外网地址的无 token setup 被拒；容器首启流程文档化；`cli owner reset` 有测试且不破坏既有会话语义。
 - **验证**：`pnpm --dir server exec vitest run tests/api/auth_setup.test.ts`（新增 token 用例）；`pnpm --dir server exec vitest run tests/apps/cli/cli.test.ts`。
 - **备注**：与 DR-033/DR-034 同属"部署安全第一公里"，建议同批规划、分条提交。
+- **交付记录**：2026-10-02 | `b10e02c6` | 首启一次性 setup token：无 Owner 时生成 32B base64url、写 `data/.setup-token`(0600)、日志打印一次（重启复用未用 token）；`POST /api/setup` 对非 loopback 原始 socket 对等方强制 `x-setup-token`（timingSafeEqual；成功后失效并删档；已有 Owner 时启动清理残留文件；路径失败一律 fail-closed，loopback 不受影响；403 `SETUP_TOKEN_INVALID`），loopback 保留原 origin 校验流程；新增 `novel-engine owner reset`（与 backup 同数据目录独占锁；单事务删 owners+sessions，输出 `{owners_deleted, sessions_deleted, username}`；spec 明确"无邮件找回，reset 即恢复路径"） | 复现：`remoteAddress: 203.0.113.7`、无 Origin、无 token 的 setup 基线 201 → 修复后 403 且无 Owner | 回归：`auth_setup.test.ts`（17：缺/错/正确 token、loopback、残留文件、并发单 Owner）、`owner_reset_cli.test.ts`（4）、`setup_token.test.ts`（4） | 联动：新错误码 SETUP_TOKEN_INVALID 同步 `error-codes.md` + `ERROR_HTTP_STATUS`；README/deploy README 首启流程（docker logs 取 token + curl 示例）；spec 新增 "First-boot setup token gate" 需求与 5 场景 | 已知后续项：浏览器 setup 页尚未提供 token 输入框（当前 Docker 首启需一次 curl），已并入 DR-019 的 setup UX 范围 | 验证：定向 78 用例 + server 241 文件/1457 用例 + frontend 全套 + react-doctor(100) + `pnpm spec:validate` 全绿
 
 ### DR-009 [P0] XFF 伪造使登录限速失效
 
-- [ ] 未开始
+- [x] 已完成（2026-10-02）
 - **问题**：当 peer 命中 `SECURITY_TRUSTED_PROXIES` 时，限速键取 `X-Forwarded-For` 首段（客户端可控）；每请求换一个伪造 IP 即每请求一个新桶，登录限速永不上限。信任列表一旦过宽（含直连网段/CIDR），爆破无阻。
 - **证据**：`shared/infrastructure/rate_limit/client_identity.ts:160-170`；`apps/api/auth_registration.ts:51-57`；实测：无信任代理时第 5 次 429；`SECURITY_TRUSTED_PROXIES=127.0.0.1` 后连续 16 次恶意登录零 429。bcrypt cost 12 每次约 0.21s，持续爆破同时打满 CPU。
 - **影响**：README 的 "5/minute" 抗爆破承诺失效，登录面可被 DoS。
 - **修复方向**：只接受具体代理 IP（拒绝 CIDR 覆盖客户端）；取"最右侧未受信跳"作为客户端身份；`trustedProxies` 推导 Fastify `trustProxy`；文档补反例警告。
 - **验收标准**：信任代理场景下伪造 XFF 不再绕过限速；新增回归测试覆盖"多跳 + 伪造首段"。
 - **验证**：`pnpm --dir server exec vitest run tests/apps/api/`（限速/身份相关文件）；`pnpm --dir server gates`。
+- **交付记录**：2026-10-02 | `b10e02c6` | 限速身份改为转发链"最右未受信跳"（peer 必须仍为受信代理；全部受信时回退 peer 共桶）；信任条目仅接受具体地址/主机，网络范围在配置加载即拒绝（`ConfigurationError` 指名 `SECURITY_TRUSTED_PROXIES`），匹配器也永不匹配范围（`isTrustedProxyRange` 防程序化绕过）；Fastify `trustProxy` 由同一列表推导（`http_server_policy.ts`，空列表保持 false），`app.ts` 单次解析供两处共用 | 复现：受信代理下 16 次轮换伪造 XFF 登录基线 0 次 429 → 修复后第 6 次起 429（共桶于最右未受信跳） | 回归：`auth_rate_limit.test.ts`（伪造首段共桶 / 多跳取右最未受信跳 / 范围条目失效）、`client_identity.test.ts`（11）、`server_config.test.ts`（范围启动拒绝）、`inbound_request_lifetime.test.ts`（XFP 仅在受信 peer 下生效） | 文档：README 配置行为 + deploy README（范围拒绝、代理须追加 XFF 的反例警告）；spec 限速需求与场景同步 | 行为变更提示：`SECURITY_TRUSTED_PROXIES` 使用 CIDR 的部署将启动失败，需改为枚举具体代理地址 | 验证：同 DR-008（全绿）
 
 ---
 
@@ -704,3 +706,4 @@
 - 2026-10-02 | `eea6f3d4` | DR-003 + DR-004 | `pnpm --dir server exec vitest run tests/api/studio_search.test.ts tests/apps/cli/cli.test.ts`；`pnpm --dir server gates && pnpm --dir server type-check && pnpm --dir server lint && pnpm --dir server lint:types && pnpm --dir server arch && pnpm --dir server test`；frontend lint/lint:types/format:check/type-check/test:unit/build + react-doctor(100) + `pnpm spec:validate` | 通过：CJK 逐字分词（无迁移）+ 16 字符窗口 + `reindex`/doctor 对账；server 237 文件/1426 用例、frontend 131 文件/709 用例；升级提示：旧库需一次性 `reindex`
 - 2026-10-02 | `8e59e9b6` | DR-005 | `pnpm --dir server exec vitest run tests/contexts/revision_word_count.test.ts tests/api/studio_writing_stats.test.ts tests/db/revision_word_count_reconciliation.test.ts tests/contexts/project_shell_store.test.ts`；`pnpm --dir server gates/type-check/lint/lint:types/arch/test`；frontend 全套 + react-doctor + `pnpm spec:validate` | 通过：统一字数口径（Han 逐字 + 拉丁按词）+ 启动对账自动修正旧口径存量；server 237 文件/1432 用例、frontend 131/709；spec 增"Stale counts recomputed"场景
 - 2026-10-02 | `3771724e` | DR-006 + DR-007 | 定向：server `studio_proposals_stream*`、`provider_streaming_retry`、`provider_streaming_deadline`、`text_generation`；frontend copilot/whole-book 7 文件；全套：`server gates/type-check/lint/lint:types/arch/test`（239 文件/1436 用例）、frontend lint/lint:types/format/type-check/test:unit/build（134 文件/723 用例）+ react-doctor(100) + `pnpm spec:validate` | 通过；过程修复：重试引入的 4 个定时预算用例（显式单次尝试，断言不变）、3 处格式化、1 处 react-doctor 链式迭代告警；spec 与 2 个 e2e 规格同步新语义
+- 2026-10-02 | `b10e02c6` | DR-008 + DR-009 | 定向 7 文件 78 用例；全套 `server gates/type-check/lint/lint:types/arch/test`（241 文件/1457 用例）、frontend lint/lint:types/format/type-check/test:unit/build（134 文件/723 用例）+ react-doctor(100) + `pnpm spec:validate` | 通过：首启 setup token + `owner reset`（DR-008）；XFF 最右未受信跳 + 范围拒绝 + trustProxy 推导（DR-009）；新错误码 SETUP_TOKEN_INVALID 锁步；README/deploy/spec 同步；已知后续：浏览器 setup token 输入并入 DR-019
