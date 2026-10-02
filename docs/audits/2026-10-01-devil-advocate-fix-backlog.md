@@ -173,23 +173,25 @@
 
 ### DR-006 [P0] 流式生成失败不可恢复（重试 + 保命）
 
-- [ ] 未开始
+- [x] 已完成（2026-10-02）
 - **问题**：唯一在用的生成路径是 SSE；流一旦失败（瞬时 429/5xx/idle 超时）不回退重试，且已生成正文在服务端置空、前端 `finally` 清空预览——双端全损，只能重新生成、再次计费。
 - **证据**：`server/src/contexts/studio/infrastructure/streaming_generation.ts:209-212`（"A stream is never retried"）；`proposal_pipeline.ts:216-223`；`frontend/.../useProposalStreamSession.ts:199-204`；`tests/api/studio_proposals_stream.test.ts` 把"不伪造文本"固化为期望。
 - **影响**：长章一次生成失败 = 全部作废 + token 双倍成本。
 - **修复方向**：① 首个 delta 之前的失败复用 `runWithRetryPolicy`；② 中途失败把已累积的 sanitized 文本持久化为 failed job 的 `result_json.partial_markdown`，前端保留预览并支持"另存为提案/复制"。
 - **验收标准**：首 delta 前失败自动重试且不产生重复 usage；中途失败后 job 记录含 partial 文本、前端可保留；新增两条回归测试。
 - **验证**：`pnpm --dir server exec vitest run tests/api/studio_proposals_stream.test.ts`；`pnpm --dir frontend exec vitest run src/app/proposalStream.lifecycle.test.ts`。
+- **交付记录**：2026-10-02 | `3771724e` | 首帧前失败经 `runWithRetryPolicy` 重试（重试只在首帧未进入 extractor 前发生，避免重放增量解包状态；失败即关闭帧迭代器）；中途失败把已累积的 sanitized 文本写入 failed job 的 `result_json.partial_markdown`（完成流 drain 后不保留 partial）；前端保留中断预览（`streamingInterrupted` 贯穿 hook→页面模型→面板），Stop 替换为"复制"（zh/en 文案、无障碍保留） | 复现：基线 `studio_proposals_stream.test.ts` 将"失败即清空"固化为期望；新用例先红后绿 | 回归：`studio_proposals_stream_retry.test.ts`（429→重试→单 job、单 usage、tokens 21/34）、`provider_streaming_retry.test.ts`（首帧前重试 / 耗尽 3 次 / 首 delta 后不重试）、`StudioCopilotPanel.streaming.test.tsx`；integrator 修复重试引入的 4 个定时预算用例（显式单次尝试隔离，断言不变）与 3 处格式化 | 验证：`server 239 文件/1436 用例`、`frontend 134 文件/723 用例`、gates/type-check/lint/lint:types/arch/react-doctor(100)/`pnpm spec:validate` 全绿
 
 ### DR-007 [P0] 整本生成静默覆盖手写章节
 
-- [ ] 未开始
+- [x] 已完成（2026-10-02）
 - **问题**：整本循环的 `needsGeneration` 规则是"当前修订不是 ai-accepted 就重生成"，手写/导入/restore 的章节全部会被重新起草并自动接受；UI 仅一句 "still missing an AI revision"，无确认。
 - **证据**：`frontend/src/features/studio/hooks/wholeBookPlan.ts:8-19`（注释自认 seeded/hand-written/imported/restored 都会被重生成）；`useWholeBookChapterRun.ts:108-140` 自动接受；`en.studio.ts:215-216` 文案。
 - **影响**：一键顶替手稿（只能逐条 restore 找回），违反 CONTEXT.md"仅作者显式接受才应用"的产品承诺。
 - **修复方向**：默认只生成"空章节/从未有 ai-accepted 的章节"；对非空作者文本逐章确认（或先 dry-run 列表）；UI 明确列出将被覆盖的章节。
 - **验收标准**：含手写章节的项目启动整本生成时不静默覆盖；回归测试覆盖 needsGeneration 与确认路径。
 - **验证**：`pnpm --dir frontend exec vitest run src/features/studio/hooks/useWholeBookLoop.run.test.tsx`；`pnpm --dir server exec vitest run tests/api/studio_proposals.test.ts`。
+- **交付记录**：2026-10-02 | `3771724e` | `wholeBookPlan` 拆为安全集（空正文 `word_count===0`，自动生成）与确认集（非空作者/导入/恢复文本）；`useWholeBookChapterRun.start(plan, {replaceOccupied})` 仅在显式确认时触碰确认集（调用方+执行器双防线）；`StudioWholeBookControl` 新增 dry-run 章节清单 +「仅生成 N 个空章」/「替换 M 章」/取消（Esc、焦点进入/归还），Start 不再静默替换；停止或刷新后重跑对未确认章节重新要求确认；`wholeBook.hint` 与两个 e2e 规格同步新交互 | 复现：探针显示手写章节被列入计划并自动接受（proposal/accept 各 2 次）；新用例先红后绿 | 回归：`useWholeBookLoop.confirm.test.tsx`（4）、`StudioWholeBookControl.confirm.test.tsx`（6）、`wholeBookPlan.test.ts`、resume/stop/unknown 用例适配（旧"无差别重生成"断言逐条点名更新） | spec："Whole-book generation loop" 需求与场景改确认门控（integrator 补写）；integrator 修复 react-doctor 链式迭代告警（单遍循环） | 验证：同 DR-006（全绿）
 
 ### DR-008 [P0] 首启 Owner 抢占（无 setup token）
 
@@ -701,3 +703,4 @@
 - 2026-10-01 | 工作区（基线 `607a092e`，未提交） | DR-002 | 同上 | 通过：beforeunload 守卫 + 切换/卸载救援写入；5 处旧"丢弃"用例按新语义重写
 - 2026-10-02 | `eea6f3d4` | DR-003 + DR-004 | `pnpm --dir server exec vitest run tests/api/studio_search.test.ts tests/apps/cli/cli.test.ts`；`pnpm --dir server gates && pnpm --dir server type-check && pnpm --dir server lint && pnpm --dir server lint:types && pnpm --dir server arch && pnpm --dir server test`；frontend lint/lint:types/format:check/type-check/test:unit/build + react-doctor(100) + `pnpm spec:validate` | 通过：CJK 逐字分词（无迁移）+ 16 字符窗口 + `reindex`/doctor 对账；server 237 文件/1426 用例、frontend 131 文件/709 用例；升级提示：旧库需一次性 `reindex`
 - 2026-10-02 | `8e59e9b6` | DR-005 | `pnpm --dir server exec vitest run tests/contexts/revision_word_count.test.ts tests/api/studio_writing_stats.test.ts tests/db/revision_word_count_reconciliation.test.ts tests/contexts/project_shell_store.test.ts`；`pnpm --dir server gates/type-check/lint/lint:types/arch/test`；frontend 全套 + react-doctor + `pnpm spec:validate` | 通过：统一字数口径（Han 逐字 + 拉丁按词）+ 启动对账自动修正旧口径存量；server 237 文件/1432 用例、frontend 131/709；spec 增"Stale counts recomputed"场景
+- 2026-10-02 | `3771724e` | DR-006 + DR-007 | 定向：server `studio_proposals_stream*`、`provider_streaming_retry`、`provider_streaming_deadline`、`text_generation`；frontend copilot/whole-book 7 文件；全套：`server gates/type-check/lint/lint:types/arch/test`（239 文件/1436 用例）、frontend lint/lint:types/format/type-check/test:unit/build（134 文件/723 用例）+ react-doctor(100) + `pnpm spec:validate` | 通过；过程修复：重试引入的 4 个定时预算用例（显式单次尝试，断言不变）、3 处格式化、1 处 react-doctor 链式迭代告警；spec 与 2 个 e2e 规格同步新语义
