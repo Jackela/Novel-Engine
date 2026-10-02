@@ -40,7 +40,7 @@ afterEach(async () => {
   );
 });
 
-async function openLegacyRows(count: number) {
+async function openLegacyRows(count: number, storedWordCount: number | null = null) {
   const directory = await mkdtemp(join(tmpdir(), "novel-engine-revision-count-"));
   directories.push(directory);
   const databasePath = join(directory, "novel-engine.sqlite3");
@@ -70,11 +70,17 @@ async function openLegacyRows(count: number) {
   const insert = studio.raw.prepare(
     "INSERT INTO document_revisions (id, document_id, parent_revision_id, revision_number, " +
       "content_markdown, metadata_json, source, word_count, created_at) " +
-      "VALUES (?, 'document-1', NULL, ?, ?, '{}', 'author', NULL, ?)",
+      "VALUES (?, 'document-1', NULL, ?, ?, '{}', 'author', ?, ?)",
   );
   studio.raw.transaction(() => {
     for (let index = 0; index < count; index += 1) {
-      insert.run(`legacy-${String(index).padStart(4, "0")}`, index + 1, "你好 world", now + index);
+      insert.run(
+        `legacy-${String(index).padStart(4, "0")}`,
+        index + 1,
+        "你好 world",
+        storedWordCount,
+        now + index,
+      );
     }
   })();
   return { databasePath, directory, studio };
@@ -121,7 +127,7 @@ describe("revision word-count reconciliation", () => {
         content_markdown: "你好 world",
         metadata_json: '{"kept":true}',
         source: "import",
-        word_count: 2,
+        word_count: 3,
         created_at: 1,
       });
     } finally {
@@ -152,9 +158,39 @@ describe("revision word-count reconciliation", () => {
         harness.studio.raw
           .prepare("SELECT DISTINCT word_count AS count FROM document_revisions")
           .all(),
-      ).toEqual([{ count: 2 }]);
+      ).toEqual([{ count: 3 }]);
     } finally {
       harness.studio.close();
+    }
+  });
+
+  it("corrects stale counts from an earlier definition before open, then stays a silent no-op", async () => {
+    // "你好 world" counted as 2 under the old punctuation-segmented semantics;
+    // the unified definition makes it 3.
+    const harness = await openLegacyRows(1, 2);
+    harness.studio.close();
+
+    const upgraded = await openReconciledStudioDatabase(harness.databasePath);
+    try {
+      expect(upgraded.raw.prepare("SELECT word_count FROM document_revisions").get()).toEqual({
+        word_count: 3,
+      });
+
+      // A write-blocking trigger proves the consistent pass performs zero
+      // count writes, not just zero numeric corrections.
+      upgraded.raw.exec(
+        "CREATE TRIGGER deny_revision_word_count_write BEFORE UPDATE OF word_count " +
+          "ON document_revisions BEGIN SELECT RAISE(FAIL, 'unexpected word-count write'); END",
+      );
+      const batches: number[] = [];
+      expect(
+        reconcileRevisionWordCounts(upgraded.db, {
+          afterBatchCommitted: (corrected) => batches.push(corrected),
+        }),
+      ).toBe(0);
+      expect(batches).toEqual([]);
+    } finally {
+      upgraded.close();
     }
   });
 

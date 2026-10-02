@@ -1,6 +1,21 @@
-/** Exact Unicode-aware word count retained with each immutable revision. */
+const HAN_CHARACTER = /\p{Script=Han}/gu;
+const WORD_RUN = /[\p{L}\p{N}_'-]+/gu;
+
+/**
+ * Exact unified word count retained with each immutable revision. One word is
+ * either a single Han-script character (counted individually, code point by
+ * code point, so punctuation-delimited Chinese prose never collapses into one
+ * "word") or one maximal run of non-Han word characters — letters, digits,
+ * underscores, apostrophes, or hyphens — matching the established Unicode
+ * run semantics for other scripts. Han characters separate adjacent runs, so
+ * mixed English/Chinese text sums both sides. Punctuation, whitespace, and
+ * unmatched characters count as nothing; the function is total, returns 0 for
+ * empty input, and never throws.
+ */
 export function revisionWordCount(markdown: string): number {
-  return markdown.match(/[\p{L}\p{N}_'-]+/gu)?.length ?? 0;
+  const hanCount = markdown.match(HAN_CHARACTER)?.length ?? 0;
+  const runCount = markdown.replace(HAN_CHARACTER, " ").match(WORD_RUN)?.length ?? 0;
+  return hanCount + runCount;
 }
 
 /** Internal persistence invariant failure; HTTP deliberately treats it as unexpected. */

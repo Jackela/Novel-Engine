@@ -161,4 +161,39 @@ describe("project writing statistics surface (#653 T2)", () => {
       await app.close();
     }
   });
+
+  it("counts Han characters individually in the source attribution", async () => {
+    const { app } = await buildStudioApp(() => NOW);
+    try {
+      const jar = await ownerJar(app);
+      const project = await seedProject(app, jar, "Han attribution");
+      const seededSummary = project.documents[0];
+      if (seededSummary === undefined) throw new Error("Expected the Chapter 1 seed document.");
+      const seeded = await getDocument(app, jar, project.id, seededSummary.id);
+
+      // 31 Han characters: the seed's 2 author words plus the +29 delta
+      // attribute 31 author words to today under per-character counting.
+      const paragraph = "天地玄黄宇宙洪荒日月盈昃辰宿列张寒来暑往秋收冬藏闰余成岁律吕调";
+      const saved = await call(
+        app,
+        jar,
+        "PUT",
+        `/api/projects/${project.id}/documents/${seeded.id}`,
+        {
+          content_markdown: paragraph,
+          base_revision_id: seeded.current_revision_id,
+        },
+      );
+      expect(saved.statusCode, saved.body).toBe(200);
+
+      const response = await call(app, jar, "GET", `/api/projects/${project.id}/stats`);
+      expect(response.statusCode, response.body).toBe(200);
+      expect(response.json().daily.at(-1)).toMatchObject({
+        date: "2026-03-15",
+        words: { author: 31, ai_accepted: 0, restore: 0 },
+      });
+    } finally {
+      await app.close();
+    }
+  });
 });

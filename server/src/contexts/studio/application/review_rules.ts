@@ -80,7 +80,12 @@ export function coerceEditorialFindings(
     .map((entry) => entry.issue);
 }
 
-/** Word-count thresholds feed the deterministic provider's chapter checks. */
+/**
+ * Word-count threshold feeding the deterministic provider's chapter checks.
+ * Kept at 250 words under the unified definition: for Han-script prose that
+ * means 250 characters — a floor below which a chapter is thin in either
+ * script; language-specific thresholds would be a new product decision.
+ */
 export const THIN_CHAPTER_WORDS = 250;
 
 export function chapterWordCounts(

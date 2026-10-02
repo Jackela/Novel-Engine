@@ -110,7 +110,10 @@ export function validatedProposalOrThrow(result: {
   return { proposal };
 }
 
-/** Invalid or absent provider usage falls back to the shared exact word count. */
+/**
+ * Invalid or absent provider usage falls back to the shared exact word count,
+ * which approximates one token per Han character for CJK text.
+ */
 function resolvedTokenCount(reported: number | null, text: string): number {
   return isSafeUsageToken(reported) ? reported : revisionWordCount(text);
 }

@@ -747,10 +747,10 @@ warning `thin_chapter` (message naming title and word count, the fixed
 suggestion, evidence `{word_count}`); empty content MUST produce blocker
 `empty_chapter`; both MAY fire on the same chapter. Non-chapter documents MUST
 be skipped, and issues MUST be ordered by severity then code. Word counting
-MUST use the one shared word definition wherever words are counted.
+MUST use the unified word-count definition wherever words are counted.
 
 #### Scenario: Thin chapter is flagged
-- **GIVEN** a chapter whose current revision has 249 words by the shared word-count definition
+- **GIVEN** a chapter whose current revision has 249 words by the unified word-count definition
 - **WHEN** a review runs
 - **THEN** it reports warning `thin_chapter` for that chapter
 - **AND** the evidence records `{"word_count": 249}`
@@ -3673,12 +3673,17 @@ suppress the outcome for a surviving subscriber.
 ### Requirement: Exact immutable revision word counts
 
 Every accepted revision MUST retain the exact non-negative word count of its
-immutable Markdown body using the established Unicode-aware counting semantics.
-Every document and revision-summary response MUST report that retained count
-without changing the underlying body, and an upgrade MUST populate exact counts
-for all earlier revisions before the server accepts traffic. Interrupted upgrade
-work MUST resume without corrupting revisions or publishing placeholder counts;
-an unrecoverable count migration failure MUST fail startup. Every full Document,
+immutable Markdown body under the unified word-count definition: one word is a
+single Han-script character, counted individually, or one maximal run of
+non-Han letters, digits, underscores, apostrophes, or hyphens; Han characters
+separate adjacent runs, so mixed Chinese and Latin text sums both sides and
+punctuation never collapses Chinese prose into one word. Every document and
+revision-summary response MUST report that retained count without changing the
+underlying body. An upgrade MUST populate exact counts for all earlier
+revisions and recompute stored counts left by an earlier counting definition
+before the server accepts traffic. Interrupted upgrade work MUST resume without
+corrupting revisions or publishing placeholder or stale counts; an
+unrecoverable count migration failure MUST fail startup. Every full Document,
 full Revision, and RevisionSummary projection MUST reject a null, negative,
 non-integer, or unsafe stored count with the same typed internal invariant
 failure. That failure MUST NOT expose storage details through a new public error
@@ -3688,7 +3693,7 @@ code or envelope.
 
 - **GIVEN** Markdown containing letters, numbers, Chinese text, apostrophes, and hyphens
 - **WHEN** a save, import, accepted proposal, or restore creates a revision
-- **THEN** its retained word count equals the established Unicode-aware result
+- **THEN** its retained word count equals the unified result, counting 31 Han characters as 31 and summing Han characters with Latin word runs
 - **AND** the count and revision commit together
 
 #### Scenario: Existing histories are backfilled before serving
@@ -3698,12 +3703,19 @@ code or envelope.
 - **THEN** every existing revision has its exact count before requests are accepted
 - **AND** content, metadata, identity, parentage, numbering, source, and timestamps are unchanged
 
+#### Scenario: Stale counts from an earlier definition are recomputed
+
+- **GIVEN** an earlier database whose revisions retain counts written by an earlier counting definition
+- **WHEN** the upgraded release starts successfully
+- **THEN** every stored count that differs from the unified result is corrected before requests are accepted
+- **AND** a later startup over consistent counts performs no count writes
+
 #### Scenario: Interrupted backfill resumes safely
 
 - **GIVEN** some earlier revision counts were committed before startup stopped
 - **WHEN** startup runs again
-- **THEN** remaining revisions are populated without rewriting completed counts
-- **AND** no placeholder or negative count is exposed
+- **THEN** remaining revisions are populated or corrected without rewriting already-consistent counts
+- **AND** no placeholder or stale count is exposed
 
 ### Requirement: Bounded revision refresh and exact restore
 
