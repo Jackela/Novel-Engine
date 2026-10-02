@@ -363,21 +363,23 @@
 
 ### DR-024 [P1] Review 归属 provider
 
-- [ ] 未开始
+- [x] 已完成（2026-10-03）
 - **问题**：项目选 dashscope 时生成走 dashscope，但 Review 恒用 `LLM_PROVIDER`（默认 mock）；UI 不标注 → 用户以为在用真模型审稿。
 - **证据**：`review_routes.ts:41-62`（拒绝客户端字段）；`studio_services_assembly.ts:110-113`；`review_service.ts:112`。
 - **修复方向**：review provider 随项目设置（或显式标注当前 provider/model + "用其他 provider 重审"）。
 - **验收**：review 的 provider 可见且可预期；测试覆盖。
 - **验证**：`pnpm --dir server exec vitest run tests/api/review_app_wiring.test.ts tests/api/studio_reviews.test.ts`。
+- **交付记录**：2026-10-03 | `dcbb42dd`（wave 10b，与 DR-025 同批） | Review 改为按项目设置解析 provider（`ReviewService.providerNameForProject`：目录内取值优先，未知存量值回落 env 默认；`review_routes` 继续拒绝客户端自选字段）；实际运行的 provider 随评估与任务落库（`review_outcome_store`/`review_store_part` 读项目 provider + 结果 provenance），失败任务按记录 provider 重试 | UI：评审面板在最新发现上方标注"由 {provider} · {model} 审阅"（en/zh 文案 + `StudioReviewPanel` 用例） | 复现：`review_service`（项目 provider 生效/未知值回落）、`review_app_wiring`（与 env 默认不一致时保持项目选择、失败任务按项目 provider 重试）先红后绿 | 验证：server 250 文件/1500 用例、frontend 145/809、gates/arch/react-doctor(100)/spec 全绿
 
 ### DR-025 [P1] review 超时下限
 
-- [ ] 未开始
+- [x] 已完成（2026-10-03）
 - **问题**：`chapter_draft/chapter_revision` 有 180s 地板，但 `editorial_review` 走默认 30s 且重试 3 次 → 长稿送审必超时并白烧 3 次调用。
 - **证据**：`provider_http.ts:12,221`；`provider_http.test.ts:163`（明确断言 30s）；`review_service.ts:118`。
 - **修复方向**：给 `editorial_review`（及 `lore_extract`）设置独立超时下限（≥180s 或独立 env）；超时消息写入 job.error 供 UI 展示。
 - **验收**：review 超时可配置且默认足够长；测试更新。
 - **验证**：`pnpm --dir server exec vitest run tests/contexts/provider_http.test.ts`。
+- **交付记录**：2026-10-03 | `dcbb42dd`（wave 10b，与 DR-024 同批） | `effectiveTimeoutSeconds` 改为按显式"长文步骤"集合套用 `LONG_FORM_TIMEOUT_FLOOR_SECONDS=180`（chapter_draft/chapter_revision/editorial_review/lore_extract；未来短步骤不会被误套地板），沿用既有 `LLM_TIMEOUT` 之上取 max、未新增 env；超时错误照常写入 job.error（UI 已有的失败行）| 复现：`dashscope_provider` 原断言"非章节步骤保持 30s"被 DR-025 契约替换（更新并点名），新增 `dashscope_provider_timeout_floor.test.ts`（章节 180s 地板 + review 180s 地板替代 30s 基线，含 179,999ms 不触发、180,000ms 触发断言）与 `review_app_wiring` "reports the editorial review's floored timeout in the job error" | 测试拆分：dashscope 测试拆出 helpers/floor 文件（行数门禁） | 验证：同 DR-024（全绿）
 
 ### DR-026 [P1] 流式时限与诊断
 
@@ -725,3 +727,5 @@
 - 2026-10-02 | `238a1cab` | DR-013 + DR-014 + DR-015 | 定向：`pnpm --dir server exec vitest run tests/contexts/export`（30 文件/137 用例）；全套 `server gates/type-check/lint/lint:types/arch/test`（244 文件/1472 用例）、frontend lint/lint:types/format/type-check/test:unit/build（138 文件/745 用例）+ react-doctor(100) + `pnpm spec:validate` | 通过：DOCX 东文字体/2 字符缩进/章前分页/TOC/去重标题（纯 docx API）；EPUB 语言推断 + dcterms:modified + 内置中文 CSS + 代码块/图片占位；Markdown `## {title}` + 导出范围文档对齐（全量归档标注未实现）；跳过：EPUBCheck（本地不可用，结构断言替代）、Word/WPS 人工打开（待 Owner）
 - 2026-10-02 | `aa551e01` | DR-017 + DR-018 | 定向：frontend 卷 18 用例 + 项目删除 4 用例；server `studio_volumes`（7）+ 项目删除 3 文件（11）无回归；全套 `server gates/type-check/lint/lint:types/arch/test`（244 文件/1472 用例）、frontend lint/lint:types/format/type-check/test:unit/build（141 文件/767 用例）+ react-doctor(100) + `pnpm spec:validate` | 通过：卷新建/改名/删除确认/排序 + "移至卷"可达（DR-017）；项目库删除确认 + 刷新（DR-018）；过程修复：4 条 react-doctor（完成态 effect → 渲染期调节 + 事件侧 ref 标志）、1 处单遍循环重构、测试/E2E 正则消歧；人工浏览器验证待 Owner
 - 2026-10-03 | `5795feb9` | DR-019 + DR-020 + DR-021 | 定向：EntryPage 系列 + `localizeError`/`toErrorMessage`/jobs 错误详情（12 文件/89 用例）、`auth_setup`（17）与 `error_codes_gate` 无回归；全套 `server gates/type-check/lint/lint:types/arch/test`（244 文件/1472 用例）、frontend lint/lint:types/format/type-check/test:unit/build（145 文件/805 用例）+ react-doctor(100) + `pnpm spec:validate` | 通过：setup 确认密码 + 首启 token 输入 + 无找回提示（DR-019）；401 过期提示 + 来源回跳（DR-020）；23 错误码双语映射 + 技术详情折叠（DR-021）；过程修复：EntryPage 测试拆分与共享 harness（行数门禁）；README/deploy 文案同步；人工浏览器验证待 Owner
+- 2026-10-03 | `b1151803` | DR-022 + DR-023 | 定向：server `provider_catalog`/`studio_proposals_stream*`/语言与清理器 8 文件 96 用例、frontend settings/localizeError 35 用例；全套 `server gates/type-check/lint/lint:types/arch/test`（249 文件/1496 用例）、frontend（145 文件/808 用例）+ react-doctor(100) + `pnpm spec:validate` | 通过：provider 目录驱动设置（禁用/标注/model）+ `PROVIDER_NOT_CONFIGURED` 凭证错误（DR-022）；写作语言入 prompt/mock/清理器（DR-023）；过程修复：422 目录断言同步、3 个测试文件拆分（行数门禁）
+- 2026-10-03 | `dcbb42dd` | DR-024 + DR-025 | 定向：review/provider 8 文件 53 用例 + 前端评审面板 3 用例；全套 `server gates/type-check/lint/lint:types/arch/test`（250 文件/1500 用例）、frontend（145 文件/809 用例）+ react-doctor(100) + `pnpm spec:validate` | 通过：review 随项目 provider（可见标注 + 失败按记录 provider 重试）（DR-024）；长文步骤（含 review/lore）180s 超时地板（DR-025）；过程修复：dashscope 测试拆分（行数门禁）
