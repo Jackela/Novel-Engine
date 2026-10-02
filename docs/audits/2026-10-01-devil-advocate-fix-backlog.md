@@ -222,31 +222,34 @@
 
 ### DR-010 [P1] 停止/接受/拒绝的恢复性
 
-- [ ] 未开始
+- [x] 已完成（2026-10-02）
 - **问题**：① 点"停止"后已生成的全部 delta 被清空，预览只读、无复制/保留；② 接受提案后没有 undo，只能走"历史 → 恢复修订"；③ reject 无记录，文本永久丢失。
 - **证据**：`useProposalStreamSession.ts:199-231`；`StudioCopilotPanel.tsx:168,183-208`；全前端 `grep -i undo` 零命中；无 reject 路由（`revision_routes.ts` 仅 list/restore）。
 - **修复方向**：停止时保留已收文本（可复制/另存为提案）；Accept 后出一次性"撤销"提示条；reject 的文本存入 job/proposal 记录可回看。
 - **验收**：三条路径各有回归测试；UI 文案（zh/en）同步。
 - **验证**：`pnpm --dir frontend exec vitest run src/features/studio/`（相关组件）。
+- **交付记录**：2026-10-02 | `2baed8a9` | ① 停止生成：新增 `streamingStopped` 状态保留已收文本并提供"复制"（与 DR-006 的 interrupted 并列、不伪造失败；面板 Stop→Copy 切换）；② 一次性撤销：接受时记录 base revision，页面模型经 `buildProposalUndo` 组合 `{onUndo}` 走 History 同款恢复路径；consume-first 保证第二次点击无效；③ 被放弃提案的文本可在任务面板按行懒加载（`api.job(projectId, jobId)` → 既有单任务 GET，无新路由）阅读/复制 | 复现：停止后预览清空、接受后无出口、拒绝后无从找回；三条新回归先红后绿（`useStudioProposal.test.tsx` 停止保留、`useStudioPageModel.proposal-undo.test.tsx`、`StudioJobsPanel.proposal-text.test.tsx`） | 过程修正：撤销提议曾被文件刷新引起的瞬时 owner 切换清空 → 清理移至项目级 effect；`activeDocumentIdRef` 渲染期写改为 effect 同步（react-doctor 归零） | 已知取舍：撤销提议在切换文档后仍保留（派生逻辑只在所属文档显示；切换项目即清除） | 验证：frontend 138 文件/745 用例、server 241 文件/1459 用例、gates/arch/react-doctor(100)/`pnpm spec:validate` 全绿
 
 ### DR-011 [P1] 修订历史预览与 diff
 
-- [ ] 未开始
+- [x] 已完成（2026-10-02）
 - **问题**：历史列表只有 source/时间/词数/id 前缀；无正文预览端点、无 diff；restore 无二次确认，是"盲恢复"。
 - **证据**：`StudioHistoryPanel.tsx:85-96`；`revision_routes.ts:26-99` 无单条正文 GET；`grep "\bdiff\b"` 前端零命中；`openwiki/guides/writing-guide.md:161` 宣称可 "diff against history"（文档说谎）。
 - **修复方向**：新增只读 `GET .../revisions/:revisionId`（正文）；历史行可点开预览 + 与当前版本 diff 高亮；restore 前确认并说明"当前内容仍保留在历史"。
 - **验收**：可查看任一历史正文；diff 至少覆盖"行级"对比；restore 有确认。
 - **验证**：`pnpm --dir server exec vitest run tests/api/studio_revisions.test.ts`（新增正文端点用例）；`pnpm --dir frontend exec vitest run src/features/studio/components/StudioHistoryPanel.restore.test.tsx`。
+- **交付记录**：2026-10-02 | `2baed8a9` | 新增只读 `GET /api/projects/:projectId/documents/:documentId/revisions/:revisionId`（正文 + source + word_count + created_at；owner/作用域校验与既有修订路由一致；读取不产生修订）；历史行可展开懒加载预览（打开一次、缓存、失败可重试）；行级 LCS diff（`historyLineDiff.ts`：删除/新增/上下文标记、确定性、超 25 万格预算退化为块替换）对比当前正文；恢复前确认并说明"当前内容仍保留在历史" | 复现：历史仅摘要、无正文端点/预览/diff；新用例先红后绿（server `studio_revisions.test.ts` 8 用例含"previews an ancestor revision body without creating a revision"、`StudioHistoryPanel.preview.test.tsx` 5 用例、restore 6 用例） | 联动：路由变更 → `openapi:snapshot` + `gen:api-types` 再生成（gate:openapi 与 drift 检查均绿）；历史/预览文案入 en/zh 字典 | 验证：同 DR-010（全绿）
 
 ### DR-012 [P1] 冲突解决可查看服务器版本
 
-- [ ] 未开始
+- [x] 已完成（2026-10-02）
 - **问题**：冲突的两个动作都是破坏性的（整体丢弃/整体覆盖），无法查看对方文本同时保留自己草稿；被覆盖文本只能靠 restore 阅读（而 restore 又整体覆盖）。
 - **证据**：`useDocumentDraftActions.ts`（loadLatest/retryOverwrite）；`StudioEditorPane.tsx:129-150`；依赖 DR-011 的正文端点。
 - **修复方向**：冲突面板加"查看服务器版本（只读）"；覆盖前列出将覆盖的 revision 号；可选三选一（保留本地/加载最新/预览后决定）。
 - **验收**：冲突下可只读查看服务器文本；测试覆盖"查看不改变本地草稿"。
 - **验证**：`pnpm --dir frontend exec vitest run src/features/studio/hooks/useDocumentDraft.conflict.test.tsx`。
 - **依赖**：DR-011。
+- **交付记录**：2026-10-02 | `2baed8a9` | 冲突面板新增"查看服务器版本（只读）"：经 DR-011 端点读取当前服务器修订正文并标注将被覆盖的修订号，保留三选一（保留本地 / 加载最新 / 预览后决定）；查看纯读，不改草稿、不写项目/修订缓存，关闭冲突面板即收起，过期响应按请求序号丢弃 | 复现：冲突下两个动作均为破坏性、无法对照对方文本；`useDocumentDraft.conflict.test.tsx` 新增"viewing does not change the local draft"先红后绿（原有用例保留） | 验证：同 DR-010（全绿）
 
 ### DR-013 [P1] DOCX 中文排版
 
@@ -277,12 +280,13 @@
 
 ### DR-016 [P1] 查找/替换与快捷键
 
-- [ ] 未开始
+- [x] 已完成（2026-10-02）
 - **问题**：编辑器无查找/替换（未装 `@codemirror/search`）；全前端无 metaKey/ctrlKey 处理，Ctrl+S 触发浏览器"保存网页"；工具条无可点击格式按钮；搜索不定位命中。
 - **证据**：`frontend/package.json`；`MarkdownEditor.tsx:49-50`；grep 零命中；`StudioNavigatorSearch.tsx:64`。
 - **修复方向**：接入 CodeMirror search（Ctrl+F/Ctrl+H）；全局拦截 Ctrl/Cmd+S 触发保存 + toast；最小格式按钮（B/I/H）；搜索返回偏移以支持定位高亮（可拆 DR-029）。
 - **验收**：Ctrl+F/Ctrl+H/Ctrl+S 行为正确；组件测试覆盖快捷键处理。
 - **验证**：`pnpm --dir frontend exec vitest run src/features/studio/`；人工浏览器验证。
+- **交付记录**：2026-10-02 | `2baed8a9` | 接入 `@codemirror/search`（授权范围内，lockfile 同步）：Ctrl+F/Ctrl+H 打开查找/替换面板（Mod-h 聚焦替换栏；面板文案随语言切换、跟随外壳主题令牌含暗色）；Ctrl/Cmd+S 经 `flushDraftNow` 取消防抖并走既有保存路径（冲突态/在途/无改动时安全 no-op，错误态委托 `retrySave` 保持 DR-001 语义，不触发浏览器"保存网页"）；Bold/Italic/Heading 命令（`runMarkdownFormat.ts`：选区包裹/去包裹、行级 `# ` 前缀切换，含空选区插入与多行处理）+ 最小工具条；新增 en/zh.editor 字典分块 | 复现：无 search 扩展/无快捷键拦截/无格式命令；`MarkdownEditor.test.tsx`（6 用例）与 `StudioEditorPane.test.tsx`（10 用例）先红后绿 | 范围说明：搜索命中定位（导航搜索偏移）仍按 backlog 拆分至 DR-029；人工浏览器验证待 Owner（已记录为人工 gate） | 验证：frontend build（含新依赖）通过；其余同 DR-010（全绿）
 
 ### DR-017 [P1] 卷功能 UI 可达性（或规格降级）
 
@@ -707,3 +711,4 @@
 - 2026-10-02 | `8e59e9b6` | DR-005 | `pnpm --dir server exec vitest run tests/contexts/revision_word_count.test.ts tests/api/studio_writing_stats.test.ts tests/db/revision_word_count_reconciliation.test.ts tests/contexts/project_shell_store.test.ts`；`pnpm --dir server gates/type-check/lint/lint:types/arch/test`；frontend 全套 + react-doctor + `pnpm spec:validate` | 通过：统一字数口径（Han 逐字 + 拉丁按词）+ 启动对账自动修正旧口径存量；server 237 文件/1432 用例、frontend 131/709；spec 增"Stale counts recomputed"场景
 - 2026-10-02 | `3771724e` | DR-006 + DR-007 | 定向：server `studio_proposals_stream*`、`provider_streaming_retry`、`provider_streaming_deadline`、`text_generation`；frontend copilot/whole-book 7 文件；全套：`server gates/type-check/lint/lint:types/arch/test`（239 文件/1436 用例）、frontend lint/lint:types/format/type-check/test:unit/build（134 文件/723 用例）+ react-doctor(100) + `pnpm spec:validate` | 通过；过程修复：重试引入的 4 个定时预算用例（显式单次尝试，断言不变）、3 处格式化、1 处 react-doctor 链式迭代告警；spec 与 2 个 e2e 规格同步新语义
 - 2026-10-02 | `b10e02c6` | DR-008 + DR-009 | 定向 7 文件 78 用例；全套 `server gates/type-check/lint/lint:types/arch/test`（241 文件/1457 用例）、frontend lint/lint:types/format/type-check/test:unit/build（134 文件/723 用例）+ react-doctor(100) + `pnpm spec:validate` | 通过：首启 setup token + `owner reset`（DR-008）；XFF 最右未受信跳 + 范围拒绝 + trustProxy 推导（DR-009）；新错误码 SETUP_TOKEN_INVALID 锁步；README/deploy/spec 同步；已知后续：浏览器 setup token 输入并入 DR-019
+- 2026-10-02 | `2baed8a9` | DR-010 + DR-011 + DR-012 + DR-016 | 定向：server `studio_revisions.test.ts`；frontend copilot/jobs/history/conflict/editor 相关 10 文件 52 用例；全套 `server gates/type-check/lint/lint:types/arch/test`（241 文件/1459 用例）、frontend lint/lint:types/format/type-check/test:unit/build（138 文件/745 用例）+ react-doctor(100) + `pnpm spec:validate` | 通过：修订正文端点 + 预览/diff + 恢复确认（DR-011）；冲突只读查看服务器版本（DR-012）；停止保留/一次性撤销/拒绝文本可回看（DR-010）；查找替换 + Ctrl/Cmd+S + 格式命令（DR-016，新增 `@codemirror/search`）；过程修复：文件行数拆分（字典 jobs 分块、proposalUndo 助手、测试 harness/拆分）、react-doctor/格式化/导出排序、撤销提议在瞬时 owner 切换被清空；人工浏览器验证待 Owner
