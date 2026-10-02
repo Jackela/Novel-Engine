@@ -1,4 +1,4 @@
-import { getByRole } from "@testing-library/dom";
+import { getByRole, queryByRole } from "@testing-library/dom";
 import { act } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -45,6 +45,39 @@ describe("StudioCopilotPanel streaming recovery", () => {
       await Promise.resolve();
     });
     expect(writeText).toHaveBeenCalledWith("A quiet beginning");
+  });
+
+  it("keeps a stopped preview readable with a copy action instead of Stop", async () => {
+    const writeText = vi.fn<(text: string) => Promise<void>>().mockResolvedValue(undefined);
+    vi.stubGlobal("navigator", { clipboard: { writeText } });
+    const props = {
+      instruction: "Continue the scene.",
+      setInstruction: vi.fn(),
+      proposal: null,
+      setProposal: vi.fn(),
+      onRunProposal: vi.fn(),
+      onAcceptProposal: vi.fn(),
+      onStopProposal: vi.fn(),
+    };
+    const mounted = harness.mount(
+      <StudioCopilotPanel
+        {...props}
+        isRunningProposal={false}
+        streamingText="Half a scene, preserved"
+        streamingStopped
+      />,
+    );
+
+    expect(mounted.container.textContent).toContain("Half a scene, preserved");
+    expect(mounted.container.textContent).toContain("Stopped — text preserved");
+    expect(queryByRole(mounted.container, "button", { name: "Stop" })).toBeNull();
+
+    const copy = getByRole(mounted.container, "button", { name: "Copy" });
+    await act(async () => {
+      copy.click();
+      await Promise.resolve();
+    });
+    expect(writeText).toHaveBeenCalledWith("Half a scene, preserved");
   });
 
   it("moves orphaned Stop focus to Continue after streaming stops", async () => {

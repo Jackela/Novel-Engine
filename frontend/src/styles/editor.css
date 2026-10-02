@@ -78,6 +78,17 @@
   min-height: 0;
   overflow: hidden;
 }
+/* Formatting toolbar (DR-016): the same chrome row as .editor__toolbar, but
+   left-aligned over the writing surface with the shared ui-command icon
+   buttons. */
+.editor__format {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 42px;
+  padding: 4px 18px;
+  border-bottom: 1px solid var(--line);
+}
 .editor__markdown .cm-content {
   max-width: 75ch;
   margin-inline: auto;

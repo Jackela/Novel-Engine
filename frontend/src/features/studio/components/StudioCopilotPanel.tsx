@@ -1,4 +1,4 @@
-import { Check, Copy, Sparkles, X } from "lucide-react";
+import { Check, Copy, RotateCcw, Sparkles, X } from "lucide-react";
 import { type Dispatch, type SetStateAction, useRef, useState } from "react";
 
 import { useTranslation } from "@/app/i18n/useTranslation";
@@ -22,8 +22,12 @@ interface StudioCopilotPanelProps {
   streamingText?: string | null;
   /** DR-006: the stream failed mid-flight; `streamingText` is the preserved partial text. */
   streamingInterrupted?: boolean;
+  /** DR-010: the author stopped the stream; `streamingText` is the kept partial text. */
+  streamingStopped?: boolean;
   /** #308: stops this client from observing the running stream. */
   onStopProposal?: () => void | Promise<void>;
+  /** DR-010: the one-shot undo for the most recent committed acceptance, when offered. */
+  acceptanceUndo?: { readonly onUndo: () => void | Promise<void> } | null;
   proposalOutcomeUnknown?: boolean;
   proposalAuditStatus?: ProposalAuditStatus;
   unknownAttemptOperation?: "continue" | "rewrite";
@@ -41,7 +45,9 @@ export function StudioCopilotPanel({
   isAcceptingProposal = false,
   streamingText = null,
   streamingInterrupted = false,
+  streamingStopped = false,
   onStopProposal,
+  acceptanceUndo = null,
   proposalOutcomeUnknown = false,
   proposalAuditStatus = "idle",
   unknownAttemptOperation = "continue",
@@ -58,6 +64,8 @@ export function StudioCopilotPanel({
     pendingProposalOperation !== null ||
     proposalAuditStatus === "auditing";
   const isStreaming = streamingText !== null;
+  /** DR-006/DR-010: a settled stream keeps its received text readable. */
+  const streamTextKept = streamingInterrupted || streamingStopped;
   const runWithFocusRestoration = useCommandFocusRestoration(isBusy);
   const instructionRef = useRef<HTMLTextAreaElement>(null);
   const continueButtonRef = useRef<HTMLButtonElement>(null);
@@ -142,9 +150,29 @@ export function StudioCopilotPanel({
           </button>
         </div>
       )}
+      {acceptanceUndo ? (
+        <>
+          <p aria-live="polite">{t("copilot.undo.body")}</p>
+          <div className="studio-inspector__actions">
+            <button
+              className="ui-command"
+              onClick={(event) => {
+                void runWithFocusRestoration(
+                  event.currentTarget,
+                  acceptanceUndo.onUndo,
+                  () => continueButtonRef.current ?? instructionRef.current,
+                );
+              }}
+              type="button"
+            >
+              <RotateCcw /> {t("copilot.action.undo")}
+            </button>
+          </div>
+        </>
+      ) : null}
       {isStreaming ? (
         <section
-          aria-busy={streamingInterrupted ? undefined : true}
+          aria-busy={streamTextKept ? undefined : true}
           className="studio-inspector__proposal"
         >
           <header>
@@ -152,12 +180,14 @@ export function StudioCopilotPanel({
             <span>
               {streamingInterrupted
                 ? t("copilot.proposal.interrupted")
-                : t("copilot.proposal.streaming")}
+                : streamingStopped
+                  ? t("copilot.proposal.stopped")
+                  : t("copilot.proposal.streaming")}
             </span>
           </header>
           <pre aria-live="polite">{streamingText}</pre>
           <div className="studio-inspector__actions">
-            {streamingInterrupted ? (
+            {streamTextKept ? (
               <button className="ui-command" onClick={copyStreamedText} type="button">
                 <Copy /> {t("copilot.action.copy")}
               </button>

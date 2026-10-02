@@ -1,6 +1,7 @@
 import type { NavigateFunction } from "react-router-dom";
 
 import type { StudioRouteState } from "../studioRouteState";
+import { buildProposalUndo } from "./proposalUndo";
 import {
   buildNavigatorRowCommands,
   buildStudioInspectorModel,
@@ -12,6 +13,7 @@ import { useLazyInspectorHistories } from "./useLazyInspectorHistories";
 import { usePageActiveDocument } from "./usePageActiveDocument";
 import { usePageDocumentDraft } from "./usePageDocumentDraft";
 import { reviewInspectorModel } from "./useReviewHistory";
+import { revisionPreviewScope } from "./useRevisionPreview";
 import { useStudioActions } from "./useStudioActions";
 import { useStudioErrorChannels } from "./useStudioErrorChannels";
 import { useStudioGeneration } from "./useStudioGeneration";
@@ -88,6 +90,7 @@ export function useStudioPageModel(projectId: string, route: StudioRouteState, n
     loadLatest,
     retryOverwrite,
     retrySave,
+    saveNow,
   } = usePageDocumentDraft({
     projectId,
     activeDocument,
@@ -231,6 +234,7 @@ export function useStudioPageModel(projectId: string, route: StudioRouteState, n
         onLoadLatest: loadLatest,
         onRetryOverwrite: retryOverwrite,
         onRetrySave: retrySave,
+        onSaveNow: saveNow,
         isLoadingDocument: currentDocument.isLoading,
         documentLoadError: currentDocument.error,
         onRetryDocument: currentDocument.retry,
@@ -249,7 +253,9 @@ export function useStudioPageModel(projectId: string, route: StudioRouteState, n
             documents: project.documents,
           },
           copilot,
+          proposalUndo: buildProposalUndo(copilot, onRestoreRevision),
           jobs: {
+            projectId,
             jobs,
             hasOlderJobs,
             onLoadJobs: () => loadJobs("refresh"),
@@ -271,6 +277,7 @@ export function useStudioPageModel(projectId: string, route: StudioRouteState, n
             isLoadingHistory,
             onLoadOlderRevisions: loadOlderRevisions,
             onRestoreRevision,
+            preview: revisionPreviewScope(projectId, activeDocument),
           },
           settings: {
             settingsForm,

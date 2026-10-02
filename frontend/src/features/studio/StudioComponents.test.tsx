@@ -18,6 +18,7 @@ function buildInspectorModel(): StudioInspectorModel {
       proposal: null,
       streamingText: null,
       streamingInterrupted: false,
+      streamingStopped: false,
       onRunProposal: vi.fn(),
       onAcceptProposal: vi.fn(),
       setInstruction: vi.fn(),
@@ -39,6 +40,7 @@ function buildInspectorModel(): StudioInspectorModel {
       isLoadingHistory: false,
       onLoadOlderRevisions: vi.fn(),
       onRestoreRevision: vi.fn(),
+      preview: null,
     },
     jobs: {
       jobs: [],
@@ -46,6 +48,7 @@ function buildInspectorModel(): StudioInspectorModel {
       onLoadJobs: vi.fn(),
       onLoadOlderJobs: vi.fn(),
       onRetryJob: vi.fn(),
+      projectId: "project-1",
     },
     usage: { projectId: "project-1" },
     stats: { projectId: "project-1" },

@@ -14,6 +14,7 @@ import type { NavigatorRowCommands } from "../components/StudioNavigatorRowActio
 import type { StudioNavigator } from "../StudioNavigator";
 import { isLoreEntryKind } from "../studioConstants";
 import type {
+  InspectorAcceptanceUndo,
   InspectorBeatModel,
   InspectorLoreStatusModel,
   InspectorReviewModel,
@@ -23,6 +24,7 @@ import type {
 import { buildProposalAuditView } from "./proposalAuditView";
 import type { useExportDownload } from "./useExportDownload";
 import type { useExportHistory } from "./useExportHistory";
+import type { RevisionPreviewScope } from "./useRevisionPreview";
 import type { BeatLifecycleState } from "./useStudioBeatActions";
 import type { useStudioGeneration } from "./useStudioGeneration";
 import type { LoreStatusLifecycleState } from "./useStudioLoreStatusActions";
@@ -144,12 +146,15 @@ interface StudioInspectorModelInputs {
     readonly documents: DocumentSummary[];
   };
   readonly copilot: ReturnType<typeof useStudioGeneration>["copilot"];
+  /** DR-010: the page-composed one-shot undo for the latest acceptance. */
+  readonly proposalUndo: InspectorAcceptanceUndo | null;
   readonly jobs: {
     readonly jobs: StudioJobSummary[];
     readonly hasOlderJobs: boolean;
     readonly onLoadJobs: () => void | Promise<void>;
     readonly onLoadOlderJobs: () => void | Promise<void>;
     readonly onRetryJob: (jobId: string) => void | Promise<void>;
+    readonly projectId: string;
   };
   readonly export: ReturnType<typeof useExportDownload> & { readonly history: ExportHistory };
   /**
@@ -166,6 +171,8 @@ interface StudioInspectorModelInputs {
     readonly isLoadingHistory: boolean;
     readonly onLoadOlderRevisions: () => void | Promise<void>;
     readonly onRestoreRevision: (revisionId: string) => void | Promise<void>;
+    /** DR-011: lazy preview/diff scope for the loaded document; null without one. */
+    readonly preview: RevisionPreviewScope | null;
   };
   readonly settings: {
     readonly settingsForm: SettingsFormState;
@@ -202,6 +209,7 @@ export function buildStudioInspectorModel({
   projectId,
   lore,
   copilot,
+  proposalUndo,
   jobs,
   export: exportPanel,
   review,
@@ -217,6 +225,8 @@ export function buildStudioInspectorModel({
       proposal: copilot.proposal,
       streamingText: copilot.streamingText,
       streamingInterrupted: copilot.streamingInterrupted,
+      streamingStopped: copilot.streamingStopped,
+      acceptanceUndo: proposalUndo,
       onRunProposal: copilot.runProposal,
       onAcceptProposal: copilot.acceptProposal,
       onStopProposal: () => copilot.stopProposal(),
@@ -256,6 +266,7 @@ export function buildStudioInspectorModel({
       isLoadingHistory: history.isLoadingHistory,
       onLoadOlderRevisions: history.onLoadOlderRevisions,
       onRestoreRevision: history.onRestoreRevision,
+      preview: history.preview,
     },
     jobs: {
       jobs: jobs.jobs,
@@ -263,6 +274,7 @@ export function buildStudioInspectorModel({
       onLoadJobs: jobs.onLoadJobs,
       onLoadOlderJobs: jobs.onLoadOlderJobs,
       onRetryJob: jobs.onRetryJob,
+      projectId: jobs.projectId,
     },
     usage: { projectId },
     stats: { projectId },

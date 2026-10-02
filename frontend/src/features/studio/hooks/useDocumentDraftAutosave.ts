@@ -12,6 +12,7 @@ import { HttpError } from "@/app/api";
 import { translateActive } from "@/app/i18n/translate";
 import type { SaveState, StudioDocument } from "@/app/types/studio";
 import type { DraftSnapshot, PersistedDraft } from "./documentDraftState";
+import { flushDraftNow } from "./flushDraftNow";
 import { toErrorMessage } from "./toErrorMessage";
 import { useDocumentDraftRescue } from "./useDocumentDraftRescue";
 
@@ -45,6 +46,7 @@ interface AutosaveOptions {
 
 interface AutosaveHandle {
   readonly retrySave: () => void;
+  readonly saveNow: () => void;
 }
 
 interface SaveAttempt {
@@ -234,6 +236,39 @@ export function useDocumentDraftAutosave({
     void executeSave();
   }, [clearRetryTimer, executeSave, saveStateRef, setCurrentSaveState]);
 
+  /**
+   * Flushes the draft on demand for the Ctrl/Cmd+S shortcut; the debounce,
+   * in-flight, conflict, and DR-001 retry semantics live in
+   * {@link flushDraftNow}.
+   */
+  const saveNow = useCallback(() => {
+    flushDraftNow({
+      ownerKey,
+      ownerToken,
+      isCurrentOwner,
+      draftRef,
+      persistedDraftsRef,
+      saveStateRef,
+      saveTimerRef,
+      saveInFlightRef,
+      setCurrentSaveState,
+      executeSave,
+      retrySave,
+    });
+  }, [
+    draftRef,
+    executeSave,
+    isCurrentOwner,
+    ownerKey,
+    ownerToken,
+    persistedDraftsRef,
+    retrySave,
+    saveInFlightRef,
+    saveStateRef,
+    saveTimerRef,
+    setCurrentSaveState,
+  ]);
+
   useEffect(() => {
     if (!activeDocument) return;
     const persisted = persistedDraftsRef.current.get(ownerKey);
@@ -285,5 +320,5 @@ export function useDocumentDraftAutosave({
     saveTimerRef,
   ]);
 
-  return { retrySave };
+  return { retrySave, saveNow };
 }

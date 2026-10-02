@@ -19,12 +19,15 @@
  *
  * File layout: when the flat dictionary outgrew the file-size budget, the
  * values moved to per-screen chunks (`en.shared.ts`, `en.entry.ts`,
- * `en.library.ts`, `en.settings.ts`, `en.studio.ts`, `en.errors.ts`) that
- * this file re-merges and types; each `zh.*.ts` chunk mirrors one chunk.
+ * `en.library.ts`, `en.settings.ts`, `en.editor.ts`, `en.jobs.ts`,
+ * `en.studio.ts`, `en.errors.ts`) that this file re-merges and types; each
+ * `zh.*.ts` chunk mirrors one chunk.
  */
 
+import { enEditor } from "./en.editor";
 import { enEntry } from "./en.entry";
 import { enErrors } from "./en.errors";
+import { enJobs } from "./en.jobs";
 import { enLibrary } from "./en.library";
 import { enSettings } from "./en.settings";
 import { enShared } from "./en.shared";
@@ -35,6 +38,8 @@ export const en = {
   ...enEntry,
   ...enLibrary,
   ...enSettings,
+  ...enEditor,
+  ...enJobs,
   ...enStudio,
   ...enErrors,
 } as const;

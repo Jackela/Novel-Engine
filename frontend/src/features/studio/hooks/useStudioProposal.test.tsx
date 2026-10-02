@@ -1,15 +1,17 @@
-import { act, useState } from "react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { act } from "react";
+import { describe, expect, it, vi } from "vitest";
 
 import { api } from "@/app/api";
-import type { ProposalStreamRequest } from "@/app/proposalStream";
-import { streamProposal } from "@/app/proposalStream";
-import type { Project, StudioDocument, StudioJob } from "@/app/types/studio";
-import type { InspectorTab } from "@/features/studio/studioConstants";
-import { chapter, job, projectWith } from "@/test/factories";
-import { createMountHarness } from "@/test/harness";
+import { ProposalOutcomeUnknownError } from "@/app/proposalStream";
 import { summarizeDocument } from "./projectState";
-import { useStudioProposal } from "./useStudioProposal";
+import {
+  baseProject,
+  deferredStream,
+  firstDocument,
+  proposalJob,
+  renderProposalHook,
+  secondDocument,
+} from "./useStudioProposal.test-harness";
 
 vi.mock("@/app/api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/app/api")>();
@@ -33,127 +35,6 @@ vi.mock("@/app/proposalStream", async (importOriginal) => {
     streamProposal: vi.fn<typeof actual.streamProposal>(),
   };
 });
-
-type HookResult = ReturnType<typeof useStudioProposal>;
-
-interface HarnessSnapshot {
-  readonly hook: HookResult;
-  readonly project: Project | null;
-  readonly inspector: InspectorTab;
-  readonly error: string | null;
-  readonly accepted: StudioDocument | null;
-}
-
-const harness = createMountHarness();
-
-const firstDocument = chapter("document-1", {
-  title: "Chapter One",
-  current_revision_id: "revision-1",
-  content_markdown: "Original scene",
-  revision_source: "author",
-  word_count: 2,
-});
-
-const secondDocument = {
-  ...firstDocument,
-  id: "document-2",
-  title: "Chapter Two",
-  current_revision_id: "revision-2",
-};
-
-const baseProject = projectWith([firstDocument, secondDocument], {
-  description: "A harbor of brass clocks.",
-});
-
-const proposalJob = job({
-  project_id: baseProject.id,
-  document_id: firstDocument.id,
-  result: { proposal_markdown: "A generated continuation." },
-});
-
-afterEach(() => {
-  harness.cleanup();
-  vi.resetAllMocks();
-});
-
-function renderProposalHook(): {
-  readonly result: () => HarnessSnapshot;
-  readonly rerender: (document: StudioDocument) => void;
-  readonly loadJobs: ReturnType<typeof vi.fn<() => void>>;
-} {
-  let activeDocument = firstDocument;
-  let current: HarnessSnapshot | undefined;
-  const loadJobs = vi.fn<() => void>();
-
-  function Wrapper(): null {
-    const [project, setProject] = useState<Project | null>(baseProject);
-    const [inspector] = useState<InspectorTab>("history");
-    const [error, setError] = useState<string | null>("previous error");
-    const [accepted, setAccepted] = useState<StudioDocument | null>(null);
-    const hook = useStudioProposal(
-      baseProject.id,
-      activeDocument,
-      project,
-      setProject,
-      setError,
-      loadJobs,
-      (documentId) =>
-        documentId === activeDocument.id ? (document) => setAccepted(document) : undefined,
-    );
-    current = { hook, project, inspector, error, accepted };
-    return null;
-  }
-
-  const { root } = harness.mount(<Wrapper />);
-
-  const render = () => root.render(<Wrapper />);
-
-  return {
-    result: () => {
-      if (current === undefined) {
-        throw new Error("Expected hook result after render.");
-      }
-      return current;
-    },
-    rerender: (document) => {
-      activeDocument = document;
-      act(render);
-    },
-    loadJobs,
-  };
-}
-
-function deferredStream(): {
-  requests: ProposalStreamRequest[];
-  settle: (job: StudioJob | Promise<StudioJob>, failure?: unknown) => Promise<void>;
-} {
-  const requests: ProposalStreamRequest[] = [];
-  const pending: Array<{
-    resolve: (job: StudioJob) => void;
-    reject: (reason: unknown) => void;
-  }> = [];
-  vi.mocked(streamProposal).mockImplementation(async (request) => {
-    requests.push(request);
-    return new Promise<StudioJob>((resolve, reject) => {
-      pending.push({ resolve, reject });
-    });
-  });
-  return {
-    requests,
-    settle: async (job, failure) => {
-      const entry = pending.shift();
-      if (entry === undefined) throw new Error("Expected a pending stream.");
-      await act(async () => {
-        if (failure !== undefined) {
-          entry.reject(failure);
-        } else {
-          entry.resolve(await job);
-        }
-        await Promise.resolve();
-      });
-    },
-  };
-}
 
 describe("useStudioProposal", () => {
   it("streams the proposal into the preview and lands the job on the done frame", async () => {
@@ -220,6 +101,41 @@ describe("useStudioProposal", () => {
     expect(signal?.aborted).toBe(true);
     expect(harness.result().hook.proposal).toBeNull();
     expect(harness.result().hook.streamingText).toBeNull();
+    expect(harness.result().hook.isRunningProposal).toBe(false);
+    expect(harness.result().error).toBeNull();
+  });
+
+  it("keeps the received text readable when the author stops the stream", async () => {
+    // Given
+    const harness = renderProposalHook();
+    const deferred = deferredStream();
+    let running: Promise<void> | undefined;
+    act(() => {
+      running = harness.result().hook.runProposal("continue");
+    });
+    if (running === undefined) throw new Error("Expected runProposal to start.");
+    await act(async () => {
+      deferred.requests[0]?.onDelta("Stopped mid-sentence");
+    });
+
+    // When the author stops and the cancelled request settles.
+    act(() => {
+      harness.result().hook.stopProposal();
+    });
+    await deferred.settle(
+      proposalJob,
+      new ProposalOutcomeUnknownError(new Error("Request cancelled.")),
+    );
+    await act(async () => {
+      await running;
+    });
+
+    // Then the received deltas stay readable as a stopped preview.
+    expect(deferred.requests[0]?.signal?.aborted).toBe(true);
+    expect(harness.result().hook.proposal).toBeNull();
+    expect(harness.result().hook.streamingText).toBe("Stopped mid-sentence");
+    expect(harness.result().hook.streamingStopped).toBe(true);
+    expect(harness.result().hook.streamingInterrupted).toBe(false);
     expect(harness.result().hook.isRunningProposal).toBe(false);
     expect(harness.result().error).toBeNull();
   });

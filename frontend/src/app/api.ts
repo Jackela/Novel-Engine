@@ -35,6 +35,7 @@ import { type ProjectsRequestOptions, projectCatalogRequest } from "@/app/projec
 import { clearRetryAttemptSession, parseAndRecordRetrySession } from "@/app/retryAttemptRegistry";
 import { type ReviewListOptions, reviewDetailPath, reviewsRequest } from "@/app/reviewApiRequest";
 import { documentRevisionsRequest, type RevisionRequestOptions } from "@/app/revisionApiRequest";
+import { parseRevisionDetail } from "@/app/revisionDetailContract";
 import { parseWritingStats } from "@/app/statsContract";
 import type { DocumentKind, ExportFormat, LoreStatus, ProjectUpdateBody } from "@/app/types/studio";
 
@@ -118,6 +119,12 @@ export const api = {
   ) => putJson(`/api/projects/${projectId}/documents/${documentId}`, payload, parseStudioDocument),
   revisions: (projectId: string, documentId: string, options: RevisionRequestOptions = {}) =>
     request(...documentRevisionsRequest(projectId, documentId, options), parseRevisions),
+  revision: (projectId: string, documentId: string, revisionId: string) =>
+    request(
+      `/api/projects/${projectId}/documents/${documentId}/revisions/${revisionId}`,
+      undefined,
+      parseRevisionDetail,
+    ),
   restoreRevision: (
     projectId: string,
     documentId: string,
@@ -175,6 +182,8 @@ export const api = {
     const [path, init] = projectJobsRequest(projectId, options);
     return request(path, init, parseJobs);
   },
+  job: (projectId: string, jobId: string, init?: RequestInit) =>
+    request(`/api/projects/${projectId}/jobs/${jobId}`, init, parseJob),
   usage: (projectId: string, init?: RequestInit) =>
     request(`/api/projects/${projectId}/usage`, init, parseUsage),
   writingStats: (projectId: string, init?: RequestInit) =>

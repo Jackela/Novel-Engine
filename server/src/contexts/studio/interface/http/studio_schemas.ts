@@ -21,6 +21,7 @@ export {
   projectPayloadSchema as projectResponseSchema,
   projectShellPayloadSchema as projectShellResponseSchema,
 } from "../../application/payload_schemas/project.js";
+export { revisionPayloadSchema as revisionResponseSchema } from "../../application/payload_schemas/revision.js";
 
 export const documentListResponseSchema = Type.Object(
   { documents: Type.Array(documentSummaryPayloadSchema) },

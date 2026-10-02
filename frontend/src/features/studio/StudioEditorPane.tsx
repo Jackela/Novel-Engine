@@ -1,9 +1,11 @@
 import { Check, Loader2, X } from "lucide-react";
-import { lazy, Suspense, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
 
 import { useTranslation } from "@/app/i18n/useTranslation";
 import type { SaveState, StudioDocument } from "@/app/types/studio";
+import { StudioConflictPanel } from "./components/StudioConflictPanel";
 import { useCommandFocusRestoration } from "./hooks/useCommandFocusRestoration";
+import type { ServerVersionPreviewController } from "./hooks/useConflictServerPreview";
 
 const MarkdownEditor = lazy(async () => {
   const module = await import("./MarkdownEditor");
@@ -17,6 +19,8 @@ interface StudioEditorPaneProps {
   saveState: SaveState;
   error?: string | null;
   isConflictActionPending?: boolean;
+  /** DR-012: the conflict panel's read-only server-version preview controller. */
+  serverVersion?: ServerVersionPreviewController | null;
   isLoadingDocument?: boolean;
   documentLoadError?: string | null;
   onDraftChange: (value: string) => void;
@@ -24,6 +28,8 @@ interface StudioEditorPaneProps {
   onLoadLatest?: () => void | Promise<void>;
   onRetryOverwrite?: () => void | Promise<void>;
   onRetrySave?: () => void | Promise<void>;
+  /** DR-016: immediate draft flush for the Ctrl/Cmd+S shortcut. */
+  onSaveNow?: () => void;
   onRetryDocument?: () => void;
 }
 
@@ -36,6 +42,7 @@ export function StudioEditorPane({
   saveState,
   error = null,
   isConflictActionPending = false,
+  serverVersion = null,
   isLoadingDocument = false,
   documentLoadError = null,
   onDraftChange,
@@ -43,6 +50,7 @@ export function StudioEditorPane({
   onLoadLatest,
   onRetryOverwrite,
   onRetrySave,
+  onSaveNow,
   onRetryDocument,
 }: StudioEditorPaneProps) {
   const { t } = useTranslation();
@@ -61,6 +69,21 @@ export function StudioEditorPane({
           ? t("editor.saveState.conflict")
           : t("editor.saveState.error");
   const runWithFocusRestoration = useCommandFocusRestoration(conflictActionsDisabled);
+
+  // DR-016: Ctrl/Cmd+S must flush the draft instead of opening the browser's
+  // save dialog. The listener lives on the window while a Document is open so
+  // the shortcut works from the title, the body, and the surrounding chrome.
+  useEffect(() => {
+    if (!activeDocument || !onSaveNow) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (!(event.ctrlKey || event.metaKey) || event.altKey || event.shiftKey) return;
+      if (event.key.toLowerCase() !== "s") return;
+      event.preventDefault();
+      onSaveNow();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [activeDocument, onSaveNow]);
 
   const runConflictCommand = (
     commandKey: EditorCommand,
@@ -125,32 +148,15 @@ export function StudioEditorPane({
             </span>
           </header>
           {saveState === "conflict" ? (
-            <div aria-live="assertive" className="editor-conflict" role="alert">
-              <strong>{t("editor.conflict.heading")}</strong>
-              {error ? <span>{error}</span> : null}
-              <div className="editor-conflict__actions">
-                <button
-                  aria-busy={pendingCommand === "loadLatest" || undefined}
-                  disabled={conflictActionsDisabled || onLoadLatest === undefined}
-                  onClick={(event) =>
-                    runConflictCommand("loadLatest", event.currentTarget, onLoadLatest)
-                  }
-                  type="button"
-                >
-                  {t("editor.conflict.action.loadLatest")}
-                </button>
-                <button
-                  aria-busy={pendingCommand === "retryOverwrite" || undefined}
-                  disabled={conflictActionsDisabled || onRetryOverwrite === undefined}
-                  onClick={(event) =>
-                    runConflictCommand("retryOverwrite", event.currentTarget, onRetryOverwrite)
-                  }
-                  type="button"
-                >
-                  {t("editor.conflict.action.keepLocal")}
-                </button>
-              </div>
-            </div>
+            <StudioConflictPanel
+              disabled={conflictActionsDisabled}
+              error={error}
+              onLoadLatest={onLoadLatest}
+              onRetryOverwrite={onRetryOverwrite}
+              onRunCommand={runConflictCommand}
+              pendingCommand={pendingCommand}
+              serverVersion={serverVersion}
+            />
           ) : null}
           {saveState === "error" ? (
             <div aria-live="assertive" className="editor-conflict" role="alert">

@@ -263,4 +263,64 @@ describe("Studio editor pane", () => {
     expect(document.activeElement).toBe(otherButton);
     otherButton.remove();
   });
+
+  it("intercepts Ctrl/Cmd+S and routes it to the save path instead of the browser dialog", () => {
+    const onSaveNow = vi.fn();
+    render(
+      <StudioEditorPane
+        activeDocument={baseDocument}
+        draft="# Opening"
+        titleDraft="Opening"
+        saveState="saving"
+        onDraftChange={vi.fn()}
+        onTitleChange={vi.fn()}
+        onSaveNow={onSaveNow}
+      />,
+    );
+
+    const ctrlSave = new KeyboardEvent("keydown", {
+      bubbles: true,
+      cancelable: true,
+      ctrlKey: true,
+      key: "s",
+    });
+    window.dispatchEvent(ctrlSave);
+    const metaSave = new KeyboardEvent("keydown", {
+      bubbles: true,
+      cancelable: true,
+      key: "s",
+      metaKey: true,
+    });
+    window.dispatchEvent(metaSave);
+
+    expect(ctrlSave.defaultPrevented).toBe(true);
+    expect(metaSave.defaultPrevented).toBe(true);
+    expect(onSaveNow).toHaveBeenCalledTimes(2);
+  });
+
+  it("leaves Ctrl+S to the browser when no document is open", () => {
+    const onSaveNow = vi.fn();
+    render(
+      <StudioEditorPane
+        activeDocument={null}
+        draft=""
+        titleDraft=""
+        saveState="idle"
+        onDraftChange={vi.fn()}
+        onTitleChange={vi.fn()}
+        onSaveNow={onSaveNow}
+      />,
+    );
+
+    const event = new KeyboardEvent("keydown", {
+      bubbles: true,
+      cancelable: true,
+      ctrlKey: true,
+      key: "s",
+    });
+    window.dispatchEvent(event);
+
+    expect(event.defaultPrevented).toBe(false);
+    expect(onSaveNow).not.toHaveBeenCalled();
+  });
 });

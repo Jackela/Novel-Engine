@@ -2288,6 +2288,85 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/projects/{projectId}/documents/{documentId}/revisions/{revisionId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    projectId: string;
+                    documentId: string;
+                    revisionId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            content_markdown: string;
+                            created_at: string;
+                            document_id: string;
+                            id: string;
+                            metadata: {
+                                [key: string]: unknown;
+                            };
+                            parent_revision_id: string | null;
+                            revision_number: number;
+                            /** @enum {string} */
+                            source: "author" | "ai-accepted" | "restore";
+                            word_count: number;
+                        };
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/projects/{projectId}/documents/{documentId}/revisions/{revisionId}/restore": {
         parameters: {
             query?: never;

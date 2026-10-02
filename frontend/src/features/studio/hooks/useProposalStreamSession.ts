@@ -24,6 +24,22 @@ interface StreamingProposal {
   readonly text: string;
   /** DR-006: a failure after text arrived keeps the preview readable. */
   readonly interrupted: boolean;
+  /** DR-010: an explicit stop after text arrived keeps the preview readable. */
+  readonly stopped: boolean;
+}
+
+/**
+ * DR-010: keeps the received text of a terminal preview readable. An empty
+ * preview holds nothing to preserve and stays eligible for the caller's
+ * final cleanup; exactly one terminal flag is ever set.
+ */
+function keptTerminalPreview(
+  current: StreamingProposal,
+  terminal: "interrupted" | "stopped",
+): StreamingProposal {
+  return current.text.length > 0
+    ? { ...current, interrupted: terminal === "interrupted", stopped: terminal === "stopped" }
+    : current;
 }
 
 export interface ProposalRequest {
@@ -94,6 +110,10 @@ export function useProposalStreamSession({
     streaming?.ownerKey === ownerKey &&
     streaming.auditEpoch === currentAuditEpoch &&
     streaming.interrupted;
+  const streamingStopped =
+    streaming?.ownerKey === ownerKey &&
+    streaming.auditEpoch === currentAuditEpoch &&
+    streaming.stopped;
   const unknownAttemptOperation =
     unknownAttempt?.projectId === projectId ? unknownAttempt.operation : "continue";
 
@@ -145,7 +165,14 @@ export function useProposalStreamSession({
       const requestEpoch = nextRequestEpoch();
       const request = { ownerKey, requestEpoch, controller };
       streamRequestRef.current = request;
-      setStreaming({ ownerKey, auditEpoch, requestEpoch, text: "", interrupted: false });
+      setStreaming({
+        ownerKey,
+        auditEpoch,
+        requestEpoch,
+        text: "",
+        interrupted: false,
+        stopped: false,
+      });
       try {
         const nextProposal = await streamProposal({
           projectId,
@@ -186,13 +213,18 @@ export function useProposalStreamSession({
           setProposalState((current) =>
             current?.ownerKey === ownerKey && current.auditEpoch === auditEpoch ? null : current,
           );
-          setStreaming((current) =>
-            current?.ownerKey === ownerKey &&
-            current.auditEpoch === auditEpoch &&
-            current.requestEpoch === requestEpoch
-              ? null
-              : current,
-          );
+          setStreaming((current) => {
+            if (
+              current?.ownerKey !== ownerKey ||
+              current.auditEpoch !== auditEpoch ||
+              current.requestEpoch !== requestEpoch
+            ) {
+              return current;
+            }
+            // DR-010: an explicit stop keeps the received text; a lost
+            // terminal frame still discards the ambiguous preview.
+            return controller.signal.aborted ? keptTerminalPreview(current, "stopped") : null;
+          });
           setUnknownAttempt({ projectId, operation });
           if (streamRequestRef.current === request) streamRequestRef.current = null;
           finish("proposal");
@@ -206,9 +238,18 @@ export function useProposalStreamSession({
           setStreaming((current) =>
             current?.ownerKey === ownerKey &&
             current.auditEpoch === auditEpoch &&
-            current.requestEpoch === requestEpoch &&
-            current.text.length > 0
-              ? { ...current, interrupted: true }
+            current.requestEpoch === requestEpoch
+              ? keptTerminalPreview(current, "interrupted")
+              : current,
+          );
+        } else if (isCurrentRequest(ownerKey, requestEpoch)) {
+          // DR-010: the author stopped this stream, so the received text is
+          // kept as a stopped preview rather than published as a failure.
+          setStreaming((current) =>
+            current?.ownerKey === ownerKey &&
+            current.auditEpoch === auditEpoch &&
+            current.requestEpoch === requestEpoch
+              ? keptTerminalPreview(current, "stopped")
               : current,
           );
         }
@@ -219,7 +260,8 @@ export function useProposalStreamSession({
             current?.ownerKey === ownerKey &&
             current.auditEpoch === auditEpoch &&
             current.requestEpoch === requestEpoch &&
-            !current.interrupted
+            !current.interrupted &&
+            !current.stopped
               ? null
               : current,
           );
@@ -257,6 +299,7 @@ export function useProposalStreamSession({
     stopProposal,
     streamingText,
     streamingInterrupted,
+    streamingStopped,
     unknownAttemptOperation,
     reconcileOwnerState,
     detachStream,

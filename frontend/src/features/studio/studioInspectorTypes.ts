@@ -12,6 +12,7 @@ import type {
   StudioJob,
   StudioJobSummary,
 } from "@/app/types/studio";
+import type { RevisionPreviewScope } from "./hooks/useRevisionPreview";
 import type { JobsLoadInitiator, ProposalAuditStatus } from "./hooks/useStudioJobs";
 
 export interface SettingsFormState {
@@ -47,16 +48,29 @@ interface InspectorCopilotModel {
   streamingText: string | null;
   /** DR-006: the stream failed mid-flight; `streamingText` is the preserved partial text. */
   streamingInterrupted: boolean;
+  /** DR-010: the author stopped the stream; `streamingText` is the kept partial text. */
+  streamingStopped: boolean;
   onRunProposal: (operation: "continue" | "rewrite") => void | Promise<void>;
   onAcceptProposal: () => void | Promise<void>;
   /** #308: aborts the running proposal stream. */
   onStopProposal?: () => void;
+  /** DR-010: the one-shot undo for the most recent committed acceptance, when offered. */
+  acceptanceUndo?: InspectorAcceptanceUndo | null;
   proposalOutcomeUnknown?: boolean;
   proposalAuditStatus?: ProposalAuditStatus;
   unknownAttemptOperation?: "continue" | "rewrite";
   onRetryProposalAudit?: () => void | Promise<void>;
   setInstruction: Dispatch<SetStateAction<string>>;
   setProposal: Dispatch<SetStateAction<StudioJob | null>>;
+}
+
+/**
+ * DR-010: one explicit undo for the most recent accepted proposal. The
+ * command routes through the shared revision restore and is consumed on
+ * invocation, so a second activation can never restore twice.
+ */
+export interface InspectorAcceptanceUndo {
+  readonly onUndo: () => void | Promise<void>;
 }
 
 interface InspectorExportModel {
@@ -112,6 +126,8 @@ interface InspectorHistoryModel {
   isLoadingHistory: boolean;
   onLoadOlderRevisions: () => void | Promise<void>;
   onRestoreRevision: (revisionId: string) => void | Promise<void>;
+  /** DR-011: lazy preview/diff scope for the loaded document; null without one. */
+  preview: RevisionPreviewScope | null;
 }
 
 interface InspectorJobsModel {
@@ -120,6 +136,8 @@ interface InspectorJobsModel {
   onLoadJobs: () => void | Promise<void>;
   onLoadOlderJobs: () => void | Promise<void>;
   onRetryJob: (jobId: string) => void | Promise<void>;
+  /** DR-010: scope for the lazily read proposal text behind a completed job row. */
+  projectId: string;
 }
 
 interface InspectorUsageModel {

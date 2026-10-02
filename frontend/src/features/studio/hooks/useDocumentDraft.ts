@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef } from "react";
 
 import type { Project, StudioDocument } from "@/app/types/studio";
 
+import { useConflictServerPreview } from "./useConflictServerPreview";
 import { useDocumentDraftActions } from "./useDocumentDraftActions";
 import { useDocumentDraftAutosave } from "./useDocumentDraftAutosave";
 import { useDocumentDraftCommit } from "./useDocumentDraftCommit";
@@ -116,7 +117,7 @@ export function useDocumentDraft(
     setRestoreError,
   });
 
-  const { retrySave } = useDocumentDraftAutosave({
+  const { retrySave, saveNow } = useDocumentDraftAutosave({
     ownerKey: owner.key,
     ownerToken: owner.token,
     isCurrentOwner: isCurrentDraftOwner,
@@ -136,6 +137,16 @@ export function useDocumentDraft(
     refreshLatestDocument,
     setCurrentSaveState,
     setError,
+  });
+
+  // DR-012: the conflict panel's read-only server-version view. It reads
+  // through the DR-011 endpoint and never touches the draft or the project.
+  const serverVersionPreview = useConflictServerPreview({
+    activeDocument,
+    projectId,
+    owner,
+    isCurrentOwner,
+    conflictVisible: saveState === "conflict",
   });
 
   // Browser-close guard for the debounce window and any failed or in-flight
@@ -172,5 +183,7 @@ export function useDocumentDraft(
     loadLatest,
     retryOverwrite,
     retrySave,
+    saveNow,
+    serverVersionPreview,
   };
 }

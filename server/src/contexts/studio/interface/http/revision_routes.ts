@@ -18,6 +18,7 @@ import {
   documentResponseSchema,
   revisionConflictSchema,
   revisionListResponseSchema,
+  revisionResponseSchema,
 } from "./studio_schemas.js";
 
 /**
@@ -72,6 +73,28 @@ export const revisionRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fa
         };
       });
     },
+  );
+
+  app.get(
+    "/api/projects/:projectId/documents/:documentId/revisions/:revisionId",
+    {
+      // Same ordering as the list read: authentication precedes schema
+      // validation so an anonymous caller cannot probe this scoped surface.
+      preValidation: [guard],
+      schema: {
+        params: revisionIdParams,
+        response: authedReadResponses({ 200: revisionResponseSchema }),
+      },
+    },
+    async (request) =>
+      withStudioErrors(() =>
+        requireServices(options).revisions.documentRevision(
+          requirePrincipal(request),
+          request.params.projectId,
+          request.params.documentId,
+          request.params.revisionId,
+        ),
+      ),
   );
 
   app.post(

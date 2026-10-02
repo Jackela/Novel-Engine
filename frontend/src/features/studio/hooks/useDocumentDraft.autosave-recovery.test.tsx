@@ -180,6 +180,55 @@ describe("autosave recovery", () => {
   });
 });
 
+describe("manual save (Ctrl/Cmd+S)", () => {
+  it("flushes the pending debounce immediately through the autosave persist path", async () => {
+    vi.mocked(api.saveDocument).mockResolvedValue(savedA);
+    const view = renderDraft();
+    await flushMicrotasks();
+    act(() => view.result().hook.setDraft("Unsaved A"));
+    await advance(1000);
+    expect(api.saveDocument).not.toHaveBeenCalled();
+
+    act(() => view.result().hook.saveNow());
+    await flushMicrotasks();
+
+    expect(api.saveDocument).toHaveBeenCalledTimes(1);
+    expect(api.saveDocument).toHaveBeenCalledWith(project.id, documentA.id, {
+      content_markdown: "Unsaved A",
+      base_revision_id: documentA.current_revision_id,
+      title: documentA.title,
+    });
+    expect(view.result().hook.saveState).toBe("saved");
+  });
+
+  it("does not write a revision when the draft has no unpersisted edits", async () => {
+    const view = renderDraft();
+    await flushMicrotasks();
+
+    act(() => view.result().hook.saveNow());
+    await flushMicrotasks();
+
+    expect(api.saveDocument).not.toHaveBeenCalled();
+  });
+
+  it("retries a failed save through the DR-001 recovery path", async () => {
+    vi.mocked(api.saveDocument)
+      .mockRejectedValueOnce(new Error("service unavailable"))
+      .mockResolvedValueOnce(savedA);
+    const view = renderDraft();
+    await flushMicrotasks();
+    act(() => view.result().hook.setDraft(savedA.content_markdown));
+    await advance(1500);
+    expect(view.result().hook.saveState).toBe("error");
+
+    act(() => view.result().hook.saveNow());
+    await flushMicrotasks();
+
+    expect(api.saveDocument).toHaveBeenCalledTimes(2);
+    expect(view.result().hook.saveState).toBe("saved");
+  });
+});
+
 describe("draft rescue on leave", () => {
   it("flushes the pending draft when switching documents before the debounce fires", async () => {
     vi.mocked(api.saveDocument).mockResolvedValue(savedA);
