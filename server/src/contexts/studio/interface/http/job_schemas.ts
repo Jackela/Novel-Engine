@@ -37,6 +37,21 @@ export const jobRetryHeadersSchema = Type.Object({
   }),
 });
 
+/**
+ * The proposal-generation key is optional (DR-027): a request without it
+ * keeps the pre-existing behavior, while a present key must satisfy the same
+ * character contract as the retry header so both routes share one key format.
+ */
+export const idempotencyKeyHeadersSchema = Type.Object({
+  "idempotency-key": Type.Optional(
+    Type.String({
+      minLength: 16,
+      maxLength: 128,
+      pattern: "^[A-Za-z0-9._~-]+$",
+    }),
+  ),
+});
+
 /** The jobs audit listing: newest compact summary first. */
 export const jobListResponseSchema = Type.Object(
   {

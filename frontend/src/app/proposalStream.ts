@@ -153,6 +153,13 @@ export interface ProposalStreamRequest {
    * `DEFAULT_STREAM_STALL_TIMEOUT_MS`; `0` disables the deadline.
    */
   readonly stallTimeoutMs?: number;
+  /**
+   * Durable idempotency key of this logical generation (DR-027): a resend that
+   * carries the same key replays the server's existing job instead of drafting
+   * — and billing — a second one. Optional; an absent key skips the header and
+   * the server keeps its current behavior.
+   */
+  readonly idempotencyKey?: string;
 }
 
 /** Consume one streamed proposal; resolves with the terminal job payload. */
@@ -165,6 +172,7 @@ export async function streamProposal({
   signal,
   onDelta,
   stallTimeoutMs,
+  idempotencyKey,
 }: ProposalStreamRequest): Promise<StudioJob> {
   const path = `/api/projects/${projectId}/documents/${documentId}/ai-proposals/stream`;
   const csrfToken = getCsrfToken();
@@ -199,6 +207,7 @@ export async function streamProposal({
       headers: {
         "Content-Type": "application/json",
         ...(csrfToken ? { "X-CSRF-Token": csrfToken } : {}),
+        ...(idempotencyKey === undefined ? {} : { "Idempotency-Key": idempotencyKey }),
       },
       body: JSON.stringify({ operation, instruction, provider }),
       signal: watchdog.signal,

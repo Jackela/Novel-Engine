@@ -5,11 +5,13 @@ import {
   type TextGenerationTask,
   type TextProviderName,
 } from "../../../contexts/ai/application/ports/text_generation.js";
+import { InvalidOperationError } from "../../../shared/domain/exceptions.js";
 import { revisionWordCount } from "../domain/revision_word_count.js";
 import { failedJobInput } from "./failed_job_input.js";
 import { BoundedPromptWriter } from "./generation_capacity.js";
 import { loreEntriesFromDocuments } from "./lorebook.js";
-import { dumpJson } from "./payloads.js";
+import type { ProposalStreamFramePayload } from "./payload_schemas/proposal_frame.js";
+import { dumpJson, jobPayload } from "./payloads.js";
 import type { StudioJobLedgerStore } from "./ports/job_ledger_store.js";
 import type { CompletedJobUsageInput, JobRecord } from "./ports/job_records.js";
 import type { ProposalContextSource } from "./ports/proposal_context_store.js";
@@ -134,6 +136,8 @@ export interface ProposalJobSeed {
   readonly operation: string;
   readonly provider: TextProviderName;
   readonly requestJson: string;
+  /** The optional client request key claimed by the landed row (DR-027). */
+  readonly requestKey?: string | undefined;
   readonly now: Date;
 }
 
@@ -174,6 +178,7 @@ export function completedProposalJob(
       requestJson: seed.requestJson,
       resultJson: outcome.resultJson,
       error: null,
+      requestIdempotencyKey: seed.requestKey ?? null,
       eventDetailsJson: outcome.eventDetailsJson,
       now: seed.now,
     },
@@ -257,7 +262,23 @@ export function failedProposalJob(
         accepted_revision_id: null,
       }),
       error: message,
+      requestIdempotencyKey: target.seed.requestKey ?? null,
       now: target.seed.now,
     }),
   );
+}
+
+/**
+ * DR-027 replay projection: the stored terminal outcome of a request-key
+ * generation as the exact stream frame the normal completion path emits — the
+ * `done` frame carrying the stored job payload for a completed job, the
+ * shared `error` frame for a failed one. A stored job with no terminal
+ * outcome is a protocol violation and throws instead of inventing a frame.
+ */
+export function replayedProposalFrame(job: JobRecord): ProposalStreamFramePayload {
+  if (job.status === "completed") return { type: "done", job: jobPayload(job) };
+  if (job.status === "failed" && job.error !== null) {
+    return { type: "error", error: { code: "PROVIDER_FAILED", message: job.error } };
+  }
+  throw new InvalidOperationError(`Stored request-key job has no terminal outcome: ${job.id}.`);
 }

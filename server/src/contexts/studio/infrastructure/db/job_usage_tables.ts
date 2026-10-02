@@ -34,6 +34,7 @@ export const jobs = sqliteTable(
     error: text("error"),
     retry_of_job_id: text("retry_of_job_id"),
     retry_idempotency_key: text("retry_idempotency_key"),
+    request_idempotency_key: text("request_idempotency_key"),
     created_at: integer("created_at", { mode: "timestamp_ms" }).notNull(),
     updated_at: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
     started_at: integer("started_at", { mode: "timestamp_ms" }),
@@ -45,6 +46,9 @@ export const jobs = sqliteTable(
     uniqueIndex("uq_jobs_retry_idempotency")
       .on(table.project_id, table.retry_of_job_id, table.retry_idempotency_key)
       .where(isNotNull(table.retry_idempotency_key)),
+    uniqueIndex("uq_jobs_request_idempotency")
+      .on(table.project_id, table.request_idempotency_key)
+      .where(isNotNull(table.request_idempotency_key)),
   ],
 );
 

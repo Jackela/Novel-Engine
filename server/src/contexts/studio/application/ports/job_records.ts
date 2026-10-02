@@ -101,6 +101,8 @@ export interface AddJobInput {
   eventDetailsJson: string;
   /** The retried predecessor; null for first-run jobs (#272 retry chain). */
   retryOfJobId?: string | null;
+  /** The client request key this landing claims; null for keyless landings (DR-027). */
+  requestIdempotencyKey?: string | null;
   now: Date;
 }
 

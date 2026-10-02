@@ -1,7 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  clearGenerateAttempt,
   clearRetryAttempt,
   clearRetryAttemptSession,
+  getOrCreateGenerateAttemptKey,
   getOrCreateRetryAttemptKey,
   recordRetryAttemptSession,
 } from "./retryAttemptRegistry";
@@ -14,12 +16,16 @@ const session: Session = {
   expires_at: null,
 };
 
+let uuidCounter = 0;
+
 beforeEach(() => {
   sessionStorage.clear();
   recordRetryAttemptSession(session);
-  vi.spyOn(crypto, "randomUUID")
-    .mockReturnValueOnce("00000000-0000-4000-8000-000000000001")
-    .mockReturnValueOnce("00000000-0000-4000-8000-000000000002");
+  uuidCounter = 0;
+  vi.spyOn(crypto, "randomUUID").mockImplementation(() => {
+    uuidCounter += 1;
+    return `00000000-0000-4000-8000-${String(uuidCounter).padStart(12, "0")}`;
+  });
 });
 
 describe("retry attempt registry", () => {
@@ -60,5 +66,30 @@ describe("retry attempt registry", () => {
     expect(() => getOrCreateRetryAttemptKey("project-a", "job-a")).toThrow(
       "Retry session identity is unavailable.",
     );
+  });
+
+  it("keeps generation scopes disjoint from retry scopes and other operations", () => {
+    const generateKey = getOrCreateGenerateAttemptKey("project-a", "chapter-a", "continue");
+    const retryKey = getOrCreateRetryAttemptKey("project-a", "chapter-a");
+
+    expect(generateKey).not.toBeNull();
+    expect(generateKey).not.toBe(retryKey);
+    expect(getOrCreateGenerateAttemptKey("project-a", "chapter-a", "continue")).toBe(generateKey);
+    expect(getOrCreateGenerateAttemptKey("project-a", "chapter-a", "rewrite")).not.toBe(
+      generateKey,
+    );
+    expect(getOrCreateGenerateAttemptKey("project-a", "chapter-b", "continue")).not.toBe(
+      generateKey,
+    );
+
+    clearGenerateAttempt("project-a", "chapter-a", "continue", generateKey ?? "");
+    expect(getOrCreateGenerateAttemptKey("project-a", "chapter-a", "continue")).not.toBe(
+      generateKey,
+    );
+  });
+
+  it("yields no generation key while no session identity is recorded", () => {
+    clearRetryAttemptSession();
+    expect(getOrCreateGenerateAttemptKey("project-a", "chapter-a", "continue")).toBeNull();
   });
 });

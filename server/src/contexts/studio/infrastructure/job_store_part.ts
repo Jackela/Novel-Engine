@@ -25,10 +25,12 @@ import {
   OperationInFlightError,
 } from "../domain/exceptions.js";
 import { jobWithEvents } from "./db/job_record_reads.js";
+import { claimRequestKeyJob, findRequestKeyJob } from "./db/job_request_claim.js";
 import { findRetryJobByKey, insertRetryClaim } from "./db/job_retry_claim.js";
 import {
   applyJobOutcome,
   insertJobAndEvent,
+  type JobInsert,
   writeUsageEvent as writeUsageEventRow,
 } from "./db/job_writes.js";
 import { jobs } from "./db/schema.js";
@@ -58,8 +60,16 @@ export class JobStorePart implements StudioJobLedgerStore {
   addJob(scope: ProjectScope, input: AddJobInput): JobRecord {
     return this.db.transaction((tx) => {
       scopedProject(tx, scope, input.projectId);
-      const jobId = insertJobAndEvent(tx, input);
-      return jobWithEvents(tx, jobId);
+      return jobWithEvents(tx, this.claimJobRow(tx, input).jobId);
+    });
+  }
+
+  /** Read a previously landed job by its request key without admitting new work. */
+  findJobRequest(scope: ProjectScope, projectId: string, requestKey: string): JobRecord | null {
+    return this.db.transaction((tx) => {
+      scopedProject(tx, scope, projectId);
+      const existing = findRequestKeyJob(tx, projectId, requestKey);
+      return existing === undefined ? null : jobWithEvents(tx, existing.id);
     });
   }
 
@@ -122,14 +132,16 @@ export class JobStorePart implements StudioJobLedgerStore {
   ): JobRecord {
     return this.db.transaction((tx) => {
       scopedProject(tx, scope, input.job.projectId);
-      const jobId = insertJobAndEvent(tx, input.job);
-      this.writeUsageEvent(tx, {
-        ...input.usage,
-        projectId: input.job.projectId,
-        jobId,
-        now: input.job.now,
-      });
-      return jobWithEvents(tx, jobId);
+      const claimed = this.claimJobRow(tx, input.job);
+      if (claimed.created) {
+        this.writeUsageEvent(tx, {
+          ...input.usage,
+          projectId: input.job.projectId,
+          jobId: claimed.jobId,
+          now: input.job.now,
+        });
+      }
+      return jobWithEvents(tx, claimed.jobId);
     });
   }
 
@@ -267,6 +279,13 @@ export class JobStorePart implements StudioJobLedgerStore {
 
   /** Failure-injection seam proving the retry row and first event stay atomic. */
   protected beforeRetryClaimEventInsert(_tx: Tx, _jobId: string): void {}
+
+  /** Claim the landing row by request key when present; keyless landings insert plainly (DR-027). */
+  private claimJobRow(tx: Tx, input: AddJobInput): JobInsert {
+    const requestKey = input.requestIdempotencyKey ?? null;
+    if (requestKey === null) return { jobId: insertJobAndEvent(tx, input), created: true };
+    return claimRequestKeyJob(tx, input, requestKey);
+  }
 
   private replayRetryClaim(tx: Tx, retry: JobRow): JobRetryClaim {
     if (retry.status === "running") {

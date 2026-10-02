@@ -2,6 +2,7 @@ import type { Dispatch, SetStateAction } from "react";
 import { useCallback, useLayoutEffect, useRef } from "react";
 import { translateActive } from "@/app/i18n/translate";
 import { ProposalOutcomeUnknownError, streamProposal } from "@/app/proposalStream";
+import { clearGenerateAttempt, getOrCreateGenerateAttemptKey } from "@/app/retryAttemptRegistry";
 import type { Project, StudioDocument } from "@/app/types/studio";
 import { AcceptedProposalRefreshError, acceptProposalAndRefresh } from "./acceptProposalAndRefresh";
 import { toErrorMessage } from "./toErrorMessage";
@@ -97,6 +98,8 @@ export function useWholeBookChapterRun({
       const run = async (): Promise<void> => {
         let generated = 0;
         let failingTitle = remainingPlan[0]?.title ?? "";
+        let failingChapterId: string | null = null;
+        let failingChapterKey: string | null = null;
         try {
           for (let index = 0; index < remainingPlan.length; index += 1) {
             if (
@@ -109,6 +112,11 @@ export function useWholeBookChapterRun({
             }
             const chapter = remainingPlan[index];
             failingTitle = chapter.title;
+            // DR-027: one key per chapter generation; a resumed run reuses it,
+            // so an unknown outcome replays the durable job instead of billing
+            // a second one.
+            failingChapterId = chapter.id;
+            failingChapterKey = getOrCreateGenerateAttemptKey(projectId, chapter.id, "generate");
             publishPhase(currentRun, {
               kind: "running",
               current: index + 1,
@@ -129,8 +137,13 @@ export function useWholeBookChapterRun({
               instruction: "",
               provider,
               signal: proposalController.signal,
+              ...(failingChapterKey === null ? {} : { idempotencyKey: failingChapterKey }),
               onDelta: () => undefined,
             });
+            if (failingChapterKey !== null) {
+              clearGenerateAttempt(projectId, chapter.id, "generate", failingChapterKey);
+              failingChapterKey = null;
+            }
             if (currentRun.proposalController === proposalController) {
               currentRun.proposalController = null;
             }
@@ -191,6 +204,11 @@ export function useWholeBookChapterRun({
           if (currentRun.stopped && !(reason instanceof AcceptedProposalRefreshError)) {
             publishPhase(currentRun, { kind: "done", generated, stoppedEarly: true });
           } else {
+            // A definitively failed generation is spent; a stopped or unknown
+            // one keeps its key so a resume replays the durable job (DR-027).
+            if (failingChapterKey !== null && failingChapterId !== null) {
+              clearGenerateAttempt(projectId, failingChapterId, "generate", failingChapterKey);
+            }
             publishPhase(currentRun, {
               kind: "failed",
               generated,

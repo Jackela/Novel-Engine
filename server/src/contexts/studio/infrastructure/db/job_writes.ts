@@ -13,8 +13,16 @@ import type { Tx } from "./studio_query_helpers.js";
 /**
  * Row-level write helpers for the workflow jobs and usage ledger. Each one
  * runs inside a caller-owned transaction so combined landings (#392) can
- * commit the job row and its usage event together or not at all.
+ * commit the job row and its usage event together or not at all. A landing
+ * that carries a client request key (DR-027) claims its row through
+ * `job_request_claim.ts`, which builds on the same insert seam.
  */
+
+/** The identity of one written job row and whether this call created it. */
+export interface JobInsert {
+  readonly jobId: string;
+  readonly created: boolean;
+}
 
 /** Insert the job row plus its first event; returns the new job id. */
 export function insertJobAndEvent(
@@ -34,12 +42,12 @@ export function insertJobAndEvent(
     request_json: input.requestJson,
     result_json: input.resultJson,
     error: input.error,
+    retry_of_job_id: input.retryOfJobId ?? null,
+    request_idempotency_key: input.requestIdempotencyKey ?? null,
     created_at: input.now,
     updated_at: input.now,
   };
-  tx.insert(jobs)
-    .values({ ...job, retry_of_job_id: input.retryOfJobId ?? null })
-    .run();
+  tx.insert(jobs).values(job).run();
   beforeEventInsert(job.id);
   tx.insert(jobEvents)
     .values({

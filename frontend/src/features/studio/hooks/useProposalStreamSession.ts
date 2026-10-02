@@ -2,6 +2,7 @@ import type { Dispatch, SetStateAction } from "react";
 import { useCallback, useRef, useState } from "react";
 import { translateActive } from "@/app/i18n/translate";
 import { ProposalOutcomeUnknownError, streamProposal } from "@/app/proposalStream";
+import { clearGenerateAttempt, getOrCreateGenerateAttemptKey } from "@/app/retryAttemptRegistry";
 import type { Project, StudioDocument, StudioJob } from "@/app/types/studio";
 import { toErrorMessage } from "./toErrorMessage";
 import type { PendingActionController } from "./usePendingAction";
@@ -156,6 +157,10 @@ export function useProposalStreamSession({
   const runProposal = useCallback(
     async (operation: "continue" | "rewrite") => {
       if (proposalAudit.isGated() || !activeDocument || !project || !begin("proposal")) return;
+      // DR-027: one key names this logical generation. It is kept while the
+      // outcome is unknown, so a resend replays the durable job instead of
+      // drafting — and billing — a second one.
+      const idempotencyKey = getOrCreateGenerateAttemptKey(projectId, activeDocument.id, operation);
       const auditEpoch = proposalAudit.epoch();
       proposalAudit.clear();
       setUnknownAttempt(null);
@@ -181,6 +186,7 @@ export function useProposalStreamSession({
           instruction,
           provider: String(project.settings.provider ?? "mock"),
           signal: controller.signal,
+          ...(idempotencyKey === null ? {} : { idempotencyKey }),
           onDelta: (text) => {
             if (
               proposalAudit.epoch() !== auditEpoch ||
@@ -205,8 +211,17 @@ export function useProposalStreamSession({
         ) {
           return;
         }
+        if (idempotencyKey !== null) {
+          clearGenerateAttempt(projectId, activeDocument.id, operation, idempotencyKey);
+        }
         setProposalState({ ownerKey, auditEpoch, job: nextProposal });
       } catch (reason) {
+        // A definitively failed generation is spent: the next click is a new
+        // intent. An unknown outcome keeps the key so a re-issue replays the
+        // possibly-committed job.
+        if (idempotencyKey !== null && !(reason instanceof ProposalOutcomeUnknownError)) {
+          clearGenerateAttempt(projectId, activeDocument.id, operation, idempotencyKey);
+        }
         if (reason instanceof ProposalOutcomeUnknownError && isProjectLive(projectId)) {
           // Ownership stays inside the state update: a stale session must not
           // drop a landed proposal that a newer request already owns.

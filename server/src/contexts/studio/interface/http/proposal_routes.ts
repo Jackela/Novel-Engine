@@ -2,7 +2,7 @@ import type { TypeBoxTypeProvider } from "@fastify/type-provider-typebox";
 import type { FastifyPluginAsync } from "fastify";
 import { principalGuard, requirePrincipal } from "../../../../shared/interface/http/auth_guard.js";
 import { proposalGeneration422ResponseSchema } from "./generation_capacity_schemas.js";
-import { jobResponseSchema } from "./job_schemas.js";
+import { idempotencyKeyHeadersSchema, jobResponseSchema } from "./job_schemas.js";
 import type { JsonResponseSchema } from "./json_response_schema.js";
 import { requireServices, type StudioRoutesOptions } from "./project_routes.js";
 import { writeProposalStreamResponse } from "./proposal_stream_response.js";
@@ -33,7 +33,9 @@ const proposalStreamResponseSchema: JsonResponseSchema = {
  * The AI proposal surface: synchronous generation that records a proposal on
  * a job (never mutating the manuscript), explicit acceptance that writes the
  * `ai-accepted` revision, and — since #308 — the SSE streaming twin of the
- * synchronous generation with identical landing semantics.
+ * synchronous generation with identical landing semantics. Both generation
+ * routes accept an optional `Idempotency-Key` header (DR-027): a duplicate
+ * submission replays the stored job instead of paying for a second generation.
  */
 export const proposalRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fastify, options) => {
   const app = fastify.withTypeProvider<TypeBoxTypeProvider>();
@@ -45,6 +47,7 @@ export const proposalRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fa
       preHandler: [guard],
       schema: {
         params: documentIdParams,
+        headers: idempotencyKeyHeadersSchema,
         body: proposalCreateSchema,
         response: authedWriteResponses({
           200: jobResponseSchema,
@@ -72,6 +75,7 @@ export const proposalRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fa
             provider: request.body.provider ?? "mock",
           },
           reportCleanupFailure,
+          request.headers["idempotency-key"],
         ),
       );
     },
@@ -83,6 +87,7 @@ export const proposalRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fa
       preHandler: [guard],
       schema: {
         params: documentIdParams,
+        headers: idempotencyKeyHeadersSchema,
         body: proposalCreateSchema,
         response: authedWriteResponses({
           200: proposalStreamResponseSchema,
@@ -116,6 +121,7 @@ export const proposalRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fa
         },
         reportCleanupFailure,
         disconnect.signal,
+        request.headers["idempotency-key"],
       );
       await writeProposalStreamResponse({
         response: reply.raw,

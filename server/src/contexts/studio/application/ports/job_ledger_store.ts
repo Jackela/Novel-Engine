@@ -32,6 +32,13 @@ export interface StudioJobLedgerStore {
   ): JobRecord | null;
   /** Reserve a retry and its first event atomically, or replay its terminal Job. */
   claimJobRetry(scope: ProjectScope, input: ClaimJobRetryInput): JobRetryClaim;
+  /**
+   * Read a previously landed first-run job by its client request key (DR-027)
+   * without admitting new work; null when this project never saw the key. The
+   * lookup is the cheap half of the durable claim — the landing closes the
+   * insert-time race through the partial unique index on the jobs table.
+   */
+  findJobRequest(scope: ProjectScope, projectId: string, requestKey: string): JobRecord | null;
   addUsageEvent(scope: ProjectScope, input: AddUsageEventInput): void;
   /**
    * The atomic completed-job-with-usage landing (#392): job row plus usage
