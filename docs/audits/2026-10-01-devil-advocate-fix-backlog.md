@@ -1,0 +1,698 @@
+# Novel Engine 魔鬼代言人评审 · 修复清单（Fix Backlog）
+
+- 评审日期：2026-10-01
+- 评审基线：`main` @ `607a092e`（server `0.8.0`）；工作区当时仅有既存未跟踪目录 `.commandcode/`、`.zcode/`
+- 方法：9 个并行 subagent —— 5 个角色评审（产品伪需求 / 用户可用性 / 架构工程 / 运维与安全 / 竞争与可持续）+ 4 个功能域审查（编辑器与写作核心 / AI 生成审阅 / 搜索导入导出 / 平台与规格符合性）。关键结论由编排者交叉复核；部分结论带实测证据（隔离 DB 与内存库复现、针对性 vitest、只读网络核验、容器只读演练）。
+- 文件性质：本文件是**可执行的修复 backlog**，不是完整评审报告。它是给"清空上下文后的新 AI"逐条修复用的工作单；每条包含证据、修复方向、验收标准与验证命令。
+
+> 行号基于评审基线 `607a092e`，代码演进后会漂移。若行号失配，请按条目中提到的符号/文件名重新定位，不要凭行号断言"问题不存在"。
+
+---
+
+## 0. 如何使用本文件（给执行修复的 AI）
+
+1. **先读仓库规则**：根 `AGENTS.md`（架构契约、禁区、命名、验证入口）、`docs/agents/change-evidence.md`（证据标准）、`docs/agents/ci-gates.md`（门禁语义）。
+2. **一次只做一条**：按 `DR-###` 编号领取；一条就是一个可独立提交的任务，不要顺手扩大范围（AGENTS.md：One task is one audit finding）。
+3. **先复现，再修**：先按"验证"字段跑出现状（失败或行为证据），修复后同一命令必须通过；需要新增回归测试的条目已注明。
+4. **遵守禁区**：不得修改 `.env*`、`config/env/*`、`data/*.sqlite3`、`data/backups/*`、`AUDIT_REPORT_Linus.md`、`Makefile`、`justfile`。迁移只能用 `pnpm --dir server db:generate --name <semantic-slug>`；改动 HTTP 路由后必须 `pnpm --dir server openapi:snapshot` 重新生成基线。
+5. **收尾验证**：至少跑该条目"验证"中的命令 + `pnpm --dir server gates`；跨前后端的条目再加 `pnpm --dir frontend type-check && pnpm --dir frontend test:unit`。不得通过削弱断言来"修复"测试。
+6. **交付记录**：完成后在本条目下追加一行 `- [x] <日期> <SHA> <命令与结果摘要>`，不要删除原始证据描述。
+
+### 等级定义
+
+| 等级 | 含义 | 处理要求 |
+|---|---|---|
+| **P0** | 数据丢失、安全漏洞、或"中文用户必然失败"的可信度问题 | 应立即修复，修完才做其他 |
+| **P1** | 高频功能缺陷、规格承诺落空、运维/质量硬伤 | 按批次推进 |
+| **P2** | 质量打磨、可见性、清理项 | 有空时清理 |
+| **DEC** | 需要人工/产品决策，不是纯代码任务 | 由 Owner 决策后才可转为代码任务 |
+
+### 状态图例
+
+`- [ ] 未开始` / `- [~] 进行中` / `- [x] 已完成` / `- [!] 阻塞（写明原因）`
+
+---
+
+## 1. 汇总表
+
+### P0（9 条）
+
+| ID | 领域 | 一句话 | 主要证据锚点 |
+|---|---|---|---|
+| DR-001 | 前端保存 | 保存失败一次后自动保存永久熔断，无重试入口 → 静默丢字 | `frontend/src/features/studio/hooks/useDocumentDraftAutosave.ts:83-90` |
+| DR-002 | 前端保存 | 切换文档/关闭页面会丢弃 1.5s 内的编辑，且无离开守卫 | 同上 `:92,149`；`beforeunload` 全仓 0 命中 |
+| DR-003 | 搜索 | 中文全文搜索静默失效（FTS5 默认 unicode61，整段中文=1 token） | `server/drizzle/0000_init_persistence_core.sql:41`；实测"林黛玉"0 命中 |
+| DR-004 | 搜索 | 无 FTS 重建/校验通道；doctor 查不出索引问题（DR-003 的前置依赖） | 全仓无 rebuild/integrity-check 路径 |
+| DR-005 | 计数 | 中文字数按"标点分段"计（约 1/7 低估），污染统计、薄章阈值与 token 估算 | `server/src/contexts/studio/domain/revision_word_count.ts:3` |
+| DR-006 | AI | 流式生成中途失败丢弃全部已生成文本且不重试（双端全损） | `server/.../streaming_generation.ts:209`；`useProposalStreamSession.ts:199-204` |
+| DR-007 | AI | "生成整本"会静默覆盖手写/导入/恢复的章节并自动接受 | `frontend/src/features/studio/hooks/wholeBookPlan.ts:17-19`（注释自认） |
+| DR-008 | 安全 | 公网/LAN 首启无 setup token，第一个访问者可抢占 Owner | `server/src/shared/interface/http/auth_routes.ts:128-155`；容器实测 201 |
+| DR-009 | 安全 | 信任代理配置下 X-Forwarded-For 伪造使登录限速归零，可无限爆破 | `shared/infrastructure/rate_limit/client_identity.ts:160-170`；实测 16 次 0 次 429 |
+
+### P1（30 条）
+
+| ID | 领域 | 一句话 |
+|---|---|---|
+| DR-010 | AI/UX | 停止生成=全部丢弃；接受提案不可撤销；reject 后无法找回文本 |
+| DR-011 | 编辑器 | 修订历史无法阅读正文、无 diff，"恢复"是不可预判的盲操作 |
+| DR-012 | 编辑器 | 冲突解决只能整体丢弃/整体覆盖，无法查看对方版本 |
+| DR-013 | 导出 | DOCX 无中文字体/首行缩进/分页/TOC，且章节标题重复出现 |
+| DR-014 | 导出 | EPUB `dc:language=en`、缺 `dcterms:modified`、零 CSS，不合 EPUB 3 |
+| DR-015 | 导出 | Markdown 导出丢失章节标题，且只有 chapter 入导出（笔记/设定/大纲拿不到） |
+| DR-016 | 编辑器 | 无查找/替换、无 Ctrl+S、无快捷键，搜索结果不定位命中位置 |
+| DR-017 | 结构 | 卷（Volume）后端齐全但 UI 零入口 → 多卷、放置、按卷导出全部不可达 |
+| DR-018 | 项目 | 项目删除端点已有但 UI 无入口（API 死代码） |
+| DR-019 | 认证 | 无密码确认字段、无修改密码入口、无"无法找回"提示（单账号永久锁死风险） |
+| DR-020 | 会话 | 会话过期静默 401 跳转，无提示、丢草稿与位置 |
+| DR-021 | i18n | 服务端错误消息英文直出（含内部标识符），中文用户无法自助 |
+| DR-022 | AI/设置 | 未配置的 provider 可选且无提示；model 不可见；未配置报"不支持流式"误导 |
+| DR-023 | AI | 提示词无语言跟随，mock 全英文、清理器只删英文模板 → "双语"实为"界面双语" |
+| DR-024 | AI | Review 恒用 env 级 provider，而非项目所选 provider，UI 不标注 |
+| DR-025 | AI | review 超时仅 30s，长稿审阅必超时并白烧重试 |
+| DR-026 | AI | 180s 绝对截止会杀掉健康长流；无心跳帧；SSE 内错误帧被静默忽略 |
+| DR-027 | AI | 生成端点无幂等键，重复提交=双份 job + 双份计费 |
+| DR-028 | AI/用量 | usage 语义误导（instruction 词数当 prompt tokens）、`estimated_cost` 死列、无预算护栏 |
+| DR-029 | 搜索 | 搜索 UI 无空态、无计数、无命中定位，结果硬截断 30 条 |
+| DR-030 | 性能 | 8-token 长查询冻结事件循环 453–970ms（实测），搜索无输入上限 |
+| DR-031 | 运维 | 每次启动写全量备份且永不清理；重启循环可撑爆磁盘 |
+| DR-032 | 运维 | `doctor` 并非只读：会迁移/备份/取锁，且把错误消息塞进 quick_check 字段 |
+| DR-033 | 运维 | `.env.example` 占位密钥可通过 production 守门；README 写 "sample value" 不一致 |
+| DR-034 | 运维 | 反代三陷阱：无 trusted proxies 时登录 DoS；TLS 下 setup 403；trustProxy 缺失 |
+| DR-035 | 运维 | 未认证暴露 `/openapi.json`（125KB 全量契约）与 `/version` 指纹 |
+| DR-036 | 运维 | 备份边角：校验产生 `-shm/-wal` 残留、无备份后自检、明文未在 UI 说明 |
+| DR-037 | 导入 | 导入 hash 含绝对路径 → 同一目录内容变更/搬家即重复建项目；标题丢失变 Chapter N；无前端入口 |
+| DR-038 | 工程 | 关键回归缺失：autosave 失败路径、CJK 搜索、413 保存均无用例；i18n 测试把文案钉死 |
+| DR-039 | 文档 | 文档-实现对齐：README 发布态过时、guides 宣称 diff/跳转命中/Move to volume 不成立、spec/CONTEXT 漂移 |
+
+### P2（9 条）
+
+| ID | 领域 | 一句话 |
+|---|---|---|
+| DR-040 | 运维 | dev 模式未配置密钥时每次重启轮换会话密钥，用户被静默登出 |
+| DR-041 | 运维 | 容器以 root 运行、无只读根/能力收敛；无 `/metrics`、无 `LOG_LEVEL` |
+| DR-042 | 编辑器 | 快照对用户不可见；审阅历史不可点开（端点已有）；文档被快照引用时的 409 无指引 |
+| DR-043 | 编辑器 | Beat 关联是"背出标题"的自由文本；多 outline 文档时规则不可知 |
+| DR-044 | 工程 | 死代码/未接线清理（同步提案端点、卷 API、未用导出、`estimated_cost` 列） |
+| DR-045 | 统计 | "今日字数"按 UTC 分桶；统计表出现无法解释的负数（如 −364） |
+| DR-046 | 前端 | 硬编码英文串未 i18n、日期/数字不随语言、无离线提示、编辑器 aria-label 语言陈旧 |
+| DR-047 | 数据 | revision 无界增长：每次自动保存全量副本 + FTS 全量重写，无保留策略/正文预算 |
+| DR-048 | 编辑器 | 1 MiB 请求体硬墙对超长中文章节不可保存且无提示（配合 DR-001 成死局） |
+
+### DEC（非代码，需 Owner 决策）
+
+| ID | 事项 |
+|---|---|
+| DEC-01 | 用户验证从未发生：10 场访谈 + 一次真实冷启动（TTFW）计时，建议作为 0.9.0 发布 gate |
+| DEC-02 | 定位收敛：面向普通作者的文案 vs 实际 homelab/tinkerer 受众 |
+| DEC-03 | v0.8.0 Release 仍为 draft（tag/镜像已可用）：正式发布或修正文案 |
+| DEC-04 | LICENSE 署名（当前 Copyright 写的是项目名）与贡献者协议取舍 |
+| DEC-05 | 0.9.0 方向：整本生成 vs 局部生成 + diff 的能力优先级重排 |
+| DEC-06 | provider 抽象（约 30 个文件）瘦身评估 |
+
+---
+
+## 2. P0 详细条目
+
+### DR-001 [P0] 自动保存失败熔断，无重试入口
+
+- [x] 已完成（2026-10-01）
+- **问题**：保存一旦进入 `error` 状态，autosave effect 直接 return，不再排任何定时器；继续输入的字不会触发保存，界面无"重试保存"按钮。
+- **证据**：`frontend/src/features/studio/hooks/useDocumentDraftAutosave.ts:83-90`（熔断）、`:117-121`（置位）；`StudioEditorPane.tsx:125-152` 只为 conflict 渲染动作，error 态无按钮；`useDocumentDraft*.test.tsx` 无 500/网络失败用例。
+- **影响**：静默数据丢失。红色 "Save failed" 后继续写作并切换文档/刷新 = 全部新增内容丢失。
+- **修复方向**：把 `error` 从熔断改为"退避重试（如 5s/15s）+ 显式重试按钮"，复用 `retryOverwrite` 的 `persistDraft` 路径；`error` 与 `conflict` 共用同一保存状态机。
+- **验收标准**：① 一次非 409 失败后，下一次输入会自动重试保存并最终成功；② UI 始终有一个可见的"重试保存"动作；③ 新增回归测试覆盖失败→重试→成功与失败→持续失败。
+- **验证**：`pnpm --dir frontend exec vitest run src/features/studio/hooks/useDocumentDraft.test.tsx`（新增用例）；`pnpm --dir frontend type-check`。
+- **备注**：这是全清单中成本最低的 P0（单一 hook + 一个按钮）。
+- **交付记录**：2026-10-01 | 工作区（基线 `607a092e`，未提交） | 退避重试（5s/15s/30s，成功即复位）+ 错误面板"重试保存"按钮（`editor.action.retrySave`，en/zh）+ 保留击键恢复路径 | 验证：`pnpm --dir frontend test:unit` 131 文件/709 用例全绿；`type-check` / `biome check` / `format:check` / `pnpm --dir frontend build` / `pnpm --dir server gates` 全绿 | 新增回归 `useDocumentDraft.autosave-recovery.test.tsx`（自动重试、退避上限、击键恢复、手动重试）。
+
+### DR-002 [P0] 草稿丢失窗口与离开守卫缺失
+
+- [x] 已完成（2026-10-01）
+- **问题**：切换文档或组件卸载会清掉待发的 1.5s 防抖定时器，未持久化编辑被丢弃；没有 `beforeunload`/路由守卫；当前测试把"丢弃"固化为期望行为。
+- **证据**：`useDocumentDraftAutosave.ts:92,149`；`grep "beforeunload|pagehide|visibilitychange" frontend/src` = 0；`useDocumentDraft.selection.test.tsx:101`、`useDocumentDraft.lifecycle.test.tsx:197` 断言丢弃；`spec.md:1838-1884` 明确 Draft 仅在内存。
+- **影响**：最常见的数据损失路径（写完一句立刻切章/关标签）。
+- **修复方向**：① `beforeunload` 守卫（存在未持久化草稿时）；② 切换文档前 flush 或确认；③ 可选：最新草稿写 sessionStorage 作为崩溃恢复（需同步修改规格）。
+- **验收标准**：切换/关闭时未保存内容不静默丢失；对应既有"丢弃"测试按新行为重写（不是掩盖）。
+- **验证**：`pnpm --dir frontend exec vitest run src/features/studio/hooks/useDocumentDraft.selection.test.tsx src/features/studio/hooks/useDocumentDraft.lifecycle.test.tsx`；浏览器人工验证一次。
+- **交付记录**：2026-10-01 | 工作区（基线 `607a092e`，未提交） | `beforeunload` 守卫（仅未持久化编辑触发）+ 切换文档/卸载时"救援写入"（新模块 `useDocumentDraftRescue.ts` 与 `documentDraftPersistence.ts`；与在途保存内容相同的写入会跳过，避免与其自身基线竞争） | 既有 5 处"切换即丢弃"用例按新语义重写（selection×2、lifecycle×1、external×1、reconciliation×1），未削弱断言语义 | 可选的 sessionStorage 崩溃恢复未做，保留为后续项 | 验证同 DR-001。
+
+### DR-003 [P0] 中文全文搜索静默失效
+
+- [ ] 未开始
+- **问题**：`document_search` 建表未指定 tokenizer（默认 unicode61），连续 CJK 字符被切成"整段一个 token"；查询侧 `buildFtsMatchQuery` 把中文包成短语做精确 token 匹配，导致日常中文查询几乎全部 0 命中。
+- **证据**：`server/drizzle/0000_init_persistence_core.sql:41`；`server/src/contexts/studio/application/fts_match_query.ts:10,25`；实测（真实 Fastify inject）`q="林黛玉"/"黛玉"/"宝玉"` → `results=[]`，`q="葬花"` 命中；一篇三段中文小说命中率 4/14；`tests/api/studio_search.test.ts` CJK 用例数 = 0。
+- **影响**：中文作者的核心检索能力事实上不存在；"搜索"是写作指南推荐功能，静默失败比缺失更伤信任。
+- **修复方向**：写入 FTS 的 title/content 做 CJK 预分词，查询侧用同一分词器。两个实测选项：`Intl.Segmenter('zh',{granularity:'word'})`（零依赖，2 字词可命中，推荐）或 `tokenize='trigram'`（3 字起命中，**2 字词仍 0 命中**，单用不够）。同时把 snippet 窗口从"16 token"改为"16 字符 CJK / 16 token 拉丁"。
+- **验收标准**：`"林黛玉"`、`"黛玉"`、`"宝玉"` 均命中断言进入 `studio_search.test.ts`；英文既有用例零回归；搜索头/查询构造在中文下不再整段成 token。
+- **验证**：`pnpm --dir server exec vitest run tests/api/studio_search.test.ts`；新增 CJK 用例先在基线上复现 0 命中。
+- **依赖**：**必须与 DR-004 同批交付**（换 tokenizer 需要全量重建索引）。
+
+### DR-004 [P0] FTS 索引重建通道与 doctor 对账缺失
+
+- [ ] 未开始
+- **问题**：全仓无 FTS `rebuild`/`integrity-check` 代码路径；`document_search` 是自含内容表，FTS5 内置 rebuild 指令不可用；`doctor` 只报 4 项、不查索引。
+- **证据**：`grep -rn "rebuild|fts5vocab|integrity-check" server/src` 仅命中无关代码；`apps/cli/main.ts:210-239`；`sqlite_diagnostics_health.ts:20-42`。
+- **影响**：换机（手工拷 DB）、索引损坏、或 DR-003 换 tokenizer 时无重建手段；用户完全不可见不可修。
+- **修复方向**：新增 `novel-engine reindex` 子命令（从 `documents.current_revision_id` + `document_revisions.content_markdown` 重灌索引）；`doctor` 增加"索引行数 vs 文档数"对账项。
+- **验收标准**：reindex 在有/无漂移库上均幂等；doctor 能报告漂移；CLI 测试覆盖。
+- **验证**：`pnpm --dir server exec vitest run tests/apps/cli/cli.test.ts`（新增用例）；`pnpm --dir server exec vitest run tests/api/studio_search.test.ts`。
+
+### DR-005 [P0] 中文字数口径错误（跨产品面）
+
+- [ ] 未开始
+- **问题**：字数按 `[\p{L}\p{N}_'-]+` 匹配"词"，中文连续文本被按标点分段计数（约 1/7 低估），但 UI 在中文下把它当"字"显示，英文下当 "words"。
+- **证据**：`server/src/contexts/studio/domain/revision_word_count.ts:3`；测试钉死 `"你好世界"→1`（`tests/contexts/revision_word_count.test.ts:15-18`）；实测 31 汉字 → 4；UI `zh.shared.ts:30-31`、`StudioStatusbar.tsx:41-44`、`StudioHistoryPanel.tsx:89-90`；下游 `THIN_CHAPTER_WORDS=250`（`review_rules.ts:84`）导致中文约 1700–2000 字前一直报"章节过薄"；usage 缺失回退也复用该函数（`proposal_landing.ts:114-118`）。
+- **影响**：连载作者的心跳数字失真；同时污染评审阈值、统计与成本估算。
+- **修复方向**：改为按脚本分量计数（CJK 逐字符 + 拉丁按词），或中文场景直接用字符数口径；同步 zh 文案、`THIN_CHAPTER_WORDS`、usage 回退与规格中的计数定义。
+- **验收标准**：CJK 用例（如 31 汉字）计数符合新定义；既有英文用例不回归；规格补充"word"定义条目。
+- **验证**：`pnpm --dir server exec vitest run tests/contexts/revision_word_count.test.ts tests/api/studio_writing_stats.test.ts`；`pnpm --dir server gates`（若涉及 spec 改动则含 `pnpm spec:validate`）。
+- **备注**：涉及 `docs/agents/error-codes.md` 之外的文档无需门禁；改动面横跨 domain/UI/测试/规格，按 AGENTS.md 一次性完成。
+
+### DR-006 [P0] 流式生成失败不可恢复（重试 + 保命）
+
+- [ ] 未开始
+- **问题**：唯一在用的生成路径是 SSE；流一旦失败（瞬时 429/5xx/idle 超时）不回退重试，且已生成正文在服务端置空、前端 `finally` 清空预览——双端全损，只能重新生成、再次计费。
+- **证据**：`server/src/contexts/studio/infrastructure/streaming_generation.ts:209-212`（"A stream is never retried"）；`proposal_pipeline.ts:216-223`；`frontend/.../useProposalStreamSession.ts:199-204`；`tests/api/studio_proposals_stream.test.ts` 把"不伪造文本"固化为期望。
+- **影响**：长章一次生成失败 = 全部作废 + token 双倍成本。
+- **修复方向**：① 首个 delta 之前的失败复用 `runWithRetryPolicy`；② 中途失败把已累积的 sanitized 文本持久化为 failed job 的 `result_json.partial_markdown`，前端保留预览并支持"另存为提案/复制"。
+- **验收标准**：首 delta 前失败自动重试且不产生重复 usage；中途失败后 job 记录含 partial 文本、前端可保留；新增两条回归测试。
+- **验证**：`pnpm --dir server exec vitest run tests/api/studio_proposals_stream.test.ts`；`pnpm --dir frontend exec vitest run src/app/proposalStream.lifecycle.test.ts`。
+
+### DR-007 [P0] 整本生成静默覆盖手写章节
+
+- [ ] 未开始
+- **问题**：整本循环的 `needsGeneration` 规则是"当前修订不是 ai-accepted 就重生成"，手写/导入/restore 的章节全部会被重新起草并自动接受；UI 仅一句 "still missing an AI revision"，无确认。
+- **证据**：`frontend/src/features/studio/hooks/wholeBookPlan.ts:8-19`（注释自认 seeded/hand-written/imported/restored 都会被重生成）；`useWholeBookChapterRun.ts:108-140` 自动接受；`en.studio.ts:215-216` 文案。
+- **影响**：一键顶替手稿（只能逐条 restore 找回），违反 CONTEXT.md"仅作者显式接受才应用"的产品承诺。
+- **修复方向**：默认只生成"空章节/从未有 ai-accepted 的章节"；对非空作者文本逐章确认（或先 dry-run 列表）；UI 明确列出将被覆盖的章节。
+- **验收标准**：含手写章节的项目启动整本生成时不静默覆盖；回归测试覆盖 needsGeneration 与确认路径。
+- **验证**：`pnpm --dir frontend exec vitest run src/features/studio/hooks/useWholeBookLoop.run.test.tsx`；`pnpm --dir server exec vitest run tests/api/studio_proposals.test.ts`。
+
+### DR-008 [P0] 首启 Owner 抢占（无 setup token）
+
+- [ ] 未开始
+- **问题**：`POST /api/setup` 的唯一门是 same-origin 校验；不带 Origin/Referer 的非浏览器客户端被直接放行。任何扫描器/首个访问者可在作者之前创建 Owner；第二次 setup 被单 Owner 不变式拒绝 → 作者被永久锁死，且无 CLI 自助恢复。
+- **证据**：`server/src/shared/interface/http/auth_routes.ts:128-155`（注释自认）、`auth_store.ts:55-72`；容器实测：无 Origin 的 `POST /api/setup` → 201，真实作者随后 → 422；两个 compose 文件默认发布 `0.0.0.0:8000`。
+- **影响**：正常部署直接变成"实例被接管且无法自救"（恢复只能删库，等于丢内容）。
+- **修复方向**：① 首启生成一次性 setup token（写入卷内 `.setup-token` 0600 + 打印到日志），`POST /api/setup` 校验 `x-setup-token`；或 setup 仅允许 loopback；② 补 `cli owner reset`（持数据目录锁，正确处理 FK/session cascade）。
+- **验收标准**：带外网地址的无 token setup 被拒；容器首启流程文档化；`cli owner reset` 有测试且不破坏既有会话语义。
+- **验证**：`pnpm --dir server exec vitest run tests/api/auth_setup.test.ts`（新增 token 用例）；`pnpm --dir server exec vitest run tests/apps/cli/cli.test.ts`。
+- **备注**：与 DR-033/DR-034 同属"部署安全第一公里"，建议同批规划、分条提交。
+
+### DR-009 [P0] XFF 伪造使登录限速失效
+
+- [ ] 未开始
+- **问题**：当 peer 命中 `SECURITY_TRUSTED_PROXIES` 时，限速键取 `X-Forwarded-For` 首段（客户端可控）；每请求换一个伪造 IP 即每请求一个新桶，登录限速永不上限。信任列表一旦过宽（含直连网段/CIDR），爆破无阻。
+- **证据**：`shared/infrastructure/rate_limit/client_identity.ts:160-170`；`apps/api/auth_registration.ts:51-57`；实测：无信任代理时第 5 次 429；`SECURITY_TRUSTED_PROXIES=127.0.0.1` 后连续 16 次恶意登录零 429。bcrypt cost 12 每次约 0.21s，持续爆破同时打满 CPU。
+- **影响**：README 的 "5/minute" 抗爆破承诺失效，登录面可被 DoS。
+- **修复方向**：只接受具体代理 IP（拒绝 CIDR 覆盖客户端）；取"最右侧未受信跳"作为客户端身份；`trustedProxies` 推导 Fastify `trustProxy`；文档补反例警告。
+- **验收标准**：信任代理场景下伪造 XFF 不再绕过限速；新增回归测试覆盖"多跳 + 伪造首段"。
+- **验证**：`pnpm --dir server exec vitest run tests/apps/api/`（限速/身份相关文件）；`pnpm --dir server gates`。
+
+---
+
+## 3. P1 详细条目
+
+### DR-010 [P1] 停止/接受/拒绝的恢复性
+
+- [ ] 未开始
+- **问题**：① 点"停止"后已生成的全部 delta 被清空，预览只读、无复制/保留；② 接受提案后没有 undo，只能走"历史 → 恢复修订"；③ reject 无记录，文本永久丢失。
+- **证据**：`useProposalStreamSession.ts:199-231`；`StudioCopilotPanel.tsx:168,183-208`；全前端 `grep -i undo` 零命中；无 reject 路由（`revision_routes.ts` 仅 list/restore）。
+- **修复方向**：停止时保留已收文本（可复制/另存为提案）；Accept 后出一次性"撤销"提示条；reject 的文本存入 job/proposal 记录可回看。
+- **验收**：三条路径各有回归测试；UI 文案（zh/en）同步。
+- **验证**：`pnpm --dir frontend exec vitest run src/features/studio/`（相关组件）。
+
+### DR-011 [P1] 修订历史预览与 diff
+
+- [ ] 未开始
+- **问题**：历史列表只有 source/时间/词数/id 前缀；无正文预览端点、无 diff；restore 无二次确认，是"盲恢复"。
+- **证据**：`StudioHistoryPanel.tsx:85-96`；`revision_routes.ts:26-99` 无单条正文 GET；`grep "\bdiff\b"` 前端零命中；`openwiki/guides/writing-guide.md:161` 宣称可 "diff against history"（文档说谎）。
+- **修复方向**：新增只读 `GET .../revisions/:revisionId`（正文）；历史行可点开预览 + 与当前版本 diff 高亮；restore 前确认并说明"当前内容仍保留在历史"。
+- **验收**：可查看任一历史正文；diff 至少覆盖"行级"对比；restore 有确认。
+- **验证**：`pnpm --dir server exec vitest run tests/api/studio_revisions.test.ts`（新增正文端点用例）；`pnpm --dir frontend exec vitest run src/features/studio/components/StudioHistoryPanel.restore.test.tsx`。
+
+### DR-012 [P1] 冲突解决可查看服务器版本
+
+- [ ] 未开始
+- **问题**：冲突的两个动作都是破坏性的（整体丢弃/整体覆盖），无法查看对方文本同时保留自己草稿；被覆盖文本只能靠 restore 阅读（而 restore 又整体覆盖）。
+- **证据**：`useDocumentDraftActions.ts`（loadLatest/retryOverwrite）；`StudioEditorPane.tsx:129-150`；依赖 DR-011 的正文端点。
+- **修复方向**：冲突面板加"查看服务器版本（只读）"；覆盖前列出将覆盖的 revision 号；可选三选一（保留本地/加载最新/预览后决定）。
+- **验收**：冲突下可只读查看服务器文本；测试覆盖"查看不改变本地草稿"。
+- **验证**：`pnpm --dir frontend exec vitest run src/features/studio/hooks/useDocumentDraft.conflict.test.tsx`。
+- **依赖**：DR-011。
+
+### DR-013 [P1] DOCX 中文排版
+
+- [ ] 未开始
+- **问题**：DOCX 只有 TITLE + HEADING_1 + 裸段落；无 `w:rFonts eastAsia`、无 2 字符首行缩进、无章前分页、无 TOC 域；正文首行与章节标题重复（H1 被 plainText 去标记后与标题行重复）。
+- **证据**：`server/src/contexts/studio/infrastructure/bounded_export_rendering.ts:86-101`；grep `rFonts|eastAsia|indent|pageBreak` 零命中；实测 styles.xml 空 `<w:rPrDefault/>`。
+- **修复方向**：显式东文字体（宋体/思源宋体）+ 首行缩进 2 字符 + 章前分页 + TOC；跳过与章节标题重复的首行；补结构断言测试。
+- **验收**：导出 DOCX 在 Word/WPS 打开即具备中文段落样式；标题不重复；测试覆盖字体与缩进标记。
+- **验证**：`pnpm --dir server test`（导出相关）；人工打开一次产物。
+
+### DR-014 [P1] EPUB 合规与中文 CSS
+
+- [ ] 未开始
+- **问题**：`<dc:language>en</dc:language>` 硬编码；缺 `<meta property="dcterms:modified">`（EPUB 3 必需）；无任何 CSS（无缩进/行高/字体）；图片与代码块被整段删除。
+- **证据**：`epub_xml.ts:113,29-37,62-68`；解包实测（mimetype 合规、缺 dcterms:modified）。
+- **修复方向**：语言可配置或按内容/项目语言推断；补 dcterms:modified（用导出时间 ISO-8601）；内置中文阅读 CSS；明确图片策略。
+- **验收**：EPUBCheck 类校验通过（或结构断言等价）；中文书语言正确。
+- **验证**：`pnpm --dir server test`（导出相关）；有条件时跑 EPUBCheck。
+
+### DR-015 [P1] Markdown 导出丢标题与导出范围
+
+- [ ] 未开始
+- **问题**：Markdown 只拼 `chapter.contentMarkdown`，丢 `chapter.title`；且所有格式只含 chapter，character/world/outline/note 与 lore 字段只留在 SQLite；指南称 Markdown 是"无损副本"（不成立）。
+- **证据**：`bounded_export_rendering.ts:73-84`；`export_artifact_service.ts:155-157`；实测输出无章节标题。
+- **修复方向**：Markdown 每章输出 `## {title}`；决策并实现"全量归档导出"（含非章节文档）或修正文档承诺。
+- **验收**：Markdown 含章节标题；导出范围与文档一致。
+- **验证**：`pnpm --dir server test`（导出相关）。
+
+### DR-016 [P1] 查找/替换与快捷键
+
+- [ ] 未开始
+- **问题**：编辑器无查找/替换（未装 `@codemirror/search`）；全前端无 metaKey/ctrlKey 处理，Ctrl+S 触发浏览器"保存网页"；工具条无可点击格式按钮；搜索不定位命中。
+- **证据**：`frontend/package.json`；`MarkdownEditor.tsx:49-50`；grep 零命中；`StudioNavigatorSearch.tsx:64`。
+- **修复方向**：接入 CodeMirror search（Ctrl+F/Ctrl+H）；全局拦截 Ctrl/Cmd+S 触发保存 + toast；最小格式按钮（B/I/H）；搜索返回偏移以支持定位高亮（可拆 DR-029）。
+- **验收**：Ctrl+F/Ctrl+H/Ctrl+S 行为正确；组件测试覆盖快捷键处理。
+- **验证**：`pnpm --dir frontend exec vitest run src/features/studio/`；人工浏览器验证。
+
+### DR-017 [P1] 卷功能 UI 可达性（或规格降级）
+
+- [ ] 未开始
+- **问题**：卷 CRUD/reorder API 与前端 client 方法存在但零调用者；项目只创建一个默认卷 → "Move to volume" 控件永不渲染；多卷、按卷导出在 UI 不可达，规格却以多卷为前提。
+- **证据**：`frontend/src/app/api.ts:79-86`（零调用者）；`StudioNavigatorRowActions.tsx:88-123`；E2E 自述 `studio_reorder.spec.ts:11-13`；`project_store_part.ts:60,178`。
+- **修复方向**：二选一（需 Owner 拍板，可并入 DEC-05）：A. 补最小卷管理 UI（新建/改名/删除/排序 + 放置）；B. 承认单卷并同步降级 spec/guide，删除死代码。
+- **验收**：所选方向落地；不再存在"文档教用户使用不存在入口"。
+- **验证**：`pnpm --dir server exec vitest run tests/api/studio_volumes.test.ts`；前端相关测试。
+
+### DR-018 [P1] 项目删除入口
+
+- [ ] 未开始
+- **问题**：`DELETE /api/projects/:id` 已实现，`api.deleteProject` 零调用者（历史审计 0.3.0 的同类问题以"有后端无 UI"形态存活）。
+- **证据**：`frontend/src/app/api.ts:170`；`server/.../project_routes.ts:195`；项目库 UI 无删除。
+- **修复方向**：项目库/设置加删除（二次确认，明示导出文件与快照的处理）。
+- **验收**：UI 可删除项目并有确认；测试覆盖。
+- **验证**：`pnpm --dir frontend exec vitest run src/features/`（项目库相关）；`pnpm --dir server exec vitest run tests/api/`（项目相关）。
+
+### DR-019 [P1] 密码体验（确认/修改/无找回提示）
+
+- [ ] 未开始
+- **问题**：密码框无确认字段（打错即永久锁死）；全仓无"忘记密码/重置"路径；只有 setup 与 login。
+- **证据**：`EntryPage.tsx:105-117`；`grep "忘记密码|reset.*password|forgot"` 全仓零命中。
+- **修复方向**：setup 加二次确认；`cli owner` 提供改密/重置（与 DR-008 的 reset 合并设计）；首登提示"本工具无邮件找回，请妥善保存密码"。
+- **验收**：setup 两次输入一致才通过；有文档化的重置路径。
+- **验证**：`pnpm --dir server exec vitest run tests/api/auth_setup.test.ts`；`pnpm --dir frontend exec vitest run src/features/studio/EntryPage.lifecycle.test.tsx`。
+
+### DR-020 [P1] 会话过期体验
+
+- [ ] 未开始
+- **问题**：任一 401 直接 `navigate("/", {replace:true})`，无提示、丢草稿与当前位置；登录后固定回 `/projects`。
+- **证据**：`useStudioPageNavigation.ts:31-34`、`useProjectShellState.ts:120-123`、`useCurrentDocument.ts:139-141`；dictionaries 无 session-expired 文案。
+- **修复方向**：入口页显示"会话已过期"；保留来源路由（`state.from`），登录后回跳；配合 DR-002 降低草稿损失。
+- **验收**：过期→提示→登录→回到原文档路径；测试覆盖。
+- **验证**：`pnpm --dir frontend exec vitest run src/features/studio/EntryPage.lifecycle.test.tsx`。
+
+### DR-021 [P1] 错误文案中文化
+
+- [ ] 未开始
+- **问题**：服务端英文 message 直出，且夹带内部标识符（如 `project_settings_bytes`、`provider returned HTTP 401`、`Owner session required.`）；契约层 `Invalid <label>.<key>` 21 处。
+- **证据**：`frontend/src/app/toErrorMessage.ts:28-36`；`httpClient.ts:41-44`；`zh.errors.ts:44` 与 `structure_capacity.ts:69` 拼出中英混句。
+- **修复方向**：按 `error.code` 前端映射中文文案；provider 原始消息降为"技术详情"折叠区；契约错误改为用户可读。
+- **验收**：中文界面常见错误（401/413/422/限速/容量）不再出现英文；测试覆盖映射表。
+- **验证**：`pnpm --dir frontend exec vitest run src/app/`（错误处理相关）。
+
+### DR-022 [P1] provider 配置可见性与错误语义
+
+- [ ] 未开始
+- **问题**：设置页渲染全部 provider，未配置不禁用不标注；`/api/providers` 已返回 `model/configured/is_default` 但前端不读；未配置时生成报 `Provider '<x>' does not support streaming generation.`（掩盖缺 key 的真实原因）。
+- **证据**：`StudioSettingsPanel.tsx:94-118`；`model_resolution.ts:74-80`；`proposal_pipeline.ts:186-191`；`provider-setup.md` 自认"选未配置 provider 会让所有生成失败"。
+- **修复方向**：未配置项置灰 + 标注"（未配置 API key）"+ 链接指南；显示当前 model；未配置错误改为明确的凭证缺失 code/message。
+- **验收**：未配置 provider 不可选；错误消息指向缺失凭证；测试覆盖。
+- **验证**：`pnpm --dir server exec vitest run tests/api/provider_catalog.test.ts tests/api/studio_proposals_stream.test.ts`。
+
+### DR-023 [P1] 生成语言跟随（"双语"的最后一公里）
+
+- [ ] 未开始
+- **问题**：任务无 locale、SYSTEM_PROMPT 无语言要求；mock provider 全英文且 revision 不引用作者正文；清理器只删英文模板前缀（"好的，以下是……"不会被剥离）。
+- **证据**：`ports/text_generation.ts:53-58`；`proposal_prompts.ts:19-28`；`deterministic_story_provider.ts:88,94-116`；`sanitization.ts:4-25`。
+- **修复方向**：项目级"写作语言"（默认取 UI 语言/大纲语言）注入 prompt；zh trial 模板与占位候选；清理器补中文模板前缀。
+- **验收**：zh 项目用中文指令生成中文正文（mock 可断言）；清理器覆盖中文前缀用例。
+- **验证**：`pnpm --dir server exec vitest run tests/contexts/`（prompt/sanitization 相关）。
+
+### DR-024 [P1] Review 归属 provider
+
+- [ ] 未开始
+- **问题**：项目选 dashscope 时生成走 dashscope，但 Review 恒用 `LLM_PROVIDER`（默认 mock）；UI 不标注 → 用户以为在用真模型审稿。
+- **证据**：`review_routes.ts:41-62`（拒绝客户端字段）；`studio_services_assembly.ts:110-113`；`review_service.ts:112`。
+- **修复方向**：review provider 随项目设置（或显式标注当前 provider/model + "用其他 provider 重审"）。
+- **验收**：review 的 provider 可见且可预期；测试覆盖。
+- **验证**：`pnpm --dir server exec vitest run tests/api/review_app_wiring.test.ts tests/api/studio_reviews.test.ts`。
+
+### DR-025 [P1] review 超时下限
+
+- [ ] 未开始
+- **问题**：`chapter_draft/chapter_revision` 有 180s 地板，但 `editorial_review` 走默认 30s 且重试 3 次 → 长稿送审必超时并白烧 3 次调用。
+- **证据**：`provider_http.ts:12,221`；`provider_http.test.ts:163`（明确断言 30s）；`review_service.ts:118`。
+- **修复方向**：给 `editorial_review`（及 `lore_extract`）设置独立超时下限（≥180s 或独立 env）；超时消息写入 job.error 供 UI 展示。
+- **验收**：review 超时可配置且默认足够长；测试更新。
+- **验证**：`pnpm --dir server exec vitest run tests/contexts/provider_http.test.ts`。
+
+### DR-026 [P1] 流式时限与诊断
+
+- [ ] 未开始
+- **问题**：180s 是从 dispatch 起算的绝对截止（不随帧重置），健康长流会被斩；SSE 无心跳帧、首个 delta 前不写 header；provider 在 200 的 SSE 里回错误负载被静默忽略（最终报 JSON contract 错）；客户端 30s 不读即 destroy（笔记本休眠即失去生成）。
+- **证据**：`streaming_generation.ts:212-232`；`provider_response_lifecycle.ts:39-47`；`proposal_stream_response.ts:6-11,13,110-120,155-158`；`dashscope_extractors.ts:74-96`。
+- **修复方向**：区分"绝对上限"与"静默预算"（或按 step 放宽并暴露设置）；补 `:` 心跳；识别 SSE 内错误帧并透出稳定 code；drain 超时区分客户端卡死与可续传。
+- **验收**：长流不再被静默周期杀；错误帧有可读诊断；测试覆盖。
+- **验证**：`pnpm --dir server exec vitest run tests/contexts/provider_streaming_deadline.test.ts tests/api/proposal_stream_response.test.ts`。
+
+### DR-027 [P1] 生成端点幂等键
+
+- [ ] 未开始
+- **问题**：in-flight guard 只挡"同 target 的并发同请求"且是进程内的；顺序重复提交（网络抖动后重发）必然产生第二份 job 与 usage（双份计费）。retry 端点强制 Idempotency-Key，形成不对称契约。
+- **证据**：`operation_in_flight.ts:17,44-98`（自认 process-local）；`job_routes.ts:104-140`。
+- **修复方向**：生成端点接受可选 `Idempotency-Key`，命中已存在 job 时返回同一 job（复用 retry 幂等机制）。
+- **验收**：同 key 重放不产生新 job/usage；测试覆盖。
+- **验证**：`pnpm --dir server exec vitest run tests/api/studio_proposals.test.ts tests/api/job_retry_idempotency_contract.test.ts`。
+
+### DR-028 [P1] usage 语义与成本
+
+- [ ] 未开始
+- **问题**：provider 未报 usage 时 `prompt_tokens` 被写成 instruction 词数（通常 0–5）、completion 写 proposal 词数；usage 只在"完成"时落库，重试/超时/失败的真实消耗不可见；`estimated_cost` 是只存在于 schema 的死列；无任何预算/告警护栏。
+- **证据**：`proposal_landing.ts:114-118,205-213`；`job_usage_tables.ts:66-69,81`；全仓 grep 仅 migration 命中 estimated_cost。
+- **修复方向**：usage 增加 `attempt/outcome` 与"provider 未报 usage"标记；决策 `estimated_cost`（实现价格表或从 schema 删除）；项目级预算/告警。
+- **验收**：用量面板数字不再误导；失败/重试可见；决策落地。
+- **验证**：`pnpm --dir server exec vitest run tests/api/studio_usage.test.ts`；`pnpm --dir frontend exec vitest run`（用量组件）。
+
+### DR-029 [P1] 搜索 UI
+
+- [ ] 未开始
+- **问题**：零结果不渲染任何提示；结果点击只切文档不定位命中；硬编码 `LIMIT 30`、无 cursor/总数；无排序选项。
+- **证据**：`StudioNavigatorSearch.tsx:58-72`；`useStudioPageModel.ts:207`；`db/document_search.ts:14-15,61`。
+- **修复方向**：空态文案 + 结果计数；返回 `total`/cursor；结果带偏移支持跳转高亮。
+- **验收**：0 结果有提示；>30 有"更多"；点击可定位。
+- **验证**：`pnpm --dir frontend exec vitest run src/features/studio/`（搜索相关）；`pnpm --dir server exec vitest run tests/api/studio_search.test.ts`。
+- **依赖**：DR-003（分词修复先落地，否则中文仍无结果可展示）。
+
+### DR-030 [P1] 事件循环冻结（搜索路径）
+
+- [ ] 未开始
+- **问题**：搜索 handler 同步执行；`q` 无长度/token 上限；8-token 停用词串要求 bm25 对全匹配集打分（LIMIT 不能剪枝）→ 实测 453–970ms 进程级冻结（SSE delta 无法 flush、healthcheck 迟到）。
+- **证据**：`server/src/contexts/studio/interface/http/project_routes.ts:173`；`studio_request_schemas.ts:141-144`；`fts_match_query.ts:12`；`document_search.ts:59-61`；实测（200 章/6.16MiB 语料）452.9ms@8 tokens。
+- **修复方向**：`MAX_MATCH_TOKENS` 8→3（实测压到 ~71ms）；高频词短路（document frequency 超阈值降级 OR/不参与 rank）；`q` 加 `maxLength`。
+- **验收**：最坏查询工作集显著下降；有界输入；测试覆盖上限行为。
+- **验证**：`pnpm --dir server exec vitest run tests/api/studio_search.test.ts tests/contexts/`（match query 相关）。
+- **备注**：与 DR-003 相邻但独立：先测量再隔离，不要为此引入 worker thread。
+
+### DR-031 [P1] 启动备份策略
+
+- [ ] 未开始
+- **问题**：每次启动（含崩溃重启循环）都写一份等于库大小的备份，永不清理；restore 还需约 2×库大小的空闲空间 → 磁盘耗尽后连恢复都做不了。
+- **证据**：`startup.ts:56-64`；`backup.ts:22-32`；`compose.yaml:4`（restart: unless-stopped）；实测 boot2/boot3 各增一份 `.bak`。
+- **修复方向**：仅当 schema 变化或显式请求时备份；保留 N 份/按时间轮转；备份前检查剩余空间并给出明确错误。
+- **验收**：连续重启不再线性增长备份；空间不足时消息可读；CLI 测试覆盖。
+- **验证**：`pnpm --dir server exec vitest run tests/apps/cli/`。
+
+### DR-032 [P1] doctor 只读化与迁移分离
+
+- [ ] 未开始
+- **问题**：`doctor` 实际会取排他锁、执行迁移与数据对账、写备份；服务器在跑时 exit 1 且把错误消息塞进 `quick_check` 字段，易被误判为数据库损坏。
+- **证据**：`apps/cli/main.ts:210-228,88`（help 未提写入副作用）；`reconciled_studio_database.ts:26-40`；实测 doctor 前后 backups 计数 +1。
+- **修复方向**：doctor 默认 readonly（不迁移/不备份/不取写锁）；迁移独立为 `cli migrate`；错误字段与消息修正。
+- **验收**：doctor 对副本零写入；运行中可安全执行（或明确拒绝并给出正确原因）。
+- **验证**：`pnpm --dir server exec vitest run tests/apps/cli/`。
+
+### DR-033 [P1] 占位密钥守门
+
+- [ ] 未开始
+- **问题**：`.env.example` 的 `change-me-to-a-long-random-local-secret` 能通过 production 守门（只拒绝空值、哨兵、<16 字符）；README 表格写默认 "sample value"，与代码不一致。
+- **证据**：`server_config.ts:27,178-186`；`.env.example:9`；实测该值 START ALLOWED。
+- **修复方向**：`.env.example` 留空或与哨兵同值；production 拒绝 `change-me*` 前缀；README 同步。
+- **验收**：占位值在 production 下被拒；文档与代码一致。
+- **验证**：`pnpm --dir server exec vitest run tests/`（config 相关）。
+
+### DR-034 [P1] 反向代理配置陷阱
+
+- [ ] 未开始
+- **问题**：A. 前置代理但未设 trusted proxies → 所有客户端共用一个限速桶，匿名者可让作者长期 429（登录 DoS）；B. TLS 终止后 `trustProxy` 未启用，浏览器 setup 的 Origin 校验只能靠 CORS 列表兜底，沿用占位 origin 时 setup 403（而 curl 反而成功）；C. compose 默认带占位 `https://app.example.com`。
+- **证据**：`client_identity.ts:166-170`；`auth_registration.ts:51-57`；`origin_validation.ts`；`http_server_policy.ts:23-40`；`compose.yaml:12`、`deploy/compose.yaml:18`；实测 Origin 组合。
+- **修复方向**：由 `trustedProxies` 推导 `trustProxy`；setup 的 expected origin 支持受信 `X-Forwarded-Proto`；compose 不提供占位 origin（缺省即 fail fast）；文档补部署 checklist。
+- **验收**：反代 + 默认配置下 setup 可用、限速按真实客户端隔离；测试/文档覆盖。
+- **验证**：`pnpm --dir server exec vitest run tests/apps/api/`；`pnpm --dir server gates`。
+
+### DR-035 [P1] 未认证暴露面收口
+
+- [ ] 未开始
+- **问题**：production 下 `/openapi.json`（125KB 全量契约）、`/version`（含 build/environment 指纹）、`/health*`、`/api/setup` 探针均可匿名访问。
+- **证据**：`apps/api/app.ts:211`；`health_routes.ts:70,100,110`；`version_route.ts:29`；实测 200。
+- **修复方向**：生产把 `/openapi.json` 收到 owner 门后或加开关；`/version` 去掉 runtime/build 指纹。
+- **验收**：生产匿名不再获得完整契约与构建指纹；测试覆盖。
+- **验证**：`pnpm --dir server exec vitest run tests/api/`；`pnpm --dir server gates`（涉及路由需 openapi:snapshot）。
+
+### DR-036 [P1] 备份边角
+
+- [ ] 未开始
+- **问题**：restore 校验会打开 `.bak` 从而在 backups/ 留下 `-shm/-wal` 残留；备份命令本身不做 quick_check 自检；备份为明文且未在 UI/指南中提示。
+- **证据**：实测 `restore.ts:51-56` 后出现 sidecar；`backup.ts:22-37` 无自检。
+- **修复方向**：校验后清理 sidecar；备份后自检 `quick_check`，失败删除半成品；文档说明备份明文。
+- **验收**：backups/ 无 sidecar 残留；坏备份不会静默留下。
+- **验证**：`pnpm --dir server exec vitest run tests/apps/cli/restore_cli.test.ts`。
+
+### DR-037 [P1] 导入修复
+
+- [ ] 未开始
+- **问题**：source hash 含目录绝对路径与内容 → 同目录改名/改一章内容即重复建项目；导入丢弃源章节标题全部变 `Chapter N`；无前端入口（仅 preview + CLI）。
+- **证据**：`fs_legacy_workspace_reader.ts:93,137-147`；`import_service.ts:60-68`；`project_store_part.ts:185-199`；`import_routes.ts:60-65`。
+- **修复方向**：hash 去根路径（相对路径+内容）；从首行标题/文件名推断章节名；决策 Web 导入向导或明确文档标注 CLI-only（可并入 DEC-05）。
+- **验收**：重复导入行为可预期（显式提示或幂等）；标题保留。
+- **验证**：`pnpm --dir server exec vitest run tests/contexts/legacy_import_service.test.ts`（或对应文件）。
+
+### DR-038 [P1] 关键回归与测试模式收敛
+
+- [ ] 未开始
+- **问题**：① autosave 失败路径（DR-001）、CJK 搜索（DR-003）、413 保存（DR-048）都没有用例；② `frontend/src/app/i18n/dictionaries/dictionaries.test.ts` 把英文文案按字节钉死，导致改一句 UI 文案要动三处（字典+断言+e2e）。
+- **证据**：`dictionaries.test.ts:27`；各域报告"测试盲区"节。
+- **修复方向**：补三类回归；把字典测试改为"键对齐 + 非空 + 关键锚点白名单"，不再全量钉文案。
+- **验收**：新增用例在修复前失败、修复后通过；字典测试只锁必要契约。
+- **验证**：`pnpm --dir server test && pnpm --dir frontend test:unit`。
+- **进展**：autosave 失败/恢复路径已随 DR-001/DR-002 交付回归覆盖（2026-10-01）；CJK 搜索用例与 413 用例仍待 Wave 2 与 DR-048。
+
+### DR-039 [P1] 文档-实现对齐
+
+- [ ] 未开始
+- **问题**：① README/deploy 反复写 "Once v0.8.0 is published"，但 tag/raw URL/GHCR 镜像均已可用（实测）；② guides 宣称 diff（`writing-guide.md:161`）、搜索"跳到命中"（`:169-171`）、"Move to volume…"（`:48-49`）均不成立；③ CONTEXT.md/CONTEXT 的 Review/Snapshot、rolling summary、Job 措辞与实现不符；④ spec 路由清单/命令数/`note` 类型滞后。
+- **证据**：各域报告的"规格宣称 vs 实现落差"与"③ 跨界发现"节。
+- **修复方向**：逐条修正；对"未来能力"的文案改为明确"未实现/规划中"表述；规格补 `note` kind、路由前缀、CLI 命令数、字数定义（DR-005）。
+- **验收**：文档不再承诺不存在的功能；`pnpm spec:validate` 通过。
+- **验证**：`pnpm spec:validate`；`pnpm --dir server gates`（llms-txt/hygiene）。
+
+---
+
+## 4. P2 详细条目（简式）
+
+### DR-040 [P2] dev 模式会话密钥持久化
+
+- [ ] 未开始
+- **问题**：非 Docker、未配置 `SECURITY_SECRET_KEY` 时每进程随机生成，重启即全体登出。
+- **证据**：`apps/api/app.ts:170-176`；`auth_service.ts:115`。
+- **修复方向**：非容器环境也把随机 secret 持久化到 `data/.secret`（0600）。
+- **验证**：`pnpm --dir server exec vitest run tests/api/auth_session.test.ts`。
+
+### DR-041 [P2] 容器加固与可观测性
+
+- [ ] 未开始
+- **问题**：容器以 root 运行、无 `read_only`/`cap_drop`/资源限制；无 `/metrics`、无 `LOG_LEVEL`；日志本身未泄露敏感信息（此项是好的）。
+- **证据**：容器实测 `id -u=0`；grep `LOG_LEVEL` 零命中。
+- **修复方向**：`USER node` + 只读根 + tmpfs；可选内网 `/metrics`；`LOG_LEVEL` 环境变量。
+- **验证**：`docker build` + compose 启动人工验证；`pnpm --dir server gates`。
+
+### DR-042 [P2] 快照/审阅可见性与删除指引
+
+- [ ] 未开始
+- **问题**：`project_snapshots` 用户永远看不到；审阅历史列表不可点开（详情端点已存在）；被快照引用的文档删除 409 无用户可读的解法。
+- **证据**：`useReviewHistory.ts:92-123`；`StudioReviewHistoryList.tsx:68-82`；`document_store_part.ts:139-146`。
+- **修复方向**：审阅行接详情；快照给出可读名字；删除失败时给出指引。
+- **验证**：`pnpm --dir frontend exec vitest run`（审阅组件）；`pnpm --dir server exec vitest run tests/api/`（review 相关）。
+
+### DR-043 [P2] Beat 候选与规则明示
+
+- [ ] 未开始
+- **问题**：beat 关联要求精确记住 outline 标题；多 outline 文档时只有第一个生效且无提示。
+- **证据**：`StudioBeatPanel.tsx:92-99`；`beat_association_service.ts:46-54,76-84`。
+- **修复方向**：服务端返回候选列表，UI 改下拉；多 outline 时明示规则或报错。
+- **验证**：`pnpm --dir server exec vitest run tests/api/studio_beats.test.ts`。
+
+### DR-044 [P2] 死代码与未接线清理
+
+- [ ] 未开始
+- **问题**：同步提案端点无调用者；卷 API 方法零调用者（若 DR-017 选降级则删除）；`estimated_cost` 死列（随 DR-028 决策）；若干仅测试引用的导出。
+- **证据**：`frontend/src/app/api.ts:79-86,170`；`job_usage_tables.ts:81`；架构报告"死代码/无引用导出"节。
+- **修复方向**：按 DEC-05/DR-017/DR-028 决策删除或接线；删除前确认 react-doctor 的 `unused-export` 零容忍不受影响。
+- **验证**：`pnpm --dir server gates && pnpm --dir frontend type-check`。
+
+### DR-045 [P2] 统计时区与负数解释
+
+- [ ] 未开始
+- **问题**："今日字数"按 UTC 日分桶（UTC+8 作者 0–8 点看到昨天）；统计表出现 `已采纳 −364` 无解释。
+- **证据**：`writing_stats_service.ts:15-18,49-55,66-78`；`StudioWritingStatsPanel.tsx:44,95-105`；截图 `writing-stats-zh.png`。
+- **修复方向**：按浏览器时区分桶（或明确标注 UTC）；负数来源加解释文案。
+- **验证**：`pnpm --dir server exec vitest run tests/contexts/writing_stats_calendar.test.ts`。
+
+### DR-046 [P2] 前端本地化与离线
+
+- [ ] 未开始
+- **问题**：硬编码英文串（`main.tsx`、`router.tsx`、`httpClient.ts`、`networkError.ts`、`proposalStream.ts`、契约层）；日期/数字不随语言；无离线提示；编辑器 aria-label 切换语言后不更新。
+- **证据**：各域报告 i18n 节。
+- **修复方向**：补 i18n 键；统一 Intl formatter 走 `getActiveLanguage()`；离线横幅 + 恢复重试。
+- **验证**：`pnpm --dir frontend test:unit && pnpm --dir frontend lint`。
+
+### DR-047 [P2] revision 增长与保留策略
+
+- [ ] 未开始
+- **问题**：每次自动保存插入整篇副本 + FTS 全量重写；无历史保留/合并策略；无正文体积预算（隐藏上限是 1 MiB HTTP body，见 DR-048）。
+- **证据**：`document_revision_writes.ts:38-52`；`document_search.ts:26-32`；`grep "prune|retention" server/src` = 0；`structure_capacity.ts:15-22` 无正文预算。
+- **修复方向**：相邻 autosave 合并（同秒/内容未变跳过）；保留策略（按时间/数量折叠）；规格补正文预算并与 DR-048 对齐。
+- **验证**：`pnpm --dir server exec vitest run tests/contexts/revision_store_pagination.test.ts`（新增策略用例）。
+
+### DR-048 [P2] 1 MiB 请求体与 413 体验
+
+- [ ] 未开始
+- **问题**：`bodyLimit: 1_048_576` 对约 35 万汉字的章节直接 413，编辑界面无体积提示；与 DR-001 叠加成"永久保存失败"死局。
+- **证据**：`http_server_policy.ts:36`；`error_envelope.ts:180-186`。
+- **修复方向**：编辑器显示字数/字节进度与软上限；或提高上限并写进 capacity 规格；413 给出可读指引。
+- **验证**：`pnpm --dir server exec vitest run tests/apps/api/`（新增 413 用例）。
+
+---
+
+## 5. 决策与验证事项（非代码，DEC）
+
+### DEC-01 用户验证从未发生（最高战略风险）
+
+- [ ] 未开始
+- **事实**：`docs/research/interview-kit.md` 明文"本文档只准备材料，全部访谈由 Owner 本人执行"，成功判据"留存候选 ≥ 3"；仓库内没有任何已执行访谈记录；TTFW（首次价值时间）从未实测（历史记录多次 "recorded skip"）。公开仓库 6 star / 0 watcher。
+- **决策建议**：把"10 场访谈 + 一次真实冷启动计时"作为 0.9.0 发布 gate；若留存候选 < 3，收敛 writer-facing 定位（见 DEC-02）。
+- **完成定义**：访谈记录归档 + TTFW 计时有一份可复现记录 + 留存候选结论。
+
+### DEC-02 定位收敛
+
+- [ ] 未开始
+- **事实**：README 第一屏对"普通作者"说话（"no development involved"），实际路径要求 Docker/终端/端口/环境变量；指南 FAQ 自述 "self-hosting authors"；访谈筛选把"不会装 Docker 的人"当作信号而非淘汰线。
+- **决策建议**：二选一——A. 面向 homelab/tinkerer 的窄口径产品文档与能力取舍；B. 为普通作者补"零终端"路径（托管/一键安装包）。文案现状与任一方向都要一致。
+
+### DEC-03 v0.8.0 Release 状态
+
+- [ ] 未开始
+- **事实**：tag `v0.8.0`、GHCR 多架构镜像（`0.8.0/0.8/latest` 匿名可拉）、raw compose URL 均已可用；GitHub Release 仍为 draft，外部发布动作处于冻结。
+- **决策建议**：正式发布或同步修正 README/deploy 文案（文案部分已包含在 DR-039）。
+
+### DEC-04 LICENSE 署名与贡献协议
+
+- [ ] 未开始
+- **事实**：MIT，`Copyright (c) 2024 Novel Engine`（署名是项目名而非自然人或实体；年份与仓库创建时间不一致）；无 CLA；CONTRIBUTING 的流程实际为 agent 集群设计，外部人类贡献成本高。
+- **决策建议**：修正署名；决定是否需要 DCO/CLA；如实说明外部贡献门槛。
+
+### DEC-05 0.9.0 方向：局部生成 + diff 优先
+
+- [ ] 未开始
+- **事实**：评审一致结论——"整章/整本盲签"是当前最贵且体验最差的路径（无 diff、不可局部生成、整本循环有覆盖风险），而不可变修订 + snapshot 是唯一竞品无对应物的承重卖点，却在用户端不可感知（看不到历史正文/无 diff）。
+- **决策建议**：把"局部生成（选区/段落）+ 接受前 diff + 一键撤销"作为 0.9.0 主题；整本生成默认改为逐章确认（与 DR-007 配套）。
+
+### DEC-06 provider 抽象瘦身评估
+
+- [ ] 未开始
+- **事实**：约 30 个文件维护多 provider 抽象与厂商中立 payload，但真实并发上限 4、真实用户 1；同时 DashScope 协议已发生过两次真实断裂（历史记录）。
+- **决策建议**：评估"保留两家 + 明确文档"或"收敛适配层厚度"，避免为不存在的市场维护抽象。
+
+---
+
+## 6. 保护清单（已验证良好，勿在修复中重写/删除）
+
+- **架构门禁真实生效**：`pnpm --dir server arch` 0 违规（273 模块/1252 依赖，2.5s）；四层边界、`ai` 隔离规则实际执行。
+- **文件粒度**：全仓生产文件 ≤331 行（300 代码行预算 + 零豁免）；这是罕见的正面资产。
+- **测试体系主干**：234 个 server 测试文件/1421 用例（184s）全过；断言可执行、无快照仪式、无 skip/only；增量维护问题只收敛"字节钉死文案"这一种模式（DR-038）。
+- **备份/恢复主干**：WAL 在线备份一致性、restore 的三重拒绝路径（空文件/异种库/坏路径均不改动现库）、SIGKILL 后数据完好——实测通过；DR-031/036 只是策略与边角。
+- **部署链**：GHCR 镜像真实可拉可跑、首启 secret bootstrap 生效、会话跨重启有效、healthcheck 工作。
+- **i18n 键完整度**：EN/zh 359 键完全对齐；无障碍（APG tabs、aria-live、焦点管理）基础扎实。
+- **错误处理**：无吞错模式、无 TODO/FIXME 标记债；日志不打印密码/密钥/cookie。
+
+---
+
+## 7. 附录：评审角色与交叉发现摘要
+
+- 5 个角色：产品伪需求 / 用户可用性 / 架构工程 / 运维安全 / 竞争可持续；4 个功能域：编辑器与写作核心 / AI 生成审阅 / 搜索导入导出 / 平台与规格符合性。
+- **交叉印证**（多角色独立命中同一事实）：中文搜索失效（用户+功能域+产品）、字数口径（用户+功能域+统计）、卷不可达（产品+功能域）、保存/取消的不可恢复（用户+功能域）、setup 抢占与限流绕过（运维实测）、"非线性产品投入"（架构 46% 提交非功能 + 市场 60% 非功能 + 产品 33/48 change 为加固）。
+- **正交结论**（单一角色独有）：运维实测的事件循环冻结（架构域独立复测）、EPUB/DOCX 产物结构缺陷（功能域实测）、竞品矩阵与 bus factor=1/验证缺失（市场域）、429/201 等安全实测（运维域）。
+- **最大交叉张力**：不可变修订 + snapshot 被市场域判为"唯一承重卖点"，但产品域判其"用户不可见"，功能域确认"连历史正文都读不了"——三者合起来指向同一修复主题：**让版本能力对用户可见/可用（DR-010/011/012）**，这比新增功能更有价值。
+
+---
+
+## 8. 执行计划（波次推进）
+
+- 配套背景：评审发现记录见 [2026-10-01-devil-advocate-review-report.md](./2026-10-01-devil-advocate-review-report.md)。
+- 原则：**一次一条、独立提交、先复现后修复**；同一波次内条目可并行，但写集（文件）不得重叠；跨波次存在依赖的条目按"准入条件"推进。
+- 每完成一条：运行条目验证命令 + `pnpm --dir server gates`，并在第 10 节与条目内更新状态。
+
+| 波次 | 条目 | 主题 | 准入条件 |
+|---|---|---|---|
+| Wave 1 | DR-001、DR-002 | 保存止血（熔断重试 + 离开守卫） | 无 |
+| Wave 2 | DR-003 + DR-004 | 中文搜索分词 + 索引重建（**必须同批**） | Wave 1 完成（避免同区域冲突） |
+| Wave 3 | DR-005 | 中文字数口径（跨域，改动面最大的一条） | 无（建议独占一批） |
+| Wave 4 | DR-006、DR-007 | 流式保命 + 整本防覆盖 | 无 |
+| Wave 5 | DR-008、DR-009 | 部署安全（setup token、XFF） | 无（建议与 DEC-03 联动） |
+| Wave 6 | DR-010、DR-011、DR-012、DR-016 | 版本可见性三件套 + 编辑器 UX | DR-011 提供正文端点后再接 DR-012 |
+| Wave 7 | DR-013、DR-014、DR-015 | 导出质量三件套 | 无 |
+| Wave 8 | DR-017、DR-018 | 结构/项目入口 | DR-017 需 DEC-05 先拍板方向 |
+| Wave 9 | DR-019、DR-020、DR-021 | 认证/会话/错误文案 | 无 |
+| Wave 10 | DR-022 至 DR-028 | AI 设置、韧性、用量 | 无 |
+| Wave 11 | DR-029、DR-030 | 搜索 UI 与性能 | Wave 2 完成 |
+| Wave 12 | DR-031 至 DR-036 | 运维批次 | 无 |
+| Wave 13 | DR-037 至 DR-039 | 导入、测试模式、文档对齐 | 无 |
+| Wave 14 | DR-040 至 DR-048 | P2 收尾 | 各前置 |
+
+---
+
+## 9. 执行 Prompt（复制给清空上下文后的执行 AI）
+
+**单条模式（推荐）**：
+
+```text
+你是在 Novel Engine 仓库执行「魔鬼代言人评审修复清单」的执行 AI。你的上下文可能已清空，按以下流程工作。
+
+仓库：/Users/jackela/Documents/GitHub/Novel-Engine（main 分支）。
+资料：
+- 工作单：docs/audits/2026-10-01-devil-advocate-fix-backlog.md（每个条目含：问题/证据/修复方向/验收标准/验证命令）
+- 评审背景（可选）：docs/audits/2026-10-01-devil-advocate-review-report.md
+- 规则：AGENTS.md、docs/agents/change-evidence.md、docs/agents/ci-gates.md
+
+任务：修复 <DR-XXX>（一次只做这一条，不要顺带扩大范围）。
+
+流程：
+1) 通读该条目；按条目中的证据锚点（file:line，以符号为准）确认问题仍存在。
+2) 先复现：运行条目"验证"命令，或先写一个失败用例并记录复现输出。
+3) 最小范围修复；遵守禁区（.env*、config/env/*、data/*.sqlite3、data/backups/*、AUDIT_REPORT_Linus.md、Makefile、justfile 不得修改）；迁移只用 pnpm --dir server db:generate --name <semantic-slug>；改动 HTTP 路由后必须运行 pnpm --dir server openapi:snapshot 更新基线。
+4) 运行：条目验证命令；然后 pnpm --dir server gates；涉及前端再加 pnpm --dir frontend type-check、pnpm --dir frontend test:unit；涉及规格再加 pnpm spec:validate。
+5) 在 backlog 该条目下追加交付记录：`- [x] <日期> <SHA> <命令与结果摘要>`；若阻塞改标 `- [!]` 并写明原因与所需决策。
+6) 不要执行 git commit（除非用户明确要求）；不要为了通过检查而削弱测试断言。
+
+输出：①问题复现证据 ②修改文件清单 ③实际运行的命令与结果（含失败/跳过） ④未完成项与阻塞。
+```
+
+**波次模式（批量推进时使用）**：
+
+```text
+按 docs/audits/2026-10-01-devil-advocate-fix-backlog.md 第 8 节执行 Wave <N>。
+对波次内每条 DR 按"单条模式"流程逐条完成：先复现、最小修复、验证命令 + gates、更新交付记录。
+同一波次内保持文件写集不重叠；若发现依赖未满足，记录阻塞并跳过该条，继续其余条目。
+最后汇报：完成条目、失败/阻塞条目、每条的命令与结果。
+```
+
+---
+
+## 10. 交付记录
+
+（执行修复的 AI 在此追加：`Date | SHA | Item | Commands | Result`）
+
+- 2026-10-01 | `607a092e` | 评审基线 | 9 个 subagent 评审 + 编排者复核 | 本文件生成
+- 2026-10-01 | 工作区（基线 `607a092e`，未提交） | DR-001 | `pnpm --dir frontend test:unit`（131/709）、`type-check`、`biome check`、`format:check`、`pnpm --dir frontend build`、`pnpm --dir server gates` | 通过：退避重试 + 手动重试按钮 + 新回归
+- 2026-10-01 | 工作区（基线 `607a092e`，未提交） | DR-002 | 同上 | 通过：beforeunload 守卫 + 切换/卸载救援写入；5 处旧"丢弃"用例按新语义重写
