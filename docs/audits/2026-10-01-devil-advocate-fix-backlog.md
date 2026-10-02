@@ -293,21 +293,23 @@
 
 ### DR-017 [P1] 卷功能 UI 可达性（或规格降级）
 
-- [ ] 未开始
+- [x] 已完成（2026-10-02）
 - **问题**：卷 CRUD/reorder API 与前端 client 方法存在但零调用者；项目只创建一个默认卷 → "Move to volume" 控件永不渲染；多卷、按卷导出在 UI 不可达，规格却以多卷为前提。
 - **证据**：`frontend/src/app/api.ts:79-86`（零调用者）；`StudioNavigatorRowActions.tsx:88-123`；E2E 自述 `studio_reorder.spec.ts:11-13`；`project_store_part.ts:60,178`。
 - **修复方向**：二选一（需 Owner 拍板，可并入 DEC-05）：A. 补最小卷管理 UI（新建/改名/删除/排序 + 放置）；B. 承认单卷并同步降级 spec/guide，删除死代码。
 - **验收**：所选方向落地；不再存在"文档教用户使用不存在入口"。
 - **验证**：`pnpm --dir server exec vitest run tests/api/studio_volumes.test.ts`；前端相关测试。
+- **交付记录**：2026-10-02 | `aa551e01` | 方向 A 落地（Owner 已拍板）：navigator 新增卷管理三件套——`StudioNavigatorVolumeList`（按卷分组 + 头簇）、`StudioNavigatorVolumeCreate`（行内新建表单）、`StudioNavigatorVolumeHeader`（改名/删除确认/上下移，复用文档重排模式而非新拖拽系统）；`useStudioVolumeActions` 接线既有 `api.createVolume/renameVolume/deleteVolume/reorderVolumes`（单飞、owner 守卫、行内错误、失败态保留），`moveDocument` 的"移至卷"入口随多卷可达（原第 2 卷起才渲染的菜单项现在真正有卷可选） | 复现：单卷项目下无任何卷控件、多卷不可达（新用例先红后绿）；修复前既有 E2E 自述该缺口 | 回归：`StudioNavigator.volumes.test.tsx`（13：新建/改名/删除+服务端拒绝/重排+边缘禁用/单卷守卫）、`useStudioPageModel.volumes.test.tsx`（5：含"新建后放置入口可达"与删除合并章节/拒绝保留）；`studio_volumes.test.ts` 7 用例无回归 | 过程修正：react-doctor 4 条（完成态 effect 改为渲染期调节 + 事件侧 ref 标志；scope 循环改单遍）；E2E 消歧 2 处（未运行，CI 负责） | 验证：frontend 141 文件/767 用例、server 244/1472、gates/arch/react-doctor(100)/spec 全绿
 
 ### DR-018 [P1] 项目删除入口
 
-- [ ] 未开始
+- [x] 已完成（2026-10-02）
 - **问题**：`DELETE /api/projects/:id` 已实现，`api.deleteProject` 零调用者（历史审计 0.3.0 的同类问题以"有后端无 UI"形态存活）。
 - **证据**：`frontend/src/app/api.ts:170`；`server/.../project_routes.ts:195`；项目库 UI 无删除。
 - **修复方向**：项目库/设置加删除（二次确认，明示导出文件与快照的处理）。
 - **验收**：UI 可删除项目并有确认；测试覆盖。
 - **验证**：`pnpm --dir frontend exec vitest run src/features/`（项目库相关）；`pnpm --dir server exec vitest run tests/api/`（项目相关）。
+- **交付记录**：2026-10-02 | `aa551e01` | 项目库每行新增删除入口：`ProjectCatalogRow`（行内确认条，Escape 取消、焦点进入确认/取消后回触发器）+ `useProjectLibraryDeletion`（单飞、经既有 `api.deleteProject`、成功后刷新目录并播报、失败按行留存）+ 确认文案明示移除范围（项目及其文档/修订/导出/快照；备份不受影响）；删除成功后行移除且焦点按既有约定回落标题 | 复现：`ProjectLibraryPage.deletion.test.tsx` 4 用例先红（渲染行仅打开按钮）；修复后全绿（确认前不发请求/取消零副作用/确认一次并刷新/失败不刷新） | 既有 lifecycle/pagination 用例的宽松正则消歧（`/Title/`→`/^Title/`，未削弱断言）；E2E 同型消歧 1 处（未运行，CI 负责） | 说明：删除入口落在项目库页面（任务锚点）；打开中项目的设置面板入口未加（属可选后续，已记录） | 验证：server 项目删除相关 3 文件/11 用例无回归；其余同 DR-017（全绿）
 
 ### DR-019 [P1] 密码体验（确认/修改/无找回提示）
 
@@ -716,3 +718,4 @@
 - 2026-10-02 | `b10e02c6` | DR-008 + DR-009 | 定向 7 文件 78 用例；全套 `server gates/type-check/lint/lint:types/arch/test`（241 文件/1457 用例）、frontend lint/lint:types/format/type-check/test:unit/build（134 文件/723 用例）+ react-doctor(100) + `pnpm spec:validate` | 通过：首启 setup token + `owner reset`（DR-008）；XFF 最右未受信跳 + 范围拒绝 + trustProxy 推导（DR-009）；新错误码 SETUP_TOKEN_INVALID 锁步；README/deploy/spec 同步；已知后续：浏览器 setup token 输入并入 DR-019
 - 2026-10-02 | `2baed8a9` | DR-010 + DR-011 + DR-012 + DR-016 | 定向：server `studio_revisions.test.ts`；frontend copilot/jobs/history/conflict/editor 相关 10 文件 52 用例；全套 `server gates/type-check/lint/lint:types/arch/test`（241 文件/1459 用例）、frontend lint/lint:types/format/type-check/test:unit/build（138 文件/745 用例）+ react-doctor(100) + `pnpm spec:validate` | 通过：修订正文端点 + 预览/diff + 恢复确认（DR-011）；冲突只读查看服务器版本（DR-012）；停止保留/一次性撤销/拒绝文本可回看（DR-010）；查找替换 + Ctrl/Cmd+S + 格式命令（DR-016，新增 `@codemirror/search`）；过程修复：文件行数拆分（字典 jobs 分块、proposalUndo 助手、测试 harness/拆分）、react-doctor/格式化/导出排序、撤销提议在瞬时 owner 切换被清空；人工浏览器验证待 Owner
 - 2026-10-02 | `238a1cab` | DR-013 + DR-014 + DR-015 | 定向：`pnpm --dir server exec vitest run tests/contexts/export`（30 文件/137 用例）；全套 `server gates/type-check/lint/lint:types/arch/test`（244 文件/1472 用例）、frontend lint/lint:types/format/type-check/test:unit/build（138 文件/745 用例）+ react-doctor(100) + `pnpm spec:validate` | 通过：DOCX 东文字体/2 字符缩进/章前分页/TOC/去重标题（纯 docx API）；EPUB 语言推断 + dcterms:modified + 内置中文 CSS + 代码块/图片占位；Markdown `## {title}` + 导出范围文档对齐（全量归档标注未实现）；跳过：EPUBCheck（本地不可用，结构断言替代）、Word/WPS 人工打开（待 Owner）
+- 2026-10-02 | `aa551e01` | DR-017 + DR-018 | 定向：frontend 卷 18 用例 + 项目删除 4 用例；server `studio_volumes`（7）+ 项目删除 3 文件（11）无回归；全套 `server gates/type-check/lint/lint:types/arch/test`（244 文件/1472 用例）、frontend lint/lint:types/format/type-check/test:unit/build（141 文件/767 用例）+ react-doctor(100) + `pnpm spec:validate` | 通过：卷新建/改名/删除确认/排序 + "移至卷"可达（DR-017）；项目库删除确认 + 刷新（DR-018）；过程修复：4 条 react-doctor（完成态 effect → 渲染期调节 + 事件侧 ref 标志）、1 处单遍循环重构、测试/E2E 正则消歧；人工浏览器验证待 Owner
