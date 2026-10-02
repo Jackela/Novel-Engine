@@ -24,8 +24,8 @@ persistent volume, applies database migrations, and then serves the app.
 On a fresh volume the server logs a one-time **first-start setup token**.
 Because the published port makes the browser a non-loopback peer, the Owner
 setup must present that token in the `x-setup-token` header; read it from the
-container logs and complete the setup once through the API (the setup screen
-does not send the header):
+container logs and paste it into the setup screen's first-start setup token
+field (or complete the setup once through the API):
 
 ```bash
 TOKEN=$(docker compose logs novel-engine | sed -n 's/.*"setup_token":"\([^"]*\)".*/\1/p' | tail -1)

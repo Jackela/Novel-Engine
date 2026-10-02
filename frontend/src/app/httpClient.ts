@@ -95,8 +95,12 @@ export async function request<T>(
 
 export const json = (value: unknown) => JSON.stringify(value);
 
-export const postJson = <T>(path: string, value: unknown, parse: ResponseParser<T>) =>
-  request(path, { method: "POST", body: json(value) }, parse);
+export const postJson = <T>(
+  path: string,
+  value: unknown,
+  parse: ResponseParser<T>,
+  init?: RequestInit,
+) => request(path, { ...init, method: "POST", body: json(value) }, parse);
 export const putJson = <T>(path: string, value: unknown, parse: ResponseParser<T>) =>
   request(path, { method: "PUT", body: json(value) }, parse);
 export const patchJson = <T>(

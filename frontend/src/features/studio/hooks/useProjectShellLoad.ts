@@ -4,6 +4,7 @@ import type { NavigateFunction } from "react-router-dom";
 
 import { api, HttpError } from "@/app/api";
 import { translateActive } from "@/app/i18n/translate";
+import { useSessionExpiredRedirect } from "@/app/sessionExpiry";
 import type { Project } from "@/app/types/studio";
 import { toErrorMessage } from "./toErrorMessage";
 
@@ -59,6 +60,9 @@ export function useProjectShellLoad(
   useEffect(() => {
     navigateRef.current = navigate;
   }, [navigate]);
+  // DR-020: the rejected session returns to the entry page carrying this
+  // route, so signing in again reopens the project that was being loaded.
+  const onSessionExpired = useSessionExpiredRedirect();
   const requestEpochRef = useRef(0);
   const requestRef = useRef<ProjectLoadRequest | null>(null);
   const [loadErrorState, setLoadErrorState] = useState<ScopedErrorState>(() => ({
@@ -123,7 +127,7 @@ export function useProjectShellLoad(
         if (!isCurrentRequest()) return;
         controller.abort();
         if (reason instanceof HttpError && reason.status === 401) {
-          void navigateRef.current("/", { replace: true });
+          onSessionExpired();
           return;
         }
         if (!shellPublished && reason instanceof HttpError && reason.status === 404) {
@@ -144,7 +148,7 @@ export function useProjectShellLoad(
     })();
 
     return request.promise;
-  }, [beginShellLoad, commitLoadedShell, isActiveProject, projectId, setError]);
+  }, [beginShellLoad, commitLoadedShell, isActiveProject, onSessionExpired, projectId, setError]);
 
   // Bootstrap is keyed by the route project identity only; `retryLoad` is
   // stable for one projectId, so same-project pathname changes (section and

@@ -21,10 +21,20 @@ export {
   parseVolumes,
 } from "./projectShellContract";
 
-class ApiContractError extends Error {
+/**
+ * Raised when a successful response does not satisfy the frontend's runtime
+ * contract. The `Invalid <label>` message stays byte-stable (the contract
+ * tests locate it verbatim) while `label` lets the localized error surface
+ * (DR-021) map the shape to a user-readable message per language and keep the
+ * raw label as technical detail.
+ */
+export class ApiContractError extends Error {
+  readonly label: string;
+
   constructor(label: string) {
     super(`Invalid ${label}`);
     Object.setPrototypeOf(this, ApiContractError.prototype);
+    this.label = label;
   }
 }
 
@@ -54,7 +64,7 @@ export function isoUtcStringField(source: JsonRecord, key: string, parent: strin
     parsed.getUTCMinutes() !== Number(match[5]) ||
     parsed.getUTCSeconds() !== Number(match[6])
   ) {
-    throw new Error(`Invalid ${parent}.${key}`);
+    fail(`${parent}.${key}`);
   }
   return value;
 }

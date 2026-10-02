@@ -1,4 +1,5 @@
 import {
+  ApiContractError,
   arrayField,
   isoUtcStringField,
   literalField,
@@ -61,7 +62,7 @@ function parseJobSummary(value: unknown, label: string): StudioJobSummary {
     fields.length !== jobSummaryFields.length ||
     fields.some((key) => !jobSummaryFieldSet.has(key))
   ) {
-    throw new Error(`Invalid ${label}`);
+    throw new ApiContractError(label);
   }
   return {
     id: stringField(item, "id", label),

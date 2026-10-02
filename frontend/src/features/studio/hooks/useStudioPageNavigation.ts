@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef } from "react";
 import type { NavigateFunction } from "react-router-dom";
 
+import { useSessionExpiredRedirect } from "@/app/sessionExpiry";
 import type { Project } from "@/app/types/studio";
 import { type StudioRouteState, studioInspectorPath } from "../studioRouteState";
 import { buildProposalAuditView } from "./proposalAuditView";
@@ -28,10 +29,9 @@ export function useStudioPageNavigation({
   useEffect(() => {
     navigateRef.current = navigate;
   }, [navigate]);
-  const onProjectResourceSessionLost = useCallback(
-    () => navigateRef.current("/", { replace: true }),
-    [],
-  );
+  // DR-020: a rejected session returns to the entry page with this route
+  // preserved, so signing in again lands back here instead of /projects.
+  const onProjectResourceSessionLost = useSessionExpiredRedirect();
   const onSettingsProjectMissing = useCallback(
     () => navigateRef.current("/projects", { replace: true }),
     [],

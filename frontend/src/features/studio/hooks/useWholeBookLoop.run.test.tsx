@@ -131,7 +131,8 @@ describe("useWholeBookLoop run lifecycle (#318)", () => {
       kind: "failed",
       generated: 1,
       failedChapterTitle: "Chapter Two",
-      message: "Generation capacity exceeded.",
+      message:
+        "The generation prompt size is too large (limit 8388608). Shorten the manuscript or the reference context and retry.",
     });
 
     const reducedProject = projectWith([

@@ -43,8 +43,18 @@ export { apiUrl, getCsrfToken, HttpError } from "@/app/httpClient";
 
 export const api = {
   setupStatus: (init?: RequestInit) => request("/api/setup", init, parseSetupStatus),
-  setupOwner: (username: string, password: string) =>
-    postJson("/api/setup", { username, password }, parseOwnerSetup),
+  // The optional first-start setup token (DR-008) rides the x-setup-token
+  // header, and only when the operator actually typed one: loopback setups
+  // must keep the header absent rather than send an empty value.
+  setupOwner: (username: string, password: string, setupToken?: string) => {
+    const token = setupToken?.trim();
+    return postJson(
+      "/api/setup",
+      { username, password },
+      parseOwnerSetup,
+      token ? { headers: { "x-setup-token": token } } : undefined,
+    );
+  },
   login: (username: string, password: string) =>
     postJson("/api/session/login", { username, password }, parseAndRecordRetrySession),
   session: (init?: RequestInit) => request("/api/session", init, parseAndRecordRetrySession),

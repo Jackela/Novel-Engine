@@ -6,9 +6,12 @@ import { api } from "@/app/api";
 import { useTranslation } from "@/app/i18n/useTranslation";
 import { LanguageSwitch } from "@/app/LanguageSwitch";
 import { productIdentity, productLabel } from "@/app/productIdentity";
+import { useEntryReturnRoute } from "@/app/sessionExpiry";
 import { ThemeSwitch } from "@/app/ThemeSwitch";
 
-import { toErrorMessage } from "./hooks/toErrorMessage";
+import { EntrySessionNotice } from "./EntrySessionNotice";
+import { EntrySetupFields } from "./EntrySetupFields";
+import { entrySubmitMessage } from "./hooks/entrySubmitMessage";
 import { useCommandFocusRestoration } from "./hooks/useCommandFocusRestoration";
 import { useEntryBootstrap } from "./hooks/useEntryBootstrap";
 
@@ -22,18 +25,26 @@ export function EntryPage() {
   const { t } = useTranslation();
   const [username, setUsername] = useState("author");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [setupToken, setSetupToken] = useState("");
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitPhase, setSubmitPhase] = useState<"idle" | "running">("idle");
+  const [mismatchSubmitted, setMismatchSubmitted] = useState(false);
   const busyRef = useRef(false);
   const submitRef = useRef<HTMLButtonElement | null>(null);
   const headingRef = useRef<HTMLHeadingElement | null>(null);
+  const returnRoute = useEntryReturnRoute();
   const onAuthenticated = useCallback(() => {
-    void navigate("/projects", { replace: true });
-  }, [navigate]);
+    void navigate(returnRoute, { replace: true });
+  }, [navigate, returnRoute]);
   const { setup, error, isLoading, reload, mountedRef, markOwnerConfigured } =
     useEntryBootstrap(onAuthenticated);
   const runRetryWithFocusRestoration = useCommandFocusRestoration(isLoading);
   const busy = submitPhase === "running";
+  const creatingOwner = setup !== null && !setup.owner_configured;
+  const passwordsMatch = password === confirmPassword;
+  const mismatchVisible =
+    creatingOwner && !passwordsMatch && (mismatchSubmitted || confirmPassword.length > 0);
   const runSubmitWithFocusRestoration = useCommandFocusRestoration(busy);
 
   const submitCredentials = async () => {
@@ -41,19 +52,21 @@ export function EntryPage() {
     busyRef.current = true;
     setSubmitPhase("running");
     setSubmitError(null);
+    let phase: "setup" | "login" = "setup";
     try {
       if (!setup?.owner_configured) {
-        await api.setupOwner(username, password);
+        await api.setupOwner(username, password, setupToken);
         if (!mountedRef.current) return;
         markOwnerConfigured();
       }
+      phase = "login";
       await api.login(username, password);
       if (mountedRef.current) {
-        void navigate("/projects");
+        void navigate(returnRoute, { replace: true });
       }
     } catch (reason) {
       if (mountedRef.current) {
-        setSubmitError(toErrorMessage(reason, t("entry.error.unableToContinue")));
+        setSubmitError(entrySubmitMessage(reason, t, phase));
       }
     } finally {
       busyRef.current = false;
@@ -64,6 +77,11 @@ export function EntryPage() {
   const submit = (event: FormEvent) => {
     event.preventDefault();
     if (busyRef.current || submitRef.current === null) return;
+    if (creatingOwner && !passwordsMatch) {
+      setMismatchSubmitted(true);
+      return;
+    }
+    setMismatchSubmitted(false);
     void runSubmitWithFocusRestoration(submitRef.current, submitCredentials);
   };
 
@@ -89,6 +107,7 @@ export function EntryPage() {
         </h1>
         <p>{t("entry.intro.selfHosted")}</p>
         <p>{t("entry.intro.trialProvider")}</p>
+        <EntrySessionNotice />
         {setup ? (
           <form className="entry__form" onSubmit={submit}>
             <label>
@@ -117,11 +136,22 @@ export function EntryPage() {
                 value={password}
               />
             </label>
+            {creatingOwner ? (
+              <EntrySetupFields
+                busy={busy}
+                confirmPassword={confirmPassword}
+                mismatchVisible={mismatchVisible}
+                onConfirmPasswordChange={setConfirmPassword}
+                onSetupTokenChange={setSetupToken}
+                setupToken={setupToken}
+              />
+            ) : null}
             {submitError ? (
               <p aria-live="assertive" className="ui-form-error" role="alert">
                 {submitError}
               </p>
             ) : null}
+            <p className="entry__hint">{t("entry.hint.noRecovery")}</p>
             <button
               aria-busy={busy || undefined}
               className="ui-command ui-command--primary"

@@ -1,4 +1,4 @@
-import { fireEvent, getByRole } from "@testing-library/dom";
+import { fireEvent, getByLabelText, getByRole } from "@testing-library/dom";
 import { act } from "react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -30,12 +30,13 @@ afterEach(() => {
 });
 
 /** Entry surface of an already-configured instance (form state, no redirect). */
-function renderEntry() {
+function renderEntry(state?: unknown) {
   return harness.mount(
-    <MemoryRouter initialEntries={["/"]}>
+    <MemoryRouter initialEntries={[{ pathname: "/", state }]}>
       <Routes>
         <Route path="/" element={<EntryPage />} />
         <Route path="/projects" element={<p>Project library</p>} />
+        <Route path="/projects/:projectId/:section?" element={<p>Studio route</p>} />
       </Routes>
     </MemoryRouter>,
   );
@@ -102,5 +103,41 @@ describe("EntryPage bilingual rendering", () => {
     expect(container.querySelector('.entry__state[role="status"]')?.textContent).toContain(
       "正在检查你的会话",
     );
+  });
+
+  it("renders the DR-019 setup safeguards in zh", async () => {
+    window.localStorage.setItem(LANGUAGE_STORAGE_KEY, "zh");
+    vi.mocked(api.session).mockRejectedValue(new HttpError("Unauthorized", 401));
+    vi.mocked(api.setupStatus).mockResolvedValue({
+      owner_configured: false,
+      name: "Test Engine",
+      version: "test",
+    });
+
+    const { container } = renderEntry();
+    await flushEffects();
+
+    expect(getByLabelText(container, "确认密码")).toBeVisible();
+    expect(getByLabelText(container, "首启 setup token")).toBeVisible();
+    expect(container.textContent).toContain("本工具出于设计不提供邮箱找回");
+    expect(container.textContent).toContain("novel-engine owner reset");
+  });
+
+  it("renders the DR-020 session-expired notice in zh", async () => {
+    window.localStorage.setItem(LANGUAGE_STORAGE_KEY, "zh");
+    vi.mocked(api.session).mockRejectedValue(new HttpError("Unauthorized", 401));
+    vi.mocked(api.setupStatus).mockResolvedValue({
+      owner_configured: true,
+      name: "Test Engine",
+      version: "test",
+    });
+
+    const { container } = renderEntry({
+      from: "/projects/project-1/manuscript",
+      reason: "session-expired",
+    });
+    await flushEffects();
+
+    expect(container.querySelector(".entry__notice")?.textContent).toContain("会话已过期");
   });
 });

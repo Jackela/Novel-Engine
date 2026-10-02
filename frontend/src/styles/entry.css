@@ -84,6 +84,24 @@
 .entry__panel > .ui-command {
   width: 100%;
 }
+.entry__hint {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+}
+/* DR-020 forced return: the author needs to act, so the notice uses the
+   documented warn pair instead of the muted copy the intro paragraphs carry.
+   `.entry__panel` outranks the `.entry p` base rule. */
+.entry__panel .entry__notice {
+  margin: 20px 0 0;
+  padding: 10px 12px;
+  border: 1px solid var(--warn);
+  border-radius: 6px;
+  background: var(--warn-soft);
+  color: var(--warn-ink);
+  font-size: 13px;
+  line-height: 1.5;
+}
 .entry__divider {
   display: flex;
   align-items: center;

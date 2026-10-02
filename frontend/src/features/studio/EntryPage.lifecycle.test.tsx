@@ -1,14 +1,13 @@
-import { fireEvent, getByRole } from "@testing-library/dom";
+import { fireEvent, getByLabelText, getByRole } from "@testing-library/dom";
 import { act } from "react";
-import { MemoryRouter, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { api, HttpError } from "@/app/api";
 import { THEME_STORAGE_KEY } from "@/app/theme";
 import type { Session } from "@/app/types/studio";
-import { createMountHarness, deferred, flushEffects } from "@/test/harness";
+import { deferred, flushEffects } from "@/test/harness";
 
-import { EntryPage } from "./EntryPage";
+import { entryHarness, ownerSession, renderEntry } from "./EntryPage.test-helpers";
 
 vi.mock("@/app/api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/app/api")>();
@@ -24,41 +23,6 @@ vi.mock("@/app/api", async (importOriginal) => {
   };
 });
 
-const harness = createMountHarness();
-const ownerSession: Session = {
-  session_id: "session-1",
-  kind: "owner",
-  owner_id: "owner-1",
-  expires_at: "2026-10-01T00:00:00Z",
-};
-
-function LocationWitness() {
-  return <output data-testid="location">{useLocation().pathname}</output>;
-}
-
-function AwayControl() {
-  const navigate = useNavigate();
-  return (
-    <button onClick={() => navigate("/away")} type="button">
-      Leave entry
-    </button>
-  );
-}
-
-function renderEntry() {
-  return harness.mount(
-    <MemoryRouter initialEntries={["/"]}>
-      <Routes>
-        <Route path="/" element={<EntryPage />} />
-        <Route path="/projects" element={<p>Project library</p>} />
-        <Route path="/away" element={<p>Away route</p>} />
-      </Routes>
-      <AwayControl />
-      <LocationWitness />
-    </MemoryRouter>,
-  );
-}
-
 beforeEach(() => {
   vi.mocked(api.setupStatus).mockReturnValue(
     deferred<{ owner_configured: boolean; name: string; version: string }>().promise,
@@ -66,7 +30,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
-  harness.cleanup();
+  entryHarness.cleanup();
   vi.resetAllMocks();
   delete document.documentElement.dataset.theme;
 });
@@ -180,8 +144,10 @@ describe("EntryPage request lifecycle", () => {
     const form = container.querySelector("form");
     const password = container.querySelector<HTMLInputElement>('input[type="password"]');
     if (form === null || password === null) throw new Error("Expected the first-run form.");
+    const confirmation = getByLabelText<HTMLInputElement>(container, "Confirm password");
     act(() => {
       fireEvent.change(password, { target: { value: "long-password" } });
+      fireEvent.change(confirmation, { target: { value: "long-password" } });
     });
 
     act(() => {
@@ -224,8 +190,10 @@ describe("EntryPage request lifecycle", () => {
     const password = container.querySelector<HTMLInputElement>('input[type="password"]');
     const form = container.querySelector("form");
     if (form === null || password === null) throw new Error("Expected the first-run form.");
+    const confirmation = getByLabelText<HTMLInputElement>(container, "Confirm password");
     act(() => {
       fireEvent.change(password, { target: { value: "long-password" } });
+      fireEvent.change(confirmation, { target: { value: "long-password" } });
     });
 
     await act(async () => {

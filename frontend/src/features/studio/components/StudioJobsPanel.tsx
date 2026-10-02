@@ -100,7 +100,19 @@ export function StudioJobsPanel({
                     date: new Date(job.created_at).toLocaleString(),
                   })}
                 </small>
-                {job.error ? <small className="job-error">{job.error}</small> : null}
+                {job.error ? (
+                  // DR-021: the server's raw failure report is English and may
+                  // quote provider HTTP details, so it lives behind a
+                  // collapsed disclosure while the visible line stays
+                  // localized.
+                  <div className="job-error">
+                    <small className="job-error__primary">{t("jobs.error.failed")}</small>
+                    <details className="job-error__details">
+                      <summary>{t("jobs.error.technicalDetails")}</summary>
+                      <small>{job.error}</small>
+                    </details>
+                  </div>
+                ) : null}
               </div>
               {job.kind !== "import" &&
               (job.status === "failed" || job.status === "interrupted") ? (

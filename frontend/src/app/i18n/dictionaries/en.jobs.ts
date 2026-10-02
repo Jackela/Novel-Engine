@@ -19,4 +19,8 @@ export const enJobs = {
   "jobs.proposal.error": "Unable to load this proposal.",
   "jobs.proposal.loading": "Loading proposal text…",
   "jobs.proposal.view": "View proposal text",
+  // DR-021: the server's raw failure report (English, may quote provider HTTP
+  // details) lives behind this disclosure; the visible line stays localized.
+  "jobs.error.failed": "This job failed.",
+  "jobs.error.technicalDetails": "Technical details",
 };

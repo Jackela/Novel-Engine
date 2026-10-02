@@ -88,7 +88,10 @@ test.describe
           await studio.waitForTimeout(2_000);
         }
       }
-      await studio.getByLabel("Password").fill(OWNER_PASSWORD);
+      await studio.getByLabel("Password", { exact: true }).fill(OWNER_PASSWORD);
+      if (!ownerConfigured) {
+        await studio.getByLabel("Confirm password", { exact: true }).fill(OWNER_PASSWORD);
+      }
       await studio
         .getByRole("button", { name: ownerConfigured ? "Sign in" : "Create owner" })
         .click();

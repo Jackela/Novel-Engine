@@ -1,5 +1,5 @@
 import { apiUrl, getCsrfToken, HttpError } from "@/app/api";
-import { objectValue } from "@/app/apiContract";
+import { ApiContractError, objectValue } from "@/app/apiContract";
 import { parseJob } from "@/app/apiWorkflowContract";
 import { localServiceUnavailable } from "@/app/networkError";
 import type { StudioJob } from "@/app/types/studio";
@@ -35,30 +35,31 @@ function parseFramePayload(data: string): ProposalStreamFrame {
   try {
     value = JSON.parse(data);
   } catch {
-    throw new Error(`Invalid proposal frame: not JSON (${data.slice(0, 64)})`);
+    throw new ApiContractError(`proposal frame: not JSON (${data.slice(0, 64)})`);
   }
   const frame = objectValue(value, "proposal frame");
   const type = frame.type;
   if (type === "delta") {
-    if (typeof frame.text !== "string") throw new Error("Invalid proposal frame: delta.text");
+    if (typeof frame.text !== "string") throw new ApiContractError("proposal frame: delta.text");
     return { type: "delta", text: frame.text };
   }
   if (type === "done") {
     if (typeof frame.job !== "object" || frame.job === null || Array.isArray(frame.job)) {
-      throw new Error("Invalid proposal frame: done.job");
+      throw new ApiContractError("proposal frame: done.job");
     }
     return frame as unknown as ProposalStreamFrame;
   }
   if (type === "error") {
     const error = objectValue(frame.error, "proposal frame.error");
-    if (typeof error.code !== "string") throw new Error("Invalid proposal frame: error.code");
-    if (typeof error.message !== "string") throw new Error("Invalid proposal frame: error.message");
+    if (typeof error.code !== "string") throw new ApiContractError("proposal frame: error.code");
+    if (typeof error.message !== "string")
+      throw new ApiContractError("proposal frame: error.message");
     return {
       type: "error",
       error: { code: error.code, message: error.message },
     };
   }
-  throw new Error(`Invalid proposal frame: unknown type (${String(type)})`);
+  throw new ApiContractError(`proposal frame: unknown type (${String(type)})`);
 }
 
 function parseFrameEvent(rawEvent: string): ProposalStreamFrame {
@@ -67,7 +68,7 @@ function parseFrameEvent(rawEvent: string): ProposalStreamFrame {
     .filter((line) => line.startsWith("data:"))
     .map((line) => (line.startsWith("data: ") ? line.slice(6) : line.slice(5)))
     .join("\n");
-  if (data === "") throw new Error("Invalid proposal frame: missing data");
+  if (data === "") throw new ApiContractError("proposal frame: missing data");
   return parseFramePayload(data);
 }
 
@@ -76,10 +77,10 @@ async function readPreStreamError(response: Response): Promise<HttpError> {
     const payload = objectValue(await response.json(), "proposal error envelope");
     const error = objectValue(payload.error, "proposal error envelope.error");
     if (typeof error.code !== "string") {
-      throw new Error("Invalid proposal error envelope: error.code");
+      throw new ApiContractError("proposal error envelope: error.code");
     }
     if (typeof error.message !== "string") {
-      throw new Error("Invalid proposal error envelope: error.message");
+      throw new ApiContractError("proposal error envelope: error.message");
     }
     return new HttpError(error.message, response.status, error.details, error.code);
   } catch (error) {

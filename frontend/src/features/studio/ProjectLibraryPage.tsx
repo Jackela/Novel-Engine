@@ -1,11 +1,12 @@
 import { BookOpen, Loader2, LogOut, Plus } from "lucide-react";
-import { type FormEvent, useCallback, useRef, useState } from "react";
+import { type FormEvent, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { api } from "@/app/api";
 import { useTranslation } from "@/app/i18n/useTranslation";
 import { LanguageSwitch } from "@/app/LanguageSwitch";
 import { productIdentity } from "@/app/productIdentity";
+import { useSessionExpiredRedirect } from "@/app/sessionExpiry";
 import { ThemeSwitch } from "@/app/ThemeSwitch";
 
 import { ProjectCatalogList } from "./components/ProjectCatalogList";
@@ -28,9 +29,10 @@ export function ProjectLibraryPage() {
   const commandRef = useRef<LibraryCommand | null>(null);
   const createButtonRef = useRef<HTMLButtonElement | null>(null);
   const headingRef = useRef<HTMLHeadingElement | null>(null);
-  const onUnauthenticated = useCallback(() => {
-    void navigate("/", { replace: true });
-  }, [navigate]);
+  // DR-020: a session the server rejects returns to the entry page with the
+  // library route preserved, so signing in again lands back on the catalog.
+  // Sign-out below navigates deliberately and shows no expiry notice.
+  const onUnauthenticated = useSessionExpiredRedirect();
   const {
     projects,
     nextCursor,
@@ -109,6 +111,7 @@ export function ProjectLibraryPage() {
       finishOperation();
     }
     if (mountedRef.current) {
+      // Voluntary sign-out carries no expiry state: the entry page stays quiet.
       void navigate("/");
     }
   };

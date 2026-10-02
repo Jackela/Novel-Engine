@@ -18,4 +18,7 @@ export const zhJobs = {
   "jobs.proposal.error": "无法加载该提案。",
   "jobs.proposal.loading": "正在加载提案文本…",
   "jobs.proposal.view": "查看提案文本",
+  // DR-021：服务端原始失败报告（英文，可能含 provider HTTP 细节）收在折叠区内。
+  "jobs.error.failed": "该任务失败。",
+  "jobs.error.technicalDetails": "技术详情",
 };

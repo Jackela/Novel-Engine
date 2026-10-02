@@ -33,6 +33,7 @@ interface HarnessSnapshot {
   readonly hook: HookResult;
   readonly pathname: string;
   readonly navigationType: ReturnType<typeof useNavigationType>;
+  readonly state: unknown;
 }
 
 const harness = createMountHarness();
@@ -67,7 +68,7 @@ function renderStudioProjectHook(
     const hook = useStudioProject(projectId);
     const location = useLocation();
     const navigationType = useNavigationType();
-    current = { hook, pathname: location.pathname, navigationType };
+    current = { hook, pathname: location.pathname, navigationType, state: location.state };
     return null;
   }
 
@@ -236,6 +237,10 @@ describe("useStudioProject", () => {
     // Then
     expect(hook.result().pathname).toBe("/");
     expect(hook.result().navigationType).toBe("REPLACE");
+    expect(hook.result().state).toEqual({
+      from: "/projects/project-1/manuscript",
+      reason: "session-expired",
+    });
     expect(hook.result().hook.loadError).toBeNull();
   });
 
