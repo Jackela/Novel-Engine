@@ -4,7 +4,7 @@ import { useRef } from "react";
 import { useTranslation } from "@/app/i18n/useTranslation";
 import type { Review, ReviewSummary } from "@/app/types/studio";
 import { useCommandFocusRestoration } from "../hooks/useCommandFocusRestoration";
-import { providerLabel } from "../studioConstants";
+import { providerLabel, shortSnapshotId } from "../studioConstants";
 import type { InspectorReviewHistoryPaging } from "../studioInspectorTypes";
 import { StudioReviewHistoryList } from "./StudioReviewHistoryList";
 
@@ -19,6 +19,9 @@ interface StudioReviewPanelProps {
   historyError?: string | null;
   olderError?: string | null;
   onLoadOlderReviews?: () => void | Promise<void>;
+  /** DR-042: the history row whose detail is open; null keeps the newest. */
+  selectedReviewId?: string | null;
+  onSelectReview?: (reviewId: string) => void;
   actionError?: string | null;
   onRetryHistory?: () => void | Promise<void>;
   onRunReview: () => void | Promise<void>;
@@ -42,6 +45,8 @@ export function StudioReviewPanel({
   historyError = null,
   olderError = null,
   onLoadOlderReviews,
+  selectedReviewId = null,
+  onSelectReview,
   actionError = null,
   onRetryHistory,
   onRunReview,
@@ -127,6 +132,9 @@ export function StudioReviewPanel({
           {t("review.provenance", {
             provider: providerLabel(latestReview.provider),
             model: latestReview.model,
+            snapshot: t("review.snapshotLabel", {
+              id: shortSnapshotId(latestReview.snapshot_id),
+            }),
           })}
         </p>
       ) : null}
@@ -154,6 +162,8 @@ export function StudioReviewPanel({
         isLoadingOlder={isLoadingOlder}
         onLoadOlderReviews={onLoadOlderReviews ?? (() => undefined)}
         olderError={olderError}
+        onSelectReview={onSelectReview}
+        selectedReviewId={selectedReviewId}
         summaries={summaries}
       />
     </div>

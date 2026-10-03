@@ -125,8 +125,10 @@ export function StudioInspectorPanels({
         role="tabpanel"
       >
         <StudioReviewPanel
-          latestReview={model.review.latestReview}
+          latestReview={model.review.selectedReview}
           summaries={model.review.summaries}
+          selectedReviewId={model.review.selectedReviewId}
+          onSelectReview={model.review.onSelectReview}
           detailLoading={model.review.detailLoading}
           detailError={model.review.detailError}
           onRetryDetail={model.review.onRetryDetail}

@@ -13,9 +13,12 @@ interface StudioReviewHistoryListProps {
   isLoadingHistory: boolean;
   olderError: string | null;
   onLoadOlderReviews: () => void | Promise<void>;
+  /** DR-042: the summary whose detail is open; rows toggle that selection. */
+  selectedReviewId?: string | null;
+  onSelectReview?: (reviewId: string) => void;
 }
 
-/** Bounded review-history summaries with an explicit older-page action (#459). */
+/** Bounded review-history summaries with an explicit older-page action (#459) and row-opened details (DR-042). */
 export function StudioReviewHistoryList({
   summaries,
   historyInitialized,
@@ -24,6 +27,8 @@ export function StudioReviewHistoryList({
   isLoadingHistory,
   olderError,
   onLoadOlderReviews,
+  selectedReviewId = null,
+  onSelectReview,
 }: StudioReviewHistoryListProps) {
   const isBusy = isLoadingOlder || isLoadingHistory;
   const { t } = useTranslation();
@@ -69,14 +74,21 @@ export function StudioReviewHistoryList({
         <ul>
           {summaries.map((summary) => (
             <li key={summary.id}>
-              <span>{new Date(summary.created_at).toLocaleString()}</span>
-              <small>
-                {t("review.history.meta", {
-                  count: summary.issue_count,
-                  unit: summary.issue_count === 1 ? t("noun.finding") : t("noun.findings"),
-                  provider: providerLabel(summary.provider),
-                })}
-              </small>
+              <button
+                aria-pressed={selectedReviewId === summary.id}
+                className="studio-inspector__history-row"
+                onClick={() => onSelectReview?.(summary.id)}
+                type="button"
+              >
+                <span>{new Date(summary.created_at).toLocaleString()}</span>
+                <small>
+                  {t("review.history.meta", {
+                    count: summary.issue_count,
+                    unit: summary.issue_count === 1 ? t("noun.finding") : t("noun.findings"),
+                    provider: providerLabel(summary.provider),
+                  })}
+                </small>
+              </button>
             </li>
           ))}
         </ul>

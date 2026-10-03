@@ -100,7 +100,7 @@ export const enErrors = {
   "errors.codeDocumentConflict":
     "A document with this title already exists in this project. Pick another title.",
   "errors.codeSnapshotConflict":
-    "This document belongs to an export snapshot and cannot be deleted.",
+    "This document belongs to an export snapshot and cannot be deleted. Delete that export (or its snapshot) first, then delete the document.",
   "errors.codeOperationInFlight":
     "The same operation is already running. Wait for it to finish before retrying.",
   "errors.codeOperationCapacity":

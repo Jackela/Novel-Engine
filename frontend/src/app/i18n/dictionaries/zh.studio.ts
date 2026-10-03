@@ -42,7 +42,8 @@ export const zhStudio = {
   "audit.action.generateAnother": "生成另一份提案",
 
   "review.heading": "评审发现",
-  "review.provenance": "由 {provider} · {model} 审阅",
+  "review.provenance": "由 {provider} · {model} 审阅 · {snapshot}",
+  "review.snapshotLabel": "评审快照 {id}",
   "review.hint": "绑定快照且不修改稿件。",
   "review.action.run": "运行评审",
   "review.action.running": "正在运行评审",
@@ -97,6 +98,7 @@ export const zhStudio = {
   "export.history.loading": "正在加载导出历史…",
   "export.history.empty": "暂无导出。",
   "export.history.rowMeta": "{size} KB · {date}",
+  "export.history.snapshotLabel": "导出快照 {id}",
   "export.history.end": "导出历史到此为止。",
   "export.history.loadOlder": "加载更早的导出",
   "export.history.loadingOlder": "正在加载更早的导出",

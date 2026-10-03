@@ -4,6 +4,7 @@ import { useRef } from "react";
 import { useTranslation } from "@/app/i18n/useTranslation";
 import type { StudioExport } from "@/app/types/studio";
 import { useCommandFocusRestoration } from "../hooks/useCommandFocusRestoration";
+import { shortSnapshotId } from "../studioConstants";
 
 interface StudioExportHistorySectionProps {
   exports: StudioExport[];
@@ -73,6 +74,9 @@ export function StudioExportHistorySection({
                     size: Math.ceil(item.size_bytes / 1024),
                     date: new Date(item.created_at).toLocaleString(),
                   })}
+                </small>
+                <small>
+                  {t("export.history.snapshotLabel", { id: shortSnapshotId(item.snapshot_id) })}
                 </small>
               </span>
               <ExternalLink aria-hidden="true" />

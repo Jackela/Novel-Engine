@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { api } from "@/app/api";
 import { translateActive } from "@/app/i18n/translate";
@@ -32,6 +32,13 @@ export interface ReviewHistoryState {
   readonly isLoadingOlder: boolean;
   readonly olderError: string | null;
   readonly loadOlder: () => Promise<void>;
+  /**
+   * The summary whose detail is on screen (DR-042): the explicitly selected
+   * review, or the newest summary while nothing is selected.
+   */
+  readonly selectedReviewId: string | null;
+  /** Open one history row's detail; a null request falls back to the newest. */
+  readonly selectReview: (reviewId: string | null) => void;
   readonly detail: ReviewDetailState;
 }
 
@@ -39,8 +46,9 @@ const EMPTY_PAGE: ReviewsPage = { reviews: [], next_cursor: null };
 
 /**
  * One Review history family member: bounded first summary page, explicit
- * older traversal, and one lazy detail read of the newest assessment (#459).
- * Activation arrives pre-derived from `useLazyInspectorHistories`.
+ * older traversal, and one lazy detail read — the newest assessment by
+ * default, or the row the author selected (DR-042). Activation arrives
+ * pre-derived from `useLazyInspectorHistories`.
  */
 export function useReviewHistory({
   active,
@@ -48,6 +56,7 @@ export function useReviewHistory({
   recheckProject,
   onSessionLost,
 }: UseReviewHistoryOptions): ReviewHistoryState {
+  const [selectedReviewId, setSelectedReviewId] = useState<string | null>(null);
   const requestPage = useCallback(
     (signal: AbortSignal) => api.reviews(projectId, { signal }),
     [projectId],
@@ -80,24 +89,29 @@ export function useReviewHistory({
   const setFirstPage = useCallback(
     (freshPage: ReviewsPage): void => {
       abortInFlightOlder();
+      // A fresh first page is a new review era; the newest detail shows again.
+      setSelectedReviewId(null);
       page.setData(freshPage);
     },
     [abortInFlightOlder, page],
   );
 
-  // Newest summary identity drives the detail read; the commit-phase mirror
-  // keeps the stable request closure from observing a stale owner after a
-  // project switch. It syncs in an effect declared before the detail read's
-  // own effects, so every request initiation below observes fresh state.
+  // Newest summary identity drives the default detail read; an explicit row
+  // selection (DR-042) overrides it until the next fresh first page. The
+  // commit-phase mirror keeps the stable request closure from observing a
+  // stale owner after a project switch. It syncs in an effect declared
+  // before the detail read's own effects, so every request initiation below
+  // observes fresh state.
   const newestReviewId = page.data.reviews[0]?.id ?? null;
-  const newestReviewIdRef = useRef<string | null>(newestReviewId);
+  const activeReviewId = selectedReviewId ?? newestReviewId;
+  const activeReviewIdRef = useRef<string | null>(activeReviewId);
   useEffect(() => {
-    newestReviewIdRef.current = newestReviewId;
-  }, [newestReviewId]);
+    activeReviewIdRef.current = activeReviewId;
+  }, [activeReviewId]);
   const requestedDetailIdRef = useRef<string | null>(null);
   const requestDetail = useCallback(
     (signal: AbortSignal): Promise<Review | null> => {
-      const reviewId = newestReviewIdRef.current;
+      const reviewId = activeReviewIdRef.current;
       return reviewId === null
         ? Promise.resolve(null)
         : api.reviewDetail(projectId, reviewId, { signal });
@@ -116,11 +130,20 @@ export function useReviewHistory({
   });
 
   useEffect(() => {
-    if (!active || newestReviewId === null) return;
-    if (requestedDetailIdRef.current === newestReviewId) return;
-    requestedDetailIdRef.current = newestReviewId;
+    if (!active || activeReviewId === null) return;
+    if (requestedDetailIdRef.current === activeReviewId) return;
+    requestedDetailIdRef.current = activeReviewId;
+    // `load()` reuses an in-flight read, so a pending detail for the previous
+    // selection is dropped first; the cleared slot also keeps the previous
+    // review's issues from rendering under the newly selected row.
+    detail.setData(null);
     void detail.retry();
-  }, [active, detail, newestReviewId]);
+  }, [active, activeReviewId, detail]);
+
+  /** Row activation (DR-042); null returns the panel to the newest review. */
+  const selectReview = useCallback((reviewId: string | null): void => {
+    setSelectedReviewId(reviewId);
+  }, []);
 
   return {
     summaries: page.data.reviews,
@@ -133,6 +156,8 @@ export function useReviewHistory({
     isLoadingOlder: olderPages.isLoadingOlder,
     olderError: olderPages.olderError,
     loadOlder: olderPages.loadOlder,
+    selectedReviewId: activeReviewId,
+    selectReview,
     detail: {
       review: detail.data,
       isLoading: active && detail.isLoading,
@@ -142,14 +167,16 @@ export function useReviewHistory({
   };
 }
 
-/** Assemble the Inspector review-tab model from one review-history state (#459). */
+/** Assemble the Inspector review-tab model from one review-history state (#459, DR-042). */
 export function reviewInspectorModel(
   history: ReviewHistoryState,
   actionError: string | null,
   onRunReview: () => void | Promise<void>,
 ): InspectorReviewModel {
   return {
-    latestReview: history.detail.review,
+    selectedReview: history.detail.review,
+    selectedReviewId: history.selectedReviewId,
+    onSelectReview: history.selectReview,
     detailLoading: history.detail.isLoading,
     detailError: history.detail.error,
     onRetryDetail: history.detail.retry,

@@ -1,7 +1,7 @@
 import { act } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { review } from "@/test/factories";
+import { review, reviewSummary } from "@/test/factories";
 import { createMountHarness, deferred } from "@/test/harness";
 
 import { StudioReviewPanel } from "./StudioReviewPanel";
@@ -102,5 +102,44 @@ describe("StudioReviewPanel", () => {
     );
 
     expect(mounted.container.textContent).toContain("Reviewed by DashScope · qwen3.5-flash");
+  });
+
+  it("opens a history row's detail and marks the selected row (DR-042)", () => {
+    const onSelectReview = vi.fn();
+    const mounted = harness.mount(
+      <StudioReviewPanel
+        latestReview={review()}
+        onSelectReview={onSelectReview}
+        selectedReviewId="review-2"
+        summaries={[reviewSummary({ id: "review-1" }), reviewSummary({ id: "review-2" })]}
+        onRunReview={vi.fn()}
+      />,
+    );
+
+    const rows = Array.from(
+      mounted.container.querySelectorAll<HTMLButtonElement>(".studio-inspector__history-row"),
+    );
+    expect(rows).toHaveLength(2);
+    expect(rows[1]?.getAttribute("aria-pressed")).toBe("true");
+
+    act(() => {
+      rows[0]?.click();
+    });
+    expect(onSelectReview).toHaveBeenCalledWith("review-1");
+  });
+
+  it("names the snapshot behind the review (DR-042)", () => {
+    const mounted = harness.mount(
+      <StudioReviewPanel
+        latestReview={review({
+          provider: "dashscope",
+          snapshot_id: "12345678-aaaa-bbbb-cccc-1234567890ab",
+        })}
+        summaries={[]}
+        onRunReview={vi.fn()}
+      />,
+    );
+
+    expect(mounted.container.textContent).toContain("Review snapshot 12345678");
   });
 });

@@ -102,7 +102,12 @@ export interface InspectorReviewHistoryPaging {
 }
 
 export interface InspectorReviewModel {
-  latestReview: Review | null;
+  /** DR-042: the review whose detail is open — the selected row, or the newest. */
+  selectedReview: Review | null;
+  /** The summary identity `selectedReview` represents; null without summaries. */
+  selectedReviewId: string | null;
+  /** Opens one history row's detail; null returns to the newest review. */
+  onSelectReview: (reviewId: string | null) => void;
   detailLoading?: boolean;
   detailError?: string | null;
   onRetryDetail?: () => void | Promise<void>;

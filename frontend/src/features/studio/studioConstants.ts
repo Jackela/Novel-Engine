@@ -121,6 +121,17 @@ export function providerLabel(provider: string): string {
 }
 
 /**
+ * DR-042: snapshots are identified by opaque UUIDs. Surfaces that expose a
+ * snapshot reference show this stable short handle instead of the raw
+ * identifier, so a record still names its concrete snapshot without UUID
+ * noise. Failure semantics: any string shorter than the handle is returned
+ * unchanged rather than padded or thrown on.
+ */
+export function shortSnapshotId(snapshotId: string): string {
+  return snapshotId.slice(0, 8);
+}
+
+/**
  * DR-022: the provider setup guide an unconfigured settings row points at.
  * The public repository keeps the writer guides with the source, so the
  * pointer is a stable link; the active UI language picks the matching guide

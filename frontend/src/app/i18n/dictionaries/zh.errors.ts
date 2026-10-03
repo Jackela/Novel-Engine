@@ -69,7 +69,8 @@ export const zhErrors = {
   "errors.codeRevisionConflict": "这份文档在加载后已被修改。请加载最新修订后重新应用你的修改。",
   "errors.codeVolumeConflict": "同名卷已存在，请换一个标题。",
   "errors.codeDocumentConflict": "这个项目里已存在同名文档，请换一个标题。",
-  "errors.codeSnapshotConflict": "这份文档属于导出快照的一部分，无法删除。",
+  "errors.codeSnapshotConflict":
+    "这份文档属于某个导出快照的一部分，无法直接删除。请先删除对应的导出（及其快照），再删除该文档。",
   "errors.codeOperationInFlight": "同一操作正在进行中，请等待完成后再试。",
   "errors.codeOperationCapacity": "工作室的并发任务已达上限（{limit}），请在 {seconds} 秒后重试。",
   "errors.codeOperationCapacityGeneric": "工作室的并发任务已达上限，请稍后重试。",

@@ -50,7 +50,8 @@ export const enStudio = {
   "audit.action.generateAnother": "Generate another proposal",
 
   "review.heading": "Review findings",
-  "review.provenance": "Reviewed by {provider} · {model}",
+  "review.provenance": "Reviewed by {provider} · {model} · {snapshot}",
+  "review.snapshotLabel": "Review snapshot {id}",
   "review.hint": "Snapshot-bound and non-mutating.",
   "review.action.run": "Run review",
   "review.action.running": "Running review",
@@ -105,6 +106,7 @@ export const enStudio = {
   "export.history.loading": "Loading export history…",
   "export.history.empty": "No exports yet.",
   "export.history.rowMeta": "{size} KB · {date}",
+  "export.history.snapshotLabel": "Export snapshot {id}",
   "export.history.end": "End of export history.",
   "export.history.loadOlder": "Load older exports",
   "export.history.loadingOlder": "Loading older exports",

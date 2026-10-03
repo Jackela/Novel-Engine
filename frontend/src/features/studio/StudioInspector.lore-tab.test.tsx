@@ -32,7 +32,13 @@ function inspectorModel(
       failedFormat: null,
       errorForExport: null,
     },
-    review: { latestReview: null, summaries: [], onRunReview: vi.fn() },
+    review: {
+      selectedReview: null,
+      selectedReviewId: null,
+      onSelectReview: vi.fn(),
+      summaries: [],
+      onRunReview: vi.fn(),
+    },
     history: {
       revisions: [],
       loadedRevisionId: null,
