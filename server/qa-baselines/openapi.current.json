@@ -8574,7 +8574,30 @@
             "name": "q",
             "required": true,
             "schema": {
+              "maxLength": 200,
               "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 30,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "maximum": 10000,
+              "minimum": 0,
+              "type": "integer"
             }
           },
           {
@@ -8593,6 +8616,10 @@
                 "schema": {
                   "additionalProperties": false,
                   "properties": {
+                    "next_offset": {
+                      "nullable": true,
+                      "type": "integer"
+                    },
                     "results": {
                       "items": {
                         "additionalProperties": false,
@@ -8603,6 +8630,9 @@
                           "excerpt": {
                             "type": "string"
                           },
+                          "match_term": {
+                            "type": "string"
+                          },
                           "title": {
                             "type": "string"
                           }
@@ -8610,15 +8640,22 @@
                         "required": [
                           "document_id",
                           "title",
-                          "excerpt"
+                          "excerpt",
+                          "match_term"
                         ],
                         "type": "object"
                       },
                       "type": "array"
+                    },
+                    "total": {
+                      "minimum": 0,
+                      "type": "integer"
                     }
                   },
                   "required": [
-                    "results"
+                    "results",
+                    "total",
+                    "next_offset"
                   ],
                   "type": "object"
                 }

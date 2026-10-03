@@ -13,6 +13,8 @@ import {
 interface MarkdownEditorProps {
   value: string;
   onChange: (value: string) => void;
+  /** DR-029: locate one search hit (term + monotonic token) in the body. */
+  reveal?: { readonly term: string; readonly token: number } | null;
 }
 
 interface CodeMirrorRuntime extends MarkdownCommandRuntime {
@@ -20,6 +22,8 @@ interface CodeMirrorRuntime extends MarkdownCommandRuntime {
   readonly EditorState: typeof import("@codemirror/state").EditorState;
   /** Reconfigures the search-panel phrases when the language switches. */
   readonly phrases: import("@codemirror/state").Compartment;
+  /** DR-029: the find-query machinery the locate intent drives. */
+  readonly search: typeof import("@codemirror/search");
 }
 
 const FORMAT_BUTTONS = [
@@ -45,14 +49,17 @@ function searchPhrases(): Record<string, string> {
   };
 }
 
-export function MarkdownEditor({ value, onChange }: MarkdownEditorProps) {
+export function MarkdownEditor({ value, onChange, reveal = null }: MarkdownEditorProps) {
   const { t } = useTranslation();
   const parent = useRef<HTMLDivElement>(null);
   const view = useRef<import("@codemirror/view").EditorView | null>(null);
   const runtime = useRef<CodeMirrorRuntime | null>(null);
   const latestValueRef = useRef(value);
   const onChangeRef = useRef(onChange);
+  /** The last consumed reveal token; repeated clicks mint fresh tokens (DR-029). */
+  const handledRevealRef = useRef(0);
   const [failed, setFailed] = useState(false);
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
     onChangeRef.current = onChange;
@@ -164,8 +171,10 @@ export function MarkdownEditor({ value, onChange }: MarkdownEditorProps) {
         Transaction: state.Transaction,
         EditorState: state.EditorState,
         phrases,
+        search,
       };
       view.current = nextView;
+      setReady(true);
     });
 
     // Surface loader failures instead of leaving the editor silently unset;
@@ -202,6 +211,28 @@ export function MarkdownEditor({ value, onChange }: MarkdownEditorProps) {
       annotations: codeMirror.Transaction.addToHistory.of(false),
     });
   }, [value]);
+
+  // DR-029: a clicked search result arrives as a locate intent; after the
+  // target body loads, pre-fill the editor's find query and jump to the first
+  // match. The guard reads the controlled body (`value`) so the intent is
+  // re-checked when the target body arrives, the token guard keeps one reveal
+  // from re-running on every keystroke, and a term that never appears in the
+  // body (a title-only hit) leaves the selection alone instead of fabricating
+  // a jump.
+  useEffect(() => {
+    const editor = view.current;
+    const codeMirror = runtime.current;
+    if (!ready || editor === null || codeMirror === null || reveal === null) return;
+    if (handledRevealRef.current === reveal.token) return;
+    if (!value.toLowerCase().includes(reveal.term.toLowerCase())) return;
+    handledRevealRef.current = reveal.token;
+    editor.dispatch({
+      effects: codeMirror.search.setSearchQuery.of(
+        new codeMirror.search.SearchQuery({ search: reveal.term }),
+      ),
+    });
+    codeMirror.search.findNext(editor);
+  }, [reveal, ready, value]);
 
   // The CodeMirror view is created once, so a language switch cannot flow
   // through re-created extensions or content attributes; sync both directly.

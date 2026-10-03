@@ -9,7 +9,6 @@ import {
   parseProjects,
   parseProviders,
   parseRevisions,
-  parseSearch,
   parseSetupStatus,
   parseStudioDocument,
   parseVoid,
@@ -36,6 +35,7 @@ import { clearRetryAttemptSession, parseAndRecordRetrySession } from "@/app/retr
 import { type ReviewListOptions, reviewDetailPath, reviewsRequest } from "@/app/reviewApiRequest";
 import { documentRevisionsRequest, type RevisionRequestOptions } from "@/app/revisionApiRequest";
 import { parseRevisionDetail } from "@/app/revisionDetailContract";
+import { parseSearch } from "@/app/searchContract";
 import { parseWritingStats } from "@/app/statsContract";
 import type { DocumentKind, ExportFormat, LoreStatus, ProjectUpdateBody } from "@/app/types/studio";
 
@@ -146,8 +146,23 @@ export const api = {
       { base_revision_id: baseRevisionId },
       parseStudioDocument,
     ),
-  search: (projectId: string, query: string, init?: RequestInit) =>
-    request(`/api/projects/${projectId}/search?q=${encodeURIComponent(query)}`, init, parseSearch),
+  /**
+   * DR-029: one ranked search page. `offset` walks the remaining pages with
+   * the server-issued `next_offset`; `signal` aborts an in-flight request.
+   */
+  search: (
+    projectId: string,
+    query: string,
+    options: { offset?: number; signal?: AbortSignal } = {},
+  ) => {
+    const offset = options.offset ?? 0;
+    const page = offset > 0 ? `&offset=${offset}` : "";
+    return request(
+      `/api/projects/${projectId}/search?q=${encodeURIComponent(query)}${page}`,
+      { signal: options.signal },
+      parseSearch,
+    );
+  },
   proposal: (
     projectId: string,
     documentId: string,

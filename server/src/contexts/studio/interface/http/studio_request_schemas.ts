@@ -137,8 +137,18 @@ export const projectListQuerySchema = Type.Object(
   },
   { additionalProperties: false },
 );
-/** The full-text query string: `q` is required (missing → 422). */
+/**
+ * The full-text query string with its page window (DR-029/DR-030): `q` is
+ * required (missing → 422) and bounded at 200 characters, so the worst-case
+ * reduced MATCH input has a fixed ceiling regardless of client behavior.
+ * `limit` keeps pages at 30 rows by default, and `offset` walks further
+ * pages; both stay inside their integer bounds.
+ */
 export const projectMatchQuerySchema = Type.Object(
-  { q: Type.String() },
+  {
+    q: Type.String({ maxLength: 200 }),
+    limit: Type.Optional(Type.Integer({ default: 30, minimum: 1, maximum: 100 })),
+    offset: Type.Optional(Type.Integer({ default: 0, minimum: 0, maximum: 10_000 })),
+  },
   { additionalProperties: false },
 );

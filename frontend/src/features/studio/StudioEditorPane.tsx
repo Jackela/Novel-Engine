@@ -21,6 +21,8 @@ interface StudioEditorPaneProps {
   isConflictActionPending?: boolean;
   /** DR-012: the conflict panel's read-only server-version preview controller. */
   serverVersion?: ServerVersionPreviewController | null;
+  /** DR-029: locate one search hit (term + token) in the opened document. */
+  reveal?: { readonly term: string; readonly token: number } | null;
   isLoadingDocument?: boolean;
   documentLoadError?: string | null;
   onDraftChange: (value: string) => void;
@@ -43,6 +45,7 @@ export function StudioEditorPane({
   error = null,
   isConflictActionPending = false,
   serverVersion = null,
+  reveal = null,
   isLoadingDocument = false,
   documentLoadError = null,
   onDraftChange,
@@ -180,7 +183,7 @@ export function StudioEditorPane({
             <span>{t("editor.toolbar.syntax")}</span>
           </div>
           <Suspense fallback={<div className="editor__loading">{t("editor.loading")}</div>}>
-            <MarkdownEditor value={draft} onChange={onDraftChange} />
+            <MarkdownEditor onChange={onDraftChange} reveal={reveal} value={draft} />
           </Suspense>
         </>
       ) : isLoadingDocument ? (

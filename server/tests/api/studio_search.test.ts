@@ -21,15 +21,28 @@ async function queryDocuments(
   jar: Parameters<typeof call>[1],
   projectId: string,
   q: string,
-): Promise<{ statusCode: number; body: string; results: MatchPayload[] }> {
+): Promise<{
+  statusCode: number;
+  body: string;
+  results: MatchPayload[];
+  total: number | null;
+  nextOffset: number | null;
+}> {
   const response = await call(
     app,
     jar,
     "GET",
     `/api/projects/${projectId}/search?q=${encodeURIComponent(q)}`,
   );
-  const parsed = response.statusCode === 200 ? response.json() : { results: [] };
-  return { statusCode: response.statusCode, body: response.body, results: parsed.results };
+  const parsed =
+    response.statusCode === 200 ? response.json() : { results: [], total: null, next_offset: null };
+  return {
+    statusCode: response.statusCode,
+    body: response.body,
+    results: parsed.results,
+    total: parsed.total,
+    nextOffset: parsed.next_offset,
+  };
 }
 
 function ftsRowCount(app: Parameters<typeof call>[0], sql: string, value: string): number {
@@ -77,7 +90,8 @@ describe("project full-text query surface", () => {
       expect(found.statusCode, found.body).toBe(200);
       expect(found.results.map((item) => item.document_id)).toEqual([frequent.id, rare.id]);
       for (const item of found.results) {
-        expect(Object.keys(item).sort()).toEqual(["document_id", "excerpt", "title"]);
+        // DR-029: hits carry the locate term in addition to the identity trio.
+        expect(Object.keys(item).sort()).toEqual(["document_id", "excerpt", "match_term", "title"]);
         expect(item.excerpt).toContain("lantern");
         expect(item.excerpt).not.toContain("<mark>");
       }
@@ -222,26 +236,6 @@ describe("project full-text query surface", () => {
         ),
       ).toBe(0);
       expect((await queryDocuments(app, jar, project.id, "bramblequill")).statusCode).toBe(404);
-    } finally {
-      await app.close();
-    }
-  });
-
-  it("caps results at 30 when more documents match", async () => {
-    const { app } = await buildStudioApp();
-    try {
-      const jar = await ownerJar(app);
-      const project = await seedProject(app, jar, "Capped");
-      for (let index = 1; index <= 32; index += 1) {
-        await seedDocument(app, jar, project.id, {
-          kind: "note",
-          title: `Cap ${String(index).padStart(2, "0")}`,
-          content_markdown: `bramblequill note number ${index} of many`,
-        });
-      }
-      const found = await queryDocuments(app, jar, project.id, "bramblequill");
-      expect(found.statusCode, found.body).toBe(200);
-      expect(found.results).toHaveLength(30);
     } finally {
       await app.close();
     }

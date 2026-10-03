@@ -23,8 +23,15 @@ interface StudioNavigatorProps {
   search: string;
   isSearching: boolean;
   searchResults: ComponentProps<typeof StudioNavigatorSearch>["searchResults"];
+  /** Honest project-wide match count of the shown query (DR-029). */
+  searchTotal?: number;
+  /** DR-029 paging/empty flags as one object: keeps the boolean-prop count down. */
+  searchState?: NavigatorSearchState;
   onSearchChange: (value: string) => void;
   onSearchSubmit: (event: FormEvent) => void;
+  /** DR-029: opens the document and locates the hit; rows use onSelectDocument. */
+  onSelectResult?: (result: NavigatorSearchResult) => void;
+  onLoadMore?: () => void;
   onNavigateSection: (section: string) => void;
   onSelectDocument: (documentId: string) => void;
   onCreateDocument: (kind: DocumentKind) => void | Promise<void>;
@@ -40,6 +47,18 @@ interface StudioNavigatorProps {
   wholeBook?: ComponentProps<typeof StudioWholeBookControl>;
 }
 
+/** One ranked search hit as the navigator renders it (DR-029). */
+export type NavigatorSearchResult = ComponentProps<
+  typeof StudioNavigatorSearch
+>["searchResults"][number];
+
+/** DR-029 paging/empty flags of the search surface, grouped as one prop. */
+export interface NavigatorSearchState {
+  readonly hasMoreResults: boolean;
+  readonly isLoadingMore: boolean;
+  readonly searchedEmpty: boolean;
+}
+
 export function StudioNavigator({
   project,
   section,
@@ -47,8 +66,12 @@ export function StudioNavigator({
   search,
   isSearching,
   searchResults,
+  searchTotal = 0,
+  searchState = { hasMoreResults: false, isLoadingMore: false, searchedEmpty: false },
   onSearchChange,
   onSearchSubmit,
+  onSelectResult,
+  onLoadMore = () => undefined,
   onNavigateSection,
   onSelectDocument,
   onCreateDocument,
@@ -126,12 +149,17 @@ export function StudioNavigator({
             ))}
           </nav>
           <StudioNavigatorSearch
+            hasMoreResults={searchState.hasMoreResults}
+            isLoadingMore={searchState.isLoadingMore}
             isSearching={isSearching}
+            onLoadMore={onLoadMore}
             onSearchChange={onSearchChange}
             onSearchSubmit={onSearchSubmit}
-            onSelectDocument={onSelectDocument}
+            onSelectResult={onSelectResult ?? ((result) => onSelectDocument(result.document_id))}
             search={search}
             searchResults={searchResults}
+            searchTotal={searchTotal}
+            searchedEmpty={searchState.searchedEmpty}
           />
           {showWholeBook ? <StudioWholeBookControl {...wholeBook} /> : null}
           <div className="studio-nav__tree">

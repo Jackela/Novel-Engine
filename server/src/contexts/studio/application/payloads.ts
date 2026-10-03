@@ -140,12 +140,16 @@ export function volumePayload(volume: VolumeRecord): VolumePayload {
   };
 }
 
-/** One full-text hit: identifier, title, and a plain-text excerpt. */
-export function documentMatchPayload(match: DocumentMatchRecord): MatchResultPayload {
+/** One full-text hit: identifier, title, excerpt, and the locate term (DR-029). */
+export function documentMatchPayload(
+  match: DocumentMatchRecord,
+  locateTerm: string,
+): MatchResultPayload {
   return {
     document_id: match.documentId,
     title: match.title,
     excerpt: match.excerpt,
+    match_term: locateTerm,
   };
 }
 

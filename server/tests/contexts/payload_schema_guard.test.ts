@@ -95,7 +95,7 @@ const CASES: Array<{
   },
   {
     name: "documentMatchPayload -> matchResultPayloadSchema",
-    build: () => documentMatchPayload(matchFixture()),
+    build: () => documentMatchPayload(matchFixture(), "willowquill"),
     schema: matchResultPayloadSchema as unknown as SchemaNode,
   },
   {

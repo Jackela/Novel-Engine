@@ -5,7 +5,8 @@ import type { StudioSqliteDatabase } from "../../../shared/infrastructure/db/con
 import type {
   AddDocumentInput,
   AdvanceDocumentInput,
-  DocumentMatchRecord,
+  DocumentMatchPage,
+  DocumentMatchPageInput,
   DocumentStore,
   DocumentWithCurrent,
   RevisionPageInput,
@@ -157,10 +158,11 @@ export class DocumentStorePart implements DocumentStore {
     scope: ProjectScope,
     projectId: string,
     matchQuery: string,
-  ): DocumentMatchRecord[] {
+    page: DocumentMatchPageInput,
+  ): DocumentMatchPage {
     return this.db.transaction((tx) => {
       const project = scopedProject(tx, scope, projectId);
-      return matchDocumentIndex(tx, project.id, matchQuery);
+      return matchDocumentIndex(tx, project.id, matchQuery, page);
     });
   }
 

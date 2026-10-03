@@ -1,15 +1,18 @@
 import type Database from "better-sqlite3";
 import { eq, sql } from "drizzle-orm";
 
-import type { DocumentMatchRecord } from "../../application/ports/document_store.js";
+import type {
+  DocumentMatchPage,
+  DocumentMatchPageInput,
+} from "../../application/ports/document_store.js";
 import { restoreFtsDisplayText, segmentFtsIndexText } from "../../domain/fts_segmentation.js";
 import { documentRevisions, documents } from "./schema.js";
 import type { Tx } from "./studio_query_helpers.js";
 
 /**
  * The single full-text module of the studio store: every FTS5 statement —
- * index refresh, index cleanup, the ranked query, and the rebuild — lives
- * here and runs inside the caller's transaction, parameter-bound. The
+ * index refresh, index cleanup, the ranked page query, and the rebuild —
+ * lives here and runs inside the caller's transaction, parameter-bound. The
  * `document_search` virtual table is created by the hand-written FTS5
  * migration and never enters the drizzle schema or snapshots.
  *
@@ -17,9 +20,6 @@ import type { Tx } from "./studio_query_helpers.js";
  * Han characters are individual unicode61 tokens (#DR-003); titles and
  * excerpts leave through `restoreFtsDisplayText`.
  */
-
-/** Result cap of the ranked query: the SQL statement uses LIMIT 30. */
-const MATCH_RESULT_LIMIT = 30;
 
 interface DocumentIndexEntry {
   documentId: string;
@@ -105,18 +105,30 @@ export function documentIndexReconciliation(raw: Database.Database): DocumentInd
 }
 
 /**
- * Ranked full-text query over one project: 16-token plain-text excerpt of
- * the content column (column 3), no highlight markers, ' … ' ellipsis
- * truncation, `ORDER BY rank`, capped at MATCH_RESULT_LIMIT. For Chinese
- * text each Han character is one token, so the same window is the
- * 16-character CJK window the search fix requires, while Latin keeps its
- * 16-word window. Excerpts and titles are restored to display text.
+ * Ranked full-text page over one project (DR-029): 16-token plain-text
+ * excerpt of the content column (column 3), no highlight markers, ' … '
+ * ellipsis truncation, `ORDER BY rank, document_id ASC` — the total order a
+ * LIMIT/OFFSET page can walk without duplicating or skipping rows — and the
+ * honest `COUNT(*)` of the same project + MATCH expression, so `total` is
+ * never the page size. For Chinese text each Han character is one token, so
+ * the same window is the 16-character CJK window the search fix requires,
+ * while Latin keeps its 16-word window. Excerpts and titles are restored to
+ * display text.
  */
 export function matchDocumentIndex(
   tx: Tx,
   projectId: string,
   matchQuery: string,
-): DocumentMatchRecord[] {
+  page: DocumentMatchPageInput,
+): DocumentMatchPage {
+  const totalRow = tx.get<{ n: number }>(
+    sql`SELECT COUNT(*) AS n FROM document_search
+        WHERE project_id = ${projectId} AND document_search MATCH ${matchQuery}`,
+  );
+  if (totalRow === undefined) {
+    // COUNT(*) always yields exactly one row; a missing row is a driver anomaly.
+    throw new Error("FTS5 match count returned no row.");
+  }
   const rows = tx.all<{
     document_id: string;
     title: string;
@@ -126,10 +138,13 @@ export function matchDocumentIndex(
         FROM document_search
         WHERE project_id = ${projectId} AND document_search MATCH ${matchQuery}
         ORDER BY rank, document_id ASC
-        LIMIT ${MATCH_RESULT_LIMIT}`);
-  return rows.map((row) => ({
-    documentId: row.document_id,
-    title: restoreFtsDisplayText(row.title),
-    excerpt: restoreFtsDisplayText(row.excerpt),
-  }));
+        LIMIT ${page.limit} OFFSET ${page.offset}`);
+  return {
+    matches: rows.map((row) => ({
+      documentId: row.document_id,
+      title: restoreFtsDisplayText(row.title),
+      excerpt: restoreFtsDisplayText(row.excerpt),
+    })),
+    total: totalRow.n,
+  };
 }

@@ -44,8 +44,17 @@ export const projectListResponseSchema = Type.Object(
   { additionalProperties: false },
 );
 
+/**
+ * One ranked search page (DR-029): `total` is the honest project-wide match
+ * count (never the page size) and `next_offset` walks the remaining pages —
+ * null exactly when every match has been delivered.
+ */
 export const matchListResponseSchema = Type.Object(
-  { results: Type.Array(matchResultPayloadSchema) },
+  {
+    results: Type.Array(matchResultPayloadSchema),
+    total: Type.Integer({ minimum: 0 }),
+    next_offset: Type.Unsafe<number | null>({ type: "integer", nullable: true }),
+  },
   { additionalProperties: false },
 );
 

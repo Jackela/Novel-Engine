@@ -4,6 +4,7 @@ import type { StudioRouteState } from "../studioRouteState";
 import { buildNavigatorCommands } from "./navigatorCommands";
 import { buildProposalUndo } from "./proposalUndo";
 import { buildStudioInspectorModel, buildStudioNavigatorProps } from "./studioPageModelView";
+import { useStudioSearchModel } from "./studioSearchModel";
 import { useDiagnosticsDownload } from "./useDiagnosticsDownload";
 import { useExportDownload } from "./useExportDownload";
 import { useLazyInspectorHistories } from "./useLazyInspectorHistories";
@@ -22,7 +23,6 @@ import {
 } from "./useStudioPageNavigation";
 import { useStudioProject } from "./useStudioProject";
 import { useStudioProviders } from "./useStudioProviders";
-import { useStudioSearch } from "./useStudioSearch";
 
 type Nav = NavigateFunction;
 
@@ -124,9 +124,10 @@ export function useStudioPageModel(projectId: string, route: StudioRouteState, n
     loadJobs,
     onSelectInspector: navigation.onSelectInspector,
   });
-  const { search, setSearch, isSearching, searchResults, runSearch } = useStudioSearch(
+  const { reveal, model: searchModel } = useStudioSearchModel(
     projectId,
     projectErrors.publishers.search,
+    setActiveId,
   );
   const providers = useStudioProviders();
   const exportHistory = inspectorHistories.exportHistory;
@@ -200,11 +201,7 @@ export function useStudioPageModel(projectId: string, route: StudioRouteState, n
           project,
           section,
           activeId: activeSummary?.id ?? activeId,
-          search,
-          isSearching,
-          searchResults,
-          onSearchChange: setSearch,
-          onSearchSubmit: runSearch,
+          ...searchModel,
           onSelectDocument: setActiveId,
           createDocument,
           moveDocument,
@@ -226,6 +223,9 @@ export function useStudioPageModel(projectId: string, route: StudioRouteState, n
         saveState,
         error: documentErrors.error,
         isConflictActionPending,
+        // DR-029: the locate intent reaches the editor only once its target
+        // document is the active one; other documents never consume it.
+        reveal: reveal !== null && reveal.documentId === activeSummary?.id ? reveal : null,
         onDraftChange: setDraft,
         onTitleChange: setTitleDraft,
         onLoadLatest: loadLatest,

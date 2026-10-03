@@ -125,6 +125,17 @@ export function numberField(source: JsonRecord, key: string, parent: string): nu
   return typeof value === "number" && Number.isFinite(value) ? value : fail(`${parent}.${key}`);
 }
 
+/** A number field that legitimately carries null (e.g. `next_offset`). */
+export function nullableNumberField(
+  source: JsonRecord,
+  key: string,
+  parent: string,
+): number | null {
+  const value = field(source, key, parent);
+  if (value === null) return null;
+  return typeof value === "number" && Number.isFinite(value) ? value : fail(`${parent}.${key}`);
+}
+
 function booleanField(source: JsonRecord, key: string, parent: string): boolean {
   const value = field(source, key, parent);
   return typeof value === "boolean" ? value : fail(`${parent}.${key}`);
@@ -315,22 +326,6 @@ export function parseRevisions(value: unknown): RevisionPage {
       parseRevisionSummary(entry, `revisions[${index}]`),
     ),
     next_cursor: nullableStringField(item, "next_cursor", "revisions response"),
-  };
-}
-
-export function parseSearch(value: unknown): {
-  results: Array<{ document_id: string; title: string; excerpt: string }>;
-} {
-  const item = objectValue(value, "search response");
-  return {
-    results: arrayField(item, "results", "search response", (entry, index) => {
-      const result = objectValue(entry, `results[${index}]`);
-      return {
-        document_id: stringField(result, "document_id", `results[${index}]`),
-        title: stringField(result, "title", `results[${index}]`),
-        excerpt: stringField(result, "excerpt", `results[${index}]`),
-      };
-    }),
   };
 }
 

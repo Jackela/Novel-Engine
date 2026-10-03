@@ -3972,6 +3972,8 @@ export interface paths {
             parameters: {
                 query: {
                     q: string;
+                    limit?: number;
+                    offset?: number;
                 };
                 header?: never;
                 path: {
@@ -3988,11 +3990,14 @@ export interface paths {
                     };
                     content: {
                         "application/json": {
+                            next_offset: number | null;
                             results: {
                                 document_id: string;
                                 excerpt: string;
+                                match_term: string;
                                 title: string;
                             }[];
+                            total: number;
                         };
                     };
                 };

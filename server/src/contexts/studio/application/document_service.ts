@@ -2,9 +2,9 @@ import type { Principal } from "../../../shared/application/ports/auth.js";
 import { InvalidOperationError } from "../../../shared/domain/exceptions.js";
 import { isDocumentKind } from "../domain/kinds.js";
 import { assertSerializedCapacity } from "../domain/structure_capacity.js";
-import { buildFtsMatchQuery } from "./fts_match_query.js";
+import { buildFtsLocateTerm, buildFtsMatchQuery } from "./fts_match_query.js";
 import { documentMatchPayload, documentPayload, dumpJson } from "./payloads.js";
-import type { DocumentStore } from "./ports/document_store.js";
+import type { DocumentMatchPageInput, DocumentStore } from "./ports/document_store.js";
 import type { ProjectScope } from "./ports/studio_store.js";
 import { scopeForPrincipal } from "./ports/studio_store.js";
 import type { StudioVolumeStore } from "./ports/volume_store.js";
@@ -118,22 +118,34 @@ export class DocumentService {
   }
 
   /**
-   * Project-scoped full-text query over titles and current content. Raw
-   * input reduces to safe quoted tokens first; an irreducible query
-   * answers empty without touching the index.
+   * Project-scoped full-text query over titles and current content (DR-029):
+   * raw input reduces to safe quoted tokens first; an irreducible query
+   * answers an empty page with an honest zero total and no next page.
+   * Otherwise the store returns one bounded page plus the project's total
+   * match count, and every result carries the first reduced element as the
+   * UI's locate term (never a fabricated one).
    */
   queryProjectDocuments(
     principal: Principal,
     projectId: string,
     query: string,
-  ): Record<string, unknown>[] {
+    page: DocumentMatchPageInput,
+  ): Record<string, unknown> {
     const matchQuery = buildFtsMatchQuery(query);
-    if (matchQuery === null) {
-      return [];
+    const locateTerm = buildFtsLocateTerm(query);
+    // Both reduce the same input, so a null together is the irreducible case.
+    if (matchQuery === null || locateTerm === null) {
+      return { results: [], total: 0, next_offset: null };
     }
-    return this.documents
-      .matchProjectDocuments(scopeForPrincipal(principal), projectId, matchQuery)
-      .map((match) => documentMatchPayload(match));
+    const { matches, total } = this.documents.matchProjectDocuments(
+      scopeForPrincipal(principal),
+      projectId,
+      matchQuery,
+      page,
+    );
+    const results = matches.map((match) => documentMatchPayload(match, locateTerm));
+    const consumed = page.offset + results.length;
+    return { results, total, next_offset: consumed < total ? consumed : null };
   }
 
   /**
