@@ -9,7 +9,8 @@ kept identical between the two files.
 
 ## Start with one command
 
-Once the v0.8.0 release is published, run this from any empty directory on a
+The `v0.8.0` tag is pushed and its image is already on GHCR (the GitHub
+Release itself is still a draft), so run this from any empty directory on a
 machine with Docker (Compose v2) and an internet connection:
 
 ```bash
@@ -116,8 +117,9 @@ otherwise Compose creates a new project with an empty volume.
 
 What the upgrade does to your data, in the startup's fixed order:
 
-1. **Safety backup** — before anything changes, the existing database is
-   copied to a timestamped file in `backups/` inside the data volume.
+1. **Safety backup** — when the upgrade has migrations to apply, the existing
+   database is copied to a timestamped file in `backups/` inside the data
+   volume before the schema changes.
 2. **Migrations** — the database schema is brought to the new version's
    shape, automatically.
 3. **Reconciliation and job recovery** — then the studio starts serving.
@@ -208,7 +210,8 @@ Everything stateful lives in the named volume `novel-engine-data`, mounted at
 `/app/data` in the container:
 
 - `novel-engine.sqlite3` — the SQLite database (the content authority),
-- `backups/` — timestamped automatic backups taken before every migration,
+- `backups/` — timestamped automatic backups written when migrations are
+  pending (the newest three are kept),
 - `.secret` — the generated session secret (mode 0600),
 - `.setup-token` — the one-time first-start setup token (mode 0600), created
   while no Owner exists and deleted after setup.

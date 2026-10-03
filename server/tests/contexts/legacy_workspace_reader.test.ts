@@ -46,11 +46,13 @@ describe("legacy workspace reader", () => {
     expect(workspace.chapters).toEqual([
       {
         filename: "chapter-002.md",
+        title: "Second",
         contentMarkdown: first,
         bytes: Buffer.byteLength(first, "utf8"),
       },
       {
         filename: "chapter-010.md",
+        title: "Tenth",
         contentMarkdown: second,
         bytes: Buffer.byteLength(second, "utf8"),
       },
@@ -71,7 +73,7 @@ describe("legacy workspace reader", () => {
     expect(workspace.description).toBe("Folded premise across lines");
   });
 
-  it("binds the hash to the canonical source and eligible raw bytes", async () => {
+  it("binds the hash to the relative source and raw bytes, not the root path (DR-037)", async () => {
     const input: LegacyWorkspaceInput = {
       title: "Shared Story",
       chapters: [{ filename: "chapter-001.md", content: "# Before\n" }],
@@ -80,7 +82,9 @@ describe("legacy workspace reader", () => {
     const second = makeWorkspace("second", input);
     const firstHash = (await reader.read(first)).sourceHash;
 
-    expect((await reader.read(second)).sourceHash).not.toBe(firstHash);
+    // DR-037: two identical trees at different roots are the same source —
+    // a moved directory must not duplicate the project.
+    expect((await reader.read(second)).sourceHash).toBe(firstHash);
 
     writeFileSync(join(first, "manuscript", "chapters", "chapter-001.md"), "# After\n", "utf8");
     expect((await reader.read(first)).sourceHash).not.toBe(firstHash);

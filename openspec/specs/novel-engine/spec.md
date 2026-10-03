@@ -43,9 +43,9 @@ The behavior specified here covers:
 - The platform contract: owner session/CSRF/setup policy with rate limiting
   and production configuration guards, a unified error envelope, synchronous
   job execution with retry, health/version surfaces, the operational CLI
-  (`serve`, `import`, `backup`, `restore`, `reindex`, `doctor`, `owner reset`),
-  read-only idempotent legacy import, and a route-driven, editor-first,
-  APG-compliant Studio UI.
+  (`serve`, `import`, `backup`, `restore`, `reindex`, `doctor`, `migrate`,
+  `owner reset`), read-only idempotent legacy import, and a route-driven,
+  editor-first, APG-compliant Studio UI.
 
 ## Requirements
 
@@ -151,33 +151,42 @@ missing tokens MUST be rejected with 403.
 - **THEN** the request proceeds without CSRF validation
 
 ### Requirement: Session and provider surface
-The API MUST expose owner setup (`GET`/`POST /setup`), authentication
-(`POST /session/login`, `GET /session`, `DELETE /session`), and provider
-discovery (`GET /providers` returning, for each provider, whether it is
-configured, its model, and whether it is the default). A guest session
-surface MUST NOT exist.
+The API MUST expose owner setup (`GET`/`POST /api/setup`), authentication
+(`POST /api/session/login`, `GET`/`DELETE /api/session`), and provider
+discovery (`GET /api/providers` returning, for each provider, whether it is
+configured, its model, and whether it is the default). The authenticated
+Studio surface is mounted under `/api/projects`, with the read-only import
+preview at `/api/imports/preview`; health probes stay at `/health*`, the
+version surface at `/version`, and the OpenAPI document at `/openapi.json`.
+A guest session surface MUST NOT exist.
 
 #### Scenario: Provider discovery
 - **GIVEN** no provider API key is configured
-- **WHEN** `GET /providers` is called by the owner
+- **WHEN** `GET /api/providers` is called by the owner
 - **THEN** each provider reports `configured: false`
 - **AND** the response includes the mock provider as configured
 
 #### Scenario: Guest surface is gone
 - **GIVEN** any session state
-- **WHEN** `POST /session/guest` is requested
+- **WHEN** `POST /api/session/guest` is requested
 - **THEN** the response is 404 under the unified error envelope
 
 ### Requirement: Health and version surface
 
 The API MUST expose a database-aware health check, liveness and readiness
 probes (`/health/ready` failing with 503 when not ready), and a version
-endpoint reporting the product version, the runtime identifier and version,
-the environment, and the build SHA. When application persistence exists, the
-default readiness probe MUST execute a read-only check through the same live
-SQLite handle used by requests. An injected probe MAY replace it explicitly.
-The database-free walking skeleton MAY remain ready with no components, and
-liveness MUST remain independent of dependency state.
+endpoint. Outside production the version endpoint reports the product version,
+the runtime identifier and version, the environment, and the build SHA; in
+production it MUST be reduced to the public product identity (name and
+version), because runtime, environment, and build values are deployment
+fingerprints. The OpenAPI document (`/openapi.json`) MUST require the owner in
+production — anonymous callers receive 401 and a missing persistence layer
+fails closed — while development and test keep it open for tooling; health
+probes and the version endpoint stay anonymous. When application persistence
+exists, the default readiness probe MUST execute a read-only check through the
+same live SQLite handle used by requests. An injected probe MAY replace it
+explicitly. The database-free walking skeleton MAY remain ready with no
+components, and liveness MUST remain independent of dependency state.
 
 #### Scenario: Readiness reflects the database
 
@@ -185,11 +194,25 @@ liveness MUST remain independent of dependency state.
 - **WHEN** `/health/ready` is requested
 - **THEN** the response is 503
 
-#### Scenario: Version reports the runtime
+#### Scenario: Version reports the runtime outside production
 
-- **GIVEN** the server runs on Node
+- **GIVEN** the server runs on Node outside production
 - **WHEN** `/version` is requested
 - **THEN** the payload reports the product version and a `runtime` field with the Node version
+
+#### Scenario: Production version hides deployment fingerprints
+
+- **GIVEN** the server runs in production
+- **WHEN** `/version` is requested anonymously
+- **THEN** the payload contains only the product name and version
+- **AND** no runtime, environment, or build value is present
+
+#### Scenario: Production OpenAPI requires the owner
+
+- **GIVEN** the server runs in production
+- **WHEN** `/openapi.json` is requested without an owner session
+- **THEN** the response is 401
+- **AND** the contract is served only to the owner
 
 #### Scenario: Default readiness uses the live SQLite handle
 
@@ -1795,7 +1818,7 @@ system MUST NOT choose, move, merge, or silently fall back to either file.
 ### Requirement: CLI operational surface
 
 The CLI MUST provide the operational commands `serve`, `import`, `backup`,
-`restore`, `reindex`, `doctor`, and `owner reset`. Every command MUST
+`restore`, `reindex`, `doctor`, `migrate`, and `owner reset`. Every command MUST
 establish the configured database authority and pass the legacy-sibling
 ambiguity gate before database backup, migration, reconciliation, import, or
 inspection. After that gate passes, `serve` MUST back up the SQLite store
@@ -1811,8 +1834,16 @@ failure MUST remain visible and return `1` instead.
 `import` MUST take an explicit source path and owner, run as the owner principal
 without HTTP authentication, and print the imported project. `backup` MUST
 write a backup and print its path. `doctor` MUST report the version, database
-path, integrity check, journal mode, foreign-key enforcement, and owner status,
-exiting non-zero unless the integrity check passes and foreign keys are enabled.
+path, integrity check, journal mode, foreign-key enforcement, owner status,
+document-index reconciliation, and migration progress as a strictly read-only
+probe: it MUST NOT migrate, back up, reconcile, or take the write lock, it MAY
+run while a server is serving the same database, and a lock or authority
+conflict MUST surface through its `error` field while `quick_check` carries
+only the integrity pragma's result. It exits non-zero unless the database
+opens, the integrity check passes, and foreign keys are enabled. `migrate`
+MUST be the write path: take the same exclusive data-directory ownership,
+write a safety backup when migrations are pending, apply them, reconcile
+exports, and recover jobs.
 `owner reset` MUST hold the same exclusive data-directory ownership as every
 maintenance command — a running server holds that lock, so the command is
 refused before anything is read or written — delete the Owner and its sessions
@@ -2000,12 +2031,13 @@ provider calls synchronously and may legitimately run for minutes.
 
 ### Requirement: Section-filtered document views
 The manuscript section MUST show every document; the outline, characters,
-and world sections MUST show only documents of their kind. When the active
-document does not match the section's kind, the section MUST fall back to
-its first document of that kind.
+world, and notes sections MUST show only documents of their kind — the closed
+document-kind set is `chapter`, `outline`, `character`, `world`, and `note`.
+When the active document does not match the section's kind, the section MUST
+fall back to its first document of that kind.
 
 #### Scenario: Outline section filters by kind
-- **GIVEN** a project holds chapter, outline, character, and world documents and the active document is a chapter
+- **GIVEN** a project holds chapter, outline, character, world, and note documents and the active document is a chapter
 - **WHEN** the author opens the outline section
 - **THEN** only outline documents are listed
 - **AND** the first outline document becomes active
@@ -2045,7 +2077,7 @@ browser, revoking the object URL afterwards.
 
 ### Requirement: Complete single-author Studio
 The system MUST provide project library, manuscript, outline, character, world,
-review, history, export, and settings surfaces.
+notes, review, history, export, and settings surfaces.
 
 #### Scenario: Authoring flow
 - **GIVEN** an owner project

@@ -25,8 +25,9 @@ export interface AddProjectInput {
   now: Date;
 }
 
-/** One imported chapter: content plus its persisted metadata JSON. */
+/** One imported chapter: its source-inferred title, content, and metadata JSON. */
 interface ImportedChapterInput {
+  title: string;
   contentMarkdown: string;
   metadataJson: string;
 }

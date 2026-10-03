@@ -1,6 +1,7 @@
+import { renameSync, writeFileSync } from "node:fs";
 import { mkdtemp } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { afterAll, describe, expect, it, vi } from "vitest";
 import { ImportService } from "../../src/contexts/studio/application/import_service.js";
 import { projectPageLimit } from "../../src/contexts/studio/application/ports/project_catalog_store.js";
@@ -136,7 +137,7 @@ describe("legacy import service", () => {
     expect(storeAccess).toHaveBeenCalledOnce();
   });
 
-  it("titles chapters Chapter 1..N by filename order with no additional documents", async () => {
+  it("preserves chapter titles inferred from the source in filename order", async () => {
     const { auth, services } = await buildServices();
     const owner = await ownerPrincipal(auth);
     const source = legacySource();
@@ -146,7 +147,7 @@ describe("legacy import service", () => {
 
     expect(
       (detail.payload.documents as Record<string, unknown>[]).map((document) => document.title),
-    ).toEqual(["Chapter 1", "Chapter 2"]);
+    ).toEqual(["First", "Second"]);
     const firstSummary = detail.documents[0];
     const secondSummary = detail.documents[1];
     if (firstSummary === undefined || secondSummary === undefined) {
@@ -159,6 +160,65 @@ describe("legacy import service", () => {
     expect(first.metadata).toEqual({
       legacy_filename: "chapter-001.md",
     });
+  });
+
+  it("infers titles from the first heading, then the filename, then the position", async () => {
+    const { auth, services } = await buildServices();
+    const owner = await ownerPrincipal(auth);
+    const source = makeLegacyWorkspace(join(tmpdir(), `legacy-titles-${Date.now()}`), {
+      title: "Titled Story",
+      chapters: [
+        { filename: "chapter-001.md", content: "# The Storm Arrives\n\nProse follows.\n" },
+        { filename: "chapter-042.md", content: "Opening prose without a heading.\n" },
+        { filename: "chapter-the-old-house.md", content: "Another plain opening.\n" },
+      ],
+    });
+
+    const project = await services.imports.importLegacyWorkspace(owner, source);
+    const detail = services.projects.projectShell(owner, project.project_id);
+
+    expect(
+      (detail.payload.documents as Record<string, unknown>[]).map((document) => document.title),
+    ).toEqual(["The Storm Arrives", "Chapter 42", "the old house"]);
+  });
+
+  it("keeps the workspace identity when an unchanged workspace moves to a new path", async () => {
+    const { auth, services } = await buildServices();
+    const owner = await ownerPrincipal(auth);
+    const source = legacySource();
+    const first = await services.imports.importLegacyWorkspace(owner, source);
+
+    const moved = join(dirname(source), `moved-${Date.now()}`);
+    renameSync(source, moved);
+    const second = await services.imports.importLegacyWorkspace(owner, moved);
+
+    expect(second.project_id).toBe(first.project_id);
+    expect(second.import_hash).toBe(first.import_hash);
+    expect(second.created).toBe(false);
+    expect(
+      services.projects.listProjects(owner, { limit: projectPageLimit(50) }).projects,
+    ).toHaveLength(1);
+  });
+
+  it("imports a changed chapter as a new workspace identity", async () => {
+    const { auth, services } = await buildServices();
+    const owner = await ownerPrincipal(auth);
+    const source = legacySource();
+    const first = await services.imports.importLegacyWorkspace(owner, source);
+
+    writeFileSync(
+      join(source, "manuscript", "chapters", "chapter-001.md"),
+      "# First, revised\n",
+      "utf8",
+    );
+    const second = await services.imports.importLegacyWorkspace(owner, source);
+
+    expect(second.created).toBe(true);
+    expect(second.import_hash).not.toBe(first.import_hash);
+    expect(second.project_id).not.toBe(first.project_id);
+    expect(
+      services.projects.listProjects(owner, { limit: projectPageLimit(50) }).projects,
+    ).toHaveLength(2);
   });
 
   it("seeds one default volume holding the imported chapters", async () => {

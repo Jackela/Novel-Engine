@@ -18,7 +18,7 @@
 
 装好并打开 [Docker Desktop](https://www.docker.com/products/docker-desktop/)，然后二选一：
 
-**路径一：一行命令（无需克隆代码）** —— 待 v0.8.0 发布后，在任意空目录运行：
+**路径一：一行命令（无需克隆代码）** —— v0.8.0 的 tag 与 GHCR 预构建镜像已可用（GitHub Release 仍为 draft），在任意空目录运行：
 
 ```bash
 # 工作室对外的浏览器来源（Compose 从 shell 或 .env 读取）；缺省会直接拒绝启动

@@ -4,14 +4,30 @@ import { type Dictionary, en, type MessageKey } from "./en";
 import { zh } from "./zh";
 
 /**
- * Runtime guard for what the compiler already enforces (`zh: Dictionary`)
- * plus the e2e anchor contract: the Playwright suite locates the EN strings
- * byte-exactly, so any intentional EN value change here must be mirrored in
- * frontend/tests/e2e-ts specs in the same change.
+ * The dictionary contract, deliberately narrow (DR-038): key parity between
+ * the languages, non-empty messages, and an anchor whitelist of the copy that
+ * other tests locate by exact string. Plain copy edits outside the whitelist
+ * need no test change; changing an anchored value MUST be mirrored in the
+ * locating test in the same change.
+ *
+ * The whitelist is derived from usage, not from the dictionaries: every entry
+ * exists because a Playwright spec in `frontend/tests/e2e-ts` (or a unit test
+ * that matches rendered copy) locates that EN value. Do not pin copy merely
+ * because it exists; add an entry together with the locating test, and delete
+ * the entry when its last locating test goes away.
  */
 describe("dictionaries", () => {
-  it("keeps zh key-complete against the English SSOT", () => {
-    expect(Object.keys(zh).sort()).toEqual(Object.keys(en).sort());
+  it("keeps zh key parity with the English SSOT in both directions", () => {
+    const enKeys = new Set(Object.keys(en));
+    const zhKeys = new Set(Object.keys(zh));
+    expect(
+      Object.keys(zh).filter((key) => !enKeys.has(key)),
+      "keys removed from en",
+    ).toEqual([]);
+    expect(
+      Object.keys(en).filter((key) => !zhKeys.has(key)),
+      "keys missing from zh",
+    ).toEqual([]);
   });
 
   it("keeps every message a non-empty string in both languages", () => {
@@ -25,7 +41,10 @@ describe("dictionaries", () => {
     }
   });
 
-  it("keeps the EN anchors the e2e suite locates by byte-stable", () => {
+  it("keeps the EN anchors other tests locate by exact copy", () => {
+    // Verified against `frontend/tests/e2e-ts` (Playwright locators) and the
+    // unit tests that match rendered copy. Each entry below is load-bearing
+    // for at least one locating test; orphaned pins are removed (DR-038).
     const anchors = {
       "common.action.tryAgain": "Try again",
       "entry.action.createOwner": "Create owner",
@@ -36,7 +55,6 @@ describe("dictionaries", () => {
       "entry.heading.signedIn": "Open your writing studio",
       "library.action.create": "Create project",
       "library.action.signOut": "Sign out",
-      "library.status.loading": "Loading projects...",
       "settings.action.save": "Save settings",
       "settings.action.saving": "Saving…",
       "shell.action.backToProjects": "Back to projects",
@@ -64,7 +82,6 @@ describe("dictionaries", () => {
       "editor.error.heading": "Unable to open this document",
       "editor.field.title": "Document title",
       "export.action.retry": "Retry {format} export",
-      "export.formats.legend": "Export formats",
       "export.history.empty": "No exports yet.",
       "export.history.end": "End of export history.",
       "export.history.heading": "Export history",

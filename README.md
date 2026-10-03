@@ -105,17 +105,19 @@ Frontend-only variables live in `frontend/.env.example`:
 
 ## Docker
 
-Docker is the recommended way to run Novel Engine. Once v0.8.0 is published,
-the quickest path needs no clone and no build: a prebuilt image on GHCR is
-started by a single command (see [deploy/README.md](deploy/README.md) for the
-walkthrough, upgrades, and the reverse-proxy hosting checklist):
+Docker is the recommended way to run Novel Engine. The `v0.8.0` tag is pushed
+and its prebuilt multi-architecture image is already on GHCR — the GitHub
+Release itself is still a draft — so the quickest path needs no clone and no
+build: a single command starts the image (see
+[deploy/README.md](deploy/README.md) for the walkthrough, upgrades, and the
+reverse-proxy hosting checklist):
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/Jackela/Novel-Engine/v0.8.0/deploy/compose.yaml | docker compose -f - up -d
 ```
 
-Until that image is published — and any time you want to run from source —
-use the clone path below. First get the code: clone this repository, or
+To build from source instead, use the clone path below. First get the code:
+clone this repository, or
 download it via the **Code** → **Download ZIP** button on GitHub and unzip
 it. Then, from the folder containing `compose.yaml` (the first start builds
 the image and can take a few minutes):
@@ -188,17 +190,27 @@ The operational CLI builds and runs through pnpm:
 
 ```bash
 pnpm --dir server cli serve
-pnpm --dir server cli doctor
+pnpm --dir server cli import --source <legacy-workspace> --owner <username>
 pnpm --dir server cli backup
 pnpm --dir server cli restore --input <backup-file>
+pnpm --dir server cli reindex
+pnpm --dir server cli doctor
+pnpm --dir server cli migrate
 pnpm --dir server cli owner reset
 ```
 
 `backup` writes a consistent online backup beneath `data/backups/` and prints
-its path. `restore --input <backup-file>` verifies a backup file, backs up
-the current database, then replaces it atomically. Both commands take
-exclusive ownership of the data directory: stop the running server first.
-Backups are never removed automatically. For the Docker equivalents, see the
+its path; after each verified write only the newest three backups in the
+`novel-engine-*.sqlite3.bak` family are kept. `restore --input <backup-file>`
+verifies a backup file, backs up the current database, then replaces it
+atomically. Both commands take exclusive ownership of the data directory:
+stop the running server first. `reindex` rebuilds the full-text search index
+from every document's current revision. `doctor` prints a read-only health
+report (identity, integrity check, journal mode, foreign keys, owner,
+document-index reconciliation, migration progress) and never migrates, backs
+up, or takes the write lock, so it is safe to run while the server is up;
+`migrate` is the write path that applies pending migrations, writing the
+safety backup first. For the Docker equivalents, see the
 [backup and restore guide](openwiki/guides/backup-and-restore.md).
 
 `owner reset` deletes the local Owner and its sessions so a fresh setup can
@@ -219,8 +231,14 @@ legacy-workspace/
 ```
 
 Run `pnpm --dir server cli import --source path/to/legacy-workspace --owner <username>`
-after the Owner account has been created. The import is read-only against the
-source and idempotent per principal.
+after the Owner account has been created. Legacy import is a CLI-only path: the
+Studio ships no import wizard, and the HTTP surface exposes only a read-only
+preview (`POST /api/imports/preview`, confined to `data/imports`). The import
+is read-only against the source. Each chapter keeps the title inferred from its
+first heading (falling back to its filename), and the workspace identity covers
+relative paths plus content — so re-importing unchanged content, wherever the
+directory moved to, returns the existing project (`created: false`) instead of
+duplicating it, while a changed chapter imports as a new project.
 
 ## Validation
 

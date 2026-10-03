@@ -2,15 +2,15 @@
 
 Novel Engine is upgraded by pulling the new code and rebuilding the image.
 Your manuscripts live in the `novel-engine-data` volume, which an upgrade
-never touches, and the studio prepares its own safety backup on every start —
-so an upgrade is routine.
+never touches, and the studio prepares its own safety backup when the upgrade
+has migrations to apply — so an upgrade is routine.
 
 ## Before you upgrade
 
 Take one copy off the machine with the [backup](backup-and-restore.md)
-routine. The studio takes automatic backups on every start, but a copy on an
-external drive or in a private cloud folder is the one that saves you from a
-disk failure during the upgrade.
+routine. The studio backs up automatically before applying pending
+migrations, but a copy on an external drive or in a private cloud folder is
+the one that saves you from a disk failure during the upgrade.
 
 ## Get the new code
 
@@ -37,8 +37,8 @@ watch progress with `docker compose logs -f novel-engine`.
 
 The startup sequence protects your data in a fixed order:
 
-1. **Safety backup** — if a database exists, a timestamped copy is written to
-   `backups/` first.
+1. **Safety backup** — when migrations are pending, a timestamped copy is
+   written to `backups/` first.
 2. **Migrations** — the database schema is brought up to the new version's
    shape, automatically.
 3. **Reconciliation** — export records and history word counts are checked

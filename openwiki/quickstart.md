@@ -113,7 +113,7 @@ pnpm --dir server cli doctor
 - `/health/live` returns liveness without querying SQLite.
 - `/health/ready` checks the authoritative SQLite store and returns HTTP 503 when it is unavailable.
 - `/health` returns the detailed database component status.
-- `/version` returns the application version, the Node runtime version, the environment, and `BUILD_SHA` when present.
+- `/version` returns the application version, the Node runtime version, the environment, and `BUILD_SHA` when present; in production it answers with only the product name and version, because the runtime, environment, and build values are deployment fingerprints.
 
 These endpoints and the doctor output are defined in `server/src/apps/api/app.ts` and `server/src/apps/cli/main.ts`.
 

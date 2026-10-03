@@ -53,6 +53,8 @@ export class ImportService {
   /**
    * Import the workspace for this principal, or return the project an earlier
    * import of the same source hash already created in this principal's scope.
+   * A repeat import is an idempotent skip: `created` is false and the existing
+   * `project_id` is returned, so callers must not assume a new project.
    */
   async importLegacyWorkspace(principal: Principal, source: string): Promise<LegacyImportResult> {
     const workspace = await this.reader.read(source);
@@ -71,6 +73,7 @@ export class ImportService {
       settingsJson: IMPORT_SETTINGS_JSON,
       importHash: workspace.sourceHash,
       chapters: workspace.chapters.map((chapter) => ({
+        title: chapter.title,
         contentMarkdown: chapter.contentMarkdown,
         metadataJson: dumpJson({ legacy_filename: chapter.filename }),
       })),

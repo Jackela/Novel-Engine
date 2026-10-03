@@ -1,6 +1,12 @@
 /** One chapter discovered in a legacy workspace without changing its source. */
 interface LegacyWorkspaceChapter {
   readonly filename: string;
+  /**
+   * Non-empty display title inferred from the source: the first ATX heading,
+   * else the filename (`chapter-<number>` normalizes to `Chapter <number>`),
+   * else `Chapter <position>`. The reader guarantees a non-empty value.
+   */
+  readonly title: string;
   readonly contentMarkdown: string;
   readonly bytes: number;
 }
@@ -8,6 +14,9 @@ interface LegacyWorkspaceChapter {
 /**
  * Canonical, principal-independent identity and content of a legacy workspace.
  * Principal scoping belongs to the import application service, not this reader.
+ * `sourceHash` is derived from relative paths plus file bytes only, so the
+ * identity survives moving the workspace directory (see the reader's
+ * `workspaceHash`) and any changed chapter is a new identity.
  */
 export interface LegacyWorkspace {
   readonly source: string;

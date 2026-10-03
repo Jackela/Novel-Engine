@@ -35,8 +35,9 @@ new revision atomically.
 _Avoid_: version, history entry
 
 **Snapshot**:
-An immutable, complete revision set of a project. Review and export read
-snapshots, never live documents.
+An immutable, complete revision set of a project captured for a review or an
+export, so the stored findings or the exported artifact never disagree with
+the text they were computed from.
 _Avoid_: backup, checkpoint
 
 **Proposal**:
@@ -45,7 +46,9 @@ accepts it.
 _Avoid_: suggestion, AI edit
 
 **Review**:
-The author's accept/reject pass over proposals, bound to a snapshot.
+A snapshot-bound AI editorial pass over the manuscript, returning findings
+grouped by severity that stay readable after the text changes.
+_Avoid_: proofread, QA pass
 
 **Review dimension**:
 A closed category of editorial finding the LLM review may report, such as
@@ -93,13 +96,15 @@ _Avoid_: tiered lore, lore scoring
 
 **Resident context**:
 The context layer always injected into generation prompts: the outline
-position, a rolling summary of prior chapters, and the tail of the most
-recent chapter.
+position, a rolling summary of every prior chapter in reading order (a
+deterministic digest of each chapter's opening prose, never model-generated),
+and the tail of the most recent chapter.
 _Avoid_: system context, background
 
 **Job**:
-A durable operation with explicit state, executed synchronously inside the
-request and recorded with its events, retryable.
+A durable operation with explicit state, recorded with its events. Proposal,
+review, export, and lore-extract jobs execute synchronously inside their HTTP
+request and are retryable; import jobs are never retried.
 
 **Export**:
 A deterministic Markdown, DOCX, or EPUB artifact written from a snapshot.

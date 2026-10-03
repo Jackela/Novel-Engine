@@ -98,10 +98,10 @@ describe("shipped demo workspace import", () => {
 
     const detail = services.projects.projectShell(owner, imported.project_id);
     expect(detail.documents.map((document) => document.title)).toEqual([
-      "Chapter 1",
-      "Chapter 2",
-      "Chapter 3",
-      "Chapter 4",
+      "Chapter 1: The Inheritance of Coastlines",
+      "Chapter 2: The Ninth Tide Road",
+      "Chapter 3: The Collector of Vanishings",
+      "Chapter 4: What the Ink Refuses",
     ]);
     const firstSummary = detail.documents[0];
     if (firstSummary === undefined) {
