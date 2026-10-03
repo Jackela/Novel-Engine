@@ -6,6 +6,7 @@ import Database from "better-sqlite3";
 
 import { errorCode } from "../error_code.js";
 import { backupDatabaseFile } from "./backup.js";
+import { removeSqliteSidecars } from "./sqlite_sidecars.js";
 
 /**
  * WAL sidecar files of the replaced database. A stale `-wal` from the previous
@@ -65,17 +66,41 @@ export async function restoreDatabaseFile(
  * Refuse any input that is missing, unreadable, empty, fails the SQLite
  * integrity check, or lacks the TS-stack migration journal. Only this
  * module's refusal errors are raised here; every branch names the exact
- * input and why it was rejected. The schema assertion cannot reject a
- * legitimate TS-stack artifact: `migrate()` creates the journal on the first
- * startup and never drops it, so any backup taken from a database that has
- * completed migrations carries it, and a genuinely empty new database is
- * zero bytes and produces no backup at all (`backupDatabaseFile` treats
- * size 0 as a clean bootstrap). The startup safety backup does run before
- * migrations, so a stale non-empty foreign file can be swept into
- * data/backups/ — refusing such an artifact at restore time is exactly what
- * this assertion is for.
+ * input and why it was rejected. Validation opens the artifact read-only,
+ * which can create `-wal`/`-shm` sidecars beside it; they are removed in
+ * every outcome so a backups directory only ever holds the artifacts
+ * themselves. A sidecar-removal failure never masks a verification failure:
+ * both surface together as an AggregateError. The schema assertion cannot
+ * reject a legitimate TS-stack artifact: `migrate()` creates the journal on
+ * the first startup and never drops it, so any backup taken from a database
+ * that has completed migrations carries it, and a genuinely empty new
+ * database is zero bytes and produces no backup at all
+ * (`backupDatabaseFile` treats size 0 as a clean bootstrap). The startup
+ * safety backup does run before migrations, so a stale non-empty foreign
+ * file can be swept into data/backups/ — refusing such an artifact at
+ * restore time is exactly what this assertion is for.
  */
 async function verifyRestoreInput(backupPath: string): Promise<void> {
+  let failure: unknown;
+  try {
+    await assertRestoreInput(backupPath);
+  } catch (error) {
+    failure = error;
+  }
+  try {
+    await removeSqliteSidecars(backupPath);
+  } catch (cleanupError) {
+    if (failure === undefined) throw cleanupError;
+    throw new AggregateError(
+      [failure, cleanupError],
+      "Restore input verification and sidecar cleanup both failed.",
+      { cause: cleanupError },
+    );
+  }
+  if (failure !== undefined) throw failure;
+}
+
+async function assertRestoreInput(backupPath: string): Promise<void> {
   let size: number;
   try {
     size = (await stat(backupPath)).size;

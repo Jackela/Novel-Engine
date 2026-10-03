@@ -1,7 +1,7 @@
 import { existsSync } from "node:fs";
 import { mkdir, mkdtemp, readdir, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { basename, join } from "node:path";
 import Database from "better-sqlite3";
 import { describe, expect, it } from "vitest";
 
@@ -118,6 +118,20 @@ describe("restore CLI", () => {
     expect(existsSync(`${harness.databasePath}-wal`)).toBe(false);
     expect(existsSync(`${harness.databasePath}-shm`)).toBe(false);
     expect(ownerUsernames(harness.databasePath)).toEqual(["rescued"]);
+  });
+
+  it("leaves no sidecars in the backups directory after validating a restore input", async () => {
+    const harness = await restoreHarness();
+    await seedOwner(harness.databasePath, "current");
+    expect(await runCli(["backup"], harness.context)).toBe(0);
+    const input = harness.lines[0] as string;
+
+    harness.lines.length = 0;
+    expect(await runCli(["restore", "--input", input], harness.context)).toBe(0);
+
+    const entries = await readdir(join(harness.dataDirectory, "backups"));
+    expect(entries).toContain(basename(input));
+    expect(entries.every((name) => name.endsWith(".sqlite3.bak"))).toBe(true);
   });
 
   it("refuses a corrupt backup input without touching the current database", async () => {

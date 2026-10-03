@@ -216,7 +216,7 @@ describe("operational CLI", () => {
     expect(payload.document_index).toBeNull();
   });
 
-  it("backs up and migrates before serve starts listening", async () => {
+  it("serves a fully migrated database without writing a backup on restart", async () => {
     const harness = await cliHarness();
     await seedDatabase(harness);
     const events: string[] = [];
@@ -230,7 +230,7 @@ describe("operational CLI", () => {
           const backups = join(harness.dataDirectory, "backups");
           backupsAtListen = existsSync(backups)
             ? (await (await import("node:fs/promises")).readdir(backups)).length
-            : -1;
+            : 0;
           await app.close();
         },
       },
@@ -240,7 +240,7 @@ describe("operational CLI", () => {
 
     expect(code).toBe(0);
     expect(events).toEqual(["listen:127.0.0.1:8765"]);
-    expect(backupsAtListen).toBeGreaterThan(0);
+    expect(backupsAtListen).toBe(0);
   });
 
   it("reports a missing owner or bad source as a failed import (exit 1)", async () => {

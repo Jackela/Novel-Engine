@@ -85,6 +85,7 @@ const USAGE = [
   "      Import a legacy file workspace as the owner principal.",
   "  backup",
   "      Write a SQLite backup beneath the backups directory and print its path.",
+  "      Backups are plaintext SQLite files; keep them where only the operator can read.",
   "  restore --input BACKUP",
   "      Verify a backup file, back up the current database, then replace it atomically.",
   "  reindex",

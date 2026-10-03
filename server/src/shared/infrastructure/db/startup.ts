@@ -13,10 +13,12 @@ import {
 } from "./connection.js";
 import { acquireDataDirectoryLock, type DataDirectoryLock } from "./data_directory_lock.js";
 import { assertNoLegacyDatabaseSibling, databaseDataDirectory } from "./database_authority.js";
+import { hasPendingMigrations } from "./pending_migrations.js";
 
 const SEARCH_DEPTH = 8;
 const PACKAGE_ROOT_MARKER = "drizzle.config.ts";
 const MIGRATIONS_DIRECTORY = "drizzle";
+const MIGRATION_JOURNAL_RELATIVE_PATH = join("meta", "_journal.json");
 
 export interface StudioDatabase {
   readonly db: StudioSqliteDatabase;
@@ -44,7 +46,9 @@ interface OpenStudioDatabaseOptions {
 /**
  * The startup pipeline of the content authority, in the adjudicated order:
  * exclusive data-directory ownership, legacy-authority ambiguity rejection,
- * online backup of any pre-existing non-empty database, schema migrations, the optional context-owned
+ * online backup of any pre-existing non-empty database whose recorded
+ * migrations are behind the bundled journal (a no-schema-change restart
+ * writes no backup), schema migrations, the optional context-owned
  * reconciliation hook, then the injected job-state recovery — only afterwards
  * may the caller serve.
  */
@@ -56,12 +60,17 @@ export async function openStudioDatabase(
   const ownership = acquireDataDirectoryLock(dataDirectory);
   let connection: ReturnType<typeof openConnection> | undefined;
   try {
+    const migrationsFolder = locateMigrationsFolder();
     await assertNoLegacyDatabaseSibling(databasePath, dataDirectory);
-    await backupDatabaseFile(databasePath);
+    if (
+      hasPendingMigrations(databasePath, join(migrationsFolder, MIGRATION_JOURNAL_RELATIVE_PATH))
+    ) {
+      await backupDatabaseFile(databasePath);
+    }
 
     connection = openConnection(databasePath, { queryLogger: options.queryLogger });
     const { db } = connection;
-    migrate(db, { migrationsFolder: locateMigrationsFolder() });
+    migrate(db, { migrationsFolder });
     await options.beforeJobRecovery?.(db, dataDirectory);
     options.recoverJobs?.(db);
   } catch (error) {
