@@ -445,39 +445,43 @@
 
 ### DR-032 [P1] doctor 只读化与迁移分离
 
-- [ ] 未开始
+- [x] 已完成（2026-10-03）
 - **问题**：`doctor` 实际会取排他锁、执行迁移与数据对账、写备份；服务器在跑时 exit 1 且把错误消息塞进 `quick_check` 字段，易被误判为数据库损坏。
 - **证据**：`apps/cli/main.ts:210-228,88`（help 未提写入副作用）；`reconciled_studio_database.ts:26-40`；实测 doctor 前后 backups 计数 +1。
 - **修复方向**：doctor 默认 readonly（不迁移/不备份/不取写锁）；迁移独立为 `cli migrate`；错误字段与消息修正。
 - **验收**：doctor 对副本零写入；运行中可安全执行（或明确拒绝并给出正确原因）。
 - **验证**：`pnpm --dir server exec vitest run tests/apps/cli/`。
+- **交付记录**：2026-10-03 | `82aaa64f`（wave 12b） | doctor 改为只读（`doctor_command.ts`）：干净副本以 `query_only=ON` 打开（关闭时清理自身瞬态 sidecar，目录/字节/mtime 前后一致——实测覆盖），存在 WAL sidecar（服务器运行中/非正常退出）时 `readonly:true` 附着不改写；报告 `quick_check/journal_mode/foreign_keys/owner/document_index/migrations{applied,pending}/error`；锁与权威冲突改由 `error` 字段承载（不再污染 `quick_check`），`timeout:0` 保证锁冲突立即以正确原因报错；新增 `migrate_command.ts`（`novel-engine migrate`：排他锁→DR-031 条件备份→迁移→导出对账→作业恢复，打印 `{database, migrations}`）；USAGE 明示 doctor 只读与 migrate 写入路径 | 复现：doctor 在待迁移副本上 +1 备份并迁移、服务器运行中 exit 1 且把 "already owned" 塞进 quick_check；修复后 doctor 零写入（含运行中 exit 0），migrate applied 26 且恰好 1 份备份 | 回归：`doctor_readonly_cli`（6：零写入/无迁移行/运行中只读/锁库正确原因/缺库不建/USAGE）、`migrate_cli`（3）；`cli.test.ts`/`cli_database_authority`/`cli_export_recovery` 三处旧断言具名更新（语义变更，无弱化）| 验证：见 §10
 
 ### DR-033 [P1] 占位密钥守门
 
-- [ ] 未开始
+- [x] 已完成（2026-10-03）
 - **问题**：`.env.example` 的 `change-me-to-a-long-random-local-secret` 能通过 production 守门（只拒绝空值、哨兵、<16 字符）；README 表格写默认 "sample value"，与代码不一致。
 - **证据**：`server_config.ts:27,178-186`；`.env.example:9`；实测该值 START ALLOWED。
 - **修复方向**：`.env.example` 留空或与哨兵同值；production 拒绝 `change-me*` 前缀；README 同步。
 - **验收**：占位值在 production 下被拒；文档与代码一致。
 - **验证**：`pnpm --dir server exec vitest run tests/`（config 相关）。
+- **交付记录**：2026-10-03 | `a06df731`（wave 12c） | production 守门拒绝 `change-me*` 前缀（`PLACEHOLDER_SECRET_PREFIX` + 守卫旁 JSDoc 说明；精确哨兵值在非生产仍经 `secretFrom` 归零）；README/README.zh-CN 密钥与 CORS/代理表措辞与代码一致；`server/vitest.config.ts` 固定 `NODE_ENV=test` 消除宿主环境漂移（本机 shell 为 production）。偏离说明：`.env.example` 属禁区未改——代码侧拒绝已使示例值在生产 fail fast，满足验收。 | 复现：该占位值基线 START ALLOWED；修复后拒绝 | 回归：`server_config.test`（17：dev 允许占位/生产拒绝/空 CORS 拒绝）与拆分出的 `server_config_production.test`（9）| 验证：见 §10
 
 ### DR-034 [P1] 反向代理配置陷阱
 
-- [ ] 未开始
+- [x] 已完成（2026-10-03）
 - **问题**：A. 前置代理但未设 trusted proxies → 所有客户端共用一个限速桶，匿名者可让作者长期 429（登录 DoS）；B. TLS 终止后 `trustProxy` 未启用，浏览器 setup 的 Origin 校验只能靠 CORS 列表兜底，沿用占位 origin 时 setup 403（而 curl 反而成功）；C. compose 默认带占位 `https://app.example.com`。
 - **证据**：`client_identity.ts:166-170`；`auth_registration.ts:51-57`；`origin_validation.ts`；`http_server_policy.ts:23-40`；`compose.yaml:12`、`deploy/compose.yaml:18`；实测 Origin 组合。
 - **修复方向**：由 `trustedProxies` 推导 `trustProxy`；setup 的 expected origin 支持受信 `X-Forwarded-Proto`；compose 不提供占位 origin（缺省即 fail fast）；文档补部署 checklist。
 - **验收**：反代 + 默认配置下 setup 可用、限速按真实客户端隔离；测试/文档覆盖。
 - **验证**：`pnpm --dir server exec vitest run tests/apps/api/`；`pnpm --dir server gates`。
+- **交付记录**：2026-10-03 | `a06df731`（wave 12c） | 两 compose 删除占位 `https://app.example.com`（`SECURITY_CORS_ORIGINS` 缺省为空 → 生产 fail fast）并透传 `SECURITY_TRUSTED_PROXIES`；`check_compose_passthrough.mjs` 扩展为可机检该契约（占位默认/丢失透传即失败，含负例）；setup 的受信 `X-Forwarded-Proto` 行为（DR-009 的 trustProxy 推导使其生效）以 `setup_proxy_origin` 固化（受信代 → HTTPS origin 通过；不受信 peer 的转发头被忽略 403）；`deploy/README.md` 增反代 checklist（5 条 + 示例）；getting-started（EN/ZH）与 quickstart 补本地 Docker 需显式配置（`.env` + `compose.override.yaml` 开发模式）的说明。A 项（未设代理时的共桶风险）以文档 checklist 覆盖（DR-009 已实现按真实客户端隔离的机制）| 复现：`docker compose config` 解析出假 origin 且 compose 不透传可信代理 | 回归：`compose_passthrough_gate`（6）、`cors_contract`（4）、`setup_proxy_origin`（2）| 验证：见 §10
 
 ### DR-035 [P1] 未认证暴露面收口
 
-- [ ] 未开始
+- [x] 已完成（2026-10-03）
 - **问题**：production 下 `/openapi.json`（125KB 全量契约）、`/version`（含 build/environment 指纹）、`/health*`、`/api/setup` 探针均可匿名访问。
 - **证据**：`apps/api/app.ts:211`；`health_routes.ts:70,100,110`；`version_route.ts:29`；实测 200。
 - **修复方向**：生产把 `/openapi.json` 收到 owner 门后或加开关；`/version` 去掉 runtime/build 指纹。
 - **验收**：生产匿名不再获得完整契约与构建指纹；测试覆盖。
 - **验证**：`pnpm --dir server exec vitest run tests/api/`；`pnpm --dir server gates`（涉及路由需 openapi:snapshot）。
+- **交付记录**：2026-10-03 | `a06df731`（wave 12c） | production 下 `/openapi.json` 走 owner 门（匿名 401；无持久层 503 fail-closed；dev/test 保持开放）；`/version` 生产仅回 `{name, version}`（runtime/environment/build 指纹移除；dev/test 全量）；`/health*` 维持匿名但字段面经用例固化（无路径/运行时/构建/环境泄漏）；`/api/setup` 维持 DR-008 首启语义（不在本项范围）。 | 复现：基线匿名即得全量契约与 build/runtime 指纹（新增用例先红）| 回归：`version.test.ts` +4（生产裁剪/开发全量/匿名 401 与 owner 200/无持久层 503）、`health.test.ts` +1 | 联动：OpenAPI 基线零漂移（`gate:openapi` 通过），前端契约未变 | 验证：见 §10
 
 ### DR-036 [P1] 备份边角
 
@@ -742,3 +746,5 @@
 - 2026-10-03 | `2630cc7f` | DR-028 | 定向：`studio_usage_provenance`/`job_store_transactions`/`safe_usage_persistence` + 前端用量面板/契约 5 文件 34 用例；全套 `server gates/type-check/lint/lint:types/arch/test`（256 文件/1520 用例）、frontend lint/lint:types/format/type-check/test:unit/build（148 文件/819 用例）+ react-doctor(100) + `pnpm spec:validate` | 通过：token 来源标记（provider/estimated/unreported）+ 失败尝试可见 + 删 estimated_cost 死列（迁移 0024/0025）+ 面板披露；过程修复：openapi 基线漂移重生成、13 个旧契约测试具名更新、写作统计解析器与 4 处前端 fixture 补字段、`types/studio.ts` 拆分（行数门禁）；范围说明：预算/告警未含在验收，留候选
 - 2026-10-03 | `636fc7b5` | DR-029 + DR-030 | 定向：server 搜索 7 文件 68 用例 + 前端搜索 4 文件 30 用例；全套 `server gates/type-check/lint/lint:types/arch/test`（258 文件/1525 用例）、frontend lint/lint:types/format/type-check/test:unit/build（149 文件/826 用例）+ react-doctor(100) + `pnpm spec:validate` | 通过：token 上限 8→3 + `q` maxLength（DR-030 事件循环冻结）；total/next_offset 分页 + match_term 定位 + 零结果提示/计数/"更多"（DR-029）；过程修复：payload guard fixture、`searchContract`/`studioSearchModel` 拆分（行数门禁）、navigator 布尔 props 归并为 `searchState`（react-doctor）；"排序选项/高频词短路"不在验收，留候选
 - 2026-10-03 | `90e5f271` | DR-031 + DR-036 | 定向：`backup_policy`/`backup_policy_cli`/`startup_pipeline`/`restore_cli`/`tests/apps/cli` 13 文件 71 用例；全套 `server gates/type-check/lint/lint:types/arch/test`（260 文件/1533 用例）、frontend test:unit/build（149 文件/826 用例）+ react-doctor(100) + `pnpm spec:validate` | 通过：仅待迁移时备份 + 保留 3 份 + 空间检查 + quick_check 自检（DR-031）；restore 校验清理 sidecar + 明文提示（DR-036）；过程修复：两处旧断言具名更新（serve 重启备份、startup 计数），正向覆盖移入新用例
+- 2026-10-03 | `82aaa64f` | DR-032 | 定向：`doctor_readonly_cli`（6）+`migrate_cli`（3）+`tests/apps/cli`（13 文件/64 用例）+`tests/infrastructure`+`tests/db`；全套 `server gates/type-check/lint/lint:types/arch/test`（262 文件/1542 用例）、frontend test:unit/build（149 文件/826 用例）+ react-doctor(100) + `pnpm spec:validate` | 通过：doctor 只读零写入（含运行中只读）+ `migrate` 独立写入路径 + `error` 字段承载锁/权威原因；CLI 重放（构建产物）实证；三处旧断言具名更新
+- 2026-10-03 | `a06df731` | DR-033 + DR-034 + DR-035 | 定向：config/version/health/cors/setup-proxy/compose-gate 7 文件 57 用例 + 回归 sanity 11 文件 100 用例；全套 `server gates/type-check/lint/lint:types/arch/test`（264 文件/1554 用例）、frontend type-check/test:unit/build（149 文件/826 用例）+ react-doctor(100) + `pnpm spec:validate`；`docker compose config` 冒烟 | 通过：占位密钥生产拒绝（DR-033）、compose 去占位 + 可信代理透传 + 反代 checklist（DR-034）、生产暴露面收口（DR-035）；OpenAPI 零漂移；过程修复：`server_config` 测试拆分（行数门禁）、vitest NODE_ENV 固定
