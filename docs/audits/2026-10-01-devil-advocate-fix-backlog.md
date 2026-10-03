@@ -413,23 +413,25 @@
 
 ### DR-029 [P1] 搜索 UI
 
-- [ ] 未开始
+- [x] 已完成（2026-10-03）
 - **问题**：零结果不渲染任何提示；结果点击只切文档不定位命中；硬编码 `LIMIT 30`、无 cursor/总数；无排序选项。
 - **证据**：`StudioNavigatorSearch.tsx:58-72`；`useStudioPageModel.ts:207`；`db/document_search.ts:14-15,61`。
 - **修复方向**：空态文案 + 结果计数；返回 `total`/cursor；结果带偏移支持跳转高亮。
 - **验收**：0 结果有提示；>30 有"更多"；点击可定位。
 - **验证**：`pnpm --dir frontend exec vitest run src/features/studio/`（搜索相关）；`pnpm --dir server exec vitest run tests/api/studio_search.test.ts`。
 - **依赖**：DR-003（分词修复先落地，否则中文仍无结果可展示）。
+- **交付记录**：2026-10-03 | `636fc7b5`（wave 11） | 服务端搜索页：`matchDocumentIndex` 返回 `total`（同项目同 MATCH 的诚实 `COUNT(*)`，非页大小）与 `next_offset` 游标；排序键补 `document_id ASC` 保证 LIMIT/OFFSET 分页不重不漏；每命中附 `match_term`（首个归约元素的显示形态，供定位）。前端：零结果提示、结果计数（单复数）、"更多"分页（hasMoreResults/isLoadingMore）、点击结果 → 打开文档 + 经 `useSearchReveal` 把 term 交给编辑器（`@codemirror/search` setSearchQuery + findNext，token 去重；仅对当前活动文档生效；标题命中而正文无该词时不伪造跳转，仅打开文档）；请求 schema `q` 增加 maxLength，输入框 maxLength=200 | 复现：修复前零结果无提示、>30 无入口、点击不定位 | 回归：`studio_search_pagination`（跨页不重不漏/总数）、`StudioNavigatorSearch.test`（提示/计数/更多/跳转意图）、`useStudioSearchJobs.test` 更新为分页契约、`StudioNavigator`/`StudioEditorPane` 用例 | 过程修复：payload guard/导航 fixture 补 `match_term`、`apiContract.ts` 拆出 `searchContract.ts`、`useStudioPageModel` 抽出 `studioSearchModel` 助手、navigator 布尔 props 归并为 `searchState`（react-doctor）| 验证：server 258 文件/1525 用例、frontend 149/826、gates/arch/react-doctor(100)/spec 全绿。（"排序选项"未含在验收内，未实现）
 
 ### DR-030 [P1] 事件循环冻结（搜索路径）
 
-- [ ] 未开始
+- [x] 已完成（2026-10-03）
 - **问题**：搜索 handler 同步执行；`q` 无长度/token 上限；8-token 停用词串要求 bm25 对全匹配集打分（LIMIT 不能剪枝）→ 实测 453–970ms 进程级冻结（SSE delta 无法 flush、healthcheck 迟到）。
 - **证据**：`server/src/contexts/studio/interface/http/project_routes.ts:173`；`studio_request_schemas.ts:141-144`；`fts_match_query.ts:12`；`document_search.ts:59-61`；实测（200 章/6.16MiB 语料）452.9ms@8 tokens。
 - **修复方向**：`MAX_MATCH_TOKENS` 8→3（实测压到 ~71ms）；高频词短路（document frequency 超阈值降级 OR/不参与 rank）；`q` 加 `maxLength`。
 - **验收**：最坏查询工作集显著下降；有界输入；测试覆盖上限行为。
 - **验证**：`pnpm --dir server exec vitest run tests/api/studio_search.test.ts tests/contexts/`（match query 相关）。
 - **备注**：与 DR-003 相邻但独立：先测量再隔离，不要为此引入 worker thread。
+- **交付记录**：2026-10-03 | `636fc7b5`（wave 11） | `MAX_MATCH_ELEMENTS` 8→3（JSDoc 注明实测 453–970ms → ~71ms 的动因；归约/引号/AND 语义与恶意输入防护不变）；`q` 增加 maxLength 使最坏输入有界；新增 `studio_search_bounds` + `fts_match_query` 上限用例（5 元素归约到 3 的语义、超长 q 拒绝、恶意查询仍被引号包裹）| 复现：8 元素对抗查询在 6.16MiB 语料上同步 452.9ms 冻结事件循环 | 备注落实：未实现"高频词短路"（不在验收内，保留候选）、未引入 worker thread（遵备注）| 验证：见 DR-029 行（全绿）
 
 ### DR-031 [P1] 启动备份策略
 
@@ -736,3 +738,4 @@
 - 2026-10-03 | `2c8393b0` | DR-026（补齐验收） | 定向 20 文件 144 用例 + API 诊断；全套 `server gates/type-check/lint/lint:types/arch/test`（255 文件/1517 用例）、frontend（148 文件/819 用例）+ react-doctor(100) + `pnpm spec:validate` | 通过：`rearm()` 逐帧重置绝对预算（健康长流不再被斩；超静默仍中止）；DashScope/OpenAI 兼容识别 200 SSE 内错误帧 → `PROVIDER_FAILED`(message+code)；旧行为钉子具名替换
 - 2026-10-03 | `04ab5d74` | DR-027 | 定向：生成幂等（`proposal_generation_idempotency*` 9 用例 + retry 边界 + proposals/stream 回归）+ 前端幂等 3 文件 10 用例；全套同上一行口径（server 255/1517、frontend 148/819、react-doctor 100、spec 通过）| 通过：生成端点可选 `Idempotency-Key` + 持久 claim（迁移 0023，部分唯一索引）+ 流式/同步重放 + 竞态回归；客户端按逻辑生成铸造/保留/清除键；重做移除进程内 guard（恢复 retry 持久重放路径）
 - 2026-10-03 | `2630cc7f` | DR-028 | 定向：`studio_usage_provenance`/`job_store_transactions`/`safe_usage_persistence` + 前端用量面板/契约 5 文件 34 用例；全套 `server gates/type-check/lint/lint:types/arch/test`（256 文件/1520 用例）、frontend lint/lint:types/format/type-check/test:unit/build（148 文件/819 用例）+ react-doctor(100) + `pnpm spec:validate` | 通过：token 来源标记（provider/estimated/unreported）+ 失败尝试可见 + 删 estimated_cost 死列（迁移 0024/0025）+ 面板披露；过程修复：openapi 基线漂移重生成、13 个旧契约测试具名更新、写作统计解析器与 4 处前端 fixture 补字段、`types/studio.ts` 拆分（行数门禁）；范围说明：预算/告警未含在验收，留候选
+- 2026-10-03 | `636fc7b5` | DR-029 + DR-030 | 定向：server 搜索 7 文件 68 用例 + 前端搜索 4 文件 30 用例；全套 `server gates/type-check/lint/lint:types/arch/test`（258 文件/1525 用例）、frontend lint/lint:types/format/type-check/test:unit/build（149 文件/826 用例）+ react-doctor(100) + `pnpm spec:validate` | 通过：token 上限 8→3 + `q` maxLength（DR-030 事件循环冻结）；total/next_offset 分页 + match_term 定位 + 零结果提示/计数/"更多"（DR-029）；过程修复：payload guard fixture、`searchContract`/`studioSearchModel` 拆分（行数门禁）、navigator 布尔 props 归并为 `searchState`（react-doctor）；"排序选项/高频词短路"不在验收，留候选
