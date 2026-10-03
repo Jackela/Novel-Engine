@@ -108,9 +108,9 @@ describe("configured database authority in the CLI", () => {
     state.lines.length = 0;
     const doctorCode = await runCli(["doctor"], state.context);
     expect(doctorCode).toBe(1);
-    const doctor = JSON.parse(state.lines[0] ?? "") as { quick_check: string };
-    expect(doctor.quick_check).toContain(state.databasePath);
-    expect(doctor.quick_check).toContain(state.legacyPath);
+    const doctor = JSON.parse(state.lines[0] ?? "") as { error: string };
+    expect(doctor.error).toContain(state.databasePath);
+    expect(doctor.error).toContain(state.legacyPath);
 
     state.lines.length = 0;
     const source = makeLegacyWorkspace(join(state.dataDirectory, "blocked-import"), {

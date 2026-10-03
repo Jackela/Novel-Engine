@@ -103,14 +103,23 @@ async function seedMissingCommittedExport(harness: CliHarness): Promise<void> {
  * suites.
  */
 describe("operational CLI export recovery", () => {
-  it("fails doctor and import before mutation when committed export bytes are missing", async () => {
+  it("keeps doctor read-only while import and migrate fail before mutation when committed export bytes are missing", async () => {
     const harness = await cliHarness();
     await seedMissingCommittedExport(harness);
 
+    // doctor is read-only by DR-032: it reports the healthy database family and
+    // never reconciles; the write paths below carry the recovery gate.
     const doctorCode = await runCli(["doctor"], harness.context);
-    expect(doctorCode).toBe(1);
+    expect(doctorCode).toBe(0);
     const doctor = JSON.parse(harness.lines[0] ?? "") as Record<string, unknown>;
-    expect(doctor.quick_check).toMatch(/missing/i);
+    expect(doctor.quick_check).toBe("ok");
+    expect(doctor.error).toBeNull();
+    expect(doctor.document_index).toEqual({ documents: 0, indexed: 0, drifted: false });
+
+    harness.lines.length = 0;
+    const migrateCode = await runCli(["migrate"], harness.context);
+    expect(migrateCode).toBe(1);
+    expect(harness.lines.join("\n")).toMatch(/missing/i);
 
     harness.lines.length = 0;
     const source = makeLegacyWorkspace(join(harness.directory, "blocked-import"), {

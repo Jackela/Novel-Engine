@@ -17,6 +17,11 @@ import { openStudioDatabase } from "../../../src/shared/infrastructure/db/startu
 const productManifest = JSON.parse(
   readFileSync(new URL("../../../package.json", import.meta.url), "utf8"),
 ) as { productName: string; version: string };
+const bundledMigrations = (
+  JSON.parse(
+    readFileSync(new URL("../../../drizzle/meta/_journal.json", import.meta.url), "utf8"),
+  ) as { entries: unknown[] }
+).entries.length;
 
 interface CliHarness {
   directory: string;
@@ -195,10 +200,12 @@ describe("operational CLI", () => {
       foreign_keys: true,
       owner_configured: false,
       document_index: { documents: 0, indexed: 0, drifted: false },
+      migrations: { applied: bundledMigrations, pending: false },
+      error: null,
     });
   });
 
-  it("reports corruption through doctor and exits non-zero", async () => {
+  it("reports corruption through doctor's error field and exits non-zero", async () => {
     const harness = await cliHarness();
     await seedDatabase(harness);
     await writeFile(harness.databasePath, "this is definitely not a sqlite database");
@@ -210,10 +217,11 @@ describe("operational CLI", () => {
     expect(payload.name).toBe(productManifest.productName);
     expect(payload.version).toBe(productManifest.version);
     expect(payload.database).toBe(harness.databasePath);
-    expect(payload.quick_check).toEqual(expect.any(String));
-    expect(payload.quick_check).not.toBe("ok");
+    expect(payload.quick_check).toBe("unknown");
+    expect(payload.error).toMatch(/not a database/i);
     expect(payload.foreign_keys).toBe(false);
     expect(payload.document_index).toBeNull();
+    expect(payload.migrations).toBeNull();
   });
 
   it("serves a fully migrated database without writing a backup on restart", async () => {

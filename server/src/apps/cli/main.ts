@@ -3,26 +3,21 @@ import { pathToFileURL } from "node:url";
 
 import type { FastifyInstance } from "fastify";
 import {
-  type DocumentIndexReconciliation,
-  documentIndexReconciliation,
-} from "../../contexts/studio/infrastructure/db/document_search.js";
-import { openReconciledStudioDatabase } from "../../contexts/studio/infrastructure/reconciled_studio_database.js";
-import {
   type LoadServerConfigInput,
   loadServerConfig,
   type ServerConfig,
 } from "../../shared/infrastructure/config/server_config.js";
-import { DrizzleAuthStore } from "../../shared/infrastructure/db/auth_store.js";
 import { backupDatabaseFile } from "../../shared/infrastructure/db/backup.js";
 import { acquireDataDirectoryLock } from "../../shared/infrastructure/db/data_directory_lock.js";
 import {
   assertNoLegacyDatabaseSibling,
   databaseDataDirectory,
 } from "../../shared/infrastructure/db/database_authority.js";
-import { readProductIdentity } from "../../shared/infrastructure/workspace_manifest.js";
 import { buildApp } from "../api/app.js";
 import { closeResourceAndRethrow } from "../api/app_lifecycle.js";
+import { runDoctorCommand } from "./doctor_command.js";
 import { runLegacyImportCommand } from "./legacy_import_command.js";
+import { runMigrateCommand } from "./migrate_command.js";
 import { runOwnerResetCommand } from "./owner_reset_command.js";
 import { runReindexCommand } from "./reindex_command.js";
 import { runRestoreCommand } from "./restore_command.js";
@@ -33,7 +28,7 @@ import {
 } from "./shutdown_signals.js";
 
 /** The single emitted TS CLI root (#272): `serve`, `import`, `backup`, `restore`,
- * `reindex`, `doctor`, and `owner reset` — no competing executable root. */
+ * `reindex`, `doctor`, `migrate`, and `owner reset` — no competing executable root. */
 
 type WriteLine = (line: string) => void;
 
@@ -91,7 +86,10 @@ const USAGE = [
   "  reindex",
   "      Rebuild the full-text index from every document's current revision.",
   "  doctor",
-  "      Report product identity, database integrity, journal mode, foreign keys, owner.",
+  "      Report product identity, database integrity, journal mode, foreign keys, owner, and",
+  "      migration state. Read-only: never migrates, backs up, reconciles, or takes the write lock.",
+  "  migrate",
+  "      Apply pending migrations and data reconciliation (backing up when migrations are pending).",
   "  owner reset",
   "      Delete the local Owner and its sessions so first-run setup is available again.",
 ].join("\n");
@@ -205,51 +203,6 @@ async function backupCommand(context: CliContext, writeLine: WriteLine): Promise
   return 0;
 }
 
-interface DoctorReport {
-  name: string;
-  version: string;
-  database: string;
-  quick_check: string;
-  journal_mode: string;
-  foreign_keys: boolean;
-  owner_configured: boolean;
-  // Index reconciliation (#DR-004); null when the database could not be read.
-  document_index: DocumentIndexReconciliation | null;
-}
-
-async function doctorCommand(context: CliContext, writeLine: WriteLine): Promise<number> {
-  const config = configFor(context);
-  const identity = readProductIdentity();
-  const report: DoctorReport = {
-    name: identity.name,
-    version: identity.version,
-    database: config.databasePath,
-    quick_check: "unknown",
-    journal_mode: "unknown",
-    foreign_keys: false,
-    owner_configured: false,
-    document_index: null,
-  };
-  try {
-    const studio = await openReconciledStudioDatabase(config.databasePath);
-    try {
-      report.quick_check = String(studio.raw.pragma("quick_check", { simple: true }));
-      report.journal_mode = String(studio.raw.pragma("journal_mode", { simple: true }));
-      report.foreign_keys = Boolean(studio.raw.pragma("foreign_keys", { simple: true }));
-      report.owner_configured = new DrizzleAuthStore(studio.db).ownerExists();
-      report.document_index = documentIndexReconciliation(studio.raw);
-    } finally {
-      studio.close();
-    }
-  } catch (error) {
-    // A database that cannot even be opened fails the integrity requirement.
-    report.quick_check =
-      error instanceof Error ? error.message : "the database could not be opened";
-  }
-  writeLine(JSON.stringify(report, null, 2));
-  return report.quick_check === "ok" && report.foreign_keys ? 0 : 1;
-}
-
 async function importCommand(
   parsed: ParsedArguments,
   context: CliContext,
@@ -301,7 +254,9 @@ export async function runCli(argv: readonly string[], context: CliContext = {}):
       case "reindex":
         return await runReindexCommand({ config: configFor(context), writeLine });
       case "doctor":
-        return await doctorCommand(context, writeLine);
+        return await runDoctorCommand({ config: configFor(context), writeLine });
+      case "migrate":
+        return await runMigrateCommand({ config: configFor(context), writeLine });
       case "owner":
         return await runOwnerResetCommand(parsed.flags, configFor(context), writeLine);
       case "import":

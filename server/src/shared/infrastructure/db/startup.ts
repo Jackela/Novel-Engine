@@ -62,9 +62,7 @@ export async function openStudioDatabase(
   try {
     const migrationsFolder = locateMigrationsFolder();
     await assertNoLegacyDatabaseSibling(databasePath, dataDirectory);
-    if (
-      hasPendingMigrations(databasePath, join(migrationsFolder, MIGRATION_JOURNAL_RELATIVE_PATH))
-    ) {
+    if (hasPendingMigrations(databasePath, bundledMigrationsJournalPath())) {
       await backupDatabaseFile(databasePath);
     }
 
@@ -128,6 +126,16 @@ function releaseAfterStartupFailure(
     );
   }
   throw startupError;
+}
+
+/**
+ * The bundled migration journal a database's applied migrations are compared
+ * against — the same file `openStudioDatabase` backs up from and doctor and
+ * migrate report pending state from, so the decision and the report can never
+ * read different journals.
+ */
+export function bundledMigrationsJournalPath(): string {
+  return join(locateMigrationsFolder(), MIGRATION_JOURNAL_RELATIVE_PATH);
 }
 
 function locateMigrationsFolder(): string {

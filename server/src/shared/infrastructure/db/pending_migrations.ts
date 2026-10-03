@@ -52,6 +52,42 @@ export function hasPendingMigrations(databasePath: string, journalPath: string):
   }
 }
 
+/** The applied/pending migration reading doctor and migrate report. */
+export interface MigrationProgress {
+  /** Rows in `__drizzle_migrations`; 0 when the journal table does not exist yet. */
+  readonly applied: number;
+  /** True when the bundled journal holds an entry newer than the newest applied one. */
+  readonly pending: boolean;
+}
+
+/**
+ * Read the applied/pending migration state over an already-open database
+ * handle (doctor's read-only session, migrate's post-run report). A missing
+ * `__drizzle_migrations` table means nothing was applied yet and migrations
+ * are pending; probe failures (unreadable database, corrupt header) propagate
+ * to the caller. The pending comparison mirrors `hasPendingMigrations`, so a
+ * fully migrated database reports `pending: false` and a database at or
+ * ahead of the bundled journal counts as complete.
+ */
+export function readMigrationProgress(
+  raw: Database.Database,
+  journalPath: string,
+): MigrationProgress {
+  const newestJournalMillis = newestJournalEntryMillis(journalPath);
+  if (!migrationsTableExists(raw)) return { applied: 0, pending: true };
+  const newest = raw
+    .prepare('SELECT created_at FROM "__drizzle_migrations" ORDER BY created_at DESC LIMIT 1')
+    .get() as { created_at: number | string } | undefined;
+  const counted = raw.prepare('SELECT COUNT(*) AS n FROM "__drizzle_migrations"').get() as
+    | { n: number }
+    | undefined;
+  return {
+    // COUNT(*) always yields one row; -1 keeps a driver anomaly visible.
+    applied: counted?.n ?? -1,
+    pending: newest === undefined || Number(newest.created_at) < newestJournalMillis,
+  };
+}
+
 /** Whether the journal table exists at all; lookup is parameterized, never concatenated. */
 function migrationsTableExists(probe: Database.Database): boolean {
   const row = probe
