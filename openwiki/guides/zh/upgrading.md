@@ -53,6 +53,17 @@ docker compose up -d --build
   恢复升级前的备份
   （[backup and restore](backup-and-restore.md#restoring)）。
 
+## 重建搜索索引
+
+全文搜索读的是派生的索引，不是修订正文本身。索引会随保存更新，但你随时可以从
+当前修订整体重建——例如在两台机器之间拷贝数据库之后，或搜索结果看起来陈旧时：
+
+```bash
+docker compose run --rm novel-engine node server/dist/apps/cli/main.js reindex
+```
+
+命令会输出包含重建文档数的 JSON 摘要。
+
 ## Upgrading from 0.3.x (the retired Python stack)
 
 0.4.0 版是一次重写切换，它的数据库格式与 Python 时代毫无关系。Python 时

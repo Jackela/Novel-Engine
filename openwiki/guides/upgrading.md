@@ -61,6 +61,19 @@ Confirm the new version at `http://localhost:8000/version` in your browser.
   must run an older version afterwards, restore the pre-upgrade backup first
   ([backup and restore](backup-and-restore.md#restoring)).
 
+## Rebuilding the search index
+
+Full-text search reads a derived index, not the revisions themselves. The
+index updates as you save, but you can rebuild the whole index from the
+current revisions at any time — for example after copying a database between
+machines or when search results look stale:
+
+```bash
+docker compose run --rm novel-engine node server/dist/apps/cli/main.js reindex
+```
+
+The command prints a JSON summary with the number of documents re-indexed.
+
 ## Upgrading from 0.3.x (the retired Python stack)
 
 Version 0.4.0 was a rewrite cutover, and its database format is unrelated to
