@@ -403,12 +403,13 @@
 
 ### DR-028 [P1] usage 语义与成本
 
-- [ ] 未开始
+- [x] 已完成（2026-10-03）
 - **问题**：provider 未报 usage 时 `prompt_tokens` 被写成 instruction 词数（通常 0–5）、completion 写 proposal 词数；usage 只在"完成"时落库，重试/超时/失败的真实消耗不可见；`estimated_cost` 是只存在于 schema 的死列；无任何预算/告警护栏。
 - **证据**：`proposal_landing.ts:114-118,205-213`；`job_usage_tables.ts:66-69,81`；全仓 grep 仅 migration 命中 estimated_cost。
 - **修复方向**：usage 增加 `attempt/outcome` 与"provider 未报 usage"标记；决策 `estimated_cost`（实现价格表或从 schema 删除）；项目级预算/告警。
 - **验收**：用量面板数字不再误导；失败/重试可见；决策落地。
 - **验证**：`pnpm --dir server exec vitest run tests/api/studio_usage.test.ts`；`pnpm --dir frontend exec vitest run`（用量组件）。
+- **交付记录**：2026-10-03 | `2630cc7f`（wave 10e） | `usage_events` 增 `outcome`（completed/failed，CHECK 约束）与 `token_source`（provider/estimated/unreported）：provider 上报→`provider`；未上报走词数回退→显式 `estimated`（不再冒充 provider 数字）；每个到达 provider 的失败尝试→零 token `unreported` 行（review/export 等不记 usage 的 kind 除外），重试链上的原失败与新结果各留一行。聚合/API/前端类型新增 `failed_attempt_count`、`estimated_requests`（含 per-model `failed_attempts`/`estimated_requests`）；用量面板增"失败调用"卡 + 两条披露（失败不并入 token 合计、估算来源说明，zh/en 文案）。决策落地：删除 `estimated_cost` 死列（迁移 `0024`/`0025` 重建表，已核对全仓仅 schema/写入处引用）。 | 复现：修复前 provider 未报 usage 时 prompt_tokens=instruction 词数（0–5）且失败尝试零行；修复后语义见上 | 回归：`studio_usage_provenance`（估算 vs provider 标记、失败行）、`job_store_transactions`（失败 job+usage 同事务、回滚不孤儿）、`safe_usage_persistence`、用量 API/写入面板/契约测试；13 个既有 API 测试文件按新账本契约具名更新（失败尝试改为显式断言 failed/unreported 行、重试链索引后移、payload 增字段），无断言弱化 | 联动：OpenAPI 基线 + 前端生成类型 + 写作统计解析器（statsContract）字段补齐 | 范围说明：修复方向中的"项目级预算/告警"不在验收内，未实现（候选后续条目） | 验证：server 256 文件/1520 用例、frontend 148/819、gates/arch/react-doctor(100)/spec 全绿
 
 ### DR-029 [P1] 搜索 UI
 
@@ -734,3 +735,4 @@
 - 2026-10-03 | `301db695` | DR-026（主体） | 定向 5+3 文件（server 28、frontend 46 用例）；全套 `server gates/type-check/lint/lint:types/arch/test`（252 文件/1503 用例）、frontend（146 文件/812 用例）+ react-doctor(100) + `pnpm spec:validate` | 通过：SSE `: heartbeat`（15s）+ 客户端停摆看门狗（90s，可关）+ 中断诊断（帧数/字节 + 异常日志）；过程修复：oxlint mock 类型 + 格式化
 - 2026-10-03 | `2c8393b0` | DR-026（补齐验收） | 定向 20 文件 144 用例 + API 诊断；全套 `server gates/type-check/lint/lint:types/arch/test`（255 文件/1517 用例）、frontend（148 文件/819 用例）+ react-doctor(100) + `pnpm spec:validate` | 通过：`rearm()` 逐帧重置绝对预算（健康长流不再被斩；超静默仍中止）；DashScope/OpenAI 兼容识别 200 SSE 内错误帧 → `PROVIDER_FAILED`(message+code)；旧行为钉子具名替换
 - 2026-10-03 | `04ab5d74` | DR-027 | 定向：生成幂等（`proposal_generation_idempotency*` 9 用例 + retry 边界 + proposals/stream 回归）+ 前端幂等 3 文件 10 用例；全套同上一行口径（server 255/1517、frontend 148/819、react-doctor 100、spec 通过）| 通过：生成端点可选 `Idempotency-Key` + 持久 claim（迁移 0023，部分唯一索引）+ 流式/同步重放 + 竞态回归；客户端按逻辑生成铸造/保留/清除键；重做移除进程内 guard（恢复 retry 持久重放路径）
+- 2026-10-03 | `2630cc7f` | DR-028 | 定向：`studio_usage_provenance`/`job_store_transactions`/`safe_usage_persistence` + 前端用量面板/契约 5 文件 34 用例；全套 `server gates/type-check/lint/lint:types/arch/test`（256 文件/1520 用例）、frontend lint/lint:types/format/type-check/test:unit/build（148 文件/819 用例）+ react-doctor(100) + `pnpm spec:validate` | 通过：token 来源标记（provider/estimated/unreported）+ 失败尝试可见 + 删 estimated_cost 死列（迁移 0024/0025）+ 面板披露；过程修复：openapi 基线漂移重生成、13 个旧契约测试具名更新、写作统计解析器与 4 处前端 fixture 补字段、`types/studio.ts` 拆分（行数门禁）；范围说明：预算/告警未含在验收，留候选
