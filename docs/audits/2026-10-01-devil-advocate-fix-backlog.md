@@ -557,19 +557,21 @@
 
 ### DR-043 [P2] Beat 候选与规则明示
 
-- [ ] 未开始
+- [x] 已完成（2026-10-03）
 - **问题**：beat 关联要求精确记住 outline 标题；多 outline 文档时只有第一个生效且无提示。
 - **证据**：`StudioBeatPanel.tsx:92-99`；`beat_association_service.ts:46-54,76-84`。
 - **修复方向**：服务端返回候选列表，UI 改下拉；多 outline 时明示规则或报错。
 - **验证**：`pnpm --dir server exec vitest run tests/api/studio_beats.test.ts`。
+- **交付记录**：2026-10-03 | `aa559112`（wave 14c） | 章节 beat 视图携带候选目录与"权威 outline"（`BeatOutlineAuthority`：文档 id/标题/outline 数量），服务端仍以阅读顺序第一个 outline 为权威但**显式披露**且链接仍只接受该 outline 的 beat；`StudioBeatPanel` 改为下拉选择（`useBeatCandidates` 懒加载 + 刷新按钮 + 错误态），多 outline 时显示"本项目有 N 个 outline，beats 来自「X」"提示；既有的"背标题"输入路径退役 | 复现：基线只有自由文本输入，多 outline 时静默取第一个 | 回归：`studio_beat_candidates`（2：候选目录顺序；多 outline 披露计数 + 非权威 outline 的 beat 一律 422）、`studio_beats`（11，共享 `studio_beat_helpers`）、`StudioBeatPanel`（11：下拉选择/多 outline 提示/刷新） | 过程修复：契约拆出 `beatContract.ts`、测试拆分为 `studio_beats` + `studio_beat_candidates`、共享 helper 模块（行数门禁） | 验证：见 §10
 
 ### DR-044 [P2] 死代码与未接线清理
 
-- [ ] 未开始
+- [x] 已完成（2026-10-03）
 - **问题**：同步提案端点无调用者；卷 API 方法零调用者（若 DR-017 选降级则删除）；`estimated_cost` 死列（随 DR-028 决策）；若干仅测试引用的导出。
 - **证据**：`frontend/src/app/api.ts:79-86,170`；`job_usage_tables.ts:81`；架构报告"死代码/无引用导出"节。
 - **修复方向**：按 DEC-05/DR-017/DR-028 决策删除或接线；删除前确认 react-doctor 的 `unused-export` 零容忍不受影响。
 - **验证**：`pnpm --dir server gates && pnpm --dir frontend type-check`。
+- **交付记录**：2026-10-03 | `52011933`（wave 14d） | 逐候选核验后清理：删除 `api.proposal`（同步客户端方法，运行期零调用——真实路径为 `streamProposal` + `api.acceptProposal`，仅 3 个测试 mock 覆盖行引用，一并删除）；删除零引用类型 `DictionaryChunk`、`LoreExtractRequest`/`LoreExtractRequestBody`、`LorebookWizardModel`；保留（有真实引用）：服务端 `/ai-proposals` 同步路由（服务端测试 + OpenAPI 快照引用）、卷 API 方法（DR-017 已接线）、test-only 导出（harness/factories/针脚，删除会破坏或削弱测试）。`estimated_cost` 核验：当前 schema 已无该列（仅历史迁移产物与一句说明注释），无需动作。 | 复现：全仓引用清单（556 个导出脚本化核验；`api.proposal` 仅测试 mock 引用） | 回归：`api*`/`useWholeBookLoop.*`/`useLorebookWizard.*` 用例全绿；react-doctor 0 诊断（unused-export 零容忍不受影响）| 验证：见 §10
 
 ### DR-045 [P2] 统计时区与负数解释
 
@@ -582,11 +584,12 @@
 
 ### DR-046 [P2] 前端本地化与离线
 
-- [ ] 未开始
+- [x] 已完成（2026-10-03）
 - **问题**：硬编码英文串（`main.tsx`、`router.tsx`、`httpClient.ts`、`networkError.ts`、`proposalStream.ts`、契约层）；日期/数字不随语言；无离线提示；编辑器 aria-label 切换语言后不更新。
 - **证据**：各域报告 i18n 节。
 - **修复方向**：补 i18n 键；统一 Intl formatter 走 `getActiveLanguage()`；离线横幅 + 恢复重试。
 - **验证**：`pnpm --dir frontend test:unit && pnpm --dir frontend lint`。
+- **交付记录**：2026-10-03 | `52011933`（wave 14d） | 本地化收尾：外壳崩溃面板（`AppCrashFallback`）、HTTP 客户端、网络错误、提案流文案全部改走 `translateActive`（EN 值与旧字面量逐字节一致；新增 `errors.transport.*`/`errors.proposalStream.*`、`shell.error.*`、`shell.offline.notice` 键）；新增 `i18n/format.ts`（`formatCount/formatDateTime/formatDate`，按 `getActiveLanguage()` 每次调用解析、formatter 模块级预建）替换 5 处内联 `toLocaleString("en-US")` 与 5 处裸 `toLocale*`（Intl 此前全仓 0 使用）；`StudioOfflineNotice` 监听 online/offline 事件在 Studio 外壳显示离线横幅（zh/en）；编辑器 aria-label 经核验已在前序波次修复。 | 复现：断网无提示、语言切换不影响日期/数字、崩溃面板硬编码英文 | 回归：`format`（3）、`StudioOfflineNotice`（3：离线显示/恢复隐藏/清理）、`AppCrashFallback`（2）、`networkError`（2）+ 既有组件用例（语言切换后格式化跟随）| 验证：见 §10
 
 ### DR-047 [P2] revision 增长与保留策略
 
@@ -599,11 +602,12 @@
 
 ### DR-048 [P2] 1 MiB 请求体与 413 体验
 
-- [ ] 未开始
+- [x] 已完成（2026-10-03）
 - **问题**：`bodyLimit: 1_048_576` 对约 35 万汉字的章节直接 413，编辑界面无体积提示；与 DR-001 叠加成"永久保存失败"死局。
 - **证据**：`http_server_policy.ts:36`；`error_envelope.ts:180-186`。
 - **修复方向**：编辑器显示字数/字节进度与软上限；或提高上限并写进 capacity 规格；413 给出可读指引。
 - **验证**：`pnpm --dir server exec vitest run tests/apps/api/`（新增 413 用例）。
+- **交付记录**：2026-10-03 | `aa559112`（wave 14c） | 保留 1 MiB 为文档化软上限（不提高）：新增 `bodyBudget.ts`（UTF-8 字节精确测量、90% 进入 near、与服务端一致的字数口径）与 `StudioBodyBudget` 指示器（编辑器头显示"草稿 {used}/{limit} · {words}"，near/over 给出拆分指引）；`errors.codePayloadTooLarge`（zh/en）改为可读解法"拆分为更小的章节——草稿仍在编辑器里"（验证草稿保留路径已有断言）；规格 "Authoring structure capacity" 增补正文预算段落与"超限 413 且不丢草稿"场景 | 复现：基线无任何体积提示，413 只有一句"请求体过大" | 回归：`StudioBodyBudget`（4：尺寸格式化/阈值/超限文案）、`StudioEditorPane`（草稿预算渲染 + 保存失败保持草稿）、`localizeError`（413 文案） | 联动：`pnpm spec:validate` 通过 | 验证：见 §10
 
 ---
 
@@ -759,3 +763,5 @@
 - 2026-10-03 | `d61b9b37` | DR-037 + DR-038 + DR-039 | 定向：import 14 用例 + 字典 4 用例；全套 `server gates/type-check/lint/lint:types/arch/test`（264 文件/1557 用例）、frontend lint/lint:types/format/type-check/test:unit/build（149 文件/826 用例）+ react-doctor(100) + `pnpm spec:validate` | 通过：导入根无关 hash + 标题保留 + CLI-only 文档（DR-037）；字典契约收敛（parity 双向/非空/锚点白名单）与回归确认（DR-038，413 随 DR-048）；文档/spec 对齐（DR-039）；过程修复：`legacy_workspace_reader` 两处旧契约具名更新、字典测试格式化
 - 2026-10-03 | `206c8dbe` | DR-040 + DR-041 + DR-045 + DR-047 | 定向：auth/metrics/stats/retention 9 文件 64 用例 + 前端 stats 2 文件 11 用例；全套 `server gates/type-check/lint/lint:types/arch/test`（268 文件/1579 用例）、frontend lint/lint:types/format/type-check/test:unit/build（149 文件/826 用例）+ react-doctor(100) + `pnpm spec:validate`；`docker compose config` 双文件 | 通过：dev secret 持久化（DR-040）、容器加固 + `/metrics` + `LOG_LEVEL`（DR-041）、统计本地时区 + 负数解释（DR-045）、revision 去重/折叠/保留 + `autosave` 标志（DR-047）；过程修复：`config_startup` 旧契约具名更新、9 处 saveDocument 载荷断言补字段、导入排序、stats fixture 补 tz 字段
 - 2026-10-03 | `c3a9674c` | DR-042 | 定向：审阅面板 5 用例 + 列表/历史 hook + 字典/本地化用例；frontend lint/lint:types/format/type-check 全绿、react-doctor(100) | 通过：审阅行可点开详情 + 选中态、快照短名（审阅/导出）、快照冲突可读解法；全套复验随 wave 14 收尾提交执行
+- 2026-10-03 | `aa559112` | DR-043 + DR-048 | 定向：beat 候选 43 用例 + 前端 beat/budget/editor 25 用例；全套 `server gates/type-check/lint/lint:types/arch/test`（269 文件/1581 用例）、frontend lint/lint:types/format/type-check/test:unit/build + react-doctor(100) + `pnpm spec:validate` | 通过：beat 候选下拉 + 权威 outline 披露（DR-043）；草稿字节预算指示 + 413 拆分指引 + 规格正文预算（DR-048）；过程修复：契约拆出 `beatContract.ts`、`studio_beats` 拆分为两文件 + 共享 helper、StudioComponents fixture 抽出、`fireEvent.change` 的 no-floating-promises
+- 2026-10-03 | `52011933` | DR-046 + DR-044 | 定向：23 文件 155 用例 + 主题/页面契约 4 文件 25 用例；全套 `server gates/type-check/lint/lint:types/arch/test`（269 文件/1581 用例）、frontend lint/lint:types/format/type-check/test:unit（154 文件/851 用例）/build + react-doctor(100) + `pnpm spec:validate` | 通过：Intl 本地化格式化 + 离线横幅 + 外壳/错误文案收口（DR-046）；死代码清理（同步客户端方法/3 个零引用类型；服务端路由与 test-only 导出保留）（DR-044）；过程修复：3 处 import 排序、Intl formatter 提升到模块作用域（js-hoist-intl）——**至此全部 48 条 DR 交付完毕**
