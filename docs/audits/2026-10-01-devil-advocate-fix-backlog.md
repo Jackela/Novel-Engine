@@ -495,31 +495,34 @@
 
 ### DR-037 [P1] 导入修复
 
-- [ ] 未开始
+- [x] 已完成（2026-10-03）
 - **问题**：source hash 含目录绝对路径与内容 → 同目录改名/改一章内容即重复建项目；导入丢弃源章节标题全部变 `Chapter N`；无前端入口（仅 preview + CLI）。
 - **证据**：`fs_legacy_workspace_reader.ts:93,137-147`；`import_service.ts:60-68`；`project_store_part.ts:185-199`；`import_routes.ts:60-65`。
 - **修复方向**：hash 去根路径（相对路径+内容）；从首行标题/文件名推断章节名；决策 Web 导入向导或明确文档标注 CLI-only（可并入 DEC-05）。
 - **验收**：重复导入行为可预期（显式提示或幂等）；标题保留。
 - **验证**：`pnpm --dir server exec vitest run tests/contexts/legacy_import_service.test.ts`（或对应文件）。
+- **交付记录**：2026-10-03 | `d61b9b37`（wave 13） | source hash 改为"相对路径 + 原始字节"（去根路径）：同内容换目录不再重复建项目，改一章内容仍可检出；章节标题从源首行标题/文件名推断并随 workspace 保留（不再 `Chapter N`）；重复导入按幂等行为处理并测试钉住；文档明确导入为 CLI-only（不做 Web 向导，方向记录归 DEC-05）。 | 复现：改名目录 → 新 sourceHash 重复建项目、标题全丢；修复前新用例先红 | 回归：`legacy_import_service`/`legacy_import_demo_workspace`/`studio_imports` 14 用例 + `legacy_workspace_reader`（`title` 字段与"根无关 hash"两处旧契约具名更新为 DR-037 语义）| 验证：见 §10
 
 ### DR-038 [P1] 关键回归与测试模式收敛
 
-- [ ] 未开始
+- [x] 已完成（2026-10-03）
 - **问题**：① autosave 失败路径（DR-001）、CJK 搜索（DR-003）、413 保存（DR-048）都没有用例；② `frontend/src/app/i18n/dictionaries/dictionaries.test.ts` 把英文文案按字节钉死，导致改一句 UI 文案要动三处（字典+断言+e2e）。
 - **证据**：`dictionaries.test.ts:27`；各域报告"测试盲区"节。
 - **修复方向**：补三类回归；把字典测试改为"键对齐 + 非空 + 关键锚点白名单"，不再全量钉文案。
 - **验收**：新增用例在修复前失败、修复后通过；字典测试只锁必要契约。
 - **验证**：`pnpm --dir server test && pnpm --dir frontend test:unit`。
 - **进展**：autosave 失败/恢复路径已随 DR-001/DR-002 交付回归覆盖（2026-10-01）；CJK 搜索用例已随 DR-003 交付（2026-10-02）；413 用例仍待 DR-048。
+- **交付记录**：2026-10-03 | `d61b9b37`（wave 13） | 字典测试收敛为"双向键对齐 + 非空 + 锚点白名单"：白名单逐条对照 `frontend/tests/e2e-ts` 定位器与按文案定位的单测核实（删除两处孤儿锚点），普通文案改动不再需要同步测试；autosave 失败回归（DR-001/002）与 CJK 搜索回归（DR-003）确认已存在；413 保存用例明确随 DR-048 交付（本项未重复实现，见"进展"注记）。 | 复现：基线字典测试全量钉死英文文案、改一句需动三处 | 回归：`dictionaries.test.ts`（4：parity 双向/非空/锚点）| 验证：见 §10
 
 ### DR-039 [P1] 文档-实现对齐
 
-- [ ] 未开始
+- [x] 已完成（2026-10-03）
 - **问题**：① README/deploy 反复写 "Once v0.8.0 is published"，但 tag/raw URL/GHCR 镜像均已可用（实测）；② guides 宣称 diff（`writing-guide.md:161`）、搜索"跳到命中"（`:169-171`）、"Move to volume…"（`:48-49`）均不成立；③ CONTEXT.md/CONTEXT 的 Review/Snapshot、rolling summary、Job 措辞与实现不符；④ spec 路由清单/命令数/`note` 类型滞后。
 - **证据**：各域报告的"规格宣称 vs 实现落差"与"③ 跨界发现"节。
 - **修复方向**：逐条修正；对"未来能力"的文案改为明确"未实现/规划中"表述；规格补 `note` kind、路由前缀、CLI 命令数、字数定义（DR-005）。
 - **验收**：文档不再承诺不存在的功能；`pnpm spec:validate` 通过。
 - **验证**：`pnpm spec:validate`；`pnpm --dir server gates`（llms-txt/hygiene）。
+- **交付记录**：2026-10-03 | `d61b9b37`（wave 13） | 逐条对齐：README/README.zh-CN/deploy README 的发布态与配置文案、openwiki guides（writing/backup/upgrading，EN+ZH）、architecture 与 studio-workspace 文档、quickstart、CONTEXT.md 术语（Review/Snapshot/rolling summary/Job）、openspec 规格补 `note` kind/路由前缀/CLI 命令数（含 reindex/migrate/owner）/DR-005 字数定义；未实现能力明确标注"未实现/规划中"。 | 复现：guides 宣称的 diff / "跳到命中" / "Move to volume" 在基线不成立（前序波次已实现，本次按现实改文）；README "Once v0.8.0 is published" 与 tag/GHCR 现实不符 | 回归：`pnpm spec:validate`（strict）与 `server gates`（llms-txt/hygiene/ssot）全绿 | 验证：见 §10
 
 ---
 
@@ -748,3 +751,4 @@
 - 2026-10-03 | `90e5f271` | DR-031 + DR-036 | 定向：`backup_policy`/`backup_policy_cli`/`startup_pipeline`/`restore_cli`/`tests/apps/cli` 13 文件 71 用例；全套 `server gates/type-check/lint/lint:types/arch/test`（260 文件/1533 用例）、frontend test:unit/build（149 文件/826 用例）+ react-doctor(100) + `pnpm spec:validate` | 通过：仅待迁移时备份 + 保留 3 份 + 空间检查 + quick_check 自检（DR-031）；restore 校验清理 sidecar + 明文提示（DR-036）；过程修复：两处旧断言具名更新（serve 重启备份、startup 计数），正向覆盖移入新用例
 - 2026-10-03 | `82aaa64f` | DR-032 | 定向：`doctor_readonly_cli`（6）+`migrate_cli`（3）+`tests/apps/cli`（13 文件/64 用例）+`tests/infrastructure`+`tests/db`；全套 `server gates/type-check/lint/lint:types/arch/test`（262 文件/1542 用例）、frontend test:unit/build（149 文件/826 用例）+ react-doctor(100) + `pnpm spec:validate` | 通过：doctor 只读零写入（含运行中只读）+ `migrate` 独立写入路径 + `error` 字段承载锁/权威原因；CLI 重放（构建产物）实证；三处旧断言具名更新
 - 2026-10-03 | `a06df731` | DR-033 + DR-034 + DR-035 | 定向：config/version/health/cors/setup-proxy/compose-gate 7 文件 57 用例 + 回归 sanity 11 文件 100 用例；全套 `server gates/type-check/lint/lint:types/arch/test`（264 文件/1554 用例）、frontend type-check/test:unit/build（149 文件/826 用例）+ react-doctor(100) + `pnpm spec:validate`；`docker compose config` 冒烟 | 通过：占位密钥生产拒绝（DR-033）、compose 去占位 + 可信代理透传 + 反代 checklist（DR-034）、生产暴露面收口（DR-035）；OpenAPI 零漂移；过程修复：`server_config` 测试拆分（行数门禁）、vitest NODE_ENV 固定
+- 2026-10-03 | `d61b9b37` | DR-037 + DR-038 + DR-039 | 定向：import 14 用例 + 字典 4 用例；全套 `server gates/type-check/lint/lint:types/arch/test`（264 文件/1557 用例）、frontend lint/lint:types/format/type-check/test:unit/build（149 文件/826 用例）+ react-doctor(100) + `pnpm spec:validate` | 通过：导入根无关 hash + 标题保留 + CLI-only 文档（DR-037）；字典契约收敛（parity 双向/非空/锚点白名单）与回归确认（DR-038，413 随 DR-048）；文档/spec 对齐（DR-039）；过程修复：`legacy_workspace_reader` 两处旧契约具名更新、字典测试格式化
