@@ -262,11 +262,17 @@ describe("owner and guest sessions", () => {
     }
   });
 
-  it("replaces an unset secret with a fresh random value on every start", async () => {
+  it("keeps the guarded production/staging rotation when no secret is configured", async () => {
+    // Guarded environments never persist a generated key (DR-040): the
+    // production guard in loadServerConfig owns them, so an explicit
+    // production start without a secret still rotates per process. The
+    // persistence pins for every other environment live in
+    // auth_session_secret.test.ts.
     const directory = await makeDataDirectory();
 
     const issued = await buildApp({
       logger: false,
+      environment: "production",
       databasePath: join(directory, "novel-engine.sqlite3"),
     });
     let jar: Map<string, string>;
@@ -279,6 +285,7 @@ describe("owner and guest sessions", () => {
 
     const restarted = await buildApp({
       logger: false,
+      environment: "production",
       databasePath: join(directory, "novel-engine.sqlite3"),
     });
     try {

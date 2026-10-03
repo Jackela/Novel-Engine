@@ -2606,6 +2606,10 @@
               "schema": {
                 "additionalProperties": false,
                 "properties": {
+                  "autosave": {
+                    "default": false,
+                    "type": "boolean"
+                  },
                   "base_revision_id": {
                     "nullable": true,
                     "type": "string"
@@ -8710,6 +8714,17 @@
       "get": {
         "parameters": [
           {
+            "in": "query",
+            "name": "tz_offset_minutes",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "maximum": 840,
+              "minimum": -840,
+              "type": "integer"
+            }
+          },
+          {
             "in": "path",
             "name": "projectId",
             "required": true,
@@ -8785,6 +8800,11 @@
                     },
                     "streak_days": {
                       "minimum": 0,
+                      "type": "integer"
+                    },
+                    "tz_offset_minutes": {
+                      "maximum": 840,
+                      "minimum": -840,
                       "type": "integer"
                     },
                     "usage": {
@@ -8941,6 +8961,7 @@
                   },
                   "required": [
                     "project_id",
+                    "tz_offset_minutes",
                     "daily",
                     "weekly",
                     "streak_days",

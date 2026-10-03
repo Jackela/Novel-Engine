@@ -122,6 +122,7 @@ describe("autosave recovery", () => {
       content_markdown: savedA.content_markdown,
       base_revision_id: documentA.current_revision_id,
       title: documentA.title,
+      autosave: true,
     });
     expect(view.result().hook.saveState).toBe("saved");
   });
@@ -197,6 +198,7 @@ describe("manual save (Ctrl/Cmd+S)", () => {
       content_markdown: "Unsaved A",
       base_revision_id: documentA.current_revision_id,
       title: documentA.title,
+      autosave: true,
     });
     expect(view.result().hook.saveState).toBe("saved");
   });
@@ -247,6 +249,7 @@ describe("draft rescue on leave", () => {
       content_markdown: "Unsaved A",
       base_revision_id: documentA.current_revision_id,
       title: "Unsaved title",
+      autosave: true,
     });
 
     await view.select(documentA);

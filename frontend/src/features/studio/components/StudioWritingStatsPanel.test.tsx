@@ -52,6 +52,7 @@ function writingStats(
   });
   return {
     project_id: "project-1",
+    tz_offset_minutes: 0,
     streak_days: 0,
     daily,
     weekly,
@@ -164,6 +165,12 @@ describe("StudioWritingStatsPanel", () => {
     expect(container.textContent).toContain("700Words today");
     expect(container.textContent).toContain("7 of 10 chapters started");
     expect(container.textContent).toContain("4Requests");
+    // DR-045: the panel labels the day boundary the rows were bucketed on and
+    // explains why an accepted-words figure can be negative.
+    expect(container.textContent).toContain("UTC+00:00");
+    expect(container.textContent).toContain(
+      "A restore or rollback can make a day's accepted words negative",
+    );
   });
 
   it("surfaces load failures through the alert region", async () => {

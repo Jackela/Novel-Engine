@@ -44,13 +44,13 @@ export interface WritingStatsWords {
   restore: number;
 }
 
-/** One UTC day of attributed words; `date` is `YYYY-MM-DD`. */
+/** One local day of attributed words; `date` is `YYYY-MM-DD`. */
 export interface WritingStatsDayRow {
   date: string;
   words: WritingStatsWords;
 }
 
-/** One complete 7-UTC-day rollup; `startDate` is its first `YYYY-MM-DD`. */
+/** One complete 7-local-day rollup; `startDate` is its first `YYYY-MM-DD`. */
 export interface WritingStatsWeekRow {
   startDate: string;
   words: WritingStatsWords;
@@ -67,20 +67,26 @@ export interface WritingStatsChapterShare {
 /**
  * The project-scoped writing-statistics summary (#653): derived entirely
  * from revisions, structure, and the existing usage aggregation — nothing
- * is recorded. Daily rows and weekly rollups use UTC days, the same anchor
- * as the usage aggregation's daily buckets.
+ * is recorded. Daily rows and weekly rollups are bucketed on the day
+ * boundary the caller supplied (DR-045): `tzOffsetMinutes` is the client's
+ * offset east of UTC, so a UTC+8 author's "today" starts at 00:00 local
+ * instead of 08:00 local. The embedded usage aggregate keeps its own UTC
+ * anchor — it is the existing `aggregateProjectUsage` result reused
+ * verbatim, never a second accounting.
  */
 export interface WritingStatsSummary {
   projectId: string;
-  /** The trailing 30 UTC days (today included), zero-filled, oldest first. */
+  /** The trailing 30 local days (today included), zero-filled, oldest first. */
   daily: WritingStatsDayRow[];
-  /** The trailing complete 7-UTC-day weeks within that window, oldest first. */
+  /** The trailing complete 7-local-day weeks within that window, oldest first. */
   weekly: WritingStatsWeekRow[];
   /**
-   * Consecutive UTC days with at least one `author` revision, ending on the
-   * current UTC day or the one before it.
+   * Consecutive local days with at least one `author` revision, ending on the
+   * current local day or the one before it.
    */
   streakDays: number;
+  /** The day boundary the rows were bucketed with, in minutes east of UTC. */
+  tzOffsetMinutes: number;
   chapters: WritingStatsChapterShare;
   /** The existing project usage aggregation reused verbatim (#653). */
   usage: ProjectUsageAggregate;

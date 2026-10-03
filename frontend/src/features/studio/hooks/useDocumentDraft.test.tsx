@@ -159,6 +159,7 @@ describe("useDocumentDraft", () => {
       content_markdown: savedDocument.content_markdown,
       base_revision_id: activeDocument.current_revision_id,
       title: activeDocument.title,
+      autosave: true,
     });
     expect(api.saveDocument).toHaveBeenCalledTimes(1);
     expect(hook.result().hook.saveState).toBe("saved");
@@ -299,6 +300,7 @@ describe("useDocumentDraft", () => {
         content_markdown: "Conflicting draft",
         base_revision_id: latestDocument.current_revision_id,
         title: activeDocument.title,
+        autosave: true,
       },
     );
     expect(hook.result().hook.saveState).toBe("saved");

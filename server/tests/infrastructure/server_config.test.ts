@@ -29,6 +29,30 @@ describe("environment configuration surface", () => {
     expect(config.authRateLimitPerMinute).toBe(5);
   });
 
+  it("resolves the structured logger level and refuses an unknown one (DR-041)", async () => {
+    const workspace = await makeWorkspace();
+
+    const unset = load({ workingDirectory: workspace }) as ServerConfig;
+    expect(unset.logLevel).toBe("info");
+
+    const explicit = load({
+      workingDirectory: workspace,
+      env: { LOG_LEVEL: "debug" },
+    }) as ServerConfig;
+    expect(explicit.logLevel).toBe("debug");
+
+    const normalized = load({
+      workingDirectory: workspace,
+      env: { LOG_LEVEL: " WARN " },
+    }) as ServerConfig;
+    expect(normalized.logLevel).toBe("warn");
+
+    const rejected = expectRejected(
+      load({ workingDirectory: workspace, env: { LOG_LEVEL: "verbose" } }),
+    );
+    expect(rejected.message).toContain("LOG_LEVEL must be one of");
+  });
+
   it("anchors default database paths to the workspace root, not the working directory", () => {
     const config = load({}) as ServerConfig;
 

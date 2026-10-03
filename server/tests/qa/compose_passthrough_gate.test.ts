@@ -112,6 +112,7 @@ export function loadServerConfig(input: LoadServerConfigInput = {}): ServerConfi
     databaseUrl,
     host: stringFrom(env, "API_HOST") ?? "0.0.0.0",
     port: portFrom(env),
+    logLevel: stringFrom(env, "LOG_LEVEL") ?? "info",
     corsOrigins: listFrom(env, "SECURITY_CORS_ORIGINS") ?? [],
     trustedProxies: listFrom(env, "SECURITY_TRUSTED_PROXIES") ?? [],
     authRateLimitPerMinute: rateLimitFrom(env),
@@ -146,6 +147,7 @@ const COMPOSE_FIXTURE = `services:
       SECURITY_SECRET_KEY: \${SECURITY_SECRET_KEY:-}
       SECURITY_CORS_ORIGINS: \${SECURITY_CORS_ORIGINS:-}
       SECURITY_TRUSTED_PROXIES: \${SECURITY_TRUSTED_PROXIES:-}
+      LOG_LEVEL: \${LOG_LEVEL:-}
       LLM_PROVIDER: \${LLM_PROVIDER:-mock}
       LLM_MODEL: \${LLM_MODEL:-}
       DASHSCOPE_MODEL: \${DASHSCOPE_MODEL:-}

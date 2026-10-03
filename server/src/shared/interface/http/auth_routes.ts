@@ -1,4 +1,3 @@
-import { isIP } from "node:net";
 import type { FastifyPluginAsync, FastifyReply, FastifyRequest } from "fastify";
 
 import type { AuthService, IssuedSession } from "../../application/auth_service.js";
@@ -7,6 +6,7 @@ import type { RateLimiter } from "../../application/ports/rate_limit.js";
 import { FIRST_CONTACT_PATHS, principalGuard } from "./auth_guard.js";
 import { AppError, ERROR_CODES, errorEnvelopeResponse } from "./error_envelope.js";
 import { isSameOriginRequest } from "./origin_validation.js";
+import { isLoopbackPeerAddress } from "./peer_address.js";
 import {
   clearSessionCookies,
   issueSessionCookies,
@@ -79,18 +79,10 @@ function requireService(options: AuthRoutesOptions): AuthService {
 }
 
 /**
- * Loopback detection for the first-boot setup exemption, evaluated on the raw
- * socket peer address — never on `request.ip`, which trusted-proxy handling
- * can rewrite from client-controlled forwarding headers. `undefined` (no
- * peer, e.g. a Unix socket) fails closed as non-loopback.
+ * Loopback detection moved to `peer_address.ts` (DR-041) so the setup gate and
+ * the internal `/metrics` gate share one implementation of "raw socket peer,
+ * never a forwarded address".
  */
-function isLoopbackPeerAddress(address: string | undefined): boolean {
-  if (address === undefined) {
-    return false;
-  }
-  const normalized = address.startsWith("::ffff:") ? address.slice("::ffff:".length) : address;
-  return normalized === "::1" || (isIP(normalized) === 4 && normalized.startsWith("127."));
-}
 
 function respondWithSession(
   reply: FastifyReply,

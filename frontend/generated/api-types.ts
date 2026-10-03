@@ -1200,6 +1200,8 @@ export interface paths {
             requestBody: {
                 content: {
                     "application/json": {
+                        /** @default false */
+                        autosave?: boolean;
                         base_revision_id: string | null;
                         content_markdown: string;
                         metadata?: {
@@ -4056,7 +4058,9 @@ export interface paths {
         };
         get: {
             parameters: {
-                query?: never;
+                query?: {
+                    tz_offset_minutes?: number;
+                };
                 header?: never;
                 path: {
                     projectId: string;
@@ -4086,6 +4090,7 @@ export interface paths {
                             }[];
                             project_id: string;
                             streak_days: number;
+                            tz_offset_minutes: number;
                             usage: {
                                 completion_tokens: number;
                                 /** @description The last 30 UTC days (today included), zero-filled: one bucket per day, oldest first, completed attempts only (#384, DR-028). */

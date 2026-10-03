@@ -4,6 +4,8 @@ import { api } from "./api";
 
 const statsPayload = {
   project_id: "project-1",
+  // DR-045: the boundary the rows were bucketed on travels with the payload.
+  tz_offset_minutes: 480,
   daily: [
     {
       date: "2026-09-13",

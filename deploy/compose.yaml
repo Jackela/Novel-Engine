@@ -8,10 +8,28 @@ services:
   novel-engine:
     image: ghcr.io/jackela/novel-engine:${NE_VERSION:-0.8.0}
     restart: unless-stopped
+    # Container hardening (DR-041): the published image runs as the
+    # unprivileged `node` user with a read-only root filesystem (only
+    # /app/data and the /tmp tmpfs are writable), every capability dropped,
+    # no-new-privileges, and bounded CPU, memory, and process counts. The data
+    # volume still works because it is a mount, not a rootfs path.
+    read_only: true
+    tmpfs:
+      - "/tmp:size=64m"
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    cpus: 2.0
+    mem_limit: 1g
+    pids_limit: 512
     ports:
       - "8000:8000"
     environment:
       APP_ENVIRONMENT: production
+      # Log verbosity of the structured server logger (fatal…silent); blank
+      # means the server default (info).
+      LOG_LEVEL: ${LOG_LEVEL:-}
       # Empty by default so the container entrypoint can bootstrap a secret
       # into the persistent volume; an explicitly exported value always wins.
       SECURITY_SECRET_KEY: ${SECURITY_SECRET_KEY:-}

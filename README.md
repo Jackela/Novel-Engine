@@ -75,9 +75,10 @@ guide](openwiki/guides/provider-setup.md).
 | `DB_URL` | `sqlite:///./data/novel-engine.sqlite3` | Only SQLite is supported. |
 | `API_HOST` | `0.0.0.0` | Bind address for `serve`. |
 | `API_PORT` | `8000` | Listen port. |
+| `LOG_LEVEL` | `info` | Structured logger level: `fatal`, `error`, `warn`, `info`, `debug`, `trace`, or `silent`. An unknown value refuses startup. |
 | `API_MAX_ACTIVE_WORKFLOWS` | `4` | Global concurrent workflow capacity; integer 1–1024. |
 | `API_MAX_ACTIVE_WORKFLOWS_PER_PROJECT` | `2` | Per-project workflow capacity; must not exceed the global limit. |
-| `SECURITY_SECRET_KEY` | unset (rotated per start outside production) | Required in production; a missing secret, a value shorter than 16 characters, or a `change-me*` placeholder refuses startup there. Generate a unique random value. |
+| `SECURITY_SECRET_KEY` | unset (rotated per start outside production) | Required in production; a missing secret, a value shorter than 16 characters, or a `change-me*` placeholder refuses startup there. Generate a unique random value. Outside production and staging a missing secret is generated once into `data/.secret` (mode `0600`) and reused, so local restarts keep sessions instead of logging everyone out; delete that file to rotate it. |
 | `SECURITY_CORS_ORIGINS` | localhost origins | Must be explicit and non-localhost in production; the Compose files intentionally ship no placeholder, so an unset value refuses startup there. |
 | `SECURITY_RATE_LIMIT` | `5/minute` | Auth endpoint rate limit. |
 | `SECURITY_TRUSTED_PROXIES` | empty | Comma-separated trusted proxy addresses (exact IPs, or host strings for local sockets) whose forwarding chain may be trusted for client identity; the client is the rightmost untrusted hop, never the client-controlled leading segment. Network ranges are refused at startup — a range that covers clients would let them forge identities. Set the exact proxy address(es) behind a reverse proxy, or every client shares one rate-limit bucket. |
@@ -183,6 +184,26 @@ down` keeps it, `docker compose down -v` deletes it (permanently). The
 built-in `mock` AI provider works out of the box; to generate real AI
 proposals, set `LLM_PROVIDER` and its API key variable — see
 [Configuration](#configuration).
+
+The Compose files harden the container (DR-041): it runs as the unprivileged
+`node` user, the root filesystem is read-only with only the data volume and a
+64 MiB `/tmp` tmpfs writable, all Linux capabilities are dropped with
+`no-new-privileges`, and CPU (2.0), memory (1g), and PID counts (512) are
+bounded. The writable data volume keeps working unchanged.
+
+For monitoring, the server exposes an internal Prometheus endpoint:
+
+```bash
+docker compose exec novel-engine node -e \
+  "fetch('http://127.0.0.1:8000/metrics').then(async r => console.log(await r.text()))"
+```
+
+`GET /metrics` answers the process gauges (uptime, resident memory, heap),
+job counts by status, usage request/token totals, and a product identity
+gauge. It is available to the loopback peer or to an authenticated owner
+session and answers 401 otherwise — a scrape surface, not a public endpoint.
+Set `LOG_LEVEL` (`fatal`…`silent`, default `info`) to change the structured
+logger's verbosity.
 
 ## Commands
 

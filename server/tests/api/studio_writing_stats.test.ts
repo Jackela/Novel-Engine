@@ -74,6 +74,9 @@ describe("project writing statistics surface (#653 T2)", () => {
       expect(response.statusCode, response.body).toBe(200);
       expect(response.json()).toEqual({
         project_id: project.id,
+        // DR-045: without a query parameter the day boundary stays UTC, and
+        // the response echoes the boundary it bucketed with.
+        tz_offset_minutes: 0,
         daily: utcDayKeys().map((date) => ({
           date,
           words: { author: 0, ai_accepted: 0, restore: 0 },
@@ -103,6 +106,41 @@ describe("project writing statistics surface (#653 T2)", () => {
       for (const week of body.weekly) {
         expect(week.words).toEqual({ author: 0, ai_accepted: 0, restore: 0 });
       }
+    } finally {
+      await app.close();
+    }
+  });
+
+  it("buckets the day rows on the requested browser offset", async () => {
+    const { app } = await buildStudioApp(() => NOW);
+    try {
+      const jar = await ownerJar(app);
+      const project = await seedProject(app, jar, "Offset");
+
+      // 2026-03-15T12:00Z is 2026-03-16 02:00 for a UTC+14 author: their
+      // "today" is the next local day, and the seeded author revision lands
+      // on that row instead of the UTC row.
+      const response = await call(
+        app,
+        jar,
+        "GET",
+        `/api/projects/${project.id}/stats?tz_offset_minutes=840`,
+      );
+      expect(response.statusCode, response.body).toBe(200);
+      const body = response.json();
+      expect(body.tz_offset_minutes).toBe(840);
+      expect(body.daily).toHaveLength(30);
+      expect(body.daily.at(-1)?.date).toBe("2026-03-16");
+      expect(body.daily.at(-1)?.words.author).toBeGreaterThan(0);
+      expect(body.streak_days).toBe(1);
+
+      const rejecting = await call(
+        app,
+        jar,
+        "GET",
+        `/api/projects/${project.id}/stats?tz_offset_minutes=900`,
+      );
+      expect(rejecting.statusCode).toBe(422);
     } finally {
       await app.close();
     }

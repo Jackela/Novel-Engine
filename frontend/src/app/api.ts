@@ -25,6 +25,7 @@ import {
   parseReviews,
   parseUsage,
 } from "@/app/apiWorkflowContract";
+import { browserTzOffsetMinutes } from "@/app/browserTimezone";
 import { parseDiagnostics } from "@/app/diagnosticsContract";
 import { type ExportsRequestOptions, projectExportsRequest } from "@/app/exportApiRequest";
 import { downloadBlob, json, patchJson, postJson, putJson, request } from "@/app/httpClient";
@@ -125,6 +126,8 @@ export const api = {
       base_revision_id: string;
       title?: string;
       metadata?: Record<string, unknown>;
+      /** #DR-047: marks the editor's draft autosave for revision folding. */
+      autosave?: boolean;
     },
   ) => putJson(`/api/projects/${projectId}/documents/${documentId}`, payload, parseStudioDocument),
   revisions: (projectId: string, documentId: string, options: RevisionRequestOptions = {}) =>
@@ -212,7 +215,13 @@ export const api = {
   usage: (projectId: string, init?: RequestInit) =>
     request(`/api/projects/${projectId}/usage`, init, parseUsage),
   writingStats: (projectId: string, init?: RequestInit) =>
-    request(`/api/projects/${projectId}/stats`, init, parseWritingStats),
+    request(
+      // DR-045: the aggregation buckets its day rows on the browser's own day
+      // boundary, so a UTC+8 author's "today" is their local day.
+      `/api/projects/${projectId}/stats?tz_offset_minutes=${browserTzOffsetMinutes()}`,
+      init,
+      parseWritingStats,
+    ),
   extractLore: (projectId: string, segment: string, provider: string) =>
     postJson(
       `/api/projects/${projectId}/lore-extractions`,

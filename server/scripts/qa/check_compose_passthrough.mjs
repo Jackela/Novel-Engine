@@ -59,6 +59,7 @@ const SERVER_ANCHORS = [
   "SECURITY_SECRET_KEY",
   "API_HOST",
   "API_PORT",
+  "LOG_LEVEL",
   "SECURITY_CORS_ORIGINS",
   "SECURITY_TRUSTED_PROXIES",
   "SECURITY_RATE_LIMIT",
@@ -66,10 +67,16 @@ const SERVER_ANCHORS = [
   "API_MAX_ACTIVE_WORKFLOWS_PER_PROJECT",
 ];
 
+// Compose entries the operator-facing server contract beyond the provider read
+// set depends on: DR-034's reverse-proxy knobs and DR-041's logger verbosity
+// must stay passable, so a deployment can configure them through the
+// documented Compose workflow instead of rebuilding the image.
+const OPERATOR_PASSTHROUGH = ["SECURITY_TRUSTED_PROXIES", "LOG_LEVEL"];
+
 // Compose entries the DR-034 reverse-proxy deployment contract depends on:
 // without the passthrough a proxied deployment cannot configure trusted
 // client identity through the documented Compose workflow.
-const REVERSE_PROXY_PASSTHROUGH = ["SECURITY_TRUSTED_PROXIES"];
+const REVERSE_PROXY_PASSTHROUGH = OPERATOR_PASSTHROUGH;
 
 // Matches `helper(env, "KEY")` across line breaks — the only shape in which
 // the config loaders pass a variable name. Helper definitions (`function

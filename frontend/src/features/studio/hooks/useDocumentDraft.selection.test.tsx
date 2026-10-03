@@ -95,6 +95,7 @@ describe("Document selection owns the Draft lifetime", () => {
       content_markdown: "Unsaved A",
       base_revision_id: documentA.current_revision_id,
       title: "Unsaved title",
+      autosave: true,
     });
     await view.select(null, documentA.id);
     await view.select(documentA);
@@ -215,6 +216,7 @@ describe("Document selection owns the Draft lifetime", () => {
       content_markdown: "Departed A",
       base_revision_id: documentA.current_revision_id,
       title: documentA.title,
+      autosave: true,
     });
     const next = renderDraft();
     await flushMicrotasks();

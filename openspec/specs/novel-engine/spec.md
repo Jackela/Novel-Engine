@@ -280,6 +280,26 @@ document. The revision source MUST be a server-assigned closed enum of
 `author`, `ai-accepted`, and `restore`; the save request schema MUST NOT
 expose a source field.
 
+A save MAY be marked as the editor's autosave (the `autosave` request field,
+default false). Marked saves additionally apply the revision growth policy:
+
+- a save whose body, metadata, and title already match the current revision
+  MUST write nothing — no revision row, no index rewrite, no timestamp;
+- an autosave whose unreferenced `author` predecessor was written inside the
+  collapse window (30 seconds) MUST fold that predecessor into the new
+  revision: the predecessor row is deleted and the new revision inherits the
+  predecessor's parent, so the lineage chain keeps no dangling reference;
+- an autosave MUST prune unreferenced `author` revisions older than the
+  retention window (90 days) that fall outside the newest 200 revisions of
+  the document, deleting at most one bounded batch per save and repairing the
+  `parent_revision_id` pointer of surviving children past pruned ancestors.
+
+Revisions referenced by a snapshot, the document's current revision, and the
+document's first revision MUST never be folded or pruned; revision content and
+metadata stay immutable, and only the lineage pointer of a surviving revision
+may be repaired. Non-autosave saves (restores, accepted proposals, imports)
+keep plain append semantics.
+
 #### Scenario: Title and metadata change in the same save
 - **GIVEN** a document points to revision A and is titled "Chapter 1"
 - **WHEN** the author saves new content, a new title, and new metadata based
@@ -300,6 +320,27 @@ expose a source field.
 - **THEN** no client-supplied source is accepted
 - **AND** the created revision's source is one of `author`, `ai-accepted`,
   or `restore`, as determined by the operation the server performed
+
+#### Scenario: Repeated autosave of the current content writes nothing
+- **GIVEN** a document points to revision A whose body and metadata match the
+  incoming save
+- **WHEN** the save is marked as an autosave
+- **THEN** no revision is created
+- **AND** the document keeps pointing to revision A with an unchanged update
+  timestamp, and the search index is not rewritten
+
+#### Scenario: Adjacent autosaves fold into the newest state
+- **GIVEN** a document points to revision A, which is an unreferenced `author`
+  revision written 2 seconds ago
+- **WHEN** an autosave based on revision A succeeds
+- **THEN** revision A is deleted and the new revision's parent is A's parent
+- **AND** the new revision is the document's current revision
+
+#### Scenario: Snapshot-pinned revisions are never folded or pruned
+- **GIVEN** an old revision is referenced by a snapshot document
+- **WHEN** an autosave inside the collapse window, and later a retention
+  prune, consider unreferenced predecessors of that document
+- **THEN** the pinned revision remains readable and unchanged
 
 ### Requirement: Full-text search over current content
 The system MUST expose project-scoped full-text search over document titles

@@ -144,6 +144,14 @@ export interface AdvanceDocumentInput {
   metadataJson: string;
   source: string;
   now: Date;
+  /**
+   * True when the caller is the editor's draft-autosave machinery (#DR-047):
+   * adjacent autosave revisions inside the collapse window fold into the new
+   * state and old unreferenced autosave revisions are pruned. Restores,
+   * accepted proposals, and imports leave it unset, so their revisions are
+   * never folded or pruned.
+   */
+  autosave?: boolean | undefined;
 }
 
 /**

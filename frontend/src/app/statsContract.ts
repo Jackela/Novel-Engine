@@ -9,13 +9,15 @@ import type {
 /**
  * Runtime-validate the writing-statistics response (#653) at the API
  * boundary: word deltas stay signed integers because an author cut is an
- * honest negative figure, and every calendar key is a UTC day string.
+ * honest negative figure, and every calendar key is a day string on the
+ * echoed `tz_offset_minutes` boundary (DR-045).
  */
 export function parseWritingStats(value: unknown): WritingStats {
   const item = objectValue(value, "writing stats response");
   const label = "writing stats response";
   return {
     project_id: stringField(item, "project_id", label),
+    tz_offset_minutes: numberField(item, "tz_offset_minutes", label),
     daily: arrayField(item, "daily", label, (entry, index) =>
       parseWordsRow(entry, "date", `${label}.daily[${index}]`),
     ),

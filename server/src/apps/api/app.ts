@@ -8,6 +8,7 @@ import { studioRoutes } from "../../contexts/studio/interface/http/studio_routes
 import { AuthService } from "../../shared/application/auth_service.js";
 import type { HealthProbe } from "../../shared/application/ports/health.js";
 import { assertStartupGuards } from "../../shared/infrastructure/config/server_config.js";
+import { resolveSessionSecret } from "../../shared/infrastructure/config/session_secret.js";
 import { DrizzleAuthStore } from "../../shared/infrastructure/db/auth_store.js";
 import type { StudioQueryLogger } from "../../shared/infrastructure/db/connection.js";
 import { armFirstBootSetupToken } from "../../shared/infrastructure/db/setup_token.js";
@@ -17,6 +18,7 @@ import { readProductIdentity } from "../../shared/infrastructure/workspace_manif
 import { principalGuard } from "../../shared/interface/http/auth_guard.js";
 import { registerErrorEnvelope } from "../../shared/interface/http/error_envelope.js";
 import { healthRoutes } from "../../shared/interface/http/health_routes.js";
+import { metricsRoutes } from "../../shared/interface/http/metrics_routes.js";
 import {
   defaultSpaDistDirectory,
   registerSpaServing,
@@ -39,6 +41,7 @@ import {
   type HttpServerPolicy,
   registerUndeclaredRequestBodyPolicy,
 } from "./http_server_policy.js";
+import { buildMetricsProbe } from "./metrics_probe.js";
 import { registerOpenApiDocument } from "./openapi_document_registration.js";
 import {
   type OperationCapacityAppOptions,
@@ -130,7 +133,7 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
       options.httpServerPolicy ?? DEFAULT_HTTP_SERVER_POLICY,
       trustedProxies,
     ),
-    logger: loggerWithProductIdentity(options.logger, productIdentity),
+    logger: loggerWithProductIdentity(options.logger, productIdentity, options.config?.logLevel),
     genReqId: (request) => correlationIdFrom(request.headers[REQUEST_ID_HEADER]) ?? randomUUID(),
   }).withTypeProvider<TypeBoxTypeProvider>();
 
@@ -156,10 +159,19 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
 
     const environment =
       options.environment ?? options.config?.environment ?? process.env.NODE_ENV ?? "development";
-    // One resolution for the whole app: the session secret is either explicit
-    // (options or config) or a per-start rotation; the diagnostics export
-    // reports only which of the two it was (#654), never the value.
-    const resolvedSessionSecret = options.sessionSecret ?? options.config?.sessionSecret;
+    // One resolution for the whole app (#654): the session secret is either
+    // explicit (options or config) or generated — and outside the guarded
+    // production/staging environments the generated key is persisted into the
+    // data directory once and reused, so a restart no longer logs the author
+    // out (DR-040). The diagnostics export reports only which of the three it
+    // was, never the value.
+    const resolvedSessionSecret =
+      options.sessionSecret ??
+      resolveSessionSecret({
+        configured: options.config?.sessionSecret,
+        environment,
+        dataDirectory,
+      });
     const authStore =
       persistence === undefined ? undefined : new DrizzleAuthStore(persistence.db.db);
     // First-boot takeover gate (DR-008): while no owner exists the one-time
@@ -220,6 +232,14 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
       healthProbe:
         options.healthProbe ??
         (persistence === undefined ? emptyHealthProbe : sqliteHealthProbe(persistence.db.raw)),
+    });
+    // DR-041: the internal scrape surface. It is registered before the SPA
+    // wildcard, kept out of the OpenAPI document, and gated to the loopback
+    // peer or an authenticated owner session.
+    await app.register(metricsRoutes, {
+      probe: buildMetricsProbe(persistence?.db.raw),
+      authService,
+      productIdentity,
     });
     await app.register(versionRoutes, {
       info: versionInfo,

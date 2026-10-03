@@ -29,6 +29,12 @@
   font-size: 10px;
   text-align: center;
 }
+.stats__note {
+  margin: 7px 0 0;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.5;
+}
 .stats__section {
   margin-top: 14px;
 }

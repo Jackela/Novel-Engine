@@ -76,6 +76,13 @@ export const documentSaveSchema = Type.Object(
     base_revision_id: nullableString({}),
     title: Type.Optional(Type.String({ maxLength: 240 })),
     metadata: Type.Optional(metadataObject),
+    /**
+     * #DR-047: the editor's draft autosave sets this so adjacent autosaves
+     * inside the collapse window fold into one revision and old unreferenced
+     * autosave revisions are pruned. Every other caller omits it and keeps
+     * the plain append semantics.
+     */
+    autosave: Type.Optional(Type.Boolean({ default: false })),
   },
   { additionalProperties: false },
 );

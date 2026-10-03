@@ -132,7 +132,7 @@ export const enStudio = {
   "usage.daily.rowLabel": "{date}: {count} tokens",
 
   "stats.heading": "Writing stats",
-  "stats.hint": "Words per UTC day, attributed by source.",
+  "stats.hint": "Words per day in your browser time zone, attributed by source.",
   "stats.action.refresh": "Refresh stats",
   "stats.action.refreshing": "Refreshing stats",
   "stats.status.loading": "Loading writing stats…",
@@ -142,6 +142,9 @@ export const enStudio = {
   "stats.summary.chaptersStarted": "Chapters started",
   "stats.summary.chaptersShare": "{started} of {total} chapters started",
   "stats.summary.today": "Words today",
+  "stats.timezone.hint": "Day and week rows follow your browser time zone ({zone}).",
+  "stats.negative.hint":
+    "A restore or rollback can make a day's accepted words negative; each row's total is that day's net movement.",
   "stats.usage.heading": "AI usage",
   "stats.daily.heading": "Words per day",
   "stats.daily.region": "Daily words by source, last 30 days",

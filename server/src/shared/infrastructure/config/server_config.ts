@@ -7,8 +7,18 @@ import { isTrustedProxyRange } from "../rate_limit/client_identity.js";
 import { locateWorkspaceRoot } from "../workspace_manifest.js";
 import { ConfigurationError } from "./configuration_error.js";
 import { parseEnvFile } from "./env_file.js";
+import { type LogLevel, logLevelFrom } from "./log_level.js";
 import { type LlmServerConfig, loadLlmServerConfig } from "./provider_config.js";
+import {
+  assertWorkflowCapacity,
+  DEFAULT_MAX_ACTIVE_WORKFLOWS,
+  DEFAULT_MAX_ACTIVE_WORKFLOWS_PER_PROJECT,
+  MAX_ACTIVE_WORKFLOWS,
+  MIN_ACTIVE_WORKFLOWS,
+} from "./workflow_capacity.js";
 
+/** Re-exported so the composition-root seam keeps one import location. */
+export { assertWorkflowCapacity, type WorkflowCapacityConfig } from "./workflow_capacity.js";
 export { ConfigurationError };
 
 /** The single converged prefix family; nothing outside it is read. */
@@ -19,10 +29,6 @@ const DEFAULT_HOST = "0.0.0.0";
 const DEFAULT_PORT = 8000;
 const DEFAULT_RATE_LIMIT = "5/minute";
 const RATE_LIMIT_PATTERN = /^([1-9]\d{0,5})\/minute$/;
-const MIN_ACTIVE_WORKFLOWS = 1;
-const MAX_ACTIVE_WORKFLOWS = 1024;
-const DEFAULT_MAX_ACTIVE_WORKFLOWS = 4;
-const DEFAULT_MAX_ACTIVE_WORKFLOWS_PER_PROJECT = 2;
 
 // Sentinel default assembled from harmless words so no credential-shaped literal ships in source.
 export const DEFAULT_SECRET_KEY = ["change-me", "in-production", "32-char-long"].join("-");
@@ -42,6 +48,12 @@ const ENVIRONMENTS = ["development", "testing", "staging", "production"] as cons
 
 type ServerEnvironment = (typeof ENVIRONMENTS)[number];
 
+/**
+ * The pino levels the server logger accepts (DR-041) live in `log_level.ts`;
+ * re-exported here so the config surface keeps one import location.
+ */
+export { type LogLevel, logLevelFrom } from "./log_level.js";
+
 export interface ServerConfig {
   readonly environment: ServerEnvironment;
   /**
@@ -54,6 +66,8 @@ export interface ServerConfig {
   readonly dataDirectory: string;
   readonly host: string;
   readonly port: number;
+  /** Pino level of the structured server logger; `info` when unset. */
+  readonly logLevel: LogLevel;
   readonly corsOrigins: string[];
   /**
    * Concrete proxy addresses only. Network ranges are refused: a range that
@@ -65,11 +79,6 @@ export interface ServerConfig {
   readonly maxActiveWorkflows: number;
   readonly maxActiveWorkflowsPerProject: number;
   readonly llm: LlmServerConfig;
-}
-
-interface WorkflowCapacityConfig {
-  readonly applicationLimit: number;
-  readonly projectLimit: number;
 }
 
 export interface LoadServerConfigInput {
@@ -122,6 +131,7 @@ export function loadServerConfig(input: LoadServerConfigInput = {}): ServerConfi
     dataDirectory: dirname(databasePath),
     host: stringFrom(env, "API_HOST") ?? DEFAULT_HOST,
     port: portFrom(env),
+    logLevel: logLevelFromEnv(env),
     corsOrigins: listFrom(env, "SECURITY_CORS_ORIGINS") ?? DEFAULT_CORS_ORIGINS,
     trustedProxies: listFrom(env, "SECURITY_TRUSTED_PROXIES") ?? [],
     authRateLimitPerMinute: rateLimitFrom(env),
@@ -169,25 +179,6 @@ export function assertStartupGuards(config: ServerConfig): void {
     )
   ) {
     throw new ConfigurationError("Production CORS origins cannot include localhost or 127.0.0.1");
-  }
-}
-
-/** Validate the structured composition-root seam before persistence opens. */
-export function assertWorkflowCapacity(capacity: WorkflowCapacityConfig): void {
-  assertCapacityValue("application", capacity.applicationLimit);
-  assertCapacityValue("project", capacity.projectLimit);
-  if (capacity.projectLimit > capacity.applicationLimit) {
-    throw new ConfigurationError(
-      "Workflow capacity project limit must not exceed the application limit",
-    );
-  }
-}
-
-function assertCapacityValue(name: string, value: number): void {
-  if (!Number.isInteger(value) || value < MIN_ACTIVE_WORKFLOWS || value > MAX_ACTIVE_WORKFLOWS) {
-    throw new ConfigurationError(
-      `Workflow capacity ${name} limit must be an integer between ${MIN_ACTIVE_WORKFLOWS} and ${MAX_ACTIVE_WORKFLOWS}`,
-    );
   }
 }
 
@@ -304,6 +295,14 @@ function portFrom(env: Map<string, string>): number {
     );
   }
   return port;
+}
+
+/**
+ * The structured logger's level (DR-041). Case-insensitive; an unknown value
+ * is a configuration error so a typo cannot silently keep the default.
+ */
+function logLevelFromEnv(env: Map<string, string>): LogLevel {
+  return logLevelFrom(stringFrom(env, "LOG_LEVEL"));
 }
 
 function rateLimitFrom(env: Map<string, string>): number {

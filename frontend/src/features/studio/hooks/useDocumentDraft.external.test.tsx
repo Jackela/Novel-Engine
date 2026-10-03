@@ -187,6 +187,7 @@ describe("useDocumentDraft external commit reconciliation", () => {
       content_markdown: "Document A newer local draft",
       base_revision_id: documentA.current_revision_id,
       title: documentA.title,
+      autosave: true,
     });
     draft.rerender(acceptedA, acceptedProject);
 

@@ -124,7 +124,7 @@ export const zhStudio = {
   "usage.daily.rowLabel": "{date}：{count} tokens",
 
   "stats.heading": "写作统计",
-  "stats.hint": "按 UTC 日归因到来源的字数。",
+  "stats.hint": "按浏览器时区归因到来源的每日字数。",
   "stats.action.refresh": "刷新统计",
   "stats.action.refreshing": "正在刷新统计",
   "stats.status.loading": "正在加载写作统计…",
@@ -134,6 +134,8 @@ export const zhStudio = {
   "stats.summary.chaptersStarted": "已开篇章节",
   "stats.summary.chaptersShare": "{total} 章中已开篇 {started} 章",
   "stats.summary.today": "今日字数",
+  "stats.timezone.hint": "每日/每周分区按浏览器时区（{zone}）划分。",
+  "stats.negative.hint": "「恢复」或回滚会让某天的「已采纳」出现负数；每行合计是该日的净变化。",
   "stats.usage.heading": "AI 用量",
   "stats.daily.heading": "每日字数",
   "stats.daily.region": "每日字数（按来源，最近 30 天）",

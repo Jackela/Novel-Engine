@@ -247,6 +247,82 @@ describe("writing stats UTC calendar buckets (#653 T1)", () => {
   });
 });
 
+describe("writing stats local day boundary (#DR-045)", () => {
+  it("buckets a revision on the caller's own day, not the UTC day", async () => {
+    const harness = await openWritingStatsHarness();
+    try {
+      const projectId = newEmptyProject(harness);
+      // 2026-03-14T22:00Z is 2026-03-15 06:00 for a UTC+8 author: their "today".
+      seedChapter(harness, projectId, "Chapter 1", 100, new Date("2026-03-14T22:00:00.000Z"));
+
+      const utc = harness.service.aggregateWritingStats(harness.principal, projectId);
+      expect(utc.tzOffsetMinutes).toBe(0);
+      expect(dayRow(utc, "2026-03-14").words.author).toBe(100);
+      expect(dayRow(utc, "2026-03-15").words.author).toBe(0);
+
+      const beijing = harness.service.aggregateWritingStats(harness.principal, projectId, 480);
+      expect(beijing.tzOffsetMinutes).toBe(480);
+      expect(dayRow(beijing, "2026-03-15").words.author).toBe(100);
+      expect(dayRow(beijing, "2026-03-14").words.author).toBe(0);
+      // The window itself shifts with the boundary: its newest key stays the
+      // caller's local day.
+      expect(beijing.daily.at(-1)?.date).toBe("2026-03-15");
+      expect(utc.daily.at(-1)?.date).toBe("2026-03-15");
+    } finally {
+      await harness.cleanup();
+    }
+  });
+
+  it("counts the author streak on the caller's day boundary", async () => {
+    const harness = await openWritingStatsHarness();
+    try {
+      const projectId = newEmptyProject(harness);
+      const documentId = seedChapter(
+        harness,
+        projectId,
+        "Chapter 1",
+        10,
+        new Date("2026-03-13T04:00:00.000Z"),
+      );
+      saveRevision(
+        harness,
+        projectId,
+        documentId,
+        wordText(30),
+        "author",
+        new Date("2026-03-14T04:00:00.000Z"),
+      );
+
+      // UTC: the two revisions land on 03-13 and 03-14, so 03-14 is the
+      // current-or-previous day and the chain has two days.
+      expect(harness.service.aggregateWritingStats(harness.principal, projectId).streakDays).toBe(
+        2,
+      );
+      // UTC-5: they land on 03-12 and 03-13, two days before the local
+      // current day (03-15), so the chain is broken.
+      expect(
+        harness.service.aggregateWritingStats(harness.principal, projectId, -300).streakDays,
+      ).toBe(0);
+    } finally {
+      await harness.cleanup();
+    }
+  });
+
+  it("refuses an impossible day-boundary offset instead of clamping it", async () => {
+    const harness = await openWritingStatsHarness();
+    try {
+      const projectId = newEmptyProject(harness);
+      for (const invalid of [900, -841, 0.5, Number.NaN]) {
+        expect(() =>
+          harness.service.aggregateWritingStats(harness.principal, projectId, invalid),
+        ).toThrow(RangeError);
+      }
+    } finally {
+      await harness.cleanup();
+    }
+  });
+});
+
 /** The last UTC-day key of the week starting at `startDate`. */
 function weekStartDate(startDate: string): string {
   const end = Date.parse(`${startDate}T00:00:00Z`) + 6 * 86_400_000;

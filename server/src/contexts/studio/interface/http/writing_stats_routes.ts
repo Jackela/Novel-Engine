@@ -13,8 +13,21 @@ import { authedReadResponses } from "./route_responses.js";
 import { withStudioErrors } from "./studio_error_mapping.js";
 import { projectIdParams } from "./studio_request_schemas.js";
 
-/** One UTC calendar day, `YYYY-MM-DD`, matching the usage buckets' anchor. */
+/** One calendar day key, `YYYY-MM-DD`, on the caller's own day boundary. */
 const UTC_DAY_PATTERN = "^[0-9]{4}-[0-9]{2}-[0-9]{2}$";
+
+/**
+ * The day-boundary selector (DR-045): the browser sends its own offset east
+ * of UTC in whole minutes, so an author in UTC+8 sees their local day rather
+ * than the UTC day. Absent means UTC, and the accepted range is every real
+ * offset (UTC-12 … UTC+14).
+ */
+const statsQuerySchema = Type.Object(
+  {
+    tz_offset_minutes: Type.Optional(Type.Integer({ default: 0, minimum: -840, maximum: 840 })),
+  },
+  { additionalProperties: false },
+);
 
 /**
  * Word figures split by revision source (#653). Deltas are honest: an author
@@ -31,13 +44,15 @@ const statsWordsSchema = Type.Object(
 
 /**
  * The writing-statistics response (#653): rendered-ready output of the
- * aggregation service. Every calendar bucket is a UTC day — the same anchor
- * as the usage aggregation's daily buckets, whose wire shape the `usage`
- * member reuses verbatim (one contract, never a second accounting).
+ * aggregation service. Every calendar bucket is a day on `tz_offset_minutes`
+ * — the caller's own day boundary (DR-045), echoed back so the view can
+ * label it. The `usage` member reuses the usage aggregation's wire shape
+ * verbatim (one contract, never a second accounting).
  */
 export const writingStatsResponseSchema = Type.Object(
   {
     project_id: Type.String(),
+    tz_offset_minutes: Type.Integer({ minimum: -840, maximum: 840 }),
     daily: Type.Array(
       Type.Object(
         {
@@ -77,6 +92,7 @@ function statsWordsPayload(words: WritingStatsWords) {
 function writingStatsPayload(summary: WritingStatsSummary) {
   return {
     project_id: summary.projectId,
+    tz_offset_minutes: summary.tzOffsetMinutes,
     daily: summary.daily.map((row) => ({ date: row.date, words: statsWordsPayload(row.words) })),
     weekly: summary.weekly.map((row) => ({
       start_date: row.startDate,
@@ -106,6 +122,7 @@ export const writingStatsRoutes: FastifyPluginAsync<StudioRoutesOptions> = async
       preHandler: [guard],
       schema: {
         params: projectIdParams,
+        querystring: statsQuerySchema,
         response: authedReadResponses({
           200: writingStatsResponseSchema,
         }),
@@ -117,6 +134,7 @@ export const writingStatsRoutes: FastifyPluginAsync<StudioRoutesOptions> = async
           requireServices(options).writingStats.aggregateWritingStats(
             requirePrincipal(request),
             request.params.projectId,
+            request.query.tz_offset_minutes,
           ),
         ),
       ),

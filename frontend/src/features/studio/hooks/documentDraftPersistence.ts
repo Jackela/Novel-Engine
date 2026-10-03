@@ -1,7 +1,15 @@
 import { api } from "@/app/api";
 import type { StudioDocument } from "@/app/types/studio";
 
-/** Saves one Draft body as a new immutable Revision on the server. */
+/**
+ * Saves one Draft body as a new immutable Revision on the server. Every
+ * caller is the draft-persistence machinery (debounced autosave, Ctrl+S
+ * flush, switch-away rescue), so the write is marked as an autosave: the
+ * server folds adjacent autosaves inside its collapse window into one
+ * revision and prunes old unreferenced autosave revisions (#DR-047). The
+ * explicit revision actions (restore, accepted proposal) keep their own
+ * endpoints and never take part in that policy.
+ */
 export function saveDocumentDraft(
   projectId: string,
   document: StudioDocument,
@@ -13,6 +21,7 @@ export function saveDocumentDraft(
     content_markdown: content,
     base_revision_id: baseRevisionId,
     title,
+    autosave: true,
   });
 }
 

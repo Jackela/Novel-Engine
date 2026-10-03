@@ -104,6 +104,13 @@ export function StatsWordsTables({ daily, weekly }: StatsWordsTablesProps) {
         firstColumnKey="stats.table.week"
         rows={activeWeeks.map((week) => ({ label: week.start_date, words: week.words }))}
       />
+      {/*
+       * DR-045: signed deltas need one sentence of explanation — a restore or
+       * a rollback can land more words in a bucket than the day wrote, and a
+       * net-negative "Accepted" figure is honest evidence of that movement,
+       * not a defect.
+       */}
+      <p className="stats__note">{t("stats.negative.hint")}</p>
     </>
   );
 }

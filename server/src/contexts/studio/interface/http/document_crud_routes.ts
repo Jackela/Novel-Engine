@@ -110,6 +110,7 @@ export const documentCrudRoutes: FastifyPluginAsync<StudioRoutesOptions> = async
             baseRevisionId: request.body.base_revision_id,
             title: request.body.title,
             metadata: request.body.metadata,
+            autosave: request.body.autosave,
           },
         ),
       ),

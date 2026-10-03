@@ -1,5 +1,6 @@
 import { RefreshCw } from "lucide-react";
 
+import { formatTzOffsetLabel } from "@/app/browserTimezone";
 import type { MessageKey } from "@/app/i18n/dictionaries/en";
 import { useTranslation } from "@/app/i18n/useTranslation";
 
@@ -100,6 +101,14 @@ export function StudioWritingStatsPanel({ projectId, active }: StudioWritingStat
               started: formatCount(stats.chapters.started),
               total: formatCount(stats.chapters.total),
             })}
+          </p>
+          {/*
+           * DR-045: the server buckets every row on the boundary the request
+           * carried, and echoes it back — the label states which boundary the
+           * figures above were computed on instead of leaving "today" implicit.
+           */}
+          <p className="stats__note">
+            {t("stats.timezone.hint", { zone: formatTzOffsetLabel(stats.tz_offset_minutes) })}
           </p>
           <StatsWordsTables daily={stats.daily} weekly={stats.weekly} />
           <section aria-label={t("stats.usage.heading")} className="stats__section">

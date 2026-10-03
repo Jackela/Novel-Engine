@@ -137,6 +137,7 @@ describe("useDocumentDraft lifecycle", () => {
       content_markdown: committedA.content_markdown,
       base_revision_id: documentA.current_revision_id,
       title: documentA.title,
+      autosave: true,
     });
     await act(async () => {
       await vi.advanceTimersByTimeAsync(1500);

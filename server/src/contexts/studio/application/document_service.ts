@@ -93,6 +93,8 @@ export class DocumentService {
       title?: string | null | undefined;
       metadata?: Record<string, unknown> | undefined;
       source?: string | undefined;
+      /** The editor's autosave path (#DR-047); other writers leave it unset. */
+      autosave?: boolean | undefined;
     },
   ): Record<string, unknown> {
     const title =
@@ -108,6 +110,7 @@ export class DocumentService {
         title,
         metadataJson,
         source: input.source ?? "author",
+        autosave: input.autosave,
         now: this.now(),
       }),
     );
