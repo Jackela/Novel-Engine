@@ -435,12 +435,13 @@
 
 ### DR-031 [P1] 启动备份策略
 
-- [ ] 未开始
+- [x] 已完成（2026-10-03）
 - **问题**：每次启动（含崩溃重启循环）都写一份等于库大小的备份，永不清理；restore 还需约 2×库大小的空闲空间 → 磁盘耗尽后连恢复都做不了。
 - **证据**：`startup.ts:56-64`；`backup.ts:22-32`；`compose.yaml:4`（restart: unless-stopped）；实测 boot2/boot3 各增一份 `.bak`。
 - **修复方向**：仅当 schema 变化或显式请求时备份；保留 N 份/按时间轮转；备份前检查剩余空间并给出明确错误。
 - **验收**：连续重启不再线性增长备份；空间不足时消息可读；CLI 测试覆盖。
 - **验证**：`pnpm --dir server exec vitest run tests/apps/cli/`。
+- **交付记录**：2026-10-03 | `90e5f271`（wave 12a） | 启动备份改为"仅在确有迁移待执行时"：新增 `pending_migrations.ts`（镜像 drizzle 判定：journal 最新 `when` vs `__drizzle_migrations` 最新 `created_at`；缺表=待迁移；探测不了则保守备份）；保留最新 3 份（只清理本模块命名的文件族）；写前 `statfs` 剩余空间检查（不足报 required/available 字节与建议、零写入）；写后 `quick_check` 自检，失败即删产物（含 sidecar）。未改 `compose.yaml`（部署行为需另行授权，且不在验收内）。 | 复现：连续三次启动 → 0/1/2 份备份线性增长；修复后无待迁移 0/0/0，待迁移恰好 1 份 | 回归：`backup_policy`（保留/清理/自检/低空间注入探针可读报错零写入）、`backup_policy_cli`（首启备份 1 次、二次不增、坏备份 exit 1 且删文件）、`startup_pipeline`/`cli.test.ts` 两处旧断言具名更新（正向覆盖保留在新用例）| 验证：见 §10
 
 ### DR-032 [P1] doctor 只读化与迁移分离
 
@@ -486,6 +487,7 @@
 - **修复方向**：校验后清理 sidecar；备份后自检 `quick_check`，失败删除半成品；文档说明备份明文。
 - **验收**：backups/ 无 sidecar 残留；坏备份不会静默留下。
 - **验证**：`pnpm --dir server exec vitest run tests/apps/cli/restore_cli.test.ts`。
+- **交付记录**：2026-10-03 | `90e5f271`（wave 12a） | 校验拆分为 `verifyRestoreInput`（无论成败都清理输入 sidecar `-wal/-shm/-journal`；清理失败与校验失败以 AggregateError 并存）+ `assertRestoreInput`（原语义不变）；备份写后 `quick_check` 自检失败即删产物（与 DR-031 同批交付）；CLI USAGE 增"备份为明文 SQLite 文件，须仅限操作者可读"。 | 复现：restore 校验后 backups/ 出现 `.bak-shm`/`.bak-wal` 残留、坏备份可静默留下 | 回归：`restore_cli` 新增"校验后无 sidecar"用例、`backup_policy` 断言产物可过 quick_check 且自检失败删文件 | 验证：见 §10
 
 ### DR-037 [P1] 导入修复
 
@@ -739,3 +741,4 @@
 - 2026-10-03 | `04ab5d74` | DR-027 | 定向：生成幂等（`proposal_generation_idempotency*` 9 用例 + retry 边界 + proposals/stream 回归）+ 前端幂等 3 文件 10 用例；全套同上一行口径（server 255/1517、frontend 148/819、react-doctor 100、spec 通过）| 通过：生成端点可选 `Idempotency-Key` + 持久 claim（迁移 0023，部分唯一索引）+ 流式/同步重放 + 竞态回归；客户端按逻辑生成铸造/保留/清除键；重做移除进程内 guard（恢复 retry 持久重放路径）
 - 2026-10-03 | `2630cc7f` | DR-028 | 定向：`studio_usage_provenance`/`job_store_transactions`/`safe_usage_persistence` + 前端用量面板/契约 5 文件 34 用例；全套 `server gates/type-check/lint/lint:types/arch/test`（256 文件/1520 用例）、frontend lint/lint:types/format/type-check/test:unit/build（148 文件/819 用例）+ react-doctor(100) + `pnpm spec:validate` | 通过：token 来源标记（provider/estimated/unreported）+ 失败尝试可见 + 删 estimated_cost 死列（迁移 0024/0025）+ 面板披露；过程修复：openapi 基线漂移重生成、13 个旧契约测试具名更新、写作统计解析器与 4 处前端 fixture 补字段、`types/studio.ts` 拆分（行数门禁）；范围说明：预算/告警未含在验收，留候选
 - 2026-10-03 | `636fc7b5` | DR-029 + DR-030 | 定向：server 搜索 7 文件 68 用例 + 前端搜索 4 文件 30 用例；全套 `server gates/type-check/lint/lint:types/arch/test`（258 文件/1525 用例）、frontend lint/lint:types/format/type-check/test:unit/build（149 文件/826 用例）+ react-doctor(100) + `pnpm spec:validate` | 通过：token 上限 8→3 + `q` maxLength（DR-030 事件循环冻结）；total/next_offset 分页 + match_term 定位 + 零结果提示/计数/"更多"（DR-029）；过程修复：payload guard fixture、`searchContract`/`studioSearchModel` 拆分（行数门禁）、navigator 布尔 props 归并为 `searchState`（react-doctor）；"排序选项/高频词短路"不在验收，留候选
+- 2026-10-03 | `90e5f271` | DR-031 + DR-036 | 定向：`backup_policy`/`backup_policy_cli`/`startup_pipeline`/`restore_cli`/`tests/apps/cli` 13 文件 71 用例；全套 `server gates/type-check/lint/lint:types/arch/test`（260 文件/1533 用例）、frontend test:unit/build（149 文件/826 用例）+ react-doctor(100) + `pnpm spec:validate` | 通过：仅待迁移时备份 + 保留 3 份 + 空间检查 + quick_check 自检（DR-031）；restore 校验清理 sidecar + 明文提示（DR-036）；过程修复：两处旧断言具名更新（serve 重启备份、startup 计数），正向覆盖移入新用例
