@@ -110,13 +110,19 @@ export const enStudio = {
   "export.history.loadingOlder": "Loading older exports",
 
   "usage.heading": "Usage",
-  "usage.hint": "Cumulative AI token usage.",
+  "usage.hint": "Cumulative AI token usage. Token totals count completed attempts only.",
   "usage.action.refresh": "Refresh usage",
   "usage.action.refreshing": "Refreshing usage",
   "usage.total.requests": "Requests",
+  "usage.total.failedAttempts": "Failed attempts",
+  "usage.total.estimatedRequests": "Estimated",
   "usage.total.promptTokens": "Prompt tokens",
   "usage.total.completionTokens": "Completion tokens",
   "usage.total.cardLabel": "{label}: {value}",
+  "usage.failedAttempts.notice":
+    "{count} provider attempt(s) failed and are counted separately from the token totals; their consumed tokens are unknown and stay out of these numbers.",
+  "usage.estimated.notice":
+    "{estimated} of {counted} counted requests use a word-count estimate because the provider reported no usage; those tokens are provider-unreported estimates, not provider counts.",
   "usage.status.loading": "Loading usage…",
   "usage.empty": "No usage recorded yet.",
   "usage.table.label": "Usage per model",

@@ -8758,7 +8758,7 @@
                           "type": "integer"
                         },
                         "daily": {
-                          "description": "The last 30 UTC days (today included), zero-filled: one bucket per day, oldest first (#384).",
+                          "description": "The last 30 UTC days (today included), zero-filled: one bucket per day, oldest first, completed attempts only (#384, DR-028).",
                           "items": {
                             "additionalProperties": false,
                             "properties": {
@@ -8789,11 +8789,29 @@
                           },
                           "type": "array"
                         },
+                        "estimated_requests": {
+                          "description": "Completed attempts whose token counts include a word-count estimate because the provider reported no usage (DR-028).",
+                          "minimum": 0,
+                          "type": "integer"
+                        },
+                        "failed_attempt_count": {
+                          "description": "Provider attempts that failed without reported usage; they carry zero tokens and never enter the token totals (DR-028).",
+                          "minimum": 0,
+                          "type": "integer"
+                        },
                         "per_model": {
                           "items": {
                             "additionalProperties": false,
                             "properties": {
                               "completion_tokens": {
+                                "minimum": 0,
+                                "type": "integer"
+                              },
+                              "estimated_requests": {
+                                "minimum": 0,
+                                "type": "integer"
+                              },
+                              "failed_attempts": {
                                 "minimum": 0,
                                 "type": "integer"
                               },
@@ -8805,6 +8823,7 @@
                                 "type": "integer"
                               },
                               "requests": {
+                                "description": "Completed provider attempts of this model (DR-028).",
                                 "minimum": 0,
                                 "type": "integer"
                               }
@@ -8812,6 +8831,8 @@
                             "required": [
                               "model",
                               "requests",
+                              "failed_attempts",
+                              "estimated_requests",
                               "prompt_tokens",
                               "completion_tokens"
                             ],
@@ -8827,6 +8848,7 @@
                           "type": "integer"
                         },
                         "request_count": {
+                          "description": "Completed provider attempts: the rows every token total folds. Failed attempts are counted separately (DR-028).",
                           "minimum": 0,
                           "type": "integer"
                         }
@@ -8834,6 +8856,8 @@
                       "required": [
                         "project_id",
                         "request_count",
+                        "failed_attempt_count",
+                        "estimated_requests",
                         "prompt_tokens",
                         "completion_tokens",
                         "per_model"
@@ -8949,7 +8973,7 @@
                       "type": "integer"
                     },
                     "daily": {
-                      "description": "The last 30 UTC days (today included), zero-filled: one bucket per day, oldest first (#384).",
+                      "description": "The last 30 UTC days (today included), zero-filled: one bucket per day, oldest first, completed attempts only (#384, DR-028).",
                       "items": {
                         "additionalProperties": false,
                         "properties": {
@@ -8980,11 +9004,29 @@
                       },
                       "type": "array"
                     },
+                    "estimated_requests": {
+                      "description": "Completed attempts whose token counts include a word-count estimate because the provider reported no usage (DR-028).",
+                      "minimum": 0,
+                      "type": "integer"
+                    },
+                    "failed_attempt_count": {
+                      "description": "Provider attempts that failed without reported usage; they carry zero tokens and never enter the token totals (DR-028).",
+                      "minimum": 0,
+                      "type": "integer"
+                    },
                     "per_model": {
                       "items": {
                         "additionalProperties": false,
                         "properties": {
                           "completion_tokens": {
+                            "minimum": 0,
+                            "type": "integer"
+                          },
+                          "estimated_requests": {
+                            "minimum": 0,
+                            "type": "integer"
+                          },
+                          "failed_attempts": {
                             "minimum": 0,
                             "type": "integer"
                           },
@@ -8996,6 +9038,7 @@
                             "type": "integer"
                           },
                           "requests": {
+                            "description": "Completed provider attempts of this model (DR-028).",
                             "minimum": 0,
                             "type": "integer"
                           }
@@ -9003,6 +9046,8 @@
                         "required": [
                           "model",
                           "requests",
+                          "failed_attempts",
+                          "estimated_requests",
                           "prompt_tokens",
                           "completion_tokens"
                         ],
@@ -9018,6 +9063,7 @@
                       "type": "integer"
                     },
                     "request_count": {
+                      "description": "Completed provider attempts: the rows every token total folds. Failed attempts are counted separately (DR-028).",
                       "minimum": 0,
                       "type": "integer"
                     }
@@ -9025,6 +9071,8 @@
                   "required": [
                     "project_id",
                     "request_count",
+                    "failed_attempt_count",
+                    "estimated_requests",
                     "prompt_tokens",
                     "completion_tokens",
                     "per_model"

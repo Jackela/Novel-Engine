@@ -1,7 +1,7 @@
 /* BEM-ish only: feature-prefixed blocks with block__element--modifier; no legacy flat classes (#442). */
 .usage__totals {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 7px;
   margin-top: 14px;
 }
@@ -21,6 +21,12 @@
 .usage__total-card span {
   color: var(--muted);
   font-size: 10px;
+}
+.usage__notice {
+  margin: 10px 0 0;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.5;
 }
 .usage__table {
   width: 100%;

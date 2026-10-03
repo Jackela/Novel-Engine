@@ -9,8 +9,8 @@ import type {
   JobRecord,
   JobRetryClaim,
   JobSummaryPage,
+  JobWithUsageLandingInput,
   MarkJobOutcomeInput,
-  RecordCompletedJobWithUsageInput,
 } from "./job_records.js";
 import type { ProjectUsageAggregate } from "./project_usage.js";
 import type { ProjectScope } from "./studio_store.js";
@@ -19,7 +19,7 @@ import type { ProjectScope } from "./studio_store.js";
  * The workflow-job half of the studio persistence port (the synchronous jobs
  * model, #268/#272). The combined landing/transition methods (#392) keep the
  * job row and its usage-ledger row in one transaction so a failure between
- * the two writes can never strand a completed job without its usage event.
+ * the two writes can never strand a landed job without its usage evidence.
  */
 export interface StudioJobLedgerStore {
   addJob(scope: ProjectScope, input: AddJobInput): JobRecord;
@@ -41,15 +41,12 @@ export interface StudioJobLedgerStore {
   findJobRequest(scope: ProjectScope, projectId: string, requestKey: string): JobRecord | null;
   addUsageEvent(scope: ProjectScope, input: AddUsageEventInput): void;
   /**
-   * The atomic completed-job-with-usage landing (#392): job row plus usage
-   * event, or nothing. Shared by every provider-backed kind that records
-   * usage (proposal, lore-extract).
+   * The atomic job-with-usage landing (#392, DR-028): job row, first event, and
+   * usage row — or nothing. Shared by every provider-backed kind that records
+   * usage (proposal, lore-extract) for both a completed and a failed attempt.
    */
-  recordCompletedJobWithUsage(
-    scope: ProjectScope,
-    input: RecordCompletedJobWithUsageInput,
-  ): JobRecord;
-  /** The atomic retry completion: outcome transition plus usage event, or nothing. */
+  recordJobWithUsage(scope: ProjectScope, input: JobWithUsageLandingInput): JobRecord;
+  /** The atomic retry completion: outcome transition plus usage row, or nothing. */
   markJobOutcomeWithUsage(
     scope: ProjectScope,
     projectId: string,

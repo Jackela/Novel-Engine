@@ -150,7 +150,12 @@ describe("proposal retry base revision fidelity", () => {
       expect(capture).toHaveBeenCalledTimes(1);
       expect(provider.factoryCalls()).toBe(1);
       expect(provider.tasks).toHaveLength(1);
-      expect(evidence(app)).toMatchObject({ jobs: [{}, {}], events: [{}, {}, {}], usage: [] });
+      // DR-028: the failed original attempt keeps its zero-token unreported row.
+      expect(evidence(app)).toMatchObject({
+        jobs: [{}, {}],
+        events: [{}, {}, {}],
+        usage: [{ outcome: "failed", token_source: "unreported" }],
+      });
       expect(await listRevisions(app, owner, project.id, document.id)).toHaveLength(2);
 
       const beforeReplay = evidence(app);
@@ -180,7 +185,7 @@ describe("proposal retry base revision fidelity", () => {
       expect(evidence(app)).toMatchObject({
         jobs: [{}, {}, {}, {}],
         events: [{}, {}, {}, {}, {}, {}, {}],
-        usage: [],
+        usage: [{ outcome: "failed", token_source: "unreported" }],
       });
     } finally {
       vi.restoreAllMocks();
@@ -237,9 +242,18 @@ describe("proposal retry base revision fidelity", () => {
       expect(capture).toHaveBeenCalledTimes(1);
       for (const legacyRead of legacyReads) expect(legacyRead).not.toHaveBeenCalled();
       expect(provider.tasks[1]?.metadata.base_revision_id).toBe(baseA);
+      // DR-028: the failed original attempt and the completed retry each keep
+      // a row; only the completed row carries provider tokens.
       const usage = evidence(app).usage;
-      expect(usage).toHaveLength(1);
-      expect(JSON.parse(usage[0]?.request_evidence_json ?? "{}")).toEqual({
+      expect(usage).toHaveLength(2);
+      expect(usage[0]).toMatchObject({
+        outcome: "failed",
+        token_source: "unreported",
+        prompt_tokens: 0,
+        completion_tokens: 0,
+      });
+      expect(usage[1]).toMatchObject({ outcome: "completed", token_source: "provider" });
+      expect(JSON.parse(usage[1]?.request_evidence_json ?? "{}")).toEqual({
         operation: "continue",
         base_revision_id: baseA,
       });

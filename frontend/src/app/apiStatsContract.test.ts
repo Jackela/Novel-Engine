@@ -25,9 +25,20 @@ const statsPayload = {
   usage: {
     project_id: "project-1",
     request_count: 4,
+    failed_attempt_count: 1,
+    estimated_requests: 0,
     prompt_tokens: 300,
     completion_tokens: 100,
-    per_model: [{ model: "mock-model", requests: 4, prompt_tokens: 300, completion_tokens: 100 }],
+    per_model: [
+      {
+        model: "mock-model",
+        requests: 4,
+        failed_attempts: 1,
+        estimated_requests: 0,
+        prompt_tokens: 300,
+        completion_tokens: 100,
+      },
+    ],
     daily: [
       {
         date: "2026-09-14",

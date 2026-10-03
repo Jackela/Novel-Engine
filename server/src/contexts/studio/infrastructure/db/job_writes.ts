@@ -62,7 +62,7 @@ export function insertJobAndEvent(
   return job.id;
 }
 
-/** Insert one usage-ledger row. */
+/** Insert one usage-ledger row (DR-028: labelled outcome and token provenance). */
 export function writeUsageEvent(tx: Tx, input: AddUsageEventInput): void {
   assertSafeUsageToken(input.promptTokens, "prompt");
   assertSafeUsageToken(input.completionTokens, "completion");
@@ -75,8 +75,9 @@ export function writeUsageEvent(tx: Tx, input: AddUsageEventInput): void {
       model: input.model,
       prompt_tokens: input.promptTokens,
       completion_tokens: input.completionTokens,
+      outcome: input.outcome,
+      token_source: input.tokenSource,
       request_evidence_json: input.requestEvidenceJson,
-      estimated_cost: null,
       created_at: input.now,
     })
     .run();

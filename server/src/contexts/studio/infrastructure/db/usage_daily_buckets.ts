@@ -11,7 +11,9 @@ const DAY_MS = 86_400_000;
  * The trailing-30-UTC-day usage buckets (#384): today included, zero-filled,
  * oldest first. Window events are read with a parameterized lower bound and
  * folded into UTC day keys in JS (no SQL date surgery on the integer
- * timestamp column).
+ * timestamp column). DR-028: only `completed` rows feed a day's tokens and
+ * request count — failed attempts are reported by the aggregate's own count,
+ * never as a zero-token request.
  */
 export function dailyUsageBuckets(tx: Tx, projectId: string, now: Date): ProjectUsageDailyBucket[] {
   const todayStart = Math.floor(now.getTime() / DAY_MS) * DAY_MS;
@@ -23,7 +25,13 @@ export function dailyUsageBuckets(tx: Tx, projectId: string, now: Date): Project
       completionTokens: usageEvents.completion_tokens,
     })
     .from(usageEvents)
-    .where(and(eq(usageEvents.project_id, projectId), gte(usageEvents.created_at, windowStart)))
+    .where(
+      and(
+        eq(usageEvents.project_id, projectId),
+        gte(usageEvents.created_at, windowStart),
+        eq(usageEvents.outcome, "completed"),
+      ),
+    )
     .all();
   const byDate = new Map<string, ProjectUsageDailyBucket>();
   for (let day = USAGE_DAILY_WINDOW_DAYS - 1; day >= 0; day -= 1) {

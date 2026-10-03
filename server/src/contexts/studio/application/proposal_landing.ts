@@ -1,19 +1,18 @@
 import {
-  isSafeUsageToken,
   type ProviderStep,
   TextGenerationProviderError,
   type TextGenerationTask,
   type TextProviderName,
 } from "../../../contexts/ai/application/ports/text_generation.js";
 import { InvalidOperationError } from "../../../shared/domain/exceptions.js";
-import { revisionWordCount } from "../domain/revision_word_count.js";
+import { resolvedTokenUsage, rowTokenSource, unreportedAttemptUsage } from "./attempt_usage.js";
 import { failedJobInput } from "./failed_job_input.js";
 import { BoundedPromptWriter } from "./generation_capacity.js";
 import { loreEntriesFromDocuments } from "./lorebook.js";
 import type { ProposalStreamFramePayload } from "./payload_schemas/proposal_frame.js";
 import { dumpJson, jobPayload } from "./payloads.js";
 import type { StudioJobLedgerStore } from "./ports/job_ledger_store.js";
-import type { CompletedJobUsageInput, JobRecord } from "./ports/job_records.js";
+import type { AttemptUsageInput, JobRecord } from "./ports/job_records.js";
 import type { ProposalContextSource } from "./ports/proposal_context_store.js";
 import type { ProjectScope } from "./ports/studio_store.js";
 import { assertProposalCodePointLimit, proposalCodePointCount } from "./proposal_code_points.js";
@@ -51,8 +50,9 @@ export {
 /**
  * The job/usage landing shared by every proposal pipeline (synchronous
  * draft, #308 streaming, retry): completed proposals persist one completed
- * job plus exactly one usage event, failures persist one failed job — the
- * manuscript itself is never touched here.
+ * job plus exactly one usage row carrying labelled token provenance, failures
+ * persist one failed job plus its zero-token `unreported` usage row (DR-028) —
+ * the manuscript itself is never touched here.
  */
 
 /** The provider task shared by the synchronous, streaming, and retry pipelines. */
@@ -121,14 +121,6 @@ export function validatedProposalOrThrow(result: {
   return { proposal };
 }
 
-/**
- * Invalid or absent provider usage falls back to the shared exact word count,
- * which approximates one token per Han character for CJK text.
- */
-function resolvedTokenCount(reported: number | null, text: string): number {
-  return isSafeUsageToken(reported) ? reported : revisionWordCount(text);
-}
-
 /** Fields every proposal job row shares before its terminal status is known. */
 export interface ProposalJobSeed {
   readonly projectId: string;
@@ -166,7 +158,7 @@ export function completedProposalJob(
   });
   // #392: the job row and its usage event commit in one transaction so a
   // failure between the two writes can never strand a completed job.
-  return jobs.recordCompletedJobWithUsage(scope, {
+  return jobs.recordJobWithUsage(scope, {
     job: {
       projectId: seed.projectId,
       documentId: seed.documentId,
@@ -202,13 +194,15 @@ interface CompletedProposalLanding {
     readonly eventDetailsJson: string;
     readonly now: Date;
   };
-  readonly usage: CompletedJobUsageInput;
+  readonly usage: AttemptUsageInput;
 }
 
 export function completedProposalLanding(
   landing: ProposalLanding,
   evidence: { readonly operation: string; readonly revisionId: string; readonly now: Date },
 ): CompletedProposalLanding {
+  const prompt = resolvedTokenUsage(landing.promptTokens, landing.instruction);
+  const completion = resolvedTokenUsage(landing.completionTokens, landing.proposal);
   return {
     outcome: {
       status: "completed",
@@ -225,8 +219,11 @@ export function completedProposalLanding(
     usage: {
       provider: landing.provider,
       model: landing.model,
-      promptTokens: resolvedTokenCount(landing.promptTokens, landing.instruction),
-      completionTokens: resolvedTokenCount(landing.completionTokens, landing.proposal),
+      promptTokens: prompt.tokens,
+      completionTokens: completion.tokens,
+      outcome: "completed",
+      // DR-028: an estimated side is disclosed on the row itself.
+      tokenSource: rowTokenSource(prompt.source, completion.source),
       requestEvidenceJson: dumpJson({
         operation: evidence.operation,
         base_revision_id: evidence.revisionId,
@@ -235,6 +232,12 @@ export function completedProposalLanding(
   };
 }
 
+/**
+ * The failed-proposal landing (DR-028): the failed job row and its zero-token
+ * `unreported` usage row commit in one transaction, so a provider attempt that
+ * reached the provider stays visible in the usage ledger even when it failed
+ * before any usage was reported.
+ */
 export function failedProposalJob(
   jobs: StudioJobLedgerStore,
   scope: ProjectScope,
@@ -245,9 +248,8 @@ export function failedProposalJob(
   // `partial_markdown` is its sanitized form, "" when nothing was accumulated.
   partialMarkdown = "",
 ): JobRecord {
-  return jobs.addJob(
-    scope,
-    failedJobInput({
+  return jobs.recordJobWithUsage(scope, {
+    job: failedJobInput({
       projectId: target.seed.projectId,
       documentId: target.seed.documentId,
       kind: "proposal",
@@ -265,7 +267,14 @@ export function failedProposalJob(
       requestIdempotencyKey: target.seed.requestKey ?? null,
       now: target.seed.now,
     }),
-  );
+    usage: unreportedAttemptUsage({
+      provider: target.seed.provider,
+      requestEvidenceJson: dumpJson({
+        operation: target.seed.operation,
+        base_revision_id: target.revisionId,
+      }),
+    }),
+  });
 }
 
 /**

@@ -13,9 +13,9 @@ import {
   type JobRecord,
   type JobRetryClaim,
   type JobSummaryPage,
+  type JobWithUsageLandingInput,
   jobPageLimit,
   type MarkJobOutcomeInput,
-  type RecordCompletedJobWithUsageInput,
 } from "../application/ports/job_records.js";
 import type { ProjectUsageAggregate } from "../application/ports/project_usage.js";
 import type { ProjectScope } from "../application/ports/studio_store.js";
@@ -120,16 +120,13 @@ export class JobStorePart implements StudioJobLedgerStore {
   }
 
   /**
-   * The atomic completed-job-with-usage landing (#392): the job row and its
-   * usage event share one transaction, so a failure between the writes rolls
-   * back both and never strands a completed job without its usage event.
-   * Shared by every provider-backed kind that records usage (proposal,
-   * lore-extract).
+   * The atomic job-with-usage landing (#392, DR-028): the job row, its first
+   * event, and its usage row share one transaction, so a failure between the
+   * writes rolls back all of them and never strands a landed job without its
+   * usage evidence. Shared by every provider-backed kind that records usage
+   * (proposal, lore-extract) for completed and failed attempts alike.
    */
-  recordCompletedJobWithUsage(
-    scope: ProjectScope,
-    input: RecordCompletedJobWithUsageInput,
-  ): JobRecord {
+  recordJobWithUsage(scope: ProjectScope, input: JobWithUsageLandingInput): JobRecord {
     return this.db.transaction((tx) => {
       scopedProject(tx, scope, input.job.projectId);
       const claimed = this.claimJobRow(tx, input.job);
@@ -147,7 +144,7 @@ export class JobStorePart implements StudioJobLedgerStore {
 
   /**
    * The atomic retry completion (#392): the terminal transition of the
-   * running job and its usage event share one transaction.
+   * running job and its usage row share one transaction.
    */
   markJobOutcomeWithUsage(
     scope: ProjectScope,

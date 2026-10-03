@@ -102,13 +102,19 @@ export const zhStudio = {
   "export.history.loadingOlder": "正在加载更早的导出",
 
   "usage.heading": "用量",
-  "usage.hint": "累计 AI token 用量。",
+  "usage.hint": "累计 AI token 用量；token 合计只统计已完成的调用。",
   "usage.action.refresh": "刷新用量",
   "usage.action.refreshing": "正在刷新用量",
   "usage.total.requests": "请求数",
+  "usage.total.failedAttempts": "失败调用",
+  "usage.total.estimatedRequests": "估算",
   "usage.total.promptTokens": "输入 tokens",
   "usage.total.completionTokens": "输出 tokens",
   "usage.total.cardLabel": "{label}：{value}",
+  "usage.failedAttempts.notice":
+    "有 {count} 次 provider 调用失败，已与 token 合计分开统计；这些调用消耗的 token 无法确定，不计入上述数字。",
+  "usage.estimated.notice":
+    "{counted} 次计入的请求中有 {estimated} 次因 provider 未返回用量而使用词数估算；这些 token 是 provider 未上报的估算值，并非 provider 计数。",
   "usage.status.loading": "正在加载用量…",
   "usage.empty": "暂无用量记录。",
   "usage.table.label": "各模型用量",

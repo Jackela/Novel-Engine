@@ -131,6 +131,16 @@ export interface MarkJobOutcomeInput {
   now: Date;
 }
 
+/**
+ * How one usage row's token counts were obtained (DR-028): `provider` when the
+ * provider reported them, `estimated` when the shared word-count fallback
+ * replaced an absent report, `unreported` for a failed attempt's zero tokens.
+ */
+export type UsageTokenSource = "provider" | "estimated" | "unreported";
+
+/** Whether the provider attempt behind one usage row completed or failed (DR-028). */
+export type UsageOutcome = "completed" | "failed";
+
 export interface AddUsageEventInput {
   projectId: string;
   jobId: string;
@@ -138,29 +148,34 @@ export interface AddUsageEventInput {
   model: string;
   promptTokens: number;
   completionTokens: number;
+  /** `failed` rows keep unsuccessful attempts visible without inflating totals. */
+  outcome: UsageOutcome;
+  /** The provenance label of the row's counts; never left implicit (DR-028). */
+  tokenSource: UsageTokenSource;
   requestEvidenceJson: string;
   now: Date;
 }
 
-/** The usage fields of one completed provider-backed job, keyed to its row (#392). */
-export type CompletedJobUsageInput = Omit<AddUsageEventInput, "projectId" | "jobId" | "now">;
+/** The usage fields of one provider attempt, keyed to its job row (#392, DR-028). */
+export type AttemptUsageInput = Omit<AddUsageEventInput, "projectId" | "jobId" | "now">;
 
 /**
- * The atomic completed-job-with-usage landing (#392): the job row and its
- * usage event commit in one transaction, so a crash between the two writes
- * can never leave a completed job without its usage event. Shared by every
- * provider-backed kind that records usage (proposal, lore-extract).
+ * The atomic job-with-usage landing (#392, DR-028): the job row, its first
+ * event, and its usage row commit in one transaction, so a crash between the
+ * writes can never leave a landed job without its usage evidence. Shared by
+ * every provider-backed kind that records usage (proposal, lore-extract) for
+ * both a completed attempt and a landed failure.
  */
-export interface RecordCompletedJobWithUsageInput {
+export interface JobWithUsageLandingInput {
   job: AddJobInput;
-  usage: CompletedJobUsageInput;
+  usage: AttemptUsageInput;
 }
 
 /**
- * The atomic retry completion (#392): the terminal outcome transition of an
- * existing running job and its usage event commit in one transaction.
+ * The atomic retry completion (#392, DR-028): the terminal outcome transition
+ * of an existing running job and its usage row commit in one transaction.
  */
 export interface CompleteJobWithUsageInput {
   outcome: MarkJobOutcomeInput;
-  usage: CompletedJobUsageInput;
+  usage: AttemptUsageInput;
 }

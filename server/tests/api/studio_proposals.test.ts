@@ -35,9 +35,8 @@ describe("proposal flow", () => {
       const jar = await ownerJar(known.app);
       const project = await seedProject(known.app, jar, "Known factory failure");
       const document = project.documents[0];
-      if (document === undefined) {
+      if (document === undefined)
         throw new Error("Known factory failure fixture must create a default document.");
-      }
       const response = await call(
         known.app,
         jar,
@@ -64,9 +63,8 @@ describe("proposal flow", () => {
       const jar = await ownerJar(unexpected.app);
       const project = await seedProject(unexpected.app, jar, "Unexpected factory failure");
       const document = project.documents[0];
-      if (document === undefined) {
+      if (document === undefined)
         throw new Error("Unexpected factory failure fixture must create a default document.");
-      }
       const response = await call(
         unexpected.app,
         jar,
@@ -203,7 +201,10 @@ describe("proposal flow", () => {
         }
         expect(job.result.proposal_markdown).toBe("");
         expect(JSON.stringify(job)).not.toContain("raw scaffold echo");
-        expect(database.select().from(usageEvents).all()).toHaveLength(usageBefore);
+        // DR-028: the failed attempt keeps its own zero-token unreported row.
+        expect(database.select().from(usageEvents).all()).toHaveLength(usageBefore + 1);
+        const failedUsage = database.select().from(usageEvents).all().at(-1);
+        expect(failedUsage).toMatchObject({ outcome: "failed", token_source: "unreported" });
       }
     } finally {
       await app.close();

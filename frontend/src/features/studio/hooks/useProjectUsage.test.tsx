@@ -31,6 +31,8 @@ function usage(projectId: string, requestCount: number): ProjectUsage {
   return {
     project_id: projectId,
     request_count: requestCount,
+    failed_attempt_count: 0,
+    estimated_requests: 0,
     prompt_tokens: requestCount * 100,
     completion_tokens: requestCount * 25,
     per_model: [],

@@ -156,7 +156,15 @@ describe("Provider failure diagnostics boundary", () => {
         expect(persistedJobs[0]?.error).toBe(error);
         expect(persistedEvents).toHaveLength(1);
         expect(JSON.parse(persistedEvents[0]?.details_json ?? "{}")).toEqual({ error });
-        expect(database.select().from(usageEvents).all()).toHaveLength(0);
+        // DR-028: the failed provider attempt keeps one zero-token unreported row.
+        expect(database.select().from(usageEvents).all()).toMatchObject([
+          {
+            outcome: "failed",
+            token_source: "unreported",
+            prompt_tokens: 0,
+            completion_tokens: 0,
+          },
+        ]);
 
         const listed = await call(app, jar, "GET", `/api/projects/${project.id}/jobs`);
         expect(listed.statusCode, listed.body).toBe(200);

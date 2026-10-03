@@ -155,7 +155,7 @@ describe("proposal accounting and scoping", () => {
   });
 
   it.each(malformedStructuredCases)(
-    "fails $provider malformed chapter content without persisting accounting",
+    "fails $provider malformed chapter content with only unreported token accounting",
     async ({ provider, chapterMarkdown, providerRawText }) => {
       const { app } = await buildStudioApp(undefined, {
         textProviderFactory: malformedStructuredFactory(provider, chapterMarkdown),
@@ -186,7 +186,15 @@ describe("proposal accounting and scoping", () => {
         if (database === undefined) {
           throw new Error("Studio test app must expose its database.");
         }
-        expect(database.select().from(usageEvents).all()).toHaveLength(0);
+        // DR-028: the failed attempt lands one zero-token unreported row.
+        expect(database.select().from(usageEvents).all()).toMatchObject([
+          {
+            outcome: "failed",
+            token_source: "unreported",
+            prompt_tokens: 0,
+            completion_tokens: 0,
+          },
+        ]);
       } finally {
         await app.close();
       }
@@ -223,7 +231,15 @@ describe("proposal accounting and scoping", () => {
         expect(await listRevisions(app, jar, project.id, document.id)).toHaveLength(1);
         const database = app.studioDb?.db;
         if (database === undefined) throw new Error("Studio test app must expose its database.");
-        expect(database.select().from(usageEvents).all()).toHaveLength(0);
+        // DR-028: the failed attempt lands one zero-token unreported row.
+        expect(database.select().from(usageEvents).all()).toMatchObject([
+          {
+            outcome: "failed",
+            token_source: "unreported",
+            prompt_tokens: 0,
+            completion_tokens: 0,
+          },
+        ]);
         const persisted = database.select().from(jobs).all();
         expect(persisted).toHaveLength(1);
         expect(persisted[0]?.error).toBe(error);

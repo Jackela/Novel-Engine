@@ -9,6 +9,7 @@ import {
   NotFoundError,
   ReviewSourceInvalidatedError,
 } from "../domain/exceptions.js";
+import { recordsProviderUsage, unreportedAttemptUsage } from "./attempt_usage.js";
 import { isExportArtifactFormat } from "./export_artifact_identity.js";
 import type { SnapshotArtifactService } from "./export_artifact_service.js";
 import { exportRetryCapacityOutcome } from "./export_retry_capacity_outcome.js";
@@ -16,7 +17,7 @@ import { failedJobOutcome } from "./failed_job_input.js";
 import { generationRetryCapacityOutcome } from "./generation_retry_capacity_outcome.js";
 import { replayedJobPayload } from "./job_replay_payload.js";
 import type { LoreExtractService } from "./lore_extract_service.js";
-import { jobPayload, safeLoadJson } from "./payloads.js";
+import { dumpJson, jobPayload, safeLoadJson } from "./payloads.js";
 import type { StudioJobLedgerStore } from "./ports/job_ledger_store.js";
 import type { JobRecord } from "./ports/job_records.js";
 import type { ReviewOutcomeStore } from "./ports/review_outcome_store.js";
@@ -168,14 +169,26 @@ export class JobRetryExecutor {
       ) {
         throw error;
       }
-      return jobPayload(
-        this.jobs.markJobOutcome(
-          scope,
-          projectId,
-          retry.id,
-          failedJobOutcome(error.message, this.now()),
-        ),
-      );
+      const outcome = failedJobOutcome(error.message, this.now());
+      // DR-028: a retried provider attempt that reached the provider keeps its
+      // failed outcome and a zero-token `unreported` usage row in one
+      // transaction. Kinds that never write usage rows (review, export) keep
+      // their plain failed transition.
+      if (error instanceof TextGenerationProviderError && recordsProviderUsage(retry.kind)) {
+        return jobPayload(
+          this.jobs.markJobOutcomeWithUsage(scope, projectId, retry.id, {
+            outcome,
+            usage: unreportedAttemptUsage({
+              provider: retry.provider,
+              requestEvidenceJson: dumpJson({
+                operation: retry.operation,
+                retry_of_job_id: retry.retryOfJobId,
+              }),
+            }),
+          }),
+        );
+      }
+      return jobPayload(this.jobs.markJobOutcome(scope, projectId, retry.id, outcome));
     }
   }
 

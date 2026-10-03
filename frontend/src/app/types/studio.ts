@@ -203,31 +203,9 @@ export interface ReviewsPage {
   next_cursor: string | null;
 }
 
-/** Per-model aggregate row of `GET /api/projects/:projectId/usage` (#377). */
-export interface UsageModelRow {
-  model: string;
-  requests: number;
-  prompt_tokens: number;
-  completion_tokens: number;
-}
-
-/** One UTC day of the trailing-30-day usage window (#384). */
-export interface UsageDailyBucket {
-  date: string;
-  request_count: number;
-  prompt_tokens: number;
-  completion_tokens: number;
-}
-
-/** Project-level cumulative AI usage (matching the generated api contract). */
-export interface ProjectUsage {
-  project_id: string;
-  request_count: number;
-  prompt_tokens: number;
-  completion_tokens: number;
-  per_model: UsageModelRow[];
-  daily?: UsageDailyBucket[];
-}
+/** Usage accounting types moved to their own module (DR-028); re-exported so
+ * existing `@/app/types/studio` imports keep working. */
+export type { ProjectUsage, UsageDailyBucket, UsageModelRow } from "./usage";
 
 /** The writing-statistics summary (#653), derived from the generated API
  * contract; UTC-day buckets, source-attributed deltas that may be negative. */

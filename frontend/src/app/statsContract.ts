@@ -64,6 +64,8 @@ function parseStatsUsage(value: unknown, label: string): WritingStats["usage"] {
   return {
     project_id: stringField(item, "project_id", label),
     request_count: numberField(item, "request_count", label),
+    failed_attempt_count: numberField(item, "failed_attempt_count", label),
+    estimated_requests: numberField(item, "estimated_requests", label),
     prompt_tokens: numberField(item, "prompt_tokens", label),
     completion_tokens: numberField(item, "completion_tokens", label),
     per_model: arrayField(item, "per_model", label, (entry, index) => {
@@ -71,6 +73,8 @@ function parseStatsUsage(value: unknown, label: string): WritingStats["usage"] {
       return {
         model: stringField(row, "model", rowLabel("per_model", index)),
         requests: numberField(row, "requests", rowLabel("per_model", index)),
+        failed_attempts: numberField(row, "failed_attempts", rowLabel("per_model", index)),
+        estimated_requests: numberField(row, "estimated_requests", rowLabel("per_model", index)),
         prompt_tokens: numberField(row, "prompt_tokens", rowLabel("per_model", index)),
         completion_tokens: numberField(row, "completion_tokens", rowLabel("per_model", index)),
       };

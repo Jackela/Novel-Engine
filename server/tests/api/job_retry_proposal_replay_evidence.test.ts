@@ -105,10 +105,21 @@ describe("proposal retry terminal replay evidence", () => {
         { "idempotency-key": "unsafe-proposal-retry-key-0001" },
       );
       expect(retried.statusCode, retried.body).toBe(200);
-      const usage = retryEvidence(app).usage[0];
-      if (usage === undefined) throw new Error("expected usage event");
-      expect(usage.prompt_tokens).toBe(wordCount(instruction));
-      expect(usage.completion_tokens).toBe(wordCount(validProposalProse));
+      // DR-028: the failed original attempt and the successful retry both keep
+      // rows — unreported first, the estimated retry usage second.
+      const [failedAttempt, retriedUsage] = retryEvidence(app).usage;
+      if (failedAttempt === undefined || retriedUsage === undefined) {
+        throw new Error("expected the failed and retried usage events");
+      }
+      expect(failedAttempt).toMatchObject({
+        outcome: "failed",
+        token_source: "unreported",
+        prompt_tokens: 0,
+        completion_tokens: 0,
+      });
+      expect(retriedUsage).toMatchObject({ outcome: "completed", token_source: "estimated" });
+      expect(retriedUsage.prompt_tokens).toBe(wordCount(instruction));
+      expect(retriedUsage.completion_tokens).toBe(wordCount(validProposalProse));
     } finally {
       await app.close();
     }
@@ -118,12 +129,18 @@ describe("proposal retry terminal replay evidence", () => {
     {
       outcome: "completed",
       key: "completed-proposal-replay-key-0001",
-      expectedUsage: 1,
+      expectedRequests: 1,
+      expectedFailedAttempts: 1,
     },
-    { outcome: "failed", key: "failed-proposal-replay-key-0001", expectedUsage: 0 },
+    {
+      outcome: "failed",
+      key: "failed-proposal-replay-key-0001",
+      expectedRequests: 0,
+      expectedFailedAttempts: 2,
+    },
   ] as const)(
     "replays the exact $outcome Job without repeating provider work or evidence",
-    async ({ outcome, key, expectedUsage }) => {
+    async ({ outcome, key, expectedRequests, expectedFailedAttempts }) => {
       const provider = proposalRetryFactory(outcome);
       const { app } = await buildStudioApp(monotonicClock(), {
         textProviderFactory: provider.factory,
@@ -157,18 +174,38 @@ describe("proposal retry terminal replay evidence", () => {
         const beforeReplay = retryEvidence(app);
         expect(beforeReplay.jobs).toHaveLength(2);
         expect(beforeReplay.events).toHaveLength(3);
-        expect(beforeReplay.usage).toHaveLength(expectedUsage);
+        // DR-028: every provider attempt keeps its own row — the failed
+        // original attempt first, the terminal retry attempt second.
+        expect(beforeReplay.usage).toHaveLength(2);
+        expect(beforeReplay.usage[0]).toMatchObject({
+          job_id: source.id,
+          outcome: "failed",
+          token_source: "unreported",
+          prompt_tokens: 0,
+          completion_tokens: 0,
+        });
         if (outcome === "completed") {
-          expect(beforeReplay.usage[0]).toMatchObject({
+          expect(beforeReplay.usage[1]).toMatchObject({
             job_id: terminal.id,
             model: "proposal-replay-model",
+            outcome: "completed",
+            token_source: "provider",
             prompt_tokens: 7,
             completion_tokens: 11,
+          });
+        } else {
+          expect(beforeReplay.usage[1]).toMatchObject({
+            job_id: terminal.id,
+            outcome: "failed",
+            token_source: "unreported",
+            prompt_tokens: 0,
+            completion_tokens: 0,
           });
         }
         const usageBefore = await call(app, owner, "GET", `/api/projects/${project.id}/usage`);
         expect(usageBefore.statusCode, usageBefore.body).toBe(200);
-        expect(usageBefore.json().request_count).toBe(expectedUsage);
+        expect(usageBefore.json().request_count).toBe(expectedRequests);
+        expect(usageBefore.json().failed_attempt_count).toBe(expectedFailedAttempts);
 
         const replay = await call(app, owner, "POST", url, undefined, {
           "idempotency-key": key,

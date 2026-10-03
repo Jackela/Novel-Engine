@@ -4083,21 +4083,29 @@ export interface paths {
                             streak_days: number;
                             usage: {
                                 completion_tokens: number;
-                                /** @description The last 30 UTC days (today included), zero-filled: one bucket per day, oldest first (#384). */
+                                /** @description The last 30 UTC days (today included), zero-filled: one bucket per day, oldest first, completed attempts only (#384, DR-028). */
                                 daily?: {
                                     completion_tokens: number;
                                     date: string;
                                     prompt_tokens: number;
                                     request_count: number;
                                 }[];
+                                /** @description Completed attempts whose token counts include a word-count estimate because the provider reported no usage (DR-028). */
+                                estimated_requests: number;
+                                /** @description Provider attempts that failed without reported usage; they carry zero tokens and never enter the token totals (DR-028). */
+                                failed_attempt_count: number;
                                 per_model: {
                                     completion_tokens: number;
+                                    estimated_requests: number;
+                                    failed_attempts: number;
                                     model: string;
                                     prompt_tokens: number;
+                                    /** @description Completed provider attempts of this model (DR-028). */
                                     requests: number;
                                 }[];
                                 project_id: string;
                                 prompt_tokens: number;
+                                /** @description Completed provider attempts: the rows every token total folds. Failed attempts are counted separately (DR-028). */
                                 request_count: number;
                             };
                             weekly: {
@@ -4174,21 +4182,29 @@ export interface paths {
                     content: {
                         "application/json": {
                             completion_tokens: number;
-                            /** @description The last 30 UTC days (today included), zero-filled: one bucket per day, oldest first (#384). */
+                            /** @description The last 30 UTC days (today included), zero-filled: one bucket per day, oldest first, completed attempts only (#384, DR-028). */
                             daily?: {
                                 completion_tokens: number;
                                 date: string;
                                 prompt_tokens: number;
                                 request_count: number;
                             }[];
+                            /** @description Completed attempts whose token counts include a word-count estimate because the provider reported no usage (DR-028). */
+                            estimated_requests: number;
+                            /** @description Provider attempts that failed without reported usage; they carry zero tokens and never enter the token totals (DR-028). */
+                            failed_attempt_count: number;
                             per_model: {
                                 completion_tokens: number;
+                                estimated_requests: number;
+                                failed_attempts: number;
                                 model: string;
                                 prompt_tokens: number;
+                                /** @description Completed provider attempts of this model (DR-028). */
                                 requests: number;
                             }[];
                             project_id: string;
                             prompt_tokens: number;
+                            /** @description Completed provider attempts: the rows every token total folds. Failed attempts are counted separately (DR-028). */
                             request_count: number;
                         };
                     };

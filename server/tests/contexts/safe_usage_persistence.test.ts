@@ -45,6 +45,8 @@ function usage(model = "alpha") {
     model,
     promptTokens: 3,
     completionTokens: 5,
+    outcome: "completed" as const,
+    tokenSource: "provider" as const,
     requestEvidenceJson: "{}",
   };
 }
@@ -81,7 +83,7 @@ describe("safe usage persistence", () => {
     const invalid = [Number.MAX_SAFE_INTEGER + 1, 1e308, Number.POSITIVE_INFINITY, -1, 1.5];
     for (const promptTokens of invalid) {
       expect(() =>
-        store.jobs.recordCompletedJobWithUsage(scope, {
+        store.jobs.recordJobWithUsage(scope, {
           job: completedJob(projectId, clock()),
           usage: { ...usage(), promptTokens },
         }),
@@ -89,7 +91,7 @@ describe("safe usage persistence", () => {
     }
     for (const completionTokens of invalid) {
       expect(() =>
-        store.jobs.recordCompletedJobWithUsage(scope, {
+        store.jobs.recordJobWithUsage(scope, {
           job: completedJob(projectId, clock()),
           usage: { ...usage(), completionTokens },
         }),
@@ -129,7 +131,7 @@ describe("safe usage persistence", () => {
 
   it("keeps per-model, project, and daily totals exact at the safe boundary", async () => {
     const { scope, clock, store, projectId } = await openHarness();
-    store.jobs.recordCompletedJobWithUsage(scope, {
+    store.jobs.recordJobWithUsage(scope, {
       job: completedJob(projectId, clock()),
       usage: {
         ...usage(),
@@ -137,7 +139,7 @@ describe("safe usage persistence", () => {
         completionTokens: Number.MAX_SAFE_INTEGER - 5,
       },
     });
-    store.jobs.recordCompletedJobWithUsage(scope, {
+    store.jobs.recordJobWithUsage(scope, {
       job: completedJob(projectId, clock(), "beta"),
       usage: { ...usage("beta"), promptTokens: 3, completionTokens: 5 },
     });
@@ -160,11 +162,11 @@ describe("safe usage persistence", () => {
 
   it("fails when one model's individually safe rows have an unsafe sum", async () => {
     const { scope, clock, store, projectId } = await openHarness();
-    store.jobs.recordCompletedJobWithUsage(scope, {
+    store.jobs.recordJobWithUsage(scope, {
       job: completedJob(projectId, clock()),
       usage: { ...usage(), promptTokens: Number.MAX_SAFE_INTEGER },
     });
-    store.jobs.recordCompletedJobWithUsage(scope, {
+    store.jobs.recordJobWithUsage(scope, {
       job: completedJob(projectId, clock()),
       usage: { ...usage(), promptTokens: 1 },
     });

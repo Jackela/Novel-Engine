@@ -180,7 +180,19 @@ describe("proposal generation request-key idempotency (DR-027)", () => {
       }
       expect(parseFrames(second.body)).toEqual([failure]);
       expect(provider.calls()).toBe(1);
-      expect(evidence(app)).toEqual({ jobs: 1, events: 1, usage: 0 });
+      // DR-028: the failed stream attempt keeps one zero-token unreported row;
+      // the duplicate's replay adds none.
+      expect(evidence(app)).toEqual({ jobs: 1, events: 1, usage: 1 });
+      const database = app.studioDb?.db;
+      if (database === undefined) throw new Error("Expected the real Studio database.");
+      expect(database.select().from(usageEvents).all()).toMatchObject([
+        {
+          outcome: "failed",
+          token_source: "unreported",
+          prompt_tokens: 0,
+          completion_tokens: 0,
+        },
+      ]);
     } finally {
       await app.close();
     }

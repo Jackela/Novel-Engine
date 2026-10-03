@@ -26,17 +26,24 @@ import {
 /**
  * The snake_case wire view of one usage aggregation, shared by the usage
  * endpoint and the writing-statistics response's `usage` member (#653) so
- * both surfaces can never disagree on the mapping.
+ * both surfaces can never disagree on the mapping. DR-028: `request_count`
+ * and the token totals fold completed attempts only, while
+ * `failed_attempt_count` and `estimated_requests` disclose failed attempts
+ * and provider-unreported estimates instead of hiding them.
  */
 export function usageWirePayload(usage: ProjectUsageAggregate) {
   return {
     project_id: usage.projectId,
     request_count: usage.requestCount,
+    failed_attempt_count: usage.failedAttemptCount,
+    estimated_requests: usage.estimatedRequestCount,
     prompt_tokens: usage.promptTokens,
     completion_tokens: usage.completionTokens,
     per_model: usage.perModel.map((entry) => ({
       model: entry.model,
       requests: entry.requests,
+      failed_attempts: entry.failedAttempts,
+      estimated_requests: entry.estimatedRequests,
       prompt_tokens: entry.promptTokens,
       completion_tokens: entry.completionTokens,
     })),

@@ -84,6 +84,9 @@ describe("project writing statistics surface (#653 T2)", () => {
         usage: {
           project_id: project.id,
           request_count: 0,
+          // DR-028: the empty-ledger usage payload carries the new counters.
+          failed_attempt_count: 0,
+          estimated_requests: 0,
           prompt_tokens: 0,
           completion_tokens: 0,
           per_model: [],

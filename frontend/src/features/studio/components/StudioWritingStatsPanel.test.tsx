@@ -59,6 +59,8 @@ function writingStats(
     usage: {
       project_id: "project-1",
       request_count: 0,
+      failed_attempt_count: 0,
+      estimated_requests: 0,
       prompt_tokens: 0,
       completion_tokens: 0,
       per_model: [],
@@ -127,6 +129,8 @@ describe("StudioWritingStatsPanel", () => {
           usage: {
             project_id: "project-1",
             request_count: 4,
+            failed_attempt_count: 0,
+            estimated_requests: 0,
             prompt_tokens: 300,
             completion_tokens: 100,
             per_model: [],

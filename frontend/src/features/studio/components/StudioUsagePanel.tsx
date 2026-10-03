@@ -27,6 +27,34 @@ function UsageTotalCard({ labelKey, value }: { labelKey: MessageKey; value: numb
   );
 }
 
+/**
+ * The DR-028 disclosures: token totals fold completed attempts only, and any
+ * count that came from the word-count estimate instead of a provider report is
+ * named as such — never silently presented as a provider number.
+ */
+function UsageProvenanceNotices({ totals }: { totals: ProjectUsage }) {
+  const { t } = useTranslation();
+  return (
+    <>
+      {totals.failed_attempt_count > 0 ? (
+        <p className="usage__notice" role="note">
+          {t("usage.failedAttempts.notice", {
+            count: formatCount(totals.failed_attempt_count),
+          })}
+        </p>
+      ) : null}
+      {totals.estimated_requests > 0 ? (
+        <p className="usage__notice" role="note">
+          {t("usage.estimated.notice", {
+            estimated: formatCount(totals.estimated_requests),
+            counted: formatCount(totals.request_count),
+          })}
+        </p>
+      ) : null}
+    </>
+  );
+}
+
 interface StudioUsagePanelProps {
   projectId: string;
   /** True while the Usage tab is the selected inspector tab (#377). */
@@ -34,8 +62,10 @@ interface StudioUsagePanelProps {
 }
 
 /**
- * Project-level cumulative AI usage (#377): three totals cards plus the
- * per-model detail table.  Data loads lazily when the tab first activates.
+ * Project-level cumulative AI usage (#377, DR-028): the completed-attempt
+ * totals cards plus failed-attempt and estimated-count disclosures, the
+ * per-model detail table, and the trailing-30-day bars. Data loads lazily
+ * when the tab first activates.
  */
 export function StudioUsagePanel({ projectId, active }: StudioUsagePanelProps) {
   const { usage, isLoading, error, reload } = useProjectUsage(projectId, active);
@@ -73,12 +103,17 @@ export function StudioUsagePanel({ projectId, active }: StudioUsagePanelProps) {
         <>
           <div className="usage__totals">
             <UsageTotalCard labelKey="usage.total.requests" value={totals.request_count} />
+            <UsageTotalCard
+              labelKey="usage.total.failedAttempts"
+              value={totals.failed_attempt_count}
+            />
             <UsageTotalCard labelKey="usage.total.promptTokens" value={totals.prompt_tokens} />
             <UsageTotalCard
               labelKey="usage.total.completionTokens"
               value={totals.completion_tokens}
             />
           </div>
+          <UsageProvenanceNotices totals={totals} />
           {totals.daily?.some((bucket) => bucket.request_count > 0) ? (
             <UsageDailyBars buckets={totals.daily} />
           ) : null}

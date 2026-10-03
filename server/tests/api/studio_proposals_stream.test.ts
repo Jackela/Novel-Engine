@@ -197,7 +197,15 @@ describe("proposal stream endpoint (#308)", () => {
       expect(result.proposal_markdown).toBe("");
       // DR-006: the mid-stream failure keeps the sanitized text it accumulated.
       expect(result.partial_markdown).toBe("A quiet beginning");
-      expect(database.select().from(usageEvents).all()).toHaveLength(usageBefore);
+      // DR-028: the failed stream attempt keeps one zero-token unreported row.
+      const usage = database.select().from(usageEvents).all();
+      expect(usage).toHaveLength(usageBefore + 1);
+      expect(usage.at(-1)).toMatchObject({
+        outcome: "failed",
+        token_source: "unreported",
+        prompt_tokens: 0,
+        completion_tokens: 0,
+      });
     } finally {
       await app.close();
     }
@@ -229,7 +237,15 @@ describe("proposal stream endpoint (#308)", () => {
       const row = rows[0] as { status: string; error: string };
       expect(row.status).toBe("failed");
       expect(row.error).toMatch(/not valid story prose/);
-      expect(database.select().from(usageEvents).all()).toHaveLength(0);
+      // DR-028: the failed attempt lands one zero-token unreported row.
+      expect(database.select().from(usageEvents).all()).toMatchObject([
+        {
+          outcome: "failed",
+          token_source: "unreported",
+          prompt_tokens: 0,
+          completion_tokens: 0,
+        },
+      ]);
     } finally {
       await app.close();
     }

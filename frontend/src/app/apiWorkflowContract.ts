@@ -238,6 +238,9 @@ function parseUsageModelRow(value: unknown, label: string): UsageModelRow {
   return {
     model: stringField(item, "model", label),
     requests: numberField(item, "requests", label),
+    // DR-028: the failure and estimate counts are part of the panel's contract.
+    failed_attempts: numberField(item, "failed_attempts", label),
+    estimated_requests: numberField(item, "estimated_requests", label),
     prompt_tokens: numberField(item, "prompt_tokens", label),
     completion_tokens: numberField(item, "completion_tokens", label),
   };
@@ -258,6 +261,10 @@ export function parseUsage(value: unknown): ProjectUsage {
   return {
     project_id: stringField(item, "project_id", "usage response"),
     request_count: numberField(item, "request_count", "usage response"),
+    // DR-028: the failure/estimate disclosure is required, not optional — the
+    // panel must never render unlabelled token totals again.
+    failed_attempt_count: numberField(item, "failed_attempt_count", "usage response"),
+    estimated_requests: numberField(item, "estimated_requests", "usage response"),
     prompt_tokens: numberField(item, "prompt_tokens", "usage response"),
     completion_tokens: numberField(item, "completion_tokens", "usage response"),
     per_model: arrayField(item, "per_model", "usage response", (entry, index) =>

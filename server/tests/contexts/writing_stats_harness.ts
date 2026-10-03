@@ -160,6 +160,8 @@ export function recordUsage(
     model: "test-model",
     promptTokens: tokens,
     completionTokens: tokens,
+    outcome: "completed",
+    tokenSource: "provider",
     requestEvidenceJson: "{}",
     now: at,
   });

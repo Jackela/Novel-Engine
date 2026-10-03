@@ -282,36 +282,35 @@ describe("proposal stream service (#308 abort semantics)", () => {
   });
 
   it.each([
-    { terminal: "done", status: "completed", usageCount: 1, providerFactory: undefined },
+    { terminal: "done", status: "completed", source: "estimated", providerFactory: undefined },
     {
       terminal: "error",
       status: "failed",
-      usageCount: 0,
+      source: "unreported",
       providerFactory: failingStreamProviderFactory,
     },
-  ])(
-    "preserves the original $status job when its $terminal frame drain times out",
-    async (testCase) => {
-      const harness = await openProposalStreamHarness(testCase.providerFactory);
-      try {
-        const { response, revisionsBefore } = await timeOutProposalResponse(
-          harness,
-          `Terminal ${testCase.terminal} backpressure timeout`,
-          (chunk) => chunk.includes(`"type":"${testCase.terminal}"`),
-        );
-        expect(response.destroyed).toBe(true);
-        expect(response.chunks.at(-1)).toContain(`"type":"${testCase.terminal}"`);
-        expect(response.chunks.filter((chunk) => chunk.includes('"type":"error"'))).toHaveLength(
-          testCase.terminal === "error" ? 1 : 0,
-        );
-        const jobRows = harness.db.select().from(jobs).all();
-        expect(jobRows).toHaveLength(1);
-        expect(jobRows[0]?.status).toBe(testCase.status);
-        expect(harness.db.select().from(usageEvents).all()).toHaveLength(testCase.usageCount);
-        expect(harness.db.select().from(documentRevisions).all()).toHaveLength(revisionsBefore);
-      } finally {
-        await harness.cleanup();
-      }
-    },
-  );
+  ])("preserves the original $status job when its $terminal frame drain times out", async (tc) => {
+    const harness = await openProposalStreamHarness(tc.providerFactory);
+    try {
+      const { response, revisionsBefore } = await timeOutProposalResponse(
+        harness,
+        `Terminal ${tc.terminal} backpressure timeout`,
+        (chunk) => chunk.includes(`"type":"${tc.terminal}"`),
+      );
+      expect(response.destroyed).toBe(true);
+      expect(response.chunks.at(-1)).toContain(`"type":"${tc.terminal}"`);
+      expect(response.chunks.filter((chunk) => chunk.includes('"type":"error"'))).toHaveLength(
+        tc.terminal === "error" ? 1 : 0,
+      );
+      const jobRows = harness.db.select().from(jobs).all();
+      expect(jobRows).toHaveLength(1);
+      expect(jobRows[0]?.status).toBe(tc.status);
+      // DR-028: the terminal attempt keeps its own labelled row.
+      const usageRows = harness.db.select().from(usageEvents).all();
+      expect(usageRows).toMatchObject([{ outcome: tc.status, token_source: tc.source }]);
+      expect(harness.db.select().from(documentRevisions).all()).toHaveLength(revisionsBefore);
+    } finally {
+      await harness.cleanup();
+    }
+  });
 });
