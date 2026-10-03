@@ -530,27 +530,30 @@
 
 ### DR-040 [P2] dev 模式会话密钥持久化
 
-- [ ] 未开始
+- [x] 已完成（2026-10-03）
 - **问题**：非 Docker、未配置 `SECURITY_SECRET_KEY` 时每进程随机生成，重启即全体登出。
 - **证据**：`apps/api/app.ts:170-176`；`auth_service.ts:115`。
 - **修复方向**：非容器环境也把随机 secret 持久化到 `data/.secret`（0600）。
 - **验证**：`pnpm --dir server exec vitest run tests/api/auth_session.test.ts`。
+- **交付记录**：2026-10-03 | `206c8dbe`（wave 14a） | 无配置 secret 的非生产启动把生成的 secret 持久化到数据目录 `data/.secret`（0600，一次生成、复用），会话跨重启保留；env secret 优先、生产守门行为不变。 | 复现：基线每次非生产重启生成新 secret → 全员登出；`config_startup` 旧断言（401）按新契约改为"重启保留（200）+ 删除 `.secret` 后失效（401）" | 回归：`auth_session_secret`（重启保留/0600/env 优先）、`auth_session`、`config_startup` | 验证：见 §10
 
 ### DR-041 [P2] 容器加固与可观测性
 
-- [ ] 未开始
+- [x] 已完成（2026-10-03）
 - **问题**：容器以 root 运行、无 `read_only`/`cap_drop`/资源限制；无 `/metrics`、无 `LOG_LEVEL`；日志本身未泄露敏感信息（此项是好的）。
 - **证据**：容器实测 `id -u=0`；grep `LOG_LEVEL` 零命中。
 - **修复方向**：`USER node` + 只读根 + tmpfs；可选内网 `/metrics`；`LOG_LEVEL` 环境变量。
 - **验证**：`docker build` + compose 启动人工验证；`pnpm --dir server gates`。
+- **交付记录**：2026-10-03 | `206c8dbe`（wave 14a） | Dockerfile/compose：非 root `node` 运行 + 只读根 + tmpfs + `cap_drop: [ALL]` + `no-new-privileges` + 资源限制；新增内网 `GET /metrics`（Prometheus 文本：进程/uptime/任务/用量类指标；loopback 或受信 peer 或 owner 会话可读，路由与门禁同步）；`LOG_LEVEL` 由 `log_level.ts` 驱动 logger，写入 README 并经 compose 透传（passthrough 锚点同步）。 | 复现：容器 `id -u`=0、无加固、无 metrics/LOG_LEVEL | 回归：`metrics_route`（4：loopback 匿名、非 loopback 需 owner、内容面）、`compose_passthrough_gate`、`server_config*`；`docker compose config -q` 双文件通过；`docker build` 的完整容器冒烟由 CI 容器任务拥有（本地按可用性执行并在交付报告注明） | 验证：见 §10
 
 ### DR-042 [P2] 快照/审阅可见性与删除指引
 
-- [ ] 未开始
+- [x] 已完成（2026-10-03）
 - **问题**：`project_snapshots` 用户永远看不到；审阅历史列表不可点开（详情端点已存在）；被快照引用的文档删除 409 无用户可读的解法。
 - **证据**：`useReviewHistory.ts:92-123`；`StudioReviewHistoryList.tsx:68-82`；`document_store_part.ts:139-146`。
 - **修复方向**：审阅行接详情；快照给出可读名字；删除失败时给出指引。
 - **验证**：`pnpm --dir frontend exec vitest run`（审阅组件）；`pnpm --dir server exec vitest run tests/api/`（review 相关）。
+- **交付记录**：2026-10-03 | `c3a9674c`（wave 14b） | 审阅历史行改为按钮：点击选中该行详情（`useReviewHistory` 以 `selectedReviewId` 驱动详情读取，空选回退最新），`aria-pressed` 标记选中；审阅 provenance 显示快照短名（`shortSnapshotId`，`review.snapshotLabel`）；导出历史行同样显示快照短名（`export.history.snapshotLabel`）；`errors.codeSnapshotConflict`（zh/en）补可读解法"先删除引用该文档的导出快照/导出，再删除文档"。 | 复现：基线列表行为不可点开的静态文本、快照 id 不可见、409 仅一句英文冲突描述 | 回归：`StudioReviewPanel`（5：选中态/点击回调/快照短名）、`StudioReviewHistoryList`（选中样式与 aria）、`useReviewHistory`、`dictionaries`（键对齐）、`localizeError` 快照冲突文案 | 验证：见 §10
 
 ### DR-043 [P2] Beat 候选与规则明示
 
@@ -570,11 +573,12 @@
 
 ### DR-045 [P2] 统计时区与负数解释
 
-- [ ] 未开始
+- [x] 已完成（2026-10-03）
 - **问题**："今日字数"按 UTC 日分桶（UTC+8 作者 0–8 点看到昨天）；统计表出现 `已采纳 −364` 无解释。
 - **证据**：`writing_stats_service.ts:15-18,49-55,66-78`；`StudioWritingStatsPanel.tsx:44,95-105`；截图 `writing-stats-zh.png`。
 - **修复方向**：按浏览器时区分桶（或明确标注 UTC）；负数来源加解释文案。
 - **验证**：`pnpm --dir server exec vitest run tests/contexts/writing_stats_calendar.test.ts`。
+- **交付记录**：2026-10-03 | `206c8dbe`（wave 14a） | 统计按浏览器时区分桶：前端 `browserTimezone.ts` 上传 `tz_offset_minutes`，服务端按该偏移切日桶并在响应回显 `tz_offset_minutes`；面板显示时区提示与"负数来自恢复/回滚抵消"的解释文案（zh/en）。 | 复现：UTC 分桶下 UTC+8 作者 0–8 点看到昨天；`已采纳 −364` 无解释 | 回归：`writing_stats_calendar`、`studio_writing_stats`、`apiStatsContract`、`StudioWritingStatsPanel`（+tz 字段与提示）| 验证：见 §10
 
 ### DR-046 [P2] 前端本地化与离线
 
@@ -586,11 +590,12 @@
 
 ### DR-047 [P2] revision 增长与保留策略
 
-- [ ] 未开始
+- [x] 已完成（2026-10-03）
 - **问题**：每次自动保存插入整篇副本 + FTS 全量重写；无历史保留/合并策略；无正文体积预算（隐藏上限是 1 MiB HTTP body，见 DR-048）。
 - **证据**：`document_revision_writes.ts:38-52`；`document_search.ts:26-32`；`grep "prune|retention" server/src` = 0；`structure_capacity.ts:15-22` 无正文预算。
 - **修复方向**：相邻 autosave 合并（同秒/内容未变跳过）；保留策略（按时间/数量折叠）；规格补正文预算并与 DR-048 对齐。
 - **验证**：`pnpm --dir server exec vitest run tests/contexts/revision_store_pagination.test.ts`（新增策略用例）。
+- **交付记录**：2026-10-03 | `206c8dbe`（wave 14a） | 写入路径：内容未变跳过（不写 revision、不重写 FTS）；相邻窗口内的 autosave 折叠（删除无引用的前驱并插入新行；被快照/任务/提案引用者永不删除；最新行始终保留）；`revision_retention.ts` 清理超出保留窗口的旧无引用 autosave；保存载荷新增 `autosave: true`（9 处旧精确断言具名补字段）；规格保留策略条目（正文预算条目由 DR-048 补齐）。 | 复现：每次保存插入整篇副本 + FTS 全量重写、零保留策略 | 回归：`revision_retention`（未变写入 0、窗口折叠、引用保护、最新保护）、`revision_retention_prune`、`revision_store_pagination`、`document_revision_writes` 相关 | 验证：见 §10
 
 ### DR-048 [P2] 1 MiB 请求体与 413 体验
 
@@ -752,3 +757,5 @@
 - 2026-10-03 | `82aaa64f` | DR-032 | 定向：`doctor_readonly_cli`（6）+`migrate_cli`（3）+`tests/apps/cli`（13 文件/64 用例）+`tests/infrastructure`+`tests/db`；全套 `server gates/type-check/lint/lint:types/arch/test`（262 文件/1542 用例）、frontend test:unit/build（149 文件/826 用例）+ react-doctor(100) + `pnpm spec:validate` | 通过：doctor 只读零写入（含运行中只读）+ `migrate` 独立写入路径 + `error` 字段承载锁/权威原因；CLI 重放（构建产物）实证；三处旧断言具名更新
 - 2026-10-03 | `a06df731` | DR-033 + DR-034 + DR-035 | 定向：config/version/health/cors/setup-proxy/compose-gate 7 文件 57 用例 + 回归 sanity 11 文件 100 用例；全套 `server gates/type-check/lint/lint:types/arch/test`（264 文件/1554 用例）、frontend type-check/test:unit/build（149 文件/826 用例）+ react-doctor(100) + `pnpm spec:validate`；`docker compose config` 冒烟 | 通过：占位密钥生产拒绝（DR-033）、compose 去占位 + 可信代理透传 + 反代 checklist（DR-034）、生产暴露面收口（DR-035）；OpenAPI 零漂移；过程修复：`server_config` 测试拆分（行数门禁）、vitest NODE_ENV 固定
 - 2026-10-03 | `d61b9b37` | DR-037 + DR-038 + DR-039 | 定向：import 14 用例 + 字典 4 用例；全套 `server gates/type-check/lint/lint:types/arch/test`（264 文件/1557 用例）、frontend lint/lint:types/format/type-check/test:unit/build（149 文件/826 用例）+ react-doctor(100) + `pnpm spec:validate` | 通过：导入根无关 hash + 标题保留 + CLI-only 文档（DR-037）；字典契约收敛（parity 双向/非空/锚点白名单）与回归确认（DR-038，413 随 DR-048）；文档/spec 对齐（DR-039）；过程修复：`legacy_workspace_reader` 两处旧契约具名更新、字典测试格式化
+- 2026-10-03 | `206c8dbe` | DR-040 + DR-041 + DR-045 + DR-047 | 定向：auth/metrics/stats/retention 9 文件 64 用例 + 前端 stats 2 文件 11 用例；全套 `server gates/type-check/lint/lint:types/arch/test`（268 文件/1579 用例）、frontend lint/lint:types/format/type-check/test:unit/build（149 文件/826 用例）+ react-doctor(100) + `pnpm spec:validate`；`docker compose config` 双文件 | 通过：dev secret 持久化（DR-040）、容器加固 + `/metrics` + `LOG_LEVEL`（DR-041）、统计本地时区 + 负数解释（DR-045）、revision 去重/折叠/保留 + `autosave` 标志（DR-047）；过程修复：`config_startup` 旧契约具名更新、9 处 saveDocument 载荷断言补字段、导入排序、stats fixture 补 tz 字段
+- 2026-10-03 | `c3a9674c` | DR-042 | 定向：审阅面板 5 用例 + 列表/历史 hook + 字典/本地化用例；frontend lint/lint:types/format/type-check 全绿、react-doctor(100) | 通过：审阅行可点开详情 + 选中态、快照短名（审阅/导出）、快照冲突可读解法；全套复验随 wave 14 收尾提交执行
