@@ -56,7 +56,7 @@ describe("toErrorMessage", () => {
 
     const payloadRefusal = new HttpError("Request body is too large", 413, undefined, undefined);
     expect(toErrorMessage(payloadRefusal, "Fallback.")).toBe(
-      "The request body is too large for the server to accept.",
+      "This chapter is too large to save. Split it into smaller chapters — your draft stays in the editor.",
     );
   });
 

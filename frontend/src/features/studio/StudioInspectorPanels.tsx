@@ -39,6 +39,7 @@ export function StudioInspectorPanels({
   ) : null;
   const beat = model.beat ? (
     <StudioBeatPanel
+      projectId={model.beat.projectId}
       documentId={model.beat.documentId}
       beatRef={model.beat.beatRef}
       attemptedTitle={model.beat.attemptedTitle}

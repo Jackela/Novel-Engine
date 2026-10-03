@@ -1,6 +1,5 @@
 import {
   parseAliases,
-  parseChapterBeat,
   parseDocuments,
   parseLoreStatus,
   parseOwnerSetup,
@@ -25,6 +24,7 @@ import {
   parseReviews,
   parseUsage,
 } from "@/app/apiWorkflowContract";
+import { parseChapterBeat } from "@/app/beatContract";
 import { browserTzOffsetMinutes } from "@/app/browserTimezone";
 import { parseDiagnostics } from "@/app/diagnosticsContract";
 import { type ExportsRequestOptions, projectExportsRequest } from "@/app/exportApiRequest";
@@ -116,6 +116,10 @@ export const api = {
       { lore_status },
       parseLoreStatus,
     ),
+  // DR-043: the read surface carries the chapter's candidate catalog and the
+  // outline it came from, so the association control never needs typed recall.
+  chapterBeat: (projectId: string, documentId: string, init?: RequestInit) =>
+    request(`/api/projects/${projectId}/documents/${documentId}/beat`, init, parseChapterBeat),
   linkChapterBeat: (projectId: string, documentId: string, beat: string | null) =>
     putJson(`/api/projects/${projectId}/documents/${documentId}/beat`, { beat }, parseChapterBeat),
   saveDocument: (

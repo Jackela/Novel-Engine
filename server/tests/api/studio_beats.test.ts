@@ -11,87 +11,29 @@ import {
 } from "../../src/contexts/studio/application/sanitization.js";
 import { capturingFactory, propose } from "./proposal_test_helpers.js";
 import {
+  linkBeat,
+  OUTLINE_CANDIDATES,
+  OUTLINE_CONTENT,
+  outlineAuthority,
+  readBeat,
+  seedChapterWithOutline,
+} from "./studio_beat_helpers.js";
+import {
   buildStudioApp,
   type CookieJar,
   call,
   type DocumentPayload,
-  getDocument,
   listDocuments,
   ownerJar,
-  seedDocument,
   seedProject,
 } from "./studio_helpers.js";
-
-const OUTLINE_CONTENT = [
-  "# Outline",
-  "",
-  "## The Storm",
-  "",
-  "Rain floods the harbour and Mara finds the washed-up chart.",
-  "",
-  "### The Archive",
-  "",
-  "Mara decodes the chart against the drowned maps.",
-].join("\n");
-
-interface BeatView {
-  beat: { title: string; content: string } | null;
-}
-
-async function linkBeat(
-  app: FastifyInstance,
-  jar: CookieJar,
-  projectId: string,
-  documentId: string,
-  beat: string | null,
-) {
-  return call(app, jar, "PUT", `/api/projects/${projectId}/documents/${documentId}/beat`, { beat });
-}
-
-async function readBeat(
-  app: FastifyInstance,
-  jar: CookieJar,
-  projectId: string,
-  documentId: string,
-): Promise<{ status: number; view?: BeatView }> {
-  const response = await call(
-    app,
-    jar,
-    "GET",
-    `/api/projects/${projectId}/documents/${documentId}/beat`,
-  );
-  if (response.statusCode !== 200) {
-    return { status: response.statusCode };
-  }
-  return { status: response.statusCode, view: response.json() as BeatView };
-}
-
-/** Fresh chapter + outline pair inside a new project. */
-async function seedChapterWithOutline(
-  app: FastifyInstance,
-  jar: CookieJar,
-): Promise<{ projectId: string; chapter: DocumentPayload; outline: DocumentPayload }> {
-  const project = await seedProject(app, jar, "Beat Studio");
-  const outline = await seedDocument(app, jar, project.id, {
-    kind: "outline",
-    title: "Outline",
-    content_markdown: OUTLINE_CONTENT,
-  });
-  const chapter = project.documents[0];
-  if (chapter === undefined) throw new Error("expected seeded document");
-  return {
-    projectId: project.id,
-    chapter: await getDocument(app, jar, project.id, chapter.id),
-    outline,
-  };
-}
 
 describe("chapter beat association (#313)", () => {
   it("links a chapter to an existing outline beat and reads it back resolved", async () => {
     const { app } = await buildStudioApp();
     try {
       const jar = await ownerJar(app);
-      const { projectId, chapter } = await seedChapterWithOutline(app, jar);
+      const { projectId, chapter, outline } = await seedChapterWithOutline(app, jar);
 
       const linked = await linkBeat(app, jar, projectId, chapter.id, "The Storm");
       expect(linked.statusCode).toBe(200);
@@ -100,6 +42,8 @@ describe("chapter beat association (#313)", () => {
           title: "The Storm",
           content: "Rain floods the harbour and Mara finds the washed-up chart.",
         },
+        candidates: OUTLINE_CANDIDATES,
+        outline: outlineAuthority(outline),
       });
 
       const stored = (await getProjectDocument(app, jar, projectId, chapter.id)) as DocumentPayload;
@@ -145,11 +89,15 @@ describe("chapter beat association (#313)", () => {
     const { app } = await buildStudioApp();
     try {
       const jar = await ownerJar(app);
-      const { projectId, chapter } = await seedChapterWithOutline(app, jar);
+      const { projectId, chapter, outline } = await seedChapterWithOutline(app, jar);
 
       const reread = await readBeat(app, jar, projectId, chapter.id);
       expect(reread.status).toBe(200);
-      expect(reread.view).toEqual({ beat: null });
+      expect(reread.view).toEqual({
+        beat: null,
+        candidates: OUTLINE_CANDIDATES,
+        outline: outlineAuthority(outline),
+      });
     } finally {
       await app.close();
     }
@@ -159,14 +107,18 @@ describe("chapter beat association (#313)", () => {
     const { app } = await buildStudioApp();
     try {
       const jar = await ownerJar(app);
-      const { projectId, chapter } = await seedChapterWithOutline(app, jar);
+      const { projectId, chapter, outline } = await seedChapterWithOutline(app, jar);
 
       const linked = await linkBeat(app, jar, projectId, chapter.id, "The Storm");
       expect(linked.statusCode).toBe(200);
 
       const cleared = await linkBeat(app, jar, projectId, chapter.id, null);
       expect(cleared.statusCode).toBe(200);
-      expect(cleared.json()).toEqual({ beat: null });
+      expect(cleared.json()).toEqual({
+        beat: null,
+        candidates: OUTLINE_CANDIDATES,
+        outline: outlineAuthority(outline),
+      });
       expect(
         ((await getProjectDocument(app, jar, projectId, chapter.id)) as DocumentPayload).beat_ref,
       ).toBeNull();
@@ -174,7 +126,7 @@ describe("chapter beat association (#313)", () => {
       // Clearing again stays safe.
       const again = await linkBeat(app, jar, projectId, chapter.id, null);
       expect(again.statusCode).toBe(200);
-      expect(again.json()).toEqual({ beat: null });
+      expect(again.json().beat).toBeNull();
     } finally {
       await app.close();
     }
@@ -203,10 +155,15 @@ describe("chapter beat association (#313)", () => {
       );
       expect(renamed.statusCode).toBe(200);
 
-      // Reads resolve to unlinked instead of erroring or serving stale text.
+      // Reads resolve to unlinked instead of erroring or serving stale text,
+      // while the candidate catalog reflects the renamed heading (DR-043).
       const reread = await readBeat(app, jar, projectId, chapter.id);
       expect(reread.status).toBe(200);
-      expect(reread.view).toEqual({ beat: null });
+      expect(reread.view).toEqual({
+        beat: null,
+        candidates: [{ title: "The Tempest" }],
+        outline: outlineAuthority(outline),
+      });
 
       // And generation runs with no beat position at all.
       const proposal = await propose(app, jar, projectId, chapter.id, { operation: "continue" });
@@ -237,7 +194,6 @@ describe("chapter beat association (#313)", () => {
     }
   });
 });
-
 describe("the outline and beat position inside the resident context (#313, #314)", () => {
   it("carries the whole outline plus the current beat ahead of the manuscript", async () => {
     const capture = capturingFactory({});

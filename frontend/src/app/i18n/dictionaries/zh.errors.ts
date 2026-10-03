@@ -27,6 +27,7 @@ export const zhErrors = {
   "errors.createProposal": "无法创建提案。",
   "errors.acceptProposal": "无法接受提案。",
   "errors.updateBeat": "无法更新章节节拍。",
+  "errors.loadBeats": "无法加载大纲节拍。",
   "errors.createDocument": "无法创建文档。",
   "errors.reorderDocuments": "无法调整文档顺序。",
   "errors.deleteDocument": "无法删除这份文档。",
@@ -81,7 +82,7 @@ export const zhErrors = {
   "errors.codeProviderNotConfigured":
     "该 provider 尚未配置 API Key。请先按 provider 配置指南添加密钥，然后重试。",
   "errors.codeProviderFailedGeneric": "AI 服务请求失败。请检查 provider 配置后重试。",
-  "errors.codePayloadTooLarge": "请求内容过大，服务器无法接收。",
+  "errors.codePayloadTooLarge": "这一章过大，无法保存。请拆分为更小的章节——草稿仍保留在编辑器中。",
   "errors.codeUnknown": "请求失败（{code}）。请重试；若持续出现，请报告此错误代码。",
 
   // 容量资源名称（按服务端资源目录的名称映射）。

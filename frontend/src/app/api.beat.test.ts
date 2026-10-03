@@ -14,9 +14,40 @@ function okResponse(payload: unknown): Response {
 }
 
 describe("chapter beat API (#466)", () => {
+  it("reads the candidate catalog beside the resolved association (DR-043)", async () => {
+    const view = {
+      beat: null,
+      candidates: [{ title: "The Storm" }, { title: "The Archive" }],
+      outline: { document_id: "outline-1", title: "Outline", outline_count: 2 },
+    };
+    const fetchMock = vi.fn().mockResolvedValue(okResponse(view));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(api.chapterBeat("project-1", "document-1")).resolves.toEqual(view);
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/projects/project-1/documents/document-1/beat",
+      expect.objectContaining({ credentials: "include" }),
+    );
+  });
+
+  it("rejects a candidate catalog without an outline authority", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(okResponse({ beat: null, candidates: [{ title: "The Storm" }] }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(api.chapterBeat("project-1", "document-1")).rejects.toThrow(
+      "Invalid chapter beat response.outline",
+    );
+  });
+
   it("links a beat with PUT, CSRF, and credentials semantics", async () => {
     vi.stubGlobal("document", { cookie: "novel_engine_csrf=test-csrf-token" });
-    const view = { beat: { title: "The Storm", content: "washed-up chart" } };
+    const view = {
+      beat: { title: "The Storm", content: "washed-up chart" },
+      candidates: [{ title: "The Storm" }],
+      outline: { document_id: "outline-1", title: "Outline", outline_count: 1 },
+    };
     const fetchMock = vi.fn().mockResolvedValue(okResponse(view));
     vi.stubGlobal("fetch", fetchMock);
 
@@ -38,12 +69,15 @@ describe("chapter beat API (#466)", () => {
   });
 
   it("clears the association with an explicit null beat body", async () => {
-    const fetchMock = vi.fn().mockResolvedValue(okResponse({ beat: null }));
+    const cleared = {
+      beat: null,
+      candidates: [{ title: "The Storm" }],
+      outline: { document_id: "outline-1", title: "Outline", outline_count: 1 },
+    };
+    const fetchMock = vi.fn().mockResolvedValue(okResponse(cleared));
     vi.stubGlobal("fetch", fetchMock);
 
-    await expect(api.linkChapterBeat("project-1", "document-1", null)).resolves.toEqual({
-      beat: null,
-    });
+    await expect(api.linkChapterBeat("project-1", "document-1", null)).resolves.toEqual(cleared);
     expect(fetchMock).toHaveBeenCalledWith(
       "/api/projects/project-1/documents/document-1/beat",
       expect.objectContaining({
@@ -54,9 +88,13 @@ describe("chapter beat API (#466)", () => {
   });
 
   it("rejects a malformed resolved-beat envelope", async () => {
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValue(okResponse({ beat: { title: 7, content: "washed-up chart" } }));
+    const fetchMock = vi.fn().mockResolvedValue(
+      okResponse({
+        beat: { title: 7, content: "washed-up chart" },
+        candidates: [],
+        outline: null,
+      }),
+    );
     vi.stubGlobal("fetch", fetchMock);
 
     await expect(api.linkChapterBeat("project-1", "document-1", "The Storm")).rejects.toThrow(

@@ -209,6 +209,10 @@ export const enStudio = {
   "editor.saveState.conflict": "Save conflict",
   "editor.saveState.error": "Save failed",
   "editor.wordCount": "{count} {unit}",
+  "editor.budget.summary": "Draft {used} of {limit} · {words}",
+  "editor.budget.near": "Approaching the {limit} save limit — consider splitting this chapter.",
+  "editor.budget.over":
+    "Over the {limit} save limit. Split this chapter before saving; the draft stays in the editor.",
   "editor.conflict.heading": "Someone else changed this document.",
   "editor.conflict.action.loadLatest": "Load latest (discard local)",
   "editor.conflict.action.keepLocal": "Keep local and retry overwrite",
@@ -260,7 +264,11 @@ export const enStudio = {
   "beat.hint": "Links the chapter to an outline beat by its heading title.",
   "beat.action.link": "Link beat",
   "beat.action.clear": "Clear",
+  "beat.action.refresh": "Refresh beats",
   "beat.status.saving": "Saving chapter beat.",
+  "beat.status.loadingCandidates": "Loading beats…",
+  "beat.option.none": "Choose a beat…",
+  "beat.notice.outlineAuthority": "This project has {count} outlines; beats come from “{title}”.",
 
   "lore.form.label": "Lore status",
   "lore.field.label": "Lore status",

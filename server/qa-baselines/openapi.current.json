@@ -4353,10 +4353,49 @@
                         "content"
                       ],
                       "type": "object"
+                    },
+                    "candidates": {
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "title": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "title"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "outline": {
+                      "additionalProperties": false,
+                      "nullable": true,
+                      "properties": {
+                        "document_id": {
+                          "type": "string"
+                        },
+                        "outline_count": {
+                          "minimum": 1,
+                          "type": "integer"
+                        },
+                        "title": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "document_id",
+                        "title",
+                        "outline_count"
+                      ],
+                      "type": "object"
                     }
                   },
                   "required": [
-                    "beat"
+                    "beat",
+                    "candidates",
+                    "outline"
                   ],
                   "type": "object"
                 }
@@ -4459,10 +4498,49 @@
                         "content"
                       ],
                       "type": "object"
+                    },
+                    "candidates": {
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "title": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "title"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "outline": {
+                      "additionalProperties": false,
+                      "nullable": true,
+                      "properties": {
+                        "document_id": {
+                          "type": "string"
+                        },
+                        "outline_count": {
+                          "minimum": 1,
+                          "type": "integer"
+                        },
+                        "title": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "document_id",
+                        "title",
+                        "outline_count"
+                      ],
+                      "type": "object"
                     }
                   },
                   "required": [
-                    "beat"
+                    "beat",
+                    "candidates",
+                    "outline"
                   ],
                   "type": "object"
                 }

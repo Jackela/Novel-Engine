@@ -4529,6 +4529,13 @@ creations cannot both pass one exhausted count. The outline-beat limit
 MUST be enforced at every path that mints outline document content:
 author saves, restores, and accepted AI proposals.
 
+Document content writes MUST also stay inside the server's request-body
+policy: a save whose serialized request body exceeds 1,048,576 bytes MUST be
+refused with 413 `PAYLOAD_TOO_LARGE`, the refusal MUST NOT carry a retry hint,
+and the draft MUST remain in the editor. The editor MUST show the draft's
+UTF-8 byte budget against that soft limit and, at or beyond it, state the
+remedy — split the chapter — instead of a bare failure.
+
 The OpenAPI contract for every route whose writes these limits gate MUST
 document the 422 capacity envelope, and generated frontend API types MUST
 remain synchronized with that contract.
@@ -4541,6 +4548,13 @@ remain synchronized with that contract.
   `resource` `project_documents`, `limit` 2,500, and `observed` 2,501
 - **AND** the project still holds exactly 2,500 documents with unchanged
   order, revisions, and search index
+
+#### Scenario: An oversized chapter body is refused without losing the draft
+
+- **GIVEN** a save request body exceeding 1,048,576 bytes
+- **WHEN** the author saves the chapter
+- **THEN** the response is 413 `PAYLOAD_TOO_LARGE` without a retry hint
+- **AND** the editor keeps the draft and shows the byte budget over the soft limit
 
 #### Scenario: Creating at the exact document boundary succeeds
 

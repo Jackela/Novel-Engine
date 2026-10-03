@@ -110,8 +110,8 @@ describe("localizeError", () => {
       "FST_ERR_CTP_BODY_TOO_LARGE",
       "Request body is too large",
       undefined,
-      "The request body is too large for the server to accept.",
-      "请求内容过大，服务器无法接收。",
+      "This chapter is too large to save. Split it into smaller chapters — your draft stays in the editor.",
+      "这一章过大，无法保存。请拆分为更小的章节——草稿仍保留在编辑器中。",
     ],
     [
       "STRUCTURE_CAPACITY_EXCEEDED",
@@ -209,7 +209,9 @@ describe("localizeError", () => {
   it("turns a 413 payload refusal into the localized message even without a coded envelope", () => {
     const presentation = localizeError(new HttpError("Payload too large", 413), FALLBACK, "zh");
 
-    expect(presentation.message).toBe("请求内容过大，服务器无法接收。");
+    expect(presentation.message).toBe(
+      "这一章过大，无法保存。请拆分为更小的章节——草稿仍保留在编辑器中。",
+    );
     expect(presentation.technical).toBe("Payload too large");
   });
 

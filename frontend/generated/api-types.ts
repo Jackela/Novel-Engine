@@ -2005,6 +2005,14 @@ export interface paths {
                                 content: string;
                                 title: string;
                             } | null;
+                            candidates: {
+                                title: string;
+                            }[];
+                            outline: {
+                                document_id: string;
+                                outline_count: number;
+                                title: string;
+                            } | null;
                         };
                     };
                 };
@@ -2064,6 +2072,14 @@ export interface paths {
                         "application/json": {
                             beat: {
                                 content: string;
+                                title: string;
+                            } | null;
+                            candidates: {
+                                title: string;
+                            }[];
+                            outline: {
+                                document_id: string;
+                                outline_count: number;
                                 title: string;
                             } | null;
                         };

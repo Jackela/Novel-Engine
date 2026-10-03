@@ -80,16 +80,19 @@ export function buildLoreStatusModel(
 /**
  * Adapt the active shell summary into the chapter beat seam (#466). The
  * returned link function preserves the mutation owner's completion Promise;
- * only chapters associate with outline beats.
+ * only chapters associate with outline beats, and the panel reads its
+ * candidate catalog from the project's outline (DR-043).
  */
 function buildBeatModel(
   document: Pick<DocumentSummary, "id" | "kind" | "beat_ref"> | null,
+  projectId: string,
   linkBeat: (documentId: string, beat: string | null) => Promise<void>,
   lifecycle: BeatLifecycleState,
 ): InspectorBeatModel | null {
   if (document === null || document.kind !== "chapter") return null;
   const documentId = document.id;
   return {
+    projectId,
     documentId,
     beatRef: document.beat_ref,
     isSaving: lifecycle.isSaving,
@@ -268,6 +271,7 @@ export function buildStudioInspectorModel({
     ),
     beat: buildBeatModel(
       narrowDocument,
+      projectId,
       commands.linkBeat,
       activeDocument ? commands.beatFor(activeDocument.id) : IDLE_BEAT_LIFECYCLE,
     ),

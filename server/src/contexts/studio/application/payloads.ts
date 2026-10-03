@@ -3,7 +3,7 @@ import type { DocumentKind, LoreStatus } from "../domain/kinds.js";
 import { assertStoredRevisionSource } from "../domain/revision_source.js";
 import { assertStoredRevisionWordCount } from "../domain/revision_word_count.js";
 import { asLoreStatus, isLoreEntryKind } from "./lorebook.js";
-import type { ChapterBeatPayload } from "./payload_schemas/beat.js";
+import type { BeatOutlineAuthority, ChapterBeatPayload } from "./payload_schemas/beat.js";
 import type { DocumentPayload, MatchResultPayload } from "./payload_schemas/document.js";
 import type { ExportArtifactPayload } from "./payload_schemas/export.js";
 import {
@@ -290,9 +290,20 @@ export function exportArtifactPayload(
   };
 }
 
-/** The resolved beat association view shared by both chapter beat verbs. */
+/**
+ * The resolved beat association view shared by both chapter beat verbs. The
+ * candidate catalog is the authoritative outline's beat titles (the
+ * association key) and `outline` names that authority, so a project with
+ * several outlines discloses its rule instead of resolving silently (DR-043).
+ */
 export function chapterBeatPayload(
   resolved: { title: string; content: string } | null,
+  candidates: readonly { title: string }[],
+  outline: BeatOutlineAuthority | null,
 ): ChapterBeatPayload {
-  return { beat: resolved === null ? null : { title: resolved.title, content: resolved.content } };
+  return {
+    beat: resolved === null ? null : { title: resolved.title, content: resolved.content },
+    candidates: candidates.map((candidate) => ({ title: candidate.title })),
+    outline,
+  };
 }

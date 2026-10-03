@@ -42,6 +42,7 @@ export const enErrors = {
   "errors.createProposal": "Unable to create proposal.",
   "errors.acceptProposal": "Unable to accept proposal.",
   "errors.updateBeat": "Unable to update the chapter beat.",
+  "errors.loadBeats": "Unable to load the outline beats.",
   "errors.createDocument": "Unable to create document.",
   "errors.reorderDocuments": "Unable to reorder documents.",
   "errors.deleteDocument": "Unable to delete the document.",
@@ -119,7 +120,8 @@ export const enErrors = {
     "This provider has no API key configured. Add the credential (see the provider setup guide), then retry.",
   "errors.codeProviderFailedGeneric":
     "The AI provider request failed. Check the provider configuration and retry.",
-  "errors.codePayloadTooLarge": "The request body is too large for the server to accept.",
+  "errors.codePayloadTooLarge":
+    "This chapter is too large to save. Split it into smaller chapters — your draft stays in the editor.",
   "errors.codeUnknown": "The request failed ({code}). Retry; if it persists, report this code.",
 
   // Capacity resource nouns (server resource catalogs, mapped by name).

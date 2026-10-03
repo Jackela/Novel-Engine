@@ -3,6 +3,7 @@ import { lazy, Suspense, useEffect, useRef, useState } from "react";
 
 import { useTranslation } from "@/app/i18n/useTranslation";
 import type { SaveState, StudioDocument } from "@/app/types/studio";
+import { StudioBodyBudget } from "./components/StudioBodyBudget";
 import { StudioConflictPanel } from "./components/StudioConflictPanel";
 import { useCommandFocusRestoration } from "./hooks/useCommandFocusRestoration";
 import type { ServerVersionPreviewController } from "./hooks/useConflictServerPreview";
@@ -149,6 +150,8 @@ export function StudioEditorPane({
                 unit: activeDocument.word_count === 1 ? t("noun.word") : t("noun.words"),
               })}
             </span>
+            {/* DR-048: the draft's own budget, ahead of the saved revision. */}
+            <StudioBodyBudget draft={draft} />
           </header>
           {saveState === "conflict" ? (
             <StudioConflictPanel

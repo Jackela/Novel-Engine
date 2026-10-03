@@ -95,7 +95,7 @@ export function objectValue(value: unknown, label: string): JsonRecord {
   return value as JsonRecord;
 }
 
-function field(source: JsonRecord, key: string, parent: string): unknown {
+export function field(source: JsonRecord, key: string, parent: string): unknown {
   if (!Object.hasOwn(source, key)) fail(`${parent}.${key}`);
   return source[key];
 }
@@ -193,30 +193,6 @@ export function parseLoreStatus(value: unknown): { lore_status: LoreStatus } {
       "lore status response",
       LORE_STATUSES,
     ) as LoreStatus,
-  };
-}
-
-/** One resolved outline beat in the chapter-beat view (#313). */
-export interface LinkedBeat {
-  title: string;
-  content: string;
-}
-
-/**
- * The chapter-beat envelope (#313): the resolved association view — the live
- * outline beat, or null when unlinked or vanished. The view is display-only;
- * `beat_ref` authority is the command's normalized requested value (#466).
- */
-export function parseChapterBeat(value: unknown): { beat: LinkedBeat | null } {
-  const item = objectValue(value, "chapter beat response");
-  const beat = field(item, "beat", "chapter beat response");
-  if (beat === null) return { beat: null };
-  const linked = objectValue(beat, "chapter beat response.beat");
-  return {
-    beat: {
-      title: stringField(linked, "title", "chapter beat response.beat"),
-      content: stringField(linked, "content", "chapter beat response.beat"),
-    },
   };
 }
 

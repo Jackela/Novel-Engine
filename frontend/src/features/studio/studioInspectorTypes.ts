@@ -197,6 +197,8 @@ export interface InspectorLoreStatusModel {
 
 /** #466: chapter-scoped beat association for the active chapter. */
 export interface InspectorBeatModel {
+  /** DR-043: project scope for the outline beat catalog read. */
+  readonly projectId: string;
   /** React identity for the active chapter. */
   readonly documentId: string;
   /**
