@@ -10,8 +10,11 @@ serves the Studio SPA and the JSON API.
 
 ## For Writers
 
-If you only want to write with Novel Engine — no development involved — start
-with the writer guides: [getting started with Docker](openwiki/guides/getting-started.md)
+Novel Engine runs on your own machine: the manuscript stays in a local SQLite
+database and you choose the model — a hosted API or a local one. It is built
+for self-hosting authors, so running it means installing Docker and setting one
+environment variable, not writing code; there is no hosted or zero-terminal
+edition. [Getting started with Docker](openwiki/guides/getting-started.md)
 covers installation to your first AI-assisted chapter, and
 [provider setup](openwiki/guides/provider-setup.md) connects a real AI
 provider such as DashScope or DeepSeek. The full journey is documented end to

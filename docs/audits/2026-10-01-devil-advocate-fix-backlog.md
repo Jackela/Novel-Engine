@@ -615,40 +615,46 @@
 
 ### DEC-01 用户验证从未发生（最高战略风险）
 
-- [ ] 未开始
+- [!] 阻塞（需 Owner 执行，2026-10-03）
 - **事实**：`docs/research/interview-kit.md` 明文"本文档只准备材料，全部访谈由 Owner 本人执行"，成功判据"留存候选 ≥ 3"；仓库内没有任何已执行访谈记录；TTFW（首次价值时间）从未实测（历史记录多次 "recorded skip"）。公开仓库 6 star / 0 watcher。
 - **决策建议**：把"10 场访谈 + 一次真实冷启动计时"作为 0.9.0 发布 gate；若留存候选 < 3，收敛 writer-facing 定位（见 DEC-02）。
 - **完成定义**：访谈记录归档 + TTFW 计时有一份可复现记录 + 留存候选结论。
+- **交付记录**：2026-10-03 | 决策落地（可由 agent 完成的部分）：发布 gate（10 场访谈 + 一次冷启动计时，留存候选 ≥ 3）已采纳并写入 `docs/roadmap.md`；访谈材料就绪（`docs/research/interview-kit.md`）。**阻塞原因**：访谈与 TTFW 计时必须由 Owner 对真实用户执行，仓库侧无等价替代动作。**所需决策/动作**：Owner 安排访谈与计时，完成后把记录与结论归档到 `docs/research/`。
 
 ### DEC-02 定位收敛
 
-- [ ] 未开始
+- [x] 已决策（2026-10-03）
 - **事实**：README 第一屏对"普通作者"说话（"no development involved"），实际路径要求 Docker/终端/端口/环境变量；指南 FAQ 自述 "self-hosting authors"；访谈筛选把"不会装 Docker 的人"当作信号而非淘汰线。
 - **决策建议**：二选一——A. 面向 homelab/tinkerer 的窄口径产品文档与能力取舍；B. 为普通作者补"零终端"路径（托管/一键安装包）。文案现状与任一方向都要一致。
+- **交付记录**：2026-10-03 | 选择方向 A（self-hosting/homelab 窄口径）：README "For Writers" 重写——明确"跑在自己机器上、需要 Docker 与一个环境变量、无托管或零终端版本"，删除 "no development involved" 的宽口径暗示；中文 README 与各指南（self-hosting authors）本就一致，无需改动；零终端托管路径不再作为承诺（如需转向，等同于方向 B 的新决策）。
 
 ### DEC-03 v0.8.0 Release 状态
 
-- [ ] 未开始
+- [x] 已决策（2026-10-03）
 - **事实**：tag `v0.8.0`、GHCR 多架构镜像（`0.8.0/0.8/latest` 匿名可拉）、raw compose URL 均已可用；GitHub Release 仍为 draft，外部发布动作处于冻结。
 - **决策建议**：正式发布或同步修正 README/deploy 文案（文案部分已包含在 DR-039）。
+- **交付记录**：2026-10-03 | 文案与事实一致（DR-039 落地）：英文 README 只陈述 "tag 已推送、镜像可拉"，中文 README 与 deploy README 如实标注 "GitHub Release 仍为 draft"；正式发布（把 GitHub Release 从 draft 转为 published）保留为 **Owner 外部动作**，agent 不代办（发布是对外且不可撤回的一步，需 Owner 显式执行）。
 
 ### DEC-04 LICENSE 署名与贡献协议
 
-- [ ] 未开始
+- [x] 已决策（2026-10-03）
 - **事实**：MIT，`Copyright (c) 2024 Novel Engine`（署名是项目名而非自然人或实体；年份与仓库创建时间不一致）；无 CLA；CONTRIBUTING 的流程实际为 agent 集群设计，外部人类贡献成本高。
 - **决策建议**：修正署名；决定是否需要 DCO/CLA；如实说明外部贡献门槛。
+- **交付记录**：2026-10-03 | LICENSE 署名修正为 `Copyright (c) 2024-2026 Jackela`（仓库所有者身份；如需替换为法务姓名，Owner 可再改一行）；决定**不引入** CLA/DCO（MIT 已覆盖贡献授权）；CONTRIBUTING 新增 "External contributions" 一节，如实说明 agent 集群工作流与外部贡献门槛。
 
 ### DEC-05 0.9.0 方向：局部生成 + diff 优先
 
-- [ ] 未开始
+- [x] 已决策（2026-10-03）
 - **事实**：评审一致结论——"整章/整本盲签"是当前最贵且体验最差的路径（无 diff、不可局部生成、整本循环有覆盖风险），而不可变修订 + snapshot 是唯一竞品无对应物的承重卖点，却在用户端不可感知（看不到历史正文/无 diff）。
 - **决策建议**：把"局部生成（选区/段落）+ 接受前 diff + 一键撤销"作为 0.9.0 主题；整本生成默认改为逐章确认（与 DR-007 配套）。
+- **交付记录**：2026-10-03 | 方向落档 `docs/roadmap.md`（0.9.0 主题：局部生成 + 接受前 diff + 一键撤销）；其中"接受前 diff"（DR-011/DR-042 已交付的预览与行级 diff）与"一次性撤销"（DR-010 已交付）已在本轮实现，"整本逐章确认"已随 DR-007 成为默认；"局部生成"为 0.9.0 的未开工主题（已登记）。
 
 ### DEC-06 provider 抽象瘦身评估
 
-- [ ] 未开始
+- [x] 已决策（2026-10-03）
 - **事实**：约 30 个文件维护多 provider 抽象与厂商中立 payload，但真实并发上限 4、真实用户 1；同时 DashScope 协议已发生过两次真实断裂（历史记录）。
 - **决策建议**：评估"保留两家 + 明确文档"或"收敛适配层厚度"，避免为不存在的市场维护抽象。
+- **交付记录**：2026-10-03 | 决策：**保留** DashScope + OpenAI-compatible + trial `mock` 三家与现有适配层厚度，不扩张为插件生态、不为不存在的 provider 增加抽象；评估与理由写入 `docs/roadmap.md` 的 "Provider policy" 节（真实并发上限 4、DashScope 两次协议断裂的历史）。若未来出现第二个真实付费用户群，再按该节的标准重新评估。
 
 ---
 
