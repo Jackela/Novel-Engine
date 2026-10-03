@@ -1,6 +1,7 @@
 import { RotateCcw } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
+import { formatDateTime } from "@/app/i18n/format";
 import { useTranslation } from "@/app/i18n/useTranslation";
 import type { RevisionSummary } from "@/app/types/studio";
 
@@ -116,7 +117,7 @@ export function StudioHistoryPanel({
               <article>
                 <div>
                   <strong>{revision.source}</strong>
-                  <time>{new Date(revision.created_at).toLocaleString()}</time>
+                  <time>{formatDateTime(revision.created_at)}</time>
                   <small>
                     {t("history.row.meta", {
                       count: revision.word_count,

@@ -281,4 +281,11 @@ export const enStudio = {
 
   "shell.status.loading": "Loading Studio",
   "shell.heading.loadError": "Unable to open this project",
+
+  // DR-046: top-level crash panel and the shell's connectivity banner.
+  "shell.error.heading": "Something went wrong",
+  "shell.error.body":
+    "The application encountered an unexpected error. Please refresh the page to try again.",
+  "shell.offline.notice":
+    "You are offline. Changes will not be saved until the connection returns.",
 } as const;

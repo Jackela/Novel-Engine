@@ -2,13 +2,12 @@ import { RefreshCw } from "lucide-react";
 
 import { formatTzOffsetLabel } from "@/app/browserTimezone";
 import type { MessageKey } from "@/app/i18n/dictionaries/en";
+import { formatCount } from "@/app/i18n/format";
 import { useTranslation } from "@/app/i18n/useTranslation";
 
 import { useCommandFocusRestoration } from "../hooks/useCommandFocusRestoration";
 import { useWritingStats } from "../hooks/useWritingStats";
 import { StatsWordsTables } from "./StatsWordsTables";
-
-const formatCount = (value: number) => value.toLocaleString("en-US");
 
 function StatsTotalCard({ labelKey, value }: { labelKey: MessageKey; value: number }) {
   const { t } = useTranslation();

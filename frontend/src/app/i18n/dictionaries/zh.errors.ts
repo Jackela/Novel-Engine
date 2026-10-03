@@ -124,4 +124,15 @@ export const zhErrors = {
   "errors.contractUsage": "用量",
   "errors.contractVolume": "卷",
   "errors.contractWriting": "写作统计",
+
+  // 浏览器传输层与提案流的失败文案（DR-046，失败时经 translateActive 解析）。
+  "errors.transport.timedOut": "请求超时，请重试。",
+  "errors.transport.cancelled": "请求已取消。",
+  "errors.transport.requestFailed": "请求失败，状态码 {status}",
+  "errors.transport.downloadTimedOut": "下载超时，请重试。",
+  "errors.transport.downloadFailed": "下载失败，状态码 {status}",
+  "errors.transport.unavailable": "{app} 不可用。请检查本地服务后重试。",
+  "errors.proposalStream.outcomeUnknown": "提案流在收到最终结果前结束，结果未知。",
+  "errors.proposalStream.noBody": "提案流未返回响应体。",
+  "errors.proposalStream.endedWithoutResult": "提案流结束时没有返回结果。",
 } satisfies Record<keyof typeof enErrors, string>;

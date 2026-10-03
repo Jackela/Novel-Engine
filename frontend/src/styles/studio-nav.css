@@ -594,3 +594,22 @@
   background: var(--badge-draft-active-bg);
   color: var(--badge-draft-active-ink);
 }
+
+/* DR-046: the shell's connectivity banner. Fixed so it never joins the
+   fully-assigned grid placement of `.studio`; it inherits the shell's
+   custom properties through the DOM, not the grid. */
+.studio-offline {
+  position: fixed;
+  top: calc(var(--top) + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 4;
+  max-width: min(560px, 90vw);
+  padding: 7px 14px;
+  border: 1px solid var(--warn);
+  border-radius: 999px;
+  background: var(--warn-soft);
+  color: var(--warn-ink);
+  font-size: 12px;
+  font-weight: 600;
+}

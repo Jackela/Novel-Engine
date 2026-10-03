@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 
+import { formatDateTime } from "@/app/i18n/format";
 import { useTranslation } from "@/app/i18n/useTranslation";
 import type { ReviewSummary } from "@/app/types/studio";
 
@@ -80,7 +81,7 @@ export function StudioReviewHistoryList({
                 onClick={() => onSelectReview?.(summary.id)}
                 type="button"
               >
-                <span>{new Date(summary.created_at).toLocaleString()}</span>
+                <span>{formatDateTime(summary.created_at)}</span>
                 <small>
                   {t("review.history.meta", {
                     count: summary.issue_count,

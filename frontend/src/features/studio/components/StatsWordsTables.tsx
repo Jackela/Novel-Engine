@@ -1,12 +1,11 @@
 import type { MessageKey } from "@/app/i18n/dictionaries/en";
+import { formatCount } from "@/app/i18n/format";
 import { useTranslation } from "@/app/i18n/useTranslation";
 import type {
   WritingStatsDayRow,
   WritingStatsWeekRow,
   WritingStatsWords,
 } from "@/app/types/studio";
-
-const formatCount = (value: number) => value.toLocaleString("en-US");
 
 function totalWords(words: WritingStatsWords): number {
   return words.author + words.ai_accepted + words.restore;

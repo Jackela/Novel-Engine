@@ -265,4 +265,9 @@ export const zhStudio = {
 
   "shell.status.loading": "正在加载写作工作室",
   "shell.heading.loadError": "无法打开这个项目",
+
+  // DR-046：顶层崩溃面板与离线横幅。
+  "shell.error.heading": "出了点问题",
+  "shell.error.body": "应用遇到了意外错误，请刷新页面重试。",
+  "shell.offline.notice": "当前处于离线状态。连接恢复前，更改不会被保存。",
 } satisfies Record<keyof typeof enStudio, string>;

@@ -62,6 +62,20 @@ export const enErrors = {
   "errors.settingsIdentity": "Invalid project settings response identity.",
   "errors.exportArtifactMissing": "Export artifact is not available.",
 
+  // Browser transport and proposal-stream failures (DR-046): resolved through
+  // `translateActive` at failure time so the copy follows the active language.
+  // The EN values preserve the pre-i18n literals byte-for-byte.
+  "errors.transport.timedOut": "Request timed out. Please retry.",
+  "errors.transport.cancelled": "Request cancelled.",
+  "errors.transport.requestFailed": "Request failed with status {status}",
+  "errors.transport.downloadTimedOut": "Download timed out. Please retry.",
+  "errors.transport.downloadFailed": "Download failed with status {status}",
+  "errors.transport.unavailable": "{app} is unavailable. Check the local service and retry.",
+  "errors.proposalStream.outcomeUnknown":
+    "The proposal stream ended before its final result was received. The outcome is unknown.",
+  "errors.proposalStream.noBody": "Proposal stream returned no body.",
+  "errors.proposalStream.endedWithoutResult": "Proposal stream ended without a result.",
+
   // Stable envelope codes (DR-021).
   "errors.codeUnauthorized": "Your session has expired. Sign in again to continue.",
   "errors.codeForbidden": "You do not have permission to do this.",

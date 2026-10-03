@@ -1,5 +1,6 @@
 import type { ComponentProps, Ref } from "react";
 
+import { StudioOfflineNotice } from "./components/StudioOfflineNotice";
 import { StudioEditorPane } from "./StudioEditorPane";
 import { StudioInspector } from "./StudioInspector";
 import { StudioNavigator } from "./StudioNavigator";
@@ -28,6 +29,7 @@ export function StudioPageView({
   return (
     <main aria-labelledby="studio-project-title" className="studio">
       <StudioTopbar headingRef={headingRef} project={project} onBack={onBack} />
+      <StudioOfflineNotice />
       <StudioNavigator {...navigator} />
       <StudioEditorPane {...editor} />
       <StudioInspector {...inspector} />

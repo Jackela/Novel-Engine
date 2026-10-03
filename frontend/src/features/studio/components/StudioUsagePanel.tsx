@@ -1,6 +1,6 @@
 import { RefreshCw } from "lucide-react";
-
 import type { MessageKey } from "@/app/i18n/dictionaries/en";
+import { formatCount } from "@/app/i18n/format";
 import { useTranslation } from "@/app/i18n/useTranslation";
 import type { ProjectUsage } from "@/app/types/studio";
 
@@ -8,8 +8,6 @@ import { useCommandFocusRestoration } from "../hooks/useCommandFocusRestoration"
 import { useProjectUsage } from "../hooks/useProjectUsage";
 import { UsageDailyBars } from "./UsageDailyBars";
 import { UsageModelTable } from "./UsageModelTable";
-
-const formatCount = (value: number) => value.toLocaleString("en-US");
 
 function UsageTotalCard({ labelKey, value }: { labelKey: MessageKey; value: number }) {
   const { t } = useTranslation();

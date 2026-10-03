@@ -1,7 +1,6 @@
+import { formatCount } from "@/app/i18n/format";
 import { useTranslation } from "@/app/i18n/useTranslation";
 import type { UsageModelRow } from "@/app/types/studio";
-
-const formatCount = (value: number) => value.toLocaleString("en-US");
 
 /**
  * Per-model usage detail table for the Usage inspector panel (#377, DR-028).

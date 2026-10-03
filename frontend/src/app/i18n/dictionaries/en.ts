@@ -53,14 +53,6 @@ export const en = {
  */
 export type Dictionary = Record<keyof typeof en, string>;
 
-/**
- * One per-screen slice of a dictionary: keys must belong to the canonical
- * set, but coverage is partial — the merged `zh` in `zh.ts` is annotated
- * with the full `Dictionary`, which is what keeps the chunks collectively
- * key-complete.
- */
-export type DictionaryChunk = Partial<Dictionary>;
-
 /** Any key the active dictionary resolves; unknown keys fail to compile. */
 export type MessageKey = keyof Dictionary;
 

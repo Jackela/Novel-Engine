@@ -1,6 +1,7 @@
 import { BookOpen, Loader2, Trash2 } from "lucide-react";
 import { type KeyboardEvent, useEffect, useRef } from "react";
 
+import { formatDate } from "@/app/i18n/format";
 import { useTranslation } from "@/app/i18n/useTranslation";
 import type { ProjectCatalogItem } from "@/app/types/studio";
 
@@ -68,7 +69,7 @@ export function ProjectCatalogRow({
           <strong>{project.title}</strong>
           <small>{project.description || t("library.catalog.noPremise")}</small>
         </span>
-        <time>{new Date(project.updated_at).toLocaleDateString()}</time>
+        <time>{formatDate(project.updated_at)}</time>
       </button>
       <span className="library__project-actions">
         <button

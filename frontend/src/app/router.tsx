@@ -1,5 +1,6 @@
 import { createBrowserRouter, useRouteError } from "react-router-dom";
 
+import { AppCrashFallback } from "@/app/AppCrashFallback";
 import { EntryPage } from "@/features/studio/EntryPage";
 import { ProjectLibraryPage } from "@/features/studio/ProjectLibraryPage";
 import { StudioPage } from "@/features/studio/StudioPage";
@@ -8,17 +9,7 @@ function RouteErrorBoundary() {
   const error = useRouteError();
   const message = error instanceof Error ? error.message : null;
 
-  return (
-    <div className="entry">
-      <div className="entry__panel">
-        <h1>Something went wrong</h1>
-        <p>
-          The application encountered an unexpected error. Please refresh the page to try again.
-        </p>
-        {message ? <p className="ui-form-error">{message}</p> : null}
-      </div>
-    </div>
-  );
+  return <AppCrashFallback detail={message} />;
 }
 
 const routerFuture = {

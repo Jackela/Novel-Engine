@@ -1,6 +1,7 @@
 import { apiUrl, getCsrfToken, HttpError } from "@/app/api";
 import { ApiContractError, objectValue } from "@/app/apiContract";
 import { parseJob } from "@/app/apiWorkflowContract";
+import { translateActive } from "@/app/i18n/translate";
 import { localServiceUnavailable } from "@/app/networkError";
 import {
   createProposalStreamWatchdog,
@@ -27,7 +28,7 @@ export class ProposalOutcomeUnknownError extends Error {
 
   constructor(cause: unknown, detail?: string) {
     super(
-      "The proposal stream ended before its final result was received. The outcome is unknown." +
+      translateActive("errors.proposalStream.outcomeUnknown") +
         (detail === undefined ? "" : ` ${detail}`),
       { cause },
     );
@@ -218,7 +219,7 @@ export async function streamProposal({
     if (stall !== undefined) throw stalledOutcome(stall);
     let cause = error;
     if ((error instanceof Error || error instanceof DOMException) && error.name === "AbortError") {
-      cause = new Error("Request cancelled.", { cause: error });
+      cause = new Error(translateActive("errors.transport.cancelled"), { cause: error });
     }
     if (error instanceof TypeError) {
       cause = localServiceUnavailable(error);
@@ -232,7 +233,9 @@ export async function streamProposal({
   const body = response.body;
   if (body === null) {
     finishStream();
-    throw new ProposalOutcomeUnknownError(new HttpError("Proposal stream returned no body.", 502));
+    throw new ProposalOutcomeUnknownError(
+      new HttpError(translateActive("errors.proposalStream.noBody"), 502),
+    );
   }
   let reader: ReadableStreamDefaultReader<Uint8Array>;
   try {
@@ -275,17 +278,19 @@ export async function streamProposal({
         }
       }
     }
-    throw new HttpError("Proposal stream ended without a result.", 502);
+    throw new HttpError(translateActive("errors.proposalStream.endedWithoutResult"), 502);
   } catch (error) {
     if (outcomeKnown) throw error;
     if (signal?.aborted === true) {
-      throw new ProposalOutcomeUnknownError(new Error("Request cancelled.", { cause: error }));
+      throw new ProposalOutcomeUnknownError(
+        new Error(translateActive("errors.transport.cancelled"), { cause: error }),
+      );
     }
     const stall = watchdog.stalled();
     if (stall !== undefined) throw stalledOutcome(stall);
     const cause =
       (error instanceof Error || error instanceof DOMException) && error.name === "AbortError"
-        ? new Error("Request cancelled.", { cause: error })
+        ? new Error(translateActive("errors.transport.cancelled"), { cause: error })
         : error;
     // A malformed frame is a protocol defect, not a lost connection: only a
     // transport-level ending gets the interruption diagnostic.

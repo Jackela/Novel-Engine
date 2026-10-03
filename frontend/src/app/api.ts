@@ -170,18 +170,6 @@ export const api = {
       parseSearch,
     );
   },
-  proposal: (
-    projectId: string,
-    documentId: string,
-    operation: "continue" | "rewrite" | "generate",
-    instruction: string,
-    provider: string,
-  ) =>
-    postJson(
-      `/api/projects/${projectId}/documents/${documentId}/ai-proposals`,
-      { operation, instruction, provider },
-      parseJob,
-    ),
   acceptProposal: (projectId: string, jobId: string) =>
     request(
       `/api/projects/${projectId}/ai-proposals/${jobId}/accept`,

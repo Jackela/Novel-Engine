@@ -2,6 +2,7 @@ import { RotateCcw } from "lucide-react";
 import { useRef, useState } from "react";
 
 import { api } from "@/app/api";
+import { formatDateTime } from "@/app/i18n/format";
 import { useTranslation } from "@/app/i18n/useTranslation";
 import type { StudioJobSummary } from "@/app/types/studio";
 import { toErrorMessage } from "../hooks/toErrorMessage";
@@ -97,7 +98,7 @@ export function StudioJobsPanel({
                 <small>
                   {t("jobs.row.meta", {
                     provider: providerLabel(job.provider),
-                    date: new Date(job.created_at).toLocaleString(),
+                    date: formatDateTime(job.created_at),
                   })}
                 </small>
                 {job.error ? (
