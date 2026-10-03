@@ -9,7 +9,15 @@ services:
       # Empty by default so the container entrypoint can bootstrap a secret
       # into the persistent volume; an explicitly exported value always wins.
       SECURITY_SECRET_KEY: ${SECURITY_SECRET_KEY:-}
-      SECURITY_CORS_ORIGINS: ${SECURITY_CORS_ORIGINS:-https://app.example.com}
+      # Intentionally empty (no placeholder): with the variable unset the
+      # server falls back to the localhost defaults, the production guard
+      # refuses them, and the container fails fast until the real public
+      # origin(s) are configured.
+      SECURITY_CORS_ORIGINS: ${SECURITY_CORS_ORIGINS:-}
+      # Reverse-proxy addresses whose forwarded client identity may be
+      # trusted; without it every client behind a proxy shares one
+      # rate-limit bucket (see deploy/README.md hosting checklist).
+      SECURITY_TRUSTED_PROXIES: ${SECURITY_TRUSTED_PROXIES:-}
       DB_URL: sqlite:///./data/novel-engine.sqlite3
       LLM_PROVIDER: ${LLM_PROVIDER:-mock}
       # Provider settings pass through from the shell environment or the

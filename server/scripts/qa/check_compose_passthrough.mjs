@@ -66,6 +66,11 @@ const SERVER_ANCHORS = [
   "API_MAX_ACTIVE_WORKFLOWS_PER_PROJECT",
 ];
 
+// Compose entries the DR-034 reverse-proxy deployment contract depends on:
+// without the passthrough a proxied deployment cannot configure trusted
+// client identity through the documented Compose workflow.
+const REVERSE_PROXY_PASSTHROUGH = ["SECURITY_TRUSTED_PROXIES"];
+
 // Matches `helper(env, "KEY")` across line breaks — the only shape in which
 // the config loaders pass a variable name. Helper definitions (`function
 // stringFrom(env: …)`) do not match: their `env` is followed by a type
@@ -168,6 +173,32 @@ for (const composeFile of COMPOSE_FILES) {
         `${composeFile} environment is missing provider variable ${key} read by provider_config.ts`,
       );
     }
+  }
+  // DR-034 deployment contract beyond the provider read set: the reverse-proxy
+  // knobs must be passable, and no compose file may ship a placeholder CORS
+  // origin — a non-empty `${SECURITY_CORS_ORIGINS:-…}` fallback would let a
+  // fake origin pass the production guard instead of failing fast on the
+  // missing configuration.
+  const contents = readTextLines(join(root, composeFile)).join("\n");
+  for (const key of REVERSE_PROXY_PASSTHROUGH) {
+    if (!new RegExp(`${key}:\\s*\\$\\{${key}:-`).test(contents)) {
+      failures.push(
+        `${composeFile} must pass ${key} through as \${${key}:-} for reverse-proxy deployments`,
+      );
+    }
+  }
+  const corsDefault = contents.match(
+    /SECURITY_CORS_ORIGINS:\s*\$\{SECURITY_CORS_ORIGINS:-([^}]*)\}/,
+  );
+  if (corsDefault === null) {
+    failures.push(
+      `${composeFile} must pass SECURITY_CORS_ORIGINS through as \${SECURITY_CORS_ORIGINS:-}`,
+    );
+  } else if (corsDefault[1].trim() !== "") {
+    failures.push(
+      `${composeFile} ships a placeholder SECURITY_CORS_ORIGINS default ` +
+        `"${corsDefault[1]}"; keep the fallback empty so a missing configuration fails fast`,
+    );
   }
 }
 

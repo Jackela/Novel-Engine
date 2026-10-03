@@ -77,10 +77,10 @@ guide](openwiki/guides/provider-setup.md).
 | `API_PORT` | `8000` | Listen port. |
 | `API_MAX_ACTIVE_WORKFLOWS` | `4` | Global concurrent workflow capacity; integer 1–1024. |
 | `API_MAX_ACTIVE_WORKFLOWS_PER_PROJECT` | `2` | Per-project workflow capacity; must not exceed the global limit. |
-| `SECURITY_SECRET_KEY` | sample value | Required in production; generate a unique value. |
-| `SECURITY_CORS_ORIGINS` | localhost origins | Must be explicit and non-localhost in production. |
+| `SECURITY_SECRET_KEY` | unset (rotated per start outside production) | Required in production; a missing secret, a value shorter than 16 characters, or a `change-me*` placeholder refuses startup there. Generate a unique random value. |
+| `SECURITY_CORS_ORIGINS` | localhost origins | Must be explicit and non-localhost in production; the Compose files intentionally ship no placeholder, so an unset value refuses startup there. |
 | `SECURITY_RATE_LIMIT` | `5/minute` | Auth endpoint rate limit. |
-| `SECURITY_TRUSTED_PROXIES` | empty | Comma-separated trusted proxy addresses (exact IPs, or host strings for local sockets) whose forwarding chain may be trusted for client identity; the client is the rightmost untrusted hop, never the client-controlled leading segment. Network ranges are refused at startup — a range that covers clients would let them forge identities. |
+| `SECURITY_TRUSTED_PROXIES` | empty | Comma-separated trusted proxy addresses (exact IPs, or host strings for local sockets) whose forwarding chain may be trusted for client identity; the client is the rightmost untrusted hop, never the client-controlled leading segment. Network ranges are refused at startup — a range that covers clients would let them forge identities. Set the exact proxy address(es) behind a reverse proxy, or every client shares one rate-limit bucket. |
 | `LLM_PROVIDER` | `mock` | `mock`, `dashscope`, or `openai_compatible`. |
 | `LLM_MODEL` | unset | Generic model override applied to every provider, between the per-provider override and the hard default. Left unset, the mock provider resolves to `deterministic-story-v1`; `.env.example` pins it to `studio-copilot-v1` as an example override. |
 | `DASHSCOPE_API_KEY` | unset | Required when `LLM_PROVIDER=dashscope`. |
@@ -108,7 +108,7 @@ Frontend-only variables live in `frontend/.env.example`:
 Docker is the recommended way to run Novel Engine. Once v0.8.0 is published,
 the quickest path needs no clone and no build: a prebuilt image on GHCR is
 started by a single command (see [deploy/README.md](deploy/README.md) for the
-walkthrough, upgrades, and hosting a demo server):
+walkthrough, upgrades, and the reverse-proxy hosting checklist):
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/Jackela/Novel-Engine/v0.8.0/deploy/compose.yaml | docker compose -f - up -d
@@ -123,6 +123,17 @@ the image and can take a few minutes):
 ```bash
 docker compose up -d
 ```
+
+Before the first start, configure the studio's browser origin: the Compose
+files intentionally ship no placeholder, and production refuses the default
+localhost origins, so the container will not start until
+`SECURITY_CORS_ORIGINS` names an origin (`SECURITY_CORS_ORIGINS=… docker
+compose up -d` or a `.env` file next to `compose.yaml` both work; local-only
+installs can follow the [getting started
+guide](openwiki/guides/getting-started.md), which also shows the
+development-mode override for a strictly local setup). Behind a reverse proxy
+also set `SECURITY_TRUSTED_PROXIES` to the proxy's exact address — see the
+[hosting checklist](deploy/README.md#hosting-on-a-server).
 
 On a fresh volume the first start logs a one-time **first-start setup token**.
 Because the published port makes the browser a non-loopback peer, the Owner

@@ -21,6 +21,8 @@
 **路径一：一行命令（无需克隆代码）** —— 待 v0.8.0 发布后，在任意空目录运行：
 
 ```bash
+# 工作室对外的浏览器来源（Compose 从 shell 或 .env 读取）；缺省会直接拒绝启动
+export SECURITY_CORS_ORIGINS=https://studio.example.com
 curl -fsSL https://raw.githubusercontent.com/Jackela/Novel-Engine/v0.8.0/deploy/compose.yaml | docker compose -f - up -d
 ```
 
@@ -34,6 +36,12 @@ git clone https://github.com/Jackela/Novel-Engine.git
 cd Novel-Engine
 docker compose up -d
 ```
+
+容器默认以 production 模式启动，而 production 拒绝 `localhost` 来源，也刻意
+不再提供占位 origin：纯本地使用前，先在 `compose.yaml` 旁边创建 `.env`
+（写 `SECURITY_CORS_ORIGINS=http://localhost:8000`）和 `compose.override.yaml`
+（把 `APP_ENVIRONMENT` 切到 `development`），否则容器会拒绝启动。详见
+[快速开始（Docker）](openwiki/guides/zh/getting-started.md)。
 
 第一次启动要构建镜像，可能需要几分钟。之后在 Chrome 或 Firefox 打开
 `http://localhost:8000`（Safari 有已知渲染缺陷，不建议），在初始化页面创

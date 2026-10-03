@@ -61,12 +61,12 @@ Copilot and whole-book generation use the SSE proposal stream. Stopping a draft 
 - `DB_URL=sqlite:///./data/novel-engine.sqlite3`; only self-hosted SQLite URLs are accepted.
 - `API_HOST=0.0.0.0`, `API_PORT=8000`.
 - `LLM_PROVIDER=mock` and `LLM_MODEL=studio-copilot-v1`; DashScope and OpenAI-compatible providers require their respective configured API-key variables.
-- `SECURITY_SECRET_KEY` and `SECURITY_CORS_ORIGINS`; production requires a non-default secret and explicit non-localhost CORS origins.
+- `SECURITY_SECRET_KEY` and `SECURITY_CORS_ORIGINS`; production requires a non-default secret (a `change-me*` placeholder is refused) and explicit non-localhost CORS origins, and the Compose files ship no placeholder origin — an unset value fails fast at startup. Behind a reverse proxy also set `SECURITY_TRUSTED_PROXIES` to the proxy's exact address, or every client shares one rate-limit bucket.
 - `SECURITY_RATE_LIMIT=5/minute` for the authentication endpoints.
 
 Configuration loads `.env.local` with process environment variables taking precedence (`server/src/shared/infrastructure/config/server_config.ts`). SQLite connections enable foreign keys and WAL mode (`server/src/shared/infrastructure/db/`). Both `.env.local` and the default SQLite `data/` path resolve against the workspace root (the checkout directory), not the current working directory.
 
-For a containerized deployment, set a real `SECURITY_SECRET_KEY` and run:
+For a containerized deployment, set a real `SECURITY_SECRET_KEY` and `SECURITY_CORS_ORIGINS` (the container refuses to start without an explicit non-localhost origin) and run:
 
 ```powershell
 docker compose up --build

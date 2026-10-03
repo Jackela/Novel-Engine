@@ -13,13 +13,20 @@ Once the v0.8.0 release is published, run this from any empty directory on a
 machine with Docker (Compose v2) and an internet connection:
 
 ```bash
+# The studio's public origin; Compose reads it from the shell or a .env file.
+export SECURITY_CORS_ORIGINS=https://studio.example.com
 curl -fsSL https://raw.githubusercontent.com/Jackela/Novel-Engine/v0.8.0/deploy/compose.yaml | docker compose -f - up -d
 ```
 
 The image (`ghcr.io/jackela/novel-engine`, tag `0.8.0` by default) is pulled
-automatically, the studio listens on port 8000, and the first start needs no
-manual configuration: the container generates a session secret into the
-persistent volume, applies database migrations, and then serves the app.
+automatically and the studio listens on port 8000. The first start needs no
+secret configuration — the container generates a session secret into the
+persistent volume, applies database migrations, and then serves the app — but
+it does need `SECURITY_CORS_ORIGINS`: the production guard refuses the
+localhost defaults and the file ships no placeholder, so the container fails
+fast until the real public origin is configured. Behind a reverse proxy also
+set `SECURITY_TRUSTED_PROXIES` — see the [hosting
+checklist](#hosting-on-a-server).
 
 On a fresh volume the server logs a one-time **first-start setup token**.
 Because the published port makes the browser a non-loopback peer, the Owner
@@ -67,8 +74,9 @@ The most common settings:
 | Variable | Default | Notes |
 |---|---|---|
 | `NE_VERSION` | `0.8.0` | Image tag to run; use the release version you want (e.g. `NE_VERSION=0.8.1`). |
-| `SECURITY_SECRET_KEY` | empty | Empty lets the container generate and persist a secret in the volume. An explicit value must be at least 16 characters. |
-| `SECURITY_CORS_ORIGINS` | placeholder | Comma-separated browser origins; see [Hosting on a server](#hosting-on-a-server). |
+| `SECURITY_SECRET_KEY` | empty | Empty lets the container generate and persist a secret in the volume. An explicit value must be at least 16 characters and must not be a `change-me*` placeholder. |
+| `SECURITY_CORS_ORIGINS` | unset | Exact public browser origin(s), comma-separated. No placeholder ships: unset refuses to start (the production guard rejects the localhost defaults). See [Hosting on a server](#hosting-on-a-server). |
+| `SECURITY_TRUSTED_PROXIES` | empty | Exact reverse-proxy address(es) whose forwarded client identity the server trusts. Without it every client behind the proxy shares one rate-limit bucket. |
 | `LLM_PROVIDER` | `mock` | `mock`, `dashscope`, or `openai_compatible`. |
 | `DASHSCOPE_API_KEY` / `LLM_API_KEY` | unset | Provider credentials, required for real providers. |
 
@@ -123,9 +131,34 @@ before a major upgrade.
 
 ## Hosting on a server
 
-The container runs with `APP_ENVIRONMENT=production`, so the server's
+The container defaults to `APP_ENVIRONMENT=production`, so the server's
 production startup guards apply and fail fast on misconfiguration. For a
-demo or public host, mind these points:
+demo or public host, work through this checklist before the first public
+boot:
+
+1. **Publish the container port only to loopback or a private network**
+   (`127.0.0.1:8000:8000` in an override file, or a firewall) so the TLS
+   proxy is the only public entry.
+2. **Set `SECURITY_CORS_ORIGINS` to the exact public origin(s).** No
+   placeholder ships: with the variable unset the server falls back to the
+   localhost defaults, the production guard refuses them, and the container
+   fails fast instead of silently accepting a fake origin.
+3. **Set `SECURITY_TRUSTED_PROXIES` to the proxy's exact address**
+   (comma-separated for several). Without it the server ignores forwarded
+   identity, every visitor shares one rate-limit bucket, and anonymous
+   requests can keep the author locked out with `429`. Network ranges are
+   refused at startup.
+4. **Forward the scheme, host, and client chain.** The proxy must send
+   `X-Forwarded-Proto` and append to `X-Forwarded-For` (nginx:
+   `proxy_set_header X-Forwarded-Proto $scheme; proxy_set_header
+   X-Forwarded-For $proxy_add_x_forwarded_for;`) and preserve `Host`, so the
+   HTTPS setup origin check and per-client throttling both see the real
+   values. Forwarded headers are honored only from addresses listed in
+   `SECURITY_TRUSTED_PROXIES`.
+5. **Keep the first-start setup token at hand** — through the proxy the
+   browser is a non-loopback peer.
+
+The same points in more detail:
 
 - **Reverse proxy with TLS.** The app serves plain HTTP on port 8000. Put a
   reverse proxy (nginx, Caddy, …) in front, terminate TLS there, and forward
@@ -135,19 +168,22 @@ demo or public host, mind these points:
 - **Trusted proxies.** Set `SECURITY_TRUSTED_PROXIES` to your proxy's exact
   address (comma-separated for several) so the server trusts forwarded client
   identity — this is what keeps per-client rate limiting meaningful behind a
-  proxy. Only concrete addresses are accepted: a network range is refused at
-  startup, because trust that covers clients would let a client pose as a
-  proxy and rotate forged `X-Forwarded-For` segments into fresh rate-limit
-  buckets. The identity is the rightmost untrusted hop of the chain, so keep
-  the proxy appending to `X-Forwarded-For` (nginx's default
-  `$proxy_add_x_forwarded_for`); a proxy that passes the client's header
-  through unchanged still trusts the client's own claim.
+  proxy. Without this setting every visitor behind the proxy shares one
+  rate-limit bucket, so an anonymous flood of failed logins can keep the
+  author at `429` (login DoS). Only concrete addresses are accepted: a
+  network range is refused at startup, because trust that covers clients
+  would let a client pose as a proxy and rotate forged `X-Forwarded-For`
+  segments into fresh rate-limit buckets. The identity is the rightmost
+  untrusted hop of the chain, so keep the proxy appending to
+  `X-Forwarded-For` (nginx's default `$proxy_add_x_forwarded_for`); a proxy
+  that passes the client's header through unchanged still trusts the client's
+  own claim.
 - **Explicit session secret.** The first-boot secret bootstrap (generated
   into the volume) satisfies the production guard, but on a public host set
   `SECURITY_SECRET_KEY` explicitly — for example `openssl rand -hex 32` — so
   the credential is operator-owned and survives even a volume reset. Any
-  explicit value must be at least 16 characters; shorter values refuse to
-  start.
+  explicit value must be at least 16 characters and must not keep the
+  `change-me*` placeholder; both refuse to start.
 - **First-start setup token.** On a fresh volume the first start logs a
   one-time `first-start setup token`, and every non-loopback `POST /api/setup`
   — including the browser through your TLS proxy — must present it in the
@@ -160,9 +196,11 @@ demo or public host, mind these points:
   API from a different origin than the one serving it, `SECURITY_CORS_ORIGINS`
   must list those exact origins (scheme + host + port, comma-separated). With
   a same-origin reverse proxy setup — the studio SPA and the API behind one
-  hostname — no cross-origin access occurs and the default is never exercised
-  by the browser; still, replace the placeholder with your real origin so the
-  configuration states the truth.
+  hostname — no cross-origin request occurs, but `SECURITY_CORS_ORIGINS`
+  still must name the public origin: an unset value falls back to the
+  localhost defaults and the production guard refuses to start. That is the
+  intended fail-fast behavior — there is no placeholder origin to fall back
+  on.
 
 ## Data volume
 

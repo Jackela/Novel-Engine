@@ -33,9 +33,31 @@
   **Download ZIP**，然后解压。在解压出来的文件夹里打开一个终端——就是那
   个装着 `compose.yaml` 的文件夹。
 
-## Step 2: Start the studio
+## Step 2: Configure and start the studio
 
-在包含 `compose.yaml` 的文件夹里运行：
+容器以 production 模式启动，而 production 在工作室的浏览器来源配置好之前会拒绝
+启动（这里刻意不提供占位 origin）。在包含 `compose.yaml` 的文件夹里创建一个名
+为 `.env` 的文件，写上你要打开工作室的地址；再创建一个
+`compose.override.yaml`，把纯本地安装切换到 development 模式——production 拒绝
+`localhost` 来源：
+
+```ini
+# .env
+SECURITY_CORS_ORIGINS=http://localhost:8000
+```
+
+```yaml
+# compose.override.yaml
+services:
+  novel-engine:
+    environment:
+      APP_ENVIRONMENT: development
+```
+
+如果主机需要被其他设备访问，则保留 production 模式，改为写上确切的公网
+origin 和反向代理地址——见[部署清单](../../deploy/README.md#hosting-on-a-server)。
+
+然后在包含 `compose.yaml` 的文件夹里运行：
 
 ```bash
 docker compose up -d

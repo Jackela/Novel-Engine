@@ -14,6 +14,7 @@ import { armFirstBootSetupToken } from "../../shared/infrastructure/db/setup_tok
 import { sqliteHealthProbe } from "../../shared/infrastructure/db/sqlite_health_probe.js";
 import type { StudioDatabase } from "../../shared/infrastructure/db/startup.js";
 import { readProductIdentity } from "../../shared/infrastructure/workspace_manifest.js";
+import { principalGuard } from "../../shared/interface/http/auth_guard.js";
 import { registerErrorEnvelope } from "../../shared/interface/http/error_envelope.js";
 import { healthRoutes } from "../../shared/interface/http/health_routes.js";
 import {
@@ -220,7 +221,10 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
         options.healthProbe ??
         (persistence === undefined ? emptyHealthProbe : sqliteHealthProbe(persistence.db.raw)),
     });
-    await app.register(versionRoutes, { info: versionInfo });
+    await app.register(versionRoutes, {
+      info: versionInfo,
+      production: environment === "production",
+    });
     await app.register(providerCatalogRoutes, {
       authService,
       defaultProvider: provider.defaultProvider,
@@ -233,7 +237,20 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
       dataDirectory,
     });
 
-    app.get("/openapi.json", { schema: { hide: true } }, async () => app.swagger());
+    // The full contract is owner-only in production (DR-035); development and
+    // test keep the route open so the snapshot gate and local tooling can read
+    // it. The owner guard answers 401 to anonymous callers and 503 when no
+    // persistence layer exists to authorize against (fail-closed).
+    const openApiDocument = async () => app.swagger();
+    if (environment === "production") {
+      app.get(
+        "/openapi.json",
+        { schema: { hide: true }, preHandler: principalGuard(authService) },
+        openApiDocument,
+      );
+    } else {
+      app.get("/openapi.json", { schema: { hide: true } }, openApiDocument);
+    }
 
     // The SPA surface registers last: its wildcard only fires when no API,
     // health, or version route matched, so the JSON API stays distinct.

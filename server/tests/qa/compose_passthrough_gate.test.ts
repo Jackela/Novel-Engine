@@ -144,6 +144,8 @@ const COMPOSE_FIXTURE = `services:
       # Provider settings pass through from the project .env file.
       DB_URL: sqlite:///./data/novel-engine.sqlite3
       SECURITY_SECRET_KEY: \${SECURITY_SECRET_KEY:-}
+      SECURITY_CORS_ORIGINS: \${SECURITY_CORS_ORIGINS:-}
+      SECURITY_TRUSTED_PROXIES: \${SECURITY_TRUSTED_PROXIES:-}
       LLM_PROVIDER: \${LLM_PROVIDER:-mock}
       LLM_MODEL: \${LLM_MODEL:-}
       DASHSCOPE_MODEL: \${DASHSCOPE_MODEL:-}
@@ -269,6 +271,53 @@ describe("compose passthrough gate", () => {
 
       expect(result.status).toBe(1);
       expect(result.stderr).toContain("required compose file is missing: deploy/compose.yaml");
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+
+  it("rejects a compose file that ships a placeholder CORS origin default", async () => {
+    const root = await createQaRepository();
+
+    try {
+      initializeGitRepository(root);
+      await writeLoaderFixtures(root);
+      await writeCandidate(root, "compose.yaml", COMPOSE_FIXTURE);
+      await writeCandidate(
+        root,
+        "deploy/compose.yaml",
+        COMPOSE_FIXTURE.replace(
+          `SECURITY_CORS_ORIGINS: \${SECURITY_CORS_ORIGINS:-}`,
+          `SECURITY_CORS_ORIGINS: \${SECURITY_CORS_ORIGINS:-https://app.example.com}`,
+        ),
+      );
+
+      const result = runGate(root);
+
+      expect(result.status).toBe(1);
+      expect(result.stderr).toContain("ships a placeholder SECURITY_CORS_ORIGINS default");
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+
+  it("rejects a compose file that drops the trusted-proxy passthrough", async () => {
+    const root = await createQaRepository();
+
+    try {
+      initializeGitRepository(root);
+      await writeLoaderFixtures(root);
+      await writeCandidate(
+        root,
+        "compose.yaml",
+        COMPOSE_FIXTURE.replace(/^ {6}SECURITY_TRUSTED_PROXIES:.*\n/m, ""),
+      );
+      await writeCandidate(root, "deploy/compose.yaml", COMPOSE_FIXTURE);
+
+      const result = runGate(root);
+
+      expect(result.status).toBe(1);
+      expect(result.stderr).toContain("must pass SECURITY_TRUSTED_PROXIES through");
     } finally {
       await rm(root, { recursive: true, force: true });
     }

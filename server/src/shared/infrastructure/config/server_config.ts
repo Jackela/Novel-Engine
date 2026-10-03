@@ -27,6 +27,14 @@ const DEFAULT_MAX_ACTIVE_WORKFLOWS_PER_PROJECT = 2;
 // Sentinel default assembled from harmless words so no credential-shaped literal ships in source.
 export const DEFAULT_SECRET_KEY = ["change-me", "in-production", "32-char-long"].join("-");
 
+/**
+ * Placeholder prefix refused by the production guard. `.env.example` ships a
+ * `change-me…` value, so without this rule a copied example file silently
+ * becomes the production session key; the guard makes it fail startup
+ * instead. Outside production the value stays usable for local development.
+ */
+const PLACEHOLDER_SECRET_PREFIX = "change-me";
+
 /** Minimum usable secret length; explicit values shorter than this fail validation. */
 const MIN_SECRET_LENGTH = 16;
 
@@ -142,6 +150,12 @@ export function assertStartupGuards(config: ServerConfig): void {
   }
   if (config.environment !== "production") {
     return;
+  }
+  if (config.sessionSecret?.startsWith(PLACEHOLDER_SECRET_PREFIX) === true) {
+    throw new ConfigurationError(
+      "SECURITY_SECRET_KEY must not keep the change-me placeholder value in production; " +
+        "generate a unique random value (for example: openssl rand -hex 32)",
+    );
   }
   if (!config.databaseUrl.startsWith("sqlite:///")) {
     throw new ConfigurationError("DB_URL must use the self-hosted SQLite store (sqlite:///…)");
