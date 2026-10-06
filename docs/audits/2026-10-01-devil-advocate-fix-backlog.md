@@ -776,3 +776,4 @@
 - 2026-10-04 | 收尾 | 遗留候选登记 | `gh issue create` → #674（DR-026 无终止帧 EOF）、#675（DR-028 预算/告警）、#676（DR-029 排序选项）、#677（DR-030 高频词短路） | 完成：四条候选转入 GitHub issue tracker（needs-triage），原始证据保留在本文件
 - 2026-10-04 | 收尾 | 规格对账 | 新增并归档 openspec change `2026-10-04-reconcile-search-and-streaming-spec`：MODIFIED 搜索（8→3 tokens、30 条上限→分页默认 30/上限 100/总数/next_offset）与响应生命周期（逐帧 rearm、静默预算仍为附加上限） | 完成：`pnpm spec:validate` 与归档校验（49/49）全绿；主 spec 与已交付行为一致
 - 2026-10-04 | 收尾 | SPA e2e 对齐 | 9 个浏览器规格同步战役行为（DR-002 救援保存、DR-015 导出字节、DR-018 定位、DR-021 本地化信封、DR-028 用量列、DR-042 快照文案、DR-043 拍点下拉、DR-045 时区提示） | 完成：本地全套 35/35，解除 #678 的浏览器步骤阻塞
+- 2026-10-04 | 收尾 | 容器检查适配 | `.github/workflows/ci.yml` 容器步骤按 deploy/README 文档化流程补 `x-setup-token`（DR-008 首启门槛） | 完成：本地完整复现通过（fresh install → setup → login → restart → sqlite 26 迁移）

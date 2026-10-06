@@ -196,7 +196,11 @@ jobs:
             throw new Error("container SPA title does not match /version product identity");
           }
           NODE
-          curl -fsS -H 'Content-Type: application/json' \
+          # Fresh volume + non-loopback peer (the docker bridge): setup must
+          # present the one-time token from the data directory, mirroring the
+          # documented operator flow (deploy/README.md "first-start setup token").
+          SETUP_TOKEN="$(docker exec novel-engine cat /app/data/.setup-token)"
+          curl -fsS -H 'Content-Type: application/json' -H "x-setup-token: $SETUP_TOKEN" \
             -d '{"username":"owner","password":"container-owner-password"}' \
             http://127.0.0.1:8000/api/setup
           curl -fsS -c cookies.txt -H 'Content-Type: application/json' \
