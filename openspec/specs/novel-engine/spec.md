@@ -343,22 +343,27 @@ keep plain append semantics.
 - **THEN** the pinned revision remains readable and unchanged
 
 ### Requirement: Full-text search over current content
+
 The system MUST expose project-scoped full-text search over document titles
 and current content through a search endpoint, with the index synchronized
 transactionally on every document create, save, and delete. Search input
 MUST be reduced to safe tokens — case-folded word tokens, de-duplicated
-preserving first occurrence, at most 8 tokens, combined with AND semantics —
+preserving first occurrence, at most 3 tokens, combined with AND semantics —
 and FTS5 operators, column filters, NEAR groups, wildcards, and punctuation
 MUST NOT reach the match expression. Each result MUST identify the document
 and carry its title and a plain-text excerpt of at most a 16-token window
 around the best match, with truncation marked by an ellipsis and no highlight
-markup. Results MUST be ordered by relevance rank, MUST NOT exceed 30 items,
-and a query that reduces to no tokens MUST return an empty result list. All
+markup. Results MUST be ordered by relevance rank and delivered in bounded
+pages: the page size defaults to 30 and MUST NOT exceed 100 items; each
+response MUST report the total number of matching documents and the offset of
+the next page — null exactly when every match has been delivered — and a
+query that reduces to no tokens MUST return an empty result list. All
 full-text access MUST be centralized in a single search module, and index
 writes and deletes MUST occur in the same transaction as the owning document
 change.
 
 #### Scenario: Ranked snippets for matching content
+
 - **GIVEN** several documents of one project contain the word "lantern"
 - **WHEN** the project search endpoint is called with `q=lantern`
 - **THEN** matching documents are returned ordered by relevance rank
@@ -367,6 +372,7 @@ change.
 - **AND** no excerpt contains highlight markup such as `<mark>`
 
 #### Scenario: Operator-laden input is safely reduced
+
 - **GIVEN** a query stuffed with FTS5 syntax such as
   `dragon OR title:( NEAR(a b) wolf* ) "quotes"`
 - **WHEN** the search runs
@@ -376,6 +382,7 @@ change.
 - **AND** the response succeeds without error
 
 #### Scenario: Unreducible input returns no results
+
 - **GIVEN** a query that reduces to no word tokens, such as empty or
   punctuation-only input
 - **WHEN** the search runs
@@ -383,15 +390,20 @@ change.
 - **AND** no match expression is evaluated
 
 #### Scenario: The index never serves stale content
+
 - **GIVEN** a document matched an earlier search and is then deleted
 - **WHEN** the same search runs again
 - **THEN** the deleted document is absent from the results
 - **AND** the deletion and its index cleanup committed in the same transaction
 
 #### Scenario: Result count is bounded
-- **GIVEN** more than 30 documents match the reduced tokens
-- **WHEN** the search runs
-- **THEN** at most 30 results are returned
+
+- **GIVEN** more than one page of documents matches the reduced tokens
+- **WHEN** the search runs without an explicit page size
+- **THEN** the response contains at most 30 results
+- **AND** it reports the total number of matching documents
+- **AND** it reports the next page's offset until every match has been
+  delivered
 
 ### Requirement: Document identity and revision uniqueness
 Document identity MUST be unique within a project by the triple (project,
@@ -2759,10 +2771,13 @@ replace the current list nor navigate.
 
 Every HTTP provider response MUST have one absolute deadline that starts before
 transport dispatch and covers connection establishment, response headers, and
-complete body consumption. Chapter draft and revision streams MUST receive the
-same effective timeout floor of 180 seconds as synchronous generation. The
-existing first-event and between-event silence budgets MUST remain additional
-ceilings and MUST NOT reset or extend the absolute deadline.
+complete body consumption of synchronous responses. For a stream, the deadline
+MUST cover dispatch through the first delivered event, and every delivered
+event MUST re-arm it, so the budget bounds dispatch plus silence rather than
+the total wall time of a healthy stream; the first-event and between-event
+silence budgets MUST remain additional ceilings. Chapter draft and revision
+streams MUST receive the same effective timeout floor of 180 seconds as
+synchronous generation.
 
 An external abort MUST participate explicitly in dispatch, response-body, and
 stream-iteration waits, including when an injected transport or body ignores
@@ -2785,11 +2800,25 @@ authoritative failure within a fixed one-second cleanup grace.
 
 #### Scenario: Absolute deadline covers response setup and body
 
-- **GIVEN** an HTTP provider stalls before returning headers or keeps sending
-  frames within the silence budget without completing
+- **GIVEN** an HTTP provider stalls before returning headers or before the
+  first stream event
 - **WHEN** the effective provider deadline elapses
 - **THEN** the transport is aborted with the stable provider timeout
-- **AND** the deadline has not reset after any response byte or frame
+
+#### Scenario: A healthy stream re-arms the deadline per event
+
+- **GIVEN** a stream delivers events at intervals inside its silence budgets
+- **WHEN** the stream outlives the original dispatch deadline
+- **THEN** every delivered event re-arms the deadline and the stream is not
+  aborted
+- **AND** the stream can reach its normal terminal event and outcome
+
+#### Scenario: Over-silent streams still abort
+
+- **GIVEN** a started stream stops delivering events
+- **WHEN** its silence exceeds the re-armed deadline or a configured silence
+  budget
+- **THEN** the transport is aborted with the stable provider timeout
 
 #### Scenario: External cancellation wins an uncooperative wait
 
