@@ -194,10 +194,20 @@ test.describe
       const epubBytes = await exportThroughUi(studio, "EPUB", `${title}.epub`);
       await expect(studio.locator(".studio-inspector__export-row")).toHaveCount(3);
 
-      // Byte fidelity (#294): the file is exactly the saved chapters under the
-      // project title — reconstructed from the store, not from typed constants.
+      // Byte fidelity (#294, DR-015): the file is exactly the project title as
+      // the only level-1 heading plus each chapter under its own level-2
+      // heading, with a leading body line that repeats the chapter title
+      // dropped — reconstructed from the store, not from typed constants.
       const expectedMarkdown = Buffer.from(
-        `# ${title}\n\n${chapters.map((chapter) => chapter.content_markdown.trim()).join("\n\n")}\n`,
+        `# ${title}\n\n${chapters
+          .map((chapter) => {
+            const body = chapter.content_markdown.trim();
+            const [firstLine = "", ...rest] = body.split("\n");
+            const repeatsTitle =
+              firstLine.replace(/^#{1,6}\s*/u, "").trim() === chapter.title.trim();
+            return `## ${chapter.title}\n\n${(repeatsTitle ? rest.join("\n") : body).trim()}`;
+          })
+          .join("\n\n")}\n`,
         "utf8",
       );
       expect(markdownBytes.equals(expectedMarkdown)).toBe(true);

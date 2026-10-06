@@ -9,8 +9,9 @@ import { createProject, studioChapters, typeChapter } from "../content_acceptanc
 //
 // #467 project-switch workflow (shell task 5.1): open A, hold an unsaved
 // Draft's autosave mid-flight, switch to B, then return to A through browser
-// Back/Forward. The Draft must be discarded on the explicit switch, the late
-// save must never cross projects, and both projects must rehydrate cleanly.
+// Back/Forward. DR-002: the explicit switch must rescue the pending Draft into
+// A with exactly one write; no late save may fire or cross projects, and both
+// projects must rehydrate cleanly.
 test.describe
   .serial("#467 project switch", () => {
     test.setTimeout(120_000);
@@ -40,8 +41,8 @@ test.describe
       await studioContext.close();
     });
 
-    test("switching projects discards the pending Draft with no late save crossing", async () => {
-      const draftMarker = "UNSAVED DRAFT never committed from ledger A";
+    test("switching projects rescues the pending Draft once with no late save crossing", async () => {
+      const draftMarker = "UNSAVED DRAFT rescued from ledger A";
       const projectIdA = await createProject(studio, "Switch Ledger A");
       await typeChapter(studio, "# Chapter 1\n\nThe harbor bell of ledger A.");
       const projectUrlA = studio.url();
@@ -75,10 +76,13 @@ test.describe
       expect(savePuts).toEqual({ a: 0, b: 0 });
 
       // Switch to B through the library while the autosave debounce is still
-      // pending. Waiting past the 1.5s window proves the switch suppressed
-      // the late save at the network layer: no PUT ever reaches A or B.
+      // pending. DR-002: the departure must rescue A's Draft with exactly one
+      // PUT to A and none to B; waiting past the 1.5s window then proves no
+      // late duplicate save fires at the network layer.
       await studio.getByRole("button", { name: "Back to projects" }).click();
       await expect(studio).toHaveURL(/\/projects$/);
+      await expect.poll(() => savePuts.a, { message: "rescue write for A" }).toBe(1);
+      expect(savePuts.b).toBe(0);
       // Starts-with: the same title also prefixes the row's delete command
       // (DR-018), which would otherwise make this locator ambiguous.
       await studio.getByRole("button", { name: /^Switch Ledger B/ }).click();
@@ -86,32 +90,35 @@ test.describe
       await expect(studio.locator(".cm-content")).toContainText("ledger B");
       await expect(studio.getByText(draftMarker)).toHaveCount(0);
       await studio.waitForTimeout(2_200);
-      expect(savePuts).toEqual({ a: 0, b: 0 });
+      expect(savePuts).toEqual({ a: 1, b: 0 });
 
-      // Return to A through Back/Forward: the Draft was discarded on the
-      // switch, so only the persisted pre-draft revision can render, and no
-      // save fired for A after the switch.
+      // Return to A through Back/Forward: the rescue write committed the
+      // Draft during the switch, so A rehydrates with the rescued text from
+      // the server and re-entry fires no further save for A.
       await studio.goBack();
       await expect(studio).toHaveURL(/\/projects$/);
       await studio.goBack();
       await expect(studio).toHaveURL(new RegExp(`/projects/${projectIdA}/manuscript`));
       await expect(studio.getByRole("heading", { name: "Switch Ledger A" })).toBeVisible();
-      await expect(studio.locator(".cm-content")).toContainText("ledger A");
-      await expect(studio.locator(".cm-content")).not.toContainText(draftMarker);
+      await expect(studio.locator(".cm-content")).toContainText(draftMarker);
+      await expect(studio.locator(".cm-content")).not.toContainText("The harbor bell of ledger A.");
       await expect(studio.locator(".studio-editor .editor__save-state")).toHaveText(/saved/i);
-      expect(savePuts.a).toBe(0);
+      // The switch rescue is A's only PUT; re-entry must not save again.
+      expect(savePuts.a).toBe(1);
       const persistedA = (await studioChapters(studio, projectIdA)).map(
         (chapter) => chapter.content_markdown,
       );
-      expect(persistedA).toEqual(["# Chapter 1\n\nThe harbor bell of ledger A."]);
+      expect(persistedA).toEqual([draftMarker]);
 
-      // Forward again lands on B with its own body intact.
+      // Forward again lands on B with its own body intact; B was never
+      // written by the switch.
       await studio.goForward();
       await expect(studio).toHaveURL(/\/projects$/);
       await studio.goForward();
       await expect(studio).toHaveURL(projectUrlB);
       await expect(studio.getByRole("heading", { name: "Switch Ledger B" })).toBeVisible();
       await expect(studio.locator(".cm-content")).toContainText("ledger B");
+      expect(savePuts.b).toBe(0);
 
       studio.off("request", countSavePut);
     });

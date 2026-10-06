@@ -182,7 +182,10 @@ test("owner login issues novel_engine cookies and the editor renders the real er
   await first.keyboard.type("Stale tab overwrite.");
   const conflict = first.locator(".editor-conflict");
   await expect(conflict).toBeVisible({ timeout: 10_000 });
-  await expect(conflict).toContainText("Document changed since the requested base revision.");
+  await expect(conflict).toContainText("Someone else changed this document.");
+  await expect(conflict).toContainText(
+    "This document changed since it was loaded. Load the latest revision and reapply your edit.",
+  );
   await expect(first.getByRole("button", { name: "Load latest (discard local)" })).toBeVisible();
   await expect(first.getByRole("button", { name: "Keep local and retry overwrite" })).toBeVisible();
 
@@ -299,7 +302,7 @@ test("History loads bounded revision pages and keeps keyboard retry state", asyn
   expect(interceptedOlderRequests).toBe(1);
   await expect(revisionRows).toHaveCount(50);
   await expect(page.getByRole("alert")).toContainText(
-    "Revision history is temporarily unavailable.",
+    "The service is not available right now. Check the server and retry.",
   );
   await expect(loadOlder).toBeFocused();
 

@@ -74,7 +74,9 @@ test.describe
       await expect(
         studio.getByRole("heading", { name: "Unable to open this project" }),
       ).toBeVisible();
-      await expect(studio.getByRole("alert")).toContainText("The studio shelf is unreachable.");
+      await expect(studio.getByRole("alert")).toContainText(
+        "The service is not available right now. Check the server and retry.",
+      );
       await expect(studio.getByRole("button", { name: "Try again" })).toBeVisible();
       await expect(studio.locator(".studio-editor")).toHaveCount(0);
       await expect(studio.getByText("Create a document to begin writing.")).toHaveCount(0);
@@ -97,7 +99,9 @@ test.describe
       await studio.goto(projectUrl);
       const documentError = studio.locator(".editor__empty[role=alert]");
       await expect(documentError).toContainText("Unable to open this document");
-      await expect(documentError).toContainText("The chapter body is unreachable.");
+      await expect(documentError).toContainText(
+        "The service is not available right now. Check the server and retry.",
+      );
       await expect(studio.getByRole("button", { name: "Retry document" })).toBeVisible();
       await expect(studio.getByText("Create a document to begin writing.")).toHaveCount(0);
       await expect(studio.locator(".studio-nav__volume-header")).toHaveText("Default Volume");
@@ -119,7 +123,9 @@ test.describe
       });
       await studio.goto(routeUrl("review"));
       const reviewAlert = studio.locator(".studio-inspector__error[role=alert]").first();
-      await expect(reviewAlert).toContainText("Review history is temporarily unavailable.");
+      await expect(reviewAlert).toContainText(
+        "The service is not available right now. Check the server and retry.",
+      );
       await expect(studio.getByText("No review findings. Run a review when ready.")).toHaveCount(0);
       await expect(studio.locator(".cm-content")).toContainText("The harbor bell rang twice.");
       await studio.unroute(`**/api/projects/${projectId}/reviews`);
@@ -137,7 +143,9 @@ test.describe
       });
       await studio.goto(routeUrl("export"));
       const exportAlert = studio.locator(".export-history .studio-inspector__error[role=alert]");
-      await expect(exportAlert).toContainText("Export history is temporarily unavailable.");
+      await expect(exportAlert).toContainText(
+        "The service is not available right now. Check the server and retry.",
+      );
       await expect(studio.getByText("No exports yet.")).toHaveCount(0);
       await expect(studio.locator(".cm-content")).toContainText("The harbor bell rang twice.");
       await studio.getByRole("tab", { name: "Review" }).click();
@@ -317,8 +325,8 @@ test.describe
     // #466 command-focus semantics on the chapter beat surface: the pending
     // window disables the whole form, so both terminal paths — a link whose
     // success keeps the submit command disabled, and a clear that disables
-    // its own trigger — must hand focus back to the beat input.
-    test("beat link and clear commands restore focus to the beat input", async () => {
+    // its own trigger — must hand focus back to the beat catalog select.
+    test("beat link and clear commands restore focus to the beat catalog select", async () => {
       const projectId = await createProject(studio, "Beat Focus Ledger");
       await typeChapter(studio, "# Chapter 1\n\nThe harbor bell rang twice.");
 
@@ -347,7 +355,10 @@ test.describe
       });
 
       const beatInput = studio.getByLabel("Beat title");
-      await beatInput.fill("The Harbor");
+      // DR-043: the chapter beat links from the outline's own catalog, so the
+      // field is a select of candidate titles, not free text.
+      await expect(beatInput.locator('option[value="The Harbor"]')).toHaveCount(1);
+      await beatInput.selectOption({ label: "The Harbor" });
       await studio.getByRole("button", { name: "Link beat" }).click();
       await expect(studio.getByRole("button", { name: "Saving…" })).toHaveAttribute(
         "aria-busy",
@@ -357,7 +368,7 @@ test.describe
 
       releaseBeatLink?.();
       // Success stores the requested title, so the submit command stays
-      // disabled and the input is the declared landing zone.
+      // disabled and the catalog select is the declared landing zone.
       await expect(studio.getByRole("button", { name: "Link beat" })).toBeDisabled();
       await expect(beatInput).toBeEnabled();
       await expect(beatInput).toBeFocused();

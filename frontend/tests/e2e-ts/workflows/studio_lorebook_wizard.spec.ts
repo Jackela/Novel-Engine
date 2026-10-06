@@ -177,7 +177,9 @@ test.describe
       for (const candidate of TRIAL_CANDIDATES) {
         const row = results.locator("li").filter({ hasText: candidate.title });
         await expect(row.getByText("Created — alias write failed")).toBeVisible();
-        await expect(row.getByRole("alert")).toHaveText("Alias write is down.");
+        await expect(row.getByRole("alert")).toHaveText(
+          "The service is not available right now. Check the server and retry.",
+        );
         await expect(row.getByText(`Aliases kept for retry: ${candidate.aliases}`)).toBeVisible();
       }
 
