@@ -20,9 +20,11 @@ import {
  * correct, not just responsive. The flows of studio-ts.spec.ts (#274) stay
  * the interaction surface; this suite pins the CONTENT contracts — the F-1
  * prose guarantee after a proposal accept, byte-faithful markdown plus
- * structurally valid DOCX/EPUB downloads, operator-safe FTS5 reduction, the
- * unified 409/CSRF envelopes, and export-directory plus row removal on
- * project deletion. Prose invariants reuse the compiled server guard (see
+ * structurally valid DOCX/EPUB downloads, and export-directory plus row
+ * removal on project deletion; the FTS5-reduction and envelope half lives in
+ * studio_content_search.spec.ts (split at the file-size gate, keeping every
+ * export in this one serialized file so the single-renderer export capacity
+ * is never raced). Prose invariants reuse the compiled server guard (see
  * content_acceptance_helpers) instead of forking the phrase list.
  */
 
@@ -301,74 +303,5 @@ test.describe
       await expectApiError(missing, 404, "NOT_FOUND");
       const undeliverable = await studio.request.get(artifact.download_url);
       expect(undeliverable.status()).toBe(404);
-    });
-
-    test("search reduces operators to literals; conflicts and csrf answer the unified envelope", async () => {
-      const projectId = await createProject(studio, "Signal Ledger");
-      await typeChapter(
-        studio,
-        "# Chapter 1\n\nThe harbor bell rang twice. Nobody answered the second time.",
-      );
-
-      // Punctuation-separated terms all exist in the chapter: a hit through
-      // both the API and the browser flow.
-      const punctuated = await studio.request.get(
-        `/api/projects/${projectId}/search?q=${encodeURIComponent("harbor.bell,twice")}`,
-      );
-      const punctuatedBody = (await punctuated.json()) as {
-        results: Array<{ document_id: string; title: string }>;
-      };
-      expect(punctuatedBody.results).toHaveLength(1);
-      expect(punctuatedBody.results[0]?.title).toBe("Chapter 1");
-      const searchBox = studio.getByLabel("Search project");
-      await searchBox.fill("harbor.bell,twice");
-      await searchBox.press("Enter");
-      await expect(studio.getByLabel("Search results")).toBeVisible();
-
-      // FTS5 operators become literal quoted tokens: "harbor OR bell" reduces
-      // to harbor AND or AND bell, and the chapter has no standalone "or" — so
-      // raw operator passthrough would have matched, the reduction must not.
-      const operated = await studio.request.get(
-        `/api/projects/${projectId}/search?q=${encodeURIComponent("harbor OR bell")}`,
-      );
-      expect(((await operated.json()) as { results: unknown[] }).results).toHaveLength(0);
-      await searchBox.fill("harbor OR bell");
-      await searchBox.press("Enter");
-      // The previous query's results are still on screen, so this auto-retry
-      // assertion cannot pass early: the section must first disappear once the
-      // safely-reduced query returns its empty result set.
-      await expect(studio.getByLabel("Search results")).toHaveCount(0);
-
-      // Stale base revision: 409 with the unified envelope and the winner.
-      const chapter = (await studioChapters(studio, projectId))[0];
-      const history = (await (
-        await studio.request.get(`/api/projects/${projectId}/documents/${chapter?.id}/revisions`)
-      ).json()) as { revisions: Array<{ id: string }> };
-      const conflict = await studio.request.put(
-        `/api/projects/${projectId}/documents/${chapter?.id}`,
-        {
-          data: {
-            content_markdown: "Stale tab write.",
-            base_revision_id: history.revisions.find(
-              (revision) => revision.id !== chapter?.current_revision_id,
-            )?.id,
-          },
-          headers: { "x-csrf-token": csrfToken },
-        },
-      );
-      const conflictBody = await expectApiError(conflict, 409, "REVISION_CONFLICT");
-      expect(conflictBody.error.details.current_revision_id).toBe(chapter?.current_revision_id);
-
-      // CSRF double-submit: a session-authenticated write without the header is
-      // rejected, and a tampered token is rejected separately.
-      const missingToken = await studio.request.post("/api/projects", {
-        data: { title: "No token ledger" },
-      });
-      await expectApiError(missingToken, 403, "CSRF_TOKEN_MISSING");
-      const tamperedToken = await studio.request.post("/api/projects", {
-        data: { title: "Tampered token ledger" },
-        headers: { "x-csrf-token": `${csrfToken}-tampered` },
-      });
-      await expectApiError(tamperedToken, 403, "CSRF_TOKEN_INVALID");
     });
   });
