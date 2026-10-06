@@ -169,7 +169,17 @@ describe("proposal retry replay boundaries", () => {
       expect(JSON.stringify(failed)).not.toContain("base_revision_changed");
       expect(capture).toHaveBeenCalledTimes(1);
       expect(provider.factoryCalls()).toBe(1);
-      expect(evidence(app).usage).toHaveLength(0);
+      // DR-028: the only row is the failed original attempt's zero-token
+      // unreported row; the refused retry fabricated no extra evidence.
+      const usage = evidence(app).usage;
+      expect(usage).toHaveLength(1);
+      expect(usage[0]).toMatchObject({
+        job_id: source.id,
+        outcome: "failed",
+        token_source: "unreported",
+        prompt_tokens: 0,
+        completion_tokens: 0,
+      });
     } finally {
       vi.restoreAllMocks();
       await app.close();

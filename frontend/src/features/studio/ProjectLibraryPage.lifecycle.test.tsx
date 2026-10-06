@@ -122,7 +122,7 @@ describe("ProjectLibraryPage request lifecycle", () => {
     expect(api.session).toHaveBeenCalledTimes(2);
     expect(api.projects).toHaveBeenCalledTimes(2);
     expect(container.querySelector('[role="alert"]')).toBeNull();
-    expect(getByRole(container, "button", { name: /Recovered draft/ })).toBeEnabled();
+    expect(getByRole(container, "button", { name: /^Recovered draft/ })).toBeEnabled();
     expect(document.activeElement).toBe(getByRole(container, "heading", { name: "Projects" }));
   });
 

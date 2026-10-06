@@ -215,6 +215,54 @@ describe("proposal markdown prose predicate", () => {
   });
 });
 
+describe("Chinese proposal template prefixes (DR-023)", () => {
+  const CHINESE_MECHANICAL_PROPOSAL = [
+    "好的，以下是第一章的初稿：",
+    "",
+    "雨还没停，走廊里的灯一盏接一盏亮起。她把信折好，放进外套的内袋。",
+    "",
+    "以下是修改后的正文：",
+    "",
+    "她推开门，风把桌上的纸吹散了一地。",
+    "",
+    "当然可以！以下是重写后的段落，请查收。",
+    "",
+    "窗外传来钟声，一下，又一下。",
+  ].join("\n");
+
+  it("drops Chinese mechanical template lines and keeps the narrative around them", () => {
+    const cleaned = sanitizeProposalMarkdown(CHINESE_MECHANICAL_PROPOSAL);
+
+    expect(cleaned).not.toContain("以下是");
+    expect(cleaned).not.toContain("初稿");
+    expect(cleaned).not.toContain("修改后的正文");
+    expect(cleaned).not.toContain("当然可以");
+    expect(cleaned).toContain("雨还没停，走廊里的灯一盏接一盏亮起。");
+    expect(cleaned).toContain("她推开门，风把桌上的纸吹散了一地。");
+    expect(cleaned).toContain("窗外传来钟声，一下，又一下。");
+  });
+
+  it("drops CRLF Chinese template lines the same as LF ones", () => {
+    const cleaned = sanitizeProposalMarkdown("以下是重写后的章节：\r\n她把伞留在门口。");
+
+    expect(cleaned).not.toContain("重写后的章节");
+    expect(cleaned).toContain("她把伞留在门口。");
+  });
+
+  it("drops an acknowledgement-only line", () => {
+    expect(sanitizeProposalMarkdown("好的。\n\n她转身离开。")).toBe("她转身离开。");
+  });
+
+  it.each([
+    ["narrative 当然", "当然，她并不后悔。"],
+    ["narrative 可以", "他可以留下来，如果任务允许。"],
+    ["quoted 好的 dialogue", '"好的，"她说，"我们走。"'],
+    ["mid-line 当然可以", "这个问题当然可以解决，只要他们肯等。"],
+  ])("keeps legitimate Chinese prose unchanged: %s", (_label, line) => {
+    expect(sanitizeProposalMarkdown(line)).toBe(line);
+  });
+});
+
 describe("author instruction sanitization", () => {
   it("redacts adjudicated injection patterns", () => {
     const cleaned = sanitizeInstruction(

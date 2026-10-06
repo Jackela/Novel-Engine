@@ -22,9 +22,16 @@ export const DEFAULT_HTTP_SERVER_POLICY: Readonly<HttpServerPolicy> = Object.fre
 /**
  * Translate the product's receipt boundary into Fastify and Node HTTP options.
  * Handler and socket-idle timeouts stay disabled because they cover valid work
- * after the request has already been received.
+ * after the request has already been received. The trusted proxy addresses are
+ * forwarded to Fastify's `trustProxy`, which resolves `request.ip` and
+ * `request.protocol` with the same rightmost-untrusted-hop rule the rate
+ * limiter applies; with no trusted proxies the option stays disabled so
+ * forwarded headers change nothing.
  */
-export function fastifyOptionsForHttpServerPolicy(policy: HttpServerPolicy) {
+export function fastifyOptionsForHttpServerPolicy(
+  policy: HttpServerPolicy,
+  trustedProxies: readonly string[] = [],
+) {
   return {
     http: {
       headersTimeout: policy.headersTimeout,
@@ -34,6 +41,7 @@ export function fastifyOptionsForHttpServerPolicy(policy: HttpServerPolicy) {
     connectionTimeout: 0,
     handlerTimeout: 0,
     bodyLimit: 1_048_576,
+    trustProxy: trustedProxies.length === 0 ? false : [...trustedProxies],
   } as const;
 }
 

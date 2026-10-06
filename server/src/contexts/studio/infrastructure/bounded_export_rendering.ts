@@ -1,15 +1,15 @@
 import type { EventEmitter } from "node:events";
 import { Readable } from "node:stream";
 
-import { Document, HeadingLevel, Packer, Paragraph } from "docx";
-
 import type {
   ArtifactChapter,
   ArtifactWriteRequest,
 } from "../application/ports/artifact_gateway.js";
 import type { ExportArtifactFormat } from "../application/ports/export_store.js";
 import { EXPORT_CAPACITY_LIMITS, ExportCapacityExceededError } from "../domain/exceptions.js";
-import { epubStream, plainText, xmlSafeText } from "./epub_xml.js";
+import { docxManuscriptStream } from "./docx_manuscript.js";
+import { epubStream } from "./epub_xml.js";
+import { stripRepeatedTitleLine } from "./export_markdown_body.js";
 
 export async function serializeBoundedArtifact(request: ArtifactWriteRequest): Promise<Buffer> {
   return collectBoundedArtifactStream(
@@ -65,13 +65,13 @@ function artifactStream(request: ArtifactWriteRequest): EventEmitter {
     return Readable.from(markdownSegments(request.projectTitle, request.chapters));
   }
   if (request.format === "epub") {
-    return epubStream(request.projectTitle, request.artifactId, request.chapters);
+    return epubStream(request);
   }
-  return docxStream(request.projectTitle, request.chapters);
+  return docxManuscriptStream(request);
 }
 
 function* markdownSegments(title: string, chapters: readonly ArtifactChapter[]) {
-  const parts = [`# ${title}`, ...chapters.map((chapter) => chapter.contentMarkdown.trim())];
+  const parts = [`# ${title}`, ...chapters.map(markdownChapterSegment)];
   let last = parts.length - 1;
   while (last > 0 && parts[last]?.trim() === "") last -= 1;
   for (let index = 0; index <= last; index += 1) {
@@ -83,19 +83,16 @@ function* markdownSegments(title: string, chapters: readonly ArtifactChapter[]) 
   yield "\n";
 }
 
-function docxStream(title: string, chapters: readonly ArtifactChapter[]): EventEmitter {
-  const children: Paragraph[] = [
-    new Paragraph({ text: xmlSafeText(title), heading: HeadingLevel.TITLE }),
-  ];
-  for (const chapter of chapters) {
-    children.push(
-      new Paragraph({ text: xmlSafeText(chapter.title), heading: HeadingLevel.HEADING_1 }),
-    );
-    for (const paragraph of plainText(chapter.contentMarkdown).split(/\n\s*\n/)) {
-      const text = xmlSafeText(paragraph.trim());
-      if (text !== "") children.push(new Paragraph({ text }));
-    }
-  }
-  const stream = Packer.toStream(new Document({ sections: [{ children }] }));
-  return stream;
+/**
+ * One chapter segment for the Markdown artifact: the chapter title becomes a
+ * level-2 heading (the project title owns the only level-1 heading) followed
+ * by the frozen body. A leading body line that merely repeats the chapter
+ * title is dropped, exactly like the DOCX/EPUB renderers, so the heading never
+ * appears twice and authored subheadings are preserved. An empty body still
+ * exports its heading, so no chapter silently vanishes from the file.
+ */
+function markdownChapterSegment(chapter: ArtifactChapter): string {
+  const heading = `## ${chapter.title}`;
+  const body = stripRepeatedTitleLine(chapter.title, chapter.contentMarkdown).trim();
+  return body === "" ? heading : `${heading}\n\n${body}`;
 }

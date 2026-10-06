@@ -2,10 +2,9 @@ import type { Dispatch, MutableRefObject, SetStateAction } from "react";
 import { useCallback, useEffect, useRef } from "react";
 
 import type { Project, StudioDocument } from "@/app/types/studio";
-
+import { loadLatestDocument } from "./documentDraftPersistence";
 import type { DocumentDraftOwner } from "./documentDraftState";
 import { mergeProjectDocument } from "./projectState";
-import { loadLatestDocument } from "./useDocumentDraftAutosave";
 
 interface DocumentRefreshArgs {
   readonly owner: DocumentDraftOwner;

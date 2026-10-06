@@ -19,13 +19,17 @@
  *
  * File layout: when the flat dictionary outgrew the file-size budget, the
  * values moved to per-screen chunks (`en.shared.ts`, `en.entry.ts`,
- * `en.library.ts`, `en.settings.ts`, `en.studio.ts`, `en.errors.ts`) that
- * this file re-merges and types; each `zh.*.ts` chunk mirrors one chunk.
+ * `en.library.ts`, `en.settings.ts`, `en.editor.ts`, `en.jobs.ts`,
+ * `en.navigator.ts`, `en.studio.ts`, `en.errors.ts`) that this file
+ * re-merges and types; each `zh.*.ts` chunk mirrors one chunk.
  */
 
+import { enEditor } from "./en.editor";
 import { enEntry } from "./en.entry";
 import { enErrors } from "./en.errors";
+import { enJobs } from "./en.jobs";
 import { enLibrary } from "./en.library";
+import { enNavigator } from "./en.navigator";
 import { enSettings } from "./en.settings";
 import { enShared } from "./en.shared";
 import { enStudio } from "./en.studio";
@@ -35,6 +39,9 @@ export const en = {
   ...enEntry,
   ...enLibrary,
   ...enSettings,
+  ...enEditor,
+  ...enJobs,
+  ...enNavigator,
   ...enStudio,
   ...enErrors,
 } as const;
@@ -45,14 +52,6 @@ export const en = {
  * translations hold different text under the same keys.
  */
 export type Dictionary = Record<keyof typeof en, string>;
-
-/**
- * One per-screen slice of a dictionary: keys must belong to the canonical
- * set, but coverage is partial — the merged `zh` in `zh.ts` is annotated
- * with the full `Dictionary`, which is what keeps the chunks collectively
- * key-complete.
- */
-export type DictionaryChunk = Partial<Dictionary>;
 
 /** Any key the active dictionary resolves; unknown keys fail to compile. */
 export type MessageKey = keyof Dictionary;

@@ -32,6 +32,7 @@ interface RawFile {
 
 interface ReadChapter extends RawFile {
   readonly filename: string;
+  readonly title: string;
 }
 
 interface FsLegacyWorkspaceReaderHooks {
@@ -90,11 +91,12 @@ export class FsLegacyWorkspaceReader implements LegacyWorkspaceReader {
     }
     return {
       source: source.path,
-      sourceHash: workspaceHash(source.path, [story, ...chapters]),
+      sourceHash: workspaceHash([story, ...chapters]),
       title: legacyScalar(story.contents, "title") ?? basename(source.path),
       description: legacyScalar(story.contents, "premise") ?? "",
-      chapters: chapters.map(({ filename, contents }) => ({
+      chapters: chapters.map(({ filename, contents, title }) => ({
         filename,
+        title,
         contentMarkdown: contents.toString("utf8"),
         bytes: contents.length,
       })),
@@ -116,27 +118,63 @@ export class FsLegacyWorkspaceReader implements LegacyWorkspaceReader {
     }
     names.sort(lexicalCompare);
     const chapters: ReadChapter[] = [];
-    for (const filename of names) {
+    for (const [index, filename] of names.entries()) {
+      const contents = await readBoundedFile(
+        directory,
+        filename,
+        "chapter_bytes",
+        CHAPTER_ERROR,
+        budget,
+        this.hooks.afterFileOpen,
+      );
       chapters.push({
         filename,
+        title: chapterTitle(contents, filename, index + 1),
         relativePath: `manuscript/chapters/${filename}`,
-        contents: await readBoundedFile(
-          directory,
-          filename,
-          "chapter_bytes",
-          CHAPTER_ERROR,
-          budget,
-          this.hooks.afterFileOpen,
-        ),
+        contents,
       });
     }
     return chapters;
   }
 }
 
-function workspaceHash(root: string, files: readonly RawFile[]): string {
+/**
+ * A chapter's display title derived from the source, deterministically:
+ * the first non-empty line when it is an ATX heading; otherwise the filename
+ * stem, where `chapter-<number>` normalizes to `Chapter <number>` and any
+ * other stem loses its `chapter-` prefix and reads its separator runs as
+ * spaces; `Chapter <position>` remains the last resort when the filename
+ * carries no words (for example `chapter-.md`).
+ */
+function chapterTitle(contents: Buffer, filename: string, position: number): string {
+  const text = contents.toString("utf8").replace(/^\uFEFF/, "");
+  const firstLine = text.split(/\r?\n/).find((line) => line.trim() !== "");
+  if (firstLine !== undefined) {
+    const heading = /^\s{0,3}#{1,6}\s+(.+?)\s*#*\s*$/.exec(firstLine);
+    const headingText = heading?.[1]?.trim();
+    if (headingText !== undefined && headingText !== "") return headingText;
+  }
+  const stem = filename.replace(/\.md$/i, "");
+  const numbered = /^chapter[-_ ]?(\d+)$/i.exec(stem);
+  if (numbered !== null) return `Chapter ${Number(numbered[1])}`;
+  const words = stem
+    .replace(/^chapter[-_ ]?/i, "")
+    .replace(/[-_]+/g, " ")
+    .trim();
+  return words === "" ? `Chapter ${position}` : words;
+}
+
+/**
+ * The workspace's location-independent identity: one SHA-256 digest over the
+ * sorted relative file paths (`story.yaml`, `manuscript/chapters/<file>`) and
+ * their exact bytes. The absolute source path and the directory name are
+ * deliberately excluded, so an unchanged workspace that is moved or renamed
+ * keeps the same hash and a repeated import returns the existing project
+ * instead of duplicating it; any changed chapter byte, or an added or removed
+ * chapter, changes the hash and is imported as a new workspace identity.
+ */
+function workspaceHash(files: readonly RawFile[]): string {
   const digest = createHash("sha256");
-  digest.update(root, "utf8");
   for (const file of [...files].sort((left, right) =>
     lexicalCompare(left.relativePath, right.relativePath),
   )) {

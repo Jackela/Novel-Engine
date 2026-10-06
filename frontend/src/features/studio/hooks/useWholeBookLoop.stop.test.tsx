@@ -10,6 +10,7 @@ import {
   firstChapter,
   proposalJobFor,
   renderLoopHook,
+  safeChapterPlan,
   secondChapter,
   traceApiCalls,
 } from "./useWholeBookLoop.test-harness";
@@ -22,7 +23,6 @@ vi.mock("@/app/api", async (importOriginal) => {
     ...actual,
     api: {
       ...actual.api,
-      proposal: vi.fn<typeof actual.api.proposal>(),
       acceptProposal: vi.fn<typeof actual.api.acceptProposal>(),
       document: vi.fn<typeof actual.api.document>(),
       project: vi.fn<typeof actual.api.project>(),
@@ -58,7 +58,7 @@ describe("useWholeBookLoop interruption", () => {
     let finished: Promise<void> = Promise.resolve();
 
     await act(async () => {
-      finished = harness.result().hook.start(wholeBookPlan(baseProject));
+      finished = harness.result().hook.start(wholeBookPlan(baseProject).chapters);
       firstDraft.resolve(proposalJobFor(firstChapter.id));
       await vi.waitFor(() =>
         expect(events.filter((event) => event.startsWith("proposal:"))).toHaveLength(2),
@@ -93,7 +93,7 @@ describe("useWholeBookLoop interruption", () => {
     let finished: Promise<void> = Promise.resolve();
 
     act(() => {
-      finished = harness.result().hook.start([firstChapter]);
+      finished = harness.result().hook.start(safeChapterPlan(firstChapter));
     });
     await vi.waitFor(() => expect(api.project).toHaveBeenCalledTimes(1));
     act(() => harness.result().hook.stop());
@@ -124,7 +124,7 @@ describe("useWholeBookLoop interruption", () => {
     let finished: Promise<void> = Promise.resolve();
 
     await act(async () => {
-      finished = harness.result().hook.start(wholeBookPlan(baseProject));
+      finished = harness.result().hook.start(wholeBookPlan(baseProject).chapters);
       await vi.waitFor(() =>
         expect(events.filter((event) => event.startsWith("proposal:"))).toHaveLength(1),
       );
@@ -176,7 +176,7 @@ describe("useWholeBookLoop interruption", () => {
     let currentRun: Promise<void> = Promise.resolve();
 
     act(() => {
-      oldRun = harness.result().hook.start([firstChapter]);
+      oldRun = harness.result().hook.start(safeChapterPlan(firstChapter));
     });
     await vi.waitFor(() => expect(streamProposal).toHaveBeenCalledTimes(1));
     const oldSignal = vi.mocked(streamProposal).mock.calls[0]?.[0].signal;
@@ -185,7 +185,7 @@ describe("useWholeBookLoop interruption", () => {
     expect(oldSignal?.aborted).toBe(true);
     expect(harness.result().hook.phase).toEqual({ kind: "idle" });
     act(() => {
-      currentRun = harness.result().hook.start([firstChapter]);
+      currentRun = harness.result().hook.start(safeChapterPlan(firstChapter));
     });
     await vi.waitFor(() => expect(streamProposal).toHaveBeenCalledTimes(2));
 
@@ -232,7 +232,7 @@ describe("useWholeBookLoop interruption", () => {
     let oldRun: Promise<void> = Promise.resolve();
 
     act(() => {
-      oldRun = harness.result().hook.start([firstChapter]);
+      oldRun = harness.result().hook.start(safeChapterPlan(firstChapter));
     });
     await vi.waitFor(() => expect(streamProposal).toHaveBeenCalledTimes(1));
     harness.rerender(secondProject);

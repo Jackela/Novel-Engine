@@ -10,10 +10,10 @@ import type {
   StudioDocument,
   StudioJobSummary,
 } from "@/app/types/studio";
-import type { NavigatorRowCommands } from "../components/StudioNavigatorRowActions";
 import type { StudioNavigator } from "../StudioNavigator";
 import { isLoreEntryKind } from "../studioConstants";
 import type {
+  InspectorAcceptanceUndo,
   InspectorBeatModel,
   InspectorLoreStatusModel,
   InspectorReviewModel,
@@ -23,6 +23,7 @@ import type {
 import { buildProposalAuditView } from "./proposalAuditView";
 import type { useExportDownload } from "./useExportDownload";
 import type { useExportHistory } from "./useExportHistory";
+import type { RevisionPreviewScope } from "./useRevisionPreview";
 import type { BeatLifecycleState } from "./useStudioBeatActions";
 import type { useStudioGeneration } from "./useStudioGeneration";
 import type { LoreStatusLifecycleState } from "./useStudioLoreStatusActions";
@@ -33,31 +34,6 @@ interface StudioNavigatorModel
   extends Omit<NavigatorProps, "onNavigateSection" | "onCreateDocument" | "onMoveDocument"> {
   createDocument: (kind: DocumentKind) => void | Promise<void>;
   moveDocument: (documentId: string, direction: -1 | 1) => void | Promise<void>;
-}
-
-/** The #481 row-command surfaces `useStudioActions` exposes for the Navigator. */
-interface RowCommandActions {
-  readonly deleteDocument: (documentId: string) => void | Promise<void>;
-  readonly placeChapter: (documentId: string, volumeId: string) => void | Promise<void>;
-  readonly deletingDocument: { readonly documentId: string } | null;
-  readonly placingDocument: { readonly documentId: string; readonly volumeId: string } | null;
-  readonly deletionFor: (documentId: string) => { readonly error: string | null };
-  readonly placementFor: (documentId: string) => { readonly error: string | null };
-}
-
-/**
- * Adapt the deletion/placement command hooks (#481) into the Navigator's
- * `rowCommands` model: exact pending identities plus per-row inline errors.
- */
-export function buildNavigatorRowCommands(actions: RowCommandActions): NavigatorRowCommands {
-  return {
-    onDeleteDocument: actions.deleteDocument,
-    onPlaceChapter: actions.placeChapter,
-    deletingDocument: actions.deletingDocument,
-    placingDocument: actions.placingDocument,
-    deletionErrorFor: (documentId) => actions.deletionFor(documentId).error,
-    placementErrorFor: (documentId) => actions.placementFor(documentId).error,
-  };
 }
 
 export function buildStudioNavigatorProps(
@@ -104,16 +80,19 @@ export function buildLoreStatusModel(
 /**
  * Adapt the active shell summary into the chapter beat seam (#466). The
  * returned link function preserves the mutation owner's completion Promise;
- * only chapters associate with outline beats.
+ * only chapters associate with outline beats, and the panel reads its
+ * candidate catalog from the project's outline (DR-043).
  */
 function buildBeatModel(
   document: Pick<DocumentSummary, "id" | "kind" | "beat_ref"> | null,
+  projectId: string,
   linkBeat: (documentId: string, beat: string | null) => Promise<void>,
   lifecycle: BeatLifecycleState,
 ): InspectorBeatModel | null {
   if (document === null || document.kind !== "chapter") return null;
   const documentId = document.id;
   return {
+    projectId,
     documentId,
     beatRef: document.beat_ref,
     isSaving: lifecycle.isSaving,
@@ -144,12 +123,15 @@ interface StudioInspectorModelInputs {
     readonly documents: DocumentSummary[];
   };
   readonly copilot: ReturnType<typeof useStudioGeneration>["copilot"];
+  /** DR-010: the page-composed one-shot undo for the latest acceptance. */
+  readonly proposalUndo: InspectorAcceptanceUndo | null;
   readonly jobs: {
     readonly jobs: StudioJobSummary[];
     readonly hasOlderJobs: boolean;
     readonly onLoadJobs: () => void | Promise<void>;
     readonly onLoadOlderJobs: () => void | Promise<void>;
     readonly onRetryJob: (jobId: string) => void | Promise<void>;
+    readonly projectId: string;
   };
   readonly export: ReturnType<typeof useExportDownload> & { readonly history: ExportHistory };
   /**
@@ -166,6 +148,8 @@ interface StudioInspectorModelInputs {
     readonly isLoadingHistory: boolean;
     readonly onLoadOlderRevisions: () => void | Promise<void>;
     readonly onRestoreRevision: (revisionId: string) => void | Promise<void>;
+    /** DR-011: lazy preview/diff scope for the loaded document; null without one. */
+    readonly preview: RevisionPreviewScope | null;
   };
   readonly settings: {
     readonly settingsForm: SettingsFormState;
@@ -202,6 +186,7 @@ export function buildStudioInspectorModel({
   projectId,
   lore,
   copilot,
+  proposalUndo,
   jobs,
   export: exportPanel,
   review,
@@ -216,6 +201,9 @@ export function buildStudioInspectorModel({
       instruction: copilot.instruction,
       proposal: copilot.proposal,
       streamingText: copilot.streamingText,
+      streamingInterrupted: copilot.streamingInterrupted,
+      streamingStopped: copilot.streamingStopped,
+      acceptanceUndo: proposalUndo,
       onRunProposal: copilot.runProposal,
       onAcceptProposal: copilot.acceptProposal,
       onStopProposal: () => copilot.stopProposal(),
@@ -255,6 +243,7 @@ export function buildStudioInspectorModel({
       isLoadingHistory: history.isLoadingHistory,
       onLoadOlderRevisions: history.onLoadOlderRevisions,
       onRestoreRevision: history.onRestoreRevision,
+      preview: history.preview,
     },
     jobs: {
       jobs: jobs.jobs,
@@ -262,6 +251,7 @@ export function buildStudioInspectorModel({
       onLoadJobs: jobs.onLoadJobs,
       onLoadOlderJobs: jobs.onLoadOlderJobs,
       onRetryJob: jobs.onRetryJob,
+      projectId: jobs.projectId,
     },
     usage: { projectId },
     stats: { projectId },
@@ -281,6 +271,7 @@ export function buildStudioInspectorModel({
     ),
     beat: buildBeatModel(
       narrowDocument,
+      projectId,
       commands.linkBeat,
       activeDocument ? commands.beatFor(activeDocument.id) : IDLE_BEAT_LIFECYCLE,
     ),

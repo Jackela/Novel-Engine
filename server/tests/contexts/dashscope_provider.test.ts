@@ -1,81 +1,17 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type { TextGenerationTask } from "../../src/contexts/ai/application/ports/text_generation.js";
-import { DashScopeTextProvider } from "../../src/contexts/ai/infrastructure/providers/dashscope_provider.js";
-import type { ProviderTransport } from "../../src/contexts/ai/infrastructure/providers/provider_http.js";
-import { fixtureApiKey } from "../credential_fixtures.js";
-
-interface CapturedRequest {
-  url: string;
-  init: RequestInit;
-}
-
-const DASHSCOPE_ORIGIN = "https://dashscope.aliyuncs.com";
-const NATIVE_GENERATION_PATH_SEGMENTS = [
-  "api",
-  "v1",
-  "services",
-  "aigc",
-  "multimodal-generation",
-  "generation",
-] as const;
-/** Official OpenAI-compatible Responses path (#502): default base plus endpoint suffix. */
-const RESPONSES_DEFAULT_PATH_SEGMENTS = ["compatible-mode", "v1", "responses"] as const;
-
-function expectedEndpoint(origin: string, pathSegments: readonly string[]): string {
-  return new URL(pathSegments.join("/"), `${origin}/`).toString();
-}
-
-function chapterTask(step: string): TextGenerationTask {
-  return {
-    step,
-    systemPrompt: "system prompt",
-    userPrompt: "user prompt",
-    responseSchema: { chapter_markdown: { type: "string" } },
-    metadata: { chapter_number: 2 },
-  };
-}
-
-function jsonResponse(status: number, body: unknown): Response {
-  return new Response(typeof body === "string" ? body : JSON.stringify(body), {
-    status,
-    headers: { "content-type": "application/json" },
-  });
-}
-
-function generationBody(content: unknown, usage?: Record<string, number>): Record<string, unknown> {
-  return {
-    output: { choices: [{ message: { content } }] },
-    usage: usage ?? { prompt_tokens: 11, completion_tokens: 22 },
-  };
-}
-
-/** Records every request and answers from a script (Response or Error); optional per-call behavior. */
-function scriptedTransport(
-  script: Array<Response | Error | (() => Response | Error)>,
-  capture: CapturedRequest[],
-): ProviderTransport {
-  let call = 0;
-  return (url, init) => {
-    capture.push({ url: String(url), init: init ?? {} });
-    const scripted = script[Math.min(call, script.length - 1)];
-    call += 1;
-    const answer = typeof scripted === "function" ? scripted() : scripted;
-    if (answer instanceof Error) {
-      return Promise.reject(answer);
-    }
-    return Promise.resolve(answer);
-  };
-}
-
-function provider(overrides: Partial<ConstructorParameters<typeof DashScopeTextProvider>[0]> = {}) {
-  return new DashScopeTextProvider({
-    apiKey: fixtureApiKey("sk-dashscope", "test"),
-    model: "qwen3.5-flash",
-    retry: { maxAttempts: 3, delayMs: 1000, sleep: async () => {} },
-    ...overrides,
-  });
-}
+import {
+  type CapturedRequest,
+  chapterTask,
+  DASHSCOPE_ORIGIN,
+  expectedEndpoint,
+  generationBody,
+  jsonResponse,
+  NATIVE_GENERATION_PATH_SEGMENTS,
+  provider,
+  RESPONSES_DEFAULT_PATH_SEGMENTS,
+  scriptedTransport,
+} from "./dashscope_provider.test-helpers.js";
 
 describe("dashscope adapter request shape", () => {
   it("posts the multimodal payload to the native endpoint with bearer auth", async () => {
@@ -251,72 +187,5 @@ describe("dashscope adapter transient failure handling", () => {
     }).generateStructured(chapterTask("chapter_draft"));
     await expect(attempt).rejects.toThrow(/missing structured message content/);
     expect(capture).toHaveLength(1);
-  });
-});
-
-describe("dashscope generation timeout floor", () => {
-  it("grants chapter steps at least 180 seconds via the abort signal", async () => {
-    vi.useFakeTimers();
-    try {
-      let requestDispatched = false;
-      let abortFired = false;
-      const transport: ProviderTransport = (_url, init) => {
-        requestDispatched = true;
-        return new Promise<Response>((resolve) => {
-          init?.signal?.addEventListener(
-            "abort",
-            () => {
-              abortFired = true;
-              resolve(jsonResponse(200, generationBody('{"chapter_markdown": "late"}')));
-            },
-            { once: true },
-          );
-        });
-      };
-      const generation = provider({
-        transport,
-        timeoutSeconds: 30,
-        retry: { maxAttempts: 1, delayMs: 0, sleep: async () => {} },
-      }).generateStructured(chapterTask("chapter_revision"));
-      const settled = expect(generation).rejects.toThrow(/timed out after 180s/);
-
-      expect(requestDispatched).toBe(true);
-      await vi.advanceTimersByTimeAsync(179_999);
-      expect(abortFired).toBe(false);
-      await vi.advanceTimersByTimeAsync(1);
-      expect(abortFired).toBe(true);
-      await settled;
-    } finally {
-      vi.useRealTimers();
-    }
-  });
-
-  it("keeps the configured timeout for non-chapter steps", async () => {
-    vi.useFakeTimers();
-    try {
-      let transportCalls = 0;
-      const transport: ProviderTransport = (_url, init) => {
-        transportCalls += 1;
-        return new Promise<Response>((resolve) => {
-          init?.signal?.addEventListener(
-            "abort",
-            () => resolve(jsonResponse(200, generationBody("{}"))),
-            { once: true },
-          );
-        });
-      };
-      const generation = provider({
-        transport,
-        timeoutSeconds: 30,
-        retry: { maxAttempts: 1, delayMs: 0, sleep: async () => {} },
-      }).generateStructured({ ...chapterTask("editorial_review") });
-      const settled = expect(generation).rejects.toThrow(/timed out after 30s/);
-      await vi.advanceTimersByTimeAsync(29_999);
-      expect(transportCalls).toBe(1);
-      await vi.advanceTimersByTimeAsync(1);
-      await settled;
-    } finally {
-      vi.useRealTimers();
-    }
   });
 });

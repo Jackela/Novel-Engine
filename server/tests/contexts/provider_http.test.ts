@@ -3,8 +3,8 @@ import { describe, expect, it } from "vitest";
 import {
   classifyTransportRejection,
   effectiveTimeoutSeconds,
-  GENERATION_TIMEOUT_FLOOR_SECONDS,
   httpStatusFailure,
+  LONG_FORM_TIMEOUT_FLOOR_SECONDS,
   malformedJsonFailure,
   ProviderTransportError,
   providerFailureIsRetryable,
@@ -151,16 +151,27 @@ describe("provider public failures", () => {
   });
 });
 
-describe("generation timeout floor", () => {
-  it("grants chapter steps at least 180 seconds", () => {
-    expect(GENERATION_TIMEOUT_FLOOR_SECONDS).toBe(180);
-    expect(effectiveTimeoutSeconds(30, "chapter_draft")).toBe(180);
-    expect(effectiveTimeoutSeconds(30, "chapter_revision")).toBe(180);
+describe("long-form timeout floor", () => {
+  it("grants every whole-manuscript step at least 180 seconds (DR-025: review included)", () => {
+    expect(LONG_FORM_TIMEOUT_FLOOR_SECONDS).toBe(180);
+    for (const step of [
+      "chapter_draft",
+      "chapter_revision",
+      "editorial_review",
+      "lore_extract",
+    ] as const) {
+      expect(effectiveTimeoutSeconds(30, step), step).toBe(180);
+      expect(effectiveTimeoutSeconds(1, step), step).toBe(180);
+    }
   });
 
-  it("keeps a larger configured timeout and the base timeout for other steps", () => {
+  it("keeps a larger configured timeout and still raises a shorter one to the floor", () => {
     expect(effectiveTimeoutSeconds(300, "chapter_draft")).toBe(300);
-    expect(effectiveTimeoutSeconds(30, "editorial_review")).toBe(30);
+    expect(effectiveTimeoutSeconds(300, "editorial_review")).toBe(300);
+    expect(effectiveTimeoutSeconds(180, "editorial_review")).toBe(180);
+    // Every step of today's closed vocabulary is long-form; a shorter step
+    // would keep its base timeout only by staying out of the floor list.
+    expect(effectiveTimeoutSeconds(40, "chapter_draft")).toBe(180);
   });
 });
 

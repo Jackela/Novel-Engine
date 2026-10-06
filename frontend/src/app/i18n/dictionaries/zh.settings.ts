@@ -5,10 +5,18 @@ export const zhSettings = {
   "settings.heading": "项目设置",
   "settings.error.unableToUpdate": "无法更新项目。",
   "settings.field.provider": "生成服务",
+  "settings.field.model": "模型",
   "settings.field.storage": "存储",
   "settings.field.documentSyntax": "文档语法",
   "settings.value.sqlite": "SQLite",
   "settings.value.markdown": "Markdown",
+  "settings.value.modelUnknown": "未知",
+
+  // DR-022：生成服务配置可见性。
+  "settings.provider.notConfigured": "未配置（缺少 API key）",
+  "settings.provider.missingCredential":
+    "这个生成服务在服务端没有配置 API key。请配置凭证并重启，或改用内置试用服务。",
+  "settings.provider.setupGuide": "provider 配置指南",
   "settings.action.save": "保存设置",
   "settings.action.saving": "正在保存…",
   "settings.status.saving": "正在保存项目设置。",

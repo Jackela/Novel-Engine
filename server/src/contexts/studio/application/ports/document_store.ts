@@ -97,6 +97,35 @@ export interface DocumentMatchRecord {
   excerpt: string;
 }
 
+/** The validated row budget of one ranked search page. */
+export type MatchPageLimit = number & { readonly __matchPageLimit: unique symbol };
+
+const MIN_MATCH_PAGE_LIMIT = 1;
+const MAX_MATCH_PAGE_LIMIT = 100;
+
+/** Validate and narrow a search-page budget before persistence. */
+export function matchPageLimit(value: number): MatchPageLimit {
+  return pageLimit<MatchPageLimit>(value, {
+    min: MIN_MATCH_PAGE_LIMIT,
+    max: MAX_MATCH_PAGE_LIMIT,
+    subject: "Search",
+  });
+}
+
+/** The page window of one ranked search read (DR-029). */
+export interface DocumentMatchPageInput {
+  readonly limit: MatchPageLimit;
+  /** Rows to skip in `(rank, document_id)` order; the request schema bounds it. */
+  readonly offset: number;
+}
+
+/** One ranked search page plus the honest total match count of the project. */
+export interface DocumentMatchPage {
+  readonly matches: DocumentMatchRecord[];
+  /** `COUNT(*)` over the same project + MATCH expression, never the page size. */
+  readonly total: number;
+}
+
 export interface AddDocumentInput {
   kind: string;
   title: string;
@@ -115,6 +144,14 @@ export interface AdvanceDocumentInput {
   metadataJson: string;
   source: string;
   now: Date;
+  /**
+   * True when the caller is the editor's draft-autosave machinery (#DR-047):
+   * adjacent autosave revisions inside the collapse window fold into the new
+   * state and old unreferenced autosave revisions are pruned. Restores,
+   * accepted proposals, and imports leave it unset, so their revisions are
+   * never folded or pruned.
+   */
+  autosave?: boolean | undefined;
 }
 
 /**
@@ -174,13 +211,16 @@ export interface DocumentStore extends StudioBeatStore {
   readWritingStatsHistory(scope: ProjectScope, projectId: string): WritingStatsHistory;
 
   /**
-   * Run a pre-reduced MATCH expression against the project's FTS index.
+   * Run a pre-reduced MATCH expression against the project's FTS index and
+   * return one bounded page plus the project's total match count (DR-029).
    * The expression must come from `buildFtsMatchQuery`; the store never
-   * reduces raw user input itself.
+   * reduces raw user input itself. Rows are ordered by `(rank, document_id)`
+   * so sequential pages neither duplicate nor skip rows for a stable index.
    */
   matchProjectDocuments(
     scope: ProjectScope,
     projectId: string,
     matchQuery: string,
-  ): DocumentMatchRecord[];
+    page: DocumentMatchPageInput,
+  ): DocumentMatchPage;
 }

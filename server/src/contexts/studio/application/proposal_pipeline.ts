@@ -1,4 +1,5 @@
 import {
+  ProviderNotConfiguredError,
   type ProviderStep,
   TextGenerationCancelledError,
   type TextGenerationProvider,
@@ -24,6 +25,7 @@ import {
   type ProposalStreamOptions,
   proposalRevisionFromContext,
   recoverProposalRetryContext,
+  replayedProposalJob,
 } from "./proposal_admission.js";
 import {
   buildProposalTask,
@@ -33,6 +35,7 @@ import {
   failedProposalJob,
   includeProposalDelta,
   type ProposalJobSeed,
+  replayedProposalFrame,
   validatedProposalOrThrow,
 } from "./proposal_landing.js";
 import { disposeProvider, type ProviderCleanupFailureReporter } from "./provider_disposal.js";
@@ -70,12 +73,13 @@ async function* accumulateStreamedDeltas(
   ) => AsyncGenerator<string, void, void>,
   task: TextGenerationTask,
   signal: AbortSignal | undefined,
+  // Caller-owned sink so a mid-stream failure can still read the text (#DR-006).
+  accumulated: string[],
 ): AsyncGenerator<
   ProposalStreamFramePayload,
-  { accumulated: string[]; reported: TextGenerationStreamOutcome | undefined },
+  { reported: TextGenerationStreamOutcome | undefined },
   void
 > {
-  const accumulated: string[] = [];
   const codePoints = createProposalCodePointCounter();
   let reported: TextGenerationStreamOutcome | undefined;
   for await (const delta of generate(task, {
@@ -88,7 +92,7 @@ async function* accumulateStreamedDeltas(
     accumulated.push(delta);
     yield { type: "delta", text: delta };
   }
-  return { accumulated, reported };
+  return { reported };
 }
 
 export class ProposalGenerationPipeline {
@@ -108,6 +112,9 @@ export class ProposalGenerationPipeline {
     reportCleanupFailure: ProviderCleanupFailureReporter,
   ): Promise<JobRecord> {
     const { step, providerName } = admitProposalOperation(request.operation, request.provider);
+    // DR-027: a stored request key replays its landed job before any work runs.
+    const replayed = replayedProposalJob(this.jobs, request);
+    if (replayed !== undefined) return replayed;
     // #305: the provider call runs before any job row exists, so identical
     // concurrent submissions are deduplicated by the in-flight guard — the
     // loser receives a 409 instead of running the work twice. Enter before
@@ -134,16 +141,8 @@ export class ProposalGenerationPipeline {
           instruction: request.instruction,
         });
       } catch (error) {
-        if (!(error instanceof TextGenerationProviderError)) {
-          throw error;
-        }
-        return failedProposalJob(
-          this.jobs,
-          request.scope,
-          target.seed,
-          target.revisionId,
-          error.message,
-        );
+        if (!(error instanceof TextGenerationProviderError)) throw error;
+        return failedProposalJob(this.jobs, request.scope, target, error.message);
       }
     } finally {
       try {
@@ -168,6 +167,12 @@ export class ProposalGenerationPipeline {
     options: ProposalStreamOptions,
   ): AsyncGenerator<ProposalStreamFramePayload, void, void> {
     const { step, providerName } = admitProposalOperation(request.operation, request.provider);
+    // DR-027: the stored key's terminal outcome is replayed as its own frame.
+    const replayed = replayedProposalJob(this.jobs, request);
+    if (replayed !== undefined) {
+      yield replayedProposalFrame(replayed);
+      return;
+    }
     // #305 parity: identical concurrent submissions are deduplicated by the
     // in-flight guard — the loser receives a 409 instead of running work twice.
     // The guard precedes row resolution so post-commit deletion cleanup keeps
@@ -180,6 +185,7 @@ export class ProposalGenerationPipeline {
       }),
     );
     let provider: TextGenerationProvider | undefined;
+    const accumulated: string[] = [];
     try {
       const target = this.resolveTarget(request, step, providerName);
       try {
@@ -190,14 +196,18 @@ export class ProposalGenerationPipeline {
             `Provider '${providerName}' does not support streaming generation.`,
           );
         }
-        const { accumulated, reported } = yield* accumulateStreamedDeltas(
+        const { reported } = yield* accumulateStreamedDeltas(
           stream,
           target.task,
           options.signal,
+          accumulated,
         );
+        // Drain the sink: a completed stream keeps no partial, so only text from
+        // a stream that actually broke mid-flight survives for the failed job.
+        const streamedMarkdown = accumulated.splice(0).join("");
         if (options.signal?.aborted === true) return;
         const { proposal } = validatedProposalOrThrow({
-          content: { chapter_markdown: accumulated.join("") },
+          content: { chapter_markdown: streamedMarkdown },
         });
         yield {
           type: "done",
@@ -214,10 +224,15 @@ export class ProposalGenerationPipeline {
         };
       } catch (error) {
         if (error instanceof TextGenerationCancelledError) return;
-        if (!(error instanceof TextGenerationProviderError)) {
-          throw error;
-        }
-        failedProposalJob(this.jobs, request.scope, target.seed, target.revisionId, error.message);
+        // DR-022: an unconfigured provider never starts a stream and never
+        // lands a failed job — the HTTP surface answers with the dedicated
+        // PROVIDER_NOT_CONFIGURED envelope naming the missing credential.
+        if (error instanceof ProviderNotConfiguredError) throw error;
+        if (!(error instanceof TextGenerationProviderError)) throw error;
+        // DR-006: a stream that broke mid-flight persists its accumulated text
+        // (sanitized) as `partial_markdown`; a completed stream drained the sink
+        // above and persists none.
+        failedProposalJob(this.jobs, request.scope, target, error.message, accumulated.join(""));
         yield { type: "error", error: { code: "PROVIDER_FAILED", message: error.message } };
       }
     } finally {
@@ -299,6 +314,7 @@ export class ProposalGenerationPipeline {
         instruction: request.instruction,
         baseRevisionId: revision.id,
         now: this.now(),
+        requestKey: request.requestKey,
       }),
       revisionId: revision.id,
       task: buildProposalTask(

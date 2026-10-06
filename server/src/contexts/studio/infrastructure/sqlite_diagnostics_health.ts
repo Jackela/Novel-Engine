@@ -7,11 +7,12 @@ import type {
 } from "../application/ports/diagnostics_health.js";
 
 /**
- * The diagnostics export's database health probe (#654): the `doctor`
- * command's field family read in-process through the app's own database
- * handle. A database whose pragmas cannot be read reports the failure through
- * the integrity field while the rest stays at the doctor defaults — exactly
- * the CLI's unopenable-database behavior, without shelling out to it.
+ * The diagnostics export's database health probe (#654): the `doctor` field
+ * family read in-process through the app's own database handle. A database
+ * whose pragmas cannot be read reports the failure through the integrity
+ * field while the rest stays at the doctor defaults; the CLI doctor routes
+ * unopenable-database failures through its own `error` field instead
+ * (DR-032), so this probe keeps its independent reading.
  */
 export function sqliteDiagnosticsHealth(
   raw: Database.Database,

@@ -34,6 +34,7 @@ const utcDay = (offsetFromToday: number): string =>
 function stats(projectId: string, wordsToday: number): WritingStats {
   return {
     project_id: projectId,
+    tz_offset_minutes: 0,
     streak_days: wordsToday > 0 ? 1 : 0,
     daily: Array.from({ length: 30 }, (_, index) => ({
       date: utcDay(index - 29),
@@ -53,6 +54,8 @@ function stats(projectId: string, wordsToday: number): WritingStats {
     usage: {
       project_id: projectId,
       request_count: 0,
+      failed_attempt_count: 0,
+      estimated_requests: 0,
       prompt_tokens: 0,
       completion_tokens: 0,
       per_model: [],

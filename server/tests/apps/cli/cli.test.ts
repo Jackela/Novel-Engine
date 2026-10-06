@@ -5,18 +5,23 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
 import { runCli } from "../../../src/apps/cli/main.js";
+import { buildFtsMatchQuery } from "../../../src/contexts/studio/application/fts_match_query.js";
 import {
-  exports as exportArtifacts,
-  projectSnapshots,
+  documentRevisions,
+  documents,
   projects,
 } from "../../../src/contexts/studio/infrastructure/db/schema.js";
 import { owners } from "../../../src/shared/infrastructure/db/schema.js";
 import { openStudioDatabase } from "../../../src/shared/infrastructure/db/startup.js";
-import { makeLegacyWorkspace } from "../../legacy_workspace_fixtures.js";
 
 const productManifest = JSON.parse(
   readFileSync(new URL("../../../package.json", import.meta.url), "utf8"),
 ) as { productName: string; version: string };
+const bundledMigrations = (
+  JSON.parse(
+    readFileSync(new URL("../../../drizzle/meta/_journal.json", import.meta.url), "utf8"),
+  ) as { entries: unknown[] }
+).entries.length;
 
 interface CliHarness {
   directory: string;
@@ -55,54 +60,80 @@ async function seedDatabase(harness: CliHarness): Promise<void> {
   expect(existsSync(harness.databasePath)).toBe(true);
 }
 
-async function seedMissingCommittedExport(harness: CliHarness): Promise<void> {
+/**
+ * Two documents with current revisions, one orphan index row, and no index
+ * rows for the real documents: the drifted database `doctor` must expose and
+ * `reindex` must reconcile (2 indexable documents vs 1 stray row).
+ */
+async function seedIndexDrift(harness: CliHarness): Promise<void> {
   const studio = await openStudioDatabase(harness.databasePath);
   const now = new Date("2026-08-31T18:00:00.000Z");
   try {
-    studio.db
-      .insert(owners)
-      .values({
-        id: "owner-recovery",
-        username: "owner",
-        password_hash: "test-only",
-        created_at: now,
-      })
+    const { db, raw } = studio;
+    db.insert(owners)
+      .values([{ id: "owner-index", username: "owner", password_hash: "x", created_at: now }])
       .run();
-    studio.db
-      .insert(projects)
-      .values({
-        id: "project-recovery",
-        ownerId: "owner-recovery",
-        title: "Recovery evidence",
-        description: "",
-        settingsJson: "{}",
-        importHash: null,
-        createdAt: now,
-        updatedAt: now,
-      })
+    db.insert(projects)
+      .values([
+        {
+          id: "project-index",
+          ownerId: "owner-index",
+          title: "Drift",
+          description: "",
+          settingsJson: "{}",
+          importHash: null,
+          createdAt: now,
+          updatedAt: now,
+        },
+      ])
       .run();
-    studio.db
-      .insert(projectSnapshots)
-      .values({
-        id: "snapshot-recovery",
-        projectId: "project-recovery",
-        reason: "export",
-        createdAt: now,
-      })
+    db.insert(documents)
+      .values([
+        {
+          id: "doc-dai",
+          projectId: "project-index",
+          kind: "chapter",
+          title: "初见",
+          position: 0,
+          currentRevisionId: "rev-dai",
+          createdAt: now,
+          updatedAt: now,
+        },
+        {
+          id: "doc-flower",
+          projectId: "project-index",
+          kind: "note",
+          title: "葬花吟",
+          position: 1,
+          currentRevisionId: "rev-flower",
+          createdAt: now,
+          updatedAt: now,
+        },
+      ])
       .run();
-    studio.db
-      .insert(exportArtifacts)
-      .values({
-        id: "artifact-recovery",
-        projectId: "project-recovery",
-        snapshotId: "snapshot-recovery",
-        format: "markdown",
-        relativePath: "exports/project-recovery/artifact-recovery.md",
-        sizeBytes: 7,
-        checksumSha256: "a".repeat(64),
-        createdAt: now,
-      })
+    db.insert(documentRevisions)
+      .values([
+        {
+          id: "rev-dai",
+          documentId: "doc-dai",
+          revisionNumber: 1,
+          contentMarkdown: "林黛玉初进贾府，宝玉迎接。",
+          createdAt: now,
+        },
+        {
+          id: "rev-flower",
+          documentId: "doc-flower",
+          revisionNumber: 1,
+          contentMarkdown: "花谢花飞花满天。",
+          createdAt: now,
+        },
+      ])
       .run();
+    raw
+      .prepare(
+        "INSERT INTO document_search(document_id, project_id, title, content) VALUES (?, ?, ?, ?)",
+      )
+      .run("doc-ghost", "project-index", "Ghost", "ghosttoken stranded");
   } finally {
     studio.close();
   }
@@ -168,10 +199,13 @@ describe("operational CLI", () => {
       journal_mode: "wal",
       foreign_keys: true,
       owner_configured: false,
+      document_index: { documents: 0, indexed: 0, drifted: false },
+      migrations: { applied: bundledMigrations, pending: false },
+      error: null,
     });
   });
 
-  it("reports corruption through doctor and exits non-zero", async () => {
+  it("reports corruption through doctor's error field and exits non-zero", async () => {
     const harness = await cliHarness();
     await seedDatabase(harness);
     await writeFile(harness.databasePath, "this is definitely not a sqlite database");
@@ -183,42 +217,14 @@ describe("operational CLI", () => {
     expect(payload.name).toBe(productManifest.productName);
     expect(payload.version).toBe(productManifest.version);
     expect(payload.database).toBe(harness.databasePath);
-    expect(payload.quick_check).toEqual(expect.any(String));
-    expect(payload.quick_check).not.toBe("ok");
+    expect(payload.quick_check).toBe("unknown");
+    expect(payload.error).toMatch(/not a database/i);
     expect(payload.foreign_keys).toBe(false);
+    expect(payload.document_index).toBeNull();
+    expect(payload.migrations).toBeNull();
   });
 
-  it("fails doctor and import before mutation when committed export bytes are missing", async () => {
-    const harness = await cliHarness();
-    await seedMissingCommittedExport(harness);
-
-    const doctorCode = await runCli(["doctor"], harness.context);
-    expect(doctorCode).toBe(1);
-    const doctor = JSON.parse(harness.lines[0] ?? "") as Record<string, unknown>;
-    expect(doctor.quick_check).toMatch(/missing/i);
-
-    harness.lines.length = 0;
-    const source = makeLegacyWorkspace(join(harness.directory, "blocked-import"), {
-      title: "Must not import",
-      chapters: [{ filename: "chapter-001.md", content: "# Blocked\n" }],
-    });
-    const importCode = await runCli(
-      ["import", "--source", source, "--owner", "owner"],
-      harness.context,
-    );
-    expect(importCode).toBe(1);
-    expect(harness.lines.join("\n")).toMatch(/missing/i);
-
-    const unchanged = await openStudioDatabase(harness.databasePath);
-    try {
-      expect(unchanged.db.select().from(projects).all()).toHaveLength(1);
-      expect(unchanged.db.select().from(exportArtifacts).all()).toHaveLength(1);
-    } finally {
-      unchanged.close();
-    }
-  });
-
-  it("backs up and migrates before serve starts listening", async () => {
+  it("serves a fully migrated database without writing a backup on restart", async () => {
     const harness = await cliHarness();
     await seedDatabase(harness);
     const events: string[] = [];
@@ -232,7 +238,7 @@ describe("operational CLI", () => {
           const backups = join(harness.dataDirectory, "backups");
           backupsAtListen = existsSync(backups)
             ? (await (await import("node:fs/promises")).readdir(backups)).length
-            : -1;
+            : 0;
           await app.close();
         },
       },
@@ -242,7 +248,7 @@ describe("operational CLI", () => {
 
     expect(code).toBe(0);
     expect(events).toEqual(["listen:127.0.0.1:8765"]);
-    expect(backupsAtListen).toBeGreaterThan(0);
+    expect(backupsAtListen).toBe(0);
   });
 
   it("reports a missing owner or bad source as a failed import (exit 1)", async () => {
@@ -283,5 +289,36 @@ describe("operational CLI", () => {
     expect(harness.lines.join("\n")).toContain("serve");
     expect(harness.lines.join("\n")).toContain("backup");
     expect(harness.lines.join("\n")).toContain("doctor");
+  });
+
+  it("reconciles a drifted index through doctor and rebuilds it idempotently", async () => {
+    const harness = await cliHarness();
+    await seedIndexDrift(harness);
+
+    expect(await runCli(["doctor"], harness.context)).toBe(0);
+    const drift = JSON.parse(harness.lines[0] ?? "") as { document_index: unknown };
+    expect(drift.document_index).toEqual({ documents: 2, indexed: 1, drifted: true });
+
+    for (let run = 0; run < 2; run += 1) {
+      harness.lines.length = 0;
+      expect(await runCli(["reindex"], harness.context)).toBe(0);
+      expect(JSON.parse(harness.lines[0] ?? "")).toEqual({ documents: 2, indexed: 2 });
+    }
+
+    const studio = await openStudioDatabase(harness.databasePath);
+    try {
+      const match = studio.raw.prepare(
+        "SELECT document_id FROM document_search WHERE document_search MATCH ?",
+      );
+      const matchIds = (term: string): string[] =>
+        (match.all(buildFtsMatchQuery(term) ?? "") as Array<{ document_id: string }>).map(
+          (row) => row.document_id,
+        );
+      expect(matchIds("黛玉")).toEqual(["doc-dai"]);
+      expect(matchIds("葬花")).toEqual(["doc-flower"]);
+      expect(matchIds("ghosttoken")).toEqual([]);
+    } finally {
+      studio.close();
+    }
   });
 });

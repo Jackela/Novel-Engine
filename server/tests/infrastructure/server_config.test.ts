@@ -1,60 +1,12 @@
 import { randomBytes } from "node:crypto";
-import { mkdtemp, writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
+import { writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
-import {
-  DEFAULT_SECRET_KEY,
-  loadServerConfig,
-  type ServerConfig,
-} from "../../src/shared/infrastructure/config/server_config.js";
+import type { ServerConfig } from "../../src/shared/infrastructure/config/server_config.js";
 import { locateWorkspaceRoot } from "../../src/shared/infrastructure/workspace_manifest.js";
 import { fixtureApiKey } from "../credential_fixtures.js";
-
-/** A usable secret generated per run — never a credential literal in source. */
-function generatedSecret(): string {
-  return randomBytes(32).toString("base64url");
-}
-
-async function makeWorkspace(): Promise<string> {
-  return mkdtemp(join(tmpdir(), "novel-engine-config-"));
-}
-
-interface LoadOptions {
-  env?: Record<string, string>;
-  envFile?: string | null;
-  workingDirectory?: string;
-}
-
-function load(options: LoadOptions = {}): ServerConfig | ConfigurationErrorLike {
-  const input: {
-    env: Record<string, string>;
-    envFile: string | null;
-    workingDirectory?: string;
-  } = {
-    env: options.env ?? {},
-    envFile: options.envFile ?? null,
-  };
-  if (options.workingDirectory !== undefined) {
-    input.workingDirectory = options.workingDirectory;
-  }
-  try {
-    return loadServerConfig(input);
-  } catch (error) {
-    return error as ConfigurationErrorLike;
-  }
-}
-
-interface ConfigurationErrorLike {
-  readonly message: string;
-  readonly name: string;
-}
-
-function expectRejected(config: ServerConfig | ConfigurationErrorLike): ConfigurationErrorLike {
-  expect(config).toBeInstanceOf(Error);
-  return config as ConfigurationErrorLike;
-}
+import { expectRejected, generatedSecret, load, makeWorkspace } from "./server_config_helpers.js";
 
 describe("environment configuration surface", () => {
   it("applies the adjudicated defaults without configuration", async () => {
@@ -75,6 +27,30 @@ describe("environment configuration surface", () => {
     ]);
     expect(config.trustedProxies).toEqual([]);
     expect(config.authRateLimitPerMinute).toBe(5);
+  });
+
+  it("resolves the structured logger level and refuses an unknown one (DR-041)", async () => {
+    const workspace = await makeWorkspace();
+
+    const unset = load({ workingDirectory: workspace }) as ServerConfig;
+    expect(unset.logLevel).toBe("info");
+
+    const explicit = load({
+      workingDirectory: workspace,
+      env: { LOG_LEVEL: "debug" },
+    }) as ServerConfig;
+    expect(explicit.logLevel).toBe("debug");
+
+    const normalized = load({
+      workingDirectory: workspace,
+      env: { LOG_LEVEL: " WARN " },
+    }) as ServerConfig;
+    expect(normalized.logLevel).toBe("warn");
+
+    const rejected = expectRejected(
+      load({ workingDirectory: workspace, env: { LOG_LEVEL: "verbose" } }),
+    );
+    expect(rejected.message).toContain("LOG_LEVEL must be one of");
   });
 
   it("anchors default database paths to the workspace root, not the working directory", () => {
@@ -174,12 +150,20 @@ describe("environment configuration surface", () => {
   it("reads settings from the .env.local file without shell exports", async () => {
     const workspace = await makeWorkspace();
     const envFile = join(workspace, ".env.local");
-    await writeFile(envFile, "APP_ENVIRONMENT=testing\nSECURITY_TRUSTED_PROXIES=10.0.0.0/8\n");
+    await writeFile(envFile, "APP_ENVIRONMENT=testing\nSECURITY_TRUSTED_PROXIES=10.0.0.7\n");
 
     const config = load({ envFile, workingDirectory: workspace }) as ServerConfig;
 
     expect(config.environment).toBe("testing");
-    expect(config.trustedProxies).toEqual(["10.0.0.0/8"]);
+    expect(config.trustedProxies).toEqual(["10.0.0.7"]);
+  });
+
+  it("refuses trusted proxy network ranges at load time", () => {
+    const rejected = expectRejected(
+      load({ env: { SECURITY_TRUSTED_PROXIES: "10.0.0.0/8, 127.0.0.1" } }),
+    );
+    expect(rejected.message).toContain("SECURITY_TRUSTED_PROXIES");
+    expect(rejected.message).toContain("10.0.0.0/8");
   });
 
   it("lets the process environment win over the .env.local file", async () => {
@@ -248,6 +232,12 @@ describe("environment configuration surface", () => {
     expect(config.sessionSecret).toBe(secret);
   });
 
+  it("keeps the change-me placeholder usable outside production", () => {
+    const placeholder = "change-me-to-a-long-random-local-secret";
+    const config = load({ env: { SECURITY_SECRET_KEY: placeholder } }) as ServerConfig;
+    expect(config.sessionSecret).toBe(placeholder);
+  });
+
   it("refuses production startup when the secret is empty or whitespace", () => {
     for (const empty of ["", "   "]) {
       const rejected = expectRejected(
@@ -261,75 +251,5 @@ describe("environment configuration surface", () => {
     const tooShort = randomBytes(6).toString("hex").slice(0, 12);
     const rejected = expectRejected(load({ env: { SECURITY_SECRET_KEY: tooShort } }));
     expect(rejected.message).toContain("SECURITY_SECRET_KEY");
-  });
-});
-
-describe("production configuration guards", () => {
-  it("refuses production startup when the secret is missing", () => {
-    const rejected = expectRejected(load({ env: { APP_ENVIRONMENT: "production" } }));
-    expect(rejected.message).toContain("SECURITY_SECRET_KEY");
-  });
-
-  it("refuses production startup when the secret is the default value", () => {
-    const rejected = expectRejected(
-      load({ env: { APP_ENVIRONMENT: "production", SECURITY_SECRET_KEY: DEFAULT_SECRET_KEY } }),
-    );
-    expect(rejected.message).toContain("SECURITY_SECRET_KEY");
-  });
-
-  it("refuses staging startup when the secret is the default value", () => {
-    const rejected = expectRejected(
-      load({ env: { APP_ENVIRONMENT: "staging", SECURITY_SECRET_KEY: DEFAULT_SECRET_KEY } }),
-    );
-    expect(rejected.message).toContain("SECURITY_SECRET_KEY");
-  });
-
-  it("accepts production with an explicit secret, SQLite, and public origins", () => {
-    const config = load({
-      env: {
-        APP_ENVIRONMENT: "production",
-        SECURITY_SECRET_KEY: generatedSecret(),
-        SECURITY_CORS_ORIGINS: "https://app.example.com",
-      },
-    }) as ServerConfig;
-
-    expect(config.environment).toBe("production");
-  });
-
-  it("refuses production CORS containing a wildcard", () => {
-    const rejected = expectRejected(
-      load({
-        env: {
-          APP_ENVIRONMENT: "production",
-          SECURITY_SECRET_KEY: generatedSecret(),
-          SECURITY_CORS_ORIGINS: "https://*.example.com",
-        },
-      }),
-    );
-    expect(rejected.message).toContain("wildcard");
-  });
-
-  it("refuses production CORS containing localhost", () => {
-    const rejected = expectRejected(
-      load({
-        env: {
-          APP_ENVIRONMENT: "production",
-          SECURITY_SECRET_KEY: generatedSecret(),
-          SECURITY_CORS_ORIGINS: "https://app.example.com, http://localhost:5173",
-        },
-      }),
-    );
-    expect(rejected.message).toContain("localhost");
-  });
-
-  it("refuses staging default secrets but keeps the store and CORS unconstrained", () => {
-    const config = load({
-      env: {
-        APP_ENVIRONMENT: "staging",
-        SECURITY_SECRET_KEY: generatedSecret(),
-      },
-    }) as ServerConfig;
-
-    expect(config.corsOrigins).toContain("http://localhost:5173");
   });
 });

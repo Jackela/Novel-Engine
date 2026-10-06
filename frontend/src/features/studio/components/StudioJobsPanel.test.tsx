@@ -6,10 +6,23 @@ import { createMountHarness, deferred } from "@/test/harness";
 
 import { StudioJobsPanel } from "./StudioJobsPanel";
 
+vi.mock("@/app/api", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/app/api")>();
+  return {
+    ...actual,
+    api: {
+      ...actual.api,
+      job: vi.fn<typeof actual.api.job>(),
+    },
+  };
+});
+
 const harness = createMountHarness();
 
 afterEach(() => {
   harness.cleanup();
+  vi.unstubAllGlobals();
+  vi.resetAllMocks();
 });
 
 const jobs = [
@@ -26,6 +39,7 @@ describe("StudioJobsPanel", () => {
   it("renders job providers under human-readable labels instead of raw IDs", () => {
     const mounted = harness.mount(
       <StudioJobsPanel
+        projectId="project-1"
         jobs={[
           jobSummary({
             id: "job-1",
@@ -47,6 +61,7 @@ describe("StudioJobsPanel", () => {
     const onRetryJob = vi.fn();
     const mounted = harness.mount(
       <StudioJobsPanel
+        projectId="project-1"
         jobs={[
           jobSummary({ kind: "import", operation: "import", status: "failed" }),
           jobSummary({ kind: "import", operation: "import", status: "interrupted" }),
@@ -63,7 +78,13 @@ describe("StudioJobsPanel", () => {
   it("disables job retry without claiming a retry is running while proposal audit gates actions", () => {
     const onRetryJob = vi.fn();
     const mounted = harness.mount(
-      <StudioJobsPanel jobs={jobs} onLoadJobs={vi.fn()} onRetryJob={onRetryJob} retryGated />,
+      <StudioJobsPanel
+        projectId="project-1"
+        jobs={jobs}
+        onLoadJobs={vi.fn()}
+        onRetryJob={onRetryJob}
+        retryGated
+      />,
     );
 
     const retries = mounted.container.querySelectorAll<HTMLButtonElement>(
@@ -81,6 +102,7 @@ describe("StudioJobsPanel", () => {
   it("announces only Retry as busy while its jobs refresh settles", () => {
     const mounted = harness.mount(
       <StudioJobsPanel
+        projectId="project-1"
         jobs={jobs}
         onLoadJobs={vi.fn()}
         onRetryJob={vi.fn()}
@@ -108,7 +130,12 @@ describe("StudioJobsPanel", () => {
     const onRetryJob = vi.fn(() => completion.promise);
     const onLoadJobs = vi.fn();
     const mounted = harness.mount(
-      <StudioJobsPanel jobs={jobs} onLoadJobs={onLoadJobs} onRetryJob={onRetryJob} />,
+      <StudioJobsPanel
+        projectId="project-1"
+        jobs={jobs}
+        onLoadJobs={onLoadJobs}
+        onRetryJob={onRetryJob}
+      />,
     );
     const retryButton = mounted.container.querySelector<HTMLButtonElement>(
       'button[aria-label="Retry continue"]',
@@ -119,6 +146,7 @@ describe("StudioJobsPanel", () => {
       retryButton.click();
       mounted.root.render(
         <StudioJobsPanel
+          projectId="project-1"
           jobs={jobs}
           onLoadJobs={onLoadJobs}
           onRetryJob={onRetryJob}
@@ -139,6 +167,7 @@ describe("StudioJobsPanel", () => {
     act(() => {
       mounted.root.render(
         <StudioJobsPanel
+          projectId="project-1"
           jobs={jobs}
           onLoadJobs={onLoadJobs}
           onRetryJob={onRetryJob}
@@ -157,6 +186,7 @@ describe("StudioJobsPanel", () => {
     const onLoadJobs = vi.fn();
     const content = (currentJobs: typeof jobs, retryingJobId: string | null) => (
       <StudioJobsPanel
+        projectId="project-1"
         jobs={currentJobs}
         onLoadJobs={onLoadJobs}
         onRetryJob={onRetryJob}
@@ -196,6 +226,7 @@ describe("StudioJobsPanel", () => {
   it("names and marks only the older-page command busy", () => {
     const mounted = harness.mount(
       <StudioJobsPanel
+        projectId="project-1"
         jobs={jobs}
         hasOlderJobs
         onLoadJobs={vi.fn()}
@@ -219,6 +250,7 @@ describe("StudioJobsPanel", () => {
     const onLoadOlderJobs = vi.fn(() => completion.promise);
     const content = (hasOlderJobs: boolean, isLoading: boolean) => (
       <StudioJobsPanel
+        projectId="project-1"
         jobs={jobs}
         hasOlderJobs={hasOlderJobs}
         onLoadJobs={vi.fn()}
@@ -256,6 +288,7 @@ describe("StudioJobsPanel", () => {
     const onLoadOlderJobs = vi.fn(() => completion.promise);
     const content = (isLoading: boolean) => (
       <StudioJobsPanel
+        projectId="project-1"
         jobs={jobs}
         hasOlderJobs
         onLoadJobs={vi.fn()}

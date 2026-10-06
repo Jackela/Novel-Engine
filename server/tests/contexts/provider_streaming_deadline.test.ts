@@ -22,6 +22,13 @@ async function collect(stream: AsyncGenerator<string, void, void>): Promise<stri
   return deltas;
 }
 
+/**
+ * These cases pin the per-attempt budget, not the retry policy: one attempt
+ * keeps the asserted timeout independent of the retry schedule (the retry
+ * behaviour itself is covered by provider_streaming_retry.test.ts).
+ */
+const singleAttemptRetry = { maxAttempts: 1, delayMs: 0, sleep: async () => undefined };
+
 afterEach(() => {
   vi.useRealTimers();
 });
@@ -43,6 +50,7 @@ describe("chapter streaming absolute timeout floor", () => {
               firstByteTimeoutMs: 240_000,
               idleTimeoutMs: 240_000,
               transport,
+              retry: singleAttemptRetry,
             })
           : new DashScopeTextProvider({
               apiKey: fixtureApiKey("sk-dashscope", "stream-floor"),
@@ -50,6 +58,7 @@ describe("chapter streaming absolute timeout floor", () => {
               firstByteTimeoutMs: 240_000,
               idleTimeoutMs: 240_000,
               transport,
+              retry: singleAttemptRetry,
             });
       const pending = collect(
         provider.generateStructuredStreaming(chapterTask("chapter_revision")),

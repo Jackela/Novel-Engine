@@ -4,65 +4,10 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { THEME_STORAGE_KEY } from "@/app/theme";
 import { chapter, projectWith } from "@/test/factories";
 import { createMountHarness } from "@/test/harness";
-
+import { buildInspectorModel } from "./components/studioInspectorModel.fixture";
 import { StudioInspector } from "./StudioInspector";
 import { StudioStatusbar } from "./StudioStatusbar";
 import { StudioTopbar } from "./StudioTopbar";
-import type { StudioInspectorModel } from "./studioInspectorTypes";
-
-/** #412: grouped per-tab model matching the new Inspector boundary. */
-function buildInspectorModel(): StudioInspectorModel {
-  return {
-    copilot: {
-      instruction: "",
-      proposal: null,
-      streamingText: null,
-      onRunProposal: vi.fn(),
-      onAcceptProposal: vi.fn(),
-      setInstruction: vi.fn(),
-      setProposal: vi.fn(),
-    },
-    export: {
-      exports: [],
-      exportingFormat: null,
-      failedFormat: null,
-      errorForExport: null,
-    },
-    review: { latestReview: null, summaries: [], onRunReview: vi.fn() },
-    history: {
-      revisions: [],
-      loadedRevisionId: null,
-      historyInitialized: true,
-      hasOlderRevisions: false,
-      isLoadingOlder: false,
-      isLoadingHistory: false,
-      onLoadOlderRevisions: vi.fn(),
-      onRestoreRevision: vi.fn(),
-    },
-    jobs: {
-      jobs: [],
-      hasOlderJobs: false,
-      onLoadJobs: vi.fn(),
-      onLoadOlderJobs: vi.fn(),
-      onRetryJob: vi.fn(),
-    },
-    usage: { projectId: "project-1" },
-    stats: { projectId: "project-1" },
-    lore: { projectId: "project-1", provider: "mock", documents: [] },
-    settings: {
-      settingsForm: { title: "", description: "", provider: "" },
-      error: null,
-      providers: [],
-      onUpdateSettings: vi.fn(),
-      setSettingsForm: vi.fn(),
-      diagnostics: { onExport: vi.fn(), isExporting: false, error: null },
-    },
-    // #444: no active Lore document in this fixture, so no panel renders.
-    loreStatus: null,
-    // #466: no active chapter in this fixture, so no beat panel renders.
-    beat: null,
-  };
-}
 
 const harness = createMountHarness();
 

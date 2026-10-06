@@ -2,9 +2,10 @@ import { mkdtemp } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-
+import { unreportedAttemptUsage } from "../../src/contexts/studio/application/attempt_usage.js";
 import {
   type AddJobInput,
+  type AttemptUsageInput,
   jobPageLimit,
 } from "../../src/contexts/studio/application/ports/job_records.js";
 import { scopeForPrincipal } from "../../src/contexts/studio/application/ports/studio_store.js";
@@ -45,12 +46,15 @@ function completedJobInput(projectId: string, now: Date): AddJobInput {
   };
 }
 
-function usageInput() {
+/** A completed provider-reported attempt (DR-028 labels both fields). */
+function usageInput(): AttemptUsageInput {
   return {
     provider: "mock",
     model: "deterministic-story-v1",
     promptTokens: 3,
     completionTokens: 5,
+    outcome: "completed",
+    tokenSource: "provider",
     requestEvidenceJson: "{}",
   };
 }
@@ -89,10 +93,10 @@ async function openHarness() {
   };
 }
 
-describe("atomic completed-proposal landing (#392)", () => {
+describe("atomic job-with-usage landing (#392, DR-028)", () => {
   it("commits the job row and its usage event together", async () => {
     const { scope, clock, store, projectId } = await openHarness();
-    const job = store.jobs.recordCompletedJobWithUsage(scope, {
+    const job = store.jobs.recordJobWithUsage(scope, {
       job: completedJobInput(projectId, clock()),
       usage: usageInput(),
     });
@@ -101,6 +105,26 @@ describe("atomic completed-proposal landing (#392)", () => {
     expect(usage.requestCount).toBe(1);
     expect(usage.promptTokens).toBe(3);
     expect(usage.completionTokens).toBe(5);
+  });
+
+  /**
+   * DR-028: a provider attempt that failed before reporting usage is landed as
+   * a failed job plus its zero-token `unreported` row, in the same transaction
+   * and outside the completed-attempt token totals.
+   */
+  it("commits a failed job row with its unreported zero-token usage row", async () => {
+    const { scope, clock, store, projectId } = await openHarness();
+    const job = store.jobs.recordJobWithUsage(scope, {
+      job: { ...completedJobInput(projectId, clock()), status: "failed", error: "transport down" },
+      usage: unreportedAttemptUsage({ provider: "mock", requestEvidenceJson: "{}" }),
+    });
+    expect(job.status).toBe("failed");
+    const usage = store.jobs.aggregateProjectUsage(scope, projectId, new Date());
+    expect(usage.requestCount).toBe(0);
+    expect(usage.failedAttemptCount).toBe(1);
+    expect(usage.estimatedRequestCount).toBe(0);
+    expect(usage.promptTokens).toBe(0);
+    expect(usage.completionTokens).toBe(0);
   });
 
   it("rolls back both writes when the usage insert fails, leaving no orphan job", async () => {
@@ -113,7 +137,7 @@ describe("atomic completed-proposal landing (#392)", () => {
     // The same underlying database handle; only the usage write differs.
     const exploding = new ExplodingUsageStore(db);
     expect(() =>
-      exploding.recordCompletedJobWithUsage(scope, {
+      exploding.recordJobWithUsage(scope, {
         job: completedJobInput(projectId, clock()),
         usage: usageInput(),
       }),

@@ -193,8 +193,19 @@ describe("proposal stream endpoint (#308)", () => {
       const row = rows[0] as { status: string; error: string; result_json: string };
       expect(row.status).toBe("failed");
       expect(row.error).toBe("stream exploded");
-      expect(JSON.parse(row.result_json)).toMatchObject({ proposal_markdown: "" });
-      expect(database.select().from(usageEvents).all()).toHaveLength(usageBefore);
+      const result = JSON.parse(row.result_json) as Record<string, string>;
+      expect(result.proposal_markdown).toBe("");
+      // DR-006: the mid-stream failure keeps the sanitized text it accumulated.
+      expect(result.partial_markdown).toBe("A quiet beginning");
+      // DR-028: the failed stream attempt keeps one zero-token unreported row.
+      const usage = database.select().from(usageEvents).all();
+      expect(usage).toHaveLength(usageBefore + 1);
+      expect(usage.at(-1)).toMatchObject({
+        outcome: "failed",
+        token_source: "unreported",
+        prompt_tokens: 0,
+        completion_tokens: 0,
+      });
     } finally {
       await app.close();
     }
@@ -226,7 +237,15 @@ describe("proposal stream endpoint (#308)", () => {
       const row = rows[0] as { status: string; error: string };
       expect(row.status).toBe("failed");
       expect(row.error).toMatch(/not valid story prose/);
-      expect(database.select().from(usageEvents).all()).toHaveLength(0);
+      // DR-028: the failed attempt lands one zero-token unreported row.
+      expect(database.select().from(usageEvents).all()).toMatchObject([
+        {
+          outcome: "failed",
+          token_source: "unreported",
+          prompt_tokens: 0,
+          completion_tokens: 0,
+        },
+      ]);
     } finally {
       await app.close();
     }
@@ -258,31 +277,6 @@ describe("proposal stream endpoint (#308)", () => {
       const rows = database.select().from(jobs).all();
       expect(rows).toHaveLength(1);
       expect((rows[0] as { status: string }).status).toBe("failed");
-    } finally {
-      await app.close();
-    }
-  });
-
-  it("answers unconfigured providers with the envelope error before any stream", async () => {
-    const { app } = await buildStudioApp();
-    try {
-      const jar = await ownerJar(app);
-      const project = await seedProject(app, jar, "Unconfigured");
-      const document = project.documents[0] as DocumentPayload;
-      const database = app.studioDb?.db;
-      if (database === undefined) throw new Error("studio test app must expose its database");
-
-      const response = await call(app, jar, "POST", STREAM_PATH(project.id, document.id), {
-        operation: "continue",
-        provider: "dashscope",
-      });
-      expect(response.statusCode).toBe(422);
-      expect(response.headers["content-type"]).toContain("application/json");
-      expect(response.json()).toMatchObject({
-        error: { code: "INVALID_OPERATION" },
-      });
-      expect(response.json().error.message).toMatch(/does not support streaming/);
-      expect(database.select().from(jobs).all()).toHaveLength(0);
     } finally {
       await app.close();
     }

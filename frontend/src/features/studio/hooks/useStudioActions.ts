@@ -12,6 +12,7 @@ import { useStudioDocumentDeletion } from "./useStudioDocumentDeletion";
 import { useStudioJobActions } from "./useStudioJobActions";
 import type { JobsFreshLoadInitiator } from "./useStudioJobs";
 import { useStudioLoreStatusActions } from "./useStudioLoreStatusActions";
+import { useStudioVolumeActions } from "./useStudioVolumeActions";
 
 interface UseStudioActionsOptions {
   project: Project | null;
@@ -116,6 +117,13 @@ export function useStudioActions({
     loadJobs,
     isProposalActionGated,
   });
+  const volumeActions = useStudioVolumeActions({
+    project,
+    projectId,
+    setProject,
+    currentOwner,
+    isCurrentOwner,
+  });
 
   return {
     createDocument: documentActions.createDocument,
@@ -126,6 +134,18 @@ export function useStudioActions({
     placeChapter: placementActions.placeChapter,
     placementFor: placementActions.placementFor,
     placingDocument: placementActions.placingDocument,
+    addVolume: volumeActions.addVolume,
+    renameVolume: volumeActions.renameVolume,
+    deleteVolume: volumeActions.deleteVolume,
+    moveVolume: volumeActions.moveVolume,
+    isCreatingVolume: volumeActions.isCreatingVolume,
+    createVolumeError: volumeActions.createVolumeError,
+    renamingVolume: volumeActions.renamingVolume,
+    renameErrorFor: volumeActions.renameErrorFor,
+    deletingVolume: volumeActions.deletingVolume,
+    deleteErrorFor: volumeActions.deleteErrorFor,
+    movingVolume: volumeActions.movingVolume,
+    moveErrorFor: volumeActions.moveErrorFor,
     runReview: jobActions.runReview,
     updateProjectSettings: settingsUpdate.updateProjectSettings,
     retryJob: jobActions.retryJob,

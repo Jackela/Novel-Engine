@@ -1,14 +1,14 @@
 # Upgrading
 
 升级 Novel Engine 的方式是拉取新代码并重新构建镜像。你的手稿住在
-`novel-engine-data` volume 里，升级永远不会碰它，而且工作室在每次启动时
-都会准备自己的安全备份——所以升级是件例行公事。
+`novel-engine-data` volume 里，升级永远不会碰它，而且当升级有待执行的迁移
+时，工作室会先准备好自己的安全备份——所以升级是件例行公事。
 
 ## Before you upgrade
 
-用[备份](backup-and-restore.md)流程往机器外拿一份副本。工作室每次启动都
-会自动备份，但当升级期间磁盘坏掉时，真正救你的是那份放在移动硬盘或私人
-云盘文件夹里的副本。
+用[备份](backup-and-restore.md)流程往机器外拿一份副本。工作室会在执行待
+迁移之前自动备份，但当升级期间磁盘坏掉时，真正救你的是那份放在移动硬盘或
+私人云盘文件夹里的副本。
 
 ## Get the new code
 
@@ -33,8 +33,8 @@ docker compose up -d --build
 
 启动序列以固定的顺序保护你的数据：
 
-1. **安全备份**——如果数据库存在，先往 `backups/` 写入一份带时间戳的副
-   本。
+1. **安全备份**——有待执行的迁移时，先往 `backups/` 写入一份带时间戳的
+   副本。
 2. **迁移**——数据库结构被自动升级到新版本的形态。
 3. **对账**——导出记录和历史字数会与磁盘上的文件核对。
 4. **任务恢复**——上次关闭时被打断的生成任务会被清理。
@@ -52,6 +52,17 @@ docker compose up -d --build
 - 它不能被简单地撤销：数据库结构只向前走。如果你之后必须运行旧版本，先
   恢复升级前的备份
   （[backup and restore](backup-and-restore.md#restoring)）。
+
+## 重建搜索索引
+
+全文搜索读的是派生的索引，不是修订正文本身。索引会随保存更新，但你随时可以从
+当前修订整体重建——例如在两台机器之间拷贝数据库之后，或搜索结果看起来陈旧时：
+
+```bash
+docker compose run --rm novel-engine node server/dist/apps/cli/main.js reindex
+```
+
+命令会输出包含重建文档数的 JSON 摘要。
 
 ## Upgrading from 0.3.x (the retired Python stack)
 

@@ -1,9 +1,12 @@
 import { Check, Loader2, X } from "lucide-react";
-import { lazy, Suspense, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
 
 import { useTranslation } from "@/app/i18n/useTranslation";
 import type { SaveState, StudioDocument } from "@/app/types/studio";
+import { StudioBodyBudget } from "./components/StudioBodyBudget";
+import { StudioConflictPanel } from "./components/StudioConflictPanel";
 import { useCommandFocusRestoration } from "./hooks/useCommandFocusRestoration";
+import type { ServerVersionPreviewController } from "./hooks/useConflictServerPreview";
 
 const MarkdownEditor = lazy(async () => {
   const module = await import("./MarkdownEditor");
@@ -17,14 +20,23 @@ interface StudioEditorPaneProps {
   saveState: SaveState;
   error?: string | null;
   isConflictActionPending?: boolean;
+  /** DR-012: the conflict panel's read-only server-version preview controller. */
+  serverVersion?: ServerVersionPreviewController | null;
+  /** DR-029: locate one search hit (term + token) in the opened document. */
+  reveal?: { readonly term: string; readonly token: number } | null;
   isLoadingDocument?: boolean;
   documentLoadError?: string | null;
   onDraftChange: (value: string) => void;
   onTitleChange: (value: string) => void;
   onLoadLatest?: () => void | Promise<void>;
   onRetryOverwrite?: () => void | Promise<void>;
+  onRetrySave?: () => void | Promise<void>;
+  /** DR-016: immediate draft flush for the Ctrl/Cmd+S shortcut. */
+  onSaveNow?: () => void;
   onRetryDocument?: () => void;
 }
+
+type EditorCommand = "loadLatest" | "retryOverwrite" | "retrySave";
 
 export function StudioEditorPane({
   activeDocument,
@@ -33,20 +45,22 @@ export function StudioEditorPane({
   saveState,
   error = null,
   isConflictActionPending = false,
+  serverVersion = null,
+  reveal = null,
   isLoadingDocument = false,
   documentLoadError = null,
   onDraftChange,
   onTitleChange,
   onLoadLatest,
   onRetryOverwrite,
+  onRetrySave,
+  onSaveNow,
   onRetryDocument,
 }: StudioEditorPaneProps) {
   const { t } = useTranslation();
   const titleRef = useRef<HTMLInputElement>(null);
-  const pendingCommandRef = useRef<"loadLatest" | "retryOverwrite" | null>(null);
-  const [pendingCommand, setPendingCommand] = useState<"loadLatest" | "retryOverwrite" | null>(
-    null,
-  );
+  const pendingCommandRef = useRef<EditorCommand | null>(null);
+  const [pendingCommand, setPendingCommand] = useState<EditorCommand | null>(null);
   const saveNeedsAttention = saveState === "conflict" || saveState === "error";
   const conflictActionsDisabled =
     pendingCommand !== null || isConflictActionPending || saveState === "saving";
@@ -60,8 +74,23 @@ export function StudioEditorPane({
           : t("editor.saveState.error");
   const runWithFocusRestoration = useCommandFocusRestoration(conflictActionsDisabled);
 
+  // DR-016: Ctrl/Cmd+S must flush the draft instead of opening the browser's
+  // save dialog. The listener lives on the window while a Document is open so
+  // the shortcut works from the title, the body, and the surrounding chrome.
+  useEffect(() => {
+    if (!activeDocument || !onSaveNow) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (!(event.ctrlKey || event.metaKey) || event.altKey || event.shiftKey) return;
+      if (event.key.toLowerCase() !== "s") return;
+      event.preventDefault();
+      onSaveNow();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [activeDocument, onSaveNow]);
+
   const runConflictCommand = (
-    commandKey: "loadLatest" | "retryOverwrite",
+    commandKey: EditorCommand,
     target: HTMLButtonElement,
     command: (() => void | Promise<void>) | undefined,
   ) => {
@@ -121,31 +150,34 @@ export function StudioEditorPane({
                 unit: activeDocument.word_count === 1 ? t("noun.word") : t("noun.words"),
               })}
             </span>
+            {/* DR-048: the draft's own budget, ahead of the saved revision. */}
+            <StudioBodyBudget draft={draft} />
           </header>
           {saveState === "conflict" ? (
+            <StudioConflictPanel
+              disabled={conflictActionsDisabled}
+              error={error}
+              onLoadLatest={onLoadLatest}
+              onRetryOverwrite={onRetryOverwrite}
+              onRunCommand={runConflictCommand}
+              pendingCommand={pendingCommand}
+              serverVersion={serverVersion}
+            />
+          ) : null}
+          {saveState === "error" ? (
             <div aria-live="assertive" className="editor-conflict" role="alert">
-              <strong>{t("editor.conflict.heading")}</strong>
+              <strong>{t("editor.saveState.error")}</strong>
               {error ? <span>{error}</span> : null}
               <div className="editor-conflict__actions">
                 <button
-                  aria-busy={pendingCommand === "loadLatest" || undefined}
-                  disabled={conflictActionsDisabled || onLoadLatest === undefined}
+                  aria-busy={pendingCommand === "retrySave" || undefined}
+                  disabled={conflictActionsDisabled || onRetrySave === undefined}
                   onClick={(event) =>
-                    runConflictCommand("loadLatest", event.currentTarget, onLoadLatest)
+                    runConflictCommand("retrySave", event.currentTarget, onRetrySave)
                   }
                   type="button"
                 >
-                  {t("editor.conflict.action.loadLatest")}
-                </button>
-                <button
-                  aria-busy={pendingCommand === "retryOverwrite" || undefined}
-                  disabled={conflictActionsDisabled || onRetryOverwrite === undefined}
-                  onClick={(event) =>
-                    runConflictCommand("retryOverwrite", event.currentTarget, onRetryOverwrite)
-                  }
-                  type="button"
-                >
-                  {t("editor.conflict.action.keepLocal")}
+                  {t("editor.action.retrySave")}
                 </button>
               </div>
             </div>
@@ -154,7 +186,7 @@ export function StudioEditorPane({
             <span>{t("editor.toolbar.syntax")}</span>
           </div>
           <Suspense fallback={<div className="editor__loading">{t("editor.loading")}</div>}>
-            <MarkdownEditor value={draft} onChange={onDraftChange} />
+            <MarkdownEditor onChange={onDraftChange} reveal={reveal} value={draft} />
           </Suspense>
         </>
       ) : isLoadingDocument ? (

@@ -21,6 +21,7 @@ export {
   projectPayloadSchema as projectResponseSchema,
   projectShellPayloadSchema as projectShellResponseSchema,
 } from "../../application/payload_schemas/project.js";
+export { revisionPayloadSchema as revisionResponseSchema } from "../../application/payload_schemas/revision.js";
 
 export const documentListResponseSchema = Type.Object(
   { documents: Type.Array(documentSummaryPayloadSchema) },
@@ -43,8 +44,17 @@ export const projectListResponseSchema = Type.Object(
   { additionalProperties: false },
 );
 
+/**
+ * One ranked search page (DR-029): `total` is the honest project-wide match
+ * count (never the page size) and `next_offset` walks the remaining pages —
+ * null exactly when every match has been delivered.
+ */
 export const matchListResponseSchema = Type.Object(
-  { results: Type.Array(matchResultPayloadSchema) },
+  {
+    results: Type.Array(matchResultPayloadSchema),
+    total: Type.Integer({ minimum: 0 }),
+    next_offset: Type.Unsafe<number | null>({ type: "integer", nullable: true }),
+  },
   { additionalProperties: false },
 );
 

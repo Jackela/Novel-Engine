@@ -1,4 +1,5 @@
 import { appConfig } from "@/app/config";
+import { translateActive } from "@/app/i18n/translate";
 import { localServiceUnavailable } from "@/app/networkError";
 import { createRequestAbortScope } from "@/app/requestAbortScope";
 import { isRecord } from "@/app/typeGuards";
@@ -74,7 +75,9 @@ export async function request<T>(
         error.name === "AbortError"
       ) {
         throw new Error(
-          abortScope.timedOut() ? "Request timed out. Please retry." : "Request cancelled.",
+          abortScope.timedOut()
+            ? translateActive("errors.transport.timedOut")
+            : translateActive("errors.transport.cancelled"),
           { cause: error },
         );
       }
@@ -84,7 +87,10 @@ export async function request<T>(
       throw error;
     }
     if (!response.ok) {
-      throw await readHttpError(response, `Request failed with status ${response.status}`);
+      throw await readHttpError(
+        response,
+        translateActive("errors.transport.requestFailed", { status: response.status }),
+      );
     }
     if (response.status === 204) return parse(undefined);
     return parse(await response.json());
@@ -95,8 +101,12 @@ export async function request<T>(
 
 export const json = (value: unknown) => JSON.stringify(value);
 
-export const postJson = <T>(path: string, value: unknown, parse: ResponseParser<T>) =>
-  request(path, { method: "POST", body: json(value) }, parse);
+export const postJson = <T>(
+  path: string,
+  value: unknown,
+  parse: ResponseParser<T>,
+  init?: RequestInit,
+) => request(path, { ...init, method: "POST", body: json(value) }, parse);
 export const putJson = <T>(path: string, value: unknown, parse: ResponseParser<T>) =>
   request(path, { method: "PUT", body: json(value) }, parse);
 export const patchJson = <T>(
@@ -115,14 +125,19 @@ export async function downloadBlob(path: string, init?: RequestInit): Promise<Bl
       signal: abortScope.signal,
     });
     if (!response.ok) {
-      throw await readHttpError(response, `Download failed with status ${response.status}`);
+      throw await readHttpError(
+        response,
+        translateActive("errors.transport.downloadFailed", { status: response.status }),
+      );
     }
     return await response.blob();
   } catch (error) {
     if (error instanceof HttpError) throw error;
     if ((error instanceof Error || error instanceof DOMException) && error.name === "AbortError") {
       throw new Error(
-        abortScope.timedOut() ? "Download timed out. Please retry." : "Request cancelled.",
+        abortScope.timedOut()
+          ? translateActive("errors.transport.downloadTimedOut")
+          : translateActive("errors.transport.cancelled"),
         { cause: error },
       );
     }

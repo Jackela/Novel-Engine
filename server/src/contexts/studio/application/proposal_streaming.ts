@@ -26,6 +26,8 @@ export interface ProposalStreamRequest {
   readonly reportCleanupFailure: ProviderCleanupFailureReporter;
   /** Aborted when the client disconnects: the stream ends with no job. */
   readonly signal?: AbortSignal | undefined;
+  /** The optional client request key naming this generation (DR-027). */
+  readonly requestKey?: string | undefined;
 }
 
 /**
@@ -57,6 +59,7 @@ export function streamProposal(
     operation: request.input.operation,
     instruction: request.input.instruction,
     provider: request.input.provider,
+    requestKey: request.requestKey,
   };
   const frames = pipeline.stream(generation, {
     reportCleanupFailure: request.reportCleanupFailure,

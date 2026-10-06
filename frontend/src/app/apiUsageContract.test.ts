@@ -5,9 +5,20 @@ import { api } from "./api";
 const usagePayload = {
   project_id: "project-1",
   request_count: 3,
+  failed_attempt_count: 1,
+  estimated_requests: 1,
   prompt_tokens: 10,
   completion_tokens: 20,
-  per_model: [{ model: "mock-model", requests: 3, prompt_tokens: 10, completion_tokens: 20 }],
+  per_model: [
+    {
+      model: "mock-model",
+      requests: 3,
+      failed_attempts: 1,
+      estimated_requests: 1,
+      prompt_tokens: 10,
+      completion_tokens: 20,
+    },
+  ],
   daily: [{ date: "2026-09-08", request_count: 3, prompt_tokens: 10, completion_tokens: 20 }],
 };
 

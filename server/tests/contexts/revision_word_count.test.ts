@@ -12,15 +12,27 @@ import {
 describe("revision word count", () => {
   it.each([
     ["hello world", 2],
-    ["你好世界", 1],
-    ["hello，世界！", 2],
     ["don't state-of-the-art", 2],
     ["123 45_6", 2],
     ["", 0],
     ["a\uD800b", 2],
-  ])("preserves the established Unicode result for %j", (markdown, expected) => {
+  ])("preserves the established Unicode word-run result for %j", (markdown, expected) => {
     expect(revisionWordCount(markdown)).toBe(expected);
   });
+
+  it.each([
+    ["天地玄黄宇宙洪荒日月盈昃辰宿列张寒来暑往秋收冬藏闰余成岁律吕调", 31],
+    ["你好世界", 4],
+    ["hello，世界！", 3],
+    ["他走进房间。窗外下着雨。", 10],
+    ["你好 world", 3],
+    ["a好b", 3],
+  ])(
+    "counts Han characters individually and sums them with word runs for %j",
+    (markdown, expected) => {
+      expect(revisionWordCount(markdown)).toBe(expected);
+    },
+  );
 
   it.each([null, -1, 1.5, Number.NaN, Number.MAX_SAFE_INTEGER + 1])(
     "refuses invalid stored evidence %s",

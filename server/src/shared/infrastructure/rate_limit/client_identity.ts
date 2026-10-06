@@ -111,52 +111,58 @@ function parseIpAddress(text: string): ParsedAddress | null {
 }
 
 /**
- * Whether the peer matches a configured trusted proxy: an exact IP, a CIDR
- * network, or an exact host string (for local sockets and test clients).
+ * Whether a configured trust entry is a network range rather than one concrete
+ * address. Configuration refuses such entries: a range that happens to cover
+ * clients would let a client connecting directly pose as a trusted proxy and
+ * rotate forged forwarding chains into fresh rate-limit buckets.
+ */
+export function isTrustedProxyRange(entry: string): boolean {
+  const slash = entry.indexOf("/");
+  if (slash === -1) {
+    return false;
+  }
+  const network = parseIpAddress(entry.slice(0, slash));
+  if (network === null) {
+    return false;
+  }
+  const prefix = Number(entry.slice(slash + 1));
+  return Number.isInteger(prefix) && prefix >= 0 && prefix <= network.bits;
+}
+
+/**
+ * Whether the peer matches a configured trusted proxy: an exact IP address or
+ * an exact host string (for local sockets and test clients). Network ranges
+ * never match — not even as host strings — so no configuration shape can grant
+ * a client the forwarding trust the rate limiter relies on.
  */
 export function isTrustedProxy(host: string, trustedProxies: string[]): boolean {
   const address = parseIpAddress(host);
   for (const proxy of trustedProxies) {
-    const slash = proxy.indexOf("/");
-    if (slash === -1) {
-      const proxyAddress = parseIpAddress(proxy);
-      if (
-        address !== null &&
-        proxyAddress !== null &&
-        proxyAddress.bits === address.bits &&
-        proxyAddress.value === address.value
-      ) {
-        return true;
-      }
-      if (address === null && host === proxy) {
+    if (isTrustedProxyRange(proxy)) {
+      continue;
+    }
+    const proxyAddress = parseIpAddress(proxy);
+    if (address !== null && proxyAddress !== null) {
+      if (proxyAddress.bits === address.bits && proxyAddress.value === address.value) {
         return true;
       }
       continue;
     }
-    const network = parseIpAddress(proxy.slice(0, slash));
-    const prefix = Number(proxy.slice(slash + 1));
-    if (network === null || !Number.isInteger(prefix) || prefix < 0 || prefix > network.bits) {
-      // Not a parseable IP network (e.g. a host string containing slashes):
-      // fall back to comparing the whole entry as an exact string.
-      if (host === proxy) {
-        return true;
-      }
-      continue;
-    }
-    if (address !== null && address.bits === network.bits) {
-      const shift = BigInt(network.bits - prefix);
-      if (address.value >> shift === network.value >> shift) {
-        return true;
-      }
+    if (address === null && host === proxy) {
+      return true;
     }
   }
   return false;
 }
 
 /**
- * Rate-limit client identity: the first X-Forwarded-For entry only when the
- * immediate peer is a trusted proxy; otherwise the peer address itself, so an
- * untrusted client cannot shuffle identities with forged headers.
+ * Rate-limit client identity: the rightmost forwarded hop that is not itself a
+ * trusted proxy, and only when the immediate peer is a trusted proxy;
+ * otherwise the peer address itself. The trusted proxy writes the rightmost
+ * entry from the connection it accepted, so a client can rotate the leading
+ * (self-described) segments without minting a new identity. When every hop is
+ * a trusted proxy, the peer is returned: those requests share one bucket,
+ * which can throttle but never bypasses the limit.
  */
 export function clientIdentity(
   remoteAddress: string | undefined,
@@ -164,10 +170,14 @@ export function clientIdentity(
   trustedProxies: string[],
 ): string {
   const peer = remoteAddress ?? "unknown";
-  if (forwardedFor !== undefined && isTrustedProxy(peer, trustedProxies)) {
-    const first = forwardedFor.split(",")[0]?.trim();
-    if (first !== undefined && first !== "") {
-      return first;
+  if (forwardedFor === undefined || !isTrustedProxy(peer, trustedProxies)) {
+    return peer;
+  }
+  const hops = forwardedFor.split(",").map((hop) => hop.trim());
+  for (let index = hops.length - 1; index >= 0; index -= 1) {
+    const hop = hops[index];
+    if (hop !== undefined && hop !== "" && !isTrustedProxy(hop, trustedProxies)) {
+      return hop;
     }
   }
   return peer;

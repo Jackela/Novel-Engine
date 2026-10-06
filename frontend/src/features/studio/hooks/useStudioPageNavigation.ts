@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef } from "react";
 import type { NavigateFunction } from "react-router-dom";
 
+import { useSessionExpiredRedirect } from "@/app/sessionExpiry";
 import type { Project } from "@/app/types/studio";
 import { type StudioRouteState, studioInspectorPath } from "../studioRouteState";
 import { buildProposalAuditView } from "./proposalAuditView";
@@ -28,10 +29,9 @@ export function useStudioPageNavigation({
   useEffect(() => {
     navigateRef.current = navigate;
   }, [navigate]);
-  const onProjectResourceSessionLost = useCallback(
-    () => navigateRef.current("/", { replace: true }),
-    [],
-  );
+  // DR-020: a rejected session returns to the entry page with this route
+  // preserved, so signing in again lands back here instead of /projects.
+  const onProjectResourceSessionLost = useSessionExpiredRedirect();
   const onSettingsProjectMissing = useCallback(
     () => navigateRef.current("/projects", { replace: true }),
     [],
@@ -86,10 +86,17 @@ export function buildWholeBookNavigatorModel(
   project: Project,
   loop: ReturnType<typeof useStudioGeneration>["wholeBookLoop"],
 ) {
+  const plan = wholeBookPlan(project);
   return {
     phase: loop.phase,
-    remaining: wholeBookPlan(project).length,
-    onStart: () => loop.start(wholeBookPlan(project)),
+    remaining: plan.chapters.length,
+    // The dry-run list the control shows before it may replace existing text.
+    occupiedChapters: plan.confirmation,
+    safeCount: plan.safe.length,
+    // The default scope drafts empty chapters only; the confirmed scope is
+    // granted only by the control's explicit replacement choice (#DR-007).
+    onStart: () => loop.start(plan.chapters),
+    onConfirmReplace: () => loop.start(plan.chapters, { replaceOccupied: true }),
     onStop: () => loop.stop(),
     ...buildProposalAuditView(
       loop.proposalOutcomeUnknown,

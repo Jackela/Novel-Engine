@@ -188,7 +188,7 @@ export class ProjectStorePart implements ProjectStore {
           projectId: project.id,
           volumeId: defaultVolume.id,
           kind: "chapter",
-          title: `Chapter ${position}`,
+          title: chapter.title,
           position,
           contentMarkdown: chapter.contentMarkdown,
           metadataJson: chapter.metadataJson,

@@ -127,7 +127,9 @@ describe("StudioNavigator", () => {
         activeId="doc-1"
         search="harbor"
         isSearching={false}
-        searchResults={[{ document_id: "doc-1", title: "Opening", excerpt: "Harbor" }]}
+        searchResults={[
+          { document_id: "doc-1", title: "Opening", excerpt: "Harbor", match_term: "harbor" },
+        ]}
         onSearchChange={callbacks.searchChange}
         onSearchSubmit={callbacks.searchSubmit}
         onNavigateSection={callbacks.navigateSection}

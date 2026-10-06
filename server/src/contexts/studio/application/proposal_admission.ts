@@ -6,6 +6,7 @@ import {
 import { InvalidOperationError } from "../../../shared/domain/exceptions.js";
 import type { InFlightOperationPermit } from "./operation_in_flight.js";
 import { dumpJson, safeLoadJson } from "./payloads.js";
+import type { StudioJobLedgerStore } from "./ports/job_ledger_store.js";
 import type { JobRecord, MarkJobOutcomeInput } from "./ports/job_records.js";
 import type {
   ProposalContextSource,
@@ -76,12 +77,15 @@ export function buildProposalSeed(params: {
   readonly instruction: string;
   readonly baseRevisionId: string;
   readonly now: Date;
+  /** The optional client request key claimed by the landed job row (DR-027). */
+  readonly requestKey?: string | undefined;
 }): ProposalJobSeed {
   return {
     projectId: params.projectId,
     documentId: params.documentId,
     operation: params.operation,
     provider: params.provider,
+    requestKey: params.requestKey,
     requestJson: dumpJson({
       operation: params.operation,
       instruction: params.instruction,
@@ -99,6 +103,24 @@ export interface ProposalGenerationRequest {
   readonly operation: string;
   readonly instruction: string;
   readonly provider: string;
+  /** The optional client request key naming this generation (DR-027). */
+  readonly requestKey?: string | undefined;
+}
+
+/**
+ * DR-027 durable request-key replay: a generation whose optional key already
+ * landed a job in this project replays that stored job — the provider never
+ * runs a second time, no second job or usage row appears. Same key in another
+ * project is a different key. The cheap lookup here cannot race-proof the
+ * landing by itself; `claimRequestKeyJob` closes the insert-time race.
+ */
+export function replayedProposalJob(
+  jobs: StudioJobLedgerStore,
+  request: ProposalGenerationRequest,
+): JobRecord | undefined {
+  const { requestKey } = request;
+  if (requestKey === undefined) return undefined;
+  return jobs.findJobRequest(request.scope, request.projectId, requestKey) ?? undefined;
 }
 
 /** Streaming-only options: cleanup reporting, abort, and permit handoff. */

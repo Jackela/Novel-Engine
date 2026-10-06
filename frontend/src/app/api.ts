@@ -1,6 +1,5 @@
 import {
   parseAliases,
-  parseChapterBeat,
   parseDocuments,
   parseLoreStatus,
   parseOwnerSetup,
@@ -9,7 +8,6 @@ import {
   parseProjects,
   parseProviders,
   parseRevisions,
-  parseSearch,
   parseSetupStatus,
   parseStudioDocument,
   parseVoid,
@@ -26,6 +24,8 @@ import {
   parseReviews,
   parseUsage,
 } from "@/app/apiWorkflowContract";
+import { parseChapterBeat } from "@/app/beatContract";
+import { browserTzOffsetMinutes } from "@/app/browserTimezone";
 import { parseDiagnostics } from "@/app/diagnosticsContract";
 import { type ExportsRequestOptions, projectExportsRequest } from "@/app/exportApiRequest";
 import { downloadBlob, json, patchJson, postJson, putJson, request } from "@/app/httpClient";
@@ -35,6 +35,8 @@ import { type ProjectsRequestOptions, projectCatalogRequest } from "@/app/projec
 import { clearRetryAttemptSession, parseAndRecordRetrySession } from "@/app/retryAttemptRegistry";
 import { type ReviewListOptions, reviewDetailPath, reviewsRequest } from "@/app/reviewApiRequest";
 import { documentRevisionsRequest, type RevisionRequestOptions } from "@/app/revisionApiRequest";
+import { parseRevisionDetail } from "@/app/revisionDetailContract";
+import { parseSearch } from "@/app/searchContract";
 import { parseWritingStats } from "@/app/statsContract";
 import type { DocumentKind, ExportFormat, LoreStatus, ProjectUpdateBody } from "@/app/types/studio";
 
@@ -42,8 +44,18 @@ export { apiUrl, getCsrfToken, HttpError } from "@/app/httpClient";
 
 export const api = {
   setupStatus: (init?: RequestInit) => request("/api/setup", init, parseSetupStatus),
-  setupOwner: (username: string, password: string) =>
-    postJson("/api/setup", { username, password }, parseOwnerSetup),
+  // The optional first-start setup token (DR-008) rides the x-setup-token
+  // header, and only when the operator actually typed one: loopback setups
+  // must keep the header absent rather than send an empty value.
+  setupOwner: (username: string, password: string, setupToken?: string) => {
+    const token = setupToken?.trim();
+    return postJson(
+      "/api/setup",
+      { username, password },
+      parseOwnerSetup,
+      token ? { headers: { "x-setup-token": token } } : undefined,
+    );
+  },
   login: (username: string, password: string) =>
     postJson("/api/session/login", { username, password }, parseAndRecordRetrySession),
   session: (init?: RequestInit) => request("/api/session", init, parseAndRecordRetrySession),
@@ -104,6 +116,10 @@ export const api = {
       { lore_status },
       parseLoreStatus,
     ),
+  // DR-043: the read surface carries the chapter's candidate catalog and the
+  // outline it came from, so the association control never needs typed recall.
+  chapterBeat: (projectId: string, documentId: string, init?: RequestInit) =>
+    request(`/api/projects/${projectId}/documents/${documentId}/beat`, init, parseChapterBeat),
   linkChapterBeat: (projectId: string, documentId: string, beat: string | null) =>
     putJson(`/api/projects/${projectId}/documents/${documentId}/beat`, { beat }, parseChapterBeat),
   saveDocument: (
@@ -114,10 +130,18 @@ export const api = {
       base_revision_id: string;
       title?: string;
       metadata?: Record<string, unknown>;
+      /** #DR-047: marks the editor's draft autosave for revision folding. */
+      autosave?: boolean;
     },
   ) => putJson(`/api/projects/${projectId}/documents/${documentId}`, payload, parseStudioDocument),
   revisions: (projectId: string, documentId: string, options: RevisionRequestOptions = {}) =>
     request(...documentRevisionsRequest(projectId, documentId, options), parseRevisions),
+  revision: (projectId: string, documentId: string, revisionId: string) =>
+    request(
+      `/api/projects/${projectId}/documents/${documentId}/revisions/${revisionId}`,
+      undefined,
+      parseRevisionDetail,
+    ),
   restoreRevision: (
     projectId: string,
     documentId: string,
@@ -129,20 +153,23 @@ export const api = {
       { base_revision_id: baseRevisionId },
       parseStudioDocument,
     ),
-  search: (projectId: string, query: string, init?: RequestInit) =>
-    request(`/api/projects/${projectId}/search?q=${encodeURIComponent(query)}`, init, parseSearch),
-  proposal: (
+  /**
+   * DR-029: one ranked search page. `offset` walks the remaining pages with
+   * the server-issued `next_offset`; `signal` aborts an in-flight request.
+   */
+  search: (
     projectId: string,
-    documentId: string,
-    operation: "continue" | "rewrite" | "generate",
-    instruction: string,
-    provider: string,
-  ) =>
-    postJson(
-      `/api/projects/${projectId}/documents/${documentId}/ai-proposals`,
-      { operation, instruction, provider },
-      parseJob,
-    ),
+    query: string,
+    options: { offset?: number; signal?: AbortSignal } = {},
+  ) => {
+    const offset = options.offset ?? 0;
+    const page = offset > 0 ? `&offset=${offset}` : "";
+    return request(
+      `/api/projects/${projectId}/search?q=${encodeURIComponent(query)}${page}`,
+      { signal: options.signal },
+      parseSearch,
+    );
+  },
   acceptProposal: (projectId: string, jobId: string) =>
     request(
       `/api/projects/${projectId}/ai-proposals/${jobId}/accept`,
@@ -175,10 +202,18 @@ export const api = {
     const [path, init] = projectJobsRequest(projectId, options);
     return request(path, init, parseJobs);
   },
+  job: (projectId: string, jobId: string, init?: RequestInit) =>
+    request(`/api/projects/${projectId}/jobs/${jobId}`, init, parseJob),
   usage: (projectId: string, init?: RequestInit) =>
     request(`/api/projects/${projectId}/usage`, init, parseUsage),
   writingStats: (projectId: string, init?: RequestInit) =>
-    request(`/api/projects/${projectId}/stats`, init, parseWritingStats),
+    request(
+      // DR-045: the aggregation buckets its day rows on the browser's own day
+      // boundary, so a UTC+8 author's "today" is their local day.
+      `/api/projects/${projectId}/stats?tz_offset_minutes=${browserTzOffsetMinutes()}`,
+      init,
+      parseWritingStats,
+    ),
   extractLore: (projectId: string, segment: string, provider: string) =>
     postJson(
       `/api/projects/${projectId}/lore-extractions`,

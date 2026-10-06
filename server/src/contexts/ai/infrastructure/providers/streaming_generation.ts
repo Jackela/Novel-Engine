@@ -1,11 +1,13 @@
-import type { TextGenerationStreamOptions } from "../../application/ports/text_generation.js";
 import {
   discardHttpFailureResponse,
   isJsonObject,
   isResponseLike,
   malformedJsonFailure,
+  type ProviderRetryPolicy,
+  type ProviderStreamOptions,
   type ProviderTransport,
   ProviderTransportError,
+  runWithRetryPolicy,
 } from "./provider_http.js";
 import {
   boundedProviderBodyChunks,
@@ -129,6 +131,13 @@ export interface StreamingTextRequest {
   readonly firstByteTimeoutMs?: number | undefined;
   /** Override for the built-in silence ceiling between stream frames. */
   readonly idleTimeoutMs?: number | undefined;
+  /**
+   * DR-006: retry policy for the pre-first-frame open phase. Absent keeps the
+   * engine single-attempt; the adapters pass the same policy the synchronous
+   * path retries with, so a transient 429/5xx or first-byte timeout recovers
+   * instead of failing the whole stream.
+   */
+  readonly retry?: ProviderRetryPolicy | undefined;
 }
 
 function streamChunkObject(payload: string, context: string): JsonObject {
@@ -175,6 +184,7 @@ function silenceTimeoutFailure(
  * Await one stream frame, but never longer than the given silence budget:
  * when it elapses the guard aborts the dispatch, the loser of the race is
  * torn down, and the wait rejects with a normalized transport timeout.
+ * DR-026: a received frame re-arms the absolute deadline (silence budget, not wall time).
  */
 async function nextFrameWithin(
   pending: Promise<IteratorResult<string>>,
@@ -193,6 +203,7 @@ async function nextFrameWithin(
     deadline.assertActive();
     const result = await Promise.race([pending, elapsed, deadline.interrupted]);
     deadline.assertActive();
+    deadline.rearm();
     return result;
   } catch (error) {
     pending.catch(() => undefined); // the raced read rejects only through teardown
@@ -202,34 +213,35 @@ async function nextFrameWithin(
   }
 }
 
-/**
- * Shared streaming engine for the HTTP adapters: dispatches the SSE request,
- * parses `data:` frames, extracts content deltas through the adapter's
- * extractor, and reports model plus final-chunk usage once the stream
- * completes. A stream is never retried — deltas already delivered cannot be
- * unsent — so the retry policy only guards the synchronous surface.
- */
-export async function* streamProviderTextDeltas(
+// Iterator cleanup must never replace the first provider/application failure.
+async function closeFrames(frames: AsyncGenerator<string, void, void> | undefined): Promise<void> {
+  await frames?.return().catch(() => undefined);
+}
+
+// DR-006: an attempt may only be abandoned before any frame reached the
+// adapter's extractor — retrying after that would replay incremental unwrapper
+// state and corrupt the prose. This pulls exactly one frame and returns it
+// unprocessed, so the caller's extractor is still pristine on failure; the
+// caller owns the deadline and frame iterator once this resolves.
+async function openStreamAttempt(
   request: StreamingTextRequest,
   transport: ProviderTransport,
-  extractDelta: (chunk: JsonObject) => string | undefined,
-  extractUsage: (chunk: JsonObject) => readonly [number | null, number | null],
-  options?: TextGenerationStreamOptions,
-): AsyncGenerator<string, void, void> {
+): Promise<{
+  readonly deadline: ProviderResponseDeadline;
+  readonly frames: AsyncGenerator<string, void, void>;
+  readonly firstFrame: IteratorResult<string, void>;
+}> {
   const deadline = startProviderResponseDeadline(
     request.context,
     request.timeoutSeconds,
     request.signal,
   );
+  let frames: AsyncGenerator<string, void, void> | undefined;
   try {
     const response = await dispatchProviderResponse(
       transport,
       request.url,
-      {
-        method: "POST",
-        headers: request.headers,
-        body: request.body,
-      },
+      { method: "POST", headers: request.headers, body: request.body },
       request.context,
       deadline,
     );
@@ -243,38 +255,68 @@ export async function* streamProviderTextDeltas(
     if (body === null) {
       throw new ProviderTransportError(`${request.context}: transport returned no stream body`);
     }
-    let promptTokens: number | null = null;
-    let completionTokens: number | null = null;
-    const frames = sseDataPayloads(body, { context: request.context, deadline });
-    const iterator = frames[Symbol.asyncIterator]();
-    let receivedFrame = false;
-    try {
-      while (true) {
-        const budget = receivedFrame ? idleTimeoutMs(request) : firstByteTimeoutMs(request);
-        const phase: SilencePhase = receivedFrame ? "idle" : "first-byte";
-        deadline.assertActive();
-        const step = await nextFrameWithin(iterator.next(), budget, phase, request, deadline);
-        if (step.done === true) break;
-        receivedFrame = true;
-        const payload = step.value;
-        if (payload.trim() === "[DONE]") break;
-        const data = streamChunkObject(payload, request.context);
-        const [prompt, completion] = extractUsage(data);
-        if (prompt !== null) promptTokens = prompt;
-        if (completion !== null) completionTokens = completion;
-        const delta = extractDelta(data);
-        if (delta !== undefined) yield delta;
-      }
-    } finally {
-      try {
-        await iterator.return?.();
-      } catch {
-        // Iterator cleanup cannot replace the first provider/application failure.
-      }
+    frames = sseDataPayloads(body, { context: request.context, deadline });
+    const firstFrame = await nextFrameWithin(
+      frames.next(),
+      firstByteTimeoutMs(request),
+      "first-byte",
+      request,
+      deadline,
+    );
+    return { deadline, frames, firstFrame };
+  } catch (error) {
+    await closeFrames(frames);
+    deadline.finish();
+    throw error;
+  }
+}
+
+/**
+ * Shared streaming engine for the HTTP adapters: dispatches the SSE request,
+ * parses `data:` frames, and reports model plus final-chunk usage once the
+ * stream completes. DR-006: a transient pre-first-frame failure is retried
+ * through the adapter's policy; after the first frame reached the extractor a
+ * stream is never retried — a replay would corrupt the incremental unwrapper.
+ * DR-026: the adapter's `extractStreamFailure` hook raises provider failure frames.
+ */
+export async function* streamProviderTextDeltas(
+  request: StreamingTextRequest,
+  transport: ProviderTransport,
+  extractDelta: (chunk: JsonObject) => string | undefined,
+  extractUsage: (chunk: JsonObject) => readonly [number | null, number | null],
+  options?: ProviderStreamOptions,
+): AsyncGenerator<string, void, void> {
+  const open = () => openStreamAttempt(request, transport);
+  const { deadline, frames, firstFrame } =
+    request.retry === undefined ? await open() : await runWithRetryPolicy(request.retry, open);
+  let promptTokens: number | null = null;
+  let completionTokens: number | null = null;
+  let step = firstFrame;
+  try {
+    while (step.done !== true) {
+      const payload = step.value;
+      if (payload.trim() === "[DONE]") break;
+      const data = streamChunkObject(payload, request.context);
+      const failure = options?.extractStreamFailure?.(data);
+      if (failure !== undefined) throw failure;
+      const [prompt, completion] = extractUsage(data);
+      if (prompt !== null) promptTokens = prompt;
+      if (completion !== null) completionTokens = completion;
+      const delta = extractDelta(data);
+      if (delta !== undefined) yield delta;
+      deadline.assertActive();
+      step = await nextFrameWithin(
+        frames.next(),
+        idleTimeoutMs(request),
+        "idle",
+        request,
+        deadline,
+      );
     }
-    deadline.assertActive();
-    options?.onOutcome?.({ model: request.model, promptTokens, completionTokens });
   } finally {
+    await closeFrames(frames);
     deadline.finish();
   }
+  deadline.assertActive();
+  options?.onOutcome?.({ model: request.model, promptTokens, completionTokens });
 }

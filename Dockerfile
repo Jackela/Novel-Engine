@@ -39,9 +39,14 @@ COPY server/drizzle ./server/drizzle
 COPY LICENSE README.md ./
 # The entrypoint bootstraps the session secret from the persistent volume on
 # first boot and then execs the CMD, so signal handling and healthcheck
-# behavior are unchanged.
+# behavior are unchanged. /app/data belongs to the unprivileged `node` user
+# (DR-041) because the runtime stage runs as that user and the root filesystem
+# stays read-only in the compose files.
 COPY docker/entrypoint.sh ./docker/entrypoint.sh
-RUN chmod 0755 ./docker/entrypoint.sh && mkdir -p /app/data
+RUN chmod 0755 ./docker/entrypoint.sh && mkdir -p /app/data && chown -R node:node /app/data
 EXPOSE 8000
+# Non-root runtime (DR-041): the published and locally built images both run as
+# the node user, so a container escape does not start from uid 0.
+USER node
 ENTRYPOINT ["/app/docker/entrypoint.sh"]
 CMD ["node", "server/dist/apps/cli/main.js", "serve", "--host", "0.0.0.0", "--port", "8000"]

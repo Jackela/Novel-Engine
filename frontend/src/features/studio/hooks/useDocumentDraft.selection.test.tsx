@@ -81,7 +81,7 @@ async function advance(milliseconds = 1500) {
 }
 
 describe("Document selection owns the Draft lifetime", () => {
-  it("discards unsaved title and body across a body-loading selection", async () => {
+  it("rescues the unsaved draft across a body-loading selection, then reloads the accepted state", async () => {
     const view = renderDraft();
     await flushMicrotasks();
     act(() => {
@@ -90,12 +90,19 @@ describe("Document selection owns the Draft lifetime", () => {
     });
     await advance(1000);
     await view.select(null, documentB.id);
+    expect(api.saveDocument).toHaveBeenCalledTimes(1);
+    expect(api.saveDocument).toHaveBeenCalledWith(project.id, documentA.id, {
+      content_markdown: "Unsaved A",
+      base_revision_id: documentA.current_revision_id,
+      title: "Unsaved title",
+      autosave: true,
+    });
     await view.select(null, documentA.id);
     await view.select(documentA);
     expect(view.result().hook.draft).toBe(documentA.content_markdown);
     expect(view.result().hook.titleDraft).toBe(documentA.title);
     await advance();
-    expect(api.saveDocument).not.toHaveBeenCalled();
+    expect(api.saveDocument).toHaveBeenCalledTimes(1);
   });
 
   it("preserves the selected Draft during a temporary missing body and retry", async () => {
@@ -194,15 +201,27 @@ describe("Document selection owns the Draft lifetime", () => {
     expect(view.result().hook.saveState).toBe("saved");
   });
 
-  it("discards a Draft on route departure and remount", async () => {
+  it("rescues the pending draft on route departure and remounts from the server state", async () => {
+    vi.mocked(api.saveDocument).mockResolvedValue({
+      ...documentA,
+      content_markdown: "Departed A",
+      current_revision_id: "saved-departed",
+    });
     const view = renderDraft();
     await flushMicrotasks();
     act(() => view.result().hook.setDraft("Departed A"));
     view.unmount();
+    expect(api.saveDocument).toHaveBeenCalledTimes(1);
+    expect(api.saveDocument).toHaveBeenCalledWith(project.id, documentA.id, {
+      content_markdown: "Departed A",
+      base_revision_id: documentA.current_revision_id,
+      title: documentA.title,
+      autosave: true,
+    });
     const next = renderDraft();
     await flushMicrotasks();
     expect(next.result().hook.draft).toBe(documentA.content_markdown);
     await advance();
-    expect(api.saveDocument).not.toHaveBeenCalled();
+    expect(api.saveDocument).toHaveBeenCalledTimes(1);
   });
 });

@@ -273,4 +273,26 @@ describe("Studio API client", () => {
     const headers = init?.headers as Record<string, string> | undefined;
     expect(headers?.["X-CSRF-Token"]).toBeUndefined();
   });
+
+  it("sends the first-start setup token header only when provided", async () => {
+    const fetchMock = vi.fn((_input: RequestInfo | URL, _init?: RequestInit) =>
+      Promise.resolve(
+        new Response(JSON.stringify({ id: "owner-1", username: "author" }), {
+          status: 201,
+          headers: { "Content-Type": "application/json" },
+        }),
+      ),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    await api.setupOwner("author", "long-password");
+    const withoutToken = fetchMock.mock.calls[0]?.[1]?.headers as
+      | Record<string, string>
+      | undefined;
+    expect(withoutToken?.["x-setup-token"]).toBeUndefined();
+
+    await api.setupOwner("author", "long-password", "boot-token-123");
+    const withToken = fetchMock.mock.calls[1]?.[1]?.headers as Record<string, string> | undefined;
+    expect(withToken?.["x-setup-token"]).toBe("boot-token-123");
+  });
 });

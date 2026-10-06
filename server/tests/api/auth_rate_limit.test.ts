@@ -129,7 +129,7 @@ describe("auth endpoint rate limiting", () => {
     }
   });
 
-  it("honors the first X-Forwarded-For entry from a trusted proxy", async () => {
+  it("keys the bucket by the forwarded hops behind a trusted proxy", async () => {
     const { app } = await buildAuthApp({ trustedProxies: ["127.0.0.1"] });
     try {
       for (let index = 0; index < 5; index += 1) {
@@ -146,18 +146,52 @@ describe("auth endpoint rate limiting", () => {
     }
   });
 
-  it("supports CIDR trusted proxy networks", async () => {
+  it("keeps one bucket when a trusted proxy forwards forged leading X-Forwarded-For segments", async () => {
+    const { app } = await buildAuthApp({ trustedProxies: ["127.0.0.1"] });
+    try {
+      const statuses: number[] = [];
+      for (let index = 0; index < 16; index += 1) {
+        // A proxy appends the address it actually saw at the right end of the
+        // chain; the leading segment is whatever the client sent and rotates.
+        const response = await createContact(app, `198.51.100.${index}, 203.0.113.50`);
+        statuses.push(response.statusCode);
+      }
+
+      expect(statuses.slice(0, 5)).toEqual([422, 422, 422, 422, 422]);
+      expect(statuses.slice(5)).toEqual(Array.from({ length: 11 }, () => 429));
+    } finally {
+      await app.close();
+    }
+  });
+
+  it("resolves the rightmost untrusted hop instead of a forged leading segment", async () => {
+    const { app } = await buildAuthApp({ trustedProxies: ["127.0.0.1", "10.0.0.1"] });
+    try {
+      for (let index = 0; index < 5; index += 1) {
+        const response = await createContact(app, `192.0.2.${index}, 198.51.100.23, 10.0.0.1`);
+        expect(response.statusCode).toBe(422);
+      }
+      const blocked = await createContact(app, "192.0.2.99, 198.51.100.23, 10.0.0.1");
+      expect(blocked.statusCode).toBe(429);
+
+      const otherClient = await createContact(app, "203.0.113.9, 10.0.0.1");
+      expect(otherClient.statusCode).toBe(422);
+    } finally {
+      await app.close();
+    }
+  });
+
+  it("never lets a network range trust entry mint forwarded identities", async () => {
     const { app } = await buildAuthApp({ trustedProxies: ["127.0.0.0/8"] });
     try {
       for (let index = 0; index < 5; index += 1) {
-        const response = await createContact(app, "198.51.100.7");
+        const response = await createContact(app, `198.51.100.${index}, 203.0.113.50`);
         expect(response.statusCode).toBe(422);
       }
-      const sameIdentity = await createContact(app, "198.51.100.7");
-      expect(sameIdentity.statusCode).toBe(429);
-
-      const otherIdentity = await createContact(app, "198.51.100.8");
-      expect(otherIdentity.statusCode).toBe(422);
+      // A range can cover clients, so it must not make the peer a trusted
+      // proxy: every request keeps sharing the peer's single bucket.
+      const blocked = await createContact(app, "198.51.100.99, 203.0.113.50");
+      expect(blocked.statusCode).toBe(429);
     } finally {
       await app.close();
     }

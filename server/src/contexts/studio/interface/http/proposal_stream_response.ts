@@ -11,6 +11,10 @@ const SSE_HEADERS = {
 } as const;
 
 const DEFAULT_DRAIN_TIMEOUT_MS = 30_000;
+/** Comment-frame cadence while the next proposal frame is pending (DR-026). */
+const DEFAULT_HEARTBEAT_MS = 15_000;
+/** One SSE comment: no `data:` field, so every client must ignore it. */
+const HEARTBEAT_FRAME = ": heartbeat\n\n";
 
 /** Stable internal diagnostic for a downstream response that never drains. */
 export class ProposalStreamDrainTimeoutError extends Error {
@@ -43,6 +47,11 @@ interface ProposalStreamResponseOptions {
   hijack: () => void;
   pullFirst?: () => Promise<IteratorResult<ProposalStreamFrame, void>>;
   drainTimeoutMs?: number;
+  /**
+   * Heartbeat cadence (ms) while a committed stream waits for its next frame.
+   * `0` disables the comment frames. Defaults to `DEFAULT_HEARTBEAT_MS`.
+   */
+  heartbeatMs?: number;
   /** Releases the app-local permit after every response and generator cleanup step. */
   releaseCapacity?: (() => void) | undefined;
 }
@@ -143,6 +152,39 @@ function continueOrThrow(monitor: ConnectionMonitor): boolean {
   return interruption === undefined;
 }
 
+/**
+ * Pull the next frame while keeping the committed connection warm: a comment
+ * frame every `heartbeatMs` tells proxies and clients that the server is still
+ * working through a long provider silence (DR-026). Comments carry no `data:`
+ * field, so no reader can mistake one for a proposal frame, and a response
+ * error while beating fails through the same monitor the stream loop uses.
+ */
+async function pullFrameWithHeartbeat(
+  options: ProposalStreamResponseOptions,
+  monitor: ConnectionMonitor,
+  pull: () => Promise<IteratorResult<ProposalStreamFrame, void>>,
+): Promise<IteratorResult<ProposalStreamFrame, void>> {
+  const { response, heartbeatMs = DEFAULT_HEARTBEAT_MS } = options;
+  if (heartbeatMs <= 0) return await pull();
+  const beat = (): void => {
+    if (monitor.interruption() !== undefined) return;
+    try {
+      // A comment frame is bounded and never accumulates (one per interval,
+      // cleared between pulls), so its write result is deliberately ignored;
+      // the next data frame owns the drain handshake.
+      response.write(HEARTBEAT_FRAME);
+    } catch (error) {
+      monitor.fail(error);
+    }
+  };
+  const timer = setInterval(beat, heartbeatMs);
+  try {
+    return await pull();
+  } finally {
+    clearInterval(timer);
+  }
+}
+
 /** Write one proposal frame stream and release its generator exactly once. */
 export async function writeProposalStreamResponse(
   options: ProposalStreamResponseOptions,
@@ -164,7 +206,7 @@ export async function writeProposalStreamResponse(
           await waitForDrain(options, monitor);
         }
         if (!continueOrThrow(monitor)) break;
-        current = await frames.next();
+        current = await pullFrameWithHeartbeat(options, monitor, () => frames.next());
       }
       if (continueOrThrow(monitor)) response.end();
     }

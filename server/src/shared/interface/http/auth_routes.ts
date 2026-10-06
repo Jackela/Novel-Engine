@@ -6,12 +6,25 @@ import type { RateLimiter } from "../../application/ports/rate_limit.js";
 import { FIRST_CONTACT_PATHS, principalGuard } from "./auth_guard.js";
 import { AppError, ERROR_CODES, errorEnvelopeResponse } from "./error_envelope.js";
 import { isSameOriginRequest } from "./origin_validation.js";
+import { isLoopbackPeerAddress } from "./peer_address.js";
 import {
   clearSessionCookies,
   issueSessionCookies,
   principalPayload,
   SESSION_COOKIE,
 } from "./session_cookies.js";
+
+/** Header carrying the one-time first-start setup token (non-loopback setup). */
+export const SETUP_TOKEN_HEADER = "x-setup-token";
+
+/**
+ * The first-boot setup gate the composition root arms while no owner exists;
+ * `verify` must compare in constant time and `invalidate` must never throw.
+ */
+export interface SetupTokenGuard {
+  verify(provided: string | undefined): boolean;
+  invalidate(): void;
+}
 
 type ClientIdentityResolver = (request: {
   socket?: { remoteAddress?: string | undefined } | undefined;
@@ -29,6 +42,11 @@ interface AuthRoutesOptions {
   environment: string;
   corsOrigins: string[];
   resolveClientIdentity: ClientIdentityResolver;
+  /**
+   * One-time first-start token gate for `POST /api/setup` from non-loopback
+   * peers; absent while the app is database-free (setup then answers 503).
+   */
+  setupTokenGuard?: SetupTokenGuard | undefined;
 }
 
 const principalResponseSchema = {
@@ -60,6 +78,12 @@ function requireService(options: AuthRoutesOptions): AuthService {
   return options.authService;
 }
 
+/**
+ * Loopback detection moved to `peer_address.ts` (DR-041) so the setup gate and
+ * the internal `/metrics` gate share one implementation of "raw socket peer,
+ * never a forwarded address".
+ */
+
 function respondWithSession(
   reply: FastifyReply,
   issued: IssuedSession,
@@ -70,9 +94,10 @@ function respondWithSession(
 }
 
 /**
- * The auth and session spine: owner setup with same-origin validation and the
- * password policy, constant-time login, the session probe and logout, plus
- * per-IP rate limiting of the unauthenticated endpoints.
+ * The auth and session spine: owner setup with same-origin validation plus the
+ * one-time first-boot setup token gate for non-loopback peers, the password
+ * policy, constant-time login, the session probe and logout, plus per-IP rate
+ * limiting of the unauthenticated endpoints.
  */
 export const authRoutes: FastifyPluginAsync<AuthRoutesOptions> = async (app, options) => {
   const guard = principalGuard(options.authService);
@@ -152,11 +177,32 @@ export const authRoutes: FastifyPluginAsync<AuthRoutesOptions> = async (app, opt
           message:
             "Setup requests must be same-origin: any Origin/Referer header must match this " +
             "server's own origin or one of the configured CORS origins (SECURITY_CORS_ORIGINS). " +
-            "Non-browser clients that send no Origin/Referer are accepted.",
+            "Non-browser clients that send no Origin/Referer are accepted only through the " +
+            "first-boot setup token gate.",
         });
+      }
+      // First-boot takeover gate: the raw socket peer decides loopback; a
+      // proxied or forwarded address must never buy the exemption.
+      if (!isLoopbackPeerAddress(request.socket?.remoteAddress)) {
+        const provided = request.headers[SETUP_TOKEN_HEADER];
+        if (
+          options.setupTokenGuard === undefined ||
+          !options.setupTokenGuard.verify(typeof provided === "string" ? provided : undefined)
+        ) {
+          throw new AppError({
+            statusCode: 403,
+            code: ERROR_CODES.SETUP_TOKEN_INVALID,
+            message:
+              "Setup from a non-loopback address requires the one-time x-setup-token header. " +
+              'Read it from the "first-start setup token" line in the server log (or the ' +
+              ".setup-token file in the data directory); loopback setup needs no token.",
+          });
+        }
       }
       const body = request.body as { username: string; password: string };
       const owner = await service.configureOwner(body.username, body.password);
+      // One-time token: a successful setup makes it meaningless.
+      options.setupTokenGuard?.invalidate();
       reply.status(201);
       return owner;
     },

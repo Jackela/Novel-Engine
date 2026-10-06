@@ -70,7 +70,7 @@ function parseFrames(raw: string): ProposalStreamFrame[] {
 }
 
 describe("proposal stream semantic size boundary", () => {
-  it("stops before the crossing delta and lands one failed job without usage", async () => {
+  it("stops before the crossing delta and lands one failed job with its unreported row", async () => {
     const { app } = await buildStudioApp(undefined, {
       textProviderFactory: oversizedStreamingFactory(),
     });
@@ -105,7 +105,15 @@ describe("proposal stream semantic size boundary", () => {
       expect(JSON.parse((rows[0] as { result_json: string }).result_json)).toMatchObject({
         proposal_markdown: "",
       });
-      expect(database.select().from(usageEvents).all()).toHaveLength(0);
+      // DR-028: the failed attempt lands one zero-token unreported row.
+      expect(database.select().from(usageEvents).all()).toMatchObject([
+        {
+          outcome: "failed",
+          token_source: "unreported",
+          prompt_tokens: 0,
+          completion_tokens: 0,
+        },
+      ]);
     } finally {
       await app.close();
     }
@@ -143,7 +151,15 @@ describe("proposal stream semantic size boundary", () => {
       expect(JSON.parse((rows[0] as { result_json: string }).result_json)).toMatchObject({
         proposal_markdown: "",
       });
-      expect(database.select().from(usageEvents).all()).toHaveLength(0);
+      // DR-028: the failed attempt lands one zero-token unreported row.
+      expect(database.select().from(usageEvents).all()).toMatchObject([
+        {
+          outcome: "failed",
+          token_source: "unreported",
+          prompt_tokens: 0,
+          completion_tokens: 0,
+        },
+      ]);
     } finally {
       await app.close();
     }

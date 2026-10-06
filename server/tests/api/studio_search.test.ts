@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 
-import { buildFtsMatchQuery } from "../../src/contexts/studio/application/fts_match_query.js";
 import {
   anonymousCall,
   buildStudioApp,
@@ -22,40 +21,34 @@ async function queryDocuments(
   jar: Parameters<typeof call>[1],
   projectId: string,
   q: string,
-): Promise<{ statusCode: number; body: string; results: MatchPayload[] }> {
+): Promise<{
+  statusCode: number;
+  body: string;
+  results: MatchPayload[];
+  total: number | null;
+  nextOffset: number | null;
+}> {
   const response = await call(
     app,
     jar,
     "GET",
     `/api/projects/${projectId}/search?q=${encodeURIComponent(q)}`,
   );
-  const parsed = response.statusCode === 200 ? response.json() : { results: [] };
-  return { statusCode: response.statusCode, body: response.body, results: parsed.results };
+  const parsed =
+    response.statusCode === 200 ? response.json() : { results: [], total: null, next_offset: null };
+  return {
+    statusCode: response.statusCode,
+    body: response.body,
+    results: parsed.results,
+    total: parsed.total,
+    nextOffset: parsed.next_offset,
+  };
 }
 
 function ftsRowCount(app: Parameters<typeof call>[0], sql: string, value: string): number {
   const row = app.studioDb?.raw.prepare(sql).get(value) as { n: number } | undefined;
   return row?.n ?? -1;
 }
-
-describe("match-query reduction (pure)", () => {
-  it("reduces the operator-laden spec query to first-8 quoted word tokens joined with AND", () => {
-    expect(buildFtsMatchQuery('dragon OR title:( NEAR(a b) wolf* ) "quotes"')).toBe(
-      '"dragon" "or" "title" "near" "a" "b" "wolf" "quotes"',
-    );
-  });
-
-  it("case-folds and de-duplicates preserving first occurrence, capping at 8 tokens", () => {
-    expect(buildFtsMatchQuery("Lantern lantern LANTERN glows")).toBe('"lantern" "glows"');
-    const crowded = "b b a a c c d d e e f f g g h h i i j j";
-    expect(buildFtsMatchQuery(crowded)).toBe('"b" "a" "c" "d" "e" "f" "g" "h"');
-  });
-
-  it("returns null for empty and punctuation-only input", () => {
-    expect(buildFtsMatchQuery("")).toBeNull();
-    expect(buildFtsMatchQuery("!!! ??? *** ( ) \" '")).toBeNull();
-  });
-});
 
 describe("project full-text query surface", () => {
   it("finds the new-project seed content (ranked snippets scenario)", async () => {
@@ -97,7 +90,8 @@ describe("project full-text query surface", () => {
       expect(found.statusCode, found.body).toBe(200);
       expect(found.results.map((item) => item.document_id)).toEqual([frequent.id, rare.id]);
       for (const item of found.results) {
-        expect(Object.keys(item).sort()).toEqual(["document_id", "excerpt", "title"]);
+        // DR-029: hits carry the locate term in addition to the identity trio.
+        expect(Object.keys(item).sort()).toEqual(["document_id", "excerpt", "match_term", "title"]);
         expect(item.excerpt).toContain("lantern");
         expect(item.excerpt).not.toContain("<mark>");
       }
@@ -106,29 +100,6 @@ describe("project full-text query surface", () => {
       expect(windowed.excerpt).toContain(" … ");
       const excerptTokens = windowed.excerpt.match(/[\p{L}\p{N}_]+/gu) ?? [];
       expect(excerptTokens.length).toBeLessThanOrEqual(16);
-    } finally {
-      await app.close();
-    }
-  });
-
-  it("breaks equal relevance ranks by document id", async () => {
-    const { app } = await buildStudioApp();
-    try {
-      const jar = await ownerJar(app);
-      const project = await seedProject(app, jar, "Rank ties");
-      const raw = app.studioDb?.raw;
-      if (raw === undefined) throw new Error("expected studio database handle");
-      const lowerId = "00000000-0000-4000-8000-000000000001";
-      const higherId = "00000000-0000-4000-8000-000000000002";
-      const insert = raw.prepare(
-        "INSERT INTO document_search(document_id, project_id, title, content) VALUES (?, ?, ?, ?)",
-      );
-      insert.run(higherId, project.id, "Equal B", "ranktietoken identical words");
-      insert.run(lowerId, project.id, "Equal A", "ranktietoken identical words");
-
-      const found = await queryDocuments(app, jar, project.id, "ranktietoken");
-      expect(found.statusCode, found.body).toBe(200);
-      expect(found.results.map((item) => item.document_id)).toEqual([lowerId, higherId]);
     } finally {
       await app.close();
     }
@@ -270,26 +241,6 @@ describe("project full-text query surface", () => {
     }
   });
 
-  it("caps results at 30 when more documents match", async () => {
-    const { app } = await buildStudioApp();
-    try {
-      const jar = await ownerJar(app);
-      const project = await seedProject(app, jar, "Capped");
-      for (let index = 1; index <= 32; index += 1) {
-        await seedDocument(app, jar, project.id, {
-          kind: "note",
-          title: `Cap ${String(index).padStart(2, "0")}`,
-          content_markdown: `bramblequill note number ${index} of many`,
-        });
-      }
-      const found = await queryDocuments(app, jar, project.id, "bramblequill");
-      expect(found.statusCode, found.body).toBe(200);
-      expect(found.results).toHaveLength(30);
-    } finally {
-      await app.close();
-    }
-  });
-
   it("stays principal-scoped: other principals' projects are not found", async () => {
     const { app } = await buildStudioApp();
     try {
@@ -309,6 +260,42 @@ describe("project full-text query surface", () => {
         "chapter",
       );
       expect(unknown.statusCode).toBe(404);
+    } finally {
+      await app.close();
+    }
+  });
+
+  it("finds CJK content by character phrases: long words, subwords, single characters, and titles", async () => {
+    const { app } = await buildStudioApp();
+    try {
+      const jar = await ownerJar(app);
+      const project = await seedProject(app, jar, "红楼梦");
+      const chapter = await seedDocument(app, jar, project.id, {
+        kind: "chapter",
+        title: "贾府初见",
+        content_markdown: `${"风".repeat(40)}林黛玉初进贾府，宝玉见之笑道：“这个妹妹我曾见过的。”${"雪".repeat(40)}`,
+      });
+      const flower = await seedDocument(app, jar, project.id, {
+        kind: "note",
+        title: "葬花吟",
+        content_markdown: "花谢花飞花满天，红消香断有谁怜。",
+      });
+      for (const term of ["林黛玉", "黛玉", "宝玉", "黛"]) {
+        const found = await queryDocuments(app, jar, project.id, term);
+        expect(found.statusCode, term).toBe(200);
+        expect(
+          found.results.map((item) => item.document_id),
+          term,
+        ).toEqual([chapter.id]);
+      }
+      const burial = (await queryDocuments(app, jar, project.id, "葬花")).results;
+      expect(burial.map((item) => item.document_id)).toEqual([flower.id]);
+      const excerpt =
+        (await queryDocuments(app, jar, project.id, "黛玉")).results[0]?.excerpt ?? "";
+      expect(excerpt).toContain("黛玉");
+      expect(excerpt).toContain(" … ");
+      expect(excerpt).not.toMatch(/\p{Script=Han} \p{Script=Han}/u);
+      expect(excerpt.match(/\p{Script=Han}/gu) ?? []).toHaveLength(16);
     } finally {
       await app.close();
     }

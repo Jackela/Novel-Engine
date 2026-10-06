@@ -74,7 +74,10 @@ test.describe
           await studio.waitForTimeout(2_000);
         }
       }
-      await studio.getByLabel("Password").fill(OWNER_PASSWORD);
+      await studio.getByLabel("Password", { exact: true }).fill(OWNER_PASSWORD);
+      if (!ownerConfigured) {
+        await studio.getByLabel("Confirm password", { exact: true }).fill(OWNER_PASSWORD);
+      }
       await studio
         .getByRole("button", { name: ownerConfigured ? "Sign in" : "Create owner" })
         .click();
@@ -174,7 +177,9 @@ test.describe
       for (const candidate of TRIAL_CANDIDATES) {
         const row = results.locator("li").filter({ hasText: candidate.title });
         await expect(row.getByText("Created — alias write failed")).toBeVisible();
-        await expect(row.getByRole("alert")).toHaveText("Alias write is down.");
+        await expect(row.getByRole("alert")).toHaveText(
+          "The service is not available right now. Check the server and retry.",
+        );
         await expect(row.getByText(`Aliases kept for retry: ${candidate.aliases}`)).toBeVisible();
       }
 

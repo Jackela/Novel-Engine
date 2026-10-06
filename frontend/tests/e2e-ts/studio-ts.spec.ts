@@ -37,13 +37,15 @@ test("owner setup, editing, AI proposal accept, search, and deep links", async (
   );
   await expect(page.getByRole("heading", { name: "Create the local owner" })).toBeVisible();
   await expect(page.getByLabel("Username")).toHaveValue("author");
-  await expect(page.locator('input[type="password"]')).toHaveAttribute(
+  await expect(page.locator('input[type="password"]').first()).toHaveAttribute(
     "autocomplete",
     "new-password",
   );
 
-  // Single submit creates the owner and establishes the session.
-  await page.getByLabel("Password").fill(OWNER_PASSWORD);
+  // Single submit creates the owner and establishes the session. The DR-019
+  // confirmation field must match — the mismatch gate is client-side.
+  await page.getByLabel("Password", { exact: true }).fill(OWNER_PASSWORD);
+  await page.getByLabel("Confirm password", { exact: true }).fill(OWNER_PASSWORD);
   await page.getByRole("button", { name: "Create owner" }).click();
   await expect(page).toHaveURL(/\/projects$/);
 
@@ -180,7 +182,10 @@ test("owner login issues novel_engine cookies and the editor renders the real er
   await first.keyboard.type("Stale tab overwrite.");
   const conflict = first.locator(".editor-conflict");
   await expect(conflict).toBeVisible({ timeout: 10_000 });
-  await expect(conflict).toContainText("Document changed since the requested base revision.");
+  await expect(conflict).toContainText("Someone else changed this document.");
+  await expect(conflict).toContainText(
+    "This document changed since it was loaded. Load the latest revision and reapply your edit.",
+  );
   await expect(first.getByRole("button", { name: "Load latest (discard local)" })).toBeVisible();
   await expect(first.getByRole("button", { name: "Keep local and retry overwrite" })).toBeVisible();
 
@@ -297,7 +302,7 @@ test("History loads bounded revision pages and keeps keyboard retry state", asyn
   expect(interceptedOlderRequests).toBe(1);
   await expect(revisionRows).toHaveCount(50);
   await expect(page.getByRole("alert")).toContainText(
-    "Revision history is temporarily unavailable.",
+    "The service is not available right now. Check the server and retry.",
   );
   await expect(loadOlder).toBeFocused();
 

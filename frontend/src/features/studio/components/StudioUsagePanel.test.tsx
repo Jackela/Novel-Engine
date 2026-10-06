@@ -37,6 +37,8 @@ function renderUsagePanel(active: boolean): HTMLDivElement {
 const emptyUsage: ProjectUsage = {
   project_id: "project-1",
   request_count: 0,
+  failed_attempt_count: 0,
+  estimated_requests: 0,
   prompt_tokens: 0,
   completion_tokens: 0,
   per_model: [],
@@ -46,18 +48,24 @@ const emptyUsage: ProjectUsage = {
 const multiModelUsage: ProjectUsage = {
   project_id: "project-1",
   request_count: 1234,
+  failed_attempt_count: 2,
+  estimated_requests: 1,
   prompt_tokens: 120000,
   completion_tokens: 4500,
   per_model: [
     {
       model: "qwen-max",
       requests: 1000,
+      failed_attempts: 2,
+      estimated_requests: 0,
       prompt_tokens: 100000,
       completion_tokens: 4000,
     },
     {
       model: "mock",
       requests: 234,
+      failed_attempts: 0,
+      estimated_requests: 1,
       prompt_tokens: 20000,
       completion_tokens: 500,
     },
@@ -96,8 +104,16 @@ describe("StudioUsagePanel", () => {
     const cards = Array.from(container.querySelectorAll(".usage__total-card"));
     expect(cards.map((card) => card.textContent)).toEqual([
       "1,234Requests",
+      "2Failed attempts",
       "120,000Prompt tokens",
       "4,500Completion tokens",
+    ]);
+
+    // DR-028: the disclosures name failures and provider-unreported estimates.
+    const notices = Array.from(container.querySelectorAll(".usage__notice"));
+    expect(notices.map((notice) => notice.textContent)).toEqual([
+      "2 provider attempt(s) failed and are counted separately from the token totals; their consumed tokens are unknown and stay out of these numbers.",
+      "1 of 1,234 counted requests use a word-count estimate because the provider reported no usage; those tokens are provider-unreported estimates, not provider counts.",
     ]);
 
     const rows = Array.from(container.querySelectorAll(".usage__table tbody tr"));

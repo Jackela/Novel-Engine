@@ -39,6 +39,7 @@ export function StudioInspectorPanels({
   ) : null;
   const beat = model.beat ? (
     <StudioBeatPanel
+      projectId={model.beat.projectId}
       documentId={model.beat.documentId}
       beatRef={model.beat.beatRef}
       attemptedTitle={model.beat.attemptedTitle}
@@ -84,6 +85,9 @@ export function StudioInspectorPanels({
           isRunningProposal={pending.proposal.running}
           isAcceptingProposal={pending.proposal.accepting}
           streamingText={model.copilot.streamingText}
+          streamingInterrupted={model.copilot.streamingInterrupted}
+          streamingStopped={model.copilot.streamingStopped}
+          acceptanceUndo={model.copilot.acceptanceUndo}
           onStopProposal={model.copilot.onStopProposal}
           proposalOutcomeUnknown={model.copilot.proposalOutcomeUnknown}
           proposalAuditStatus={model.copilot.proposalAuditStatus}
@@ -122,8 +126,10 @@ export function StudioInspectorPanels({
         role="tabpanel"
       >
         <StudioReviewPanel
-          latestReview={model.review.latestReview}
+          latestReview={model.review.selectedReview}
           summaries={model.review.summaries}
+          selectedReviewId={model.review.selectedReviewId}
+          onSelectReview={model.review.onSelectReview}
           detailLoading={model.review.detailLoading}
           detailError={model.review.detailError}
           onRetryDetail={model.review.onRetryDetail}
@@ -148,6 +154,7 @@ export function StudioInspectorPanels({
           revisions={model.history.revisions}
           loadedRevisionId={model.history.loadedRevisionId}
           onRestoreRevision={model.history.onRestoreRevision}
+          previewScope={model.history.preview}
           restoringRevisionId={pending.history?.restoringRevisionId}
           historyInitialized={model.history.historyInitialized}
           hasOlderRevisions={model.history.hasOlderRevisions}
@@ -163,6 +170,7 @@ export function StudioInspectorPanels({
         role="tabpanel"
       >
         <StudioJobsPanel
+          projectId={model.jobs.projectId}
           jobs={model.jobs.jobs}
           hasOlderJobs={model.jobs.hasOlderJobs}
           onLoadJobs={model.jobs.onLoadJobs}

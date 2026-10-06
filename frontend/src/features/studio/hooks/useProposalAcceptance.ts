@@ -1,5 +1,5 @@
 import type { Dispatch, SetStateAction } from "react";
-import { useCallback, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { translateActive } from "@/app/i18n/translate";
 import type { Project, StudioDocument, StudioJob } from "@/app/types/studio";
 import { acceptProposalAndRefresh } from "./acceptProposalAndRefresh";
@@ -10,6 +10,12 @@ import type { ProposalAuditControl } from "./useStudioJobs";
 
 interface AcceptRequest extends ProposalRequest {
   readonly projectId: string;
+}
+
+/** DR-010: the pre-accept revision of one committed acceptance. */
+export interface AcceptanceUndo {
+  readonly documentId: string;
+  readonly baseRevisionId: string;
 }
 
 interface ProposalAcceptanceOptions {
@@ -56,6 +62,16 @@ export function useProposalAcceptance({
   clearCurrentProposal,
 }: ProposalAcceptanceOptions) {
   const acceptRequestRef = useRef<AcceptRequest | null>(null);
+  // null: no live offer (never accepted, taken, or cleared); a record: a live
+  // one-shot offer for the document that accepted (DR-010).
+  const [acceptanceUndoState, setAcceptanceUndoState] = useState<AcceptanceUndo | null>(null);
+  const acceptanceUndoRef = useRef<AcceptanceUndo | null>(null);
+  const activeDocumentIdRef = useRef<string | null>(activeDocument?.id ?? null);
+  useEffect(() => {
+    // Latest-value ref for the take-once guard; synced after commit so no
+    // render work mutates it (React may replay discarded renders).
+    activeDocumentIdRef.current = activeDocument?.id ?? null;
+  }, [activeDocument?.id]);
 
   /** Aborts the accept request still attached to the departed project. */
   const detachAccept = useCallback((previousProjectId: string) => {
@@ -64,6 +80,27 @@ export function useProposalAcceptance({
       acceptRequest.controller.abort();
       acceptRequestRef.current = null;
     }
+  }, []);
+
+  /** DR-010: the one-shot undo offer, visible only for the document that accepted. */
+  const undoAcceptance =
+    acceptanceUndoState !== null && acceptanceUndoState.documentId === (activeDocument?.id ?? null)
+      ? acceptanceUndoState
+      : null;
+
+  /** Takes the offer so a second invocation can never restore twice. */
+  const consumeAcceptanceUndo = useCallback((): AcceptanceUndo | null => {
+    const record = acceptanceUndoRef.current;
+    if (record === null || record.documentId !== activeDocumentIdRef.current) return null;
+    acceptanceUndoRef.current = null;
+    setAcceptanceUndoState(null);
+    return record;
+  }, []);
+
+  /** Drops the offer on an owner change; the revision stays in History. */
+  const clearAcceptanceUndo = useCallback(() => {
+    acceptanceUndoRef.current = null;
+    setAcceptanceUndoState(null);
   }, []);
 
   const acceptProposal = useCallback(async () => {
@@ -77,6 +114,9 @@ export function useProposalAcceptance({
       return;
     }
     const onAccepted = captureAcceptedDocument(activeDocument.id);
+    // DR-010: the accepted revision is written on top of this base revision;
+    // it is the one-shot undo target, and absence simply offers no undo.
+    const baseRevisionId = proposal.result.base_revision_id;
     setError(null);
     const requestEpoch = nextRequestEpoch();
     const controller = new AbortController();
@@ -95,6 +135,11 @@ export function useProposalAcceptance({
         onAcceptanceCommitted: () => {
           if (isCurrentRequest(ownerKey, requestEpoch) && !controller.signal.aborted) {
             clearCurrentProposal();
+            if (baseRevisionId !== undefined) {
+              const undo = { documentId: activeDocument.id, baseRevisionId };
+              acceptanceUndoRef.current = undo;
+              setAcceptanceUndoState(undo);
+            }
           }
         },
       });
@@ -127,5 +172,11 @@ export function useProposalAcceptance({
     setProject,
   ]);
 
-  return { acceptProposal, detachAccept };
+  return {
+    acceptProposal,
+    detachAccept,
+    undoAcceptance,
+    consumeAcceptanceUndo,
+    clearAcceptanceUndo,
+  };
 }

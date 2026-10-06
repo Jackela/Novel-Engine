@@ -86,7 +86,10 @@ test.describe
           await studio.waitForTimeout(2_000);
         }
       }
-      await studio.getByLabel("Password").fill(OWNER_PASSWORD);
+      await studio.getByLabel("Password", { exact: true }).fill(OWNER_PASSWORD);
+      if (!ownerConfigured) {
+        await studio.getByLabel("Confirm password", { exact: true }).fill(OWNER_PASSWORD);
+      }
       await studio
         .getByRole("button", { name: ownerConfigured ? "Sign in" : "Create owner" })
         .click();
@@ -113,13 +116,22 @@ test.describe
       const stats = await openStatsTab(studio, projectId);
 
       // The aggregation invariants this workflow just produced: an author
-      // revision today (UTC) extends the streak, both source splits moved
-      // the current UTC day positively, and the mock generation recorded a
-      // usage event whose word-count fallback keeps the token sums positive.
+      // revision today (browser-local) extends the streak, both source splits
+      // moved the current local day positively, and the mock generation
+      // recorded a usage event whose word-count fallback keeps the token sums
+      // positive.
       expect(stats.streak_days).toBeGreaterThanOrEqual(1);
       const today = stats.daily.at(-1);
       if (today === undefined) throw new Error("The stats window carried no trailing day.");
-      expect(today.date).toBe(new Date().toISOString().slice(0, 10));
+      // DR-045: day rows follow the browser time zone, so the trailing row's
+      // date is the browser-local date, not the UTC date.
+      const browserToday = await studio.evaluate(() => {
+        const now = new Date();
+        const month = String(now.getMonth() + 1).padStart(2, "0");
+        const day = String(now.getDate()).padStart(2, "0");
+        return `${now.getFullYear()}-${month}-${day}`;
+      });
+      expect(today.date).toBe(browserToday);
       expect(today.words.author).toBeGreaterThan(0);
       expect(today.words.ai_accepted).toBeGreaterThan(0);
       expect(stats.usage.request_count).toBe(1);
@@ -130,7 +142,9 @@ test.describe
       await expect(tab).toHaveAttribute("aria-selected", "true");
       const panel = studio.getByRole("tabpanel", { name: "Stats" });
       await expect(panel.getByRole("heading", { name: "Writing stats" })).toBeVisible();
-      await expect(panel.getByText("Words per UTC day, attributed by source.")).toBeVisible();
+      await expect(
+        panel.getByText("Words per day in your browser time zone, attributed by source."),
+      ).toBeVisible();
 
       // Summary cards mirror the payload: streak, the day's net words, and
       // the started-chapters share.
@@ -148,7 +162,7 @@ test.describe
         ),
       ).toBeVisible();
 
-      // The daily table's today row (UTC) carries the source split and its
+      // The daily table's today row (browser-local) carries the source split and its
       // total, under the source-named columns.
       const dailyTable = panel.getByRole("table", {
         name: "Daily words by source, last 30 days",

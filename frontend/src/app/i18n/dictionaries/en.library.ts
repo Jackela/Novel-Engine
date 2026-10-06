@@ -16,4 +16,18 @@ export const enLibrary = {
   "library.catalog.end": "End of project catalog.",
   "library.action.loadOlder": "Load older projects",
   "library.action.loadingOlder": "Loading older projects...",
+  "library.row.delete": "Delete {title}",
+  "library.row.deleteTitle": "Delete project",
+  "library.row.deleting": "Deleting {title}…",
+  "library.row.deletingTitle": "Deleting…",
+  "library.row.confirmHeading": "Delete {title} confirmation",
+  "library.row.confirmBody":
+    "Permanently delete {title}? Its documents, revisions, exports, and snapshots are removed too. Backups are not touched.",
+  "library.row.confirmDelete": "Confirm delete {title}",
+  "library.row.confirmAction": "Delete project",
+  "library.row.confirmingAction": "Deleting…",
+  "library.row.cancelDelete": "Cancel delete {title}",
+  "library.row.cancel": "Cancel",
+  "library.error.unableToDelete": "Unable to delete project.",
+  "library.status.deleted": "Deleted {title}.",
 } as const;

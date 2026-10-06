@@ -169,6 +169,7 @@ describe("restart persistence", () => {
       // The proposal workflow (#268) grew the persistence columns (project
       // scoping, provider/model, request/result, retry chain/identity) — everything
       // the adjudicated synchronous jobs model carries, and nothing more.
+      // DR-027 added the durable request key of the generation routes.
       expect(columnNames(studio, "jobs")).toEqual([
         "id",
         "kind",
@@ -187,6 +188,7 @@ describe("restart persistence", () => {
         "result_json",
         "retry_of_job_id",
         "retry_idempotency_key",
+        "request_idempotency_key",
       ]);
       for (const name of columnNames(studio, "jobs")) {
         expect(name).not.toMatch(/lease|ttl|heartbeat|worker/i);

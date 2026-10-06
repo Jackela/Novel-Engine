@@ -1,10 +1,13 @@
 import type { FormEvent, MouseEvent, RefObject } from "react";
 import { useCallback, useLayoutEffect, useRef, useState } from "react";
 
+import type { BeatCandidate, BeatOutlineAuthority } from "@/app/beatContract";
 import { useTranslation } from "@/app/i18n/useTranslation";
+import { useBeatCandidates } from "../hooks/useBeatCandidates";
 import { useCommandFocusRestoration } from "../hooks/useCommandFocusRestoration";
 
 interface StudioBeatPanelProps {
+  projectId: string;
   documentId: string;
   beatRef: string | null;
   attemptedTitle?: string | null;
@@ -14,13 +17,14 @@ interface StudioBeatPanelProps {
 }
 
 /**
- * The chapter beat-association command surface (#466): set the chapter's
- * linked outline beat title, or clear the association. The input submits the
- * requested title; `beatRef` is the stored-reference authority patched from
- * the successful command's normalized requested value — never from the
- * independently resolved beat display.
+ * The chapter beat-association command surface (#466, DR-043): choose the
+ * chapter's linked outline beat from the outline's own catalog, or clear the
+ * association. The selection submits the requested title; `beatRef` is the
+ * stored-reference authority patched from the successful command's normalized
+ * requested value — never from the independently resolved beat display.
  */
 export function StudioBeatPanel({
+  projectId,
   documentId,
   beatRef,
   attemptedTitle = null,
@@ -28,10 +32,17 @@ export function StudioBeatPanel({
   error = null,
   onLink,
 }: StudioBeatPanelProps) {
-  const inputRef = useRef<HTMLInputElement | null>(null);
+  const selectRef = useRef<HTMLSelectElement | null>(null);
   const linkButtonRef = useRef<HTMLButtonElement | null>(null);
   const activeDocumentIdRef = useRef(documentId);
   const runWithFocusRestoration = useCommandFocusRestoration(isSaving);
+  const {
+    candidates,
+    outline,
+    isLoading,
+    error: candidatesError,
+    refresh,
+  } = useBeatCandidates(projectId, documentId);
 
   useLayoutEffect(() => {
     activeDocumentIdRef.current = documentId;
@@ -44,15 +55,15 @@ export function StudioBeatPanel({
         trigger,
         () => onLink(beat),
         // A success keeps the initiating command disabled (`requested ===
-        // beatRef`, or Clear with no reference left), so the beat input is
+        // beatRef`, or Clear with no reference left), so the catalog select is
         // the semantic landing zone — but only for the same document.
-        () => (activeDocumentIdRef.current === originDocumentId ? inputRef.current : null),
+        () => (activeDocumentIdRef.current === originDocumentId ? selectRef.current : null),
       );
     },
     [documentId, onLink, runWithFocusRestoration],
   );
 
-  // The keyed form resets local title at the document boundary, while the
+  // The keyed form resets local selection at the document boundary, while the
   // persistent owner above can resolve a returning document's semantic target.
   return (
     <BeatEntryForm
@@ -61,11 +72,29 @@ export function StudioBeatPanel({
       attemptedTitle={attemptedTitle}
       isSaving={isSaving}
       error={error}
+      candidates={candidates}
+      outline={outline}
+      isLoadingCandidates={isLoading}
+      candidatesError={candidatesError}
+      onRefreshCandidates={refresh}
       onLinkCommand={linkWithFocusRestoration}
-      inputRef={inputRef}
+      selectRef={selectRef}
       linkButtonRef={linkButtonRef}
     />
   );
+}
+
+/**
+ * The options the catalog select offers: the outline's beats in document
+ * order, preceded by a still-stored reference the outline no longer holds, so
+ * a renamed heading never silently blanks the author's current association.
+ */
+function selectableTitles(candidates: readonly BeatCandidate[], current: string): string[] {
+  const titles = candidates.map((candidate) => candidate.title);
+  if (current === "" || titles.includes(current)) {
+    return [...new Set(titles)];
+  }
+  return [current, ...new Set(titles)];
 }
 
 interface BeatEntryFormProps {
@@ -73,8 +102,13 @@ interface BeatEntryFormProps {
   readonly attemptedTitle: string | null;
   readonly isSaving: boolean;
   readonly error: string | null;
+  readonly candidates: readonly BeatCandidate[];
+  readonly outline: BeatOutlineAuthority | null;
+  readonly isLoadingCandidates: boolean;
+  readonly candidatesError: string | null;
+  readonly onRefreshCandidates: () => void;
   readonly onLinkCommand: (trigger: HTMLButtonElement, beat: string | null) => void;
-  readonly inputRef: RefObject<HTMLInputElement | null>;
+  readonly selectRef: RefObject<HTMLSelectElement | null>;
   readonly linkButtonRef: RefObject<HTMLButtonElement | null>;
 }
 
@@ -83,13 +117,19 @@ function BeatEntryForm({
   attemptedTitle,
   isSaving,
   error,
+  candidates,
+  outline,
+  isLoadingCandidates,
+  candidatesError,
+  onRefreshCandidates,
   onLinkCommand,
-  inputRef,
+  selectRef,
   linkButtonRef,
 }: BeatEntryFormProps) {
   const [title, setTitle] = useState(attemptedTitle ?? beatRef ?? "");
   const { t } = useTranslation();
   const requested = title.trim();
+  const titles = selectableTitles(candidates, title);
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -107,16 +147,35 @@ function BeatEntryForm({
     <form aria-label={t("beat.form.label")} className="studio-beat" onSubmit={handleSubmit}>
       <label className="studio-inspector__settings-field">
         <span>{t("beat.field.label")}</span>
-        <input
+        <select
           aria-label={t("beat.field.title")}
           disabled={isSaving}
           onChange={(event) => setTitle(event.target.value)}
-          ref={inputRef}
-          type="text"
+          ref={selectRef}
           value={title}
-        />
+        >
+          <option value="">{t("beat.option.none")}</option>
+          {titles.map((candidate) => (
+            <option key={candidate} value={candidate}>
+              {candidate}
+            </option>
+          ))}
+        </select>
       </label>
       <p className="studio-beat__hint">{t("beat.hint")}</p>
+      {outline !== null && outline.outline_count > 1 ? (
+        <p className="studio-beat__notice">
+          {t("beat.notice.outlineAuthority", {
+            count: outline.outline_count,
+            title: outline.title,
+          })}
+        </p>
+      ) : null}
+      {candidatesError !== null ? (
+        <p aria-live="assertive" className="studio-beat__error" role="alert">
+          {candidatesError}
+        </p>
+      ) : null}
       <div className="studio-inspector__actions">
         <button
           aria-busy={isSaving}
@@ -134,6 +193,15 @@ function BeatEntryForm({
           type="button"
         >
           {t("beat.action.clear")}
+        </button>
+        <button
+          aria-label={t("beat.action.refresh")}
+          className="ui-command"
+          disabled={isSaving || isLoadingCandidates}
+          onClick={onRefreshCandidates}
+          type="button"
+        >
+          {isLoadingCandidates ? t("beat.status.loadingCandidates") : t("beat.action.refresh")}
         </button>
       </div>
       {error ? (

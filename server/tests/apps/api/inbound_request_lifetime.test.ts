@@ -278,3 +278,40 @@ describe("inbound HTTP request lifetime", () => {
     }
   });
 });
+
+describe("trusted proxy wiring", () => {
+  it("derives Fastify trustProxy from the configured trusted proxies", async () => {
+    const app = await buildApp({ logger: false, trustedProxies: ["127.0.0.1"] });
+    app.get("/test/protocol", async (request) => ({ protocol: request.protocol }));
+    try {
+      const response = await app.inject({
+        method: "GET",
+        url: "/test/protocol",
+        headers: { "x-forwarded-proto": "https" },
+      });
+      // The injected loopback peer is trusted, so Fastify honors the
+      // forwarding proxy's scheme; this is the same per-peer rule the rate
+      // limiter applies to client identity.
+      expect(response.json()).toEqual({ protocol: "https" });
+    } finally {
+      await app.close();
+    }
+  });
+
+  it("keeps forwarded headers inert without a trusted peer", async () => {
+    for (const trustedProxies of [undefined, ["10.0.0.7"]]) {
+      const app = await buildApp({ logger: false, trustedProxies });
+      app.get("/test/protocol", async (request) => ({ protocol: request.protocol }));
+      try {
+        const response = await app.inject({
+          method: "GET",
+          url: "/test/protocol",
+          headers: { "x-forwarded-proto": "https" },
+        });
+        expect(response.json()).toEqual({ protocol: "http" });
+      } finally {
+        await app.close();
+      }
+    }
+  });
+});

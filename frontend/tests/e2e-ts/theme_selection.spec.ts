@@ -74,7 +74,8 @@ async function login(page: Page): Promise<void> {
     await expect(async () => {
       await page.goto("/");
       await expect(page.getByRole("heading", { name: "Create the local owner" })).toBeVisible();
-      await page.getByLabel("Password").fill(OWNER_PASSWORD);
+      await page.getByLabel("Password", { exact: true }).fill(OWNER_PASSWORD);
+      await page.getByLabel("Confirm password", { exact: true }).fill(OWNER_PASSWORD);
       await page.getByRole("button", { name: "Create owner" }).click();
       await expect(page).toHaveURL(/\/projects$/);
     }).toPass({ timeout: 30_000 });

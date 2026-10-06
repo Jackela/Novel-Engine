@@ -30,6 +30,56 @@ const MECHANICAL_PREAMBLE = new RegExp(
   `^\\s*(?:here(?:'s| is)|below is|sure[,!:]?|certainly[,!:]?|as requested[,!:]?|draft(?:ed)? chapter)\\b.*(?:${FORBIDDEN_TEMPLATE_ALTERNATION}).*$`,
   "i",
 );
+/** Chinese mechanical template phrases: the counterpart of the English preamble vocabulary. */
+const CHINESE_TEMPLATE_PHRASES = [
+  "以下是",
+  "下面是",
+  "如下",
+  "如下所示",
+  "正文如下",
+  "内容如下",
+  "初稿",
+  "草稿",
+  "修订稿",
+  "修改稿",
+  "重写稿",
+  "改写稿",
+  "重写后的",
+  "改写后的",
+  "修改后的",
+  "修订后的",
+  "为您",
+  "按照您的要求",
+  "根据您的要求",
+  "遵照您的指示",
+] as const;
+const CHINESE_TEMPLATE_ALTERNATION = CHINESE_TEMPLATE_PHRASES.map((phrase) =>
+  phrase.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"),
+).join("|");
+/** The acknowledgement and meta openers that head a Chinese template line. */
+const CHINESE_PREAMBLE_OPENERS =
+  "好的|当然(?:可以)?|没问题|可以|明白了|收到|以下是|下面是|如下所示|如下";
+/**
+ * A Chinese template line: it starts with an acknowledgement or meta opener
+ * and the whole line carries a mechanical template phrase. The lookahead
+ * scans the entire line so a bare "以下是……" opener counts as its own
+ * template phrase, while narrative lines that merely begin with 当然/可以
+ * and carry no template phrase stay untouched.
+ */
+const CHINESE_MECHANICAL_PREAMBLE = new RegExp(
+  `^(?=[^\\n]*(?:${CHINESE_TEMPLATE_ALTERNATION}))\\s*(?:${CHINESE_PREAMBLE_OPENERS})[^\\n]*$`,
+);
+/** A line that is nothing but an acknowledgement is provider chatter, never story prose. */
+const CHINESE_ACKNOWLEDGEMENT_ONLY =
+  /^\s*(?:好的|当然(?:可以)?|没问题|可以|明白了|收到)[，,。.！!？?：:\s]*$/;
+/** True when a proposal line is a mechanical template rather than story prose. */
+function isMechanicalPreambleLine(line: string): boolean {
+  return (
+    MECHANICAL_PREAMBLE.test(line) ||
+    CHINESE_MECHANICAL_PREAMBLE.test(line) ||
+    CHINESE_ACKNOWLEDGEMENT_ONLY.test(line)
+  );
+}
 const PROMPT_INJECTION_PATTERNS: readonly RegExp[] = [
   /ignore\s+(?:all\s+)?(?:previous|prior|above)\s+instructions/gi,
   /disregard\s+(?:all\s+)?(?:previous|prior|above)\s+instructions/gi,
@@ -89,7 +139,7 @@ export function sanitizeProposalMarkdown(markdown: string): string {
   const kept = String(markdown)
     .replace(/\r\n?/g, "\n")
     .split("\n")
-    .filter((line) => !MECHANICAL_PREAMBLE.test(line));
+    .filter((line) => !isMechanicalPreambleLine(line));
   let cleaned = kept.join("\n");
   for (const [pattern, replacement] of MECHANICAL_SUBSTITUTIONS) {
     cleaned = cleaned.replace(pattern, replacement);

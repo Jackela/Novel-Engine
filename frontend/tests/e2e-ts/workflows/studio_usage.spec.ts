@@ -62,6 +62,8 @@ async function assertUsageView(page: Page, usage: UsagePayload): Promise<void> {
     await expect(modelRows.nth(index).locator("th, td")).toHaveText([
       row.model,
       row.requests.toLocaleString("en-US"),
+      row.failed_attempts.toLocaleString("en-US"),
+      row.estimated_requests.toLocaleString("en-US"),
       row.prompt_tokens.toLocaleString("en-US"),
       row.completion_tokens.toLocaleString("en-US"),
     ]);
@@ -195,7 +197,9 @@ test.describe
       try {
         await refresh.click();
         await failed;
-        await expect(studio.getByRole("alert")).toContainText("Usage is down.");
+        await expect(studio.getByRole("alert")).toContainText(
+          "The service is not available right now. Check the server and retry.",
+        );
         await assertUsageView(studio, loaded);
         await expect(refresh).toBeEnabled();
         await expect(refresh).toBeFocused();
@@ -268,7 +272,7 @@ test.describe
         await started;
         await studio.getByRole("button", { name: "Back to projects" }).click();
         await expect(studio.getByRole("heading", { name: "Projects" })).toBeVisible();
-        await studio.getByRole("button", { name: "Usage B" }).click();
+        await studio.getByRole("button", { name: /^Usage B/ }).click();
         await expect(studio).toHaveURL(new RegExp(`/projects/${projectB}/manuscript`));
         const emptyB = await usageResponse(studio, projectB);
         expect(emptyB).toMatchObject({

@@ -3,10 +3,18 @@ export const enSettings = {
   "settings.heading": "Project settings",
   "settings.error.unableToUpdate": "Unable to update project.",
   "settings.field.provider": "Provider",
+  "settings.field.model": "Model",
   "settings.field.storage": "Storage",
   "settings.field.documentSyntax": "Document syntax",
   "settings.value.sqlite": "SQLite",
   "settings.value.markdown": "Markdown",
+  "settings.value.modelUnknown": "Unknown",
+
+  // DR-022: provider configuration visibility.
+  "settings.provider.notConfigured": "not configured (missing API key)",
+  "settings.provider.missingCredential":
+    "This provider has no API key on the server. Configure the key and restart, or choose the built-in trial provider.",
+  "settings.provider.setupGuide": "Provider setup guide",
   "settings.action.save": "Save settings",
   "settings.action.saving": "Saving…",
   "settings.status.saving": "Saving project settings.",

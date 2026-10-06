@@ -1,7 +1,7 @@
 import type { Principal } from "../../../shared/application/ports/auth.js";
 import { InvalidOperationError } from "../../../shared/domain/exceptions.js";
 import { type OutlineBeat, splitOutlineBeats } from "./outline_beats.js";
-import type { ChapterBeatPayload } from "./payload_schemas/beat.js";
+import type { BeatOutlineAuthority, ChapterBeatPayload } from "./payload_schemas/beat.js";
 import { chapterBeatPayload } from "./payloads.js";
 import type { DocumentStore, DocumentWithCurrent } from "./ports/document_store.js";
 import type { ProjectScope } from "./ports/studio_store.js";
@@ -12,7 +12,9 @@ import { scopeForPrincipal } from "./ports/studio_store.js";
  * beat of its project's outline document. The stored reference is the beat's
  * heading title; every read resolves it against the outline's current
  * sections, so a renamed or removed heading degrades to unlinked and never
- * errors.
+ * errors. The candidate catalog and its authoritative outline travel with
+ * every view (DR-043), so the association never depends on recall or on a
+ * silently chosen outline.
  */
 export class BeatAssociationService {
   private readonly store: DocumentStore;
@@ -39,57 +41,76 @@ export class BeatAssociationService {
     if (requested !== null && requested === "") {
       throw new InvalidOperationError("An outline beat title is required to link a chapter.");
     }
-    if (requested !== null) {
-      const known = projectOutlineBeats(this.store, scope, projectId).some(
-        (beat) => beat.title === requested,
-      );
-      if (!known) {
-        throw new InvalidOperationError(`The outline has no beat titled "${requested}".`);
-      }
+    const authority = projectOutlineAuthority(this.store, scope, projectId);
+    if (requested !== null && !authority.beats.some((beat) => beat.title === requested)) {
+      throw new InvalidOperationError(`The outline has no beat titled "${requested}".`);
     }
     const updated = this.store.setBeatReference(scope, projectId, documentId, {
       beatRef: requested,
       now: this.now(),
     });
-    return chapterBeatView(updated, projectOutlineBeats(this.store, scope, projectId));
+    return chapterBeatView(updated, authority);
   }
 
   /** The chapter's effective association, resolved against the live outline. */
   chapterBeat(principal: Principal, projectId: string, documentId: string): ChapterBeatPayload {
     const scope = scopeForPrincipal(principal);
     const document = this.store.findDocument(scope, projectId, documentId);
-    return chapterBeatView(document, projectOutlineBeats(this.store, scope, projectId));
+    return chapterBeatView(document, projectOutlineAuthority(this.store, scope, projectId));
   }
 }
 
+/** The outline document whose beats a project's chapters associate with. */
+export interface OutlineAuthority {
+  readonly beats: OutlineBeat[];
+  readonly outline: { readonly id: string; readonly title: string } | null;
+  /** Outline-kind documents in the project; more than one is disclosed, never hidden. */
+  readonly outlineCount: number;
+}
+
 /**
- * The beats of the project's outline document in document order. The first
- * outline-kind document in the project's reading order is the authority; a
- * project without an outline has no beats.
+ * The beats of the project's outline document in document order, together
+ * with which outline was read and how many exist. The first outline-kind
+ * document in the project's reading order is the authority — an explicit,
+ * disclosed rule (DR-043): the payload names that document and reports the
+ * total count, so a project with several outlines surfaces the choice instead
+ * of silently dropping the others. A project without an outline has no beats.
  */
-function projectOutlineBeats(
+function projectOutlineAuthority(
   store: DocumentStore,
   scope: ProjectScope,
   projectId: string,
-): OutlineBeat[] {
-  const outline = store
+): OutlineAuthority {
+  const outlines = store
     .findDocuments(scope, projectId)
-    .find((document) => document.kind === "outline");
+    .filter((document) => document.kind === "outline");
+  const outline = outlines[0] ?? null;
   const revision = outline?.currentRevision ?? null;
-  if (outline === undefined || revision === null) {
-    return [];
-  }
-  return splitOutlineBeats(revision.contentMarkdown);
+  return {
+    beats: outline === null || revision === null ? [] : splitOutlineBeats(revision.contentMarkdown),
+    outline: outline === null ? null : { id: outline.id, title: outline.title },
+    outlineCount: outlines.length,
+  };
+}
+
+function outlineAuthorityPayload(authority: OutlineAuthority): BeatOutlineAuthority | null {
+  return authority.outline === null
+    ? null
+    : {
+        document_id: authority.outline.id,
+        title: authority.outline.title,
+        outline_count: authority.outlineCount,
+      };
 }
 
 /** The read contract: `beat` is null when unlinked or when the beat vanished. */
 export function chapterBeatView(
   document: DocumentWithCurrent,
-  beats: OutlineBeat[],
+  authority: OutlineAuthority,
 ): ChapterBeatPayload {
   const resolved =
     document.beatRef === null
       ? null
-      : (beats.find((beat) => beat.title === document.beatRef) ?? null);
-  return chapterBeatPayload(resolved);
+      : (authority.beats.find((beat) => beat.title === document.beatRef) ?? null);
+  return chapterBeatPayload(resolved, authority.beats, outlineAuthorityPayload(authority));
 }

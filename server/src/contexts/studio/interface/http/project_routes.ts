@@ -7,6 +7,7 @@ import {
   ERROR_CODES,
   errorEnvelopeResponse,
 } from "../../../../shared/interface/http/error_envelope.js";
+import { matchPageLimit } from "../../application/ports/document_store.js";
 import { projectPageLimit } from "../../application/ports/project_catalog_store.js";
 import { scopeForPrincipal } from "../../application/ports/studio_store.js";
 import { projectUpdateCommand } from "../../application/project_service.js";
@@ -183,13 +184,17 @@ export const projectRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fas
       },
     },
     async (request) =>
-      withStudioErrors(() => ({
-        results: requireServices(options).documents.queryProjectDocuments(
+      withStudioErrors(() =>
+        requireServices(options).documents.queryProjectDocuments(
           requirePrincipal(request),
           request.params.projectId,
           request.query.q,
+          {
+            limit: matchPageLimit(request.query.limit ?? 30),
+            offset: request.query.offset ?? 0,
+          },
         ),
-      })),
+      ),
   );
 
   app.delete(

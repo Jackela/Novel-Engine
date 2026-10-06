@@ -74,6 +74,9 @@ describe("project writing statistics surface (#653 T2)", () => {
       expect(response.statusCode, response.body).toBe(200);
       expect(response.json()).toEqual({
         project_id: project.id,
+        // DR-045: without a query parameter the day boundary stays UTC, and
+        // the response echoes the boundary it bucketed with.
+        tz_offset_minutes: 0,
         daily: utcDayKeys().map((date) => ({
           date,
           words: { author: 0, ai_accepted: 0, restore: 0 },
@@ -84,6 +87,9 @@ describe("project writing statistics surface (#653 T2)", () => {
         usage: {
           project_id: project.id,
           request_count: 0,
+          // DR-028: the empty-ledger usage payload carries the new counters.
+          failed_attempt_count: 0,
+          estimated_requests: 0,
           prompt_tokens: 0,
           completion_tokens: 0,
           per_model: [],
@@ -100,6 +106,41 @@ describe("project writing statistics surface (#653 T2)", () => {
       for (const week of body.weekly) {
         expect(week.words).toEqual({ author: 0, ai_accepted: 0, restore: 0 });
       }
+    } finally {
+      await app.close();
+    }
+  });
+
+  it("buckets the day rows on the requested browser offset", async () => {
+    const { app } = await buildStudioApp(() => NOW);
+    try {
+      const jar = await ownerJar(app);
+      const project = await seedProject(app, jar, "Offset");
+
+      // 2026-03-15T12:00Z is 2026-03-16 02:00 for a UTC+14 author: their
+      // "today" is the next local day, and the seeded author revision lands
+      // on that row instead of the UTC row.
+      const response = await call(
+        app,
+        jar,
+        "GET",
+        `/api/projects/${project.id}/stats?tz_offset_minutes=840`,
+      );
+      expect(response.statusCode, response.body).toBe(200);
+      const body = response.json();
+      expect(body.tz_offset_minutes).toBe(840);
+      expect(body.daily).toHaveLength(30);
+      expect(body.daily.at(-1)?.date).toBe("2026-03-16");
+      expect(body.daily.at(-1)?.words.author).toBeGreaterThan(0);
+      expect(body.streak_days).toBe(1);
+
+      const rejecting = await call(
+        app,
+        jar,
+        "GET",
+        `/api/projects/${project.id}/stats?tz_offset_minutes=900`,
+      );
+      expect(rejecting.statusCode).toBe(422);
     } finally {
       await app.close();
     }
@@ -157,6 +198,41 @@ describe("project writing statistics surface (#653 T2)", () => {
       const usage = await call(app, jar, "GET", `/api/projects/${project.id}/usage`);
       expect(usage.statusCode, usage.body).toBe(200);
       expect(body.usage).toEqual(usage.json());
+    } finally {
+      await app.close();
+    }
+  });
+
+  it("counts Han characters individually in the source attribution", async () => {
+    const { app } = await buildStudioApp(() => NOW);
+    try {
+      const jar = await ownerJar(app);
+      const project = await seedProject(app, jar, "Han attribution");
+      const seededSummary = project.documents[0];
+      if (seededSummary === undefined) throw new Error("Expected the Chapter 1 seed document.");
+      const seeded = await getDocument(app, jar, project.id, seededSummary.id);
+
+      // 31 Han characters: the seed's 2 author words plus the +29 delta
+      // attribute 31 author words to today under per-character counting.
+      const paragraph = "天地玄黄宇宙洪荒日月盈昃辰宿列张寒来暑往秋收冬藏闰余成岁律吕调";
+      const saved = await call(
+        app,
+        jar,
+        "PUT",
+        `/api/projects/${project.id}/documents/${seeded.id}`,
+        {
+          content_markdown: paragraph,
+          base_revision_id: seeded.current_revision_id,
+        },
+      );
+      expect(saved.statusCode, saved.body).toBe(200);
+
+      const response = await call(app, jar, "GET", `/api/projects/${project.id}/stats`);
+      expect(response.statusCode, response.body).toBe(200);
+      expect(response.json().daily.at(-1)).toMatchObject({
+        date: "2026-03-15",
+        words: { author: 31, ai_accepted: 0, restore: 0 },
+      });
     } finally {
       await app.close();
     }

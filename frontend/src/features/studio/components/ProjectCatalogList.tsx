@@ -1,7 +1,9 @@
-import { BookOpen, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
 import { useTranslation } from "@/app/i18n/useTranslation";
 import type { ProjectCatalogItem } from "@/app/types/studio";
+
+import { ProjectCatalogRow } from "./ProjectCatalogRow";
 
 interface ProjectCatalogListProps {
   readonly projects: readonly ProjectCatalogItem[];
@@ -9,8 +11,13 @@ interface ProjectCatalogListProps {
   readonly isLoadingOlder: boolean;
   readonly olderError: string | null;
   readonly disabled: boolean;
+  readonly confirmingDeleteId: string | null;
+  readonly deletingProjectId: string | null;
+  readonly deleteErrorFor: (projectId: string) => string | null;
   readonly onOpenProject: (projectId: string) => void;
   readonly onActivateOlder: (target: HTMLButtonElement) => void;
+  readonly onConfirmingDeleteChange: (projectId: string | null) => void;
+  readonly onDeleteProject: (target: HTMLButtonElement, projectId: string, title: string) => void;
 }
 
 /** The bounded catalog rows plus the explicit older-page continuation. */
@@ -20,8 +27,13 @@ export function ProjectCatalogList({
   isLoadingOlder,
   olderError,
   disabled,
+  confirmingDeleteId,
+  deletingProjectId,
+  deleteErrorFor,
   onOpenProject,
   onActivateOlder,
+  onConfirmingDeleteChange,
+  onDeleteProject,
 }: ProjectCatalogListProps) {
   const { t } = useTranslation();
   // Mirrors the export/review/history terminal copy: a populated catalog with
@@ -30,20 +42,17 @@ export function ProjectCatalogList({
   return (
     <>
       {projects.map((project) => (
-        <button
-          className="library__project-row"
+        <ProjectCatalogRow
+          deleteError={deleteErrorFor(project.id)}
           disabled={disabled}
+          isConfirmingDelete={confirmingDeleteId === project.id}
+          isDeleting={deletingProjectId === project.id}
           key={project.id}
-          onClick={() => onOpenProject(project.id)}
-          type="button"
-        >
-          <BookOpen aria-hidden="true" />
-          <span>
-            <strong>{project.title}</strong>
-            <small>{project.description || t("library.catalog.noPremise")}</small>
-          </span>
-          <time>{new Date(project.updated_at).toLocaleDateString()}</time>
-        </button>
+          onConfirmingDeleteChange={onConfirmingDeleteChange}
+          onDeleteProject={onDeleteProject}
+          onOpenProject={onOpenProject}
+          project={project}
+        />
       ))}
       {hasOlderProjects || olderError || isCatalogExhausted ? (
         <div className="library__catalog-older">

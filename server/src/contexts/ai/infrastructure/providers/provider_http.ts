@@ -2,14 +2,19 @@ import {
   isSafeUsageToken,
   type ProviderStep,
   TextGenerationProviderError,
+  type TextGenerationStreamOptions,
 } from "../../application/ports/text_generation.js";
 
 const RETRYABLE_HTTP_STATUSES = new Set([429, 500, 502, 503, 504]);
 const MAX_PROVIDER_ATTEMPTS = 3;
 const PROVIDER_CLEANUP_GRACE_MS = 1_000;
 
-/** Chapter generation calls must outlive the enclosing request timeout. */
-export const GENERATION_TIMEOUT_FLOOR_SECONDS = 180;
+/**
+ * Whole-manuscript provider calls (draft, revision, editorial review, lore
+ * extraction) must outlive the enclosing request timeout: the default 30s
+ * transport deadline cuts real work on any non-trivial manuscript.
+ */
+export const LONG_FORM_TIMEOUT_FLOOR_SECONDS = 180;
 
 /** Adapter fallback when neither composition nor options carry a timeout. */
 export const DEFAULT_PROVIDER_TIMEOUT_SECONDS = 30;
@@ -217,12 +222,74 @@ export function timeoutFailure(context: string, timeoutSeconds: number): Provide
   });
 }
 
-/** Chapter generation has a hard transport floor; editorial review keeps its base timeout. */
-export function effectiveTimeoutSeconds(timeoutSeconds: number, step: ProviderStep): number {
-  if (step === "chapter_draft" || step === "chapter_revision") {
-    return Math.max(timeoutSeconds, GENERATION_TIMEOUT_FLOOR_SECONDS);
+/** A provider-reported failure payload embedded in a 200 SSE stream (DR-026). */
+export interface ProviderStreamFailure {
+  readonly message: string;
+  readonly code: string;
+}
+
+/** Normalize an in-stream provider failure; stable phrasing feeds the job error. */
+export function providerStreamFailure(
+  context: string,
+  failure: ProviderStreamFailure,
+): ProviderTransportError {
+  return new ProviderTransportError(
+    `${context}: provider reported ${failure.message} (code ${failure.code})`,
+  );
+}
+
+function errorPayloadCode(error: Record<string, unknown>): string {
+  for (const candidate of [error.code, error.type]) {
+    if (typeof candidate === "string" && candidate.trim() !== "") return candidate.trim();
+    if (typeof candidate === "number" && Number.isFinite(candidate)) return String(candidate);
   }
-  return timeoutSeconds;
+  return "unknown";
+}
+
+/**
+ * Recognize an OpenAI-compatible error payload (`{"error":{...}}`); a payload
+ * without a readable message is left to the existing extraction path, so
+ * mixed or provider-specific shapes keep their previous behavior.
+ */
+export function openAiCompatibleStreamFailure(
+  data: Record<string, unknown>,
+): ProviderStreamFailure | undefined {
+  const error = data.error;
+  if (!isJsonObject(error)) return undefined;
+  const message = typeof error.message === "string" ? error.message.trim() : "";
+  return message === "" ? undefined : { message, code: errorPayloadCode(error) };
+}
+
+/**
+ * Engine options for the streaming path: the application stream options plus
+ * the adapter's in-stream failure detector. The engine runs the detector on
+ * every parsed frame before extraction; a returned error is raised immediately
+ * and never retried, because a frame has already flowed into the consumer.
+ */
+export interface ProviderStreamOptions extends TextGenerationStreamOptions {
+  readonly extractStreamFailure?:
+    | ((chunk: Record<string, unknown>) => ProviderTransportError | undefined)
+    | undefined;
+}
+
+/**
+ * Long-form steps hand the provider a whole manuscript; every step of the
+ * closed vocabulary is one today, so the floor applies to all of them. Keep
+ * the list explicit: a future short-lived step must not inherit a floor it
+ * does not need.
+ */
+const LONG_FORM_STEPS: ReadonlySet<ProviderStep> = new Set<ProviderStep>([
+  "chapter_draft",
+  "chapter_revision",
+  "editorial_review",
+  "lore_extract",
+]);
+
+/** Long-form steps have a hard transport floor; every other step keeps its base timeout. */
+export function effectiveTimeoutSeconds(timeoutSeconds: number, step: ProviderStep): number {
+  return LONG_FORM_STEPS.has(step)
+    ? Math.max(timeoutSeconds, LONG_FORM_TIMEOUT_FLOOR_SECONDS)
+    : timeoutSeconds;
 }
 
 function rejectionName(rejection: unknown): string | undefined {

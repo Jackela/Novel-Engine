@@ -100,7 +100,8 @@ services; shared routes (auth, health, version, SPA serving) live in
 before route plugins, and the SPA wildcard registers last so the JSON API stays
 distinct.
 
-The API contract is code-first: Fastify swagger produces `/openapi.json`, and
+The API contract is code-first: Fastify swagger produces `/openapi.json`
+(owner-gated in production; open in development and test), and
 the frozen snapshot `server/qa-baselines/openapi.current.json` is compared by
 the OpenAPI gate. Route-adding changes must regenerate it deliberately via
 `pnpm --dir server openapi:snapshot`. Frontend types are generated from the

@@ -98,7 +98,11 @@ async function advanceAutosave(): Promise<void> {
 }
 
 describe("useDocumentDraft committed reconciliation", () => {
-  it("discards document A's pre-debounce draft after visiting document B", async () => {
+  it("rescues document A's pre-debounce draft when visiting document B", async () => {
+    vi.mocked(api.saveDocument).mockResolvedValue({
+      ...documentA,
+      content_markdown: "Document A local draft",
+    });
     const draft = renderDraft();
     await flushMicrotasks();
 
@@ -108,11 +112,13 @@ describe("useDocumentDraft committed reconciliation", () => {
     });
     draft.rerender(documentB);
 
-    expect(draft.result().hook.draft).toBe(documentB.content_markdown);
-    await act(async () => {
-      await vi.advanceTimersByTimeAsync(1000);
-    });
-    expect(api.saveDocument).not.toHaveBeenCalled();
+    expect(api.saveDocument).toHaveBeenCalledWith(
+      project.id,
+      documentA.id,
+      expect.objectContaining({ content_markdown: "Document A local draft" }),
+    );
+    await advanceAutosave();
+    expect(api.saveDocument).toHaveBeenCalledTimes(1);
     expect(draft.result().hook.draft).toBe(documentB.content_markdown);
 
     draft.rerender(documentA);

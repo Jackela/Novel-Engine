@@ -21,10 +21,20 @@ export {
   parseVolumes,
 } from "./projectShellContract";
 
-class ApiContractError extends Error {
+/**
+ * Raised when a successful response does not satisfy the frontend's runtime
+ * contract. The `Invalid <label>` message stays byte-stable (the contract
+ * tests locate it verbatim) while `label` lets the localized error surface
+ * (DR-021) map the shape to a user-readable message per language and keep the
+ * raw label as technical detail.
+ */
+export class ApiContractError extends Error {
+  readonly label: string;
+
   constructor(label: string) {
     super(`Invalid ${label}`);
     Object.setPrototypeOf(this, ApiContractError.prototype);
+    this.label = label;
   }
 }
 
@@ -54,7 +64,7 @@ export function isoUtcStringField(source: JsonRecord, key: string, parent: strin
     parsed.getUTCMinutes() !== Number(match[5]) ||
     parsed.getUTCSeconds() !== Number(match[6])
   ) {
-    throw new Error(`Invalid ${parent}.${key}`);
+    fail(`${parent}.${key}`);
   }
   return value;
 }
@@ -85,7 +95,7 @@ export function objectValue(value: unknown, label: string): JsonRecord {
   return value as JsonRecord;
 }
 
-function field(source: JsonRecord, key: string, parent: string): unknown {
+export function field(source: JsonRecord, key: string, parent: string): unknown {
   if (!Object.hasOwn(source, key)) fail(`${parent}.${key}`);
   return source[key];
 }
@@ -112,6 +122,17 @@ export function nullableStringField(
 
 export function numberField(source: JsonRecord, key: string, parent: string): number {
   const value = field(source, key, parent);
+  return typeof value === "number" && Number.isFinite(value) ? value : fail(`${parent}.${key}`);
+}
+
+/** A number field that legitimately carries null (e.g. `next_offset`). */
+export function nullableNumberField(
+  source: JsonRecord,
+  key: string,
+  parent: string,
+): number | null {
+  const value = field(source, key, parent);
+  if (value === null) return null;
   return typeof value === "number" && Number.isFinite(value) ? value : fail(`${parent}.${key}`);
 }
 
@@ -172,30 +193,6 @@ export function parseLoreStatus(value: unknown): { lore_status: LoreStatus } {
       "lore status response",
       LORE_STATUSES,
     ) as LoreStatus,
-  };
-}
-
-/** One resolved outline beat in the chapter-beat view (#313). */
-export interface LinkedBeat {
-  title: string;
-  content: string;
-}
-
-/**
- * The chapter-beat envelope (#313): the resolved association view — the live
- * outline beat, or null when unlinked or vanished. The view is display-only;
- * `beat_ref` authority is the command's normalized requested value (#466).
- */
-export function parseChapterBeat(value: unknown): { beat: LinkedBeat | null } {
-  const item = objectValue(value, "chapter beat response");
-  const beat = field(item, "beat", "chapter beat response");
-  if (beat === null) return { beat: null };
-  const linked = objectValue(beat, "chapter beat response.beat");
-  return {
-    beat: {
-      title: stringField(linked, "title", "chapter beat response.beat"),
-      content: stringField(linked, "content", "chapter beat response.beat"),
-    },
   };
 }
 
@@ -305,22 +302,6 @@ export function parseRevisions(value: unknown): RevisionPage {
       parseRevisionSummary(entry, `revisions[${index}]`),
     ),
     next_cursor: nullableStringField(item, "next_cursor", "revisions response"),
-  };
-}
-
-export function parseSearch(value: unknown): {
-  results: Array<{ document_id: string; title: string; excerpt: string }>;
-} {
-  const item = objectValue(value, "search response");
-  return {
-    results: arrayField(item, "results", "search response", (entry, index) => {
-      const result = objectValue(entry, `results[${index}]`);
-      return {
-        document_id: stringField(result, "document_id", `results[${index}]`),
-        title: stringField(result, "title", `results[${index}]`),
-        excerpt: stringField(result, "excerpt", `results[${index}]`),
-      };
-    }),
   };
 }
 

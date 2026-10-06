@@ -17,6 +17,27 @@ export const invalidOperationEnvelope = {
   required: ["error"],
 } as const;
 
+/**
+ * DR-022: the selected provider has no usable credential. The envelope names
+ * the missing credential in `message`; no job row and no stream exist.
+ */
+export const providerNotConfiguredEnvelope = {
+  type: "object",
+  additionalProperties: false,
+  properties: {
+    error: {
+      type: "object",
+      additionalProperties: false,
+      properties: {
+        code: { type: "string", enum: [ERROR_CODES.PROVIDER_NOT_CONFIGURED] },
+        message: { type: "string" },
+      },
+      required: ["code", "message"],
+    },
+  },
+  required: ["error"],
+} as const;
+
 export const validationErrorEnvelope = {
   type: "object",
   additionalProperties: false,

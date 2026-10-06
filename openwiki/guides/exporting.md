@@ -12,9 +12,17 @@ project) and choose a format:
 
 | Format | Good for |
 |---|---|
-| **Markdown** (`.md`) | Plain-text archival, version control, static site generators. |
+| **Markdown** (`.md`) | Plain-text reading, version control, static site generators. |
 | **DOCX** (`.docx`) | Word processors, editing with tracked changes, submission manuscripts. |
 | **EPUB** (`.epub`) | E-readers and ebook stores. |
+
+Every format exports the **chapter documents only**: each chapter's title and
+the text of its revision in the snapshot, as far as the chosen format
+supports. Notes, characters, world entries, outlines, and lore entries stay in
+the app database and are not written into any export file, and no export
+reproduces the rest of the project's data. A full-archive export (the
+manuscript plus the other document kinds) is **not implemented**; to keep
+everything, back up the database — see [backup](backup-and-restore.md).
 
 The file downloads through your browser under the project's title, for
 example `My Novel.epub`, straight into your Downloads folder.
@@ -33,7 +41,7 @@ by the same [backup](backup-and-restore.md) routine.
 ## A safe publishing ritual
 
 1. Finish and let the editor show **saved**.
-2. Export Markdown — the lossless, future-proof copy of your words.
+2. Export Markdown — a portable, plain-text copy of the manuscript text.
 3. Store that file with your [backups](backup-and-restore.md), off the
    machine if you can.
 

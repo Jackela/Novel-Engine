@@ -2,6 +2,7 @@ import type { Dispatch, SetStateAction } from "react";
 import { useCallback, useRef, useState } from "react";
 import { translateActive } from "@/app/i18n/translate";
 import { ProposalOutcomeUnknownError, streamProposal } from "@/app/proposalStream";
+import { clearGenerateAttempt, getOrCreateGenerateAttemptKey } from "@/app/retryAttemptRegistry";
 import type { Project, StudioDocument, StudioJob } from "@/app/types/studio";
 import { toErrorMessage } from "./toErrorMessage";
 import type { PendingActionController } from "./usePendingAction";
@@ -22,6 +23,24 @@ interface StreamingProposal {
   readonly auditEpoch: number;
   readonly requestEpoch: number;
   readonly text: string;
+  /** DR-006: a failure after text arrived keeps the preview readable. */
+  readonly interrupted: boolean;
+  /** DR-010: an explicit stop after text arrived keeps the preview readable. */
+  readonly stopped: boolean;
+}
+
+/**
+ * DR-010: keeps the received text of a terminal preview readable. An empty
+ * preview holds nothing to preserve and stays eligible for the caller's
+ * final cleanup; exactly one terminal flag is ever set.
+ */
+function keptTerminalPreview(
+  current: StreamingProposal,
+  terminal: "interrupted" | "stopped",
+): StreamingProposal {
+  return current.text.length > 0
+    ? { ...current, interrupted: terminal === "interrupted", stopped: terminal === "stopped" }
+    : current;
 }
 
 export interface ProposalRequest {
@@ -88,6 +107,14 @@ export function useProposalStreamSession({
     streaming?.ownerKey === ownerKey && streaming.auditEpoch === currentAuditEpoch
       ? streaming.text
       : null;
+  const streamingInterrupted =
+    streaming?.ownerKey === ownerKey &&
+    streaming.auditEpoch === currentAuditEpoch &&
+    streaming.interrupted;
+  const streamingStopped =
+    streaming?.ownerKey === ownerKey &&
+    streaming.auditEpoch === currentAuditEpoch &&
+    streaming.stopped;
   const unknownAttemptOperation =
     unknownAttempt?.projectId === projectId ? unknownAttempt.operation : "continue";
 
@@ -130,6 +157,10 @@ export function useProposalStreamSession({
   const runProposal = useCallback(
     async (operation: "continue" | "rewrite") => {
       if (proposalAudit.isGated() || !activeDocument || !project || !begin("proposal")) return;
+      // DR-027: one key names this logical generation. It is kept while the
+      // outcome is unknown, so a resend replays the durable job instead of
+      // drafting — and billing — a second one.
+      const idempotencyKey = getOrCreateGenerateAttemptKey(projectId, activeDocument.id, operation);
       const auditEpoch = proposalAudit.epoch();
       proposalAudit.clear();
       setUnknownAttempt(null);
@@ -139,7 +170,14 @@ export function useProposalStreamSession({
       const requestEpoch = nextRequestEpoch();
       const request = { ownerKey, requestEpoch, controller };
       streamRequestRef.current = request;
-      setStreaming({ ownerKey, auditEpoch, requestEpoch, text: "" });
+      setStreaming({
+        ownerKey,
+        auditEpoch,
+        requestEpoch,
+        text: "",
+        interrupted: false,
+        stopped: false,
+      });
       try {
         const nextProposal = await streamProposal({
           projectId,
@@ -148,6 +186,7 @@ export function useProposalStreamSession({
           instruction,
           provider: String(project.settings.provider ?? "mock"),
           signal: controller.signal,
+          ...(idempotencyKey === null ? {} : { idempotencyKey }),
           onDelta: (text) => {
             if (
               proposalAudit.epoch() !== auditEpoch ||
@@ -172,21 +211,35 @@ export function useProposalStreamSession({
         ) {
           return;
         }
+        if (idempotencyKey !== null) {
+          clearGenerateAttempt(projectId, activeDocument.id, operation, idempotencyKey);
+        }
         setProposalState({ ownerKey, auditEpoch, job: nextProposal });
       } catch (reason) {
+        // A definitively failed generation is spent: the next click is a new
+        // intent. An unknown outcome keeps the key so a re-issue replays the
+        // possibly-committed job.
+        if (idempotencyKey !== null && !(reason instanceof ProposalOutcomeUnknownError)) {
+          clearGenerateAttempt(projectId, activeDocument.id, operation, idempotencyKey);
+        }
         if (reason instanceof ProposalOutcomeUnknownError && isProjectLive(projectId)) {
           // Ownership stays inside the state update: a stale session must not
           // drop a landed proposal that a newer request already owns.
           setProposalState((current) =>
             current?.ownerKey === ownerKey && current.auditEpoch === auditEpoch ? null : current,
           );
-          setStreaming((current) =>
-            current?.ownerKey === ownerKey &&
-            current.auditEpoch === auditEpoch &&
-            current.requestEpoch === requestEpoch
-              ? null
-              : current,
-          );
+          setStreaming((current) => {
+            if (
+              current?.ownerKey !== ownerKey ||
+              current.auditEpoch !== auditEpoch ||
+              current.requestEpoch !== requestEpoch
+            ) {
+              return current;
+            }
+            // DR-010: an explicit stop keeps the received text; a lost
+            // terminal frame still discards the ambiguous preview.
+            return controller.signal.aborted ? keptTerminalPreview(current, "stopped") : null;
+          });
           setUnknownAttempt({ projectId, operation });
           if (streamRequestRef.current === request) streamRequestRef.current = null;
           finish("proposal");
@@ -195,6 +248,25 @@ export function useProposalStreamSession({
           return;
         } else if (isCurrentRequest(ownerKey, requestEpoch) && !controller.signal.aborted) {
           setError(toErrorMessage(reason, translateActive("errors.createProposal")));
+          // DR-006: keep the accumulated preview instead of discarding it; the
+          // finally below leaves any entry marked interrupted in place.
+          setStreaming((current) =>
+            current?.ownerKey === ownerKey &&
+            current.auditEpoch === auditEpoch &&
+            current.requestEpoch === requestEpoch
+              ? keptTerminalPreview(current, "interrupted")
+              : current,
+          );
+        } else if (isCurrentRequest(ownerKey, requestEpoch)) {
+          // DR-010: the author stopped this stream, so the received text is
+          // kept as a stopped preview rather than published as a failure.
+          setStreaming((current) =>
+            current?.ownerKey === ownerKey &&
+            current.auditEpoch === auditEpoch &&
+            current.requestEpoch === requestEpoch
+              ? keptTerminalPreview(current, "stopped")
+              : current,
+          );
         }
       } finally {
         if (streamRequestRef.current === request) streamRequestRef.current = null;
@@ -202,7 +274,9 @@ export function useProposalStreamSession({
           setStreaming((current) =>
             current?.ownerKey === ownerKey &&
             current.auditEpoch === auditEpoch &&
-            current.requestEpoch === requestEpoch
+            current.requestEpoch === requestEpoch &&
+            !current.interrupted &&
+            !current.stopped
               ? null
               : current,
           );
@@ -239,6 +313,8 @@ export function useProposalStreamSession({
     runProposal,
     stopProposal,
     streamingText,
+    streamingInterrupted,
+    streamingStopped,
     unknownAttemptOperation,
     reconcileOwnerState,
     detachStream,

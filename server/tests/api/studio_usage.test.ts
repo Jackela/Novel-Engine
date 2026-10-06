@@ -102,6 +102,9 @@ describe("project usage surface (#317)", () => {
       expect(body).toEqual({
         project_id: project.id,
         request_count: 0,
+        // DR-028: an empty ledger discloses zero failed attempts and estimates.
+        failed_attempt_count: 0,
+        estimated_requests: 0,
         prompt_tokens: 0,
         completion_tokens: 0,
         per_model: [],

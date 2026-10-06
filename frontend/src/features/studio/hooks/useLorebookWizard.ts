@@ -287,5 +287,3 @@ function nextSegmentId(): string {
   segmentCounter += 1;
   return `lore-segment-${segmentCounter}`;
 }
-
-export type LorebookWizardModel = ReturnType<typeof useLorebookWizard>;

@@ -10,8 +10,11 @@ serves the Studio SPA and the JSON API.
 
 ## For Writers
 
-If you only want to write with Novel Engine — no development involved — start
-with the writer guides: [getting started with Docker](openwiki/guides/getting-started.md)
+Novel Engine runs on your own machine: the manuscript stays in a local SQLite
+database and you choose the model — a hosted API or a local one. It is built
+for self-hosting authors, so running it means installing Docker and setting one
+environment variable, not writing code; there is no hosted or zero-terminal
+edition. [Getting started with Docker](openwiki/guides/getting-started.md)
 covers installation to your first AI-assisted chapter, and
 [provider setup](openwiki/guides/provider-setup.md) connects a real AI
 provider such as DashScope or DeepSeek. The full journey is documented end to
@@ -75,12 +78,13 @@ guide](openwiki/guides/provider-setup.md).
 | `DB_URL` | `sqlite:///./data/novel-engine.sqlite3` | Only SQLite is supported. |
 | `API_HOST` | `0.0.0.0` | Bind address for `serve`. |
 | `API_PORT` | `8000` | Listen port. |
+| `LOG_LEVEL` | `info` | Structured logger level: `fatal`, `error`, `warn`, `info`, `debug`, `trace`, or `silent`. An unknown value refuses startup. |
 | `API_MAX_ACTIVE_WORKFLOWS` | `4` | Global concurrent workflow capacity; integer 1–1024. |
 | `API_MAX_ACTIVE_WORKFLOWS_PER_PROJECT` | `2` | Per-project workflow capacity; must not exceed the global limit. |
-| `SECURITY_SECRET_KEY` | sample value | Required in production; generate a unique value. |
-| `SECURITY_CORS_ORIGINS` | localhost origins | Must be explicit and non-localhost in production. |
+| `SECURITY_SECRET_KEY` | unset (rotated per start outside production) | Required in production; a missing secret, a value shorter than 16 characters, or a `change-me*` placeholder refuses startup there. Generate a unique random value. Outside production and staging a missing secret is generated once into `data/.secret` (mode `0600`) and reused, so local restarts keep sessions instead of logging everyone out; delete that file to rotate it. |
+| `SECURITY_CORS_ORIGINS` | localhost origins | Must be explicit and non-localhost in production; the Compose files intentionally ship no placeholder, so an unset value refuses startup there. |
 | `SECURITY_RATE_LIMIT` | `5/minute` | Auth endpoint rate limit. |
-| `SECURITY_TRUSTED_PROXIES` | empty | Comma-separated trusted proxies (exact IP, CIDR, or host) for forwarded client identity. |
+| `SECURITY_TRUSTED_PROXIES` | empty | Comma-separated trusted proxy addresses (exact IPs, or host strings for local sockets) whose forwarding chain may be trusted for client identity; the client is the rightmost untrusted hop, never the client-controlled leading segment. Network ranges are refused at startup — a range that covers clients would let them forge identities. Set the exact proxy address(es) behind a reverse proxy, or every client shares one rate-limit bucket. |
 | `LLM_PROVIDER` | `mock` | `mock`, `dashscope`, or `openai_compatible`. |
 | `LLM_MODEL` | unset | Generic model override applied to every provider, between the per-provider override and the hard default. Left unset, the mock provider resolves to `deterministic-story-v1`; `.env.example` pins it to `studio-copilot-v1` as an example override. |
 | `DASHSCOPE_API_KEY` | unset | Required when `LLM_PROVIDER=dashscope`. |
@@ -105,17 +109,19 @@ Frontend-only variables live in `frontend/.env.example`:
 
 ## Docker
 
-Docker is the recommended way to run Novel Engine. Once v0.8.0 is published,
-the quickest path needs no clone and no build: a prebuilt image on GHCR is
-started by a single command (see [deploy/README.md](deploy/README.md) for the
-walkthrough, upgrades, and hosting a demo server):
+Docker is the recommended way to run Novel Engine. The `v0.8.0` tag is pushed
+and its prebuilt multi-architecture image is already on GHCR — the GitHub
+Release itself is still a draft — so the quickest path needs no clone and no
+build: a single command starts the image (see
+[deploy/README.md](deploy/README.md) for the walkthrough, upgrades, and the
+reverse-proxy hosting checklist):
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/Jackela/Novel-Engine/v0.8.0/deploy/compose.yaml | docker compose -f - up -d
 ```
 
-Until that image is published — and any time you want to run from source —
-use the clone path below. First get the code: clone this repository, or
+To build from source instead, use the clone path below. First get the code:
+clone this repository, or
 download it via the **Code** → **Download ZIP** button on GitHub and unzip
 it. Then, from the folder containing `compose.yaml` (the first start builds
 the image and can take a few minutes):
@@ -124,13 +130,37 @@ the image and can take a few minutes):
 docker compose up -d
 ```
 
-Open `http://localhost:8000` in Chrome or Firefox and create the Owner
-account on the setup screen, then log in. Safari works but has a known
-rendering limitation in the frosted-glass visual style, so Chrome or Firefox
-is recommended. No secret or other manual configuration is needed: on first
-start the container generates a session secret into the `novel-engine-data`
-volume, and because that volume persists, sessions keep working across
-restarts. A healthcheck polls `/health/ready` inside the container.
+Before the first start, configure the studio's browser origin: the Compose
+files intentionally ship no placeholder, and production refuses the default
+localhost origins, so the container will not start until
+`SECURITY_CORS_ORIGINS` names an origin (`SECURITY_CORS_ORIGINS=… docker
+compose up -d` or a `.env` file next to `compose.yaml` both work; local-only
+installs can follow the [getting started
+guide](openwiki/guides/getting-started.md), which also shows the
+development-mode override for a strictly local setup). Behind a reverse proxy
+also set `SECURITY_TRUSTED_PROXIES` to the proxy's exact address — see the
+[hosting checklist](deploy/README.md#hosting-on-a-server).
+
+On a fresh volume the first start logs a one-time **first-start setup token**.
+Because the published port makes the browser a non-loopback peer, the Owner
+setup request must present that token in the `x-setup-token` header. Read it
+from the container logs and paste it into the setup screen's **First-start
+setup token** field, or complete the setup once through the API (the local
+non-Docker flow above connects over loopback and needs no token):
+
+```bash
+TOKEN=$(docker compose logs novel-engine | sed -n 's/.*"setup_token":"\([^"]*\)".*/\1/p' | tail -1)
+curl -H "content-type: application/json" -H "x-setup-token: $TOKEN" \
+  -d '{"username":"author","password":"choose-a-strong-password"}' \
+  http://localhost:8000/api/setup
+```
+
+Then open `http://localhost:8000` in Chrome or Firefox and log in. Safari works
+but has a known rendering limitation in the frosted-glass visual style, so
+Chrome or Firefox is recommended. The token file is deleted after setup, and
+because the `novel-engine-data` volume persists (the session secret is
+generated into it on first start), sessions keep working across restarts. A
+healthcheck polls `/health/ready` inside the container.
 
 The container runs with `restart: unless-stopped`, so it comes back on its
 own after a crash or a machine reboot (unless you stopped it yourself). To
@@ -158,23 +188,60 @@ built-in `mock` AI provider works out of the box; to generate real AI
 proposals, set `LLM_PROVIDER` and its API key variable — see
 [Configuration](#configuration).
 
+The Compose files harden the container (DR-041): it runs as the unprivileged
+`node` user, the root filesystem is read-only with only the data volume and a
+64 MiB `/tmp` tmpfs writable, all Linux capabilities are dropped with
+`no-new-privileges`, and CPU (2.0), memory (1g), and PID counts (512) are
+bounded. The writable data volume keeps working unchanged.
+
+For monitoring, the server exposes an internal Prometheus endpoint:
+
+```bash
+docker compose exec novel-engine node -e \
+  "fetch('http://127.0.0.1:8000/metrics').then(async r => console.log(await r.text()))"
+```
+
+`GET /metrics` answers the process gauges (uptime, resident memory, heap),
+job counts by status, usage request/token totals, and a product identity
+gauge. It is available to the loopback peer or to an authenticated owner
+session and answers 401 otherwise — a scrape surface, not a public endpoint.
+Set `LOG_LEVEL` (`fatal`…`silent`, default `info`) to change the structured
+logger's verbosity.
+
 ## Commands
 
 The operational CLI builds and runs through pnpm:
 
 ```bash
 pnpm --dir server cli serve
-pnpm --dir server cli doctor
+pnpm --dir server cli import --source <legacy-workspace> --owner <username>
 pnpm --dir server cli backup
 pnpm --dir server cli restore --input <backup-file>
+pnpm --dir server cli reindex
+pnpm --dir server cli doctor
+pnpm --dir server cli migrate
+pnpm --dir server cli owner reset
 ```
 
 `backup` writes a consistent online backup beneath `data/backups/` and prints
-its path. `restore --input <backup-file>` verifies a backup file, backs up
-the current database, then replaces it atomically. Both commands take
-exclusive ownership of the data directory: stop the running server first.
-Backups are never removed automatically. For the Docker equivalents, see the
+its path; after each verified write only the newest three backups in the
+`novel-engine-*.sqlite3.bak` family are kept. `restore --input <backup-file>`
+verifies a backup file, backs up the current database, then replaces it
+atomically. Both commands take exclusive ownership of the data directory:
+stop the running server first. `reindex` rebuilds the full-text search index
+from every document's current revision. `doctor` prints a read-only health
+report (identity, integrity check, journal mode, foreign keys, owner,
+document-index reconciliation, migration progress) and never migrates, backs
+up, or takes the write lock, so it is safe to run while the server is up;
+`migrate` is the write path that applies pending migrations, writing the
+safety backup first. For the Docker equivalents, see the
 [backup and restore guide](openwiki/guides/backup-and-restore.md).
+
+`owner reset` deletes the local Owner and its sessions so a fresh setup can
+create a new Owner. It is the recovery path when the Owner password is lost —
+there is no email recovery by design. Like `backup` and `restore`, it takes
+exclusive ownership of the data directory, so stop the running server first;
+book content is never touched.
 
 Legacy import expects a directory containing `story.yaml` and optional chapter
 files under `manuscript/chapters/chapter-*.md`:
@@ -188,8 +255,14 @@ legacy-workspace/
 ```
 
 Run `pnpm --dir server cli import --source path/to/legacy-workspace --owner <username>`
-after the Owner account has been created. The import is read-only against the
-source and idempotent per principal.
+after the Owner account has been created. Legacy import is a CLI-only path: the
+Studio ships no import wizard, and the HTTP surface exposes only a read-only
+preview (`POST /api/imports/preview`, confined to `data/imports`). The import
+is read-only against the source. Each chapter keeps the title inferred from its
+first heading (falling back to its filename), and the workspace identity covers
+relative paths plus content — so re-importing unchanged content, wherever the
+directory moved to, returns the existing project (`created: false`) instead of
+duplicating it, while a changed chapter imports as a new project.
 
 ## Validation
 

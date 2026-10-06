@@ -98,30 +98,57 @@ describe("streamProviderTextDeltas internal timeouts (#342)", () => {
     await settled;
   });
 
-  it("does not reset the absolute deadline while a stream keeps dripping frames", async () => {
+  it("keeps a healthy stream alive past the absolute budget by re-arming per frame (DR-026 gap A)", async () => {
     vi.useFakeTimers();
     const encoder = new TextEncoder();
+    const frame = (content: string) => encoder.encode(`data: ${JSON.stringify({ content })}\n\n`);
+    let cancelled = false;
     const body = new ReadableStream<Uint8Array>({
       start(controller) {
-        controller.enqueue(encoder.encode(`data: ${JSON.stringify({ content: "zero " })}\n\n`));
-        setTimeout(
-          () =>
-            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ content: "four " })}\n\n`)),
-          4_000,
-        );
-        setTimeout(
-          () =>
-            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ content: "eight" })}\n\n`)),
-          8_000,
-        );
+        const emit = (content: string): void => {
+          if (cancelled) return;
+          controller.enqueue(frame(content));
+        };
+        emit("zero ");
+        setTimeout(() => emit("four "), 4_000);
+        setTimeout(() => emit("eight "), 8_000);
+        setTimeout(() => {
+          emit("twelve");
+          if (cancelled) return;
+          controller.enqueue(encoder.encode("data: [DONE]\n\n"));
+          controller.close();
+        }, 12_000);
+      },
+      cancel() {
+        cancelled = true;
       },
     });
     const request = streamRequest({
       timeoutSeconds: 10,
-      firstByteTimeoutMs: 2_000,
+      firstByteTimeoutMs: 9_000,
       idleTimeoutMs: 5_000,
     });
-    const pending = consume(sseTransport(body), request);
+    const settled = expect(consume(sseTransport(body), request)).resolves.toEqual({
+      deltas: ["zero ", "four ", "eight ", "twelve"],
+      outcome: true,
+    });
+
+    await vi.advanceTimersByTimeAsync(12_000);
+
+    // Frames arrive every 4s — inside the 5s idle budget — so the healthy
+    // stream outlives the 10s wall-clock budget and completes.
+    await settled;
+  });
+
+  it("still aborts a stream that stays silent past the re-armed absolute budget", async () => {
+    vi.useFakeTimers();
+    const request = streamRequest({
+      timeoutSeconds: 10,
+      firstByteTimeoutMs: 20_000,
+      idleTimeoutMs: 20_000,
+    });
+    const transport = sseTransport(stallingStream([JSON.stringify({ content: "only" })]));
+    const pending = consume(transport, request);
     const settled = expect(pending).rejects.toThrow(/timed out after 10s/);
 
     await vi.advanceTimersByTimeAsync(9_999);

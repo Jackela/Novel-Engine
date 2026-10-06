@@ -90,7 +90,7 @@ describe("useDocumentDraft lifecycle", () => {
     expect(api.revisions).toHaveBeenCalledTimes(revisionRequestsBeforeUnmount);
   });
 
-  it("discards switched drafts and autosaves a new edit once under StrictMode", async () => {
+  it("rescues a switched draft and autosaves a new edit once under StrictMode", async () => {
     const committedA = {
       ...documentA,
       current_revision_id: "revision-a-2",
@@ -132,16 +132,23 @@ describe("useDocumentDraft lifecycle", () => {
     );
 
     expect(current?.draft).toBe(documentA.content_markdown);
+    expect(api.saveDocument).toHaveBeenCalledTimes(1);
+    expect(api.saveDocument).toHaveBeenCalledWith(project.id, documentA.id, {
+      content_markdown: committedA.content_markdown,
+      base_revision_id: documentA.current_revision_id,
+      title: documentA.title,
+      autosave: true,
+    });
     await act(async () => {
       await vi.advanceTimersByTimeAsync(1500);
     });
-    expect(api.saveDocument).not.toHaveBeenCalled();
+    expect(api.saveDocument).toHaveBeenCalledTimes(1);
     act(() => current?.setDraft(committedA.content_markdown));
     await act(async () => {
       await vi.advanceTimersByTimeAsync(1500);
     });
 
-    expect(api.saveDocument).toHaveBeenCalledOnce();
+    expect(api.saveDocument).toHaveBeenCalledTimes(2);
     expect(current?.loadedRevision.current).toBe(committedA.current_revision_id);
     expect(current?.saveState).toBe("saved");
   });

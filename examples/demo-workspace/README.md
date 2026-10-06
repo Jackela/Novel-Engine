@@ -22,7 +22,12 @@ become documents named `Chapter 1`..`Chapter 4` inside a default volume.
 From the repository root, with the published image or a local build:
 
 ```sh
-# 1. Start the stack (port 8000, mock AI provider by default — no API keys).
+# 1. Configure the studio's browser origin first, then start the stack
+#    (port 8000, mock AI provider by default — no API keys). The Compose files
+#    ship no placeholder origin and production refuses the localhost defaults,
+#    so an unconfigured first start fails fast — see the getting-started guide
+#    (openwiki/guides/getting-started.md) for the local `.env` +
+#    compose.override.yaml pair.
 docker compose up -d
 docker compose ps   # wait until novel-engine is healthy
 

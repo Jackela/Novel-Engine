@@ -12,6 +12,7 @@ import type {
   StudioJob,
   StudioJobSummary,
 } from "@/app/types/studio";
+import type { RevisionPreviewScope } from "./hooks/useRevisionPreview";
 import type { JobsLoadInitiator, ProposalAuditStatus } from "./hooks/useStudioJobs";
 
 export interface SettingsFormState {
@@ -45,16 +46,31 @@ interface InspectorCopilotModel {
   proposal: StudioJob | null;
   /** #308: markdown received so far while the proposal stream is running. */
   streamingText: string | null;
+  /** DR-006: the stream failed mid-flight; `streamingText` is the preserved partial text. */
+  streamingInterrupted: boolean;
+  /** DR-010: the author stopped the stream; `streamingText` is the kept partial text. */
+  streamingStopped: boolean;
   onRunProposal: (operation: "continue" | "rewrite") => void | Promise<void>;
   onAcceptProposal: () => void | Promise<void>;
   /** #308: aborts the running proposal stream. */
   onStopProposal?: () => void;
+  /** DR-010: the one-shot undo for the most recent committed acceptance, when offered. */
+  acceptanceUndo?: InspectorAcceptanceUndo | null;
   proposalOutcomeUnknown?: boolean;
   proposalAuditStatus?: ProposalAuditStatus;
   unknownAttemptOperation?: "continue" | "rewrite";
   onRetryProposalAudit?: () => void | Promise<void>;
   setInstruction: Dispatch<SetStateAction<string>>;
   setProposal: Dispatch<SetStateAction<StudioJob | null>>;
+}
+
+/**
+ * DR-010: one explicit undo for the most recent accepted proposal. The
+ * command routes through the shared revision restore and is consumed on
+ * invocation, so a second activation can never restore twice.
+ */
+export interface InspectorAcceptanceUndo {
+  readonly onUndo: () => void | Promise<void>;
 }
 
 interface InspectorExportModel {
@@ -86,7 +102,12 @@ export interface InspectorReviewHistoryPaging {
 }
 
 export interface InspectorReviewModel {
-  latestReview: Review | null;
+  /** DR-042: the review whose detail is open — the selected row, or the newest. */
+  selectedReview: Review | null;
+  /** The summary identity `selectedReview` represents; null without summaries. */
+  selectedReviewId: string | null;
+  /** Opens one history row's detail; null returns to the newest review. */
+  onSelectReview: (reviewId: string | null) => void;
   detailLoading?: boolean;
   detailError?: string | null;
   onRetryDetail?: () => void | Promise<void>;
@@ -110,6 +131,8 @@ interface InspectorHistoryModel {
   isLoadingHistory: boolean;
   onLoadOlderRevisions: () => void | Promise<void>;
   onRestoreRevision: (revisionId: string) => void | Promise<void>;
+  /** DR-011: lazy preview/diff scope for the loaded document; null without one. */
+  preview: RevisionPreviewScope | null;
 }
 
 interface InspectorJobsModel {
@@ -118,6 +141,8 @@ interface InspectorJobsModel {
   onLoadJobs: () => void | Promise<void>;
   onLoadOlderJobs: () => void | Promise<void>;
   onRetryJob: (jobId: string) => void | Promise<void>;
+  /** DR-010: scope for the lazily read proposal text behind a completed job row. */
+  projectId: string;
 }
 
 interface InspectorUsageModel {
@@ -172,6 +197,8 @@ export interface InspectorLoreStatusModel {
 
 /** #466: chapter-scoped beat association for the active chapter. */
 export interface InspectorBeatModel {
+  /** DR-043: project scope for the outline beat catalog read. */
+  readonly projectId: string;
   /** React identity for the active chapter. */
   readonly documentId: string;
   /**

@@ -35,9 +35,33 @@ Choose either option:
   green **Code** button, then **Download ZIP**, and unzip it. Open a terminal
   in the unzipped folder — the folder that contains `compose.yaml`.
 
-## Step 2: Start the studio
+## Step 2: Configure and start the studio
 
-From the folder containing `compose.yaml`, run:
+The container starts in production mode, and production refuses to come up
+until the studio's browser origin is configured (there is deliberately no
+placeholder origin). In the folder containing `compose.yaml`, create a file
+named `.env` naming the address you will open the studio at, plus a
+`compose.override.yaml` that switches a strictly local install to
+development mode — production refuses `localhost` origins:
+
+```ini
+# .env
+SECURITY_CORS_ORIGINS=http://localhost:8000
+```
+
+```yaml
+# compose.override.yaml
+services:
+  novel-engine:
+    environment:
+      APP_ENVIRONMENT: development
+```
+
+For a host reachable from other machines, keep production mode and name the
+exact public origin instead, along with the reverse proxy's address — see the
+[deployment checklist](../../deploy/README.md#hosting-on-a-server).
+
+Then run, from the folder containing `compose.yaml`:
 
 ```bash
 docker compose up -d

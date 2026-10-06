@@ -66,6 +66,8 @@ export function useStudioProposal(
     runProposal,
     stopProposal,
     streamingText,
+    streamingInterrupted,
+    streamingStopped,
     unknownAttemptOperation,
     reconcileOwnerState,
     detachStream,
@@ -84,7 +86,13 @@ export function useStudioProposal(
     isProjectLive,
   });
 
-  const { acceptProposal, detachAccept } = useProposalAcceptance({
+  const {
+    acceptProposal,
+    detachAccept,
+    undoAcceptance,
+    consumeAcceptanceUndo,
+    clearAcceptanceUndo,
+  } = useProposalAcceptance({
     projectId,
     activeDocument,
     ownerKey,
@@ -115,11 +123,14 @@ export function useStudioProposal(
 
   useEffect(() => {
     projectIdRef.current = projectId;
+    // DR-010: the one-shot acceptance undo survives document switches (the
+    // derivation hides it for other documents); only a project change drops it.
+    clearAcceptanceUndo();
     return () => {
       if (projectIdRef.current === projectId) projectIdRef.current = null;
       detachAccept(projectId);
     };
-  }, [detachAccept, projectId]);
+  }, [clearAcceptanceUndo, detachAccept, projectId]);
 
   const proposalOutcomeUnknown = proposalAudit.status !== "idle";
   const proposalActionsGated = proposalAudit.isGated();
@@ -137,6 +148,8 @@ export function useStudioProposal(
     runProposal,
     stopProposal,
     streamingText,
+    streamingInterrupted,
+    streamingStopped,
     acceptProposal,
     pending,
     isRunningProposal: pending.proposal,
@@ -146,5 +159,7 @@ export function useStudioProposal(
     proposalActionsGated,
     unknownAttemptOperation,
     retryProposalAudit,
+    undoAcceptance,
+    consumeAcceptanceUndo,
   };
 }

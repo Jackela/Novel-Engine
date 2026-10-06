@@ -3,7 +3,10 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
-import { revisionPageLimit } from "../../src/contexts/studio/application/ports/document_store.js";
+import {
+  matchPageLimit,
+  revisionPageLimit,
+} from "../../src/contexts/studio/application/ports/document_store.js";
 import { scopeForPrincipal } from "../../src/contexts/studio/application/ports/studio_store.js";
 import { DocumentStorePart } from "../../src/contexts/studio/infrastructure/document_store_part.js";
 import { JobStorePart } from "../../src/contexts/studio/infrastructure/job_store_part.js";
@@ -115,10 +118,16 @@ describe("proposal acceptance transaction", () => {
         harness.store.projects.findProject(harness.scope, harness.project.id).updatedAt,
       ).toEqual(beforeProject.updatedAt);
       expect(
-        harness.store.documents.matchProjectDocuments(harness.scope, harness.project.id, '"new"'),
+        harness.store.documents.matchProjectDocuments(harness.scope, harness.project.id, '"new"', {
+          limit: matchPageLimit(30),
+          offset: 0,
+        }).matches,
       ).toEqual([]);
       expect(
-        harness.store.documents.matchProjectDocuments(harness.scope, harness.project.id, '"old"'),
+        harness.store.documents.matchProjectDocuments(harness.scope, harness.project.id, '"old"', {
+          limit: matchPageLimit(30),
+          offset: 0,
+        }).matches,
       ).toHaveLength(1);
       expect(
         JSON.parse(

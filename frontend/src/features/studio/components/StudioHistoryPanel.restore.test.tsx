@@ -1,3 +1,4 @@
+import { getByRole } from "@testing-library/dom";
 import { act } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -66,6 +67,29 @@ describe("StudioHistoryPanel restore actions", () => {
     );
   });
 
+  it("asks for confirmation before restoring and explains the current content stays in history", async () => {
+    const onRestore = vi.fn().mockResolvedValue(undefined);
+    const { container } = harness.mount(
+      <StudioHistoryPanel
+        revisions={revisions}
+        loadedRevisionId="revision-current"
+        onRestoreRevision={onRestore}
+      />,
+    );
+    const trigger = container.querySelector<HTMLButtonElement>(".ui-command--icon");
+    if (trigger === null) throw new Error("Expected a restore command.");
+
+    act(() => trigger.click());
+    expect(onRestore).not.toHaveBeenCalled();
+    expect(container).toHaveTextContent("The current content stays in history.");
+
+    act(() => getByRole(container, "button", { name: "Confirm restore" }).click());
+    expect(onRestore).toHaveBeenCalledWith("revision-old");
+    await act(async () => {
+      await Promise.resolve();
+    });
+  });
+
   it("does not steal focus after restore when the author moved elsewhere", async () => {
     const command = deferred<void>();
     const onRestore = vi.fn(() => command.promise);
@@ -90,6 +114,8 @@ describe("StudioHistoryPanel restore actions", () => {
 
     trigger.focus();
     act(() => trigger.click());
+    act(() => getByRole(container, "button", { name: "Confirm restore" }).click());
+    expect(onRestore).toHaveBeenCalledWith("revision-old");
     restoringRevisionId = "revision-old";
     act(() => root.render(content()));
     fallback.focus();
@@ -123,8 +149,9 @@ describe("StudioHistoryPanel restore actions", () => {
     if (trigger === null) throw new Error("Expected a restore command.");
 
     trigger.focus();
+    act(() => trigger.click());
     act(() => {
-      trigger.click();
+      getByRole(container, "button", { name: "Confirm restore" }).click();
       restoringRevisionId = "revision-old";
       root.render(content());
     });
@@ -160,8 +187,9 @@ describe("StudioHistoryPanel restore actions", () => {
     if (trigger === null || heading === null) throw new Error("Expected History focus targets.");
 
     trigger.focus();
+    act(() => trigger.click());
     act(() => {
-      trigger.click();
+      getByRole(container, "button", { name: "Confirm restore" }).click();
       restoringRevisionId = onlyRevision.id;
       root.render(content());
     });

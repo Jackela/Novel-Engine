@@ -10,6 +10,8 @@ import {
 } from "./proposalStream";
 
 afterEach(() => {
+  vi.useRealTimers();
+  vi.restoreAllMocks();
   vi.unstubAllGlobals();
 });
 
@@ -91,10 +93,10 @@ describe("ProposalStreamParser", () => {
   });
 
   it.each([": ping\n\n", "event: proposal\n\n"])(
-    "rejects a complete SSE event without a data field",
+    "ignores a complete SSE event without a data field",
     (event) => {
       const parser = new ProposalStreamParser();
-      expect(() => parser.append(event)).toThrow(/missing data/);
+      expect(parser.append(event)).toEqual([]);
     },
   );
 
@@ -289,15 +291,24 @@ describe("streamProposal", () => {
 
   it("forwards the caller signal to fetch", async () => {
     const controller = new AbortController();
+    const body = new ReadableStream<Uint8Array>({ start() {} });
     const fetchMock = vi.fn((_path: string, _init: RequestInit) =>
-      Promise.resolve(sseResponse([])),
+      Promise.resolve(
+        new Response(body, { status: 200, headers: { "Content-Type": "text/event-stream" } }),
+      ),
     );
     vi.stubGlobal("fetch", fetchMock);
     const failure = streamProposal({
       ...baseRequest(),
       signal: controller.signal,
+      stallTimeoutMs: 0,
     }).catch((reason: unknown) => reason);
+    await Promise.resolve();
+    const streamSignal = fetchMock.mock.calls[0]?.[1]?.signal;
+
+    expect(streamSignal?.aborted).toBe(false);
+    controller.abort();
     await expect(failure).resolves.toBeInstanceOf(ProposalOutcomeUnknownError);
-    expect(fetchMock.mock.calls[0]?.[1]?.signal).toBe(controller.signal);
+    expect(streamSignal?.aborted).toBe(true);
   });
 });

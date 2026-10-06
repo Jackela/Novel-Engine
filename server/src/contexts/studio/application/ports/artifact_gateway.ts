@@ -21,6 +21,12 @@ export interface ArtifactWriteRequest {
   readonly format: ExportArtifactFormat;
   readonly projectTitle: string;
   readonly chapters: readonly ArtifactChapter[];
+  /**
+   * Snapshot capture time of this export attempt. Formats that must carry a
+   * modification timestamp (EPUB 3 `dcterms:modified`) stamp it here; a missing
+   * value falls back to the render time so older callers stay valid.
+   */
+  readonly capturedAt?: Date | undefined;
 }
 
 /** Integrity evidence returned only after the final file has been written. */

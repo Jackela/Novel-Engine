@@ -1,8 +1,9 @@
 import type { Dispatch, SetStateAction } from "react";
-import { useCallback, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 
 import type { Project, StudioDocument } from "@/app/types/studio";
 
+import { useConflictServerPreview } from "./useConflictServerPreview";
 import { useDocumentDraftActions } from "./useDocumentDraftActions";
 import { useDocumentDraftAutosave } from "./useDocumentDraftAutosave";
 import { useDocumentDraftCommit } from "./useDocumentDraftCommit";
@@ -116,7 +117,7 @@ export function useDocumentDraft(
     setRestoreError,
   });
 
-  useDocumentDraftAutosave({
+  const { retrySave, saveNow } = useDocumentDraftAutosave({
     ownerKey: owner.key,
     ownerToken: owner.token,
     isCurrentOwner: isCurrentDraftOwner,
@@ -138,6 +139,31 @@ export function useDocumentDraft(
     setError,
   });
 
+  // DR-012: the conflict panel's read-only server-version view. It reads
+  // through the DR-011 endpoint and never touches the draft or the project.
+  const serverVersionPreview = useConflictServerPreview({
+    activeDocument,
+    projectId,
+    owner,
+    isCurrentOwner,
+    conflictVisible: saveState === "conflict",
+  });
+
+  // Browser-close guard for the debounce window and any failed or in-flight
+  // save: only unpersisted text raises it, so a settled Document never nags.
+  const hasUnpersistedEdits =
+    activeDocument !== null &&
+    (draft !== activeDocument.content_markdown || titleDraft !== activeDocument.title);
+  useEffect(() => {
+    if (!hasUnpersistedEdits) return;
+    const warnBeforeUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    window.addEventListener("beforeunload", warnBeforeUnload);
+    return () => window.removeEventListener("beforeunload", warnBeforeUnload);
+  }, [hasUnpersistedEdits]);
+
   return {
     draft,
     setDraft,
@@ -156,5 +182,8 @@ export function useDocumentDraft(
     isConflictActionPending,
     loadLatest,
     retryOverwrite,
+    retrySave,
+    saveNow,
+    serverVersionPreview,
   };
 }

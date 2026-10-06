@@ -195,6 +195,11 @@ describe("SnapshotArtifactService", () => {
       ),
     ).toBe(true);
     expect(records.every((record) => record.snapshotId === "snapshot-1")).toBe(true);
+    expect(
+      gateway.writes.every(
+        (write) => write.capturedAt?.toISOString() === "2026-08-25T00:00:00.000Z",
+      ),
+    ).toBe(true);
     await expect(
       service.withArtifactDelivery(principal, "project-1", "artifact-1", async ({ bytes }) =>
         Promise.resolve(bytes),

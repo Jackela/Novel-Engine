@@ -73,11 +73,12 @@ docker compose cp novel-engine:/app/data/backups/. ./novel-engine-backups/
 machine when you can: an external drive or any private cloud folder. A backup
 that only lives next to the original is not a backup.
 
-The studio also protects you implicitly: **every start** writes one
-timestamped safety backup before touching the database (that is how
-migrations and upgrades stay reversible — see [upgrading](upgrading.md)).
-Old backups are never removed automatically; prune the `backups/` directory
-yourself once in a while.
+The studio also protects you implicitly: an upgrade **with migrations to
+apply** writes one timestamped safety backup before the schema changes (that
+is how migrations and upgrades stay reversible — see
+[upgrading](upgrading.md)). Each verified write keeps the newest three
+backups in the studio's `novel-engine-*.sqlite3.bak` family and prunes older
+ones; copies you move elsewhere yourself are never touched.
 
 ## Restoring
 

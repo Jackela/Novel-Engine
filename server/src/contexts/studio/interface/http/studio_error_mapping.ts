@@ -7,6 +7,7 @@ import {
   INVALID_OPERATION_CODE,
   INVALID_OPERATION_STATUS_CODE,
 } from "../../../../shared/interface/http/error_envelope.js";
+import { ProviderNotConfiguredError } from "../../../ai/application/ports/text_generation.js";
 import {
   DuplicateDocumentError,
   DuplicateVolumeError,
@@ -180,6 +181,15 @@ const ERROR_ENVELOPE_MAPPINGS: readonly ErrorEnvelopeMapping[] = [
   ),
   errorMapping(GenerationCapacityExceededError, (error) =>
     capacityEnvelope(ERROR_CODES.GENERATION_CAPACITY_EXCEEDED, GENERATION_CAPACITY_MESSAGE, error),
+  ),
+  errorMapping(
+    ProviderNotConfiguredError,
+    (error) =>
+      new AppError({
+        statusCode: ERROR_HTTP_STATUS[ERROR_CODES.PROVIDER_NOT_CONFIGURED],
+        code: ERROR_CODES.PROVIDER_NOT_CONFIGURED,
+        message: error.message,
+      }),
   ),
   errorMapping(
     InvalidOperationError,

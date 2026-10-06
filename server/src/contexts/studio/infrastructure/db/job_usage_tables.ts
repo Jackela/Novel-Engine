@@ -1,13 +1,5 @@
 import { isNotNull, sql } from "drizzle-orm";
-import {
-  check,
-  index,
-  integer,
-  real,
-  sqliteTable,
-  text,
-  uniqueIndex,
-} from "drizzle-orm/sqlite-core";
+import { check, index, integer, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 
 /**
  * Durable audit rows for the synchronous jobs model: jobs run inside the
@@ -34,6 +26,7 @@ export const jobs = sqliteTable(
     error: text("error"),
     retry_of_job_id: text("retry_of_job_id"),
     retry_idempotency_key: text("retry_idempotency_key"),
+    request_idempotency_key: text("request_idempotency_key"),
     created_at: integer("created_at", { mode: "timestamp_ms" }).notNull(),
     updated_at: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
     started_at: integer("started_at", { mode: "timestamp_ms" }),
@@ -45,6 +38,9 @@ export const jobs = sqliteTable(
     uniqueIndex("uq_jobs_retry_idempotency")
       .on(table.project_id, table.retry_of_job_id, table.retry_idempotency_key)
       .where(isNotNull(table.retry_idempotency_key)),
+    uniqueIndex("uq_jobs_request_idempotency")
+      .on(table.project_id, table.request_idempotency_key)
+      .where(isNotNull(table.request_idempotency_key)),
   ],
 );
 
@@ -64,8 +60,14 @@ export const jobEvents = sqliteTable(
 );
 
 /**
- * Usage accounting for AI requests (#268): one row per completed generation,
- * with provider-reported token counts or the shared word-count fallback.
+ * Usage accounting for AI requests (#268, DR-028): one row per provider
+ * attempt that reached the provider — completed or failed — with no silent
+ * numbers. `token_source` labels how the counts were obtained (`provider`
+ * reported them, `estimated` is the shared word-count fallback for a
+ * provider that reported none, `unreported` is a failed attempt with zero
+ * tokens) and `outcome` separates token-bearing attempts from failures, so
+ * the aggregate can fold token totals from `completed` rows only. The dead
+ * `estimated_cost` column (never written, never read) was dropped by DR-028.
  */
 export const usageEvents = sqliteTable(
   "usage_events",
@@ -77,12 +79,18 @@ export const usageEvents = sqliteTable(
     model: text("model").notNull(),
     prompt_tokens: integer("prompt_tokens").notNull().default(0),
     completion_tokens: integer("completion_tokens").notNull().default(0),
+    outcome: text("outcome").notNull().default("completed"),
+    token_source: text("token_source").notNull().default("provider"),
     request_evidence_json: text("request_evidence_json").notNull().default("{}"),
-    estimated_cost: real("estimated_cost"),
     created_at: integer("created_at", { mode: "timestamp_ms" }).notNull(),
   },
   (table) => [
     index("idx_usage_events_project_id").on(table.project_id),
+    check("ck_usage_events_outcome", sql`${table.outcome} IN ('completed', 'failed')`),
+    check(
+      "ck_usage_events_token_source",
+      sql`${table.token_source} IN ('provider', 'estimated', 'unreported')`,
+    ),
     check(
       "ck_usage_events_prompt_tokens_safe",
       sql`typeof(${table.prompt_tokens}) = 'integer' AND ${table.prompt_tokens} BETWEEN 0 AND 9007199254740991`,

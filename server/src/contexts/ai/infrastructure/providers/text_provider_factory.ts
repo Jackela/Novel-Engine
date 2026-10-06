@@ -35,11 +35,20 @@ interface TextProviderFactoryOptions extends TextProviderFactoryConfiguration {
   readonly apiKeys: ProviderCredentials;
 }
 
-/** The message family for an HTTP provider selected without credentials. */
+/**
+ * The message family for an HTTP provider selected without credentials
+ * (DR-022): it names the missing environment variable and points at the
+ * provider setup guide, so every surface that shows the raw provider error
+ * (jobs, technical details) names the actual gap instead of a capability
+ * message.
+ */
 function missingCredentialMessage(provider: TextProviderName): string {
-  return provider === "dashscope"
-    ? "DASHSCOPE_API_KEY is required when provider is dashscope"
-    : "LLM_API_KEY is required when provider is openai_compatible";
+  const variable = provider === "dashscope" ? "DASHSCOPE_API_KEY" : "LLM_API_KEY";
+  return [
+    `${provider} is not configured: ${variable} is required when provider is ${provider}.`,
+    "Add the key to the server environment (see openwiki/guides/provider-setup.md)",
+    "or select the built-in trial provider (mock).",
+  ].join(" ");
 }
 
 function nonBlankCredential(value: string | undefined): string | undefined {

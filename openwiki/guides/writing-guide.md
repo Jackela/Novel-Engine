@@ -46,8 +46,11 @@ Create material with the **Add** button beside each group in the navigation:
 
 Chapters and outline documents can be reordered with the **Move** buttons on
 each row. Chapters can also be filed into volumes with the **Move to
-volume…** selector on the row; the navigation groups chapters under one
-heading per volume in reading order (two levels only: project, then volume).
+volume…** selector on the row; volumes start with **Add volume** above the
+chapter list, and each volume header offers rename, move up/down, and delete
+(deleting a volume moves its chapters to the adjacent volume). The
+navigation groups chapters under one heading per volume in reading order (two
+levels only: project, then volume).
 
 Each chapter can be linked to one outline beat: open the chapter and use the
 beat control in the Copilot tab to type the outline document's title, or
@@ -75,12 +78,16 @@ below for how to control what it knows.
 ## The whole-book generator
 
 Below the chapter list sits the whole-book control. Pressing **Generate whole
-book** drafts and auto-accepts every chapter that does not yet have an
-accepted AI revision, strictly in reading order — each chapter is written
-knowing the ones before it, so the book builds coherently. Progress shows
-"Generating chapter 3 of 12…", and **Stop generating** halts after the
-chapter in flight; chapters already accepted are preserved. Start it again
-later and it resumes at the first chapter still missing an accepted revision.
+book** drafts and auto-accepts the empty chapters strictly in reading order —
+each chapter is written knowing the ones before it, so the book builds
+coherently. A chapter that already holds text you did not accept from AI
+(hand-written, imported, or restored) is replaced only after an explicit
+confirmation: the control lists those chapters first and offers **Generate
+the N empty chapters only** or **Replace the M chapters with AI drafts**.
+Progress shows "Generating chapter 3 of 12…", and **Stop generating** halts
+after the chapter in flight; chapters already accepted are preserved. Start
+it again later and the plan is recomputed: empty chapters proceed, and
+chapters that still hold unconfirmed text ask for confirmation again.
 
 Whole-book runs consume provider tokens chapter by chapter; watch the
 **Usage** tab if you are on a metered plan.
@@ -156,10 +163,11 @@ provider as generation (DashScope can use a dedicated review model, see
 
 The **History** tab lists the revision chain of the open document. Saves,
 accepted proposals, and restores all create revisions — nothing is ever
-overwritten. **Restore** brings an old revision back as a *new* revision, so
-restoring is itself undoable. Treat it as a safety net for aggressive
-rewrites: accept the Copilot's bold version, then diff against history if it
-went too far.
+overwritten. Click a revision to preview its text and to see a line-by-line
+diff against the current version; **Restore** asks you to confirm first and
+brings the old revision back as a *new* revision, so restoring is itself
+undoable. Treat it as a safety net for aggressive rewrites: accept the
+Copilot's bold version, then diff against history if it went too far.
 
 ## Jobs, usage, and search
 
@@ -194,6 +202,7 @@ lives in the **Usage** tab.
 ## When the editor disagrees with the server
 
 If you edit on two tabs or a save collides, the studio never silently drops
-text: it offers **Load latest** (take the server's version, discard local) or
-**Keep local and retry** (re-submit your text on top of the latest revision).
-Your words are the thing the studio is least willing to lose.
+text: it offers **View server version (read-only)**, **Load latest (discard
+local)**, or **Keep local and retry overwrite** (re-submit your text on top
+of the latest revision). Your words are the thing the studio is least willing
+to lose.

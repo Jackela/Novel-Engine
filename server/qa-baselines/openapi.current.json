@@ -2606,6 +2606,10 @@
               "schema": {
                 "additionalProperties": false,
                 "properties": {
+                  "autosave": {
+                    "default": false,
+                    "type": "boolean"
+                  },
                   "base_revision_id": {
                     "nullable": true,
                     "type": "string"
@@ -3006,6 +3010,17 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "in": "header",
+            "name": "idempotency-key",
+            "required": false,
+            "schema": {
+              "maxLength": 128,
+              "minLength": 16,
+              "pattern": "^[A-Za-z0-9._~-]+$",
+              "type": "string"
+            }
           }
         ],
         "requestBody": {
@@ -3254,6 +3269,34 @@
                             "code": {
                               "enum": [
                                 "INVALID_OPERATION"
+                              ],
+                              "type": "string"
+                            },
+                            "message": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "code",
+                            "message"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "error"
+                      ],
+                      "type": "object"
+                    },
+                    {
+                      "additionalProperties": false,
+                      "properties": {
+                        "error": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "code": {
+                              "enum": [
+                                "PROVIDER_NOT_CONFIGURED"
                               ],
                               "type": "string"
                             },
@@ -3577,6 +3620,17 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "in": "header",
+            "name": "idempotency-key",
+            "required": false,
+            "schema": {
+              "maxLength": 128,
+              "minLength": 16,
+              "pattern": "^[A-Za-z0-9._~-]+$",
+              "type": "string"
+            }
           }
         ],
         "requestBody": {
@@ -3729,6 +3783,34 @@
                             "code": {
                               "enum": [
                                 "INVALID_OPERATION"
+                              ],
+                              "type": "string"
+                            },
+                            "message": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "code",
+                            "message"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "error"
+                      ],
+                      "type": "object"
+                    },
+                    {
+                      "additionalProperties": false,
+                      "properties": {
+                        "error": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "code": {
+                              "enum": [
+                                "PROVIDER_NOT_CONFIGURED"
                               ],
                               "type": "string"
                             },
@@ -4271,10 +4353,49 @@
                         "content"
                       ],
                       "type": "object"
+                    },
+                    "candidates": {
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "title": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "title"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "outline": {
+                      "additionalProperties": false,
+                      "nullable": true,
+                      "properties": {
+                        "document_id": {
+                          "type": "string"
+                        },
+                        "outline_count": {
+                          "minimum": 1,
+                          "type": "integer"
+                        },
+                        "title": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "document_id",
+                        "title",
+                        "outline_count"
+                      ],
+                      "type": "object"
                     }
                   },
                   "required": [
-                    "beat"
+                    "beat",
+                    "candidates",
+                    "outline"
                   ],
                   "type": "object"
                 }
@@ -4377,10 +4498,49 @@
                         "content"
                       ],
                       "type": "object"
+                    },
+                    "candidates": {
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "title": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "title"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "outline": {
+                      "additionalProperties": false,
+                      "nullable": true,
+                      "properties": {
+                        "document_id": {
+                          "type": "string"
+                        },
+                        "outline_count": {
+                          "minimum": 1,
+                          "type": "integer"
+                        },
+                        "title": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "document_id",
+                        "title",
+                        "outline_count"
+                      ],
+                      "type": "object"
                     }
                   },
                   "required": [
-                    "beat"
+                    "beat",
+                    "candidates",
+                    "outline"
                   ],
                   "type": "object"
                 }
@@ -4696,6 +4856,126 @@
             "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
           },
           "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          }
+        }
+      }
+    },
+    "/api/projects/{projectId}/documents/{documentId}/revisions/{revisionId}": {
+      "get": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "documentId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "revisionId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "content_markdown": {
+                      "type": "string"
+                    },
+                    "created_at": {
+                      "type": "string"
+                    },
+                    "document_id": {
+                      "type": "string"
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "metadata": {
+                      "additionalProperties": true,
+                      "type": "object"
+                    },
+                    "parent_revision_id": {
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "revision_number": {
+                      "type": "integer"
+                    },
+                    "source": {
+                      "enum": [
+                        "author",
+                        "ai-accepted",
+                        "restore"
+                      ],
+                      "type": "string"
+                    },
+                    "word_count": {
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "document_id",
+                    "parent_revision_id",
+                    "revision_number",
+                    "content_markdown",
+                    "metadata",
+                    "source",
+                    "word_count",
+                    "created_at"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "404": {
             "content": {
               "application/json": {
                 "schema": {
@@ -8376,7 +8656,30 @@
             "name": "q",
             "required": true,
             "schema": {
+              "maxLength": 200,
               "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 30,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "maximum": 10000,
+              "minimum": 0,
+              "type": "integer"
             }
           },
           {
@@ -8395,6 +8698,10 @@
                 "schema": {
                   "additionalProperties": false,
                   "properties": {
+                    "next_offset": {
+                      "nullable": true,
+                      "type": "integer"
+                    },
                     "results": {
                       "items": {
                         "additionalProperties": false,
@@ -8405,6 +8712,9 @@
                           "excerpt": {
                             "type": "string"
                           },
+                          "match_term": {
+                            "type": "string"
+                          },
                           "title": {
                             "type": "string"
                           }
@@ -8412,15 +8722,22 @@
                         "required": [
                           "document_id",
                           "title",
-                          "excerpt"
+                          "excerpt",
+                          "match_term"
                         ],
                         "type": "object"
                       },
                       "type": "array"
+                    },
+                    "total": {
+                      "minimum": 0,
+                      "type": "integer"
                     }
                   },
                   "required": [
-                    "results"
+                    "results",
+                    "total",
+                    "next_offset"
                   ],
                   "type": "object"
                 }
@@ -8474,6 +8791,17 @@
     "/api/projects/{projectId}/stats": {
       "get": {
         "parameters": [
+          {
+            "in": "query",
+            "name": "tz_offset_minutes",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "maximum": 840,
+              "minimum": -840,
+              "type": "integer"
+            }
+          },
           {
             "in": "path",
             "name": "projectId",
@@ -8552,6 +8880,11 @@
                       "minimum": 0,
                       "type": "integer"
                     },
+                    "tz_offset_minutes": {
+                      "maximum": 840,
+                      "minimum": -840,
+                      "type": "integer"
+                    },
                     "usage": {
                       "additionalProperties": false,
                       "properties": {
@@ -8560,7 +8893,7 @@
                           "type": "integer"
                         },
                         "daily": {
-                          "description": "The last 30 UTC days (today included), zero-filled: one bucket per day, oldest first (#384).",
+                          "description": "The last 30 UTC days (today included), zero-filled: one bucket per day, oldest first, completed attempts only (#384, DR-028).",
                           "items": {
                             "additionalProperties": false,
                             "properties": {
@@ -8591,11 +8924,29 @@
                           },
                           "type": "array"
                         },
+                        "estimated_requests": {
+                          "description": "Completed attempts whose token counts include a word-count estimate because the provider reported no usage (DR-028).",
+                          "minimum": 0,
+                          "type": "integer"
+                        },
+                        "failed_attempt_count": {
+                          "description": "Provider attempts that failed without reported usage; they carry zero tokens and never enter the token totals (DR-028).",
+                          "minimum": 0,
+                          "type": "integer"
+                        },
                         "per_model": {
                           "items": {
                             "additionalProperties": false,
                             "properties": {
                               "completion_tokens": {
+                                "minimum": 0,
+                                "type": "integer"
+                              },
+                              "estimated_requests": {
+                                "minimum": 0,
+                                "type": "integer"
+                              },
+                              "failed_attempts": {
                                 "minimum": 0,
                                 "type": "integer"
                               },
@@ -8607,6 +8958,7 @@
                                 "type": "integer"
                               },
                               "requests": {
+                                "description": "Completed provider attempts of this model (DR-028).",
                                 "minimum": 0,
                                 "type": "integer"
                               }
@@ -8614,6 +8966,8 @@
                             "required": [
                               "model",
                               "requests",
+                              "failed_attempts",
+                              "estimated_requests",
                               "prompt_tokens",
                               "completion_tokens"
                             ],
@@ -8629,6 +8983,7 @@
                           "type": "integer"
                         },
                         "request_count": {
+                          "description": "Completed provider attempts: the rows every token total folds. Failed attempts are counted separately (DR-028).",
                           "minimum": 0,
                           "type": "integer"
                         }
@@ -8636,6 +8991,8 @@
                       "required": [
                         "project_id",
                         "request_count",
+                        "failed_attempt_count",
+                        "estimated_requests",
                         "prompt_tokens",
                         "completion_tokens",
                         "per_model"
@@ -8682,6 +9039,7 @@
                   },
                   "required": [
                     "project_id",
+                    "tz_offset_minutes",
                     "daily",
                     "weekly",
                     "streak_days",
@@ -8751,7 +9109,7 @@
                       "type": "integer"
                     },
                     "daily": {
-                      "description": "The last 30 UTC days (today included), zero-filled: one bucket per day, oldest first (#384).",
+                      "description": "The last 30 UTC days (today included), zero-filled: one bucket per day, oldest first, completed attempts only (#384, DR-028).",
                       "items": {
                         "additionalProperties": false,
                         "properties": {
@@ -8782,11 +9140,29 @@
                       },
                       "type": "array"
                     },
+                    "estimated_requests": {
+                      "description": "Completed attempts whose token counts include a word-count estimate because the provider reported no usage (DR-028).",
+                      "minimum": 0,
+                      "type": "integer"
+                    },
+                    "failed_attempt_count": {
+                      "description": "Provider attempts that failed without reported usage; they carry zero tokens and never enter the token totals (DR-028).",
+                      "minimum": 0,
+                      "type": "integer"
+                    },
                     "per_model": {
                       "items": {
                         "additionalProperties": false,
                         "properties": {
                           "completion_tokens": {
+                            "minimum": 0,
+                            "type": "integer"
+                          },
+                          "estimated_requests": {
+                            "minimum": 0,
+                            "type": "integer"
+                          },
+                          "failed_attempts": {
                             "minimum": 0,
                             "type": "integer"
                           },
@@ -8798,6 +9174,7 @@
                             "type": "integer"
                           },
                           "requests": {
+                            "description": "Completed provider attempts of this model (DR-028).",
                             "minimum": 0,
                             "type": "integer"
                           }
@@ -8805,6 +9182,8 @@
                         "required": [
                           "model",
                           "requests",
+                          "failed_attempts",
+                          "estimated_requests",
                           "prompt_tokens",
                           "completion_tokens"
                         ],
@@ -8820,6 +9199,7 @@
                       "type": "integer"
                     },
                     "request_count": {
+                      "description": "Completed provider attempts: the rows every token total folds. Failed attempts are counted separately (DR-028).",
                       "minimum": 0,
                       "type": "integer"
                     }
@@ -8827,6 +9207,8 @@
                   "required": [
                     "project_id",
                     "request_count",
+                    "failed_attempt_count",
+                    "estimated_requests",
                     "prompt_tokens",
                     "completion_tokens",
                     "per_model"

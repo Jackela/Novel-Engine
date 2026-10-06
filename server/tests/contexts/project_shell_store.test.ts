@@ -80,7 +80,7 @@ describe("project shell store seam", () => {
         id: document.id,
         currentRevisionId: document.currentRevision?.id,
         revisionSource: "author",
-        wordCount: 3,
+        wordCount: 4,
       });
 
       const current = store.documents.readCurrentDocument(scope, created.project.id, document.id);
@@ -88,7 +88,7 @@ describe("project shell store seam", () => {
         contentMarkdown: "one two 三四",
         metadataJson: '{"private":true}',
         source: "author",
-        wordCount: 3,
+        wordCount: 4,
       });
 
       const reordered = store.volumes.renumberDocuments(

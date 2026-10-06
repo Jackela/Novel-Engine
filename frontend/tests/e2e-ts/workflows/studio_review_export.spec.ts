@@ -123,7 +123,9 @@ test.describe
 
       await studio.getByRole("button", { name: /^Markdown/ }).click();
       const failureAlert = studio.locator(".export-panel .studio-inspector__error[role=alert]");
-      await expect(failureAlert).toContainText("Export service is temporarily down.");
+      await expect(failureAlert).toContainText(
+        "The service is not available right now. Check the server and retry.",
+      );
       const retryExport = studio.getByRole("button", { name: "Retry markdown export" });
       await expect(retryExport).toBeVisible();
 

@@ -1,4 +1,4 @@
-import { fireEvent, getByRole, queryByRole } from "@testing-library/dom";
+import { fireEvent, getAllByRole, getByRole, queryByRole } from "@testing-library/dom";
 import { act, useState } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -74,6 +74,30 @@ describe("Studio editor pane", () => {
     act(() => getByRole(container, "button", { name: "Retry document" }).click());
     expect(retry).toHaveBeenCalledTimes(1);
     expect(container.querySelector('textarea[aria-label="Markdown body"]')).toBeNull();
+  });
+
+  it("surfaces a retryable save failure with an explicit Retry save command", () => {
+    const retrySave = vi.fn();
+    const container = render(
+      <StudioEditorPane
+        activeDocument={baseDocument}
+        draft="# Opening"
+        titleDraft="Opening"
+        saveState="error"
+        error="Unable to save this document."
+        onDraftChange={vi.fn()}
+        onTitleChange={vi.fn()}
+        onRetrySave={retrySave}
+      />,
+    );
+
+    expect(
+      getAllByRole(container, "alert").some((node) =>
+        node.textContent?.includes("Unable to save this document."),
+      ),
+    ).toBe(true);
+    act(() => getByRole(container, "button", { name: "Retry save" }).click());
+    expect(retrySave).toHaveBeenCalledTimes(1);
   });
 
   it("renders editor state and forwards title/body edits", async () => {
@@ -238,5 +262,65 @@ describe("Studio editor pane", () => {
 
     expect(document.activeElement).toBe(otherButton);
     otherButton.remove();
+  });
+
+  it("intercepts Ctrl/Cmd+S and routes it to the save path instead of the browser dialog", () => {
+    const onSaveNow = vi.fn();
+    render(
+      <StudioEditorPane
+        activeDocument={baseDocument}
+        draft="# Opening"
+        titleDraft="Opening"
+        saveState="saving"
+        onDraftChange={vi.fn()}
+        onTitleChange={vi.fn()}
+        onSaveNow={onSaveNow}
+      />,
+    );
+
+    const ctrlSave = new KeyboardEvent("keydown", {
+      bubbles: true,
+      cancelable: true,
+      ctrlKey: true,
+      key: "s",
+    });
+    window.dispatchEvent(ctrlSave);
+    const metaSave = new KeyboardEvent("keydown", {
+      bubbles: true,
+      cancelable: true,
+      key: "s",
+      metaKey: true,
+    });
+    window.dispatchEvent(metaSave);
+
+    expect(ctrlSave.defaultPrevented).toBe(true);
+    expect(metaSave.defaultPrevented).toBe(true);
+    expect(onSaveNow).toHaveBeenCalledTimes(2);
+  });
+
+  it("leaves Ctrl+S to the browser when no document is open", () => {
+    const onSaveNow = vi.fn();
+    render(
+      <StudioEditorPane
+        activeDocument={null}
+        draft=""
+        titleDraft=""
+        saveState="idle"
+        onDraftChange={vi.fn()}
+        onTitleChange={vi.fn()}
+        onSaveNow={onSaveNow}
+      />,
+    );
+
+    const event = new KeyboardEvent("keydown", {
+      bubbles: true,
+      cancelable: true,
+      ctrlKey: true,
+      key: "s",
+    });
+    window.dispatchEvent(event);
+
+    expect(event.defaultPrevented).toBe(false);
+    expect(onSaveNow).not.toHaveBeenCalled();
   });
 });

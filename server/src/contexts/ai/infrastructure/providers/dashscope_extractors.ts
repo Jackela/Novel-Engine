@@ -1,5 +1,10 @@
 import { TextGenerationProviderError } from "../../application/ports/text_generation.js";
-import { isJsonObject, usageToken } from "./provider_http.js";
+import {
+  isJsonObject,
+  openAiCompatibleStreamFailure,
+  type ProviderStreamFailure,
+  usageToken,
+} from "./provider_http.js";
 
 type JsonObject = Record<string, unknown>;
 
@@ -87,6 +92,21 @@ export function extractDashscopeIncrementalText(data: JsonObject): string | unde
     extractCompatibleModeStreamText(data) ??
     extractNativeGenerationStreamText(data)
   );
+}
+
+/**
+ * Detect a provider-reported failure frame inside a DashScope 200 SSE stream
+ * (DR-026): compatible mode speaks the OpenAI error shape, native modes carry
+ * a top-level `code` plus `message`. Chunks with neither keep their previous
+ * extraction behavior.
+ */
+export function extractDashscopeStreamFailure(data: JsonObject): ProviderStreamFailure | undefined {
+  const compatible = openAiCompatibleStreamFailure(data);
+  if (compatible !== undefined) return compatible;
+  const code = typeof data.code === "string" ? data.code.trim() : "";
+  const message = typeof data.message === "string" ? data.message.trim() : "";
+  if (code === "" || message === "") return undefined;
+  return { message, code };
 }
 
 /** Responses events: a top-level string `delta`, then `output` list items. */

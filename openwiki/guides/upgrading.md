@@ -2,15 +2,15 @@
 
 Novel Engine is upgraded by pulling the new code and rebuilding the image.
 Your manuscripts live in the `novel-engine-data` volume, which an upgrade
-never touches, and the studio prepares its own safety backup on every start —
-so an upgrade is routine.
+never touches, and the studio prepares its own safety backup when the upgrade
+has migrations to apply — so an upgrade is routine.
 
 ## Before you upgrade
 
 Take one copy off the machine with the [backup](backup-and-restore.md)
-routine. The studio takes automatic backups on every start, but a copy on an
-external drive or in a private cloud folder is the one that saves you from a
-disk failure during the upgrade.
+routine. The studio backs up automatically before applying pending
+migrations, but a copy on an external drive or in a private cloud folder is
+the one that saves you from a disk failure during the upgrade.
 
 ## Get the new code
 
@@ -37,8 +37,8 @@ watch progress with `docker compose logs -f novel-engine`.
 
 The startup sequence protects your data in a fixed order:
 
-1. **Safety backup** — if a database exists, a timestamped copy is written to
-   `backups/` first.
+1. **Safety backup** — when migrations are pending, a timestamped copy is
+   written to `backups/` first.
 2. **Migrations** — the database schema is brought up to the new version's
    shape, automatically.
 3. **Reconciliation** — export records and history word counts are checked
@@ -60,6 +60,19 @@ Confirm the new version at `http://localhost:8000/version` in your browser.
 - It cannot be trivially undone: the database schema moves forward. If you
   must run an older version afterwards, restore the pre-upgrade backup first
   ([backup and restore](backup-and-restore.md#restoring)).
+
+## Rebuilding the search index
+
+Full-text search reads a derived index, not the revisions themselves. The
+index updates as you save, but you can rebuild the whole index from the
+current revisions at any time — for example after copying a database between
+machines or when search results look stale:
+
+```bash
+docker compose run --rm novel-engine node server/dist/apps/cli/main.js reindex
+```
+
+The command prints a JSON summary with the number of documents re-indexed.
 
 ## Upgrading from 0.3.x (the retired Python stack)
 

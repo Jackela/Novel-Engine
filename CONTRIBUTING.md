@@ -37,6 +37,13 @@ use [CONTEXT.md](CONTEXT.md) for domain terms.
    maintainer squash-merges it. Read live branch rules for required checks;
    local validation does not establish hosted CI or release approval.
 
+## External contributions
+
+The workflow above is optimized for the maintainer's agent clusters. Issues
+and pull requests from outside contributors are welcome — start with a small,
+focused issue — but expect the maintainer to adapt the change into that
+workflow. No CLA or DCO is required; the MIT license covers contributions.
+
 ## What belongs in Git
 
 Track source, tests and intentional fixtures, product specs, current guides,

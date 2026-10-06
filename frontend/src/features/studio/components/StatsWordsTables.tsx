@@ -1,12 +1,11 @@
 import type { MessageKey } from "@/app/i18n/dictionaries/en";
+import { formatCount } from "@/app/i18n/format";
 import { useTranslation } from "@/app/i18n/useTranslation";
 import type {
   WritingStatsDayRow,
   WritingStatsWeekRow,
   WritingStatsWords,
 } from "@/app/types/studio";
-
-const formatCount = (value: number) => value.toLocaleString("en-US");
 
 function totalWords(words: WritingStatsWords): number {
   return words.author + words.ai_accepted + words.restore;
@@ -104,6 +103,13 @@ export function StatsWordsTables({ daily, weekly }: StatsWordsTablesProps) {
         firstColumnKey="stats.table.week"
         rows={activeWeeks.map((week) => ({ label: week.start_date, words: week.words }))}
       />
+      {/*
+       * DR-045: signed deltas need one sentence of explanation — a restore or
+       * a rollback can land more words in a bucket than the day wrote, and a
+       * net-negative "Accepted" figure is honest evidence of that movement,
+       * not a defect.
+       */}
+      <p className="stats__note">{t("stats.negative.hint")}</p>
     </>
   );
 }

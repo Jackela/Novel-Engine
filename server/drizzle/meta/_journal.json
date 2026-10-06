@@ -162,6 +162,27 @@
       "when": 1788626819700,
       "tag": "0022_bound-review-history-keyset-index",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "6",
+      "when": 1790979541673,
+      "tag": "0023_request-idempotency-key",
+      "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "6",
+      "when": 1790982015615,
+      "tag": "0024_usage-attempt-provenance",
+      "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "6",
+      "when": 1790982072800,
+      "tag": "0025_usage-attempt-guard",
+      "breakpoints": true
     }
   ]
 }

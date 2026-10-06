@@ -13,9 +13,9 @@ import {
   type JobRecord,
   type JobRetryClaim,
   type JobSummaryPage,
+  type JobWithUsageLandingInput,
   jobPageLimit,
   type MarkJobOutcomeInput,
-  type RecordCompletedJobWithUsageInput,
 } from "../application/ports/job_records.js";
 import type { ProjectUsageAggregate } from "../application/ports/project_usage.js";
 import type { ProjectScope } from "../application/ports/studio_store.js";
@@ -25,10 +25,12 @@ import {
   OperationInFlightError,
 } from "../domain/exceptions.js";
 import { jobWithEvents } from "./db/job_record_reads.js";
+import { claimRequestKeyJob, findRequestKeyJob } from "./db/job_request_claim.js";
 import { findRetryJobByKey, insertRetryClaim } from "./db/job_retry_claim.js";
 import {
   applyJobOutcome,
   insertJobAndEvent,
+  type JobInsert,
   writeUsageEvent as writeUsageEventRow,
 } from "./db/job_writes.js";
 import { jobs } from "./db/schema.js";
@@ -58,8 +60,16 @@ export class JobStorePart implements StudioJobLedgerStore {
   addJob(scope: ProjectScope, input: AddJobInput): JobRecord {
     return this.db.transaction((tx) => {
       scopedProject(tx, scope, input.projectId);
-      const jobId = insertJobAndEvent(tx, input);
-      return jobWithEvents(tx, jobId);
+      return jobWithEvents(tx, this.claimJobRow(tx, input).jobId);
+    });
+  }
+
+  /** Read a previously landed job by its request key without admitting new work. */
+  findJobRequest(scope: ProjectScope, projectId: string, requestKey: string): JobRecord | null {
+    return this.db.transaction((tx) => {
+      scopedProject(tx, scope, projectId);
+      const existing = findRequestKeyJob(tx, projectId, requestKey);
+      return existing === undefined ? null : jobWithEvents(tx, existing.id);
     });
   }
 
@@ -110,32 +120,31 @@ export class JobStorePart implements StudioJobLedgerStore {
   }
 
   /**
-   * The atomic completed-job-with-usage landing (#392): the job row and its
-   * usage event share one transaction, so a failure between the writes rolls
-   * back both and never strands a completed job without its usage event.
-   * Shared by every provider-backed kind that records usage (proposal,
-   * lore-extract).
+   * The atomic job-with-usage landing (#392, DR-028): the job row, its first
+   * event, and its usage row share one transaction, so a failure between the
+   * writes rolls back all of them and never strands a landed job without its
+   * usage evidence. Shared by every provider-backed kind that records usage
+   * (proposal, lore-extract) for completed and failed attempts alike.
    */
-  recordCompletedJobWithUsage(
-    scope: ProjectScope,
-    input: RecordCompletedJobWithUsageInput,
-  ): JobRecord {
+  recordJobWithUsage(scope: ProjectScope, input: JobWithUsageLandingInput): JobRecord {
     return this.db.transaction((tx) => {
       scopedProject(tx, scope, input.job.projectId);
-      const jobId = insertJobAndEvent(tx, input.job);
-      this.writeUsageEvent(tx, {
-        ...input.usage,
-        projectId: input.job.projectId,
-        jobId,
-        now: input.job.now,
-      });
-      return jobWithEvents(tx, jobId);
+      const claimed = this.claimJobRow(tx, input.job);
+      if (claimed.created) {
+        this.writeUsageEvent(tx, {
+          ...input.usage,
+          projectId: input.job.projectId,
+          jobId: claimed.jobId,
+          now: input.job.now,
+        });
+      }
+      return jobWithEvents(tx, claimed.jobId);
     });
   }
 
   /**
    * The atomic retry completion (#392): the terminal transition of the
-   * running job and its usage event share one transaction.
+   * running job and its usage row share one transaction.
    */
   markJobOutcomeWithUsage(
     scope: ProjectScope,
@@ -267,6 +276,13 @@ export class JobStorePart implements StudioJobLedgerStore {
 
   /** Failure-injection seam proving the retry row and first event stay atomic. */
   protected beforeRetryClaimEventInsert(_tx: Tx, _jobId: string): void {}
+
+  /** Claim the landing row by request key when present; keyless landings insert plainly (DR-027). */
+  private claimJobRow(tx: Tx, input: AddJobInput): JobInsert {
+    const requestKey = input.requestIdempotencyKey ?? null;
+    if (requestKey === null) return { jobId: insertJobAndEvent(tx, input), created: true };
+    return claimRequestKeyJob(tx, input, requestKey);
+  }
 
   private replayRetryClaim(tx: Tx, retry: JobRow): JobRetryClaim {
     if (retry.status === "running") {

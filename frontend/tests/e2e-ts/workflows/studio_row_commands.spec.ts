@@ -133,7 +133,8 @@ test.describe
       await studio.getByRole("button", { name: "Delete Chapter 1" }).click();
       await studio.getByRole("button", { name: "Confirm delete Chapter 1" }).click();
       const refusal = studio.getByRole("alert").filter({
-        hasText: "Document is referenced by an immutable snapshot.",
+        hasText:
+          "This document belongs to an export snapshot and cannot be deleted. Delete that export (or its snapshot) first, then delete the document.",
       });
       await expect(refusal).toBeVisible();
       // The refused document stays in the navigator and remains deletable.
@@ -259,7 +260,8 @@ test.describe
         .getByRole("combobox", { name: "Place Chapter 3 in volume" })
         .selectOption({ label: "Full Volume" });
       const refusal = studio.getByRole("alert").filter({
-        hasText: "That volume is full. volume_chapters limit is 2000.",
+        hasText:
+          "The chapter count reached its limit (2000). Remove some structure before retrying.",
       });
       await expect(refusal).toBeVisible();
       // The refused chapter stays in its current volume.

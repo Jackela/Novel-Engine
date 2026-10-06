@@ -156,7 +156,15 @@ describe("Provider failure diagnostics boundary", () => {
         expect(persistedJobs[0]?.error).toBe(error);
         expect(persistedEvents).toHaveLength(1);
         expect(JSON.parse(persistedEvents[0]?.details_json ?? "{}")).toEqual({ error });
-        expect(database.select().from(usageEvents).all()).toHaveLength(0);
+        // DR-028: the failed provider attempt keeps one zero-token unreported row.
+        expect(database.select().from(usageEvents).all()).toMatchObject([
+          {
+            outcome: "failed",
+            token_source: "unreported",
+            prompt_tokens: 0,
+            completion_tokens: 0,
+          },
+        ]);
 
         const listed = await call(app, jar, "GET", `/api/projects/${project.id}/jobs`);
         expect(listed.statusCode, listed.body).toBe(200);
@@ -195,4 +203,50 @@ describe("Provider failure diagnostics boundary", () => {
       }
     },
   );
+
+  it("records an in-stream error payload as the job failure with the provider reason (DR-026 gap B)", async () => {
+    const apiKey = fixtureApiKey("openai-mid-stream", "that-must-not-leak");
+    const transport = async () =>
+      new Response(
+        `data: ${JSON.stringify({ error: { message: "upstream overloaded", code: "server_error" } })}\n\n`,
+        { status: 200, headers: { "content-type": "text/event-stream" } },
+      );
+    const factory: TextGenerationProviderFactory = () =>
+      new OpenAICompatibleTextProvider({
+        apiKey,
+        retry: { delayMs: 0, sleep: async () => {} },
+        transport,
+      });
+    const { app } = await buildStudioApp(undefined, { textProviderFactory: factory });
+    try {
+      const jar = await ownerJar(app);
+      const project = await seedProject(app, jar, "Mid-stream provider failure");
+      const document = project.documents[0];
+      if (document === undefined) throw new Error("Expected a default document.");
+
+      const response = await call(
+        app,
+        jar,
+        "POST",
+        `/api/projects/${project.id}/documents/${document.id}/ai-proposals/stream`,
+        { operation: "continue", provider: "openai_compatible" },
+      );
+      expect(response.statusCode, response.body).toBe(200);
+      const error =
+        "OpenAI-compatible generation failed for step 'chapter_revision': provider reported upstream overloaded (code server_error)";
+      expect(parseSingleErrorFrame(response.body)).toEqual({
+        type: "error",
+        error: { code: "PROVIDER_FAILED", message: error },
+      });
+
+      const database = app.studioDb?.db;
+      if (database === undefined) throw new Error("Expected the studio database.");
+      const persistedJobs = database.select().from(jobs).all();
+      expect(persistedJobs).toHaveLength(1);
+      expect(persistedJobs[0]?.status).toBe("failed");
+      expect(persistedJobs[0]?.error).toBe(error);
+    } finally {
+      await app.close();
+    }
+  });
 });

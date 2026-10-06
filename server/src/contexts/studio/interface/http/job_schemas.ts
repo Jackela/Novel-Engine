@@ -37,6 +37,21 @@ export const jobRetryHeadersSchema = Type.Object({
   }),
 });
 
+/**
+ * The proposal-generation key is optional (DR-027): a request without it
+ * keeps the pre-existing behavior, while a present key must satisfy the same
+ * character contract as the retry header so both routes share one key format.
+ */
+export const idempotencyKeyHeadersSchema = Type.Object({
+  "idempotency-key": Type.Optional(
+    Type.String({
+      minLength: 16,
+      maxLength: 128,
+      pattern: "^[A-Za-z0-9._~-]+$",
+    }),
+  ),
+});
+
 /** The jobs audit listing: newest compact summary first. */
 export const jobListResponseSchema = Type.Object(
   {
@@ -46,20 +61,38 @@ export const jobListResponseSchema = Type.Object(
   { additionalProperties: false },
 );
 
-/** The project usage surface (#317): totals plus a per-model breakdown and
+/** The project usage surface (#317): completed-attempt totals plus a
+ * per-model breakdown, failed-attempt/estimated counts (DR-028), and
  * the trailing-30-UTC-day buckets (#384, optional for consumers). */
 export const usageResponseSchema: JsonResponseSchema = {
   type: "object",
   additionalProperties: false,
   properties: {
     project_id: { type: "string" },
-    request_count: { type: "integer", minimum: 0 },
+    request_count: {
+      type: "integer",
+      minimum: 0,
+      description:
+        "Completed provider attempts: the rows every token total folds. Failed attempts are counted separately (DR-028).",
+    },
+    failed_attempt_count: {
+      type: "integer",
+      minimum: 0,
+      description:
+        "Provider attempts that failed without reported usage; they carry zero tokens and never enter the token totals (DR-028).",
+    },
+    estimated_requests: {
+      type: "integer",
+      minimum: 0,
+      description:
+        "Completed attempts whose token counts include a word-count estimate because the provider reported no usage (DR-028).",
+    },
     prompt_tokens: { type: "integer", minimum: 0 },
     completion_tokens: { type: "integer", minimum: 0 },
     daily: {
       type: "array",
       description:
-        "The last 30 UTC days (today included), zero-filled: one bucket per day, oldest first (#384).",
+        "The last 30 UTC days (today included), zero-filled: one bucket per day, oldest first, completed attempts only (#384, DR-028).",
       items: {
         type: "object",
         additionalProperties: false,
@@ -79,13 +112,34 @@ export const usageResponseSchema: JsonResponseSchema = {
         additionalProperties: false,
         properties: {
           model: { type: "string" },
-          requests: { type: "integer", minimum: 0 },
+          requests: {
+            type: "integer",
+            minimum: 0,
+            description: "Completed provider attempts of this model (DR-028).",
+          },
+          failed_attempts: { type: "integer", minimum: 0 },
+          estimated_requests: { type: "integer", minimum: 0 },
           prompt_tokens: { type: "integer", minimum: 0 },
           completion_tokens: { type: "integer", minimum: 0 },
         },
-        required: ["model", "requests", "prompt_tokens", "completion_tokens"],
+        required: [
+          "model",
+          "requests",
+          "failed_attempts",
+          "estimated_requests",
+          "prompt_tokens",
+          "completion_tokens",
+        ],
       },
     },
   },
-  required: ["project_id", "request_count", "prompt_tokens", "completion_tokens", "per_model"],
+  required: [
+    "project_id",
+    "request_count",
+    "failed_attempt_count",
+    "estimated_requests",
+    "prompt_tokens",
+    "completion_tokens",
+    "per_model",
+  ],
 } as const;

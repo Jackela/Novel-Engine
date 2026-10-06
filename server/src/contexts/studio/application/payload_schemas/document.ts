@@ -74,12 +74,18 @@ export const documentSummaryPayloadSchema = Type.Object(
 
 export type DocumentSummaryPayload = Static<typeof documentSummaryPayloadSchema>;
 
-/** One ranked full-text hit: identifier, title, plain-text excerpt. */
+/** One ranked full-text hit: identifier, title, excerpt, and the locate term (DR-029). */
 export const matchResultPayloadSchema = Type.Object(
   {
     document_id: Type.String(),
     title: Type.String(),
     excerpt: Type.String(),
+    /**
+     * The first reduced match element in display form; the editor locates it
+     * inside the document body. Always present on a hit — an irreducible
+     * query has no hits.
+     */
+    match_term: Type.String(),
   },
   { additionalProperties: false },
 );

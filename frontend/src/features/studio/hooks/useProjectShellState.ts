@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { NavigateFunction } from "react-router-dom";
 
 import { api, HttpError } from "@/app/api";
+import { useSessionExpiredRedirect } from "@/app/sessionExpiry";
 import type { Project } from "@/app/types/studio";
 
 import type { ProjectShellReadCapture } from "./projectShellReadAuthority";
@@ -36,6 +37,9 @@ export function useProjectShellState(projectId: string, navigate: NavigateFuncti
   useEffect(() => {
     navigateRef.current = navigate;
   }, [navigate]);
+  // DR-020: a rejected session returns to the entry page carrying this route,
+  // so signing in again reopens the project the author was reading.
+  const onSessionExpired = useSessionExpiredRedirect();
   const activeProjectIdRef = useRef<string | null>(null);
   const projectMutationEpochRef = useRef(0);
   const nextProjectReadEpochRef = useRef(0);
@@ -118,7 +122,7 @@ export function useProjectShellState(projectId: string, navigate: NavigateFuncti
       } catch (reason) {
         if (signal.aborted || activeProjectIdRef.current !== projectId) return false;
         if (reason instanceof HttpError && reason.status === 401) {
-          void navigateRef.current("/", { replace: true });
+          onSessionExpired();
           return false;
         }
         if (reason instanceof HttpError && reason.status === 404) {
@@ -128,7 +132,7 @@ export function useProjectShellState(projectId: string, navigate: NavigateFuncti
         throw reason;
       }
     },
-    [captureProjectShellRead, projectId, publishProjectShellRead],
+    [captureProjectShellRead, onSessionExpired, projectId, publishProjectShellRead],
   );
 
   const isActiveProject = useCallback(() => activeProjectIdRef.current === projectId, [projectId]);

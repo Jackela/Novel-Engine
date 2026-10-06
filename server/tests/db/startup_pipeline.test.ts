@@ -246,6 +246,25 @@ describe("startup pipeline", () => {
     } finally {
       backup.close();
     }
+
+    const restarted = await openStudioDatabase(defaultDatabasePath(directory));
+    restarted.close();
+    const afterRestart = (await readdir(join(directory, "backups"))).filter((name) =>
+      name.endsWith(".sqlite3.bak"),
+    );
+    expect(afterRestart).toHaveLength(1);
+  });
+
+  it("reopens a fully migrated database without writing a backup", async () => {
+    const directory = await makeDataDirectory();
+    const databasePath = defaultDatabasePath(directory);
+
+    const first = await openStudioDatabase(databasePath);
+    first.close();
+    const second = await openStudioDatabase(databasePath);
+    second.close();
+
+    await expect(readdir(join(directory, "backups"))).rejects.toThrow();
   });
 
   it("fails loudly and keeps the pre-migration state when migrations cannot apply", async () => {

@@ -1,31 +1,21 @@
-import { HttpError } from "@/app/httpClient";
-import { translateActive } from "@/app/i18n/translate";
-import { isRecord } from "@/app/typeGuards";
+import { localizeError } from "@/app/localizeError";
 
-const STRUCTURE_CAPACITY_EXCEEDED_CODE = "STRUCTURE_CAPACITY_EXCEEDED";
+import { reportUnexpectedError } from "./reportUnexpectedError";
 
 /**
- * The permanent structure-capacity refusal (#461) reports a fixed message, so
- * its envelope details carry the only actionable evidence: which bounded
- * resource refused the write and its inclusive limit. Append exactly that;
- * every other error keeps its own message semantics.
- */
-function structureCapacitySuffix(reason: Error): string {
-  if (!(reason instanceof HttpError) || reason.code !== STRUCTURE_CAPACITY_EXCEEDED_CODE) {
-    return "";
-  }
-  if (!isRecord(reason.detail)) return "";
-  const { resource, limit } = reason.detail;
-  if (typeof resource !== "string" || resource === "") return "";
-  if (typeof limit !== "number" || !Number.isSafeInteger(limit) || limit < 0) return "";
-  return ` ${translateActive("errors.structureCapacity", { resource, limit })}`;
-}
-
-/**
- * Canonical error-to-message reduction for user-facing error state: prefer
- * the error's own message, fall back to a caller-supplied readable string.
+ * Canonical error-to-message reduction for user-facing error state (DR-021):
+ * a stable envelope code (`HttpError.code`), a contract-layer shape failure,
+ * or a body-size refusal resolves to a localized dictionary message through
+ * `localizeError`; only reasons without a code keep their own message. When
+ * the localized message withholds raw server/provider prose — provider
+ * failures, unknown codes, contract shapes — that raw text is forwarded to
+ * the diagnostics channel (`reportError`/console) so it stays reachable for
+ * debugging while never rendering as the primary text.
  */
 export function toErrorMessage(reason: unknown, fallback: string): string {
-  if (!(reason instanceof Error)) return fallback;
-  return `${reason.message}${structureCapacitySuffix(reason)}`;
+  const presentation = localizeError(reason, fallback);
+  if (presentation.technical !== null) {
+    reportUnexpectedError("Server error detail withheld from the localized message.", reason);
+  }
+  return presentation.message;
 }

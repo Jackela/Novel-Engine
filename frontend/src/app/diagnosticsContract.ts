@@ -1,9 +1,15 @@
-import { arrayField, isoUtcStringField, objectValue, stringField } from "@/app/apiContract";
+import {
+  ApiContractError,
+  arrayField,
+  isoUtcStringField,
+  objectValue,
+  stringField,
+} from "@/app/apiContract";
 import type { DiagnosticsSummary } from "@/app/types/studio";
 
 function booleanMember(source: Record<string, unknown>, key: string, parent: string): boolean {
   const value = source[key];
-  if (typeof value !== "boolean") throw new Error(`Invalid ${parent}.${key}`);
+  if (typeof value !== "boolean") throw new ApiContractError(`${parent}.${key}`);
   return value;
 }
 

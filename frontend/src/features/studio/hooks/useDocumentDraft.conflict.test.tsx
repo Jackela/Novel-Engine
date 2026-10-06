@@ -2,6 +2,7 @@ import { act, useState } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { api, HttpError } from "@/app/api";
+import type { RevisionDetail } from "@/app/types/revision";
 import type { Project, StudioDocument } from "@/app/types/studio";
 import { chapter, projectWith, revision } from "@/test/factories";
 import { createMountHarness, deferred, flushEffects, flushMicrotasks } from "@/test/harness";
@@ -18,6 +19,7 @@ vi.mock("@/app/api", async (importOriginal) => {
       document: vi.fn<typeof actual.api.document>(),
       project: vi.fn<typeof actual.api.project>(),
       revisions: vi.fn<typeof actual.api.revisions>(),
+      revision: vi.fn<typeof actual.api.revision>(),
       restoreRevision: vi.fn<typeof actual.api.restoreRevision>(),
       saveDocument: vi.fn<typeof actual.api.saveDocument>(),
     },
@@ -42,6 +44,18 @@ const latestDocument: StudioDocument = {
   current_revision_id: "revision-2",
   content_markdown: "Second tab wins.",
   updated_at: "2026-09-05T00:01:00Z",
+};
+
+const serverRevision: RevisionDetail = {
+  id: "revision-2",
+  document_id: activeDocument.id,
+  parent_revision_id: "revision-1",
+  revision_number: 2,
+  content_markdown: "Second tab wins.",
+  metadata: {},
+  source: "author",
+  word_count: 3,
+  created_at: "2026-09-05T00:01:00Z",
 };
 
 beforeEach(() => {
@@ -131,5 +145,49 @@ describe("useDocumentDraft conflict recovery timing (#472)", () => {
     expect(view.result().hook.saveState).toBe("idle");
     expect(view.result().hook.isConflictActionPending).toBe(false);
     expect(view.result().error).toBeNull();
+  });
+
+  it("views the server version without changing the local draft", async () => {
+    vi.mocked(api.revisions).mockResolvedValue({ revisions: [initialRevision], next_cursor: null });
+    vi.mocked(api.document).mockResolvedValue(latestDocument);
+    vi.mocked(api.saveDocument).mockRejectedValue(new HttpError("revision conflict", 409));
+    vi.mocked(api.revision).mockResolvedValue(serverRevision);
+    const view = renderDocumentDraftHook();
+    await flushMicrotasks();
+
+    act(() => {
+      view.result().hook.setDraft("Stale tab overwrite.");
+    });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1500);
+    });
+    await flushEffects();
+    expect(view.result().hook.saveState).toBe("conflict");
+
+    const draftBefore = view.result().hook.draft;
+    const titleBefore = view.result().hook.titleDraft;
+    const documentsBefore = view.result().project?.documents;
+
+    // The read-only server-version view resolves the current revision body by
+    // id (DR-011) and publishes nothing back into the draft or the project.
+    await act(async () => {
+      await view.result().hook.serverVersionPreview.view();
+    });
+
+    expect(api.revision).toHaveBeenCalledWith(
+      activeDocument.project_id,
+      activeDocument.id,
+      "revision-2",
+    );
+    expect(view.result().hook.serverVersionPreview.isOpen).toBe(true);
+    expect(view.result().hook.serverVersionPreview.currentRevisionId).toBe("revision-2");
+    expect(view.result().hook.serverVersionPreview.revision?.content_markdown).toBe(
+      latestDocument.content_markdown,
+    );
+    expect(view.result().hook.draft).toBe(draftBefore);
+    expect(view.result().hook.titleDraft).toBe(titleBefore);
+    expect(view.result().hook.saveState).toBe("conflict");
+    expect(view.result().project?.documents).toEqual(documentsBefore);
+    expect(view.result().hook.isConflictActionPending).toBe(false);
   });
 });

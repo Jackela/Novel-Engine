@@ -1,5 +1,5 @@
 import { randomBytes } from "node:crypto";
-import { existsSync } from "node:fs";
+import { existsSync, rmSync } from "node:fs";
 import { mkdtemp } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -47,7 +47,7 @@ describe("configuration at the composition root", () => {
     expect(existsSync(join(workspace, "data"))).toBe(false);
   });
 
-  it("invalidates sessions on every non-production restart with an unset secret", async () => {
+  it("keeps sessions across a non-production restart by persisting the generated secret (DR-040)", async () => {
     const workspace = await makeWorkspace();
     const first = await buildApp({ logger: false, config: configOver(workspace) });
 
@@ -65,17 +65,33 @@ describe("configuration at the composition root", () => {
     const cookie = (login.headers["set-cookie"] ?? [""])[0]?.split(";")[0] ?? "";
     await first.close();
 
+    // DR-040: with no configured secret the generated one persists to the data
+    // directory, so a restart keeps sessions; deleting the file (or moving the
+    // data dir) is what invalidates them.
     const second: FastifyInstance = await buildApp({
       logger: false,
       config: configOver(workspace),
     });
-    const probe = await second.inject({
+    const surviving = await second.inject({
       method: "GET",
       url: "/api/session",
       headers: { cookie },
     });
-    expect(probe.statusCode).toBe(401);
+    expect(surviving.statusCode).toBe(200);
     await second.close();
+
+    rmSync(join(workspace, "data", ".secret"), { force: true });
+    const third: FastifyInstance = await buildApp({
+      logger: false,
+      config: configOver(workspace),
+    });
+    const invalidated = await third.inject({
+      method: "GET",
+      url: "/api/session",
+      headers: { cookie },
+    });
+    expect(invalidated.statusCode).toBe(401);
+    await third.close();
   });
 
   it("wires the configured authentication rate limit into the limiter", async () => {

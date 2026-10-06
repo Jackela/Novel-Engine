@@ -46,6 +46,7 @@ export class AiProposalService {
     projectId: string,
     documentId: string,
     input: ProposalDraftInput,
+    requestKey?: string | undefined,
   ): ProposalGenerationRequest {
     return {
       scope: scopeForPrincipal(principal),
@@ -54,20 +55,25 @@ export class AiProposalService {
       operation: input.operation,
       instruction: input.instruction,
       provider: input.provider,
+      requestKey,
     };
   }
 
-  /** Generate a proposal for a document's current revision and record it on a job. */
+  /**
+   * Generate a proposal for a document's current revision and record it on a
+   * job; a request key that already landed replays its stored job (DR-027).
+   */
   async draftProposal(
     principal: Principal,
     projectId: string,
     documentId: string,
     input: ProposalDraftInput,
     reportCleanupFailure: ProviderCleanupFailureReporter,
+    requestKey?: string | undefined,
   ): Promise<Record<string, unknown>> {
     return jobPayload(
       await this.pipeline.draft(
-        this.generationRequest(principal, projectId, documentId, input),
+        this.generationRequest(principal, projectId, documentId, input, requestKey),
         reportCleanupFailure,
       ),
     );
@@ -87,6 +93,7 @@ export class AiProposalService {
     input: ProposalDraftInput,
     reportCleanupFailure: ProviderCleanupFailureReporter,
     signal?: AbortSignal,
+    requestKey?: string | undefined,
   ): ProposalStreamSession {
     return streamProposal(this.pipeline, {
       principal,
@@ -95,6 +102,7 @@ export class AiProposalService {
       input,
       reportCleanupFailure,
       signal,
+      requestKey,
     });
   }
 

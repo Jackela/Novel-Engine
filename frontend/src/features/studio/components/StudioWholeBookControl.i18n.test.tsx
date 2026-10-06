@@ -1,4 +1,5 @@
-import { getByRole } from "@testing-library/dom";
+import { getByRole, getByText } from "@testing-library/dom";
+import { act } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { LANGUAGE_STORAGE_KEY } from "@/app/i18n/language";
@@ -71,5 +72,38 @@ describe("StudioWholeBookControl bilingual rendering", () => {
     expect(getByRole(failed, "alert").textContent).toBe(
       "在“风暴夜”上失败，此前已接受 1 章：provider 掉线",
     );
+  });
+
+  it("renders the zh replacement confirmation with natural counts", () => {
+    window.localStorage.setItem(LANGUAGE_STORAGE_KEY, "zh");
+    const mounted = harness.mount(
+      <StudioWholeBookControl
+        occupiedChapters={[
+          { id: "hand", title: "手写开篇", requiresConfirmation: true },
+          { id: "imported", title: "导入章节", requiresConfirmation: true },
+        ]}
+        onConfirmReplace={vi.fn()}
+        onStart={vi.fn()}
+        onStop={vi.fn()}
+        phase={{ kind: "idle" }}
+        remaining={3}
+        safeCount={1}
+      />,
+    );
+
+    act(() => getByRole(mounted.container, "button", { name: "生成整本书" }).click());
+
+    expect(
+      getByText(
+        mounted.container,
+        "整本生成会自动接受生成的草稿。以下章节的现有正文不是已接受的 AI 修订：",
+      ),
+    ).toBeVisible();
+    expect(getByRole(mounted.container, "list", { name: "将被替换的章节" }).textContent).toBe(
+      "手写开篇导入章节",
+    );
+    expect(getByRole(mounted.container, "button", { name: "只生成 1 个空白章节" })).toBeVisible();
+    expect(getByRole(mounted.container, "button", { name: "用 AI 草稿替换这 2 章" })).toBeVisible();
+    expect(getByRole(mounted.container, "button", { name: "取消" })).toBeVisible();
   });
 });

@@ -1,7 +1,6 @@
+import { formatCount } from "@/app/i18n/format";
 import { useTranslation } from "@/app/i18n/useTranslation";
 import type { UsageDailyBucket } from "@/app/types/studio";
-
-const formatCount = (value: number) => value.toLocaleString("en-US");
 
 function dailyTotal(bucket: UsageDailyBucket): number {
   return bucket.prompt_tokens + bucket.completion_tokens;

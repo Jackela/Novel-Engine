@@ -8,6 +8,7 @@ import type { Project, Session } from "@/app/types/studio";
 import { project } from "@/test/factories";
 import { createMountHarness, deferred, flushEffects } from "@/test/harness";
 
+import { EntryPage } from "./EntryPage";
 import { ProjectLibraryPage } from "./ProjectLibraryPage";
 
 vi.mock("@/app/api", async (importOriginal) => {
@@ -20,6 +21,7 @@ vi.mock("@/app/api", async (importOriginal) => {
       logout: vi.fn<typeof actual.api.logout>(),
       projects: vi.fn<typeof actual.api.projects>(),
       session: vi.fn<typeof actual.api.session>(),
+      setupStatus: vi.fn<typeof actual.api.setupStatus>(),
     },
   };
 });
@@ -216,5 +218,37 @@ describe("ProjectLibraryPage command ownership", () => {
       await logout.promise;
     });
     expect(container.querySelector('[data-testid="location"]')?.textContent).toBe("/");
+  });
+
+  it("lands on a plain entry page after signing out, without the expired notice", async () => {
+    vi.mocked(api.session)
+      .mockResolvedValueOnce(ownerSession)
+      .mockRejectedValue(new HttpError("Sign in required.", 401));
+    vi.mocked(api.projects).mockResolvedValue({ projects: [], next_cursor: null });
+    vi.mocked(api.logout).mockResolvedValue(undefined);
+    vi.mocked(api.setupStatus).mockResolvedValue({
+      owner_configured: true,
+      name: "Test Engine",
+      version: "test",
+    });
+
+    const { container } = harness.mount(
+      <MemoryRouter initialEntries={["/projects"]}>
+        <Routes>
+          <Route path="/" element={<EntryPage />} />
+          <Route path="/projects" element={<ProjectLibraryPage />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+    await flushEffects();
+
+    act(() => {
+      getByRole(container, "button", { name: "Sign out" }).click();
+    });
+    await flushEffects();
+    await flushEffects();
+
+    expect(getByRole(container, "heading", { name: "Open your writing studio" })).toBeVisible();
+    expect(container.querySelector(".entry__notice")).toBeNull();
   });
 });

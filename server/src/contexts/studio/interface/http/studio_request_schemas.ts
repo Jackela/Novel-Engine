@@ -76,6 +76,13 @@ export const documentSaveSchema = Type.Object(
     base_revision_id: nullableString({}),
     title: Type.Optional(Type.String({ maxLength: 240 })),
     metadata: Type.Optional(metadataObject),
+    /**
+     * #DR-047: the editor's draft autosave sets this so adjacent autosaves
+     * inside the collapse window fold into one revision and old unreferenced
+     * autosave revisions are pruned. Every other caller omits it and keeps
+     * the plain append semantics.
+     */
+    autosave: Type.Optional(Type.Boolean({ default: false })),
   },
   { additionalProperties: false },
 );
@@ -137,8 +144,18 @@ export const projectListQuerySchema = Type.Object(
   },
   { additionalProperties: false },
 );
-/** The full-text query string: `q` is required (missing → 422). */
+/**
+ * The full-text query string with its page window (DR-029/DR-030): `q` is
+ * required (missing → 422) and bounded at 200 characters, so the worst-case
+ * reduced MATCH input has a fixed ceiling regardless of client behavior.
+ * `limit` keeps pages at 30 rows by default, and `offset` walks further
+ * pages; both stay inside their integer bounds.
+ */
 export const projectMatchQuerySchema = Type.Object(
-  { q: Type.String() },
+  {
+    q: Type.String({ maxLength: 200 }),
+    limit: Type.Optional(Type.Integer({ default: 30, minimum: 1, maximum: 100 })),
+    offset: Type.Optional(Type.Integer({ default: 0, minimum: 0, maximum: 10_000 })),
+  },
   { additionalProperties: false },
 );

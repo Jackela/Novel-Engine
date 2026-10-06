@@ -228,12 +228,19 @@ describe("proposal guards", () => {
       expect(job.result.proposal_markdown).toBe("");
       expect(job.events.map((event: { status: string }) => event.status)).toEqual(["failed"]);
 
-      // No revision, and no usage was accounted for a failed generation.
+      // No revision; DR-028 keeps the failed generation visible as one
+      // zero-token unreported row instead of dropping it silently.
       expect(await listRevisions(app, jar, project.id, document.id)).toHaveLength(1);
       const db = app.studioDb?.db;
       if (db === undefined) throw new Error("expected studio database handle");
       const usage = db.select().from(usageEvents).all();
-      expect(usage).toHaveLength(0);
+      expect(usage).toHaveLength(1);
+      expect(usage[0]).toMatchObject({
+        outcome: "failed",
+        token_source: "unreported",
+        prompt_tokens: 0,
+        completion_tokens: 0,
+      });
     } finally {
       await app.close();
     }
@@ -269,7 +276,7 @@ describe("proposal guards", () => {
     }
   });
 
-  it("fails a non-string structured proposal before accounting", async () => {
+  it("fails a non-string structured proposal without token accounting", async () => {
     const capture = capturingFactory({
       markdown: validProposalProse,
       chapterMarkdown: null,
@@ -292,7 +299,15 @@ describe("proposal guards", () => {
       if (database === undefined) {
         throw new Error("Studio test app must expose its database.");
       }
-      expect(database.select().from(usageEvents).all()).toHaveLength(0);
+      // DR-028: the failed attempt lands one zero-token unreported row.
+      expect(database.select().from(usageEvents).all()).toMatchObject([
+        {
+          outcome: "failed",
+          token_source: "unreported",
+          prompt_tokens: 0,
+          completion_tokens: 0,
+        },
+      ]);
     } finally {
       await app.close();
     }

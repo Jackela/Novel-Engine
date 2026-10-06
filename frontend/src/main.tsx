@@ -3,6 +3,7 @@ import ReactDOM from "react-dom/client";
 import { RouterProvider } from "react-router-dom";
 import "@fontsource-variable/ibm-plex-sans";
 
+import { AppCrashFallback } from "@/app/AppCrashFallback";
 import { router } from "@/app/router";
 import "@/index.css";
 
@@ -30,17 +31,7 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
       return this.props.children;
     }
 
-    return (
-      <div className="entry">
-        <div className="entry__panel">
-          <h1>Something went wrong</h1>
-          <p>
-            The application encountered an unexpected error. Please refresh the page to try again.
-          </p>
-          {this.state.error ? <p className="ui-form-error">{this.state.error.message}</p> : null}
-        </div>
-      </div>
-    );
+    return <AppCrashFallback detail={this.state.error ? this.state.error.message : null} />;
   }
 }
 

@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { DocumentStorePart } from "../../src/contexts/studio/infrastructure/document_store_part.js";
 
 import {
+  anonymousCall,
   buildStudioApp,
   call,
   getProject,
@@ -253,6 +254,76 @@ describe("revision chain", () => {
       });
       expect(response.statusCode).toBe(404);
       expect(response.json().error.code).toBe("NOT_FOUND");
+    } finally {
+      await app.close();
+    }
+  });
+
+  // DR-011 single-revision content read: a scoped, read-only body that never
+  // appends to the chain, and closes foreign or missing ids with 404.
+  it("previews an ancestor revision body without creating a revision", async () => {
+    const { app } = await buildStudioApp(monotonicClock());
+    try {
+      const jar = await ownerJar(app);
+      const project = await seedProject(app, jar, "Ancestor preview");
+      const document = await seedDocument(app, jar, project.id, {
+        kind: "chapter",
+        title: "Previewed",
+        content_markdown: "ancestor body",
+      });
+      const ancestorId = document.current_revision_id;
+      const current = await putDocument(app, jar, project.id, document.id, {
+        content_markdown: "current body",
+        base_revision_id: ancestorId,
+      });
+      expect(current.statusCode, current.body).toBe(200);
+      const before = await listRevisions(app, jar, project.id, document.id);
+
+      const preview = await call(
+        app,
+        jar,
+        "GET",
+        `/api/projects/${project.id}/documents/${document.id}/revisions/${ancestorId}`,
+      );
+      expect(preview.statusCode, preview.body).toBe(200);
+      // The full immutable body with the summary invariants, no more.
+      expect(preview.json()).toMatchObject({
+        id: ancestorId,
+        document_id: document.id,
+        parent_revision_id: null,
+        revision_number: 1,
+        content_markdown: "ancestor body",
+        metadata: {},
+        source: "author",
+        word_count: 2,
+        created_at: expect.any(String),
+      });
+      // Read-only: the preview appended nothing to the chain.
+      expect(await listRevisions(app, jar, project.id, document.id)).toEqual(before);
+    } finally {
+      await app.close();
+    }
+  });
+
+  it("closes missing, cross-document, and anonymous revision reads", async () => {
+    const { app } = await buildStudioApp(monotonicClock());
+    try {
+      const jar = await ownerJar(app);
+      const project = await seedProject(app, jar, "Guarded preview");
+      const document = (await getProject(app, jar, project.id)).documents[0];
+      if (document === undefined) throw new Error("expected seeded document");
+      const other = await seedDocument(app, jar, project.id, { kind: "note", title: "Other" });
+      const otherRevisionId = (await listRevisions(app, jar, project.id, other.id))[0]?.id;
+      if (otherRevisionId === undefined) throw new Error("expected other revision");
+      const url = (revisionId: string) =>
+        `/api/projects/${project.id}/documents/${document.id}/revisions/${revisionId}`;
+
+      expect((await call(app, jar, "GET", url("no-such-revision"))).statusCode).toBe(404);
+      const crossDocument = await call(app, jar, "GET", url(otherRevisionId));
+      expect(crossDocument.statusCode, crossDocument.body).toBe(404);
+      expect(crossDocument.json().error.code).toBe("NOT_FOUND");
+      const anonymous = await anonymousCall(app, "GET", url(document.current_revision_id));
+      expect(anonymous.statusCode, anonymous.body).toBe(401);
     } finally {
       await app.close();
     }

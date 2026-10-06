@@ -2,6 +2,7 @@ import type { Dispatch, SetStateAction } from "react";
 import { useCallback, useLayoutEffect, useRef } from "react";
 import { translateActive } from "@/app/i18n/translate";
 import { ProposalOutcomeUnknownError, streamProposal } from "@/app/proposalStream";
+import { clearGenerateAttempt, getOrCreateGenerateAttemptKey } from "@/app/retryAttemptRegistry";
 import type { Project, StudioDocument } from "@/app/types/studio";
 import { AcceptedProposalRefreshError, acceptProposalAndRefresh } from "./acceptProposalAndRefresh";
 import { toErrorMessage } from "./toErrorMessage";
@@ -12,6 +13,16 @@ import type { WholeBookChapter } from "./wholeBookPlan";
 interface CommittedChapters {
   readonly projectId: string;
   readonly documentIds: Set<string>;
+}
+
+/** One run's authorization for replacing chapters that already hold text. */
+export interface WholeBookRunScope {
+  /**
+   * Draft and accept chapters whose current text was not accepted from AI.
+   * Only an explicit author confirmation sets this; absent, the run drafts
+   * just the empty chapters the plan marked safe (#DR-007).
+   */
+  readonly replaceOccupied?: boolean;
 }
 
 interface UseWholeBookChapterRunArgs {
@@ -29,13 +40,18 @@ interface UseWholeBookChapterRunArgs {
 
 /**
  * Executor of the frontend-driven whole-book generation loop (#318): over the
- * existing streaming endpoint it drafts a `generate` proposal per planned
+ * existing streaming endpoint it drafts a `generate` proposal per authorized
  * chapter, auto-accepts it, and refreshes project/jobs state exactly like the
- * manual copilot accept flow. Stop ends client observation and prevents
- * automatic acceptance or continuation; an unobserved terminal outcome enters
- * the shared jobs-audit gate. An acceptance that already started remains
- * atomic and is counted if it completes. Resume recomputes the persisted plan
- * from the first chapter whose current revision is not `ai-accepted`.
+ * manual copilot accept flow. Authorization is the run scope: without an
+ * explicit confirmation, chapters whose current text was not accepted from AI
+ * are dropped before anything is drafted, so a hand-written/imported/restored
+ * chapter is never silently regenerated (#DR-007). Stop ends client
+ * observation and prevents automatic acceptance or continuation; an unobserved
+ * terminal outcome enters the shared jobs-audit gate. An acceptance that
+ * already started remains atomic and is counted if it completes. Resume
+ * recomputes the persisted plan from the first chapter whose current revision
+ * is not `ai-accepted`, and demands a fresh confirmation for any occupied
+ * chapter that a stopped run left unreplaced.
  */
 export function useWholeBookChapterRun({
   projectId,
@@ -58,7 +74,7 @@ export function useWholeBookChapterRun({
   }, [projectId]);
 
   const start = useCallback(
-    (plan: WholeBookChapter[]): Promise<void> => {
+    (plan: readonly WholeBookChapter[], scope: WholeBookRunScope = {}): Promise<void> => {
       const committedChapters = committedChaptersRef.current;
       if (!isOwnerProject() || committedChapters.projectId !== projectId) {
         return Promise.resolve();
@@ -69,7 +85,12 @@ export function useWholeBookChapterRun({
       const auditEpoch = proposalAudit.epoch();
       proposalAudit.clear();
       const currentRun = beginRun(auditEpoch);
-      const remainingPlan = plan.filter(
+      // The confirmed scope is the only path that drafts a chapter holding
+      // text the author has not accepted from AI (#DR-007).
+      const authorized = scope.replaceOccupied
+        ? plan
+        : plan.filter((chapter) => !chapter.requiresConfirmation);
+      const remainingPlan = authorized.filter(
         (chapter) => !committedChapters.documentIds.has(chapter.id),
       );
       publishPhase(currentRun, { kind: "running", current: 1, total: remainingPlan.length });
@@ -77,6 +98,8 @@ export function useWholeBookChapterRun({
       const run = async (): Promise<void> => {
         let generated = 0;
         let failingTitle = remainingPlan[0]?.title ?? "";
+        let failingChapterId: string | null = null;
+        let failingChapterKey: string | null = null;
         try {
           for (let index = 0; index < remainingPlan.length; index += 1) {
             if (
@@ -89,6 +112,11 @@ export function useWholeBookChapterRun({
             }
             const chapter = remainingPlan[index];
             failingTitle = chapter.title;
+            // DR-027: one key per chapter generation; a resumed run reuses it,
+            // so an unknown outcome replays the durable job instead of billing
+            // a second one.
+            failingChapterId = chapter.id;
+            failingChapterKey = getOrCreateGenerateAttemptKey(projectId, chapter.id, "generate");
             publishPhase(currentRun, {
               kind: "running",
               current: index + 1,
@@ -109,8 +137,13 @@ export function useWholeBookChapterRun({
               instruction: "",
               provider,
               signal: proposalController.signal,
+              ...(failingChapterKey === null ? {} : { idempotencyKey: failingChapterKey }),
               onDelta: () => undefined,
             });
+            if (failingChapterKey !== null) {
+              clearGenerateAttempt(projectId, chapter.id, "generate", failingChapterKey);
+              failingChapterKey = null;
+            }
             if (currentRun.proposalController === proposalController) {
               currentRun.proposalController = null;
             }
@@ -171,6 +204,11 @@ export function useWholeBookChapterRun({
           if (currentRun.stopped && !(reason instanceof AcceptedProposalRefreshError)) {
             publishPhase(currentRun, { kind: "done", generated, stoppedEarly: true });
           } else {
+            // A definitively failed generation is spent; a stopped or unknown
+            // one keeps its key so a resume replays the durable job (DR-027).
+            if (failingChapterKey !== null && failingChapterId !== null) {
+              clearGenerateAttempt(projectId, failingChapterId, "generate", failingChapterKey);
+            }
             publishPhase(currentRun, {
               kind: "failed",
               generated,

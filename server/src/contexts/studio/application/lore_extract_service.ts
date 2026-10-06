@@ -1,5 +1,4 @@
 import {
-  isSafeUsageToken,
   type TextGenerationProvider,
   TextGenerationProviderError,
   type TextGenerationProviderFactory,
@@ -8,7 +7,7 @@ import {
 } from "../../../contexts/ai/application/ports/text_generation.js";
 import type { Principal } from "../../../shared/application/ports/auth.js";
 import { InvalidOperationError } from "../../../shared/domain/exceptions.js";
-import { revisionWordCount } from "../domain/revision_word_count.js";
+import { resolvedTokenUsage, rowTokenSource, unreportedAttemptUsage } from "./attempt_usage.js";
 import { failedJobInput } from "./failed_job_input.js";
 import {
   assertLoreExtractSegmentCapacity,
@@ -18,7 +17,7 @@ import {
 } from "./lore_extract_task.js";
 import { dumpJson, jobPayload, safeLoadJson } from "./payloads.js";
 import type { StudioJobLedgerStore } from "./ports/job_ledger_store.js";
-import type { JobRecord } from "./ports/job_records.js";
+import type { AttemptUsageInput, JobRecord } from "./ports/job_records.js";
 import type { ProjectScope } from "./ports/studio_store.js";
 import { scopeForPrincipal } from "./ports/studio_store.js";
 import { admitTextProvider } from "./proposal_admission.js";
@@ -49,11 +48,6 @@ export interface LoreExtractRetryRequest {
   readonly now: () => Date;
 }
 
-/** Invalid or absent provider usage falls back to the shared exact word count. */
-function resolvedTokenCount(reported: number | null, text: string): number {
-  return isSafeUsageToken(reported) ? reported : revisionWordCount(text);
-}
-
 /** Recover the stored segment of a claimed retry; a lost context refuses the retry. */
 export function recoverLoreExtractSegment(requestJson: string): string {
   const stored = safeLoadJson(requestJson);
@@ -69,6 +63,33 @@ interface ExtractionOutcome {
   readonly model: string;
   readonly promptTokens: number | null;
   readonly completionTokens: number | null;
+}
+
+/**
+ * The labelled usage row of one completed extraction (DR-028): reported counts
+ * are written as `provider`, an absent report falls back to the shared word
+ * count and is written as `estimated` — never as an unlabelled number.
+ */
+function completedExtractionUsage(
+  outcome: ExtractionOutcome,
+  evidence: {
+    readonly provider: string;
+    readonly promptText: string;
+    readonly completionText: string;
+    readonly requestEvidenceJson: string;
+  },
+): AttemptUsageInput {
+  const prompt = resolvedTokenUsage(outcome.promptTokens, evidence.promptText);
+  const completion = resolvedTokenUsage(outcome.completionTokens, evidence.completionText);
+  return {
+    provider: evidence.provider,
+    model: outcome.model,
+    promptTokens: prompt.tokens,
+    completionTokens: completion.tokens,
+    outcome: "completed",
+    tokenSource: rowTokenSource(prompt.source, completion.source),
+    requestEvidenceJson: evidence.requestEvidenceJson,
+  };
 }
 
 /** Run one admitted segment through the provider; the caller owns the landing. */
@@ -105,9 +126,9 @@ export class LoreExtractService {
   /**
    * Extract one wizard segment as its own synchronous `lore-extract` Job:
    * admission refusals (segment cap, assembled prompt bytes) throw before any
-   * job row or provider exists; a provider failure lands one failed job; a
-   * completed provider request lands one completed job plus exactly one
-   * usage event, atomically.
+   * job row or provider exists; a provider failure lands one failed job plus
+   * its zero-token `unreported` usage row; a completed provider request lands
+   * one completed job plus one labelled usage row, atomically.
    */
   async extractSegment(
     principal: Principal,
@@ -120,6 +141,7 @@ export class LoreExtractService {
     const codePoints = assertLoreExtractSegmentCapacity(input.segment);
     const task = buildLoreExtractTask(input.segment);
     const requestJson = dumpJson({ segment: input.segment });
+    const requestEvidenceJson = dumpJson({ operation: "extract", segment_code_points: codePoints });
     try {
       const outcome = await generateLoreCandidates(
         this.providerFactory,
@@ -129,7 +151,7 @@ export class LoreExtractService {
       );
       const resultJson = dumpJson({ candidates: outcome.candidates });
       return jobPayload(
-        this.jobs.recordCompletedJobWithUsage(scope, {
+        this.jobs.recordJobWithUsage(scope, {
           job: {
             projectId,
             documentId: null,
@@ -144,16 +166,12 @@ export class LoreExtractService {
             eventDetailsJson: dumpJson({ candidates_count: outcome.candidates.length }),
             now: this.now(),
           },
-          usage: {
+          usage: completedExtractionUsage(outcome, {
             provider: providerName,
-            model: outcome.model,
-            promptTokens: resolvedTokenCount(outcome.promptTokens, input.segment),
-            completionTokens: resolvedTokenCount(outcome.completionTokens, resultJson),
-            requestEvidenceJson: dumpJson({
-              operation: "extract",
-              segment_code_points: codePoints,
-            }),
-          },
+            promptText: input.segment,
+            completionText: resultJson,
+            requestEvidenceJson,
+          }),
         }),
       );
     } catch (error) {
@@ -161,9 +179,8 @@ export class LoreExtractService {
         throw error;
       }
       return jobPayload(
-        this.jobs.addJob(
-          scope,
-          failedJobInput({
+        this.jobs.recordJobWithUsage(scope, {
+          job: failedJobInput({
             projectId,
             documentId: null,
             kind: "lore-extract",
@@ -175,7 +192,8 @@ export class LoreExtractService {
             error: error.message,
             now: this.now(),
           }),
-        ),
+          usage: unreportedAttemptUsage({ provider: providerName, requestEvidenceJson }),
+        }),
       );
     }
   }
@@ -184,8 +202,8 @@ export class LoreExtractService {
    * Retry of a claimed lore-extract job: the stored segment is recovered and
    * re-admitted (segment cap, assembled prompt bytes) before the provider
    * runs, and the landing transitions the reserved retry row plus exactly
-   * one usage event, atomically. A lost stored request context refuses the
-   * retry; provider failures propagate to the retry executor's failed-job
+   * one labelled usage row, atomically. A lost stored request context refuses
+   * the retry; provider failures propagate to the retry executor's failed-job
    * landing, exactly like proposal retries.
    */
   async retry(request: LoreExtractRetryRequest): Promise<JobRecord> {
@@ -210,13 +228,15 @@ export class LoreExtractService {
         eventDetailsJson: dumpJson({ candidates_count: outcome.candidates.length }),
         now: request.now(),
       },
-      usage: {
+      usage: completedExtractionUsage(outcome, {
         provider: providerName,
-        model: outcome.model,
-        promptTokens: resolvedTokenCount(outcome.promptTokens, segment),
-        completionTokens: resolvedTokenCount(outcome.completionTokens, resultJson),
-        requestEvidenceJson: dumpJson({ operation: "extract", segment_code_points: codePoints }),
-      },
+        promptText: segment,
+        completionText: resultJson,
+        requestEvidenceJson: dumpJson({
+          operation: "extract",
+          segment_code_points: codePoints,
+        }),
+      }),
     });
   }
 }

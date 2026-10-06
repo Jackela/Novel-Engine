@@ -1200,6 +1200,8 @@ export interface paths {
             requestBody: {
                 content: {
                     "application/json": {
+                        /** @default false */
+                        autosave?: boolean;
                         base_revision_id: string | null;
                         content_markdown: string;
                         metadata?: {
@@ -1429,7 +1431,9 @@ export interface paths {
         post: {
             parameters: {
                 query?: never;
-                header?: never;
+                header?: {
+                    "idempotency-key"?: string;
+                };
                 path: {
                     projectId: string;
                     documentId: string;
@@ -1551,6 +1555,12 @@ export interface paths {
                         } | {
                             error: {
                                 /** @enum {string} */
+                                code: "PROVIDER_NOT_CONFIGURED";
+                                message: string;
+                            };
+                        } | {
+                            error: {
+                                /** @enum {string} */
                                 code: "GENERATION_CAPACITY_EXCEEDED";
                                 details: {
                                     /** @enum {integer} */
@@ -1642,7 +1652,9 @@ export interface paths {
         post: {
             parameters: {
                 query?: never;
-                header?: never;
+                header?: {
+                    "idempotency-key"?: string;
+                };
                 path: {
                     projectId: string;
                     documentId: string;
@@ -1731,6 +1743,12 @@ export interface paths {
                             error: {
                                 /** @enum {string} */
                                 code: "INVALID_OPERATION";
+                                message: string;
+                            };
+                        } | {
+                            error: {
+                                /** @enum {string} */
+                                code: "PROVIDER_NOT_CONFIGURED";
                                 message: string;
                             };
                         } | {
@@ -1987,6 +2005,14 @@ export interface paths {
                                 content: string;
                                 title: string;
                             } | null;
+                            candidates: {
+                                title: string;
+                            }[];
+                            outline: {
+                                document_id: string;
+                                outline_count: number;
+                                title: string;
+                            } | null;
                         };
                     };
                 };
@@ -2046,6 +2072,14 @@ export interface paths {
                         "application/json": {
                             beat: {
                                 content: string;
+                                title: string;
+                            } | null;
+                            candidates: {
+                                title: string;
+                            }[];
+                            outline: {
+                                document_id: string;
+                                outline_count: number;
                                 title: string;
                             } | null;
                         };
@@ -2262,6 +2296,85 @@ export interface paths {
                 };
                 /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
                 422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/projects/{projectId}/documents/{documentId}/revisions/{revisionId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    projectId: string;
+                    documentId: string;
+                    revisionId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            content_markdown: string;
+                            created_at: string;
+                            document_id: string;
+                            id: string;
+                            metadata: {
+                                [key: string]: unknown;
+                            };
+                            parent_revision_id: string | null;
+                            revision_number: number;
+                            /** @enum {string} */
+                            source: "author" | "ai-accepted" | "restore";
+                            word_count: number;
+                        };
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -3877,6 +3990,8 @@ export interface paths {
             parameters: {
                 query: {
                     q: string;
+                    limit?: number;
+                    offset?: number;
                 };
                 header?: never;
                 path: {
@@ -3893,11 +4008,14 @@ export interface paths {
                     };
                     content: {
                         "application/json": {
+                            next_offset: number | null;
                             results: {
                                 document_id: string;
                                 excerpt: string;
+                                match_term: string;
                                 title: string;
                             }[];
+                            total: number;
                         };
                     };
                 };
@@ -3956,7 +4074,9 @@ export interface paths {
         };
         get: {
             parameters: {
-                query?: never;
+                query?: {
+                    tz_offset_minutes?: number;
+                };
                 header?: never;
                 path: {
                     projectId: string;
@@ -3986,23 +4106,32 @@ export interface paths {
                             }[];
                             project_id: string;
                             streak_days: number;
+                            tz_offset_minutes: number;
                             usage: {
                                 completion_tokens: number;
-                                /** @description The last 30 UTC days (today included), zero-filled: one bucket per day, oldest first (#384). */
+                                /** @description The last 30 UTC days (today included), zero-filled: one bucket per day, oldest first, completed attempts only (#384, DR-028). */
                                 daily?: {
                                     completion_tokens: number;
                                     date: string;
                                     prompt_tokens: number;
                                     request_count: number;
                                 }[];
+                                /** @description Completed attempts whose token counts include a word-count estimate because the provider reported no usage (DR-028). */
+                                estimated_requests: number;
+                                /** @description Provider attempts that failed without reported usage; they carry zero tokens and never enter the token totals (DR-028). */
+                                failed_attempt_count: number;
                                 per_model: {
                                     completion_tokens: number;
+                                    estimated_requests: number;
+                                    failed_attempts: number;
                                     model: string;
                                     prompt_tokens: number;
+                                    /** @description Completed provider attempts of this model (DR-028). */
                                     requests: number;
                                 }[];
                                 project_id: string;
                                 prompt_tokens: number;
+                                /** @description Completed provider attempts: the rows every token total folds. Failed attempts are counted separately (DR-028). */
                                 request_count: number;
                             };
                             weekly: {
@@ -4079,21 +4208,29 @@ export interface paths {
                     content: {
                         "application/json": {
                             completion_tokens: number;
-                            /** @description The last 30 UTC days (today included), zero-filled: one bucket per day, oldest first (#384). */
+                            /** @description The last 30 UTC days (today included), zero-filled: one bucket per day, oldest first, completed attempts only (#384, DR-028). */
                             daily?: {
                                 completion_tokens: number;
                                 date: string;
                                 prompt_tokens: number;
                                 request_count: number;
                             }[];
+                            /** @description Completed attempts whose token counts include a word-count estimate because the provider reported no usage (DR-028). */
+                            estimated_requests: number;
+                            /** @description Provider attempts that failed without reported usage; they carry zero tokens and never enter the token totals (DR-028). */
+                            failed_attempt_count: number;
                             per_model: {
                                 completion_tokens: number;
+                                estimated_requests: number;
+                                failed_attempts: number;
                                 model: string;
                                 prompt_tokens: number;
+                                /** @description Completed provider attempts of this model (DR-028). */
                                 requests: number;
                             }[];
                             project_id: string;
                             prompt_tokens: number;
+                            /** @description Completed provider attempts: the rows every token total folds. Failed attempts are counted separately (DR-028). */
                             request_count: number;
                         };
                     };

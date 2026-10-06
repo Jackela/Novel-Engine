@@ -1,7 +1,7 @@
 import type { Principal } from "../../../shared/application/ports/auth.js";
 import type { DocumentService } from "./document_service.js";
-import type { RevisionSummaryPayload } from "./payload_schemas/revision.js";
-import { revisionSummaryPayload, safeLoadJson } from "./payloads.js";
+import type { RevisionPayload, RevisionSummaryPayload } from "./payload_schemas/revision.js";
+import { revisionPayload, revisionSummaryPayload, safeLoadJson } from "./payloads.js";
 import type {
   DocumentStore,
   RevisionPageCursor,
@@ -44,6 +44,26 @@ export class RevisionService {
       revisions: page.revisions.map((revision) => revisionSummaryPayload(revision)),
       nextCursor: page.nextCursor,
     };
+  }
+
+  /**
+   * One immutable revision body, owner-scoped exactly like the history list
+   * and restore reads. A wrong-owner, wrong-document, or missing id throws
+   * `NotFoundError`; the read never writes.
+   */
+  documentRevision(
+    principal: Principal,
+    projectId: string,
+    documentId: string,
+    revisionId: string,
+  ): RevisionPayload {
+    const revision = this.store.findRevision(
+      scopeForPrincipal(principal),
+      projectId,
+      documentId,
+      revisionId,
+    );
+    return revisionPayload(revision);
   }
 
   replayRevision(

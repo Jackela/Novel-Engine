@@ -1,4 +1,4 @@
-import { and, asc, eq, isNull } from "drizzle-orm";
+import { asc, eq, gt, isNull } from "drizzle-orm";
 
 import type { StudioSqliteDatabase } from "../../../shared/infrastructure/db/connection.js";
 import {
@@ -11,38 +11,72 @@ import { documentRevisions } from "./db/schema.js";
 export const REVISION_WORD_COUNT_BATCH_SIZE = 256;
 
 interface RevisionWordCountReconciliationOptions {
-  readonly afterBatchCommitted?: ((completed: number) => void) | undefined;
+  /**
+   * Called after each batch that committed corrections, with the cumulative
+   * number of corrections; batches that found nothing stale stay silent.
+   */
+  readonly afterBatchCommitted?: ((corrected: number) => void) | undefined;
 }
 
-/** Populate upgrade sentinels in bounded, committed, restart-safe batches. */
+/**
+ * Repairs retained revision word counts before the server accepts traffic, in
+ * bounded, committed, restart-safe batches ordered by revision id. Every
+ * revision body is re-counted under the current shared definition and a row is
+ * updated only when its stored value differs, so the first upgrade fills NULL
+ * sentinels and any later counting-semantics change rewrites stale numbers
+ * through the same pass. The pass is idempotent — a consistent database
+ * commits zero writes — returns the number of rows corrected, and restarts
+ * from the first revision after an interruption, which is safe because
+ * repeated batches observe already-correct rows as no-ops. A failed batch
+ * write, an update that matches no row, or a revision still NULL after the
+ * pass raises RevisionWordCountInvariantError so startup fails before traffic
+ * instead of publishing placeholder or stale counts.
+ */
 export function reconcileRevisionWordCounts(
   db: StudioSqliteDatabase,
   options: RevisionWordCountReconciliationOptions = {},
 ): number {
-  let completed = 0;
+  let cursor = "";
+  let corrected = 0;
   while (true) {
+    // Revision ids are non-empty, so `id > ""` serves the first page and the
+    // keyset walk resumes strictly after the last id of the previous batch.
     const batch = db
-      .select({ id: documentRevisions.id, contentMarkdown: documentRevisions.contentMarkdown })
+      .select({
+        id: documentRevisions.id,
+        contentMarkdown: documentRevisions.contentMarkdown,
+        wordCount: documentRevisions.wordCount,
+      })
       .from(documentRevisions)
-      .where(isNull(documentRevisions.wordCount))
+      .where(gt(documentRevisions.id, cursor))
       .orderBy(asc(documentRevisions.id))
       .limit(REVISION_WORD_COUNT_BATCH_SIZE)
       .all();
-    if (batch.length === 0) break;
+    const last = batch[batch.length - 1];
+    if (last === undefined) break;
+    cursor = last.id;
+
+    const corrections = batch
+      .map((revision) => ({
+        id: revision.id,
+        wordCount: assertStoredRevisionWordCount(revisionWordCount(revision.contentMarkdown)),
+        stored: revision.wordCount,
+      }))
+      .filter((revision) => revision.stored !== revision.wordCount);
+    if (corrections.length === 0) continue;
 
     db.transaction((tx) => {
-      for (const revision of batch) {
-        const count = assertStoredRevisionWordCount(revisionWordCount(revision.contentMarkdown));
+      for (const correction of corrections) {
         const result = tx
           .update(documentRevisions)
-          .set({ wordCount: count })
-          .where(and(eq(documentRevisions.id, revision.id), isNull(documentRevisions.wordCount)))
+          .set({ wordCount: correction.wordCount })
+          .where(eq(documentRevisions.id, correction.id))
           .run();
         if (result.changes !== 1) throw new RevisionWordCountInvariantError();
       }
     });
-    completed += batch.length;
-    options.afterBatchCommitted?.(completed);
+    corrected += corrections.length;
+    options.afterBatchCommitted?.(corrected);
   }
 
   const unresolved = db
@@ -52,5 +86,5 @@ export function reconcileRevisionWordCounts(
     .limit(1)
     .get();
   if (unresolved !== undefined) throw new RevisionWordCountInvariantError();
-  return completed;
+  return corrected;
 }

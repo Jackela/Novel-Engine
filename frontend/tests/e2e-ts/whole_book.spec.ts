@@ -46,7 +46,7 @@ test.describe
       await studioContext.close();
     });
 
-    test("auto-accepts chapters in reading order and preserves them after a stop", async () => {
+    test("confirms, then auto-accepts chapters in reading order and preserves them after a stop", async () => {
       const projectId = await createProject(studio, "Whole Book Ledger");
       await typeChapter(studio, "# Chapter 1\n\nThe lighthouse keeper counted her debts aloud.");
       await studio.getByRole("button", { name: "Add Manuscript" }).click();
@@ -60,9 +60,18 @@ test.describe
       );
       await typeChapter(studio, "# Chapter 3\n\nEvery ledger closes on somebody eventually.");
 
-      // All three authored chapters lack an accepted AI revision, so the loop
-      // plans them in reading order (volume position, then chapter position).
+      // All three authored chapters lack an accepted AI revision and already
+      // hold text, so the loop plans them in reading order (volume position,
+      // then chapter position) and asks before it replaces anything
+      // (#DR-007): the dry-run list names every affected chapter.
       await studio.getByRole("button", { name: "Generate whole book" }).click();
+      const affected = studio.getByRole("list", {
+        name: "Chapters that would be replaced",
+      });
+      await expect(affected.getByRole("listitem")).toHaveCount(3);
+      await expect(affected).toContainText("Chapter 1");
+      await expect(affected).toContainText("Chapter 3");
+      await studio.getByRole("button", { name: "Replace the 3 chapters with AI drafts" }).click();
 
       // At least two chapters must be drafted AND auto-accepted through the
       // synchronous proposal surface: their revision source is the closed

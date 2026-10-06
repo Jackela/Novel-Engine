@@ -1,4 +1,5 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync, statSync } from "node:fs";
+import { join } from "node:path";
 import type { FastifyInstance } from "fastify";
 import { describe, expect, it } from "vitest";
 
@@ -220,7 +221,7 @@ describe("owner setup", () => {
     }
   });
 
-  it("allows the local development origin and origin-less bootstrap clients", async () => {
+  it("allows the local development origin and origin-less loopback bootstrap clients", async () => {
     const devOrigin = await buildAuthApp();
     try {
       const response = await devOrigin.app.inject({
@@ -250,6 +251,74 @@ describe("owner setup", () => {
       const response = await app.inject({ method: "GET", url: "/api/setup" });
       expect(response.statusCode).toBe(503);
       expect(response.json().error.code).toBe("SERVICE_UNAVAILABLE");
+    } finally {
+      await app.close();
+    }
+  });
+});
+
+const NON_LOOPBACK = "203.0.113.7";
+
+function postSetup(
+  app: FastifyInstance,
+  remoteAddress: string,
+  headers: Record<string, string> = {},
+): Promise<Awaited<ReturnType<FastifyInstance["inject"]>>> {
+  return app.inject({
+    method: "POST",
+    url: "/api/setup",
+    remoteAddress,
+    headers,
+    payload: { username: OWNER_USERNAME, password: OWNER_PASSWORD },
+  });
+}
+
+describe("first-boot setup token", () => {
+  it("rejects a non-loopback setup without the token and creates no owner", async () => {
+    const { app } = await buildAuthApp();
+    try {
+      const response = await postSetup(app, NON_LOOPBACK);
+      expect(response.statusCode).toBe(403);
+      expect(response.json().error.code).toBe("SETUP_TOKEN_INVALID");
+      expect(await ownerCount(app)).toBe(0);
+    } finally {
+      await app.close();
+    }
+  });
+
+  it("rejects a non-loopback setup with the wrong token", async () => {
+    const { app } = await buildAuthApp();
+    try {
+      const response = await postSetup(app, NON_LOOPBACK, { "x-setup-token": "not-the-token" });
+      expect(response.statusCode).toBe(403);
+      expect(response.json().error.code).toBe("SETUP_TOKEN_INVALID");
+      expect(await ownerCount(app)).toBe(0);
+    } finally {
+      await app.close();
+    }
+  });
+
+  it("accepts the token, removes the file, and still rejects a second setup", async () => {
+    const { app, directory } = await buildAuthApp();
+    try {
+      const tokenPath = join(directory, ".setup-token");
+      expect(statSync(tokenPath).mode & 0o777).toBe(0o600);
+      const token = readFileSync(tokenPath, "utf8").trim();
+      const created = await postSetup(app, NON_LOOPBACK, { "x-setup-token": token });
+      expect(created.statusCode).toBe(201);
+      expect(await ownerCount(app)).toBe(1);
+      expect(existsSync(tokenPath)).toBe(false);
+      const replay = await postSetup(app, NON_LOOPBACK, { "x-setup-token": token });
+      expect(replay.statusCode).toBe(403);
+    } finally {
+      await app.close();
+    }
+  });
+
+  it("keeps loopback setup exempt from the token", async () => {
+    const { app } = await buildAuthApp();
+    try {
+      expect((await postSetup(app, "::1")).statusCode).toBe(201);
     } finally {
       await app.close();
     }

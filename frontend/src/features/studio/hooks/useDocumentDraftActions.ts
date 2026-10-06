@@ -4,6 +4,7 @@ import { useCallback } from "react";
 import { HttpError } from "@/app/api";
 import { translateActive } from "@/app/i18n/translate";
 import type { Project, SaveState, StudioDocument } from "@/app/types/studio";
+import { restoreDocumentRevision } from "./documentDraftPersistence";
 import type {
   DocumentDraftOwner,
   DraftSnapshot,
@@ -12,7 +13,6 @@ import type {
 import { toErrorMessage } from "./toErrorMessage";
 import { useAbortableDocumentRefresh } from "./useAbortableDocumentRefresh";
 import { useConflictActionGate } from "./useConflictActionGate";
-import { restoreDocumentRevision } from "./useDocumentDraftAutosave";
 
 interface DraftSnapshotRef {
   readonly current: DraftSnapshot;

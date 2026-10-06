@@ -188,4 +188,30 @@ describe("health surface", () => {
       await app.close();
     }
   });
+
+  it("keeps /health* anonymous in production without adding fingerprint fields", async () => {
+    const app = await buildApp({
+      logger: false,
+      environment: "production",
+      buildSha: "deadbeef",
+      healthProbe: healthyDatabaseProbe,
+    });
+
+    try {
+      const detailed = await app.inject({ method: "GET", url: "/health" });
+      const live = await app.inject({ method: "GET", url: "/health/live" });
+      const ready = await app.inject({ method: "GET", url: "/health/ready" });
+
+      expect(detailed.statusCode).toBe(200);
+      const body = detailed.json();
+      // Exactly the probe port surface: no runtime, build, environment, or
+      // timing fields beyond what HealthComponent carries.
+      expect(Object.keys(body).sort()).toEqual(["components", "overall_status", "timestamp"]);
+      expect(Object.keys(body.components.database).sort()).toEqual(["error", "message", "status"]);
+      expect(live.json()).toEqual({ status: "alive" });
+      expect(ready.json()).toEqual({ status: "ready" });
+    } finally {
+      await app.close();
+    }
+  });
 });

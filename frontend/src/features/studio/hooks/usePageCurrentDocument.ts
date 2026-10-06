@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef } from "react";
 import type { NavigateFunction } from "react-router-dom";
 
+import { useSessionExpiredRedirect } from "@/app/sessionExpiry";
 import type { DocumentSummary } from "@/app/types/studio";
 
 import type { ProjectShellReadAuthority } from "./projectShellReadAuthority";
@@ -26,7 +27,9 @@ export function usePageCurrentDocument(
   useEffect(() => {
     navigateRef.current = navigate;
   }, [navigate]);
-  const onSessionLoss = useCallback(() => navigateRef.current("/", { replace: true }), []);
+  // DR-020: the rejected document read returns to the entry page carrying the
+  // route of the document being read, and the reader comes back to it.
+  const onSessionLoss = useSessionExpiredRedirect();
   const onProjectMissing = useCallback(
     () => navigateRef.current("/projects", { replace: true }),
     [],

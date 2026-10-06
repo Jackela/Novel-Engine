@@ -1,17 +1,17 @@
 import type { NavigateFunction } from "react-router-dom";
 
 import type { StudioRouteState } from "../studioRouteState";
-import {
-  buildNavigatorRowCommands,
-  buildStudioInspectorModel,
-  buildStudioNavigatorProps,
-} from "./studioPageModelView";
+import { buildNavigatorCommands } from "./navigatorCommands";
+import { buildProposalUndo } from "./proposalUndo";
+import { buildStudioInspectorModel, buildStudioNavigatorProps } from "./studioPageModelView";
+import { useStudioSearchModel } from "./studioSearchModel";
 import { useDiagnosticsDownload } from "./useDiagnosticsDownload";
 import { useExportDownload } from "./useExportDownload";
 import { useLazyInspectorHistories } from "./useLazyInspectorHistories";
 import { usePageActiveDocument } from "./usePageActiveDocument";
 import { usePageDocumentDraft } from "./usePageDocumentDraft";
 import { reviewInspectorModel } from "./useReviewHistory";
+import { revisionPreviewScope } from "./useRevisionPreview";
 import { useStudioActions } from "./useStudioActions";
 import { useStudioErrorChannels } from "./useStudioErrorChannels";
 import { useStudioGeneration } from "./useStudioGeneration";
@@ -23,7 +23,6 @@ import {
 } from "./useStudioPageNavigation";
 import { useStudioProject } from "./useStudioProject";
 import { useStudioProviders } from "./useStudioProviders";
-import { useStudioSearch } from "./useStudioSearch";
 
 type Nav = NavigateFunction;
 
@@ -87,6 +86,8 @@ export function useStudioPageModel(projectId: string, route: StudioRouteState, n
     isConflictActionPending,
     loadLatest,
     retryOverwrite,
+    retrySave,
+    saveNow,
   } = usePageDocumentDraft({
     projectId,
     activeDocument,
@@ -123,9 +124,10 @@ export function useStudioPageModel(projectId: string, route: StudioRouteState, n
     loadJobs,
     onSelectInspector: navigation.onSelectInspector,
   });
-  const { search, setSearch, isSearching, searchResults, runSearch } = useStudioSearch(
+  const { reveal, model: searchModel } = useStudioSearchModel(
     projectId,
     projectErrors.publishers.search,
+    setActiveId,
   );
   const providers = useStudioProviders();
   const exportHistory = inspectorHistories.exportHistory;
@@ -199,11 +201,7 @@ export function useStudioPageModel(projectId: string, route: StudioRouteState, n
           project,
           section,
           activeId: activeSummary?.id ?? activeId,
-          search,
-          isSearching,
-          searchResults,
-          onSearchChange: setSearch,
-          onSearchSubmit: runSearch,
+          ...searchModel,
           onSelectDocument: setActiveId,
           createDocument,
           moveDocument,
@@ -211,9 +209,9 @@ export function useStudioPageModel(projectId: string, route: StudioRouteState, n
           isMovingDocument,
           creatingDocumentKind,
           movingDocument,
-          // #481: the Navigator's per-row delete/placement commands with
-          // their exact pending identities and inline error surfaces.
-          rowCommands: buildNavigatorRowCommands(studioActions),
+          // #481/DR-017: the Navigator's row and volume commands with their
+          // exact pending identities and inline error surfaces.
+          ...buildNavigatorCommands(studioActions),
           wholeBook: buildWholeBookNavigatorModel(project, wholeBookLoop),
         },
         navigate,
@@ -225,10 +223,15 @@ export function useStudioPageModel(projectId: string, route: StudioRouteState, n
         saveState,
         error: documentErrors.error,
         isConflictActionPending,
+        // DR-029: the locate intent reaches the editor only once its target
+        // document is the active one; other documents never consume it.
+        reveal: reveal !== null && reveal.documentId === activeSummary?.id ? reveal : null,
         onDraftChange: setDraft,
         onTitleChange: setTitleDraft,
         onLoadLatest: loadLatest,
         onRetryOverwrite: retryOverwrite,
+        onRetrySave: retrySave,
+        onSaveNow: saveNow,
         isLoadingDocument: currentDocument.isLoading,
         documentLoadError: currentDocument.error,
         onRetryDocument: currentDocument.retry,
@@ -247,7 +250,9 @@ export function useStudioPageModel(projectId: string, route: StudioRouteState, n
             documents: project.documents,
           },
           copilot,
+          proposalUndo: buildProposalUndo(copilot, onRestoreRevision),
           jobs: {
+            projectId,
             jobs,
             hasOlderJobs,
             onLoadJobs: () => loadJobs("refresh"),
@@ -269,6 +274,7 @@ export function useStudioPageModel(projectId: string, route: StudioRouteState, n
             isLoadingHistory,
             onLoadOlderRevisions: loadOlderRevisions,
             onRestoreRevision,
+            preview: revisionPreviewScope(projectId, activeDocument),
           },
           settings: {
             settingsForm,

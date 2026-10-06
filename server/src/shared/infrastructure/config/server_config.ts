@@ -3,11 +3,22 @@ import { dirname, join, resolve } from "node:path";
 
 import { DEFAULT_CORS_ORIGINS } from "../../domain/cors_contract.js";
 import { errorCode } from "../error_code.js";
+import { isTrustedProxyRange } from "../rate_limit/client_identity.js";
 import { locateWorkspaceRoot } from "../workspace_manifest.js";
 import { ConfigurationError } from "./configuration_error.js";
 import { parseEnvFile } from "./env_file.js";
+import { type LogLevel, logLevelFrom } from "./log_level.js";
 import { type LlmServerConfig, loadLlmServerConfig } from "./provider_config.js";
+import {
+  assertWorkflowCapacity,
+  DEFAULT_MAX_ACTIVE_WORKFLOWS,
+  DEFAULT_MAX_ACTIVE_WORKFLOWS_PER_PROJECT,
+  MAX_ACTIVE_WORKFLOWS,
+  MIN_ACTIVE_WORKFLOWS,
+} from "./workflow_capacity.js";
 
+/** Re-exported so the composition-root seam keeps one import location. */
+export { assertWorkflowCapacity, type WorkflowCapacityConfig } from "./workflow_capacity.js";
 export { ConfigurationError };
 
 /** The single converged prefix family; nothing outside it is read. */
@@ -18,13 +29,17 @@ const DEFAULT_HOST = "0.0.0.0";
 const DEFAULT_PORT = 8000;
 const DEFAULT_RATE_LIMIT = "5/minute";
 const RATE_LIMIT_PATTERN = /^([1-9]\d{0,5})\/minute$/;
-const MIN_ACTIVE_WORKFLOWS = 1;
-const MAX_ACTIVE_WORKFLOWS = 1024;
-const DEFAULT_MAX_ACTIVE_WORKFLOWS = 4;
-const DEFAULT_MAX_ACTIVE_WORKFLOWS_PER_PROJECT = 2;
 
 // Sentinel default assembled from harmless words so no credential-shaped literal ships in source.
 export const DEFAULT_SECRET_KEY = ["change-me", "in-production", "32-char-long"].join("-");
+
+/**
+ * Placeholder prefix refused by the production guard. `.env.example` ships a
+ * `change-me…` value, so without this rule a copied example file silently
+ * becomes the production session key; the guard makes it fail startup
+ * instead. Outside production the value stays usable for local development.
+ */
+const PLACEHOLDER_SECRET_PREFIX = "change-me";
 
 /** Minimum usable secret length; explicit values shorter than this fail validation. */
 const MIN_SECRET_LENGTH = 16;
@@ -32,6 +47,12 @@ const MIN_SECRET_LENGTH = 16;
 const ENVIRONMENTS = ["development", "testing", "staging", "production"] as const;
 
 type ServerEnvironment = (typeof ENVIRONMENTS)[number];
+
+/**
+ * The pino levels the server logger accepts (DR-041) live in `log_level.ts`;
+ * re-exported here so the config surface keeps one import location.
+ */
+export { type LogLevel, logLevelFrom } from "./log_level.js";
 
 export interface ServerConfig {
   readonly environment: ServerEnvironment;
@@ -45,17 +66,19 @@ export interface ServerConfig {
   readonly dataDirectory: string;
   readonly host: string;
   readonly port: number;
+  /** Pino level of the structured server logger; `info` when unset. */
+  readonly logLevel: LogLevel;
   readonly corsOrigins: string[];
+  /**
+   * Concrete proxy addresses only. Network ranges are refused: a range that
+   * covers clients would let a client pose as a trusted proxy and rotate
+   * forged forwarding chains into fresh rate-limit buckets.
+   */
   readonly trustedProxies: string[];
   readonly authRateLimitPerMinute: number;
   readonly maxActiveWorkflows: number;
   readonly maxActiveWorkflowsPerProject: number;
   readonly llm: LlmServerConfig;
-}
-
-interface WorkflowCapacityConfig {
-  readonly applicationLimit: number;
-  readonly projectLimit: number;
 }
 
 export interface LoadServerConfigInput {
@@ -108,6 +131,7 @@ export function loadServerConfig(input: LoadServerConfigInput = {}): ServerConfi
     dataDirectory: dirname(databasePath),
     host: stringFrom(env, "API_HOST") ?? DEFAULT_HOST,
     port: portFrom(env),
+    logLevel: logLevelFromEnv(env),
     corsOrigins: listFrom(env, "SECURITY_CORS_ORIGINS") ?? DEFAULT_CORS_ORIGINS,
     trustedProxies: listFrom(env, "SECURITY_TRUSTED_PROXIES") ?? [],
     authRateLimitPerMinute: rateLimitFrom(env),
@@ -125,6 +149,7 @@ export function assertStartupGuards(config: ServerConfig): void {
     applicationLimit: config.maxActiveWorkflows,
     projectLimit: config.maxActiveWorkflowsPerProject,
   });
+  assertTrustedProxyAddresses(config.trustedProxies);
   if (config.environment !== "production" && config.environment !== "staging") {
     return;
   }
@@ -135,6 +160,12 @@ export function assertStartupGuards(config: ServerConfig): void {
   }
   if (config.environment !== "production") {
     return;
+  }
+  if (config.sessionSecret?.startsWith(PLACEHOLDER_SECRET_PREFIX) === true) {
+    throw new ConfigurationError(
+      "SECURITY_SECRET_KEY must not keep the change-me placeholder value in production; " +
+        "generate a unique random value (for example: openssl rand -hex 32)",
+    );
   }
   if (!config.databaseUrl.startsWith("sqlite:///")) {
     throw new ConfigurationError("DB_URL must use the self-hosted SQLite store (sqlite:///…)");
@@ -151,22 +182,18 @@ export function assertStartupGuards(config: ServerConfig): void {
   }
 }
 
-/** Validate the structured composition-root seam before persistence opens. */
-export function assertWorkflowCapacity(capacity: WorkflowCapacityConfig): void {
-  assertCapacityValue("application", capacity.applicationLimit);
-  assertCapacityValue("project", capacity.projectLimit);
-  if (capacity.projectLimit > capacity.applicationLimit) {
-    throw new ConfigurationError(
-      "Workflow capacity project limit must not exceed the application limit",
-    );
-  }
-}
-
-function assertCapacityValue(name: string, value: number): void {
-  if (!Number.isInteger(value) || value < MIN_ACTIVE_WORKFLOWS || value > MAX_ACTIVE_WORKFLOWS) {
-    throw new ConfigurationError(
-      `Workflow capacity ${name} limit must be an integer between ${MIN_ACTIVE_WORKFLOWS} and ${MAX_ACTIVE_WORKFLOWS}`,
-    );
+/**
+ * Trusted proxies must be concrete addresses: a network range can cover
+ * clients, and a client inside it would then be treated as a forwarding proxy
+ * (fresh rate-limit bucket per forged forwarding chain).
+ */
+function assertTrustedProxyAddresses(entries: readonly string[]): void {
+  for (const entry of entries) {
+    if (isTrustedProxyRange(entry)) {
+      throw new ConfigurationError(
+        `SECURITY_TRUSTED_PROXIES must list exact proxy addresses, not network ranges (got "${entry}")`,
+      );
+    }
   }
 }
 
@@ -268,6 +295,14 @@ function portFrom(env: Map<string, string>): number {
     );
   }
   return port;
+}
+
+/**
+ * The structured logger's level (DR-041). Case-insensitive; an unknown value
+ * is a configuration error so a typo cannot silently keep the default.
+ */
+function logLevelFromEnv(env: Map<string, string>): LogLevel {
+  return logLevelFrom(stringFrom(env, "LOG_LEVEL"));
 }
 
 function rateLimitFrom(env: Map<string, string>): number {

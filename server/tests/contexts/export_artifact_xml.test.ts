@@ -75,9 +75,13 @@ describe("export artifact XML sanitation", () => {
     );
     const xml = (
       await Promise.all(
-        ["OEBPS/chapter-001.xhtml", "OEBPS/nav.xhtml", "OEBPS/toc.ncx", "OEBPS/content.opf"].map(
-          (path) => zipText(zip, path),
-        ),
+        [
+          "OEBPS/chapter-001.xhtml",
+          "OEBPS/nav.xhtml",
+          "OEBPS/toc.ncx",
+          "OEBPS/content.opf",
+          "OEBPS/styles/reading.css",
+        ].map((path) => zipText(zip, path)),
       )
     ).join("");
     assertCleanXml(xml);

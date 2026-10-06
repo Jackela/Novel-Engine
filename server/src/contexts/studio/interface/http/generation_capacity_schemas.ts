@@ -8,6 +8,7 @@ import { exportCapacityEnvelope } from "./export_capacity_schemas.js";
 import type { JsonResponseSchema } from "./json_response_schema.js";
 import {
   invalidOperationEnvelope,
+  providerNotConfiguredEnvelope,
   validationErrorEnvelope,
 } from "./unprocessable_entity_schemas.js";
 
@@ -67,7 +68,12 @@ export const proposalGeneration422ResponseSchema: JsonResponseSchema = {
   content: {
     "application/json": {
       schema: {
-        oneOf: [invalidOperationEnvelope, generationCapacityEnvelope, validationErrorEnvelope],
+        oneOf: [
+          invalidOperationEnvelope,
+          providerNotConfiguredEnvelope,
+          generationCapacityEnvelope,
+          validationErrorEnvelope,
+        ],
       },
     },
   },

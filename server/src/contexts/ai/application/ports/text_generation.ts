@@ -28,6 +28,16 @@ export function isTextProviderName(value: string): value is TextProviderName {
   return (PROVIDER_NAMES as readonly string[]).includes(value);
 }
 
+/**
+ * The project writing languages the engine can drive generation in (DR-023).
+ * The vocabulary is closed so adapters never invent a language; a task that
+ * carries no language is English, which keeps every pre-existing task shape
+ * behaving exactly as before.
+ */
+export const WRITING_LANGUAGES = ["en", "zh"] as const;
+
+export type WritingLanguage = (typeof WRITING_LANGUAGES)[number];
+
 /** Runtime contract for exact, non-negative usage accounting. */
 export function isSafeUsageToken(value: unknown): value is number {
   return typeof value === "number" && Number.isSafeInteger(value) && value >= 0;
@@ -38,6 +48,21 @@ export class TextGenerationProviderError extends Error {
   constructor(message: string) {
     super(message);
     this.name = "TextGenerationProviderError";
+  }
+}
+
+/**
+ * Raised when the selected provider has no usable credential on the server
+ * (DR-022). It extends the provider failure family so every existing landing
+ * keeps treating it as a provider failure, while it stays distinguishable for
+ * surfaces that must answer with the dedicated `PROVIDER_NOT_CONFIGURED`
+ * envelope instead of a generic streaming-capability error. There is never a
+ * silent fallback to the mock.
+ */
+export class ProviderNotConfiguredError extends TextGenerationProviderError {
+  constructor(message: string) {
+    super(message);
+    this.name = "ProviderNotConfiguredError";
   }
 }
 
@@ -52,6 +77,12 @@ export class TextGenerationCancelledError extends Error {
 /** Structured generation task handed to provider adapters. */
 export interface TextGenerationTask {
   readonly step: string;
+  /**
+   * The project's writing language (DR-023). Callers holding project context
+   * set it from the captured project text; adapters treat an absent value as
+   * English, so a task built before this field existed keeps its behavior.
+   */
+  readonly language?: WritingLanguage | undefined;
   readonly systemPrompt: string;
   readonly userPrompt: string;
   readonly responseSchema: Record<string, unknown>;

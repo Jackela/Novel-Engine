@@ -1,4 +1,4 @@
-import { realpathSync } from "node:fs";
+import { realpathSync, renameSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { buildApp } from "../../src/apps/api/app.js";
@@ -23,6 +23,9 @@ const CHAPTERS: LegacyChapterInput[] = [
   { filename: "chapter-002.md", content: "# Two\n\nThe keeper looked away.\n" },
   { filename: "chapter-003.md", content: "# Three\n\nThe light returned.\n" },
 ];
+
+/** Titles inferred from each chapter's first heading (`# One` → `One`). */
+const CHAPTER_TITLES = ["One", "Two", "Three"];
 
 /** App whose data directory carries one importable legacy workspace. */
 async function buildImportApp() {
@@ -73,7 +76,7 @@ describe("legacy import surface", () => {
     }
   });
 
-  it("imports chapters as Chapter 1..N by filename order with no extra documents", async () => {
+  it("imports chapters with source titles in filename order and no extra documents", async () => {
     const { app, directory } = await buildImportApp();
     await ownerJar(app);
     // The CLI takes an explicit local path: unlike the web surface it is not
@@ -112,7 +115,7 @@ describe("legacy import surface", () => {
         if (summary === undefined) throw new Error("expected imported document summary");
         const document = await getDocument(reopened, jar, project.id, summary.id);
         expect(summary.kind).toBe("chapter");
-        expect(summary.title).toBe(`Chapter ${index + 1}`);
+        expect(summary.title).toBe(CHAPTER_TITLES[index]);
         expect(summary.position).toBe(index + 1);
         expect(document.content_markdown).toBe(chapter.content);
         expect(document.metadata).toEqual({ legacy_filename: chapter.filename });
@@ -127,7 +130,7 @@ describe("legacy import surface", () => {
     }
   });
 
-  it("re-importing the same source returns the existing project without duplication", async () => {
+  it("re-importing a moved workspace returns the existing project without duplication", async () => {
     const { app, directory } = await buildImportApp();
     await ownerJar(app);
     const source = makeLegacyWorkspace(join(directory, "cli-source"), {
@@ -143,9 +146,13 @@ describe("legacy import surface", () => {
       source,
       owner: "owner",
     });
+    // The hash covers relative paths plus bytes, not the absolute path: the
+    // same unchanged workspace under a new name is still the same identity.
+    const moved = join(directory, "cli-source-moved");
+    renameSync(source, moved);
     const second = await runLegacyImportCommand({
       databasePath: join(directory, "novel-engine.sqlite3"),
-      source,
+      source: moved,
       owner: "owner",
     });
 
@@ -153,7 +160,7 @@ describe("legacy import surface", () => {
     expect(second.created).toBe(false);
     expect(second.project_id).toBe(first.project_id);
     expect(second.import_hash).toBe(first.import_hash);
-    expect(directoryFingerprint(source)).toBe(before);
+    expect(directoryFingerprint(moved)).toBe(before);
 
     const reopened = await reopenApp(directory);
     try {

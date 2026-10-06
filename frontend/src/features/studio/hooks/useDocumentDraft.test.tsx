@@ -159,6 +159,7 @@ describe("useDocumentDraft", () => {
       content_markdown: savedDocument.content_markdown,
       base_revision_id: activeDocument.current_revision_id,
       title: activeDocument.title,
+      autosave: true,
     });
     expect(api.saveDocument).toHaveBeenCalledTimes(1);
     expect(hook.result().hook.saveState).toBe("saved");
@@ -233,6 +234,34 @@ describe("useDocumentDraft", () => {
     expect(hook.result().project?.documents).toEqual([summarizeDocument(latestDocument)]);
   });
 
+  it("keeps the oversized draft and explains the 413 refusal (DR-048)", async () => {
+    // Given the server refuses the save body before writing anything.
+    vi.mocked(api.revisions).mockResolvedValue({
+      revisions: [initialRevision],
+      next_cursor: null,
+    });
+    vi.mocked(api.saveDocument).mockRejectedValue(
+      new HttpError("Request body is too large", 413, undefined, "FST_ERR_CTP_BODY_TOO_LARGE"),
+    );
+    const hook = renderDocumentDraftHook();
+    await flushMicrotasks();
+
+    // When an autosave carries a draft beyond the body budget.
+    act(() => {
+      hook.result().hook.setDraft("A chapter far beyond the body budget");
+    });
+    await advanceAutosave();
+
+    // Then the refusal is readable (split the chapter) and the draft survives
+    // in the editor instead of being dropped by the failed save.
+    expect(hook.result().hook.saveState).toBe("error");
+    expect(hook.result().error).toBe(
+      "This chapter is too large to save. Split it into smaller chapters — your draft stays in the editor.",
+    );
+    expect(hook.result().hook.draft).toBe("A chapter far beyond the body budget");
+    expect(hook.result().project?.documents).toEqual(initialProject.documents);
+  });
+
   it("loads the latest document and discards the local draft after a conflict", async () => {
     // Given
     vi.mocked(api.revisions).mockResolvedValue({
@@ -299,6 +328,7 @@ describe("useDocumentDraft", () => {
         content_markdown: "Conflicting draft",
         base_revision_id: latestDocument.current_revision_id,
         title: activeDocument.title,
+        autosave: true,
       },
     );
     expect(hook.result().hook.saveState).toBe("saved");

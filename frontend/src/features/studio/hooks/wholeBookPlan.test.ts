@@ -12,8 +12,8 @@ function fixture(input: Partial<Parameters<typeof chapter>[1]> & { id: string })
 
 const baseProject = project();
 
-describe("needsGeneration (#318 rule)", () => {
-  it("regenerates every revision source except the accepted AI one", () => {
+describe("needsGeneration (#318 candidate rule)", () => {
+  it("treats every revision source except the accepted AI one as a candidate", () => {
     expect(needsGeneration(fixture({ id: "a", revision_source: "author" }))).toBe(true);
     expect(needsGeneration(fixture({ id: "b", revision_source: "restore" }))).toBe(true);
     expect(needsGeneration(fixture({ id: "c", revision_source: "ai-accepted" }))).toBe(false);
@@ -80,9 +80,9 @@ describe("wholeBookPlan", () => {
         fixture({ id: "three", position: 2 }),
       ],
     };
-    expect(wholeBookPlan(project)).toEqual([
-      { id: "one", title: "Chapter one" },
-      { id: "three", title: "Chapter three" },
+    expect(wholeBookPlan(project).chapters).toEqual([
+      { id: "one", title: "Chapter one", requiresConfirmation: false },
+      { id: "three", title: "Chapter three", requiresConfirmation: false },
     ]);
   });
 
@@ -92,6 +92,29 @@ describe("wholeBookPlan", () => {
       volumes: [volume("volume-1", 0)],
       documents: [fixture({ id: "one", revision_source: "ai-accepted" })],
     };
-    expect(wholeBookPlan(project)).toEqual([]);
+    expect(wholeBookPlan(project).chapters).toEqual([]);
+    expect(wholeBookPlan(project).safe).toEqual([]);
+    expect(wholeBookPlan(project).confirmation).toEqual([]);
+  });
+});
+
+describe("wholeBookPlan split (#DR-007)", () => {
+  it("separates empty chapters from chapters holding non-AI text", () => {
+    const project = {
+      ...baseProject,
+      volumes: [volume("volume-1", 0)],
+      documents: [
+        fixture({ id: "empty", position: 0 }),
+        fixture({ id: "hand", position: 1, content_markdown: "Hand-written.", word_count: 2 }),
+        fixture({ id: "accepted", position: 2, revision_source: "ai-accepted", word_count: 9 }),
+      ],
+    };
+
+    expect(wholeBookPlan(project).safe).toEqual([
+      { id: "empty", title: "Chapter empty", requiresConfirmation: false },
+    ]);
+    expect(wholeBookPlan(project).confirmation).toEqual([
+      { id: "hand", title: "Chapter hand", requiresConfirmation: true },
+    ]);
   });
 });

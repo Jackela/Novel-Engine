@@ -68,9 +68,11 @@ docker compose cp novel-engine:/app/data/backups/. ./novel-engine-backups/
 容器删掉，所以要在 `down` 之前复制。尽可能把副本放到机器之外：一块移动
 硬盘，或任何私人云盘文件夹。只活在原件旁边的备份不是备份。
 
-工作室也在暗中保护你：**每一次启动**都会在触碰数据库之前先写一份带时间
-戳的安全备份（迁移和升级因此可逆——见 [upgrading](upgrading.md)）。旧备
-份永远不会被自动删除；请自己定期清理 `backups/` 目录。
+工作室也在暗中保护你：**确实有待执行的迁移**时，它会在改动数据库结构之前
+先写一份带时间戳的安全备份（迁移和升级因此可逆——见
+[upgrading](upgrading.md)）。每次校验通过的写入只保留工作室自己命名的
+`novel-engine-*.sqlite3.bak` 家族中最新三份，更旧的会被清理；你自行移走的
+副本永远不会被动。
 
 ## Restoring
 

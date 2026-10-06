@@ -2,12 +2,19 @@ import { act, useState } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { api } from "@/app/api";
-import type { LinkedBeat } from "@/app/apiContract";
+import type { ChapterBeatView, LinkedBeat } from "@/app/beatContract";
 import type { DocumentSummary, Project } from "@/app/types/studio";
 import { chapter, projectWith } from "@/test/factories";
 import { createMountHarness, deferred } from "@/test/harness";
 
 import { useStudioActions } from "./useStudioActions";
+
+/** DR-043: the link response now carries the catalog and outline authority too. */
+const beatResponse = (beat: LinkedBeat | null): ChapterBeatView => ({
+  beat,
+  candidates: [],
+  outline: null,
+});
 
 vi.mock("@/app/api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/app/api")>();
@@ -127,8 +134,8 @@ describe("useStudioActions narrow Lore/beat causal-authority matrix (#466)", () 
   });
 
   it("lets the newer beat intent win when same-revision responses settle in reverse", async () => {
-    const first = deferred<{ beat: LinkedBeat | null }>();
-    const second = deferred<{ beat: LinkedBeat | null }>();
+    const first = deferred<ChapterBeatView>();
+    const second = deferred<ChapterBeatView>();
     vi.mocked(api.linkChapterBeat)
       .mockReturnValueOnce(first.promise)
       .mockReturnValueOnce(second.promise);
@@ -142,13 +149,13 @@ describe("useStudioActions narrow Lore/beat causal-authority matrix (#466)", () 
     });
 
     await act(async () => {
-      second.resolve({ beat: { title: "The Harbor", content: "quiet pier" } });
+      second.resolve(beatResponse({ title: "The Harbor", content: "quiet pier" }));
       await secondLink;
     });
     expect(view.summaryOf(chapterOne.id)?.beat_ref).toBe("The Harbor");
 
     await act(async () => {
-      first.resolve({ beat: { title: "The Storm", content: "washed-up chart" } });
+      first.resolve(beatResponse({ title: "The Storm", content: "washed-up chart" }));
       await firstLink;
     });
 
@@ -164,7 +171,7 @@ describe("useStudioActions narrow Lore/beat causal-authority matrix (#466)", () 
     // The outline heading renames between persistence and resolution, so the
     // resolved display comes back null; stored-reference authority is still
     // the successful command's trimmed requested title.
-    const response = deferred<{ beat: LinkedBeat | null }>();
+    const response = deferred<ChapterBeatView>();
     vi.mocked(api.linkChapterBeat).mockReturnValue(response.promise);
     const view = renderActions();
     let linking!: Promise<void>;
@@ -176,7 +183,7 @@ describe("useStudioActions narrow Lore/beat causal-authority matrix (#466)", () 
     view.replaceProject({ ...project, documents: [chapterOne, character, renamedOutline] });
 
     await act(async () => {
-      response.resolve({ beat: null });
+      response.resolve(beatResponse(null));
       await linking;
     });
 
@@ -210,7 +217,7 @@ describe("useStudioActions narrow Lore/beat causal-authority matrix (#466)", () 
   });
 
   it("ignores an older-revision beat response after a newer revision owns the row", async () => {
-    const response = deferred<{ beat: LinkedBeat | null }>();
+    const response = deferred<ChapterBeatView>();
     vi.mocked(api.linkChapterBeat).mockReturnValue(response.promise);
     const view = renderActions();
     let linking!: Promise<void>;
@@ -227,7 +234,7 @@ describe("useStudioActions narrow Lore/beat causal-authority matrix (#466)", () 
     view.replaceProject({ ...project, documents: [newerChapter, character, outline] });
 
     await act(async () => {
-      response.resolve({ beat: { title: "The Storm", content: "washed-up chart" } });
+      response.resolve(beatResponse({ title: "The Storm", content: "washed-up chart" }));
       await linking;
     });
 
@@ -235,7 +242,7 @@ describe("useStudioActions narrow Lore/beat causal-authority matrix (#466)", () 
   });
 
   it("clears a linked beat with an explicit null command", async () => {
-    vi.mocked(api.linkChapterBeat).mockResolvedValue({ beat: null });
+    vi.mocked(api.linkChapterBeat).mockResolvedValue(beatResponse(null));
     const view = renderActions();
     view.replaceProject({
       ...project,

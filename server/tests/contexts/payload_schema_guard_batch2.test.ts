@@ -95,14 +95,22 @@ const CASES: Array<{
   {
     name: "chapterBeatView (linked) -> chapterBeatPayloadSchema",
     build: () =>
-      chapterBeatView(documentFixture(), [{ title: "beat-7", content: "Opening image." }]),
+      chapterBeatView(documentFixture(), {
+        beats: [{ title: "beat-7", content: "Opening image." }],
+        outline: { id: "outline-1", title: "Outline" },
+        outlineCount: 1,
+      }),
     schema: chapterBeatPayloadSchema as unknown as SchemaNode,
     // `beat` is an object-typed field: a number trips the type check itself.
     mistypedValue: 42,
   },
   {
     name: "chapterBeatView (unlinked null) -> chapterBeatPayloadSchema",
-    build: () => chapterBeatView({ ...documentFixture(), beatRef: null }, []),
+    build: () =>
+      chapterBeatView(
+        { ...documentFixture(), beatRef: null },
+        { beats: [], outline: null, outlineCount: 0 },
+      ),
     schema: chapterBeatPayloadSchema as unknown as SchemaNode,
     mistypedValue: 42,
   },

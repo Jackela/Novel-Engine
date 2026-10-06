@@ -3,10 +3,10 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
-import {
-  type TextGenerationProvider,
-  TextGenerationProviderError,
-  type TextGenerationProviderFactory,
+import type {
+  TextGenerationProvider,
+  TextGenerationProviderFactory,
+  TextGenerationTask,
 } from "../../src/contexts/ai/application/ports/text_generation.js";
 import { DocumentService } from "../../src/contexts/studio/application/document_service.js";
 import { reviewPageLimit } from "../../src/contexts/studio/application/ports/review_outcome_store.js";
@@ -95,14 +95,6 @@ function staticFactory(content: unknown): {
     return impl;
   };
   return { factory };
-}
-
-function failingFactory(): TextGenerationProviderFactory {
-  return () => ({
-    generateStructured: async () => {
-      throw new TextGenerationProviderError("review provider exploded");
-    },
-  });
 }
 
 describe("ReviewService (#316 provider-driven review)", () => {
@@ -200,30 +192,119 @@ describe("ReviewService (#316 provider-driven review)", () => {
     }
   });
 
-  it("propagates provider failures so the terminal job records them, without findings", async () => {
+  it("runs on the project's stored provider instead of the server default (DR-024)", async () => {
     const harness = await openHarness();
     try {
       const project = harness.projects.newProject(harness.principal, {
-        title: "Provider failure",
+        title: "Project provider review",
       }) as { id: string };
+      harness.projects.updateProject(harness.principal, project.id, {
+        settings: { provider: "dashscope" },
+      });
+      const requested: string[] = [];
+      const factory: TextGenerationProviderFactory = (provider) => {
+        requested.push(provider);
+        return {
+          generateStructured: async () => ({
+            step: "editorial_review",
+            provider,
+            model: "project-provider-model",
+            rawText: '{"findings":[]}',
+            content: { findings: [] },
+            promptTokens: null,
+            completionTokens: null,
+          }),
+        };
+      };
       const reviews = new ReviewService(harness.reviewOutcomes, {
         now: monotonicClock(),
-        providerFactory: failingFactory(),
+        provenance: { provider: "mock", model: "deterministic-story-v1" },
+        providerFactory: factory,
       });
 
-      const failure = await reviews.evaluateProject(harness.principal, project.id).then(
-        () => null,
-        (error: unknown) => error,
-      );
-      expect(failure).toBeInstanceOf(TextGenerationProviderError);
-      expect((failure as TextGenerationProviderError).message).toContain(
-        "review provider exploded",
-      );
-      expect(
-        reviews.collectProjectReviewSummaries(harness.principal, project.id, {
-          limit: reviewPageLimit(10),
-        }).reviews,
-      ).toEqual([]);
+      const evaluation = await reviews.evaluateProject(harness.principal, project.id);
+      expect(requested).toEqual(["dashscope"]);
+      expect(evaluation.provider).toBe("dashscope");
+      expect(reviews.providerNameForProject(harness.principal, project.id)).toBe("dashscope");
+    } finally {
+      await harness.cleanup();
+    }
+  });
+
+  it("keeps the server default when the stored provider is not in the catalog (DR-024)", async () => {
+    const harness = await openHarness();
+    try {
+      const project = harness.projects.newProject(harness.principal, {
+        title: "Unknown stored provider",
+      }) as { id: string };
+      harness.projects.updateProject(harness.principal, project.id, {
+        settings: { provider: "custom_relay" },
+      });
+      const requested: string[] = [];
+      const factory: TextGenerationProviderFactory = (provider) => {
+        requested.push(provider);
+        return {
+          generateStructured: async () => ({
+            step: "editorial_review",
+            provider,
+            model: "server-default-model",
+            rawText: '{"findings":[]}',
+            content: { findings: [] },
+            promptTokens: null,
+            completionTokens: null,
+          }),
+        };
+      };
+      const reviews = new ReviewService(harness.reviewOutcomes, {
+        now: monotonicClock(),
+        provenance: { provider: "mock", model: "deterministic-story-v1" },
+        providerFactory: factory,
+      });
+
+      const evaluation = await reviews.evaluateProject(harness.principal, project.id);
+      expect(requested).toEqual(["mock"]);
+      expect(evaluation.provider).toBe("mock");
+    } finally {
+      await harness.cleanup();
+    }
+  });
+
+  it("carries the manuscript writing language into the review task (DR-023)", async () => {
+    const harness = await openHarness();
+    try {
+      const project = harness.projects.newProject(harness.principal, {
+        title: "雪国纪事",
+      }) as { id: string; documents: Array<{ id: string; current_revision_id: string }> };
+      const seed = project.documents[0];
+      if (seed === undefined) {
+        throw new Error("Project creation must provide its seed document.");
+      }
+      harness.documents.storeDocument(harness.principal, project.id, seed.id, {
+        baseRevisionId: seed.current_revision_id,
+        contentMarkdown: "她推开门时，雨声灌满了整条走廊。灯在风里摇晃，像有人举着它犹豫不决。",
+      });
+      const tasks: TextGenerationTask[] = [];
+      const factory: TextGenerationProviderFactory = (provider) => ({
+        generateStructured: async (task) => {
+          tasks.push(task);
+          return {
+            step: "editorial_review",
+            provider,
+            model: "capture-model",
+            rawText: '{"findings":[]}',
+            content: { findings: [] },
+            promptTokens: null,
+            completionTokens: null,
+          };
+        },
+      });
+      const reviews = new ReviewService(harness.reviewOutcomes, {
+        now: monotonicClock(),
+        providerFactory: factory,
+      });
+
+      await reviews.evaluateProject(harness.principal, project.id);
+      expect(tasks[0]?.language).toBe("zh");
     } finally {
       await harness.cleanup();
     }
