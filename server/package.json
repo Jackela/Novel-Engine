@@ -38,7 +38,7 @@
     "better-sqlite3": "13.0.3",
     "docx": "^9.7.1",
     "drizzle-orm": "0.45.2",
-    "fastify": "^5.12.1",
+    "fastify": "^5.12.5",
     "jszip": "^3.10.1"
   },
   "devDependencies": {
