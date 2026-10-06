@@ -1,14 +1,20 @@
 import { type APIResponse, type BrowserContext, expect, type Page, test } from "@playwright/test";
 
-import { createProject, studioChapters, typeChapter } from "./content_acceptance_helpers";
+import { createProject, studioChapters, typeChapter } from "../content_acceptance_helpers";
 
 /**
  * #276 content-level acceptance, search and envelope half (split from
  * studio_content.spec.ts at the file-size gate): operator-safe FTS5
  * reduction plus the unified 409/CSRF envelopes against the TS stack. The
  * export-fidelity and project-deletion halves (and their serialized export
- * activity) stay in studio_content.spec.ts. The owner session is shared with
- * studio-ts.spec.ts, which owns the one-time setup on the same store.
+ * activity) stay in studio_content.spec.ts.
+ *
+ * Placement contract: this directory sorts after studio-ts.spec.ts under
+ * Playwright's localeCompare file order, so the owner-setup file always
+ * starts in the first worker wave even with two CI workers; a second
+ * studio_content_*.spec.ts file at the root would have pushed the setup
+ * file into the second wave while both content waiters starve (see #467
+ * PR notes).
  */
 
 interface EnvelopeBody {
