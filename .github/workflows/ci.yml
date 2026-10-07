@@ -54,7 +54,7 @@ jobs:
           pnpm --dir server type-check
           pnpm --dir server lint
           pnpm --dir server lint:types
-          pnpm --dir server test
+          pnpm --dir server test:coverage
       - name: Validate frontend
         working-directory: frontend
         run: |
@@ -62,7 +62,7 @@ jobs:
           pnpm lint:types
           pnpm format:check
           pnpm type-check
-          pnpm test:unit
+          pnpm test:coverage
           pnpm build
       - name: Check generated API types drift
         working-directory: frontend

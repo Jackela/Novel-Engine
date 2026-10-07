@@ -27,6 +27,14 @@ export default defineConfig({
       reporter: ["text", "html"],
       include: ["src/**/*.ts", "src/**/*.tsx"],
       exclude: ["src/main.tsx", "src/vite-env.d.ts"],
+      // Frozen floor of the 2026-10-07 baseline (91.26 / 84.76 / 90.91 / 93.9).
+      // A later drop fails `test:coverage`; raising the floor is a deliberate edit.
+      thresholds: {
+        statements: 91,
+        branches: 84,
+        functions: 90,
+        lines: 93,
+      },
     },
   },
 });

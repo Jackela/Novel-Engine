@@ -76,13 +76,12 @@ const FORBIDDEN_PATTERNS = [
     ]),
   },
 ];
-const ALLOW_RULES = [
-  {
-    pathRegex:
-      /^(?:src\/contexts\/ai\/infrastructure\/providers\/dashscope_text_generation_provider\.py|tests\/contexts\/ai\/infrastructure\/test_provider_factory\.py)$/,
-    lineRegex: /\/api\/v(?:1|2)(?:\/|$)/,
-  },
-];
+/**
+ * Line-level exemptions from the forbidden-pattern scan. Empty: the
+ * only historical exemptions named retired Python provider files, and
+ * a match in those paths is no longer a reason to keep a line.
+ */
+const ALLOW_RULES = [];
 const API_SURFACE_FORBIDDEN = [
   {
     name: "api_private_payload_surface",

@@ -4,9 +4,10 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 /**
- * Shared helpers for the Node twins of the Python QA gates
- * (scripts/qa/*.py). The twins live under server/ because the Python
- * tree — including scripts/ — is frozen by the python-freeze CI guard.
+ * Shared helpers for the Node QA gates under server/scripts/qa.
+ * `repoRoot` walks upward to the git root so a gate started from a
+ * package directory still scans the workspace. A missing `.git`
+ * throws instead of scanning an unrelated parent.
  */
 
 export function repoRoot() {
