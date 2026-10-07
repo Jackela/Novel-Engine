@@ -54,7 +54,8 @@ that run passed. Residual risk: none for assertion failures. A separate plain
 
 | Check | Status | Reason | Residual risk | Closure |
 |---|---|---|---|---|
-| CI on the candidate SHA | not run | Local record, written before push | Branch protection is unverified until GitHub reports the `validate` job | Green required checks on the pushed SHA |
+| CI on `6a7c198f` | failed | `validate` exited in React Doctor; `server` and `Analyze (javascript-typescript)` passed; `container` was skipped | The branch was not mergeable | The follow-up in this file |
+| CI on the React Doctor follow-up | not run | This section is written before that push | Branch protection is unverified on the new SHA | Green `validate`, `server`, `container`, and `Analyze (javascript-typescript)` on that SHA |
 | Human acceptance | not run | No owner exercised the UI in this session | Visual or keyboard judgment is not claimed | Owner review of the PR |
 | Plain `pnpm --dir server test` | not run | Covered by `test:coverage` on the same include set | None for test failures | Re-run the script name only if a reviewer asks |
 
@@ -69,3 +70,51 @@ that run passed. Residual risk: none for assertion failures. A separate plain
 - Draft-rescue behavior is in the archived OpenSpec change and `openspec/specs/novel-engine/spec.md`.
 - `frontend/src/**/*.tsx` except `*.test.tsx` has a 200-code-line cap with no exemption. Retired Python allow-rules and the python-freeze comments in the size gate and `common.mjs` are gone.
 - Coverage floors are in both Vitest configs. The `validate` job runs `test:coverage`. The separate `server` job still runs `pnpm --dir server test`.
+
+## CI on `6a7c198f`
+
+Branch `quality-iteration-2026-10-07`, pull request
+[#681](https://github.com/Jackela/Novel-Engine/pull/681). Run
+[37625413884](https://github.com/Jackela/Novel-Engine/actions/runs/37625413884)
+is the CI workflow. Run
+[37625413872](https://github.com/Jackela/Novel-Engine/actions/runs/37625413872)
+is CodeQL.
+
+| Check | Result |
+|---|---|
+| `validate` (job 112805794628) | FAIL, 10m7s. Step "Validate React static diagnostics" exited 1. The log does not print the diagnostic JSON, because `react-doctor` itself exits 1 under `bash -e` before the printer runs. |
+| `server` (job 112805794302) | PASS, 6m40s |
+| `Analyze (javascript-typescript)` (job 112805794350) | PASS, 1m41s |
+| `container` (job 112810224691) | skipped, because `validate` failed |
+| `CodeQL` | NEUTRAL. Not a failure and not a required success. |
+
+Local reproduction on that tree, `pnpm --dir frontend exec react-doctor --json`
+(react-doctor 0.9.12), reported `totalDiagnosticCount` 3, score 83:
+
+- error `no-ref-current-in-render` at `useRevisionPreview.ts` line 87 (`scopeEpochRef.current += 1` during render);
+- warning `no-many-boolean-props` at `StudioHistoryLoadOlder.tsx` line 29;
+- warning `rerender-memo-with-default-value` at `StudioWholeBookControl.tsx` line 33 (`occupiedChapters = []`).
+
+## React Doctor follow-up
+
+The follow-up drops the render-time scope epoch. A settled preview read
+publishes only while its row is still `loading` for the same request
+sequence, so a document switch that clears the cache cannot accept the
+abandoned response. The history footer's five flags are one
+`HistoryLoadOlderStatus` object. The empty occupied-chapter list is the
+module constant `EMPTY_OCCUPIED_CHAPTERS`. DOM, class names, i18n keys, and
+ARIA are unchanged. Existing test assertions were not edited.
+
+These commands ran on that uncommitted diff (macOS, Node `v24.19.0`, pnpm
+`11.6.0`), before the follow-up commit existed.
+
+| Surface | Command | Result |
+|---|---|---|
+| React Doctor | `pnpm --dir frontend exec react-doctor --json` | PASS, exit 0, `totalDiagnosticCount` 0, score 100 |
+| Affected unit tests | `pnpm --dir frontend exec vitest run` on `useRevisionPreview.test.tsx`, `StudioHistoryPanel.test.tsx`, `StudioHistoryPanel.preview.test.tsx`, `StudioWholeBookControl.confirm.test.tsx`, `StudioWholeBookControl.i18n.test.tsx` | PASS, 5 files / 23 tests |
+| Frontend static | `pnpm --dir frontend type-check && lint && lint:types && format:check` | PASS |
+| File size | `node server/scripts/qa/check_file_sizes.mjs` | PASS, 1021 files, component limit 200 |
+| Frontend coverage | `pnpm --dir frontend test:coverage` | PASS, 156 files / 860 tests. Statements 91.26, branches 84.75, functions 90.9, lines 93.9. Floors 91 / 84 / 90 / 93 still hold. |
+
+`act(...)` stderr in the coverage run is the same pre-existing noise as the
+earlier local full run. CI for the follow-up SHA is not closed by this table.
