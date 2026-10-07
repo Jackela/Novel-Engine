@@ -1,4 +1,5 @@
 import { ConfigurationError } from "./configuration_error.js";
+import { integerFrom, numberFrom, stringFrom } from "./env_values.js";
 
 const LLM_PROVIDERS = ["mock", "dashscope", "openai_compatible"] as const;
 const DASHSCOPE_TRANSPORT_MODES = [
@@ -63,7 +64,9 @@ export interface LlmServerConfig {
 /**
  * Parse lower-case merged environment values into the server-owned LLM
  * configuration seam. It has no application or provider implementation
- * dependencies, and errors deliberately name settings but never their values.
+ * dependencies, and errors deliberately name the setting instead of echoing
+ * it: only the numeric bounds quote the rejected value, never a string or
+ * credential-shaped setting.
  */
 export function loadLlmServerConfig(env: ReadonlyMap<string, string>): LlmServerConfig {
   return {
@@ -128,10 +131,6 @@ export function loadLlmServerConfig(env: ReadonlyMap<string, string>): LlmServer
   };
 }
 
-function stringFrom(env: ReadonlyMap<string, string>, key: string): string | undefined {
-  return env.get(key.toLowerCase());
-}
-
 function nonBlankStringFrom(env: ReadonlyMap<string, string>, key: string): string | undefined {
   const value = stringFrom(env, key)?.trim();
   return value === "" || value === undefined ? undefined : value;
@@ -160,36 +159,4 @@ function enumFrom<Values extends readonly string[]>(
     throw new ConfigurationError(`${key} must be one of ${values.join(", ")}`);
   }
   return value as Values[number];
-}
-
-function integerFrom(
-  env: ReadonlyMap<string, string>,
-  key: string,
-  fallback: number,
-  minimum: number,
-  maximum: number,
-): number {
-  const raw = stringFrom(env, key);
-  if (raw === undefined || raw.trim() === "") return fallback;
-  const value = Number(raw);
-  if (!Number.isInteger(value) || value < minimum || value > maximum) {
-    throw new ConfigurationError(`${key} must be an integer between ${minimum} and ${maximum}`);
-  }
-  return value;
-}
-
-function numberFrom(
-  env: ReadonlyMap<string, string>,
-  key: string,
-  fallback: number,
-  minimum: number,
-  maximum: number,
-): number {
-  const raw = stringFrom(env, key);
-  if (raw === undefined || raw.trim() === "") return fallback;
-  const value = Number(raw);
-  if (!Number.isFinite(value) || value < minimum || value > maximum) {
-    throw new ConfigurationError(`${key} must be a number between ${minimum} and ${maximum}`);
-  }
-  return value;
 }

@@ -66,12 +66,13 @@ module.exports = {
     {
       name: "ai-leaf-ports-only",
       comment:
-        "Audit gap closure: the ai context is a leaf provider module — everything outside its application layer (infrastructure, interface, and any domain or root-level files) is invisible from outside; application-layer imports are narrowed to ports/ by ai-ports-only. Exemption granularity (#535): only the named composition-root wiring files are exempt, mirroring the Python authority whose runtime wires create_text_generation_provider directly — api/app.ts (mounts provider routes), api/provider_runtime.ts and cli/legacy_import_command.ts (wire the provider factory). Every other src/apps file goes through ai application ports like the rest of the tree.",
+        "Audit gap closure: the ai context is a leaf provider module — everything outside its application layer (infrastructure, interface, and any domain or root-level files) is invisible from outside; application-layer imports are narrowed to ports/ by ai-ports-only. Exemption granularity (#535): only the named composition-root wiring files are exempt, mirroring the Python authority whose runtime wires create_text_generation_provider directly — api/app.ts (composition root), api/api_plugins_registration.ts (the API route registration phase it delegates to, which mounts the provider catalog), api/provider_runtime.ts and cli/legacy_import_command.ts (wire the provider factory). Every other src/apps file goes through ai application ports like the rest of the tree.",
       severity: "error",
       from: {
         pathNot: [
           "^src/contexts/ai/",
           "^src/apps/api/app\\.ts$",
+          "^src/apps/api/api_plugins_registration\\.ts$",
           "^src/apps/api/provider_runtime\\.ts$",
           "^src/apps/cli/legacy_import_command\\.ts$",
         ],

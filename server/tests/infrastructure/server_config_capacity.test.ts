@@ -73,4 +73,13 @@ describe("workflow capacity configuration", () => {
     expect(config.maxActiveWorkflows).toBe(1024);
     expect(config.maxActiveWorkflowsPerProject).toBe(1);
   });
+
+  it("reads a blank capacity value as unset, the shared env reader's blank convention", () => {
+    const config = load({
+      API_MAX_ACTIVE_WORKFLOWS: "",
+      API_MAX_ACTIVE_WORKFLOWS_PER_PROJECT: " ",
+    });
+    expect(config.maxActiveWorkflows).toBe(4);
+    expect(config.maxActiveWorkflowsPerProject).toBe(2);
+  });
 });

@@ -1,6 +1,7 @@
 import { OperationCapacityExceededError, OperationInFlightError } from "../domain/exceptions.js";
 
-interface InFlightTarget {
+/** The identity of one in-flight pipeline operation: its project, document, and operation. */
+export interface InFlightTarget {
   readonly projectId: string;
   readonly documentId: string | null;
   readonly operation: string;
@@ -148,5 +149,30 @@ export class InFlightOperationGuard {
         releaseOwned();
       },
     };
+  }
+}
+
+/**
+ * Run `work` under one acquired in-flight permit — the shared template for
+ * every synchronous pipeline operation that serializes identical targets
+ * (#305) and must release its permit on both exits. The permit is acquired
+ * before `work` starts, so an in-flight or capacity refusal throws with no
+ * work performed and no permit held; once acquired, a resolving or rejecting
+ * `work` releases the permit exactly once through `finally`, and `work`'s
+ * outcome (returned value or thrown error) propagates unchanged. The
+ * streaming twin deliberately does not use this template: it hands its
+ * acquired permit to the session that owns the session-scoped release, so
+ * the generator must not release that permit when its frame stream ends.
+ */
+export async function withInFlightPermit<T>(
+  guard: InFlightOperationGuard,
+  target: InFlightTarget,
+  work: () => T | Promise<T>,
+): Promise<T> {
+  const permit = guard.acquire(target);
+  try {
+    return await work();
+  } finally {
+    permit.release();
   }
 }

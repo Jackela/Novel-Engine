@@ -1,9 +1,8 @@
-import {
-  type TextGenerationProvider,
-  TextGenerationProviderError,
-  type TextGenerationProviderFactory,
-  type TextGenerationTask,
-  type TextProviderName,
+import type {
+  TextGenerationProvider,
+  TextGenerationProviderFactory,
+  TextGenerationTask,
+  TextProviderName,
 } from "../../../contexts/ai/application/ports/text_generation.js";
 import type { Principal } from "../../../shared/application/ports/auth.js";
 import { InvalidOperationError } from "../../../shared/domain/exceptions.js";
@@ -22,6 +21,7 @@ import type { ProjectScope } from "./ports/studio_store.js";
 import { scopeForPrincipal } from "./ports/studio_store.js";
 import { admitTextProvider } from "./proposal_admission.js";
 import { disposeProvider, type ProviderCleanupFailureReporter } from "./provider_disposal.js";
+import { firstRunFailureDisposition } from "./studio_failure_classification.js";
 
 /**
  * The lorebook initialization wizard's extraction service (#614): one input
@@ -175,7 +175,8 @@ export class LoreExtractService {
         }),
       );
     } catch (error) {
-      if (!(error instanceof TextGenerationProviderError)) {
+      const disposition = firstRunFailureDisposition(error, "lore-extract");
+      if (disposition.kind === "propagate") {
         throw error;
       }
       return jobPayload(
@@ -189,7 +190,7 @@ export class LoreExtractService {
             model: "",
             requestJson,
             resultJson: dumpJson({ candidates: [] }),
-            error: error.message,
+            error: disposition.failure.message,
             now: this.now(),
           }),
           usage: unreportedAttemptUsage({ provider: providerName, requestEvidenceJson }),

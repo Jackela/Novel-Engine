@@ -1,18 +1,11 @@
-import { TextGenerationProviderError } from "../../../contexts/ai/application/ports/text_generation.js";
 import type { Principal } from "../../../shared/application/ports/auth.js";
-import {
-  ExportArtifactWriteError,
-  ExportSourceInvalidatedError,
-  NotFoundError,
-  OperationInFlightError,
-  ReviewSourceInvalidatedError,
-} from "../domain/exceptions.js";
+import { NotFoundError, OperationInFlightError } from "../domain/exceptions.js";
 import type { SnapshotArtifactService } from "./export_artifact_service.js";
 import { failedJobInput } from "./failed_job_input.js";
 import { replayedJobPayload } from "./job_replay_payload.js";
 import { JobRetryExecutor } from "./job_retry_executor.js";
 import type { LoreExtractService } from "./lore_extract_service.js";
-import type { InFlightOperationGuard } from "./operation_in_flight.js";
+import { type InFlightOperationGuard, withInFlightPermit } from "./operation_in_flight.js";
 import type { JobPayload, JobSummaryPayload } from "./payload_schemas/job.js";
 import { dumpJson, jobPayload, jobSummaryPayload } from "./payloads.js";
 import type { ExportArtifactFormat } from "./ports/export_store.js";
@@ -24,6 +17,7 @@ import type { ProjectScope } from "./ports/studio_store.js";
 import { scopeForPrincipal } from "./ports/studio_store.js";
 import type { ProposalGenerationPipeline } from "./proposal_pipeline.js";
 import type { ReviewService } from "./review_service.js";
+import { firstRunFailureDisposition } from "./studio_failure_classification.js";
 
 /** Honest provenance for the deterministic studio renderers (no AI model). */
 const STUDIO_EXPORTER_PROVIDER = "studio";
@@ -117,17 +111,11 @@ export class JobHistoryService {
     // #392: like proposal/export/retry, a review runs real provider work
     // before its terminal row exists, so identical concurrent reviews are
     // serialized by the in-flight guard instead of racing the provider.
-    const inFlightTarget = {
-      projectId,
-      documentId: null,
-      operation: "review",
-    };
-    const permit = this.inFlight.acquire(inFlightTarget);
-    try {
-      return await this.recordReviewJobInner(principal, scope, projectId, reportCleanupFailure);
-    } finally {
-      permit.release();
-    }
+    return withInFlightPermit(
+      this.inFlight,
+      { projectId, documentId: null, operation: "review" },
+      () => this.recordReviewJobInner(principal, scope, projectId, reportCleanupFailure),
+    );
   }
 
   private async recordReviewJobInner(
@@ -148,12 +136,8 @@ export class JobHistoryService {
       const completed = this.reviewOutcomes.recordCompletedReviewJob(scope, evaluation);
       return jobPayload(completed.job);
     } catch (error) {
-      if (
-        !(error instanceof TextGenerationProviderError) &&
-        !(error instanceof ReviewSourceInvalidatedError)
-      ) {
-        throw error;
-      }
+      const disposition = firstRunFailureDisposition(error, "review");
+      if (disposition.kind === "propagate") throw error;
       return jobPayload(
         this.jobs.addJob(
           scope,
@@ -166,7 +150,7 @@ export class JobHistoryService {
             model: evaluation?.model ?? "",
             requestJson: dumpJson({}),
             resultJson: dumpJson({ review_id: null, snapshot_id: null, summary: "", issues: [] }),
-            error: error.message,
+            error: disposition.failure.message,
             now: this.now(),
           }),
         ),
@@ -185,54 +169,46 @@ export class JobHistoryService {
     // #305: the artifact write runs before the terminal job row exists;
     // identical concurrent exports deduplicate through the in-flight guard
     // (different formats of one project may still run in parallel).
-    const inFlightTarget = {
-      projectId,
-      documentId: null,
-      operation: `export (${format})`,
-    };
-    const permit = this.inFlight.acquire(inFlightTarget);
-    try {
-      try {
-        const completed = await this.artifacts.recordCompletedExportJob(
-          principal,
-          projectId,
-          format,
-          { reportCleanupFailure },
-        );
-        return jobPayload(completed.job);
-      } catch (error) {
-        if (
-          !(error instanceof ExportArtifactWriteError) &&
-          !(error instanceof ExportSourceInvalidatedError)
-        ) {
-          throw error;
-        }
-        return jobPayload(
-          this.jobs.addJob(
-            scope,
-            failedJobInput({
-              projectId,
-              documentId: null,
-              kind: "export",
-              operation: "export",
-              provider: STUDIO_EXPORTER_PROVIDER,
-              model: "",
-              requestJson: dumpJson({ format }),
-              resultJson: dumpJson({
-                export_id: null,
-                snapshot_id: null,
-                format,
-                download_url: null,
+    return withInFlightPermit(
+      this.inFlight,
+      { projectId, documentId: null, operation: `export (${format})` },
+      async () => {
+        try {
+          const completed = await this.artifacts.recordCompletedExportJob(
+            principal,
+            projectId,
+            format,
+            { reportCleanupFailure },
+          );
+          return jobPayload(completed.job);
+        } catch (error) {
+          const disposition = firstRunFailureDisposition(error, "export");
+          if (disposition.kind === "propagate") throw error;
+          return jobPayload(
+            this.jobs.addJob(
+              scope,
+              failedJobInput({
+                projectId,
+                documentId: null,
+                kind: "export",
+                operation: "export",
+                provider: STUDIO_EXPORTER_PROVIDER,
+                model: "",
+                requestJson: dumpJson({ format }),
+                resultJson: dumpJson({
+                  export_id: null,
+                  snapshot_id: null,
+                  format,
+                  download_url: null,
+                }),
+                error: disposition.failure.message,
+                now: this.now(),
               }),
-              error: error.message,
-              now: this.now(),
-            }),
-          ),
-        );
-      }
-    } finally {
-      permit.release();
-    }
+            ),
+          );
+        }
+      },
+    );
   }
 
   /** Retry a failed/interrupted job; see JobRetryExecutor for the contract. */
@@ -267,22 +243,17 @@ export class JobHistoryService {
     }
     // #305: a retry runs real work after its running row is created, so a
     // double-fired retry of the same job is deduplicated like the pipelines.
-    const inFlightTarget = {
-      projectId,
-      documentId: null,
-      operation: `retry (${jobId})`,
-    };
-    const permit = this.inFlight.acquire(inFlightTarget);
-    try {
-      return await this.retries.reexecuteProjectJob(
-        principal,
-        projectId,
-        jobId,
-        requestKey,
-        reportCleanupFailure,
-      );
-    } finally {
-      permit.release();
-    }
+    return withInFlightPermit(
+      this.inFlight,
+      { projectId, documentId: null, operation: `retry (${jobId})` },
+      () =>
+        this.retries.reexecuteProjectJob(
+          principal,
+          projectId,
+          jobId,
+          requestKey,
+          reportCleanupFailure,
+        ),
+    );
   }
 }
