@@ -2,7 +2,8 @@ import type { RefObject } from "react";
 
 import { useTranslation } from "@/app/i18n/useTranslation";
 
-interface StudioHistoryLoadOlderProps {
+/** Whether an older page remains, and which history load currently owns the footer. */
+export interface HistoryLoadOlderStatus {
   /** True while an older page remains or a load is in flight. */
   readonly hasOlderRevisions: boolean;
   /** True once the first history page has rendered. */
@@ -11,6 +12,10 @@ interface StudioHistoryLoadOlderProps {
   readonly isBusy: boolean;
   readonly isLoadingHistory: boolean;
   readonly isLoadingOlder: boolean;
+}
+
+interface StudioHistoryLoadOlderProps {
+  readonly status: HistoryLoadOlderStatus;
   readonly onLoadOlderRevisions?: () => void | Promise<void>;
   /** The load-more button the keyboard-focus effect targets. */
   readonly loadButtonRef: RefObject<HTMLButtonElement | null>;
@@ -27,16 +32,14 @@ interface StudioHistoryLoadOlderProps {
  * settles; a pointer invocation leaves focus alone.
  */
 export function StudioHistoryLoadOlder({
-  hasOlderRevisions,
-  historyInitialized,
-  isBusy,
-  isLoadingHistory,
-  isLoadingOlder,
   keyboardPendingRef,
   keyboardTriggerRef,
   loadButtonRef,
   onLoadOlderRevisions,
+  status,
 }: StudioHistoryLoadOlderProps) {
+  const { hasOlderRevisions, historyInitialized, isBusy, isLoadingHistory, isLoadingOlder } =
+    status;
   const { t } = useTranslation();
   return (hasOlderRevisions || isLoadingOlder) && onLoadOlderRevisions ? (
     <button

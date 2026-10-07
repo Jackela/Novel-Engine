@@ -129,15 +129,17 @@ export function StudioHistoryPanel({
         ))}
       </div>
       <StudioHistoryLoadOlder
-        hasOlderRevisions={hasOlderRevisions}
-        historyInitialized={historyInitialized}
-        isBusy={isBusy}
-        isLoadingHistory={isLoadingHistory}
-        isLoadingOlder={isLoadingOlder}
         keyboardPendingRef={keyboardLoadPendingRef}
         keyboardTriggerRef={keyboardLoadTriggerRef}
         loadButtonRef={loadOlderButtonRef}
         onLoadOlderRevisions={onLoadOlderRevisions}
+        status={{
+          hasOlderRevisions,
+          historyInitialized,
+          isBusy,
+          isLoadingHistory,
+          isLoadingOlder,
+        }}
       />
     </div>
   );

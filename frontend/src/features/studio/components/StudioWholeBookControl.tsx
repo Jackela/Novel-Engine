@@ -8,6 +8,9 @@ import type { WholeBookChapter, WholeBookPhase } from "../hooks/useWholeBookLoop
 import { ProposalOutcomeAuditNotice } from "./ProposalOutcomeAuditNotice";
 import { StudioWholeBookReplaceConfirm } from "./StudioWholeBookReplaceConfirm";
 
+/** Stable empty dry-run list so an omitted prop does not allocate a new array each render. */
+const EMPTY_OCCUPIED_CHAPTERS: readonly WholeBookChapter[] = [];
+
 interface StudioWholeBookControlProps {
   /** Loop state machine snapshot (#318). */
   phase: WholeBookPhase;
@@ -30,7 +33,7 @@ interface StudioWholeBookControlProps {
 export function StudioWholeBookControl({
   phase,
   remaining,
-  occupiedChapters = [],
+  occupiedChapters = EMPTY_OCCUPIED_CHAPTERS,
   safeCount = Math.max(remaining - occupiedChapters.length, 0),
   onStart,
   onConfirmReplace,

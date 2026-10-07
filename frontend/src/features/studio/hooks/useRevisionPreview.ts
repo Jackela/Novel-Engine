@@ -59,10 +59,11 @@ function previewFailureMessage(reason: unknown): string {
  * closing it keeps that body cached, and switching documents drops both the
  * cache and the open row. Stale responses are discarded per revision by
  * request sequence, so concurrent reads for different rows settle
- * independently instead of superseding one another, and a scope epoch
- * discards every response issued before a document switch — whatever the
- * interleaving, a revision whose read was issued settles away from
- * "loading".
+ * independently. A response publishes only while that row is still the
+ * loading entry for the same sequence: the document switch clears the cache
+ * during render, so a read issued before the switch cannot write into the
+ * reset cache even when no newer request supersedes it. A revision whose
+ * read was issued therefore settles away from "loading".
  */
 export function useRevisionPreview(
   scope: RevisionPreviewScope | null | undefined,
@@ -72,19 +73,17 @@ export function useRevisionPreview(
   const scopeKey =
     scope === null || scope === undefined ? null : `${scope.projectId}:${scope.documentId}`;
   const [resolvedScopeKey, setResolvedScopeKey] = useState(scopeKey);
-  const scopeEpochRef = useRef(0);
   const requestSequenceRef = useRef(new Map<string, number>());
   if (resolvedScopeKey !== scopeKey) {
     // React's documented reset-when-a-prop-changes pattern: adjusting during
     // render drops the previous document's cache and open row without an
-    // effect, so no stale preview can paint for the new scope. The scope epoch
-    // bumps in the same adjustment, so a read issued by the previous scope
-    // cannot publish into the reset cache even when no newer request ever
-    // supersedes it.
+    // effect, so no stale preview can paint for the new scope. The sequence
+    // map is left alone here; writing it during render would leak across a
+    // discarded replay. A late response no-ops because this reset removes
+    // the loading row it would have published into.
     setResolvedScopeKey(scopeKey);
     setOpenRevisionId(null);
     setStates({});
-    scopeEpochRef.current += 1;
   }
   const scopeRef = useRef(scope);
   useEffect(() => {
@@ -96,28 +95,31 @@ export function useRevisionPreview(
   const load = useCallback((revisionId: string) => {
     const currentScope = scopeRef.current;
     if (!currentScope) return;
-    const scopeEpoch = scopeEpochRef.current;
     const sequence = (requestSequenceRef.current.get(revisionId) ?? 0) + 1;
     requestSequenceRef.current.set(revisionId, sequence);
-    const isCurrentResponse = () =>
-      scopeEpochRef.current === scopeEpoch &&
-      requestSequenceRef.current.get(revisionId) === sequence;
+    /**
+     * Applies one settled read. Fails closed (returns the previous map) when
+     * the row is no longer the loading owner of this sequence: a document
+     * switch has cleared it, or a newer read for the same revision has taken
+     * the sequence. The check lives inside the updater because a resolved
+     * promise can run before the scope effect, and a check outside setState
+     * can pass against a cache the reset has already replaced.
+     */
+    const publish = (next: RevisionPreviewState) => {
+      setStates((current) => {
+        if (current[revisionId]?.status !== "loading") return current;
+        if (requestSequenceRef.current.get(revisionId) !== sequence) return current;
+        return { ...current, [revisionId]: next };
+      });
+    };
     setStates((current) => ({ ...current, [revisionId]: { status: "loading" } }));
     void api
       .revision(currentScope.projectId, currentScope.documentId, revisionId)
       .then((revision) => {
-        if (!isCurrentResponse()) return;
-        setStates((current) => ({ ...current, [revisionId]: { status: "loaded", revision } }));
+        publish({ status: "loaded", revision });
       })
       .catch((reason: unknown) => {
-        if (!isCurrentResponse()) return;
-        setStates((current) => ({
-          ...current,
-          [revisionId]: {
-            status: "error",
-            message: previewFailureMessage(reason),
-          },
-        }));
+        publish({ status: "error", message: previewFailureMessage(reason) });
       });
   }, []);
 
