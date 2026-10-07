@@ -2011,28 +2011,76 @@ publish state nor navigate.
 ### Requirement: In-memory document drafts
 
 An unsaved Draft—edited content, title, and save state—MUST live only in the
-currently active editor's component memory and MUST NOT persist per Document
-across selection changes, route departure, or page reload. A cached complete
-Document represents only a server-accepted revision and MUST NOT store or be
-mutated into an unsaved Draft.
+currently active editor's component memory. Leaving a Document MUST NOT retain
+that Draft as client-side state for an inactive Document: it MUST NOT be
+restored from inactive client memory or client-side storage across selection
+changes, route departure, or page reload. A cached complete Document represents
+only a server-accepted revision and MUST NOT store or be mutated into an
+unsaved Draft.
+
+A Draft that has not been accepted MUST NOT be dropped silently when its owner
+is left. While an edited Draft has not been accepted, a deliberate selection of
+another Document, or leaving the Studio surface with that Document open, MUST
+hand the departing Document's newest local content and title to one rescue
+write — one conflict-checked draft save addressed to that Document. The
+departure MUST NOT duplicate a save attempt already in flight for that Document
+with identical content and title, an unresolved conflict Draft MUST NOT enter
+the rescue path, and the departing editor's local Draft is discarded once the
+rescue write is issued. The rescue's result is observable only as an accepted
+revision of its own Document: reopening that Document MUST read the rescued
+text back from the server rather than from inactive client state, and MUST NOT
+save it again. A rescue write that fails, conflicts, or never lands MUST remain
+silent and MUST NOT claim acceptance; the next open reads the server state, and
+the explicit save surface keeps ownership of user-visible save errors.
 
 After 1.5 seconds without a newer edit, the Studio MUST start the existing
 conflict-checked autosave attempt. The debounce bounds when an attempt starts;
 it MUST NOT be presented as a guarantee that the Draft is durable, because a
 request can fail, conflict, be cancelled, or lose its response. A 409 MUST
 retain the local Draft and a separate latest-server baseline while that
-Document remains active. The Draft is discarded only by successful acceptance,
-an explicit conflict choice that replaces it, deliberate selection of another
-Document, route departure, or reload. A late save/conflict outcome MUST NOT
-publish into a newly active Document.
+Document remains active. The active local Draft ends only by successful
+acceptance, an explicit conflict choice that replaces it, a departure that
+hands the newest text to its one rescue write, or a reload. A late save,
+rescue, or conflict outcome MUST NOT publish into a newly active Document.
 
 #### Scenario: Switching documents discards the draft
 
-- **GIVEN** the active Document has unsaved edits or an unresolved conflict Draft
+- **GIVEN** the active Document has unsaved edits and no unresolved conflict Draft
 - **WHEN** the author deliberately switches to another Document
-- **THEN** the earlier local Draft is discarded and no client-side Draft copy remains
+- **THEN** exactly one save for the departing Document carries its newest local content and title as that Document's rescue write
+- **AND** the departing editor's local Draft is discarded and no client-side Draft copy remains
 - **AND** the next Document loads from its accepted current revision
 - **AND** a late response for the earlier Document cannot replace the new editor state
+
+#### Scenario: Leaving the Studio rescues the pending draft once
+
+- **GIVEN** the author edits a Document and leaves the Studio before the 1.5-second debounce elapses
+- **WHEN** the departure happens
+- **THEN** exactly one rescue write for the departing Document carries its newest local content
+- **AND** no write is issued for another Document or project
+- **AND** waiting past the debounce window issues no duplicate late save
+
+#### Scenario: A reopened document reads back the rescued text
+
+- **GIVEN** a departure's rescue write was accepted as a revision of that Document
+- **WHEN** the author opens that Document again
+- **THEN** the editor shows the rescued content and title read back from the server, settled as saved
+- **AND** re-entry issues no further save for that Document
+
+#### Scenario: An unresolved conflict draft is not rescued
+
+- **GIVEN** the active Document holds an unresolved conflict Draft
+- **WHEN** the author deliberately switches to another Document
+- **THEN** no rescue write is issued for the conflicted text
+- **AND** the conflict Draft is discarded with the departure
+- **AND** opening that Document again reads its last accepted revision
+
+#### Scenario: A failed rescue write stays silent
+
+- **GIVEN** a departure's rescue write fails or never lands
+- **WHEN** the author opens that Document again
+- **THEN** the editor shows that Document's last accepted revision
+- **AND** no error, acceptance claim, or client-side Draft copy from the failed rescue is published
 
 #### Scenario: No client-side draft persistence
 
@@ -4480,11 +4528,16 @@ Document. Returning to that identity MUST use the committed revision or a newer
 server revision as its baseline.
 
 A deliberate Document switch MUST discard an edited local Draft that has not
-been accepted, including an unresolved conflict Draft; it MUST NOT persist that
-Draft by inactive Document. Accepted server content MAY be recovered from the
-current-Document resource but MUST NOT be described as Draft survival. A
-conflicted Draft remains available only while its Document stays active or
-until the author chooses an explicit conflict action.
+been accepted and MUST NOT retain it as the inactive Document's client-side
+state; before discarding, it MUST hand a non-conflicted Draft to the departing
+Document's one rescue write, while an unresolved conflict Draft MUST NOT enter
+the rescue path. Accepted server content — including a revision a rescue write
+committed — MAY be recovered from the current-Document resource but MUST NOT
+be described as Draft survival. A conflicted Draft remains available only while
+its Document stays active or until the author chooses an explicit conflict
+action. A rescue write MUST stay bound to the project and Document that own it:
+it MUST NOT be issued for, write into, or publish state on a newly active
+identity.
 
 #### Scenario: Switching projects hides the previous aggregate immediately
 
@@ -4495,14 +4548,15 @@ until the author chooses an explicit conflict action.
 
 #### Scenario: Late document completion is discarded
 
-- **GIVEN** a save, restore, search, proposal, body, Lore-status, or beat request belongs to an earlier project, Document, revision, or intent
+- **GIVEN** a save, rescue, restore, search, proposal, body, Lore-status, or beat request belongs to an earlier project, Document, revision, or intent
 - **WHEN** it completes after the active ownership changed
 - **THEN** its server result does not replace the active identity's Draft, accepted body, revision baseline, field value, result list, or error state
 - **AND** a stale shell or body response does not replace current resource state
+- **AND** a departure rescue write commits only on its originating Document and is never issued for, or applied to, the newly active identity
 
 #### Scenario: A committed inactive-document mutation is reconciled
 
-- **GIVEN** a save, restore, or proposal acceptance for Document A commits after the author selects Document B
+- **GIVEN** a save, a departure rescue write, a restore, or a proposal acceptance for Document A commits after the author selects Document B
 - **WHEN** the author later returns to Document A
 - **THEN** Document B was never overwritten by A's completion
 - **AND** Document A reflects the committed server revision or a newer refreshed revision
@@ -4512,8 +4566,8 @@ until the author chooses an explicit conflict action.
 
 - **GIVEN** the author edits Document A and selects Document B before the save debounce elapses
 - **WHEN** the author returns to Document A
-- **THEN** A's unpersisted local Draft is absent rather than restored from inactive client state
-- **AND** A loads its last accepted current revision or a newer committed revision
+- **THEN** A's unpersisted local Draft is absent as inactive client-side state rather than restored from it
+- **AND** A loads its last accepted current revision, or the revision A's departure rescue write committed when that write was accepted
 - **AND** B never displays or persists A's Draft
 
 #### Scenario: An old export owner cannot trigger a download
