@@ -55,7 +55,8 @@ that run passed. Residual risk: none for assertion failures. A separate plain
 | Check | Status | Reason | Residual risk | Closure |
 |---|---|---|---|---|
 | CI on `6a7c198f` | failed | `validate` exited in React Doctor; `server` and `Analyze (javascript-typescript)` passed; `container` was skipped | The branch was not mergeable | The follow-up in this file |
-| CI on the React Doctor follow-up | not run | This section is written before that push | Branch protection is unverified on the new SHA | Green `validate`, `server`, `container`, and `Analyze (javascript-typescript)` on that SHA |
+| CI on `3f55e599` | passed | Required jobs below are success on that SHA | None for those four jobs | Already closed on `3f55e599` |
+| CI on the documentation commit that records `3f55e599` | not run | This paragraph is that commit, written after the green run | The product tree is unchanged, but this SHA is a new candidate | Green required jobs on this documentation SHA before merge |
 | Human acceptance | not run | No owner exercised the UI in this session | Visual or keyboard judgment is not claimed | Owner review of the PR |
 | Plain `pnpm --dir server test` | not run | Covered by `test:coverage` on the same include set | None for test failures | Re-run the script name only if a reviewer asks |
 
@@ -117,4 +118,24 @@ These commands ran on that uncommitted diff (macOS, Node `v24.19.0`, pnpm
 | Frontend coverage | `pnpm --dir frontend test:coverage` | PASS, 156 files / 860 tests. Statements 91.26, branches 84.75, functions 90.9, lines 93.9. Floors 91 / 84 / 90 / 93 still hold. |
 
 `act(...)` stderr in the coverage run is the same pre-existing noise as the
-earlier local full run. CI for the follow-up SHA is not closed by this table.
+earlier local full run.
+
+### CI-required on `3f55e599`
+
+Product fix `b7aa1983`, evidence tip `3f55e599f263675b187bd712a9ef9910c5df0ef0`.
+Pull request [#681](https://github.com/Jackela/Novel-Engine/pull/681). CI run
+[37631910485](https://github.com/Jackela/Novel-Engine/actions/runs/37631910485).
+CodeQL run
+[37631910660](https://github.com/Jackela/Novel-Engine/actions/runs/37631910660).
+Both `headSha` values are `3f55e599`.
+
+| Check | Result |
+|---|---|
+| `validate` (job 112828079769) | PASS, 12m18s |
+| `server` (job 112828079323) | PASS, 6m34s |
+| `container` (job 112834038610) | PASS, 44s |
+| `Analyze (javascript-typescript)` (job 112828080254) | PASS, 1m28s |
+| `CodeQL` | NEUTRAL. Not a failure and not one of the four required successes. |
+
+Human acceptance is still not run. The commit that adds this table changes
+only this file. It does not reuse the `3f55e599` result as its own CI pass.
