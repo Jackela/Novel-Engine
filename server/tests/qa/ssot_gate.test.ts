@@ -165,6 +165,58 @@ describe("product identity SSOT gate", () => {
     expect(result.stderr).toContain(expected);
   });
 
+  it("accepts an ## Unreleased section that leads the release headings", async () => {
+    const root = await createFixture();
+    await writeFixtureFile(
+      root,
+      "CHANGELOG.md",
+      "# Changelog\n\n## Unreleased\n\n- Pending work.\n\n## 1.2.3\n",
+    );
+
+    const result = runGate(root);
+
+    expect(result.status, result.stderr).toBe(0);
+    expect(result.stdout).toContain("Novel Engine 1.2.3 is aligned");
+  });
+
+  it("rejects a release heading after ## Unreleased that is not the current version", async () => {
+    const root = await createFixture();
+    await writeFixtureFile(
+      root,
+      "CHANGELOG.md",
+      "# Changelog\n\n## Unreleased\n\n- Pending work.\n\n## 0.0.1\n",
+    );
+
+    const result = runGate(root);
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain("release after ## Unreleased must be ## 1.2.3");
+  });
+
+  it("rejects an ## Unreleased section with no release heading beneath it", async () => {
+    const root = await createFixture();
+    await writeFixtureFile(
+      root,
+      "CHANGELOG.md",
+      "# Changelog\n\n## Unreleased\n\n- Pending work.\n",
+    );
+
+    const result = runGate(root);
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain("release after ## Unreleased must be ## 1.2.3, got undefined");
+  });
+
+  it("rejects an ## Unreleased section below the current release", async () => {
+    const root = await createFixture();
+    await writeFixtureFile(root, "CHANGELOG.md", "# Changelog\n\n## 1.2.3\n\n## Unreleased\n");
+
+    const result = runGate(root);
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain("## Unreleased must be the first release heading");
+  });
+
   it("rejects retired visible and capability identities", async () => {
     const root = await createFixture();
     await writeFixtureFile(root, "frontend/src/brand.ts", 'export const brand = "Novel Studio";\n');

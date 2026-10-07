@@ -21,6 +21,8 @@ const PRODUCT_NAME = "Novel Engine";
 const SEMVER =
   /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(?:\.(?:0|[1-9]\d*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*))?(?:\+([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?$/;
 const SEMVER_CORE = SEMVER.source.slice(1, -1);
+const UNRELEASED_HEADING = "## Unreleased";
+const SECTION_HEADING = /^##\s+\S/;
 const TEXT_SUFFIXES = new Set([".md", ".ts", ".tsx", ".js", ".mjs", ".cjs", ".json"]);
 const SCAN_SKIP_DIRECTORIES = new Set(["node_modules", "dist", "tmp", "coverage"]);
 const IDENTITY_SCAN_PATHS = [
@@ -141,11 +143,29 @@ function projectionFailures(root, productName, version) {
     failures.push(`README.md current product version must match ${AUTHORITY_MANIFEST}`);
   }
 
-  const currentRelease = readTextLines(join(root, "CHANGELOG.md")).find((line) =>
-    /^##\s+\S/.test(line),
+  // The changelog may lead with an `## Unreleased` section that accumulates
+  // changes made after the current release. When present it must be the first
+  // section heading — directly below the `# Changelog` title — and the
+  // manifest version's release heading must follow it. Without one, the first
+  // section heading is the release heading for the manifest version.
+  const sections = readTextLines(join(root, "CHANGELOG.md")).filter((line) =>
+    SECTION_HEADING.test(line),
   );
-  if (currentRelease !== `## ${version}`) {
-    failures.push(`CHANGELOG.md current release must be ## ${version}, got ${currentRelease}`);
+  const firstSection = sections[0];
+  if (firstSection === UNRELEASED_HEADING) {
+    const releaseSection = sections[1];
+    if (releaseSection !== `## ${version}`) {
+      failures.push(
+        `CHANGELOG.md release after ## Unreleased must be ## ${version}, got ${releaseSection}`,
+      );
+    }
+  } else {
+    if (firstSection !== `## ${version}`) {
+      failures.push(`CHANGELOG.md current release must be ## ${version}, got ${firstSection}`);
+    }
+    if (sections.includes(UNRELEASED_HEADING)) {
+      failures.push("CHANGELOG.md ## Unreleased must be the first release heading");
+    }
   }
 
   const openapi = readJson(root, "server/qa-baselines/openapi.current.json");

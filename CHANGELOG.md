@@ -1,5 +1,166 @@
 # Changelog
 
+## Unreleased
+
+Post-release hardening and capability pass: the server gains `reindex`,
+`migrate`, and `owner reset` CLI commands, a read-only `doctor`, and a
+first-boot setup token; the Studio adds a guided lorebook initialization
+wizard, writing statistics, and an opt-in diagnostics export; and the
+devil's-advocate remediation campaign resolves all 48 recorded findings
+(DR-001–048) with its spec reconciliation and browser-suite alignment.
+
+### Added
+
+- Operational CLI: `reindex` rebuilds the full-text search index from
+  every document's current revision and is the one-time activation step
+  for Chinese search on databases indexed before the per-character
+  tokenizer; `migrate` applies pending migrations as an explicit write
+  path with the safety backup first; `owner reset` deletes the local
+  Owner and its sessions so first-run setup can create a fresh Owner
+  (#678).
+- First-boot setup token: when no Owner exists the server generates a
+  one-time token (written under the data directory with owner-only
+  permissions and logged once); setup from a peer that is not loopback
+  must present it as `x-setup-token`, so a first visitor cannot claim
+  the instance before the author does (#678).
+- Guided lorebook initialization: a lore tab wizard extracts candidate
+  entries from a pasted draft segment or an imported chapter, merges the
+  segments for review inside the session, and confirms selected entries
+  as `draft` lore with editable aliases — alias-write failures stay
+  retryable and are never silently dropped (#657, #660, #662).
+- Writing statistics: a Stats inspector tab backed by a local-only
+  aggregation — daily and weekly word counts attributed by revision
+  source (author, accepted, restored), the chapters-started share, a
+  writing streak over author-only days, and the existing AI usage
+  summary (#655, #659, #661).
+- Diagnostics export: an opt-in Settings action that saves a local JSON
+  report (version, runtime, resolved provider identity, credential
+  booleans, recent failed-job messages, and doctor-family database
+  health) behind a schema that cannot carry secret values; no telemetry
+  and no upload (#656, #658).
+- SSE `: heartbeat` comment frames every 15 seconds keep idle proxies
+  from dropping live generation streams; a 90-second client stall
+  watchdog (with an off switch) and frame/byte counts for interrupted
+  streams make stalled generation diagnosable (#678).
+- `GET /metrics`: a Prometheus text endpoint (loopback, trusted peer, or
+  owner session) covering process, uptime, job, and usage gauges, with
+  `LOG_LEVEL` configuring the structured logger (#678).
+- Editor completeness: find and replace, Ctrl/Cmd+S save, and format
+  commands, plus a draft byte-budget indicator for the documented 1 MiB
+  chapter ceiling whose 413 message gives split guidance and keeps the
+  draft in the editor (#678).
+
+### Changed
+
+- `doctor` is read-only by contract: it no longer migrates, backs up, or
+  takes the write lock, so it is safe to run while the server is up;
+  migrations move to the new `migrate` command, and lock or authority
+  conflicts land in a dedicated `error` field instead of the integrity
+  check (#678).
+- Word counting is unified across the product: Han characters count
+  individually, Latin runs count by word, stored counts from the
+  earlier definition are reconciled at startup, and the thin-chapter
+  threshold and usage fallback follow the same rule (#678).
+- Search: Chinese queries hit (the index tokenizes Han text per
+  character and queries use the same segmentation), results gain totals,
+  pagination, zero-result guidance, and match-term highlighting, and the
+  query token budget drops from 8 to 3 with an input cap that keeps the
+  event loop responsive (#678).
+- Streaming resilience: failures before the first delta retry under the
+  shared policy, the absolute deadline re-arms on every frame so healthy
+  long streams survive, provider error frames inside a 200 SSE body
+  surface as `PROVIDER_FAILED`, and text accumulated before a mid-stream
+  failure is preserved on the failed job and kept as a copyable preview
+  (#678).
+- Generation idempotency: the generation endpoints accept an optional
+  `Idempotency-Key`; duplicate submissions replay the persisted terminal
+  job instead of creating a second job and a second usage charge (#678).
+- Usage accounting: token rows carry provenance (provider, estimated,
+  unreported), failed attempts stay visible, and the dead
+  `estimated_cost` column is removed (#678).
+- Backups and revisions: safety backups run only when migrations are
+  pending, keep the newest three, check free space first, and verify
+  with `quick_check`; restore verification cleans its sidecars and the
+  CLI usage text states that backups are plaintext; autosave skips
+  unchanged content and collapses its window, and retention prunes
+  unreferenced autosaves while referenced revisions are never deleted
+  (#678).
+- Exports: DOCX gains a CJK font, first-line indents, per-chapter page
+  breaks, and a table of contents without duplicated headings; EPUB
+  declares the detected language and modification time with bundled
+  Chinese styling; Markdown keeps chapter headings (#678).
+- Generation follows the author's writing language through prompts, the
+  mock provider, and the sanitizer; review runs on the project's
+  configured provider with a 180-second floor for long manuscripts; and
+  settings mark unconfigured providers and show the effective model
+  (#678).
+- Whole-book generation drafts only empty chapters by default; chapters
+  with author or imported text require an explicit per-chapter
+  confirmation before replacement (#678).
+
+### Fixed
+
+- Draft safety: a failed autosave retries with backoff and offers a
+  manual retry; pending edits are flushed on document switch and rescued
+  on unmount, and an unload guard covers the debounce window instead of
+  discarding it (#678).
+- Session and auth experience: setup asks for password confirmation and
+  the first-boot token; a lost password is documented as unrecoverable
+  by design with `owner reset` as the recovery path; expired sessions
+  notify and return the author to their origin; and a local development
+  start without a configured key persists its generated session secret
+  across restarts (#678).
+- Production posture: placeholder secrets are rejected at startup;
+  trusted-proxy configuration accepts only concrete addresses (network
+  ranges fail fast at startup) and rate limiting keys on the forwarding
+  chain's rightmost untrusted hop; `/openapi.json` sits behind the owner
+  door in production, and `/version` stops publishing build and runtime
+  fingerprints (#678).
+- Navigator, history, and review surfaces: volumes are creatable,
+  renameable, deletable, and reorderable with move-to-volume actions;
+  projects are deletable from the library; revisions open a preview with
+  diff and confirmed restore; conflicts can read the server version;
+  review history rows open details with snapshot names; and beat
+  association becomes a dropdown that names the authoritative outline
+  (#678).
+- Import identity: the workspace hash covers relative paths plus
+  content, so a moved directory re-imports into the existing project and
+  chapter titles survive; import remains a documented CLI path (#678).
+- Writing statistics follow the browser's timezone with an explanation
+  for negative deltas; dates, numbers, and shell copy localize with the
+  active language, and the Studio shows an offline banner when the
+  network drops (#678).
+
+### Internal
+
+- Campaign closeout: the devil's-advocate fix backlog records all 48
+  findings delivered with per-item evidence; its spec reconciliation
+  aligns search bounds, pagination, and the response lifecycle with
+  shipped behavior; the browser suite is aligned with the new
+  semantics; and the CI container check now follows the documented
+  first-boot setup-token flow (#678).
+- Wind-down cleanups: compose config smoke in the CI container job
+  (#644), root-caused e2e flake fixes for theme first paint and volume
+  placement (#645, #648), and a server residual sweep — ENOENT through
+  the error-code SSOT, restore input asserted against the migration
+  journal, and the dashscope test split by module (#646).
+- Quality gates: a type-aware lint gate with its measured residual fixes
+  and a trimmed `GET /health` (#671); dependency pins that clear the
+  audit advisories (#673, #679); and dictionary tests that converge on
+  key alignment and anchor checks (#678).
+- Documentation: guides cover the wizard, the statistics view, and the
+  diagnostics export in both languages (#666), the zh lore tab is
+  disambiguated from settings (#667), a live screenshot gallery lands in
+  both READMEs (#668), and the guides stop promising unshipped behavior
+  (#678).
+- Campaign bookkeeping: iteration and release records (#643, #647,
+  #649), the interview kit for the Owner-run validation round (#650),
+  the wizard, statistics, and diagnostics proposals and their archive
+  (#651, #663), the iteration-3 record and post-tag evidence index
+  (#664, #669), and the Owner-decision outcomes — self-hosting
+  positioning, LICENSE attribution, contribution notes, and a 0.9.0
+  roadmap (#678).
+
 ## 0.8.0
 
 Productization and distribution pass: the server deploys with one command
