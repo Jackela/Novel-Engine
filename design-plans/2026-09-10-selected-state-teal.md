@@ -2,6 +2,11 @@
 
 Written against: 11b4e5ef
 
+> 状态：已执行（计划日 2026-09-10；含 ADR-0010 的后续 token 化）。活动行与
+> 节选态文本已统一为 `var(--teal-strong)`；原 `#0f6862` 徽章例外由 ADR-0010
+> 落地为 `--badge-*-ink` tokens（定义在 `frontend/src/styles/base.css`，使用
+> 在 `frontend/src/styles/studio-nav.css`）。
+
 ## Evidence chain
 
 - Surface: Studio navigation tree (`frontend/src/styles/studio-nav.css`), document rows vs section buttons.

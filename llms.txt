@@ -30,7 +30,13 @@ A self-hosted writing studio: a TypeScript/Fastify + SQLite backend with a React
 - [Volumes and beats](https://raw.githubusercontent.com/Jackela/Novel-Engine/main/openwiki/architecture/volumes-and-beats.md): The fixed two-level volume hierarchy and per-chapter beat linkage as separate dimensions.
 - [Resident context](https://raw.githubusercontent.com/Jackela/Novel-Engine/main/openwiki/architecture/resident-context.md): The deterministic layer-1 context always assembled ahead of every generation.
 - [Usage](https://raw.githubusercontent.com/Jackela/Novel-Engine/main/openwiki/architecture/usage.md): The per-project token usage ledger with cumulative totals and a trailing 30-day window.
+- [Studio workspace](https://raw.githubusercontent.com/Jackela/Novel-Engine/main/openwiki/frontend/studio-workspace.md): The browser workspace: routes, workspace hooks, drafts and revisions, streaming proposals, and accessibility behavior.
 - [Product specification](https://raw.githubusercontent.com/Jackela/Novel-Engine/main/openspec/specs/novel-engine/spec.md): Canonical OpenSpec capability specification for Novel Engine.
+
+## Planning and deployment
+
+- [Roadmap](https://raw.githubusercontent.com/Jackela/Novel-Engine/main/docs/roadmap.md): Owner-decided direction, the release gate before 0.9.0, and provider policy.
+- [Deployment checklist](https://raw.githubusercontent.com/Jackela/Novel-Engine/main/deploy/README.md): Running the published image, upgrades, the data volume, and reverse-proxy hosting.
 
 ## Optional
 
@@ -38,6 +44,8 @@ A self-hosted writing studio: a TypeScript/Fastify + SQLite backend with a React
 - [CONTEXT.md](https://raw.githubusercontent.com/Jackela/Novel-Engine/main/CONTEXT.md): Domain vocabulary and canonical terms used across code, docs, and discussion.
 - [AGENTS.md](https://raw.githubusercontent.com/Jackela/Novel-Engine/main/AGENTS.md): Repository-wide instructions for AI coding agents working in this repo.
 - [CI gates](https://raw.githubusercontent.com/Jackela/Novel-Engine/main/docs/agents/ci-gates.md): Description of the QA gates and validation commands enforced in CI.
+- [Change evidence](https://raw.githubusercontent.com/Jackela/Novel-Engine/main/docs/agents/change-evidence.md): Evidence levels, fixed-SHA records, executed checks, skips, and human gates for a change.
+- [Domain docs](https://raw.githubusercontent.com/Jackela/Novel-Engine/main/docs/agents/domain.md): How engineering skills consume the single-context domain documentation.
 - [Issue tracker](https://raw.githubusercontent.com/Jackela/Novel-Engine/main/docs/agents/issue-tracker.md): Conventions for using GitHub Issues as the work tracker.
 - [Triage labels](https://raw.githubusercontent.com/Jackela/Novel-Engine/main/docs/agents/triage-labels.md): The five canonical triage labels and how to apply them.
 - [Error codes](https://raw.githubusercontent.com/Jackela/Novel-Engine/main/docs/agents/error-codes.md): Catalog of stable API error codes with HTTP status, meaning, and the suggested agent action for each, kept in lockstep with the TS sources by gate:error-codes.

@@ -2,6 +2,11 @@
 
 Written against: 11b4e5ef
 
+> 状态：已执行（计划日 2026-09-10）。`#dfe2e3`、`#626a6b`、`#697172` 已并入
+> `frontend/src/styles/base.css` 的 `--line`、`--muted-soft`、`--muted-faint`；
+> 这些字面量在 `frontend/src/styles/` 中现仅出现在 `base.css` 的 token 定义
+> 与主题/fallback 块里。
+
 ## Evidence chain
 
 - Surface: Studio three-pane workspace + entry/library chrome (`frontend/src/styles/*.css`)

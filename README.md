@@ -62,8 +62,10 @@ AI proposal flows work without external credentials.
 
 ## Configuration
 
-The canonical environment template is `.env.example`; copy it to `.env.local`.
-Process environment variables always win over the file. `.env.local` and the
+Start from the minimal template in `.env.example`; copy it to `.env.local`. It
+is not the complete variable list — the configuration table below and the
+pass-through list in `compose.yaml` are the full reference. Process
+environment variables always win over the file. `.env.local` and the
 default SQLite `data/` directory resolve against the workspace root (the
 checkout directory), not the current working directory, so `pnpm --dir server
 cli serve` reads the root `.env.local` and stores data under `<workspace>/data/`.

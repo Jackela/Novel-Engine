@@ -65,13 +65,16 @@ The full setup checklist is in [provider setup](provider-setup.md).
 
 ## "The data directory is already owned by another Novel Engine process."
 
-**Symptom:** a `backup`, `restore`, or `doctor` command refuses to run.
+**Symptom:** a `backup`, `restore`, `reindex`, `migrate`, or `owner reset`
+command refuses to run.
 
-The running studio owns the data directory exclusively. Stop it first, run
-the command, start it again — the exact sequence is in
+The running studio owns the data directory exclusively, and these maintenance
+commands take over that ownership to write. Stop the studio first, run the
+command, start it again — the exact sequence is in
 [backup and restore](backup-and-restore.md#running-cli-commands-in-docker).
 The refusal is by design: it is what prevents two processes from writing to
-your manuscript database at once.
+your manuscript database at once. `doctor` is not in this list: it is
+strictly read-only and safe to run while the studio keeps serving.
 
 ## I can't find my novels on disk
 
@@ -133,8 +136,8 @@ whether you share it is your decision alone.
 2. `http://localhost:8000/health/ready` — answers JSON when the server can
    reach its database.
 3. The `doctor` command reports version, database integrity, and account
-   state as JSON; it needs the studio stopped first
-   ([sequence](backup-and-restore.md#running-cli-commands-in-docker)).
+   state as JSON; it is strictly read-only, so it can run while the studio
+   keeps serving (`docker compose exec novel-engine node server/dist/apps/cli/main.js doctor`).
 4. When you report the problem, attach the diagnostics export — see
    [export diagnostics before asking for
    help](#before-you-ask-for-help-export-diagnostics).

@@ -56,7 +56,9 @@ Copilot and whole-book generation use the SSE proposal stream. Stopping a draft 
 
 ## Configuration and persistence
 
-`.env.example` is the canonical configuration reference. Its important local defaults are:
+`.env.example` is the minimal starting template, not the full variable list —
+the README configuration table and the Compose pass-through list
+(`compose.yaml`) are the complete reference. Its important local defaults are:
 
 - `DB_URL=sqlite:///./data/novel-engine.sqlite3`; only self-hosted SQLite URLs are accepted.
 - `API_HOST=0.0.0.0`, `API_PORT=8000`.
