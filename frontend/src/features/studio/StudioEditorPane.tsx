@@ -1,12 +1,13 @@
-import { Check, Loader2, X } from "lucide-react";
-import { lazy, Suspense, useEffect, useRef, useState } from "react";
+import { lazy, Suspense } from "react";
 
 import { useTranslation } from "@/app/i18n/useTranslation";
 import type { SaveState, StudioDocument } from "@/app/types/studio";
-import { StudioBodyBudget } from "./components/StudioBodyBudget";
 import { StudioConflictPanel } from "./components/StudioConflictPanel";
-import { useCommandFocusRestoration } from "./hooks/useCommandFocusRestoration";
+import { StudioEditorEmptyState } from "./components/StudioEditorEmptyState";
+import { StudioEditorHeader } from "./components/StudioEditorHeader";
+import { useConflictCommand } from "./hooks/useConflictCommand";
 import type { ServerVersionPreviewController } from "./hooks/useConflictServerPreview";
+import { useSaveNowShortcut } from "./hooks/useSaveNowShortcut";
 
 const MarkdownEditor = lazy(async () => {
   const module = await import("./MarkdownEditor");
@@ -36,8 +37,6 @@ interface StudioEditorPaneProps {
   onRetryDocument?: () => void;
 }
 
-type EditorCommand = "loadLatest" | "retryOverwrite" | "retrySave";
-
 export function StudioEditorPane({
   activeDocument,
   draft,
@@ -58,59 +57,12 @@ export function StudioEditorPane({
   onRetryDocument,
 }: StudioEditorPaneProps) {
   const { t } = useTranslation();
-  const titleRef = useRef<HTMLInputElement>(null);
-  const pendingCommandRef = useRef<EditorCommand | null>(null);
-  const [pendingCommand, setPendingCommand] = useState<EditorCommand | null>(null);
-  const saveNeedsAttention = saveState === "conflict" || saveState === "error";
-  const conflictActionsDisabled =
-    pendingCommand !== null || isConflictActionPending || saveState === "saving";
-  const saveStateLabel =
-    saveState === "idle" || saveState === "saved"
-      ? t("editor.saveState.saved")
-      : saveState === "saving"
-        ? t("editor.saveState.saving")
-        : saveState === "conflict"
-          ? t("editor.saveState.conflict")
-          : t("editor.saveState.error");
-  const runWithFocusRestoration = useCommandFocusRestoration(conflictActionsDisabled);
-
+  const { conflictActionsDisabled, pendingCommand, runConflictCommand, titleRef } =
+    useConflictCommand(saveState, isConflictActionPending);
   // DR-016: Ctrl/Cmd+S must flush the draft instead of opening the browser's
   // save dialog. The listener lives on the window while a Document is open so
   // the shortcut works from the title, the body, and the surrounding chrome.
-  useEffect(() => {
-    if (!activeDocument || !onSaveNow) return;
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (!(event.ctrlKey || event.metaKey) || event.altKey || event.shiftKey) return;
-      if (event.key.toLowerCase() !== "s") return;
-      event.preventDefault();
-      onSaveNow();
-    };
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [activeDocument, onSaveNow]);
-
-  const runConflictCommand = (
-    commandKey: EditorCommand,
-    target: HTMLButtonElement,
-    command: (() => void | Promise<void>) | undefined,
-  ) => {
-    if (command === undefined || conflictActionsDisabled || pendingCommandRef.current !== null)
-      return;
-    pendingCommandRef.current = commandKey;
-    setPendingCommand(commandKey);
-    void runWithFocusRestoration(
-      target,
-      async () => {
-        try {
-          await command();
-        } finally {
-          if (pendingCommandRef.current === commandKey) pendingCommandRef.current = null;
-          setPendingCommand((current) => (current === commandKey ? null : current));
-        }
-      },
-      () => titleRef.current,
-    );
-  };
+  useSaveNowShortcut(activeDocument, onSaveNow);
 
   return (
     <section
@@ -119,40 +71,14 @@ export function StudioEditorPane({
     >
       {activeDocument ? (
         <>
-          <header className="editor__header">
-            <div>
-              <input
-                aria-label={t("editor.field.title")}
-                className="editor__title"
-                ref={titleRef}
-                value={titleDraft}
-                onChange={(event) => onTitleChange(event.target.value)}
-              />
-              <span
-                aria-atomic="true"
-                aria-live={saveNeedsAttention ? "assertive" : "polite"}
-                className={`editor__save-state editor__save-state--${saveState}`}
-                role={saveNeedsAttention ? "alert" : "status"}
-              >
-                {saveState === "saving" ? (
-                  <Loader2 aria-hidden="true" className="ui-spin" />
-                ) : saveNeedsAttention ? (
-                  <X aria-hidden="true" />
-                ) : (
-                  <Check aria-hidden="true" />
-                )}
-                {saveStateLabel}
-              </span>
-            </div>
-            <span className="editor-word-count">
-              {t("editor.wordCount", {
-                count: activeDocument.word_count,
-                unit: activeDocument.word_count === 1 ? t("noun.word") : t("noun.words"),
-              })}
-            </span>
-            {/* DR-048: the draft's own budget, ahead of the saved revision. */}
-            <StudioBodyBudget draft={draft} />
-          </header>
+          <StudioEditorHeader
+            draft={draft}
+            onTitleChange={onTitleChange}
+            saveState={saveState}
+            titleDraft={titleDraft}
+            titleRef={titleRef}
+            wordCount={activeDocument.word_count}
+          />
           {saveState === "conflict" ? (
             <StudioConflictPanel
               disabled={conflictActionsDisabled}
@@ -189,26 +115,12 @@ export function StudioEditorPane({
             <MarkdownEditor onChange={onDraftChange} reveal={reveal} value={draft} />
           </Suspense>
         </>
-      ) : isLoadingDocument ? (
-        <div aria-live="polite" className="editor__empty" role="status">
-          <Loader2 aria-hidden="true" className="ui-spin" /> {t("editor.loadingDocument")}
-        </div>
-      ) : documentLoadError ? (
-        <div aria-live="assertive" className="editor__empty" role="alert">
-          <strong>{t("editor.error.heading")}</strong>
-          <span>{documentLoadError}</span>
-          {onRetryDocument ? (
-            <button
-              className="ui-command ui-command--primary"
-              onClick={onRetryDocument}
-              type="button"
-            >
-              {t("editor.action.retryDocument")}
-            </button>
-          ) : null}
-        </div>
       ) : (
-        <div className="editor__empty">{t("editor.empty")}</div>
+        <StudioEditorEmptyState
+          documentLoadError={documentLoadError}
+          isLoadingDocument={isLoadingDocument}
+          onRetryDocument={onRetryDocument}
+        />
       )}
     </section>
   );

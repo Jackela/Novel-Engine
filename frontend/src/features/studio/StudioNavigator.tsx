@@ -1,20 +1,17 @@
-import { ChevronDown, Loader2, Plus } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { type ComponentProps, type FormEvent, useState } from "react";
 
 import { useTranslation } from "@/app/i18n/useTranslation";
 import type { DocumentKind, Project } from "@/app/types/studio";
-import {
-  type PendingDocumentMove,
-  StudioNavigatorDocumentRows,
-} from "./components/StudioNavigatorDocumentRows";
+import { StudioNavigatorDocumentGroup } from "./components/StudioNavigatorDocumentGroup";
+import type { PendingDocumentMove } from "./components/StudioNavigatorDocumentRows";
 import type { NavigatorRowCommands } from "./components/StudioNavigatorRowActions";
 import { StudioNavigatorSearch } from "./components/StudioNavigatorSearch";
-import { StudioNavigatorVolumeCreate } from "./components/StudioNavigatorVolumeCreate";
+import { StudioNavigatorSections } from "./components/StudioNavigatorSections";
 import type { NavigatorVolumeCommands } from "./components/StudioNavigatorVolumeHeader";
-import { StudioNavigatorVolumeList } from "./components/StudioNavigatorVolumeList";
 import { StudioWholeBookControl } from "./components/StudioWholeBookControl";
 import { useCommandFocusRestoration } from "./hooks/useCommandFocusRestoration";
-import { GROUPS, SECTIONS } from "./studioConstants";
+import { GROUPS } from "./studioConstants";
 
 interface StudioNavigatorProps {
   project: Project;
@@ -131,23 +128,7 @@ export function StudioNavigator({
           <ChevronDown aria-hidden="true" />
         </summary>
         <div className="studio-nav__content">
-          <nav className="studio-nav__sections" aria-label={t("navigator.sections.label")}>
-            {SECTIONS.map(([path, labelKey]) => (
-              <button
-                aria-current={section === path ? "page" : undefined}
-                className={
-                  section === path
-                    ? "studio-nav__section studio-nav__section--active"
-                    : "studio-nav__section"
-                }
-                key={path}
-                onClick={() => onNavigateSection(path)}
-                type="button"
-              >
-                {t(labelKey)}
-              </button>
-            ))}
-          </nav>
+          <StudioNavigatorSections onNavigateSection={onNavigateSection} section={section} />
           <StudioNavigatorSearch
             hasMoreResults={searchState.hasMoreResults}
             isLoadingMore={searchState.isLoadingMore}
@@ -163,73 +144,19 @@ export function StudioNavigator({
           />
           {showWholeBook ? <StudioWholeBookControl {...wholeBook} /> : null}
           <div className="studio-nav__tree">
-            {visibleGroups.map(({ kind, messageKey, icon: Icon }) => {
-              const isCreatingThisKind = creatingDocumentKind === kind;
-              const documents =
-                project.documents?.filter((document) => document.kind === kind) ?? [];
-              const volumes = kind === "chapter" ? (project.volumes ?? null) : null;
-              const inVolume = (volumeId: string | undefined) =>
-                documents.filter(
-                  (document) => (document.volume_id ?? volumes?.[0]?.id) === volumeId,
-                );
-              return (
-                <section className="studio-nav__document-group" key={kind}>
-                  <header>
-                    <span>
-                      <Icon aria-hidden="true" /> {t(messageKey)}
-                    </span>
-                    <button
-                      aria-busy={isCreatingThisKind || undefined}
-                      aria-label={
-                        isCreatingThisKind
-                          ? t("navigator.group.adding", { group: t(messageKey) })
-                          : t("navigator.group.add", { group: t(messageKey) })
-                      }
-                      disabled={documentMutationBusy}
-                      onClick={(event) => {
-                        void runCreateWithFocusRestoration(event.currentTarget, () =>
-                          onCreateDocument(kind),
-                        );
-                      }}
-                      title={
-                        isCreatingThisKind
-                          ? t("navigator.group.adding", { group: t(messageKey) })
-                          : t("navigator.group.add", { group: t(messageKey) })
-                      }
-                      type="button"
-                    >
-                      {isCreatingThisKind ? (
-                        <Loader2 aria-hidden="true" className="ui-spin" />
-                      ) : (
-                        <Plus aria-hidden="true" />
-                      )}
-                    </button>
-                  </header>
-                  {kind === "chapter" && volumeCommands !== null ? (
-                    <StudioNavigatorVolumeCreate
-                      commands={volumeCommands}
-                      isMutationBusy={documentMutationBusy}
-                    />
-                  ) : null}
-                  {volumes && volumes.length > 0 ? (
-                    <StudioNavigatorVolumeList
-                      commands={volumeCommands}
-                      isMutationBusy={documentMutationBusy}
-                      renderRows={(volume) => (
-                        <StudioNavigatorDocumentRows
-                          rows={inVolume(volume.id)}
-                          volumes={volumes}
-                          {...rowProps}
-                        />
-                      )}
-                      volumes={volumes}
-                    />
-                  ) : (
-                    <StudioNavigatorDocumentRows rows={documents} volumes={volumes} {...rowProps} />
-                  )}
-                </section>
-              );
-            })}
+            {visibleGroups.map((group) => (
+              <StudioNavigatorDocumentGroup
+                key={group.kind}
+                creatingDocumentKind={creatingDocumentKind}
+                documentMutationBusy={documentMutationBusy}
+                group={group}
+                onCreateDocument={onCreateDocument}
+                project={project}
+                rowProps={rowProps}
+                runCreateWithFocusRestoration={runCreateWithFocusRestoration}
+                volumeCommands={volumeCommands}
+              />
+            ))}
           </div>
         </div>
       </details>
