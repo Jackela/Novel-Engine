@@ -14,6 +14,15 @@ The frame vocabulary is closed — one JSON object per `data:` line, blank-line 
 - `{"type":"done","job":{...}}` — the completed proposal job, the same payload the synchronous endpoint returns.
 - `{"type":"error","error":{"code":"PROVIDER_FAILED","message":"..."}}` — a provider failure (connect, mid-stream, or prose rejected after completion) lands a failed job exactly like the synchronous path, then ends the stream.
 
+Alongside these frames the server writes a `: heartbeat` comment frame every
+15 seconds while a generation is silent, so proxies and clients do not treat
+the idle connection as dead; comment frames carry no `data:` field
+(`HEARTBEAT_FRAME` / `DEFAULT_HEARTBEAT_MS` in
+`server/src/contexts/studio/interface/http/proposal_stream_response.ts`).
+Clients must ignore every frame that is not a `data:` frame — the shipped
+parser already drops them (`parseFrameEvent` in
+`frontend/src/app/proposalStream.ts`).
+
 The frontend consumes the stream with `fetch` + `ReadableStream` so credentials and the CSRF header stay identical to the synchronous client, using the incremental `ProposalStreamParser`; received deltas land in the Copilot panel preview only — the manuscript changes through explicit accept, never the stream (`frontend/src/app/proposalStream.ts`, `frontend/src/features/studio/hooks/useStudioProposal.ts`, `frontend/src/features/studio/components/StudioCopilotPanel.tsx`). Each manual stream belongs to one project/document identity and request epoch. Changing either identity aborts the current controller, clears that owner's pending state, and prevents late delta, job, or error publication into the new document.
 
 ## Stoppable and resumable

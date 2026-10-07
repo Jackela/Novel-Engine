@@ -61,12 +61,14 @@ Safari 特有的登录问题是最常见的反馈。请用 **Chrome 或 Firefox*
 
 ## "The data directory is already owned by another Novel Engine process."
 
-**症状：** `backup`、`restore` 或 `doctor` 命令拒绝运行。
+**症状：** `backup`、`restore`、`reindex`、`migrate` 或 `owner reset` 命
+令拒绝运行。
 
-正在运行的工作室以独占方式持有数据目录。先停掉它，再跑命令，然后启动回
-来——精确顺序见
+正在运行的工作室以独占方式持有数据目录，而这些维护命令要接管该所有权才
+能写入。先停掉工作室，再跑命令，然后启动回来——精确顺序见
 [backup and restore](backup-and-restore.md#running-cli-commands-in-docker)。
-这个拒绝是刻意设计的：正是它防止两个进程同时写你的手稿数据库。
+这个拒绝是刻意设计的：正是它防止两个进程同时写你的手稿数据库。`doctor`
+不在这个清单里：它严格只读，可以在工作室继续运行时安全执行。
 
 ## I can't find my novels on disk
 
@@ -121,9 +123,9 @@ docker compose up -d
    败。
 2. `http://localhost:8000/health/ready` —— 服务器能连上自己的数据库时，
    这里会返回 JSON。
-3. `doctor` 命令以 JSON 报告版本、数据库完整性和账户状态；它需要先停掉
-   工作室
-   （[顺序见此](backup-and-restore.md#running-cli-commands-in-docker)）。
+3. `doctor` 命令以 JSON 报告版本、数据库完整性和账户状态；它严格只读，
+   可以在工作室运行时直接执行
+   （`docker compose exec novel-engine node server/dist/apps/cli/main.js doctor`）。
 4. 求助时附上诊断导出——见
    [export diagnostics before asking for
    help](#before-you-ask-for-help-export-diagnostics)。

@@ -38,7 +38,7 @@ Synchronous, SSE streaming, and retry generation all pass the same captured `Pro
 
 ## API surface
 
-Entry content remains managed through the ordinary document routes (`server/src/contexts/studio/interface/http/document_routes.ts`). Lore-specific routes own aliases and lifecycle status:
+Entry content remains managed through the ordinary document routes (`server/src/contexts/studio/interface/http/document_crud_routes.ts`, `document_order_routes.ts`). Lore-specific routes own aliases and lifecycle status:
 
 | Method | Path | Behavior |
 |---|---|---|

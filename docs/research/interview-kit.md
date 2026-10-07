@@ -145,8 +145,11 @@
 访谈前发 `README.zh-CN.md` 链接（或直接发
 `openwiki/guides/zh/getting-started.md`）。注意两点现状，提前打好招呼：
 
-- 用「克隆或下载 ZIP 后 `docker compose up -d`」这条路；README 里的一行
-  命令路径标注了「待 v0.8.0 发布后」，当前不要让受访者走。
+- 两条路都可以走：「克隆或下载 ZIP 后 `docker compose up -d`」，或
+  README 里的一行命令路径（v0.8.0 的 tag 与 GHCR 预构建镜像已可用；GitHub
+  Release 本身仍为 draft）。2026-09-14 起草时「一行命令路径标注待 v0.8.0
+  发布后、当前不要让受访者走」的说明已是历史状态，README 现已声明两条路
+  可用。
 - 提醒：首次启动要构建镜像，可能要等几分钟到十几分钟；浏览器用 Chrome
   或 Firefox（Safari 有已知渲染缺陷）。
 

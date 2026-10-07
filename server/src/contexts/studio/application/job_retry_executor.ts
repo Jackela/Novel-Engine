@@ -1,14 +1,6 @@
-import { TextGenerationProviderError } from "../../../contexts/ai/application/ports/text_generation.js";
 import type { Principal } from "../../../shared/application/ports/auth.js";
 import { InvalidOperationError } from "../../../shared/domain/exceptions.js";
-import {
-  ExportArtifactWriteError,
-  ExportCapacityExceededError,
-  ExportSourceInvalidatedError,
-  GenerationCapacityExceededError,
-  NotFoundError,
-  ReviewSourceInvalidatedError,
-} from "../domain/exceptions.js";
+import { ReviewSourceInvalidatedError } from "../domain/exceptions.js";
 import { recordsProviderUsage, unreportedAttemptUsage } from "./attempt_usage.js";
 import { isExportArtifactFormat } from "./export_artifact_identity.js";
 import type { SnapshotArtifactService } from "./export_artifact_service.js";
@@ -26,6 +18,7 @@ import { scopeForPrincipal } from "./ports/studio_store.js";
 import { admitTextProvider } from "./proposal_admission.js";
 import type { ProposalGenerationPipeline } from "./proposal_pipeline.js";
 import type { ReviewService } from "./review_service.js";
+import { retryFailureDisposition } from "./studio_failure_classification.js";
 
 interface JobRetryExecutorOptions {
   readonly now?: (() => Date) | undefined;
@@ -123,73 +116,102 @@ export class JobRetryExecutor {
     }
     const retry = claim.job;
     try {
-      if (retry.kind === "proposal") {
-        return await this.reexecuteProposalJob(scope, retry, reportCleanupFailure);
-      }
-      if (retry.kind === "review") {
-        return await this.reexecuteReviewJob(principal, scope, retry, reportCleanupFailure);
-      }
-      if (retry.kind === "export") {
-        return await this.reexecuteExportJob(principal, retry, reportCleanupFailure);
-      }
-      if (retry.kind === "lore-extract") {
-        return await this.reexecuteLoreExtractJob(scope, retry, reportCleanupFailure);
-      }
-      throw new InvalidOperationError(`Unsupported job kind for retry: ${retry.kind}`);
+      return await this.executeByKind(principal, scope, retry, reportCleanupFailure);
     } catch (error) {
-      if (error instanceof ExportCapacityExceededError) {
-        this.jobs.markJobOutcome(
-          scope,
-          projectId,
-          retry.id,
-          exportRetryCapacityOutcome(retry, error, this.now()),
-        );
-        throw error;
-      }
+      return this.classifyRetryFailure(scope, projectId, retry, error);
+    }
+  }
+
+  /**
+   * The kind dispatch of one freshly claimed retry row: the proposal sequence
+   * lives in the pipeline, the lore-extract sequence in its service, and the
+   * review/export landings on their own stores. An unsupported kind refuses
+   * with `InvalidOperationError` — a programming error, not work to run —
+   * and still lets the reserved row record its failure disposition through
+   * the caller.
+   */
+  private async executeByKind(
+    principal: Principal,
+    scope: ProjectScope,
+    retry: JobRecord,
+    reportCleanupFailure: (failure: unknown) => void,
+  ): Promise<Record<string, unknown>> {
+    if (retry.kind === "proposal") {
+      return this.reexecuteProposalJob(scope, retry, reportCleanupFailure);
+    }
+    if (retry.kind === "review") {
+      return this.reexecuteReviewJob(principal, scope, retry, reportCleanupFailure);
+    }
+    if (retry.kind === "export") {
+      return this.reexecuteExportJob(principal, retry, reportCleanupFailure);
+    }
+    if (retry.kind === "lore-extract") {
+      return this.reexecuteLoreExtractJob(scope, retry, reportCleanupFailure);
+    }
+    throw new InvalidOperationError(`Unsupported job kind for retry: ${retry.kind}`);
+  }
+
+  /**
+   * The failure disposition of one kind execution, consulted from the shared
+   * classification registry: a capacity refusal lands its structured outcome
+   * on the reserved row and rethrows (the surface renders the pinned
+   * envelope), every landing failure records the failed outcome — with a
+   * zero-token `unreported` usage row when the failed attempt was
+   * provider-attributable and the kind records provider usage (DR-028) —
+   * while unknown failures propagate untouched, leaving the reserved row for
+   * the operator instead of minting a phantom failure message.
+   */
+  private classifyRetryFailure(
+    scope: ProjectScope,
+    projectId: string,
+    retry: JobRecord,
+    error: unknown,
+  ): Record<string, unknown> {
+    const disposition = retryFailureDisposition(error, retry.kind);
+    if (disposition.kind === "capacity-export") {
+      this.jobs.markJobOutcome(
+        scope,
+        projectId,
+        retry.id,
+        exportRetryCapacityOutcome(retry, disposition.failure, this.now()),
+      );
+      throw error;
+    }
+    if (disposition.kind === "capacity-generation") {
       // Only proposal retries carry the structured prompt-byte capacity
       // protocol; a lore-extract retry re-admits its stored segment, so its
       // capacity refusal lands through the plain failed outcome below.
-      if (error instanceof GenerationCapacityExceededError && retry.kind === "proposal") {
-        this.jobs.markJobOutcome(
-          scope,
-          projectId,
-          retry.id,
-          generationRetryCapacityOutcome(retry, error, this.now()),
-        );
-        throw error;
-      }
-      if (
-        !(error instanceof InvalidOperationError) &&
-        !(error instanceof NotFoundError) &&
-        !(error instanceof ExportArtifactWriteError) &&
-        !(error instanceof ExportSourceInvalidatedError) &&
-        !(error instanceof ReviewSourceInvalidatedError) &&
-        !(error instanceof TextGenerationProviderError) &&
-        !(error instanceof GenerationCapacityExceededError)
-      ) {
-        throw error;
-      }
-      const outcome = failedJobOutcome(error.message, this.now());
-      // DR-028: a retried provider attempt that reached the provider keeps its
-      // failed outcome and a zero-token `unreported` usage row in one
-      // transaction. Kinds that never write usage rows (review, export) keep
-      // their plain failed transition.
-      if (error instanceof TextGenerationProviderError && recordsProviderUsage(retry.kind)) {
-        return jobPayload(
-          this.jobs.markJobOutcomeWithUsage(scope, projectId, retry.id, {
-            outcome,
-            usage: unreportedAttemptUsage({
-              provider: retry.provider,
-              requestEvidenceJson: dumpJson({
-                operation: retry.operation,
-                retry_of_job_id: retry.retryOfJobId,
-              }),
+      this.jobs.markJobOutcome(
+        scope,
+        projectId,
+        retry.id,
+        generationRetryCapacityOutcome(retry, disposition.failure, this.now()),
+      );
+      throw error;
+    }
+    if (disposition.kind === "propagate") {
+      throw error;
+    }
+    const outcome = failedJobOutcome(disposition.failure.message, this.now());
+    // DR-028: a retried provider attempt that reached the provider keeps its
+    // failed outcome and a zero-token `unreported` usage row in one
+    // transaction. Kinds that never write usage rows (review, export) keep
+    // their plain failed transition.
+    if (disposition.providerAttributable && recordsProviderUsage(retry.kind)) {
+      return jobPayload(
+        this.jobs.markJobOutcomeWithUsage(scope, projectId, retry.id, {
+          outcome,
+          usage: unreportedAttemptUsage({
+            provider: retry.provider,
+            requestEvidenceJson: dumpJson({
+              operation: retry.operation,
+              retry_of_job_id: retry.retryOfJobId,
             }),
           }),
-        );
-      }
-      return jobPayload(this.jobs.markJobOutcome(scope, projectId, retry.id, outcome));
+        }),
+      );
     }
+    return jobPayload(this.jobs.markJobOutcome(scope, projectId, retry.id, outcome));
   }
 
   private async reexecuteProposalJob(

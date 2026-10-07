@@ -1,161 +1,51 @@
-import { BookOpen, Loader2, LogOut, Plus } from "lucide-react";
-import { type FormEvent, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
-
-import { api } from "@/app/api";
 import { useTranslation } from "@/app/i18n/useTranslation";
-import { LanguageSwitch } from "@/app/LanguageSwitch";
-import { productIdentity } from "@/app/productIdentity";
-import { useSessionExpiredRedirect } from "@/app/sessionExpiry";
-import { ThemeSwitch } from "@/app/ThemeSwitch";
 
 import { ProjectCatalogList } from "./components/ProjectCatalogList";
+import { ProjectLibraryCreateForm } from "./components/ProjectLibraryCreateForm";
+import { ProjectLibraryHeader } from "./components/ProjectLibraryHeader";
 import { ProjectLibraryLoadState } from "./components/ProjectLibraryLoadState";
-import { toErrorMessage } from "./hooks/toErrorMessage";
-import { useCommandFocusRestoration } from "./hooks/useCommandFocusRestoration";
-import { useProjectLibraryBootstrap } from "./hooks/useProjectLibraryBootstrap";
-import { useProjectLibraryDeletion } from "./hooks/useProjectLibraryDeletion";
+import { useProjectLibraryActions } from "./hooks/useProjectLibraryActions";
 
-type LibraryOperation = "create" | "logout" | "delete";
-type LibraryCommand = LibraryOperation | "retry";
-
+/**
+ * The project library entry page: the project catalog with its
+ * older-page continuation, the create-project form, and the
+ * page-level commands sharing one single-flight command slot —
+ * create, sign-out, retry, delete, and load older.
+ */
 export function ProjectLibraryPage() {
-  const navigate = useNavigate();
   const { t } = useTranslation();
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [actionError, setActionError] = useState<string | null>(null);
-  const [operation, setOperation] = useState<LibraryOperation | null>(null);
-  const commandRef = useRef<LibraryCommand | null>(null);
-  const createButtonRef = useRef<HTMLButtonElement | null>(null);
-  const headingRef = useRef<HTMLHeadingElement | null>(null);
-  // DR-020: a session the server rejects returns to the entry page with the
-  // library route preserved, so signing in again lands back on the catalog.
-  // Sign-out below navigates deliberately and shows no expiry notice.
-  const onUnauthenticated = useSessionExpiredRedirect();
   const {
-    projects,
-    nextCursor,
+    actionError,
+    activateLoadOlder,
+    createButtonRef,
+    deletion,
+    description,
     error,
-    olderError,
+    hasLoaded,
+    headingRef,
     isLoading,
     isLoadingOlder,
-    hasLoaded,
-    reload,
-    loadOlder,
-    mountedRef,
-  } = useProjectLibraryBootstrap(onUnauthenticated);
-  const runRetryWithFocusRestoration = useCommandFocusRestoration(isLoading);
-  const runOperationWithFocusRestoration = useCommandFocusRestoration(operation !== null);
-  const runOlderWithFocusRestoration = useCommandFocusRestoration(isLoadingOlder);
-
-  const beginOperation = (next: LibraryOperation): boolean => {
-    if (commandRef.current !== null) return false;
-    commandRef.current = next;
-    setOperation(next);
-    setActionError(null);
-    return true;
-  };
-
-  const finishOperation = () => {
-    commandRef.current = null;
-    if (mountedRef.current) setOperation(null);
-  };
-
-  const deletion = useProjectLibraryDeletion({
-    reload,
-    isMounted: mountedRef,
-    beginDelete: () => beginOperation("delete"),
-    finishDelete: finishOperation,
-  });
-  const runDeleteWithFocusRestoration = useCommandFocusRestoration(
-    deletion.deletingProjectId !== null,
-  );
-
-  const retryLoad = async () => {
-    if (commandRef.current !== null) return;
-    commandRef.current = "retry";
-    try {
-      await reload();
-    } finally {
-      if (commandRef.current === "retry") commandRef.current = null;
-    }
-  };
-
-  const createProject = async () => {
-    if (!beginOperation("create")) return;
-    try {
-      const project = await api.createProject(title, description);
-      if (mountedRef.current) {
-        void navigate(`/projects/${project.id}/manuscript`);
-      }
-    } catch (reason) {
-      if (mountedRef.current) {
-        setActionError(toErrorMessage(reason, t("library.error.unableToCreate")));
-      }
-    } finally {
-      finishOperation();
-    }
-  };
-
-  const logout = async () => {
-    if (!beginOperation("logout")) return;
-    try {
-      await api.logout();
-    } catch (reason) {
-      if (mountedRef.current) {
-        setActionError(toErrorMessage(reason, t("library.error.unableToSignOut")));
-      }
-      return;
-    } finally {
-      finishOperation();
-    }
-    if (mountedRef.current) {
-      // Voluntary sign-out carries no expiry state: the entry page stays quiet.
-      void navigate("/");
-    }
-  };
-
-  const submitProject = (event: FormEvent) => {
-    event.preventDefault();
-    if (commandRef.current !== null || createButtonRef.current === null) return;
-    void runOperationWithFocusRestoration(createButtonRef.current, createProject);
-  };
-
-  const activateLoadOlder = (target: HTMLButtonElement) => {
-    if (commandRef.current !== null) return;
-    void runOlderWithFocusRestoration(target, loadOlder, () => headingRef.current);
-  };
+    nextCursor,
+    olderError,
+    openProject,
+    operation,
+    projects,
+    requestDelete,
+    requestRetry,
+    requestSignOut,
+    setDescription,
+    setTitle,
+    submitProject,
+    title,
+  } = useProjectLibraryActions();
 
   return (
     <main className="library">
-      <header className="library__header">
-        <div className="ui-brand">
-          <BookOpen aria-hidden="true" /> {productIdentity.name}
-        </div>
-        <div className="library__header-actions">
-          <LanguageSwitch />
-          <ThemeSwitch />
-          <button
-            aria-busy={operation === "logout" || undefined}
-            aria-label={t("library.action.signOut")}
-            className="ui-command--icon"
-            disabled={operation !== null || isLoading}
-            onClick={(event) => {
-              if (commandRef.current !== null) return;
-              void runOperationWithFocusRestoration(event.currentTarget, logout);
-            }}
-            title={t("library.action.signOut")}
-            type="button"
-          >
-            {operation === "logout" ? (
-              <Loader2 aria-hidden="true" className="ui-spin" />
-            ) : (
-              <LogOut aria-hidden="true" />
-            )}
-          </button>
-        </div>
-      </header>
+      <ProjectLibraryHeader
+        isLoading={isLoading}
+        onSignOut={requestSignOut}
+        operation={operation}
+      />
 
       <section className="library__content">
         <div className="library__heading">
@@ -182,47 +72,19 @@ export function ProjectLibraryPage() {
             error={error}
             headingRef={headingRef}
             isLoading={isLoading}
-            onRetry={(target, heading) => {
-              if (commandRef.current !== null) return;
-              void runRetryWithFocusRestoration(target, retryLoad, heading);
-            }}
+            onRetry={requestRetry}
           />
         ) : (
           <div className="library__grid">
-            <form className="library-create" onSubmit={submitProject}>
-              <div className="library-create__icon">
-                <Plus aria-hidden="true" />
-              </div>
-              <h2>{t("library.create.newProject")}</h2>
-              <label>
-                <span>{t("common.field.title")}</span>
-                <input
-                  disabled={operation !== null}
-                  value={title}
-                  onChange={(event) => setTitle(event.target.value)}
-                  required
-                />
-              </label>
-              <label>
-                <span>{t("library.create.premise")}</span>
-                <textarea
-                  value={description}
-                  disabled={operation !== null}
-                  onChange={(event) => setDescription(event.target.value)}
-                  rows={4}
-                />
-              </label>
-              <button
-                aria-busy={operation === "create" || undefined}
-                className="ui-command ui-command--primary"
-                disabled={operation !== null}
-                ref={createButtonRef}
-                type="submit"
-              >
-                {operation === "create" ? <Loader2 aria-hidden="true" className="ui-spin" /> : null}
-                {operation === "create" ? t("library.action.creating") : t("library.action.create")}
-              </button>
-            </form>
+            <ProjectLibraryCreateForm
+              createButtonRef={createButtonRef}
+              description={description}
+              onDescriptionChange={setDescription}
+              onSubmit={submitProject}
+              onTitleChange={setTitle}
+              operation={operation}
+              title={title}
+            />
             <ProjectCatalogList
               confirmingDeleteId={deletion.confirmingProjectId}
               deleteErrorFor={deletion.deleteErrorFor}
@@ -233,14 +95,8 @@ export function ProjectLibraryPage() {
               olderError={olderError}
               onActivateOlder={activateLoadOlder}
               onConfirmingDeleteChange={deletion.setConfirmingProjectId}
-              onDeleteProject={(target, projectId, projectTitle) => {
-                void runDeleteWithFocusRestoration(
-                  target,
-                  () => deletion.deleteProject(projectId, projectTitle),
-                  () => headingRef.current,
-                );
-              }}
-              onOpenProject={(projectId) => navigate(`/projects/${projectId}/manuscript`)}
+              onDeleteProject={requestDelete}
+              onOpenProject={openProject}
               projects={projects}
             />
           </div>

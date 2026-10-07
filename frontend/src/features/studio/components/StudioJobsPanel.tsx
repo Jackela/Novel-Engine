@@ -51,18 +51,21 @@ export function StudioJobsPanel({
   // DR-010: a completed proposal's text stays readable even after the panel
   // cleared it — the job detail read is lazy, scoped, and copy-friendly.
   const [viewedProposal, setViewedProposal] = useState<ViewedProposalText | null>(null);
+  const viewSequenceRef = useRef(0);
 
   const viewProposalText = async (jobId: string): Promise<void> => {
-    setViewedProposal({ jobId, text: null, error: null });
+    // The author's latest row choice owns the read cursor (last-click-wins),
+    // so a slow earlier read can never replace a newer proposal's body.
+    const sequence = ++viewSequenceRef.current;
+    const publish = (next: ViewedProposalText): void => {
+      if (viewSequenceRef.current === sequence) setViewedProposal(next);
+    };
+    publish({ jobId, text: null, error: null });
     try {
       const detail = await api.job(projectId, jobId, {});
-      setViewedProposal({ jobId, text: detail.result.proposal_markdown ?? "", error: null });
+      publish({ jobId, text: detail.result.proposal_markdown ?? "", error: null });
     } catch (reason) {
-      setViewedProposal({
-        jobId,
-        text: null,
-        error: toErrorMessage(reason, t("jobs.proposal.error")),
-      });
+      publish({ jobId, text: null, error: toErrorMessage(reason, t("jobs.proposal.error")) });
     }
   };
 

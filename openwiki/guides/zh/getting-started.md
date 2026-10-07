@@ -55,7 +55,7 @@ services:
 ```
 
 如果主机需要被其他设备访问，则保留 production 模式，改为写上确切的公网
-origin 和反向代理地址——见[部署清单](../../deploy/README.md#hosting-on-a-server)。
+origin 和反向代理地址——见[部署清单](../../../deploy/README.md#hosting-on-a-server)。
 
 然后在包含 `compose.yaml` 的文件夹里运行：
 

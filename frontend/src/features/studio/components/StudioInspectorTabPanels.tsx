@@ -1,0 +1,159 @@
+import type { InspectorTab } from "../studioConstants";
+import type { InspectorPendingState, StudioInspectorModel } from "../studioInspectorTypes";
+import { StudioExportPanel } from "./StudioExportPanel";
+import { StudioHistoryPanel } from "./StudioHistoryPanel";
+import { StudioJobsPanel } from "./StudioJobsPanel";
+import { StudioLorebookWizardPanel } from "./StudioLorebookWizardPanel";
+import { StudioReviewPanel } from "./StudioReviewPanel";
+import { StudioUsagePanel } from "./StudioUsagePanel";
+import { StudioWritingStatsPanel } from "./StudioWritingStatsPanel";
+
+interface StudioInspectorTabPanelsProps {
+  inspector: InspectorTab;
+  tabId: (tab: Exclude<InspectorTab, "settings">) => string;
+  panelId: (tab: Exclude<InspectorTab, "settings">) => string;
+  pending: InspectorPendingState;
+  model: StudioInspectorModel;
+}
+
+/**
+ * The inspector's secondary tab panels — export, review, history,
+ * jobs, usage, stats, and lore. Each panel keeps its own tab's DOM
+ * slot (hidden until active) so the tabpanel semantics, live-region
+ * announcements, and per-panel mounting stay owned by the panel the
+ * tab presents; the switcher only decides which slot is visible.
+ */
+export function StudioInspectorTabPanels({
+  inspector,
+  tabId,
+  panelId,
+  pending,
+  model,
+}: StudioInspectorTabPanelsProps) {
+  return (
+    <>
+      <div
+        aria-labelledby={tabId("export")}
+        hidden={inspector !== "export"}
+        id={panelId("export")}
+        role="tabpanel"
+      >
+        <StudioExportPanel
+          exports={model.export.exports}
+          historyInitialized={model.export.historyInitialized}
+          isLoadingHistory={model.export.isLoadingHistory}
+          historyError={model.export.historyError}
+          onRetryHistory={model.export.onRetryHistory}
+          hasOlderExports={model.export.hasOlderExports}
+          isLoadingOlderExports={model.export.isLoadingOlderExports}
+          olderExportsError={model.export.olderExportsError}
+          onLoadOlderExports={model.export.onLoadOlderExports}
+          exportingFormat={model.export.exportingFormat}
+          retryingFormat={model.export.retryingFormat}
+          onExport={model.export.onExport}
+          error={model.export.errorForExport}
+          failedFormat={model.export.failedFormat}
+          onRetry={model.export.onRetryExport}
+        />
+      </div>
+      <div
+        aria-labelledby={tabId("review")}
+        hidden={inspector !== "review"}
+        id={panelId("review")}
+        role="tabpanel"
+      >
+        <StudioReviewPanel
+          latestReview={model.review.selectedReview}
+          summaries={model.review.summaries}
+          selectedReviewId={model.review.selectedReviewId}
+          onSelectReview={model.review.onSelectReview}
+          detailLoading={model.review.detailLoading}
+          detailError={model.review.detailError}
+          onRetryDetail={model.review.onRetryDetail}
+          historyInitialized={model.review.historyInitialized}
+          historyPaging={model.review.historyPaging}
+          historyError={model.review.historyError}
+          olderError={model.review.olderError}
+          onLoadOlderReviews={model.review.onLoadOlderReviews}
+          actionError={model.review.actionError}
+          onRetryHistory={model.review.onRetryHistory}
+          onRunReview={model.review.onRunReview}
+          isRunning={pending.review}
+        />
+      </div>
+      <div
+        aria-labelledby={tabId("history")}
+        hidden={inspector !== "history"}
+        id={panelId("history")}
+        role="tabpanel"
+      >
+        <StudioHistoryPanel
+          revisions={model.history.revisions}
+          loadedRevisionId={model.history.loadedRevisionId}
+          onRestoreRevision={model.history.onRestoreRevision}
+          previewScope={model.history.preview}
+          restoringRevisionId={pending.history?.restoringRevisionId}
+          historyInitialized={model.history.historyInitialized}
+          hasOlderRevisions={model.history.hasOlderRevisions}
+          isLoadingOlder={model.history.isLoadingOlder}
+          isLoadingHistory={model.history.isLoadingHistory}
+          onLoadOlderRevisions={model.history.onLoadOlderRevisions}
+        />
+      </div>
+      <div
+        aria-labelledby={tabId("jobs")}
+        hidden={inspector !== "jobs"}
+        id={panelId("jobs")}
+        role="tabpanel"
+      >
+        <StudioJobsPanel
+          projectId={model.jobs.projectId}
+          jobs={model.jobs.jobs}
+          hasOlderJobs={model.jobs.hasOlderJobs}
+          onLoadJobs={model.jobs.onLoadJobs}
+          onLoadOlderJobs={model.jobs.onLoadOlderJobs}
+          onRetryJob={model.jobs.onRetryJob}
+          isLoading={pending.jobs.loading}
+          loadingInitiator={pending.jobs.loadingInitiator}
+          retryGated={pending.jobs.retryGated}
+          retryingJobId={
+            pending.jobs.retryingJobId ??
+            (pending.jobs.retrying
+              ? (model.jobs.jobs.find(
+                  (job) => job.status === "failed" || job.status === "interrupted",
+                )?.id ?? "__retrying__")
+              : null)
+          }
+        />
+      </div>
+      <div
+        aria-labelledby={tabId("usage")}
+        hidden={inspector !== "usage"}
+        id={panelId("usage")}
+        role="tabpanel"
+      >
+        <StudioUsagePanel active={inspector === "usage"} projectId={model.usage.projectId} />
+      </div>
+      <div
+        aria-labelledby={tabId("stats")}
+        hidden={inspector !== "stats"}
+        id={panelId("stats")}
+        role="tabpanel"
+      >
+        <StudioWritingStatsPanel active={inspector === "stats"} projectId={model.stats.projectId} />
+      </div>
+      <div
+        aria-labelledby={tabId("lore")}
+        hidden={inspector !== "lore"}
+        id={panelId("lore")}
+        role="tabpanel"
+      >
+        <StudioLorebookWizardPanel
+          documents={model.lore.documents}
+          projectId={model.lore.projectId}
+          provider={model.lore.provider}
+        />
+      </div>
+    </>
+  );
+}

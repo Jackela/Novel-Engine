@@ -149,9 +149,12 @@ studio falls back to `gpt-4o-mini` (or `LLM_MODEL` when set).
    Typical causes: the key was copied with a stray space, `up -d` was not run
    after editing `.env`, the model name does not exist at that
    endpoint, or the account is out of credit.
-3. For a deeper database-and-configuration health report, the `doctor`
-   command runs inside the container — it needs the studio stopped first; the
-   exact stop/run/start sequence is in
+3. For a deeper database-and-configuration health report, run the `doctor`
+   command inside the container — it is strictly read-only, so it is safe
+   while the studio keeps serving:
+   `docker compose exec novel-engine node server/dist/apps/cli/main.js doctor`.
+   Only commands that take exclusive ownership need the stop/run/start
+   sequence in
    [backup and restore](backup-and-restore.md#running-cli-commands-in-docker).
 
 ## Back to trial mode

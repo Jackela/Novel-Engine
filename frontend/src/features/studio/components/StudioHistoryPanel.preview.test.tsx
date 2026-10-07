@@ -93,6 +93,44 @@ describe("StudioHistoryPanel revision preview (DR-011)", () => {
     expect(container).toHaveTextContent("Revision 1 preview");
   });
 
+  it("settles both rows when a second preview is opened before the first read lands", async () => {
+    const earlier = deferred<RevisionDetail>();
+    const later = deferred<RevisionDetail>();
+    const currentDetail: RevisionDetail = {
+      ...ancestor,
+      id: "revision-current",
+      parent_revision_id: "revision-old",
+      revision_number: 2,
+      content_markdown: "line one\nline two\nline three\nline four",
+      word_count: 4,
+    };
+    vi.mocked(api.revision).mockImplementation((_projectId, _documentId, revisionId) =>
+      revisionId === "revision-old" ? earlier.promise : later.promise,
+    );
+    const { container } = renderHistory();
+
+    // The reported permanent-loading shape: open the older row's preview, then
+    // the newer row's before either body arrives.
+    openFirstPreview(container);
+    act(() => getByRole(container, "button", { name: "Preview" }).click());
+
+    await act(async () => {
+      earlier.resolve(ancestor);
+      await earlier.promise;
+    });
+    await act(async () => {
+      later.resolve(currentDetail);
+      await later.promise;
+    });
+
+    // Reopening the older row serves its settled read from the cache instead of
+    // leaving the row on "Loading revision…" forever.
+    act(() => getByRole(container, "button", { name: "Preview" }).click());
+    expect(container).toHaveTextContent("Revision 1 preview");
+    expect(container).not.toHaveTextContent("Loading revision…");
+    expect(api.revision).toHaveBeenCalledTimes(2);
+  });
+
   it("highlights added and removed lines against the current revision", async () => {
     vi.mocked(api.revision).mockResolvedValue(ancestor);
     const { container } = renderHistory();

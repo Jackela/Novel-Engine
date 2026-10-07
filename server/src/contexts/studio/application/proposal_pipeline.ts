@@ -1,17 +1,12 @@
-import {
-  ProviderNotConfiguredError,
-  type ProviderStep,
-  TextGenerationCancelledError,
-  type TextGenerationProvider,
-  TextGenerationProviderError,
-  type TextGenerationProviderFactory,
-  type TextGenerationStreamOptions,
-  type TextGenerationStreamOutcome,
-  type TextGenerationTask,
-  type TextProviderName,
+import type {
+  ProviderStep,
+  TextGenerationProvider,
+  TextGenerationProviderFactory,
+  TextGenerationTask,
+  TextProviderName,
 } from "../../../contexts/ai/application/ports/text_generation.js";
 import { InvalidOperationError } from "../../../shared/domain/exceptions.js";
-import type { InFlightOperationGuard } from "./operation_in_flight.js";
+import { type InFlightOperationGuard, withInFlightPermit } from "./operation_in_flight.js";
 import type { ProposalStreamFramePayload } from "./payload_schemas/proposal_frame.js";
 import { jobPayload } from "./payloads.js";
 import type { StudioJobLedgerStore } from "./ports/job_ledger_store.js";
@@ -31,14 +26,17 @@ import {
   buildProposalTask,
   completedProposalJob,
   completedProposalLanding,
-  createProposalCodePointCounter,
   failedProposalJob,
-  includeProposalDelta,
   type ProposalJobSeed,
   replayedProposalFrame,
   validatedProposalOrThrow,
 } from "./proposal_landing.js";
+import { accumulateStreamedDeltas } from "./proposal_stream_accumulation.js";
 import { disposeProvider, type ProviderCleanupFailureReporter } from "./provider_disposal.js";
+import {
+  firstRunFailureDisposition,
+  streamingFailureDisposition,
+} from "./studio_failure_classification.js";
 
 /**
  * The execution-sequence half of the proposal pipeline: the one owner of the
@@ -57,42 +55,6 @@ interface ProposalTarget {
   readonly seed: ProposalJobSeed;
   readonly revisionId: string;
   readonly task: TextGenerationTask;
-}
-
-/**
- * The streaming twin's delta loop: consumes the provider stream, counts code
- * points, accumulates the proposal markdown, and re-emits each delta as a
- * `delta` frame. Returns the accumulated markdown and the provider-reported
- * outcome once the stream completes; aborts and provider failures propagate
- * to the caller's existing cancel/failure handling.
- */
-async function* accumulateStreamedDeltas(
-  generate: (
-    task: TextGenerationTask,
-    options?: TextGenerationStreamOptions,
-  ) => AsyncGenerator<string, void, void>,
-  task: TextGenerationTask,
-  signal: AbortSignal | undefined,
-  // Caller-owned sink so a mid-stream failure can still read the text (#DR-006).
-  accumulated: string[],
-): AsyncGenerator<
-  ProposalStreamFramePayload,
-  { reported: TextGenerationStreamOutcome | undefined },
-  void
-> {
-  const codePoints = createProposalCodePointCounter();
-  let reported: TextGenerationStreamOutcome | undefined;
-  for await (const delta of generate(task, {
-    signal,
-    onOutcome: (value) => {
-      reported = value;
-    },
-  })) {
-    includeProposalDelta(codePoints, delta);
-    accumulated.push(delta);
-    yield { type: "delta", text: delta };
-  }
-  return { reported };
 }
 
 export class ProposalGenerationPipeline {
@@ -120,39 +82,38 @@ export class ProposalGenerationPipeline {
     // loser receives a 409 instead of running the work twice. Enter before
     // resolving the revision so a committed deletion still owns the project
     // throughout post-commit artifact cleanup rather than degrading to 404.
-    const permit = this.inFlight.acquire({
+    const inFlightTarget = {
       projectId: request.projectId,
       documentId: request.documentId,
       operation: request.operation,
-    });
-    let provider: TextGenerationProvider | undefined;
-    try {
-      const target = this.resolveTarget(request, step, providerName);
+    };
+    return withInFlightPermit(this.inFlight, inFlightTarget, async () => {
+      let provider: TextGenerationProvider | undefined;
       try {
-        provider = this.providerFactory(providerName);
-        const result = await provider.generateStructured(target.task);
-        const { proposal } = validatedProposalOrThrow(result);
-        return completedProposalJob(this.jobs, request.scope, target.seed, target.revisionId, {
-          proposal,
-          provider: providerName,
-          model: result.model,
-          promptTokens: result.promptTokens,
-          completionTokens: result.completionTokens,
-          instruction: request.instruction,
-        });
-      } catch (error) {
-        if (!(error instanceof TextGenerationProviderError)) throw error;
-        return failedProposalJob(this.jobs, request.scope, target, error.message);
-      }
-    } finally {
-      try {
+        const target = this.resolveTarget(request, step, providerName);
+        try {
+          provider = this.providerFactory(providerName);
+          const result = await provider.generateStructured(target.task);
+          const { proposal } = validatedProposalOrThrow(result);
+          return completedProposalJob(this.jobs, request.scope, target.seed, target.revisionId, {
+            proposal,
+            provider: providerName,
+            model: result.model,
+            promptTokens: result.promptTokens,
+            completionTokens: result.completionTokens,
+            instruction: request.instruction,
+          });
+        } catch (error) {
+          const disposition = firstRunFailureDisposition(error, "proposal");
+          if (disposition.kind === "propagate") throw error;
+          return failedProposalJob(this.jobs, request.scope, target, disposition.failure.message);
+        }
+      } finally {
         if (provider !== undefined) {
           await disposeProvider(provider, reportCleanupFailure);
         }
-      } finally {
-        permit.release();
       }
-    }
+    });
   }
 
   /**
@@ -160,7 +121,8 @@ export class ProposalGenerationPipeline {
    * validation, and job/usage landing, but the proposal markdown is yielded
    * as deltas while the provider writes. The permit is handed to
    * `ownPermit` instead of being released here — the caller owns its
-   * session-scoped release.
+   * session-scoped release, so the synchronous `withInFlightPermit` template
+   * deliberately does not apply and must not release it when frames end.
    */
   async *stream(
     request: ProposalGenerationRequest,
@@ -223,17 +185,19 @@ export class ProposalGenerationPipeline {
           ),
         };
       } catch (error) {
-        if (error instanceof TextGenerationCancelledError) return;
+        const disposition = streamingFailureDisposition(error);
         // DR-022: an unconfigured provider never starts a stream and never
         // lands a failed job — the HTTP surface answers with the dedicated
-        // PROVIDER_NOT_CONFIGURED envelope naming the missing credential.
-        if (error instanceof ProviderNotConfiguredError) throw error;
-        if (!(error instanceof TextGenerationProviderError)) throw error;
+        // PROVIDER_NOT_CONFIGURED envelope naming the missing credential;
+        // unknown failures take the same propagate exit.
+        if (disposition.kind === "propagate") throw error;
+        if (disposition.kind === "abort") return;
         // DR-006: a stream that broke mid-flight persists its accumulated text
         // (sanitized) as `partial_markdown`; a completed stream drained the sink
         // above and persists none.
-        failedProposalJob(this.jobs, request.scope, target, error.message, accumulated.join(""));
-        yield { type: "error", error: { code: "PROVIDER_FAILED", message: error.message } };
+        const failure = disposition.failure.message;
+        failedProposalJob(this.jobs, request.scope, target, failure, accumulated.join(""));
+        yield { type: "error", error: { code: "PROVIDER_FAILED", message: failure } };
       }
     } finally {
       if (provider !== undefined) {

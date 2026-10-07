@@ -1,60 +1,36 @@
-import { randomBytes, randomUUID } from "node:crypto";
-import cookie from "@fastify/cookie";
+import { randomUUID } from "node:crypto";
 import type { TypeBoxTypeProvider } from "@fastify/type-provider-typebox";
 import Fastify, { type FastifyInstance, type FastifyServerOptions } from "fastify";
 import type { TextGenerationProviderFactory } from "../../contexts/ai/application/ports/text_generation.js";
-import { providerCatalogRoutes } from "../../contexts/ai/interface/http/provider_routes.js";
-import { studioRoutes } from "../../contexts/studio/interface/http/studio_routes.js";
-import { AuthService } from "../../shared/application/auth_service.js";
 import type { HealthProbe } from "../../shared/application/ports/health.js";
 import { assertStartupGuards } from "../../shared/infrastructure/config/server_config.js";
-import { resolveSessionSecret } from "../../shared/infrastructure/config/session_secret.js";
-import { DrizzleAuthStore } from "../../shared/infrastructure/db/auth_store.js";
 import type { StudioQueryLogger } from "../../shared/infrastructure/db/connection.js";
-import { armFirstBootSetupToken } from "../../shared/infrastructure/db/setup_token.js";
-import { sqliteHealthProbe } from "../../shared/infrastructure/db/sqlite_health_probe.js";
 import type { StudioDatabase } from "../../shared/infrastructure/db/startup.js";
 import { readProductIdentity } from "../../shared/infrastructure/workspace_manifest.js";
-import { principalGuard } from "../../shared/interface/http/auth_guard.js";
 import { registerErrorEnvelope } from "../../shared/interface/http/error_envelope.js";
-import { healthRoutes } from "../../shared/interface/http/health_routes.js";
-import { metricsRoutes } from "../../shared/interface/http/metrics_routes.js";
 import {
   defaultSpaDistDirectory,
   registerSpaServing,
 } from "../../shared/interface/http/spa_serving.js";
-import { type VersionInfo, versionRoutes } from "../../shared/interface/http/version_route.js";
+import { registerApiPlugins } from "./api_plugins_registration.js";
 import { closeAppAndRethrow } from "./app_lifecycle.js";
-import {
-  type AuthRegistrationOptions,
-  registerAuthRoutes,
-  resolveTrustedProxies,
-} from "./auth_registration.js";
-import {
-  type CorsOriginsAppOptions,
-  registerCors,
-  resolveCorsOrigins,
-} from "./cors_registration_policy.js";
+import { type AuthRegistrationOptions, resolveTrustedProxies } from "./auth_registration.js";
+import type { CorsOriginsAppOptions } from "./cors_registration_policy.js";
 import {
   DEFAULT_HTTP_SERVER_POLICY,
   fastifyOptionsForHttpServerPolicy,
   type HttpServerPolicy,
   registerUndeclaredRequestBodyPolicy,
 } from "./http_server_policy.js";
-import { buildMetricsProbe } from "./metrics_probe.js";
-import { registerOpenApiDocument } from "./openapi_document_registration.js";
 import {
   type OperationCapacityAppOptions,
   resolveOperationCapacity,
 } from "./operation_capacity_config.js";
-import { openPersistence } from "./persistence.js";
 import { loggerWithProductIdentity } from "./product_logger.js";
-import { buildProviderRuntime, type ProviderApiKeys } from "./provider_runtime.js";
+import type { ProviderApiKeys } from "./provider_runtime.js";
 import { correlationIdFrom, REQUEST_ID_HEADER } from "./request_correlation.js";
-import {
-  assembleStudioServices,
-  type StudioServicesAssemblyOptions,
-} from "./studio_services_assembly.js";
+import { createRuntimeDependencies } from "./runtime_dependencies.js";
+import type { StudioServicesAssemblyOptions } from "./studio_services_assembly.js";
 
 declare module "fastify" {
   interface FastifyInstance {
@@ -106,8 +82,6 @@ export interface AppOptions
   httpServerPolicy?: HttpServerPolicy | undefined;
 }
 
-const emptyHealthProbe: HealthProbe = async () => ({ components: [] });
-
 /**
  * Composition root of the TS server: correlation-id request logging, the
  * unified error envelope, health probes, /version metadata, the OpenAPI
@@ -115,6 +89,11 @@ const emptyHealthProbe: HealthProbe = async () => ({ components: [] });
  * configured — the persistence pipeline (backup → migrate → reconcile
  * export publications → recover job state) that must complete before the app
  * serves traffic.
+ *
+ * This function owns only the phases and their order: the runtime handles
+ * assemble in createRuntimeDependencies, the API surface registers in
+ * registerApiPlugins, and the SPA wildcard mounts last. A failure in any
+ * phase closes the partially built app before the error propagates.
  */
 export async function buildApp(options: AppOptions = {}): Promise<FastifyInstance> {
   // Guards run before any side effect: a misconfigured production start must
@@ -143,141 +122,24 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
     });
     registerUndeclaredRequestBodyPolicy(app);
 
-    const databasePath = options.databasePath ?? options.config?.databasePath;
-    // The content-authority database exists exactly when a database path is
-    // configured, so the handles travel together and downstream guards need a
-    // single check (audit hard-10: the former `studioDb === undefined ||
-    // dataDirectory === undefined` clause was unreachable).
-    const persistence =
-      databasePath === undefined
-        ? undefined
-        : await openPersistence(app, databasePath, options.databaseQueryLogger);
-    if (persistence !== undefined) {
-      app.decorate("studioDb", persistence.db);
-    }
-    const dataDirectory = persistence?.dataDirectory;
-
-    const environment =
-      options.environment ?? options.config?.environment ?? process.env.NODE_ENV ?? "development";
-    // One resolution for the whole app (#654): the session secret is either
-    // explicit (options or config) or generated — and outside the guarded
-    // production/staging environments the generated key is persisted into the
-    // data directory once and reused, so a restart no longer logs the author
-    // out (DR-040). The diagnostics export reports only which of the three it
-    // was, never the value.
-    const resolvedSessionSecret =
-      options.sessionSecret ??
-      resolveSessionSecret({
-        configured: options.config?.sessionSecret,
-        environment,
-        dataDirectory,
-      });
-    const authStore =
-      persistence === undefined ? undefined : new DrizzleAuthStore(persistence.db.db);
-    // First-boot takeover gate (DR-008): while no owner exists the one-time
-    // setup token is armed and logged here; the raw socket peer decides the
-    // loopback exemption inside the route, never a forwarded address.
-    const setupTokenGuard =
-      persistence === undefined || authStore === undefined
-        ? undefined
-        : armFirstBootSetupToken({
-            directory: persistence.dataDirectory,
-            ownerExists: authStore.ownerExists(),
-            onToken: (token) => app.log.info({ setup_token: token }, "first-start setup token"),
-            onWarning: (message, error) => app.log.warn({ err: error }, message),
-          });
-    const authService =
-      persistence === undefined || authStore === undefined
-        ? undefined
-        : new AuthService({
-            store: authStore,
-            sessionSecret: resolvedSessionSecret ?? randomBytes(32).toString("base64url"),
-            now: options.clock,
-          });
-    const provider = buildProviderRuntime(options.config, options);
-    const studioServices =
-      persistence === undefined
-        ? undefined
-        : assembleStudioServices(persistence, {
-            config: options.config,
-            provider,
-            operationCapacity,
-            options,
-            productIdentity,
-            sessionSecretConfigured: resolvedSessionSecret !== undefined,
-          });
-
-    const versionInfo: VersionInfo = {
-      version: productIdentity.version,
-      name: productIdentity.name,
-      runtime: { name: "node", version: process.versions.node },
-      environment,
-      build: options.buildSha ?? process.env.BUILD_SHA ?? "unknown",
-    };
+    const dependencies = await createRuntimeDependencies(
+      app,
+      options,
+      productIdentity,
+      operationCapacity,
+    );
 
     // The envelope must be installed before route plugins: Fastify child
     // contexts snapshot their parent's error handler at registration time.
     registerErrorEnvelope(app);
-
-    await app.register(cookie);
-    await registerOpenApiDocument(app, productIdentity, versionInfo);
-    const corsOrigins = resolveCorsOrigins(options);
-    await registerCors(app, corsOrigins);
-    await registerAuthRoutes(
-      app,
-      { authService, productIdentity, environment, corsOrigins, setupTokenGuard },
-      options,
-    );
-    await app.register(healthRoutes, {
-      healthProbe:
-        options.healthProbe ??
-        (persistence === undefined ? emptyHealthProbe : sqliteHealthProbe(persistence.db.raw)),
-    });
-    // DR-041: the internal scrape surface. It is registered before the SPA
-    // wildcard, kept out of the OpenAPI document, and gated to the loopback
-    // peer or an authenticated owner session.
-    await app.register(metricsRoutes, {
-      probe: buildMetricsProbe(persistence?.db.raw),
-      authService,
-      productIdentity,
-    });
-    await app.register(versionRoutes, {
-      info: versionInfo,
-      production: environment === "production",
-    });
-    await app.register(providerCatalogRoutes, {
-      authService,
-      defaultProvider: provider.defaultProvider,
-      settings: provider.providerModelSettings,
-      credentials: provider.providerApiKeys,
-    });
-    await app.register(studioRoutes, {
-      authService,
-      services: studioServices,
-      dataDirectory,
-    });
-
-    // The full contract is owner-only in production (DR-035); development and
-    // test keep the route open so the snapshot gate and local tooling can read
-    // it. The owner guard answers 401 to anonymous callers and 503 when no
-    // persistence layer exists to authorize against (fail-closed).
-    const openApiDocument = async () => app.swagger();
-    if (environment === "production") {
-      app.get(
-        "/openapi.json",
-        { schema: { hide: true }, preHandler: principalGuard(authService) },
-        openApiDocument,
-      );
-    } else {
-      app.get("/openapi.json", { schema: { hide: true } }, openApiDocument);
-    }
+    await registerApiPlugins(app, dependencies, options);
 
     // The SPA surface registers last: its wildcard only fires when no API,
     // health, or version route matched, so the JSON API stays distinct.
     await registerSpaServing(app, {
       distDirectory: options.spaDistDirectory ?? defaultSpaDistDirectory(),
-      productName: versionInfo.name,
-      version: versionInfo.version,
+      productName: dependencies.versionInfo.name,
+      version: dependencies.versionInfo.version,
     });
 
     return app;

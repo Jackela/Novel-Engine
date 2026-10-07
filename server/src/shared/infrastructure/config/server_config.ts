@@ -3,12 +3,13 @@ import { dirname, join, resolve } from "node:path";
 
 import { DEFAULT_CORS_ORIGINS } from "../../domain/cors_contract.js";
 import { errorCode } from "../error_code.js";
-import { isTrustedProxyRange } from "../rate_limit/client_identity.js";
 import { locateWorkspaceRoot } from "../workspace_manifest.js";
 import { ConfigurationError } from "./configuration_error.js";
 import { parseEnvFile } from "./env_file.js";
+import { integerFrom, listFrom, stringFrom } from "./env_values.js";
 import { type LogLevel, logLevelFrom } from "./log_level.js";
 import { type LlmServerConfig, loadLlmServerConfig } from "./provider_config.js";
+import { assertStartupGuards, secretFrom } from "./startup_guards.js";
 import {
   assertWorkflowCapacity,
   DEFAULT_MAX_ACTIVE_WORKFLOWS,
@@ -17,6 +18,8 @@ import {
   MIN_ACTIVE_WORKFLOWS,
 } from "./workflow_capacity.js";
 
+/** Same seam for the guards: `loadServerConfig` and `buildApp` share one import point. */
+export { assertStartupGuards, DEFAULT_SECRET_KEY } from "./startup_guards.js";
 /** Re-exported so the composition-root seam keeps one import location. */
 export { assertWorkflowCapacity, type WorkflowCapacityConfig } from "./workflow_capacity.js";
 export { ConfigurationError };
@@ -29,20 +32,6 @@ const DEFAULT_HOST = "0.0.0.0";
 const DEFAULT_PORT = 8000;
 const DEFAULT_RATE_LIMIT = "5/minute";
 const RATE_LIMIT_PATTERN = /^([1-9]\d{0,5})\/minute$/;
-
-// Sentinel default assembled from harmless words so no credential-shaped literal ships in source.
-export const DEFAULT_SECRET_KEY = ["change-me", "in-production", "32-char-long"].join("-");
-
-/**
- * Placeholder prefix refused by the production guard. `.env.example` ships a
- * `change-me…` value, so without this rule a copied example file silently
- * becomes the production session key; the guard makes it fail startup
- * instead. Outside production the value stays usable for local development.
- */
-const PLACEHOLDER_SECRET_PREFIX = "change-me";
-
-/** Minimum usable secret length; explicit values shorter than this fail validation. */
-const MIN_SECRET_LENGTH = 16;
 
 const ENVIRONMENTS = ["development", "testing", "staging", "production"] as const;
 
@@ -108,15 +97,19 @@ export function loadServerConfig(input: LoadServerConfigInput = {}): ServerConfi
   const workingDirectory = input.workingDirectory ?? locateWorkspaceRoot();
   const databasePath = resolve(workingDirectory, databaseUrl.slice("sqlite:///".length));
   const sessionSecret = secretFrom(stringFrom(env, "SECURITY_SECRET_KEY"));
-  const maxActiveWorkflows = boundedIntegerFrom(
+  const maxActiveWorkflows = integerFrom(
     env,
     "API_MAX_ACTIVE_WORKFLOWS",
     DEFAULT_MAX_ACTIVE_WORKFLOWS,
+    MIN_ACTIVE_WORKFLOWS,
+    MAX_ACTIVE_WORKFLOWS,
   );
-  const maxActiveWorkflowsPerProject = boundedIntegerFrom(
+  const maxActiveWorkflowsPerProject = integerFrom(
     env,
     "API_MAX_ACTIVE_WORKFLOWS_PER_PROJECT",
     DEFAULT_MAX_ACTIVE_WORKFLOWS_PER_PROJECT,
+    MIN_ACTIVE_WORKFLOWS,
+    MAX_ACTIVE_WORKFLOWS,
   );
   assertWorkflowCapacity({
     applicationLimit: maxActiveWorkflows,
@@ -141,78 +134,6 @@ export function loadServerConfig(input: LoadServerConfigInput = {}): ServerConfi
   };
   assertStartupGuards(config);
   return config;
-}
-
-/** Re-assert the startup guards at the composition root (fail-fast seam). */
-export function assertStartupGuards(config: ServerConfig): void {
-  assertWorkflowCapacity({
-    applicationLimit: config.maxActiveWorkflows,
-    projectLimit: config.maxActiveWorkflowsPerProject,
-  });
-  assertTrustedProxyAddresses(config.trustedProxies);
-  if (config.environment !== "production" && config.environment !== "staging") {
-    return;
-  }
-  if (config.sessionSecret === undefined) {
-    throw new ConfigurationError(
-      `SECURITY_SECRET_KEY must be set to a non-default value in ${config.environment}`,
-    );
-  }
-  if (config.environment !== "production") {
-    return;
-  }
-  if (config.sessionSecret?.startsWith(PLACEHOLDER_SECRET_PREFIX) === true) {
-    throw new ConfigurationError(
-      "SECURITY_SECRET_KEY must not keep the change-me placeholder value in production; " +
-        "generate a unique random value (for example: openssl rand -hex 32)",
-    );
-  }
-  if (!config.databaseUrl.startsWith("sqlite:///")) {
-    throw new ConfigurationError("DB_URL must use the self-hosted SQLite store (sqlite:///…)");
-  }
-  if (config.corsOrigins.some((origin) => origin.includes("*"))) {
-    throw new ConfigurationError("Production CORS origins cannot include a wildcard");
-  }
-  if (
-    config.corsOrigins.some(
-      (origin) => origin.includes("localhost") || origin.includes("127.0.0.1"),
-    )
-  ) {
-    throw new ConfigurationError("Production CORS origins cannot include localhost or 127.0.0.1");
-  }
-}
-
-/**
- * Trusted proxies must be concrete addresses: a network range can cover
- * clients, and a client inside it would then be treated as a forwarding proxy
- * (fresh rate-limit bucket per forged forwarding chain).
- */
-function assertTrustedProxyAddresses(entries: readonly string[]): void {
-  for (const entry of entries) {
-    if (isTrustedProxyRange(entry)) {
-      throw new ConfigurationError(
-        `SECURITY_TRUSTED_PROXIES must list exact proxy addresses, not network ranges (got "${entry}")`,
-      );
-    }
-  }
-}
-
-/**
- * Normalize the session secret: unset, empty, or the default value rotate
- * (or refuse, per the production guards), while an explicitly short-but-real
- * value fails validation everywhere.
- */
-function secretFrom(rawSecret: string | undefined): string | undefined {
-  const trimmed = rawSecret?.trim() ?? "";
-  if (trimmed === "" || trimmed === DEFAULT_SECRET_KEY) {
-    return undefined;
-  }
-  if (trimmed.length < MIN_SECRET_LENGTH) {
-    throw new ConfigurationError(
-      `SECURITY_SECRET_KEY must be at least ${MIN_SECRET_LENGTH} characters long`,
-    );
-  }
-  return trimmed;
 }
 
 function mergedEnvironment(input: LoadServerConfigInput): Map<string, string> {
@@ -253,23 +174,6 @@ function readOptionalEnvironmentFile(filePath: string): string | undefined {
 
 function isMissingFileError(error: unknown): boolean {
   return errorCode(error) === "ENOENT";
-}
-
-/** Case-insensitive lookup: merged environment keys are stored lowercased. */
-function stringFrom(env: Map<string, string>, key: string): string | undefined {
-  return env.get(key.toLowerCase());
-}
-
-function listFrom(env: Map<string, string>, key: string): string[] | undefined {
-  const raw = stringFrom(env, key);
-  if (raw === undefined) {
-    return undefined;
-  }
-  const entries = raw
-    .split(",")
-    .map((entry) => entry.trim().toLowerCase())
-    .filter((entry) => entry !== "");
-  return entries.length === 0 ? undefined : entries;
 }
 
 function environmentFrom(env: Map<string, string>): ServerEnvironment {
@@ -314,16 +218,4 @@ function rateLimitFrom(env: Map<string, string>): number {
     );
   }
   return Number(match[1]);
-}
-
-function boundedIntegerFrom(env: Map<string, string>, key: string, fallback: number): number {
-  const raw = stringFrom(env, key);
-  if (raw === undefined) return fallback;
-  const value = Number(raw);
-  if (!Number.isInteger(value) || value < MIN_ACTIVE_WORKFLOWS || value > MAX_ACTIVE_WORKFLOWS) {
-    throw new ConfigurationError(
-      `${key} must be an integer between ${MIN_ACTIVE_WORKFLOWS} and ${MAX_ACTIVE_WORKFLOWS} (got "${raw}")`,
-    );
-  }
-  return value;
 }

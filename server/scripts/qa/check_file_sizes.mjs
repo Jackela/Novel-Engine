@@ -3,13 +3,16 @@ import { join } from "node:path";
 import { fileSuffix, listRepoFiles, readTextLines, repoRoot } from "./common.mjs";
 
 /**
- * Node twin of scripts/qa/check_file_sizes.py: per-file code-line budget
- * over the TypeScript workspace. The Python scan roots (src/, tests/,
- * scripts/) stay with the Python gate; they cannot grow because the
- * python-freeze CI guard blocks edits without an exception label.
+ * Per-file code-line budget over the TypeScript workspace.
+ * Most files share one default limit. A frontend component
+ * (frontend/src, every .tsx file except tests) uses a tighter cap and
+ * cannot be waived by a legacy baseline. A file over its cap fails
+ * the gate; blank lines and `//` comments do not count.
  */
 
 const MAX_CODE_LINES = 300;
+const FRONTEND_COMPONENT_LIMIT = 200;
+const FRONTEND_COMPONENT_ROOT = "frontend/src/";
 const CODE_SUFFIXES = new Set([
   ".py",
   ".pyi",
@@ -48,6 +51,20 @@ const SKIP_PARTS = new Set([
 // A baseline is stale when the file shrinks to the default limit or its
 // count drifts from the configured value; both must fail loudly.
 const LEGACY_LIMITS = {};
+
+/**
+ * Tighter cap for product components. Test files stay on the default
+ * limit. A legacy baseline cannot raise this cap.
+ */
+function frontendComponentLimit(relativePath) {
+  if (!relativePath.startsWith(FRONTEND_COMPONENT_ROOT)) {
+    return null;
+  }
+  if (!relativePath.endsWith(".tsx") || relativePath.endsWith(".test.tsx")) {
+    return null;
+  }
+  return FRONTEND_COMPONENT_LIMIT;
+}
 
 function inScope(relativePath) {
   if (!CODE_SUFFIXES.has(fileSuffix(relativePath))) {
@@ -111,7 +128,8 @@ if (failures.length === 0) {
     checkedCount += 1;
     const suffix = fileSuffix(relativePath);
     const codeLines = codeLineCount(join(root, relativePath), suffix);
-    const limit = LEGACY_LIMITS[relativePath] ?? MAX_CODE_LINES;
+    const limit =
+      frontendComponentLimit(relativePath) ?? LEGACY_LIMITS[relativePath] ?? MAX_CODE_LINES;
     if (codeLines > limit) {
       failures.push(`${relativePath}: ${codeLines} code lines exceeds limit ${limit}`);
     }
@@ -129,6 +147,6 @@ if (failures.length > 0) {
   process.exitCode = 1;
 } else {
   console.log(
-    `[file-size] clean: ${checkedCount} files checked; new-file limit ${MAX_CODE_LINES}; legacy baselines ${Object.keys(LEGACY_LIMITS).length}`,
+    `[file-size] clean: ${checkedCount} files checked; new-file limit ${MAX_CODE_LINES}; frontend component limit ${FRONTEND_COMPONENT_LIMIT}; legacy baselines ${Object.keys(LEGACY_LIMITS).length}`,
   );
 }

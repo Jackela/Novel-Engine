@@ -30,9 +30,10 @@ database-free walking skeleton. Misconfigured production starts fail fast:
 `assertStartupGuards()` runs before any side effect, so a bad start creates no
 directories and opens no databases.
 
-The CLI (`server/src/apps/cli/main.ts`: `serve`, `import`, `backup`, `doctor`)
-builds short-lived app instances through the same `buildApp()` factory; no
-state is shared through module globals between commands.
+The CLI (`server/src/apps/cli/main.ts`: `serve`, `import`, `backup`, `restore`,
+`reindex`, `doctor`, `migrate`, and `owner reset`) builds short-lived app
+instances through the same `buildApp()` factory; no state is shared through
+module globals between commands.
 
 ## Bounded contexts and enforced dependency direction
 

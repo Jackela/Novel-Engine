@@ -141,9 +141,12 @@ OPENAI_COMPATIBLE_MODEL=gpt-4o-mini
 
    常见原因：复制 key 时带了多余的空格、改完 `.env` 后没跑 `up -d`、模型
    名在该接口不存在，或者账户欠费。
-3. 想要一份更深入的数据库与配置健康报告，可以在容器里运行 `doctor` 命令
-   ——它需要先停掉工作室；精确的停止/运行/启动顺序见
-   [backup and restore](backup-and-restore.md#running-cli-commands-in-docker)。
+3. 想要一份更深入的数据库与配置健康报告，在容器里运行 `doctor` 命令——
+   它严格只读，工作室继续运行时也能安全执行：
+   `docker compose exec novel-engine node server/dist/apps/cli/main.js doctor`。
+   只有需要独占所有权的命令才需要
+   [backup and restore](backup-and-restore.md#running-cli-commands-in-docker)
+   里的停止/运行/启动顺序。
 
 ## Back to trial mode
 

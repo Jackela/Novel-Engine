@@ -112,7 +112,9 @@ three tensions that dark mode now has to resolve:
 ## Implementation results
 
 Accepted and shipped with the 2026-09-11 dark-mode campaign
-(`openspec/changes/2026-09-11-dark-mode/`, issue #509):
+(`openspec/changes/archive/2026-09-11-dark-mode/` — its current archive
+location; originally recorded as `openspec/changes/2026-09-11-dark-mode/`;
+issue #509):
 
 - The dual entry landed exactly as decided: light tokens unchanged in
   `:root`, dark values in `[data-theme="dark"]` plus the

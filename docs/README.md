@@ -50,6 +50,17 @@ evidence for its named commit, not the status of a later checkout.
 - [Architecture decisions](adr/): dated rationale and constraints. Read later
   decisions and current implementation when assessing an older decision.
 
+## Plan and deploy
+
+- [Roadmap](roadmap.md): owner-decided direction and the release gate before
+  0.9.0.
+- [Design plans](../design-plans/): dated plans for shipped frontend changes;
+  implementation records, not current contracts.
+- [Deployment checklist](../deploy/README.md): the published-image Compose
+  path, upgrades, the data volume, and reverse-proxy hosting.
+- [Design assets](design/): a 0.3-era concept render kept as a historical
+  asset only, not a current design source.
+
 ## Contribute and validate
 
 - [Contribution guide](../CONTRIBUTING.md): Git workflow, tracking policy,

@@ -33,7 +33,7 @@ Generated/runtime trees such as caches, `htmlcov/`, `frontend/coverage/`, `front
 | Task | Location | Notes |
 |---|---|---|
 | Build the API app | `server/src/apps/api/app.ts` | Canonical `buildApp()` factory; plugins via injectable options |
-| CLI entry | `server/src/apps/cli/main.ts` | `serve`, `import`, `backup`, `doctor` |
+| CLI entry | `server/src/apps/cli/main.ts` | See the USAGE in that file for the current command list |
 | Add HTTP behavior | `server/src/contexts/studio/interface/http/` | Thin routes; TypeBox schemas; services via `StudioStore` |
 | Change workflows | `server/src/contexts/studio/application/` | Per-capability services behind ports |
 | Change persistence | `server/src/contexts/studio/infrastructure/` | Drizzle store parts; FTS5 SQL lives in `db/` helpers |
@@ -54,7 +54,7 @@ Generated/runtime trees such as caches, `htmlcov/`, `frontend/coverage/`, `front
 | Symbol | Location | Role / reach |
 |---|---|---|
 | `buildApp` | `server/src/apps/api/app.ts` | API composition root; used by CLI, tests, OpenAPI snapshot |
-| `runCli` | `server/src/apps/cli/main.ts` | Operational CLI: serve/import/backup/doctor |
+| `runCli` | `server/src/apps/cli/main.ts` | Operational CLI; see the USAGE in that file |
 | `DrizzleStudioStore` | `server/src/contexts/studio/infrastructure/` | Persistence implementation used by API/CLI/tests |
 | `loadServerConfig` | `server/src/shared/infrastructure/config/server_config.ts` | Env resolution + production startup guards |
 | `readProductIdentity` | `server/src/shared/infrastructure/workspace_manifest.ts` | Release-version SSOT reader (server/package.json) |
