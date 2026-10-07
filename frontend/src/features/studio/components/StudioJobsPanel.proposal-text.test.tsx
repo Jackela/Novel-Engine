@@ -1,10 +1,11 @@
-import { getByRole } from "@testing-library/dom";
+import { getAllByRole, getByRole } from "@testing-library/dom";
 import { act } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { api } from "@/app/api";
+import type { StudioJob } from "@/app/types/studio";
 import { job, jobSummary } from "@/test/factories";
-import { createMountHarness } from "@/test/harness";
+import { createMountHarness, deferred } from "@/test/harness";
 
 import { StudioJobsPanel } from "./StudioJobsPanel";
 
@@ -64,5 +65,44 @@ describe("StudioJobsPanel proposal text (DR-010)", () => {
       await Promise.resolve();
     });
     expect(writeText).toHaveBeenCalledWith("A discarded scene, still readable.");
+  });
+
+  it("keeps the latest clicked proposal when an earlier read lands last", async () => {
+    const first = deferred<StudioJob>();
+    const second = deferred<StudioJob>();
+    vi.mocked(api.job).mockImplementation((_projectId, jobId) =>
+      jobId === "job-a" ? first.promise : second.promise,
+    );
+    const mounted = harness.mount(
+      <StudioJobsPanel
+        projectId="project-1"
+        jobs={[
+          jobSummary({ id: "job-a", kind: "proposal", status: "completed" }),
+          jobSummary({ id: "job-b", kind: "proposal", status: "completed" }),
+        ]}
+        onLoadJobs={vi.fn()}
+        onRetryJob={vi.fn()}
+      />,
+    );
+    const viewButtons = () =>
+      getAllByRole(mounted.container, "button", { name: "View proposal text" });
+
+    // The author clicks A's read, then B's before either body arrives.
+    act(() => viewButtons()[0]?.click());
+    act(() => viewButtons()[1]?.click());
+
+    await act(async () => {
+      second.resolve(job({ id: "job-b", result: { proposal_markdown: "Second proposal body." } }));
+      await second.promise;
+    });
+    expect(mounted.container.textContent).toContain("Second proposal body.");
+
+    await act(async () => {
+      first.resolve(job({ id: "job-a", result: { proposal_markdown: "First proposal body." } }));
+      await first.promise;
+    });
+    // The late first read never replaces the author's latest choice.
+    expect(mounted.container.textContent).toContain("Second proposal body.");
+    expect(mounted.container.textContent).not.toContain("First proposal body.");
   });
 });

@@ -57,8 +57,12 @@ function previewFailureMessage(reason: unknown): string {
  * Lazy, read-only revision-body previews for one document scope (DR-011).
  * Opening a row fetches its body once over the single-revision endpoint;
  * closing it keeps that body cached, and switching documents drops both the
- * cache and the open row. Stale responses are discarded by request sequence,
- * so a slow ancestor read can never overwrite a newer scope's state.
+ * cache and the open row. Stale responses are discarded per revision by
+ * request sequence, so concurrent reads for different rows settle
+ * independently instead of superseding one another, and a scope epoch
+ * discards every response issued before a document switch — whatever the
+ * interleaving, a revision whose read was issued settles away from
+ * "loading".
  */
 export function useRevisionPreview(
   scope: RevisionPreviewScope | null | undefined,
@@ -68,15 +72,20 @@ export function useRevisionPreview(
   const scopeKey =
     scope === null || scope === undefined ? null : `${scope.projectId}:${scope.documentId}`;
   const [resolvedScopeKey, setResolvedScopeKey] = useState(scopeKey);
+  const scopeEpochRef = useRef(0);
+  const requestSequenceRef = useRef(new Map<string, number>());
   if (resolvedScopeKey !== scopeKey) {
     // React's documented reset-when-a-prop-changes pattern: adjusting during
     // render drops the previous document's cache and open row without an
-    // effect, so no stale preview can paint for the new scope.
+    // effect, so no stale preview can paint for the new scope. The scope epoch
+    // bumps in the same adjustment, so a read issued by the previous scope
+    // cannot publish into the reset cache even when no newer request ever
+    // supersedes it.
     setResolvedScopeKey(scopeKey);
     setOpenRevisionId(null);
     setStates({});
+    scopeEpochRef.current += 1;
   }
-  const requestRef = useRef(0);
   const scopeRef = useRef(scope);
   useEffect(() => {
     // Latest-value ref for the event callbacks; synced after commit so no
@@ -87,17 +96,21 @@ export function useRevisionPreview(
   const load = useCallback((revisionId: string) => {
     const currentScope = scopeRef.current;
     if (!currentScope) return;
-    const request = requestRef.current + 1;
-    requestRef.current = request;
+    const scopeEpoch = scopeEpochRef.current;
+    const sequence = (requestSequenceRef.current.get(revisionId) ?? 0) + 1;
+    requestSequenceRef.current.set(revisionId, sequence);
+    const isCurrentResponse = () =>
+      scopeEpochRef.current === scopeEpoch &&
+      requestSequenceRef.current.get(revisionId) === sequence;
     setStates((current) => ({ ...current, [revisionId]: { status: "loading" } }));
     void api
       .revision(currentScope.projectId, currentScope.documentId, revisionId)
       .then((revision) => {
-        if (requestRef.current !== request) return;
+        if (!isCurrentResponse()) return;
         setStates((current) => ({ ...current, [revisionId]: { status: "loaded", revision } }));
       })
       .catch((reason: unknown) => {
-        if (requestRef.current !== request) return;
+        if (!isCurrentResponse()) return;
         setStates((current) => ({
           ...current,
           [revisionId]: {
