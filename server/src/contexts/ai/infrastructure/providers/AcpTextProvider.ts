@@ -6,7 +6,6 @@ import {
   type SessionConfigOption,
 } from "@agentclientprotocol/sdk";
 import { createWebSocketStream } from "@agentclientprotocol/sdk/experimental/ws-client";
-import WebSocket from "ws";
 import {
   isSafeUsageToken,
   ProviderNotConfiguredError,
@@ -20,6 +19,7 @@ import {
 } from "../../application/ports/text_generation.js";
 import { AcpJsonResponse } from "./AcpJsonResponse.js";
 import { AcpTurnBudget } from "./AcpTurnBudget.js";
+import { AcpWebSocket } from "./AcpWebSocket.js";
 import { AcpWorkspace } from "./AcpWorkspace.js";
 import { buildAcpClient } from "./buildAcpClient.js";
 import { buildAcpSystemContent } from "./buildAcpSystemContent.js";
@@ -148,6 +148,7 @@ export class AcpTextProvider implements TextGenerationProvider {
     execution: TextGenerationExecutionOptions,
     onText: (fragment: string) => void,
   ): Promise<TurnResult> {
+    if (execution.signal?.aborted) throw new TextGenerationCancelledError();
     if (this.options.tokenFile === undefined || this.options.workspaceRoot === undefined)
       throw new ProviderNotConfiguredError(
         "ACP requires ACP_PROXY_TOKEN_FILE and ACP_WORKSPACE_ROOT.",
@@ -173,6 +174,7 @@ export class AcpTextProvider implements TextGenerationProvider {
       throw error;
     }
     if (token === "") throw new ProviderNotConfiguredError("ACP proxy token file is empty.");
+    if (execution.signal?.aborted) throw new TextGenerationCancelledError();
     const budget = new AcpTurnBudget(
       this.options.handshakeMs ?? 30_000,
       this.options.overallMs ?? 600_000,
@@ -200,7 +202,7 @@ export class AcpTextProvider implements TextGenerationProvider {
       },
     });
     const stream = createWebSocketStream(this.options.proxyUrl, {
-      WebSocket,
+      WebSocket: AcpWebSocket,
       headers: { Authorization: `Bearer ${token}` },
       cookies: "omit",
     });
