@@ -1,0 +1,42 @@
+$ pnpm run gate:ssot && pnpm run gate:hygiene && pnpm run gate:compose-passthrough && pnpm run gate:sizes && pnpm run gate:migrations && pnpm run gate:llms-txt && pnpm run gate:error-codes && pnpm run gate:openapi
+$ node scripts/qa/check_ssot.mjs
+[ssot] Novel Engine 0.8.0 is aligned
+$ node scripts/qa/check_repo_hygiene.mjs
+[repo-hygiene] clean
+$ node scripts/qa/check_compose_passthrough.mjs
+[compose-passthrough] clean: all 24 provider variables read by the config loaders are covered in compose.yaml and deploy/compose.yaml (11 server-side variables extracted in total)
+$ node scripts/qa/check_file_sizes.mjs
+[file-size] clean: 1089 files checked; new-file limit 300; frontend component limit 200; legacy baselines 0
+$ node scripts/qa/check_migration_channel.mjs
+[migration-channel] clean: generated migrations are the sole schema channel
+$ node scripts/qa/check_llms_txt.mjs
+[llms-txt] clean: 55 link targets verified against the current candidate
+$ node scripts/qa/check_error_codes.mjs
+[error-codes] clean: 22 codes verified in lockstep across docs/agents/error-codes.md, ERROR_CODES, and ERROR_HTTP_STATUS
+$ vitest run tests/qa/openapi_snapshot.test.ts
+
+ RUN  v4.1.11 /Users/jackela/.codex/worktrees/acp-full-acceptance/Novel-Engine/server
+
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  17:20:37
+   Duration  5.25s (transform 2.35s, setup 0ms, import 4.45s, tests 632ms, environment 0ms)
+
+$ tsc -p tsconfig.json --noEmit
+$ biome check .
+Checked 652 files in 2s. No fixes applied.
+$ oxlint src tests
+$ depcruise src --config .dependency-cruiser.cjs
+
+✔ no dependency violations found (336 modules, 1509 dependencies cruised)
+
+$ tsc -p tsconfig.build.json
+$ openspec validate --all --strict
+- Validating...
+✓ change/2026-10-08-add-acp-proxy-and-grok-provider
+✓ change/2026-10-08-reject-unterminated-provider-streams
+✓ spec/novel-engine
+Totals: 3 passed, 0 failed (3 items)
+$ node scripts/check-api-types-drift.mjs
+[api-types-drift] clean: /Users/jackela/.codex/worktrees/acp-full-acceptance/Novel-Engine/frontend/generated/api-types.ts matches the snapshot.

@@ -1,0 +1,40 @@
+
+Running 2 tests using 1 worker
+
+(node:12602) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  1 [chromium] › tests/e2e-acp/studio_acp.spec.ts:76:5 › coupled ACP tools through the real Studio API › observes all four steps, sends permission choices, and changes the manuscript only after acceptance (5.7s)
+  ✘  2 [chromium] › tests/e2e-acp/studio_acp.spec.ts:155:5 › coupled ACP tools through the real Studio API › Stop keeps file-effect evidence and navigation discards pending permission controls (2.0m)
+
+
+  1) [chromium] › tests/e2e-acp/studio_acp.spec.ts:155:5 › coupled ACP tools through the real Studio API › Stop keeps file-effect evidence and navigation discards pending permission controls 
+
+    Test timeout of 120000ms exceeded.
+
+    Error: locator.click: Test timeout of 120000ms exceeded.
+    Call log:
+      - waiting for getByRole('button', { name: 'Jobs', exact: true })
+
+
+      170 |       ).toBeVisible();
+      171 |       await expect(editor).toHaveText(original);
+    > 172 |       await page.getByRole("button", { name: "Jobs", exact: true }).click();
+          |                                                                     ^
+      173 |       await page.getByRole("button", { name: "Refresh jobs", exact: true }).click();
+      174 |       await expect(
+      175 |         page.getByRole("button", { name: "View tool activity", exact: true }),
+        at /Users/jackela/.codex/worktrees/acp-full-acceptance/Novel-Engine/frontend/tests/e2e-acp/studio_acp.spec.ts:172:69
+
+    Error Context: test-results/studio_acp-coupled-ACP-too-d3724-pending-permission-controls-chromium/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/studio_acp-coupled-ACP-too-d3724-pending-permission-controls-chromium/trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace test-results/studio_acp-coupled-ACP-too-d3724-pending-permission-controls-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    [chromium] › tests/e2e-acp/studio_acp.spec.ts:155:5 › coupled ACP tools through the real Studio API › Stop keeps file-effect evidence and navigation discards pending permission controls 
+  1 passed (2.1m)

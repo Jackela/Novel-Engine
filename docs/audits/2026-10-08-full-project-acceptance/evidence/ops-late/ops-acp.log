@@ -1,0 +1,359 @@
+$ docker exec 2b3b4cd5467c91f1d1dedd50db971fbc45fa696931435a414829f50bff0d1ee7 node --input-type=module -e for(const host of ['host.lima.internal','host.docker.internal','192.168.5.2']){try{const r=await fetch('http://'+host+':57168/acp',{signal:AbortSignal.timeout(3000)});console.log(JSON.stringify({host,status:r.status}))}catch(e){console.log(JSON.stringify({host,error:e.message}))}}
+{"host":"host.lima.internal","error":"fetch failed"}
+{"host":"host.docker.internal","error":"fetch failed"}
+{"host":"192.168.5.2","status":404}
+
+$ docker volume create --label novel-engine.audit=ne-ops-candidate-7c3120fc ne-ops-candidate-7c3120fc_acp-secret
+ne-ops-candidate-7c3120fc_acp-secret
+
+$ docker run --rm -i --read-only --cap-drop ALL --security-opt no-new-privileges --user node -v ne-ops-candidate-7c3120fc_acp-secret:/app/data --entrypoint node sha256:c0fcfcb275a5625f3b908678c4ec715c70f201710f50e20ea3d3b872f24c80d4 -e const fs=require('fs');fs.writeFileSync('/app/data/gateway.token',fs.readFileSync(0,'utf8'),{mode:0o600});console.log(JSON.stringify({uid:process.getuid(),mode:fs.statSync('/app/data/gateway.token').mode&511})); [synthetic token supplied on stdin; not logged]
+{"uid":1000,"mode":384}
+
+$ docker compose --project-name ne-ops-candidate-7c3120fc --project-directory /tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-late-candidate/ops-ne-ops-candidate-7c3120fc --env-file /dev/null -f /Users/jackela/.codex/worktrees/acp-full-acceptance/Novel-Engine/compose.yaml -f /tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-late-candidate/ops-ne-ops-candidate-7c3120fc/ops-compose.override.yaml up -d --no-build --pull never
+ Container ne-ops-candidate-7c3120fc-novel-engine-1 Recreate 
+ Container ne-ops-candidate-7c3120fc-novel-engine-1 Recreated 
+ Container ne-ops-candidate-7c3120fc-novel-engine-1 Starting 
+ Container ne-ops-candidate-7c3120fc-novel-engine-1 Started 
+
+$ docker compose --project-name ne-ops-candidate-7c3120fc --project-directory /tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-late-candidate/ops-ne-ops-candidate-7c3120fc --env-file /dev/null -f /Users/jackela/.codex/worktrees/acp-full-acceptance/Novel-Engine/compose.yaml -f /tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-late-candidate/ops-ne-ops-candidate-7c3120fc/ops-compose.override.yaml ps -q novel-engine
+0a761385a279124b522b78ecb468d622f8b94b5370060e97bcdeb01905b8d130
+
+$ docker inspect 0a761385a279124b522b78ecb468d622f8b94b5370060e97bcdeb01905b8d130
+[
+    {
+        "Id": "0a761385a279124b522b78ecb468d622f8b94b5370060e97bcdeb01905b8d130",
+        "Created": "2026-10-08T20:32:44.409037141Z",
+        "Path": "/app/docker/entrypoint.sh",
+        "Args": [
+            "node",
+            "server/dist/apps/cli/main.js",
+            "serve",
+            "--host",
+            "0.0.0.0",
+            "--port",
+            "8000"
+        ],
+        "State": {
+            "Status": "running",
+            "Running": true,
+            "Paused": false,
+            "Restarting": false,
+            "OOMKilled": false,
+            "Dead": false,
+            "Pid": 30884,
+            "ExitCode": 0,
+            "Error": "",
+            "StartedAt": "2026-10-08T20:32:44.706696299Z",
+            "FinishedAt": "0001-01-01T00:00:00Z",
+            "Health": {
+                "Status": "starting",
+                "FailingStreak": 0,
+                "Log": []
+            }
+        },
+        "Image": "sha256:c0fcfcb275a5625f3b908678c4ec715c70f201710f50e20ea3d3b872f24c80d4",
+        "ResolvConfPath": "/var/lib/docker/containers/0a761385a279124b522b78ecb468d622f8b94b5370060e97bcdeb01905b8d130/resolv.conf",
+        "HostnamePath": "/var/lib/docker/containers/0a761385a279124b522b78ecb468d622f8b94b5370060e97bcdeb01905b8d130/hostname",
+        "HostsPath": "/var/lib/docker/containers/0a761385a279124b522b78ecb468d622f8b94b5370060e97bcdeb01905b8d130/hosts",
+        "LogPath": "/var/lib/docker/containers/0a761385a279124b522b78ecb468d622f8b94b5370060e97bcdeb01905b8d130/0a761385a279124b522b78ecb468d622f8b94b5370060e97bcdeb01905b8d130-json.log",
+        "Name": "/ne-ops-candidate-7c3120fc-novel-engine-1",
+        "RestartCount": 0,
+        "Driver": "overlayfs",
+        "Platform": "linux",
+        "MountLabel": "",
+        "ProcessLabel": "",
+        "AppArmorProfile": "docker-default",
+        "ExecIDs": null,
+        "HostConfig": {
+            "Binds": [
+                "/private/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-late-candidate/ops-acp-materials:/private/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-late-candidate/ops-acp-materials:rw",
+                "ne-ops-candidate-7c3120fc_acp-secret:/run/ops-acp-secret:ro",
+                "ne-ops-candidate-7c3120fc_novel-engine-data:/app/data:rw"
+            ],
+            "ContainerIDFile": "",
+            "LogConfig": {
+                "Type": "json-file",
+                "Config": {}
+            },
+            "NetworkMode": "ne-ops-candidate-7c3120fc_default",
+            "PortBindings": {
+                "8000/tcp": [
+                    {
+                        "HostIp": "127.0.0.1",
+                        "HostPort": "56966"
+                    }
+                ]
+            },
+            "RestartPolicy": {
+                "Name": "unless-stopped",
+                "MaximumRetryCount": 0
+            },
+            "AutoRemove": false,
+            "VolumeDriver": "",
+            "VolumesFrom": null,
+            "ConsoleSize": [
+                0,
+                0
+            ],
+            "CapAdd": null,
+            "CapDrop": [
+                "ALL"
+            ],
+            "CgroupnsMode": "private",
+            "Dns": null,
+            "DnsOptions": null,
+            "DnsSearch": null,
+            "ExtraHosts": [],
+            "GroupAdd": null,
+            "IpcMode": "private",
+            "Cgroup": "",
+            "Links": null,
+            "OomScoreAdj": 0,
+            "PidMode": "",
+            "Privileged": false,
+            "PublishAllPorts": false,
+            "ReadonlyRootfs": true,
+            "SecurityOpt": [
+                "no-new-privileges:true"
+            ],
+            "Tmpfs": {
+                "/tmp": "size=64m"
+            },
+            "UTSMode": "",
+            "UsernsMode": "",
+            "ShmSize": 67108864,
+            "Runtime": "runc",
+            "Isolation": "",
+            "CpuShares": 0,
+            "Memory": 1073741824,
+            "NanoCpus": 2000000000,
+            "CgroupParent": "",
+            "BlkioWeight": 0,
+            "BlkioWeightDevice": null,
+            "BlkioDeviceReadBps": null,
+            "BlkioDeviceWriteBps": null,
+            "BlkioDeviceReadIOps": null,
+            "BlkioDeviceWriteIOps": null,
+            "CpuPeriod": 0,
+            "CpuQuota": 0,
+            "CpuRealtimePeriod": 0,
+            "CpuRealtimeRuntime": 0,
+            "CpusetCpus": "",
+            "CpusetMems": "",
+            "Devices": null,
+            "DeviceCgroupRules": null,
+            "DeviceRequests": null,
+            "MemoryReservation": 0,
+            "MemorySwap": 2147483648,
+            "MemorySwappiness": null,
+            "OomKillDisable": null,
+            "PidsLimit": 512,
+            "Ulimits": null,
+            "CpuCount": 0,
+            "CpuPercent": 0,
+            "IOMaximumIOps": 0,
+            "IOMaximumBandwidth": 0,
+            "MaskedPaths": [
+                "/proc/acpi",
+                "/proc/asound",
+                "/proc/interrupts",
+                "/proc/kcore",
+                "/proc/keys",
+                "/proc/latency_stats",
+                "/proc/sched_debug",
+                "/proc/scsi",
+                "/proc/timer_list",
+                "/proc/timer_stats",
+                "/sys/devices/virtual/powercap",
+                "/sys/firmware"
+            ],
+            "ReadonlyPaths": [
+                "/proc/bus",
+                "/proc/fs",
+                "/proc/irq",
+                "/proc/sys",
+                "/proc/sysrq-trigger"
+            ]
+        },
+        "Storage": {
+            "RootFS": {
+                "Snapshot": {
+                    "Name": "overlayfs"
+                }
+            }
+        },
+        "Mounts": [
+            {
+                "Type": "bind",
+                "Source": "/private/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-late-candidate/ops-acp-materials",
+                "Destination": "/private/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-late-candidate/ops-acp-materials",
+                "Mode": "rw",
+                "RW": true,
+                "Propagation": "rprivate"
+            },
+            {
+                "Type": "volume",
+                "Name": "ne-ops-candidate-7c3120fc_acp-secret",
+                "Source": "/var/lib/docker/volumes/ne-ops-candidate-7c3120fc_acp-secret/_data",
+                "Destination": "/run/ops-acp-secret",
+                "Driver": "local",
+                "Mode": "ro",
+                "RW": false,
+                "Propagation": ""
+            },
+            {
+                "Type": "volume",
+                "Name": "ne-ops-candidate-7c3120fc_novel-engine-data",
+                "Source": "/var/lib/docker/volumes/ne-ops-candidate-7c3120fc_novel-engine-data/_data",
+                "Destination": "/app/data",
+                "Driver": "local",
+                "Mode": "rw",
+                "RW": true,
+                "Propagation": ""
+            }
+        ],
+        "Config": {
+            "Hostname": "0a761385a279",
+            "Domainname": "",
+            "User": "node",
+            "AttachStdin": false,
+            "AttachStdout": true,
+            "AttachStderr": true,
+            "ExposedPorts": {
+                "8000/tcp": {}
+            },
+            "Tty": false,
+            "OpenStdin": false,
+            "StdinOnce": false,
+            "Env": [
+                "SECURITY_TRUSTED_PROXIES=",
+                "APP_ENVIRONMENT=production",
+                "LLM_RETRY_ATTEMPTS=",
+                "LLM_LOREBOOK_BUDGET_CHARACTERS=",
+                "LLM_STREAM_IDLE_TIMEOUT_MS=",
+                "ACP_PROXY_TOKEN_FILE=/run/ops-acp-secret/gateway.token",
+                "ACP_AGENT_COMMAND=/Users/jackela/.local/bin/node",
+                "LLM_STREAM_FIRST_BYTE_TIMEOUT_MS=",
+                "LLM_PROVIDER=mock",
+                "DASHSCOPE_MODEL=",
+                "ACP_MODEL=",
+                "LLM_MODEL=",
+                "OPENAI_API_KEY=",
+                "DASHSCOPE_REVIEW_MODEL=",
+                "LOG_LEVEL=warn",
+                "ACP_WORKSPACE_ROOT=/private/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-late-candidate/ops-acp-materials",
+                "LLM_TIMEOUT=",
+                "DASHSCOPE_API_KEY=",
+                "ACP_AGENT_ARGS=[\"/private/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-late-candidate/ops-acp-agent.mjs\"]",
+                "DASHSCOPE_API_BASE=",
+                "DB_URL=sqlite:///./data/novel-engine.sqlite3",
+                "OPENAI_COMPATIBLE_MODEL=",
+                "ACP_PROXY_URL=ws://192.168.5.2:57168/acp",
+                "DASHSCOPE_TRANSPORT_MODE=",
+                "SECURITY_SECRET_KEY=",
+                "SECURITY_CORS_ORIGINS=https://ops.example.invalid",
+                "LLM_API_BASE=",
+                "OPENAI_API_BASE=",
+                "LLM_API_KEY=",
+                "LLM_RETRY_DELAY=",
+                "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+                "NODE_VERSION=24.21.0",
+                "YARN_VERSION=1.22.22",
+                "NODE_ENV=production"
+            ],
+            "Cmd": [
+                "node",
+                "server/dist/apps/cli/main.js",
+                "serve",
+                "--host",
+                "0.0.0.0",
+                "--port",
+                "8000"
+            ],
+            "Healthcheck": {
+                "Test": [
+                    "CMD",
+                    "node",
+                    "-e",
+                    "fetch('http://127.0.0.1:8000/health/ready').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+                ],
+                "Interval": 30000000000,
+                "Timeout": 5000000000,
+                "Retries": 5
+            },
+            "Image": "sha256:c0fcfcb275a5625f3b908678c4ec715c70f201710f50e20ea3d3b872f24c80d4",
+            "Volumes": null,
+            "WorkingDir": "/app",
+            "Entrypoint": [
+                "/app/docker/entrypoint.sh"
+            ],
+            "Labels": {
+                "com.docker.compose.config-hash": "88efb632c83d3bb3b454a3a8c0f8ba04db9d7f645dd83ff41bb76af501fdabd3",
+                "com.docker.compose.container-number": "1",
+                "com.docker.compose.depends_on": "",
+                "com.docker.compose.image": "sha256:c0fcfcb275a5625f3b908678c4ec715c70f201710f50e20ea3d3b872f24c80d4",
+                "com.docker.compose.oneoff": "False",
+                "com.docker.compose.project": "ne-ops-candidate-7c3120fc",
+                "com.docker.compose.project.config_files": "/Users/jackela/.codex/worktrees/acp-full-acceptance/Novel-Engine/compose.yaml,/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-late-candidate/ops-ne-ops-candidate-7c3120fc/ops-compose.override.yaml",
+                "com.docker.compose.project.environment_file": "/dev/null",
+                "com.docker.compose.project.working_dir": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-late-candidate/ops-ne-ops-candidate-7c3120fc",
+                "com.docker.compose.replace": "novel-engine-1",
+                "com.docker.compose.service": "novel-engine",
+                "com.docker.compose.version": "5.5.1",
+                "org.opencontainers.image.revision": "7c155bf44a4299a25310c98f76241e3c6f953682"
+            }
+        },
+        "NetworkSettings": {
+            "SandboxID": "c9b1fec190f87a3d2a0abb62f47582968bb171c678eb42e61896cf053c1d1f08",
+            "SandboxKey": "/var/run/docker/netns/c9b1fec190f8",
+            "Ports": {
+                "8000/tcp": [
+                    {
+                        "HostIp": "127.0.0.1",
+                        "HostPort": "56966"
+                    }
+                ]
+            },
+            "Networks": {
+                "ne-ops-candidate-7c3120fc_default": {
+                    "IPAMConfig": null,
+                    "Links": null,
+                    "Aliases": [
+                        "ne-ops-candidate-7c3120fc-novel-engine-1",
+                        "novel-engine"
+                    ],
+                    "DriverOpts": null,
+                    "GwPriority": 0,
+                    "NetworkID": "d5feb159fb32e07a55fbb023f45d0ef5d71c50ec8acfc8a055f38c7e7a3cdcdc",
+                    "EndpointID": "f10ecd3d0f2432b43ee7132f7927da13239f95b8873749f66e94fb5f123a9e09",
+                    "Gateway": "172.18.0.1",
+                    "IPAddress": "172.18.0.2",
+                    "MacAddress": "ae:8a:7e:df:d0:28",
+                    "IPPrefixLen": 16,
+                    "IPv6Gateway": "",
+                    "GlobalIPv6Address": "",
+                    "GlobalIPv6PrefixLen": 0,
+                    "DNSNames": [
+                        "ne-ops-candidate-7c3120fc-novel-engine-1",
+                        "novel-engine",
+                        "0a761385a279"
+                    ]
+                }
+            }
+        },
+        "ImageManifestDescriptor": {
+            "mediaType": "application/vnd.oci.image.manifest.v1+json",
+            "digest": "sha256:c0fcfcb275a5625f3b908678c4ec715c70f201710f50e20ea3d3b872f24c80d4",
+            "size": 4253,
+            "platform": {
+                "architecture": "arm64",
+                "os": "linux"
+            }
+        }
+    }
+]
+
+GET /api/providers -> 200
+GET /api/projects/12ef9016-920b-4924-84be-87dad08c846f/documents/ada93697-c426-4f9d-a201-6941f37369ea -> 200
+GET /api/projects/12ef9016-920b-4924-84be-87dad08c846f/documents/ada93697-c426-4f9d-a201-6941f37369ea -> 200
+{"status": "pass", "image_id": "sha256:c0fcfcb275a5625f3b908678c4ec715c70f201710f50e20ea3d3b872f24c80d4", "gateway_url": "ws://192.168.5.2:57168/acp", "provider_catalog": {"provider": "acp", "configured": true, "model": null, "is_default": false}, "job_id": "11418577-22ae-4cc4-a530-b716b6d4b413", "job_status": "completed", "model": "ops-fake-model", "host_material_write": true, "material_path": "/private/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-late-candidate/ops-acp-materials/notes.md", "database_content_unchanged": true, "revision_unchanged": true, "hardening": {"ReadonlyRootfs": true, "CapDrop": ["ALL"], "SecurityOpt": ["no-new-privileges:true"], "Memory": 1073741824, "NanoCpus": 2000000000, "PidsLimit": 512, "Tmpfs": {"/tmp": "size=64m"}}, "events": [{"type": "ready", "operation_id": "8902fad3-822a-462c-bb1c-01eedbb1d2be"}, {"type": "tool", "tool_id": "ops-write", "title": "Write synthetic material notes", "target": "notes.md", "kind": "edit", "status": "pending"}, {"type": "permission", "permission_id": "6be9b78c-2063-403d-a4e2-9673592c4d85", "tool": {"title": "Write synthetic material notes", "target": "notes.md", "kind": "edit"}, "options": [{"option_id": "allow_once", "name": "Allow synthetic write once", "kind": "allow_once"}, {"option_id": "reject_once", "name": "Reject", "kind": "reject_once"}]}, {"type": "tool", "tool_id": "ops-write", "title": "Write synthetic material notes", "target": "notes.md", "kind": "edit", "status": "completed"}, {"type": "completed", "external_effects": "completed"}], "token_mount": "separate node-owned mode0600 synthetic token volume mounted read-only", "credentials": "no Grok credentials accessed or copied", "log": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-late-candidate/ops-acp.log"}

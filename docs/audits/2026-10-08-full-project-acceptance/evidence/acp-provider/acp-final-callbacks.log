@@ -1,0 +1,52 @@
+
+ RUN  v4.1.11 /Users/jackela/.codex/worktrees/acp-full-acceptance/Novel-Engine/server
+
+ ❯ tests/contexts/acp_final_callbacks.test.ts (5 tests | 2 failed) 32ms
+     × serves a bounded material read while denying file and permission requests from another session 7ms
+     × rejects unknown permission options in the callback without approving them 3ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/contexts/acp_final_callbacks.test.ts > ACP final callback ownership and safe evidence > serves a bounded material read while denying file and permission requests from another session
+AssertionError: expected undefined to deeply equal { content: 'second' }
+
+- Expected:
+{
+  "content": "second",
+}
+
++ Received:
+undefined
+
+ ❯ tests/contexts/acp_final_callbacks.test.ts:153:34
+    151|         },
+    152|       });
+    153|       expect(replies[0]?.result).toEqual({ content: "second" });
+       |                                  ^
+    154|       expect(
+    155|         replies.slice(1).every((reply) => reply.error?.message.include…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  tests/contexts/acp_final_callbacks.test.ts > ACP final callback ownership and safe evidence > rejects unknown permission options in the callback without approving them
+AssertionError: expected 'Internal error' to contain 'unknown option'
+
+Expected: "unknown option"
+Received: "Internal error"
+
+ ❯ tests/contexts/acp_final_callbacks.test.ts:185:37
+    183|         },
+    184|       });
+    185|       expect(reply?.error?.message).toContain("unknown option");
+       |                                     ^
+    186|       expect(reply?.result).toBeUndefined();
+    187|       expect(requests[0]).toMatchObject({
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 3 passed (5)
+   Start at  04:23:43
+   Duration  226ms (transform 49ms, setup 0ms, import 118ms, tests 32ms, environment 0ms)
+

@@ -1,0 +1,67 @@
+$ biome check .
+src/features/studio/hooks/useAcpOperation.ts:34:3 lint/correctness/useExhaustiveDependencies  FIXABLE  ━━━━━━━━━━
+
+  × This hook does not specify its dependency on projectId.
+  
+    32 │   const live = useRef(true);
+    33 │   const sessionLost = useRef(onSessionLost);
+  > 34 │   useEffect(() => {
+       │   ^^^^^^^^^
+    35 │     ownerProject.current = projectId;
+    36 │     sessionLost.current = onSessionLost;
+  
+  i This dependency is being used here, but is not specified in the hook dependency list.
+  
+    33 │   const sessionLost = useRef(onSessionLost);
+    34 │   useEffect(() => {
+  > 35 │     ownerProject.current = projectId;
+       │                            ^^^^^^^^^
+    36 │     sessionLost.current = onSessionLost;
+    37 │   }, [onSessionLost]);
+  
+  i React relies on hook dependencies to determine when to re-compute Effects.
+    Failing to specify dependencies can result in Effects not updating correctly when state changes.
+    These "stale closures" are a common source of surprising bugs.
+  
+  i Unsafe fix: Add the missing dependency projectId to the list.
+  
+    37 │ ··},·[onSessionLost,·projectId]);
+       │                    +++++++++++   
+
+src/features/studio/hooks/useAcpOperation.ts:38:3 lint/correctness/useExhaustiveDependencies  FIXABLE  ━━━━━━━━━━
+
+  × This hook specifies more dependencies than necessary: projectId.
+  
+    36 │     sessionLost.current = onSessionLost;
+    37 │   }, [onSessionLost]);
+  > 38 │   useEffect(() => {
+       │   ^^^^^^^^^
+    39 │     live.current = true;
+    40 │     return () => {
+  
+  i Outer scope values aren't valid dependencies because mutating them doesn't re-render the component.
+  
+    43 │       active.current.clear();
+    44 │     };
+  > 45 │   }, [projectId]);
+       │       ^^^^^^^^^
+    46 │   const update = useCallback((id: string, apply: (view: AcpOperationView) => AcpOperationView) => {
+    47 │     if (live.current)
+  
+  i React relies on hook dependencies to determine when to re-compute Effects.
+    Specifying more dependencies than required can lead to unnecessary re-rendering
+    and degraded performance.
+  
+  i Unsafe fix: Remove the extra dependencies from the list.
+  
+    45 │ ··},·[projectId]);
+       │       ---------   
+
+Checked 462 files in 130ms. No fixes applied.
+Found 2 errors.
+check ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Some errors were emitted while running checks.
+  
+
+[ELIFECYCLE] Command failed with exit code 1.

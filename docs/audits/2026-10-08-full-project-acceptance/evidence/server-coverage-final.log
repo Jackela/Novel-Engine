@@ -1,0 +1,62 @@
+$ vitest run --coverage
+
+ RUN  v4.1.11 /Users/jackela/.codex/worktrees/acp-full-acceptance/Novel-Engine/server
+      Coverage enabled with v8
+
+{"level":30,"time":1791449422217,"product_name":"Novel Engine","product_version":"0.8.0","export_publication_recovery":true,"manifestsReconciled":0,"committedArtifactsVerified":0,"finalsRestored":0,"orphanFilesRemoved":0,"sidecarsRemoved":0,"deletedProjectDirectoriesRemoved":0,"msg":"export publication recovery completed"}
+{"level":30,"time":1791449422220,"product_name":"Novel Engine","product_version":"0.8.0","setup_token":"[REDACTED_SYNTHETIC_TOKEN]","msg":"first-start setup token"}
+{"level":30,"time":1791449482685,"product_name":"Novel Engine","product_version":"0.8.0","export_publication_recovery":true,"manifestsReconciled":0,"committedArtifactsVerified":0,"finalsRestored":0,"orphanFilesRemoved":0,"sidecarsRemoved":0,"deletedProjectDirectoriesRemoved":0,"msg":"export publication recovery completed"}
+{"level":30,"time":1791449482688,"product_name":"Novel Engine","product_version":"0.8.0","setup_token":"[REDACTED_SYNTHETIC_TOKEN]","msg":"first-start setup token"}
+{"level":30,"time":1791449483368,"product_name":"Novel Engine","product_version":"0.8.0","export_publication_recovery":true,"manifestsReconciled":0,"committedArtifactsVerified":0,"finalsRestored":0,"orphanFilesRemoved":0,"sidecarsRemoved":0,"deletedProjectDirectoriesRemoved":0,"msg":"export publication recovery completed"}
+{"level":30,"time":1791449483369,"product_name":"Novel Engine","product_version":"0.8.0","setup_token":"[REDACTED_SYNTHETIC_TOKEN]","msg":"first-start setup token"}
+{"level":30,"time":1791449483652,"product_name":"Novel Engine","product_version":"0.8.0","export_publication_recovery":true,"manifestsReconciled":0,"committedArtifactsVerified":0,"finalsRestored":0,"orphanFilesRemoved":0,"sidecarsRemoved":0,"deletedProjectDirectoriesRemoved":0,"msg":"export publication recovery completed"}
+{"level":30,"time":1791449483653,"product_name":"Novel Engine","product_version":"0.8.0","setup_token":"[REDACTED_SYNTHETIC_TOKEN]","msg":"first-start setup token"}
+{"level":30,"time":1791449483876,"product_name":"Novel Engine","product_version":"0.8.0","export_publication_recovery":true,"manifestsReconciled":0,"committedArtifactsVerified":0,"finalsRestored":0,"orphanFilesRemoved":0,"sidecarsRemoved":0,"deletedProjectDirectoriesRemoved":0,"msg":"export publication recovery completed"}
+{"level":30,"time":1791449483877,"product_name":"Novel Engine","product_version":"0.8.0","setup_token":"[REDACTED_SYNTHETIC_TOKEN]","msg":"first-start setup token"}
+{"level":30,"time":1791449484057,"product_name":"Novel Engine","product_version":"0.8.0","export_publication_recovery":true,"manifestsReconciled":0,"committedArtifactsVerified":0,"finalsRestored":0,"orphanFilesRemoved":0,"sidecarsRemoved":0,"deletedProjectDirectoriesRemoved":0,"msg":"export publication recovery completed"}
+{"level":30,"time":1791449484057,"product_name":"Novel Engine","product_version":"0.8.0","setup_token":"[REDACTED_SYNTHETIC_TOKEN]","msg":"first-start setup token"}
+{"level":30,"time":1791449484218,"product_name":"Novel Engine","product_version":"0.8.0","export_publication_recovery":true,"manifestsReconciled":0,"committedArtifactsVerified":0,"finalsRestored":0,"orphanFilesRemoved":0,"sidecarsRemoved":0,"deletedProjectDirectoriesRemoved":0,"msg":"export publication recovery completed"}
+{"level":30,"time":1791449484219,"product_name":"Novel Engine","product_version":"0.8.0","setup_token":"[REDACTED_SYNTHETIC_TOKEN]","msg":"first-start setup token"}
+{"level":30,"time":1791449484417,"product_name":"Novel Engine","product_version":"0.8.0","export_publication_recovery":true,"manifestsReconciled":0,"committedArtifactsVerified":0,"finalsRestored":0,"orphanFilesRemoved":0,"sidecarsRemoved":0,"deletedProjectDirectoriesRemoved":0,"msg":"export publication recovery completed"}
+{"level":30,"time":1791449484419,"product_name":"Novel Engine","product_version":"0.8.0","setup_token":"[REDACTED_SYNTHETIC_TOKEN]","msg":"first-start setup token"}
+{"level":30,"time":1791449484628,"product_name":"Novel Engine","product_version":"0.8.0","export_publication_recovery":true,"manifestsReconciled":0,"committedArtifactsVerified":0,"finalsRestored":0,"orphanFilesRemoved":0,"sidecarsRemoved":0,"deletedProjectDirectoriesRemoved":0,"msg":"export publication recovery completed"}
+{"level":30,"time":1791449484629,"product_name":"Novel Engine","product_version":"0.8.0","setup_token":"[REDACTED_SYNTHETIC_TOKEN]","msg":"first-start setup token"}
+{"level":30,"time":1791449493897,"product_name":"Novel Engine","product_version":"0.8.0","export_publication_recovery":true,"manifestsReconciled":0,"committedArtifactsVerified":0,"finalsRestored":0,"orphanFilesRemoved":0,"sidecarsRemoved":0,"deletedProjectDirectoriesRemoved":0,"msg":"export publication recovery completed"}
+{"level":30,"time":1791449493899,"product_name":"Novel Engine","product_version":"0.8.0","setup_token":"[REDACTED_SYNTHETIC_TOKEN]","msg":"first-start setup token"}
+{"level":30,"time":1791449494104,"product_name":"Novel Engine","product_version":"0.8.0","export_publication_recovery":true,"manifestsReconciled":0,"committedArtifactsVerified":0,"finalsRestored":0,"orphanFilesRemoved":0,"sidecarsRemoved":0,"deletedProjectDirectoriesRemoved":0,"msg":"export publication recovery completed"}
+{"level":30,"time":1791449494105,"product_name":"Novel Engine","product_version":"0.8.0","setup_token":"[REDACTED_SYNTHETIC_TOKEN]","msg":"first-start setup token"}
+{"level":30,"time":1791449494234,"product_name":"Novel Engine","product_version":"0.8.0","export_publication_recovery":true,"manifestsReconciled":0,"committedArtifactsVerified":0,"finalsRestored":0,"orphanFilesRemoved":0,"sidecarsRemoved":0,"deletedProjectDirectoriesRemoved":0,"msg":"export publication recovery completed"}
+{"level":30,"time":1791449494234,"product_name":"Novel Engine","product_version":"0.8.0","setup_token":"[REDACTED_SYNTHETIC_TOKEN]","msg":"first-start setup token"}
+{"level":30,"time":1791449494348,"product_name":"Novel Engine","product_version":"0.8.0","export_publication_recovery":true,"manifestsReconciled":0,"committedArtifactsVerified":0,"finalsRestored":0,"orphanFilesRemoved":0,"sidecarsRemoved":0,"deletedProjectDirectoriesRemoved":0,"msg":"export publication recovery completed"}
+{"level":30,"time":1791449494348,"product_name":"Novel Engine","product_version":"0.8.0","setup_token":"[REDACTED_SYNTHETIC_TOKEN]","msg":"first-start setup token"}
+{"level":30,"time":1791449503586,"product_name":"Novel Engine","product_version":"0.8.0","export_publication_recovery":true,"manifestsReconciled":0,"committedArtifactsVerified":0,"finalsRestored":0,"orphanFilesRemoved":0,"sidecarsRemoved":0,"deletedProjectDirectoriesRemoved":0,"msg":"export publication recovery completed"}
+{"level":30,"time":1791449503588,"product_name":"Novel Engine","product_version":"0.8.0","setup_token":"[REDACTED_SYNTHETIC_TOKEN]","msg":"first-start setup token"}
+{"level":30,"time":1791449503798,"product_name":"Novel Engine","product_version":"0.8.0","export_publication_recovery":true,"manifestsReconciled":0,"committedArtifactsVerified":0,"finalsRestored":0,"orphanFilesRemoved":0,"sidecarsRemoved":0,"deletedProjectDirectoriesRemoved":0,"msg":"export publication recovery completed"}
+{"level":30,"time":1791449503799,"product_name":"Novel Engine","product_version":"0.8.0","setup_token":"[REDACTED_SYNTHETIC_TOKEN]","msg":"first-start setup token"}
+{"level":30,"time":1791449507181,"product_name":"Novel Engine","product_version":"0.8.0","export_publication_recovery":true,"manifestsReconciled":0,"committedArtifactsVerified":0,"finalsRestored":0,"orphanFilesRemoved":0,"sidecarsRemoved":0,"deletedProjectDirectoriesRemoved":0,"msg":"export publication recovery completed"}
+{"level":30,"time":1791449507183,"product_name":"Novel Engine","product_version":"0.8.0","setup_token":"[REDACTED_SYNTHETIC_TOKEN]","msg":"first-start setup token"}
+ ❯ tests/qa/openapi_snapshot.test.ts (1 test | 1 failed) 266ms
+     × keeps the committed baseline in sync with the generated document 265ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/qa/openapi_snapshot.test.ts > OpenAPI snapshot gate > keeps the committed baseline in sync with the generated document
+Error: [openapi-snapshot] drift detected: the generated OpenAPI document no longer matches /Users/jackela/.codex/worktrees/acp-full-acceptance/Novel-Engine/server/qa-baselines/openapi.current.json
+[openapi-snapshot] run `pnpm --dir server openapi:snapshot` to refresh the baseline.
+ ❯ tests/qa/openapi_snapshot.test.ts:73:13
+     71|     const baseline = readFileSync(BASELINE_PATH, "utf8");
+     72|     if (baseline !== current) {
+     73|       throw new Error(
+       |             ^
+     74|         "[openapi-snapshot] drift detected: the generated OpenAPI docu…
+     75|           `${BASELINE_PATH}\n` +
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 296 passed (297)
+      Tests  1 failed | 1753 passed (1754)
+   Start at  16:45:09
+   Duration  422.26s (transform 6.80s, setup 0ms, import 147.15s, tests 640.33s, environment 22ms)
+
+[ELIFECYCLE] Command failed with exit code 1.

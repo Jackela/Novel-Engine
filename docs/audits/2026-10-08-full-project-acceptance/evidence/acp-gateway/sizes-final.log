@@ -1,0 +1,2 @@
+$ node scripts/qa/check_file_sizes.mjs
+[file-size] clean: 1067 files checked; new-file limit 300; frontend component limit 200; legacy baselines 0

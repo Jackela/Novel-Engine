@@ -1,0 +1,20 @@
+$ pnpm run gate:ssot && pnpm run gate:hygiene && pnpm run gate:compose-passthrough && pnpm run gate:sizes && pnpm run gate:migrations && pnpm run gate:llms-txt && pnpm run gate:error-codes && pnpm run gate:openapi
+$ node scripts/qa/check_ssot.mjs
+[ssot] Novel Engine 0.8.0 is aligned
+$ node scripts/qa/check_repo_hygiene.mjs
+[repo-hygiene] clean
+$ node scripts/qa/check_compose_passthrough.mjs
+[compose-passthrough] compose.yaml environment is missing provider variable ACP_PROXY_URL read by provider_config.ts
+[compose-passthrough] compose.yaml environment is missing provider variable ACP_PROXY_TOKEN_FILE read by provider_config.ts
+[compose-passthrough] compose.yaml environment is missing provider variable ACP_AGENT_COMMAND read by provider_config.ts
+[compose-passthrough] compose.yaml environment is missing provider variable ACP_WORKSPACE_ROOT read by provider_config.ts
+[compose-passthrough] compose.yaml environment is missing provider variable ACP_MODEL read by provider_config.ts
+[compose-passthrough] compose.yaml environment is missing provider variable ACP_AGENT_ARGS read by provider_config.ts
+[compose-passthrough] deploy/compose.yaml environment is missing provider variable ACP_PROXY_URL read by provider_config.ts
+[compose-passthrough] deploy/compose.yaml environment is missing provider variable ACP_PROXY_TOKEN_FILE read by provider_config.ts
+[compose-passthrough] deploy/compose.yaml environment is missing provider variable ACP_AGENT_COMMAND read by provider_config.ts
+[compose-passthrough] deploy/compose.yaml environment is missing provider variable ACP_WORKSPACE_ROOT read by provider_config.ts
+[compose-passthrough] deploy/compose.yaml environment is missing provider variable ACP_MODEL read by provider_config.ts
+[compose-passthrough] deploy/compose.yaml environment is missing provider variable ACP_AGENT_ARGS read by provider_config.ts
+[ELIFECYCLE] Command failed with exit code 1.
+[ELIFECYCLE] Command failed with exit code 1.

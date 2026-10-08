@@ -1,0 +1,9 @@
+
+ RUN  v4.1.11 /Users/jackela/.codex/worktrees/acp-full-acceptance/Novel-Engine/server
+
+
+ Test Files  17 passed (17)
+      Tests  99 passed (99)
+   Start at  16:11:15
+   Duration  17.46s (transform 751ms, setup 0ms, import 5.82s, tests 27.00s, environment 1ms)
+

@@ -1,0 +1,94 @@
+Skipped 4 suggested fixes.
+If you wish to apply the suggested (unsafe) fixes, use the command biome check --write --unsafe
+
+Checked 39 files in 24ms. Fixed 33 files.
+Found 1 error.
+Found 3 warnings.
+src/contexts/studio/application/job_history_service.ts:179:5 lint/correctness/noUnusedFunctionParameters  FIXABLE  ━━━━━━━━━━
+
+  ! This parameter execution is unused.
+  
+    177 │     format: ExportArtifactFormat,
+    178 │     reportCleanupFailure?: (failure: unknown) => void,
+  > 179 │     execution?: TextGenerationExecutionOptions,
+        │     ^^^^^^^^^
+    180 │   ): Promise<Record<string, unknown>> {
+    181 │     const scope = scopeForPrincipal(principal);
+  
+  i Unused parameters might be the result of an incomplete refactoring.
+  
+  i Unsafe fix: If this is intentional, prepend execution with an underscore.
+  
+    177 177 │       format: ExportArtifactFormat,
+    178 178 │       reportCleanupFailure?: (failure: unknown) => void,
+    179     │ - ····execution?:·TextGenerationExecutionOptions,
+        179 │ + ····_execution?:·TextGenerationExecutionOptions,
+    180 180 │     ): Promise<Record<string, unknown>> {
+    181 181 │       const scope = scopeForPrincipal(principal);
+  
+
+src/contexts/studio/application/job_retry_executor.ts:310:5 lint/correctness/noUnusedFunctionParameters  FIXABLE  ━━━━━━━━━━
+
+  ! This parameter execution is unused.
+  
+    308 │     retry: JobRecord,
+    309 │     reportCleanupFailure: (failure: unknown) => void,
+  > 310 │     execution?: TextGenerationExecutionOptions,
+        │     ^^^^^^^^^
+    311 │   ): Promise<Record<string, unknown>> {
+    312 │     const request = safeLoadJson(retry.requestJson);
+  
+  i Unused parameters might be the result of an incomplete refactoring.
+  
+  i Unsafe fix: If this is intentional, prepend execution with an underscore.
+  
+    308 308 │       retry: JobRecord,
+    309 309 │       reportCleanupFailure: (failure: unknown) => void,
+    310     │ - ····execution?:·TextGenerationExecutionOptions,
+        310 │ + ····_execution?:·TextGenerationExecutionOptions,
+    311 311 │     ): Promise<Record<string, unknown>> {
+    312 312 │       const request = safeLoadJson(retry.requestJson);
+  
+
+src/contexts/studio/interface/http/review_routes.ts:34:38 lint/correctness/noUnusedFunctionParameters  FIXABLE  ━━━━━━━━━━
+
+  ! This parameter reply is unused.
+  
+    32 │     "/api/projects/:projectId/reviews",
+    33 │     {
+  > 34 │       preValidation: async (request, reply) => {
+       │                                      ^^^^^
+    35 │         if (request.body === undefined) {
+    36 │           request.body = {};
+  
+  i Unused parameters might be the result of an incomplete refactoring.
+  
+  i Unsafe fix: If this is intentional, prepend reply with an underscore.
+  
+     32  32 │       "/api/projects/:projectId/reviews",
+     33  33 │       {
+     34     │ - ······preValidation:·async·(request,·reply)·=>·{
+         34 │ + ······preValidation:·async·(request,·_reply)·=>·{
+     35  35 │           if (request.body === undefined) {
+     36  36 │             request.body = {};
+  
+
+src/contexts/studio/interface/http/withAiExecution.ts:34:7 lint/suspicious/noImplicitAnyLet ━━━━━━━━━━
+
+  × This variable implicitly has the any type.
+  
+    32 │   };
+    33 │   reply.raw.on("close", close);
+  > 34 │   let lease;
+       │       ^^^^^
+    35 │   try {
+    36 │     if (typeof header === "string") {
+  
+  i Variable declarations without type annotation and initialization implicitly have the any type. Declare a type or initialize the variable with some value.
+  
+
+check ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Some errors were emitted while applying fixes.
+  
+

@@ -1,0 +1,31 @@
+[WebServer] (node:19933) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:19934) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 35 tests using 2 workers
+
+(node:19953) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:19952) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘   1 [firefox] › tests/e2e-ts/studio-ts.spec.ts:25:1 › owner setup, editing, AI proposal accept, search, and deep links (1ms)
+  ✘   2 [firefox] › tests/e2e-ts/studio_content.spec.ts:86:5 › #276 content acceptance › Inspector tabs stay contained and its disclosure recovers across breakpoints (0ms)
+  -   3 [firefox] › tests/e2e-ts/studio_content.spec.ts:145:5 › #276 content acceptance › accepted proposal leaves narrative prose in the editor and the saved document
+  -   4 [firefox] › tests/e2e-ts/studio_content.spec.ts:170:5 › #276 content acceptance › exports download as byte-faithful markdown and structurally valid docx and epub
+  -   5 [firefox] › tests/e2e-ts/studio_content.spec.ts:249:5 › #276 content acceptance › deleting a project removes its export directory and every store row
+(node:21459) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:21458) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘   6 [firefox] › tests/e2e-ts/theme_selection.spec.ts:91:5 › theme selection workflow › dark OS emulation renders every surface dark through entry, login, library, and studio (2ms)
+  -   8 [firefox] › tests/e2e-ts/theme_selection.spec.ts:144:5 › theme selection workflow › dark lock wins over a light OS and survives reload
+  -   9 [firefox] › tests/e2e-ts/theme_selection.spec.ts:169:5 › theme selection workflow › light lock renders light under a dark OS with the attribute set before first paint
+  -  10 [firefox] › tests/e2e-ts/theme_selection.spec.ts:215:5 › theme selection workflow › returning to system removes the lock and follows OS flips live
+  ✘   7 [firefox] › tests/e2e-ts/studio-ts.spec.ts:130:1 › owner login issues novel_engine cookies and the editor renders the real error envelope (1ms)
+(node:23337) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:23338) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+undefined
+[ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL] Command was killed with SIGTERM (Termination): playwright test --config playwright.acceptance.config.ts --project firefox

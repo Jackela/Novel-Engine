@@ -1,0 +1,13 @@
+$ docker inspect 0a761385a279124b522b78ecb468d622f8b94b5370060e97bcdeb01905b8d130 --format {{index .Config.Labels "com.docker.compose.project"}}
+ne-ops-candidate-7c3120fc
+
+$ docker compose --project-name ne-ops-candidate-7c3120fc --project-directory /tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-late-candidate/ops-ne-ops-candidate-7c3120fc --env-file /dev/null -f /Users/jackela/.codex/worktrees/acp-full-acceptance/Novel-Engine/compose.yaml -f /tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-late-candidate/ops-ne-ops-candidate-7c3120fc/ops-compose.override.yaml down --volumes --remove-orphans
+ Container ne-ops-candidate-7c3120fc-novel-engine-1 Stopping 
+ Container ne-ops-candidate-7c3120fc-novel-engine-1 Stopped 
+ Container ne-ops-candidate-7c3120fc-novel-engine-1 Removing 
+ Container ne-ops-candidate-7c3120fc-novel-engine-1 Removed 
+ Volume ne-ops-candidate-7c3120fc_novel-engine-data Removing 
+ Network ne-ops-candidate-7c3120fc_default Removing 
+ Volume ne-ops-candidate-7c3120fc_novel-engine-data Removed 
+ Network ne-ops-candidate-7c3120fc_default Removed 
+

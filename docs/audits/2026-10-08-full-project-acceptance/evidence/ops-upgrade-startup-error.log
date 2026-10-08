@@ -1,0 +1,9 @@
+/app/docker/entrypoint.sh: 18: cannot open /app/data/.secret: Permission denied
+/app/docker/entrypoint.sh: 18: cannot open /app/data/.secret: Permission denied
+/app/docker/entrypoint.sh: 18: cannot open /app/data/.secret: Permission denied
+/app/docker/entrypoint.sh: 18: cannot open /app/data/.secret: Permission denied
+/app/docker/entrypoint.sh: 18: cannot open /app/data/.secret: Permission denied
+/app/docker/entrypoint.sh: 18: cannot open /app/data/.secret: Permission denied
+/app/docker/entrypoint.sh: 18: cannot open /app/data/.secret: Permission denied
+/app/docker/entrypoint.sh: 18: cannot open /app/data/.secret: Permission denied
+/app/docker/entrypoint.sh: 18: cannot open /app/data/.secret: Permission denied

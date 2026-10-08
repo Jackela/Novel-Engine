@@ -1,0 +1,22 @@
+captured review completed grok-4.7 original snapshot retained
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: ACP execution or handshake timeout.
++ actual - expected
+
++ 'failed'
+- 'completed'
+
+    at file:///private/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/frozen-grok.mjs:57:79
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5) {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: 'failed',
+  expected: 'completed',
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v24.19.0

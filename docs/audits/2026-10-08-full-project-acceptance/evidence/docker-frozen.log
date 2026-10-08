@@ -1,0 +1,239 @@
+DEPRECATED: The legacy builder is deprecated and will be removed in a future release.
+            Install the buildx component to build images with BuildKit:
+            https://docs.docker.com/go/buildx/
+
+Sending build context to Docker daemon  16.93MB
+Step 1/30 : FROM node:24-bookworm-slim AS build
+ ---> 2fe369e96955
+Step 2/30 : WORKDIR /app
+ ---> Using cache
+ ---> dd7b1c9bd2b9
+Step 3/30 : RUN corepack enable
+ ---> Using cache
+ ---> 0d542f6b56da
+Step 4/30 : COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
+ ---> Using cache
+ ---> fe5b01420a3e
+Step 5/30 : COPY frontend/package.json ./frontend/package.json
+ ---> Using cache
+ ---> 1a9216458f7b
+Step 6/30 : COPY server/package.json ./server/package.json
+ ---> Using cache
+ ---> c787e66a75fb
+Step 7/30 : RUN pnpm install --frozen-lockfile
+ ---> Using cache
+ ---> b70fb7a19705
+Step 8/30 : COPY frontend ./frontend
+ ---> bdbcad35528b
+Step 9/30 : COPY server ./server
+ ---> b79f4c26374a
+Step 10/30 : RUN pnpm --dir frontend build && pnpm --dir server build
+ ---> Running in 2df037913452
+[91m$ vite build && node scripts/check-build-identity.mjs
+[0mvite v8.2.2 building client environment for production...
+transforming...
+✓ 2080 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                                                      2.44 kB │ gzip:   1.05 kB
+dist/assets/ibm-plex-sans-vietnamese-wght-normal-Dg1JeJN0.woff2     13.16 kB
+dist/assets/ibm-plex-sans-greek-wght-normal-CmyJS8uq.woff2          19.50 kB
+dist/assets/ibm-plex-sans-cyrillic-ext-wght-normal-d45eAU9y.woff2   23.56 kB
+dist/assets/ibm-plex-sans-cyrillic-wght-normal-BAAhND-U.woff2       29.51 kB
+dist/assets/ibm-plex-sans-latin-ext-wght-normal-CIII54If.woff2      30.96 kB
+dist/assets/ibm-plex-sans-latin-wght-normal-IvpUvPa2.woff2          45.71 kB
+dist/assets/index-DE8x6k7s.css                                      40.78 kB │ gzip:   7.37 kB
+dist/assets/MarkdownEditor-cVO52tmc.js                               7.55 kB │ gzip:   2.98 kB
+dist/assets/dist-CfW1HieG.js                                        20.82 kB │ gzip:   7.04 kB
+dist/assets/dist-BtKjq9YY.js                                        29.00 kB │ gzip:   9.51 kB
+dist/assets/dist-BsDtBo2R.js                                        48.97 kB │ gzip:  16.33 kB
+dist/assets/dist-BT1z_k_-.js                                        49.22 kB │ gzip:  16.92 kB
+dist/assets/dist-BaE1Wntn.js                                       199.78 kB │ gzip:  64.47 kB
+dist/assets/dist-Bl-MOTjP.js                                       216.75 kB │ gzip:  82.53 kB
+dist/assets/index-XI9EfHEg.js                                      620.98 kB │ gzip: 180.19 kB
+
+[91m[plugin builtin:vite-reporter] 
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rolldownOptions.output.codeSplitting to improve chunking: https://rolldown.rs/reference/OutputOptions.codeSplitting
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+[0m✓ built in 1.20s
+[build-identity] Novel Engine 0.8.0 verified in HTML and 8 JavaScript bundles
+[91m$ tsc -p tsconfig.build.json
+[0m ---> Removed intermediate container 2df037913452
+ ---> 6777920a2395
+Step 11/30 : FROM node:24-bookworm-slim AS runtime
+ ---> 2fe369e96955
+Step 12/30 : WORKDIR /app
+ ---> Using cache
+ ---> dd7b1c9bd2b9
+Step 13/30 : ENV NODE_ENV=production     APP_ENVIRONMENT=production     DB_URL=sqlite:///./data/novel-engine.sqlite3
+ ---> Using cache
+ ---> c8f5c5fa5031
+Step 14/30 : RUN corepack enable
+ ---> Using cache
+ ---> 3e5b84fae0e4
+Step 15/30 : COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
+ ---> dbeb8fb6600e
+Step 16/30 : COPY frontend/package.json ./frontend/package.json
+ ---> 94c8f171d17d
+Step 17/30 : COPY server/package.json ./server/package.json
+ ---> 4757edaa8b0b
+Step 18/30 : RUN pnpm install --frozen-lockfile --prod --filter novel-engine-server...     && rm -rf /root/.cache
+ ---> Running in ebe9f017b754
+[91m! Corepack is about to download https://registry.npmjs.org/pnpm/-/pnpm-11.6.0.tgz
+[0m? Verifying lockfile against supply-chain policies (761 entries)...
+[WARN] Request took 15503ms: https://registry.npmjs.org/@bramus%2Fspecificity
+[WARN] Request took 18759ms: https://registry.npmjs.org/@babel%2Ftypes
+[WARN] Request took 20566ms: https://registry.npmjs.org/@asamuzakjp%2Fdom-selector
+[WARN] Request took 12942ms: https://registry.npmjs.org/@lezer%2Flr
+[WARN] Request took 12153ms: https://registry.npmjs.org/@rolldown%2Fbinding-android-arm64
+[WARN] Request took 11570ms: https://registry.npmjs.org/@swc%2Fcore-win32-arm64-msvc
+[WARN] Request took 12948ms: https://registry.npmjs.org/@swc%2Fcore-linux-arm64-musl
+[WARN] Request took 13958ms: https://registry.npmjs.org/@rolldown%2Fbinding-win32-arm64-msvc
+[WARN] Request took 24627ms: https://registry.npmjs.org/@babel%2Fgenerator
+[WARN] Request took 24730ms: https://registry.npmjs.org/@codemirror%2Fsearch
+[WARN] Request took 14570ms: https://registry.npmjs.org/@redocly%2Fopenapi-core
+[WARN] Request took 14926ms: https://registry.npmjs.org/@swc%2Fcore-linux-arm-gnueabihf
+[WARN] Request took 15429ms: https://registry.npmjs.org/@swc%2Fcore-linux-arm64-gnu
+[WARN] Request took 26546ms: https://registry.npmjs.org/@babel%2Ftraverse
+[WARN] Request took 27186ms: https://registry.npmjs.org/@astrojs%2Fcompiler
+[WARN] Request took 10979ms: https://registry.npmjs.org/@sentry%2Fopentelemetry
+[WARN] Request took 18278ms: https://registry.npmjs.org/@testing-library%2Fdom
+[WARN] Request took 20562ms: https://registry.npmjs.org/@swc%2Fcore
+[WARN] Request took 11497ms: https://registry.npmjs.org/drizzle-orm
+[WARN] Request took 11930ms: https://registry.npmjs.org/dependency-cruiser
+[WARN] Request took 25478ms: https://registry.npmjs.org/@swc%2Fcore-win32-ia32-msvc
+[WARN] Request took 25958ms: https://registry.npmjs.org/@swc%2Fcore-darwin-x64
+[WARN] Request took 25807ms: https://registry.npmjs.org/@swc%2Fcore-linux-x64-musl
+[WARN] Request took 27416ms: https://registry.npmjs.org/@sentry%2Fcore
+[WARN] Request took 38539ms: https://registry.npmjs.org/pnpm
+
+   ╭───────────────────────────────────────────────╮
+   │                                               │
+   │      Update available! 11.6.0 → 12.10.1.      │
+   │     Changelog: https://pnpm.io/v/12.10.1      │
+   │   To update, run: corepack use pnpm@12.10.1   │
+   │                                               │
+   ╰───────────────────────────────────────────────╯
+
+[WARN] Request took 27779ms: https://registry.npmjs.org/@swc%2Fcore-win32-x64-msvc
+[WARN] Request took 15722ms: https://registry.npmjs.org/fastify
+[WARN] Request took 29420ms: https://registry.npmjs.org/@sentry%2Fnode
+[WARN] Request took 23381ms: https://registry.npmjs.org/@typescript%2Ftypescript-win32-x64
+[WARN] Request took 14939ms: https://registry.npmjs.org/lightningcss
+[WARN] Request took 22526ms: https://registry.npmjs.org/escalade
+[WARN] Request took 14783ms: https://registry.npmjs.org/oxlint-plugin-react-doctor
+[WARN] Request took 13837ms: https://registry.npmjs.org/react-router-dom
+[WARN] Request took 15687ms: https://registry.npmjs.org/react-doctor
+[WARN] Request took 18995ms: https://registry.npmjs.org/lucide-react
+[WARN] Request took 15551ms: https://registry.npmjs.org/react-router
+[WARN] Request took 11242ms: https://registry.npmjs.org/undici
+[WARN] Request took 31628ms: https://registry.npmjs.org/caniuse-lite
+[WARN] Request took 40080ms: https://registry.npmjs.org/@swc%2Fcore-darwin-arm64
+[WARN] Request took 13465ms: https://registry.npmjs.org/vitest
+[WARN] Request took 13933ms: https://registry.npmjs.org/vscode-languageserver-protocol
+[WARN] Request took 12207ms: https://registry.npmjs.org/ws
+[WARN] Request took 13135ms: https://registry.npmjs.org/zod
+[WARN] Request took 42037ms: https://registry.npmjs.org/@types%2Freact
+[WARN] Request took 19536ms: https://registry.npmjs.org/tldts-core
+[WARN] Request took 33324ms: https://registry.npmjs.org/meriyah
+[WARN] Request took 27706ms: https://registry.npmjs.org/vite
+[WARN] Request took 34112ms: https://registry.npmjs.org/scheduler
+[WARN] Request took 28570ms: https://registry.npmjs.org/@sentry%2Fcore
+[WARN] Request took 36751ms: https://registry.npmjs.org/react
+[WARN] Request took 48531ms: https://registry.npmjs.org/electron-to-chromium
+[WARN] GET https://registry.npmjs.org/@playwright%2Ftest error (23). Will retry in 10 seconds. 2 retries left.
+[WARN] GET https://registry.npmjs.org/@types%2Fnode error (23). Will retry in 10 seconds. 2 retries left.
+[WARN] Request took 36422ms: https://registry.npmjs.org/tldts
+[WARN] GET https://registry.npmjs.org/@typescript-eslint%2Ftypes error (23). Will retry in 10 seconds. 2 retries left.
+[WARN] Request took 45848ms: https://registry.npmjs.org/playwright-core
+[WARN] Request took 46645ms: https://registry.npmjs.org/react-dom
+[WARN] GET https://registry.npmjs.org/eslint-plugin-react-hooks error (23). Will retry in 10 seconds. 2 retries left.
+[WARN] Request took 14928ms: https://registry.npmjs.org/scheduler
+[WARN] Request took 41903ms: https://registry.npmjs.org/@sentry%2Fnode
+[WARN] Request took 53249ms: https://registry.npmjs.org/playwright
+[WARN] Request took 54208ms: https://registry.npmjs.org/react-is
+[WARN] Request took 57097ms: https://registry.npmjs.org/typescript
+[WARN] Request took 13096ms: https://registry.npmjs.org/@types%2Fnode
+[WARN] Request took 23131ms: https://registry.npmjs.org/@playwright%2Ftest
+✓ Lockfile passes supply-chain policies (761 entries in 1m 47.5s)
+Lockfile is up to date, resolution step is skipped
+Progress: resolved 1, reused 0, downloaded 0, added 0
+.                                        | +112 +++++++++++
+Progress: resolved 112, reused 0, downloaded 14, added 14
+Progress: resolved 112, reused 0, downloaded 21, added 21
+[WARN] Tarball download average speed 8 KiB/s (size 12 KiB) is below 50 KiB/s: https://registry.npmjs.org/hash.js/-/hash.js-1.1.7.tgz (GET)
+[WARN] Tarball download average speed 13 KiB/s (size 16 KiB) is below 50 KiB/s: https://registry.npmjs.org/sax/-/sax-1.6.1.tgz (GET)
+Progress: resolved 112, reused 0, downloaded 39, added 39
+[WARN] Tarball download average speed 9 KiB/s (size 27 KiB) is below 50 KiB/s: https://registry.npmjs.org/undici-types/-/undici-types-7.24.6.tgz (GET)
+[WARN] Tarball download average speed 22 KiB/s (size 27 KiB) is below 50 KiB/s: https://registry.npmjs.org/undici-types/-/undici-types-7.18.2.tgz (GET)
+Progress: resolved 112, reused 0, downloaded 54, added 54
+[WARN] Tarball download average speed 2 KiB/s (size 3 KiB) is below 50 KiB/s: https://registry.npmjs.org/@lukeed/ms/-/ms-2.0.2.tgz (GET)
+[WARN] Tarball download average speed 3 KiB/s (size 4 KiB) is below 50 KiB/s: https://registry.npmjs.org/json-schema-resolver/-/json-schema-resolver-3.0.0.tgz (GET)
+[WARN] Tarball download average speed 3 KiB/s (size 7 KiB) is below 50 KiB/s: https://registry.npmjs.org/@fastify/type-provider-typebox/-/type-provider-typebox-6.1.0.tgz (GET)
+[WARN] Tarball download average speed 46 KiB/s (size 99 KiB) is below 50 KiB/s: https://registry.npmjs.org/path-scurry/-/path-scurry-2.0.2.tgz (GET)
+Progress: resolved 112, reused 0, downloaded 82, added 80
+[WARN] GET https://registry.npmjs.org/rfdc/-/rfdc-1.4.1.tgz error (ECONNRESET). Will retry in 10 seconds. 2 retries left.
+[WARN] Tarball download average speed 8 KiB/s (size 13 KiB) is below 50 KiB/s: https://registry.npmjs.org/ipaddr.js/-/ipaddr.js-2.5.0.tgz (GET)
+[WARN] GET https://registry.npmjs.org/docx/-/docx-9.7.1.tgz error (ECONNRESET). Will retry in 10 seconds. 2 retries left.
+[WARN] Tarball download average speed 7 KiB/s (size 13 KiB) is below 50 KiB/s: https://registry.npmjs.org/cookie/-/cookie-1.1.1.tgz (GET)
+[WARN] Tarball download average speed 26 KiB/s (size 28 KiB) is below 50 KiB/s: https://registry.npmjs.org/semver/-/semver-7.8.5.tgz (GET)
+Progress: resolved 112, reused 0, downloaded 93, added 93
+Progress: resolved 112, reused 0, downloaded 99, added 99
+Progress: resolved 112, reused 0, downloaded 101, added 101
+[WARN] Tarball download average speed 1 KiB/s (size 11 KiB) is below 50 KiB/s: https://registry.npmjs.org/content-disposition/-/content-disposition-2.0.1.tgz (GET)
+Progress: resolved 112, reused 0, downloaded 103, added 103
+[WARN] Tarball download average speed 13 KiB/s (size 81 KiB) is below 50 KiB/s: https://registry.npmjs.org/minipass/-/minipass-7.1.3.tgz (GET)
+Progress: resolved 112, reused 0, downloaded 105, added 105
+[WARN] Tarball download average speed 0 KiB/s (size 3 KiB) is below 50 KiB/s: https://registry.npmjs.org/fast-decode-uri-component/-/fast-decode-uri-component-1.0.1.tgz (GET)
+Progress: resolved 112, reused 0, downloaded 106, added 105
+Progress: resolved 112, reused 0, downloaded 108, added 108
+[WARN] Tarball download average speed 15 KiB/s (size 212 KiB) is below 50 KiB/s: https://registry.npmjs.org/ajv/-/ajv-8.20.0.tgz (GET)
+Progress: resolved 112, reused 0, downloaded 109, added 109
+[WARN] Tarball download average speed 27 KiB/s (size 427 KiB) is below 50 KiB/s: https://registry.npmjs.org/@types/node/-/node-25.9.3.tgz (GET)
+Progress: resolved 112, reused 0, downloaded 110, added 109
+Progress: resolved 112, reused 0, downloaded 111, added 111
+Progress: resolved 112, reused 0, downloaded 112, added 111
+Progress: resolved 112, reused 0, downloaded 112, added 112, done
+Done in 2m 19.1s using pnpm v11.6.0
+ ---> Removed intermediate container ebe9f017b754
+ ---> 361b3beae480
+Step 19/30 : COPY --from=build /app/frontend/dist ./frontend/dist
+ ---> d6a156c94e8e
+Step 20/30 : COPY --from=build /app/server/dist ./server/dist
+ ---> ac8890ab79d7
+Step 21/30 : COPY server/drizzle.config.ts ./server/drizzle.config.ts
+ ---> 679f2425e357
+Step 22/30 : COPY server/drizzle ./server/drizzle
+ ---> 98e58810dbda
+Step 23/30 : COPY LICENSE README.md ./
+ ---> a506795469a6
+Step 24/30 : COPY docker/entrypoint.sh ./docker/entrypoint.sh
+ ---> 9192b8df0a5e
+Step 25/30 : RUN chmod 0755 ./docker/entrypoint.sh && mkdir -p /app/data && chown -R node:node /app/data
+ ---> Running in 01ca6e74bd2f
+ ---> Removed intermediate container 01ca6e74bd2f
+ ---> dcf9198b6c1e
+Step 26/30 : EXPOSE 8000
+ ---> Running in 8badeea8af72
+ ---> Removed intermediate container 8badeea8af72
+ ---> b41d61ba6878
+Step 27/30 : USER node
+ ---> Running in 1050b2ba7a0e
+ ---> Removed intermediate container 1050b2ba7a0e
+ ---> d0ab51ce10d3
+Step 28/30 : ENTRYPOINT ["/app/docker/entrypoint.sh"]
+ ---> Running in 8288dd1ca760
+ ---> Removed intermediate container 8288dd1ca760
+ ---> 80bce74d440b
+Step 29/30 : CMD ["node", "server/dist/apps/cli/main.js", "serve", "--host", "0.0.0.0", "--port", "8000"]
+ ---> Running in 2d46f874dae2
+ ---> Removed intermediate container 2d46f874dae2
+ ---> 6f5fd4815438
+Step 30/30 : LABEL org.opencontainers.image.revision=0799ddf8909dd28f9c31dd72e418636c5a7a8992
+ ---> Running in 0bc841c995c0
+ ---> Removed intermediate container 0bc841c995c0
+ ---> b52f1812833a
+Successfully built b52f1812833a
+Successfully tagged novel-engine-acp-audit:final

@@ -1,0 +1,33 @@
+
+ RUN  v4.1.11 /Users/jackela/.codex/worktrees/acp-full-acceptance/Novel-Engine/frontend
+
+ ❯ src/features/studio/components/StudioAcpJobActions.test.tsx (0 test)
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/features/studio/components/StudioAcpJobActions.test.tsx [ src/features/studio/components/StudioAcpJobActions.test.tsx ]
+Error: Failed to resolve import "./StudioAcpJobActions" from "src/features/studio/components/StudioAcpJobActions.test.tsx". Does the file exist?
+  Plugin: vite:import-analysis
+  File: /Users/jackela/.codex/worktrees/acp-full-acceptance/Novel-Engine/frontend/src/features/studio/components/StudioAcpJobActions.test.tsx:7:0
+  14 |  const __vi_import_3__ = await import("@/test/factories");
+  15 |  const __vi_import_4__ = await import("@/test/harness");
+  16 |  const __vi_import_5__ = await import("./StudioAcpJobActions");
+     |                                       ^
+  17 |  const __vi_import_6__ = await import("react/jsx-dev-runtime");
+  18 |  
+ ❯ TransformPluginContext._formatLog ../node_modules/.pnpm/vite@8.2.2_@types+node@24.13.3_esbuild@0.28.2_jiti@2.7.0_terser@5.48.0_tsx@4.23.12_yaml@2.9.0/node_modules/vite/dist/node/chunks/node.js:31147:39
+ ❯ TransformPluginContext.error ../node_modules/.pnpm/vite@8.2.2_@types+node@24.13.3_esbuild@0.28.2_jiti@2.7.0_terser@5.48.0_tsx@4.23.12_yaml@2.9.0/node_modules/vite/dist/node/chunks/node.js:31144:14
+ ❯ normalizeUrl ../node_modules/.pnpm/vite@8.2.2_@types+node@24.13.3_esbuild@0.28.2_jiti@2.7.0_terser@5.48.0_tsx@4.23.12_yaml@2.9.0/node_modules/vite/dist/node/chunks/node.js:28083:18
+ ❯ ../node_modules/.pnpm/vite@8.2.2_@types+node@24.13.3_esbuild@0.28.2_jiti@2.7.0_terser@5.48.0_tsx@4.23.12_yaml@2.9.0/node_modules/vite/dist/node/chunks/node.js:28153:30
+ ❯ TransformPluginContext.transform ../node_modules/.pnpm/vite@8.2.2_@types+node@24.13.3_esbuild@0.28.2_jiti@2.7.0_terser@5.48.0_tsx@4.23.12_yaml@2.9.0/node_modules/vite/dist/node/chunks/node.js:28119:4
+ ❯ EnvironmentPluginContainer.transform ../node_modules/.pnpm/vite@8.2.2_@types+node@24.13.3_esbuild@0.28.2_jiti@2.7.0_terser@5.48.0_tsx@4.23.12_yaml@2.9.0/node_modules/vite/dist/node/chunks/node.js:30932:14
+ ❯ loadAndTransform ../node_modules/.pnpm/vite@8.2.2_@types+node@24.13.3_esbuild@0.28.2_jiti@2.7.0_terser@5.48.0_tsx@4.23.12_yaml@2.9.0/node_modules/vite/dist/node/chunks/node.js:20671:26
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  no tests
+   Start at  16:04:25
+   Duration  548ms (transform 9ms, setup 90ms, import 0ms, tests 0ms, environment 356ms)
+

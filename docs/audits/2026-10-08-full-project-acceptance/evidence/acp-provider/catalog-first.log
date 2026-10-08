@@ -1,0 +1,179 @@
+
+ RUN  v4.1.11 /Users/jackela/.codex/worktrees/acp-full-acceptance/Novel-Engine/server
+
+ ❯ tests/infrastructure/provider_config.test.ts (6 tests | 1 failed) 6ms
+     × uses the server-owned defaults without exposing a model choice 3ms
+ ❯ tests/contexts/model_resolution.test.ts (9 tests | 2 failed) 5ms
+     × lists all three providers with configured/default flags and resolved models 3ms
+     × marks keyed providers configured and honors model overrides and the default 0ms
+ ❯ tests/api/provider_catalog.test.ts (2 tests | 2 failed) 1093ms
+     × requires an owner and returns only resolved provider facts 609ms
+     × marks credential-backed providers as unconfigured without a key (DR-022) 484ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/api/provider_catalog.test.ts > provider catalog API > requires an owner and returns only resolved provider facts
+AssertionError: expected { providers: [ { …(4) }, …(3) ] } to deeply equal { providers: [ { …(4) }, …(2) ] }
+
+- Expected
++ Received
+
+@@ -16,7 +16,13 @@
+        "configured": true,
+        "is_default": false,
+        "model": "catalog-compatible-model",
+        "provider": "openai_compatible",
+      },
++     {
++       "configured": false,
++       "is_default": false,
++       "model": null,
++       "provider": "acp",
++     },
+    ],
+  }
+
+ ❯ tests/api/provider_catalog.test.ts:53:31
+     51|
+     52|       expect(response.statusCode).toBe(200);
+     53|       expect(response.json()).toEqual({
+       |                               ^
+     54|         providers: [
+     55|           {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  tests/api/provider_catalog.test.ts > provider catalog API > marks credential-backed providers as unconfigured without a key (DR-022)
+AssertionError: expected { providers: [ { …(4) }, …(3) ] } to deeply equal { providers: [ { …(4) }, …(2) ] }
+
+- Expected
++ Received
+
+@@ -16,7 +16,13 @@
+        "configured": false,
+        "is_default": false,
+        "model": "gpt-4o-mini",
+        "provider": "openai_compatible",
+      },
++     {
++       "configured": false,
++       "is_default": false,
++       "model": null,
++       "provider": "acp",
++     },
+    ],
+  }
+
+ ❯ tests/api/provider_catalog.test.ts:107:31
+    105|
+    106|       expect(response.statusCode).toBe(200);
+    107|       expect(response.json()).toEqual({
+       |                               ^
+    108|         providers: [
+    109|           {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  tests/infrastructure/provider_config.test.ts > provider configuration parser > uses the server-owned defaults without exposing a model choice
+AssertionError: expected { defaultProvider: 'mock', …(16) } to deeply equal { defaultProvider: 'mock', …(15) }
+
+- Expected
++ Received
+
+@@ -1,6 +1,19 @@
+  {
++   "acp": {
++     "args": [
++       "--no-auto-update",
++       "agent",
++       "--no-leader",
++       "stdio",
++     ],
++     "command": "grok",
++     "model": undefined,
++     "proxyUrl": "ws://127.0.0.1:8710/acp",
++     "tokenFile": undefined,
++     "workspaceRoot": undefined,
++   },
+    "dashscopeApiBase": undefined,
+    "dashscopeApiKey": undefined,
+    "dashscopeModel": undefined,
+    "dashscopeReviewModel": undefined,
+    "dashscopeTransportMode": "multimodal_generation",
+
+ ❯ tests/infrastructure/provider_config.test.ts:29:48
+     27|
+     28|   it("uses the server-owned defaults without exposing a model choice",…
+     29|     expect(loadLlmServerConfig(environment())).toEqual({
+       |                                                ^
+     30|       defaultProvider: "mock",
+     31|       genericModel: undefined,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  tests/contexts/model_resolution.test.ts > provider catalog (GET /api/providers payload) > lists all three providers with configured/default flags and resolved models
+AssertionError: expected [ { provider: 'mock', …(3) }, …(3) ] to deeply equal [ { provider: 'mock', …(3) }, …(2) ]
+
+- Expected
++ Received
+
+@@ -15,6 +15,12 @@
+      "configured": false,
+      "is_default": false,
+      "model": "gpt-4o-mini",
+      "provider": "openai_compatible",
+    },
++   {
++     "configured": false,
++     "is_default": false,
++     "model": null,
++     "provider": "acp",
++   },
+  ]
+
+ ❯ tests/contexts/model_resolution.test.ts:80:21
+     78|       credentials: {},
+     79|     });
+     80|     expect(catalog).toEqual([
+       |                     ^
+     81|       {
+     82|         provider: "mock",
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  tests/contexts/model_resolution.test.ts > provider catalog (GET /api/providers payload) > marks keyed providers configured and honors model overrides and the default
+AssertionError: expected [ { provider: 'mock', …(3) }, …(3) ] to deeply equal [ { provider: 'mock', …(3) }, …(2) ]
+
+- Expected
++ Received
+
+@@ -15,6 +15,12 @@
+      "configured": false,
+      "is_default": false,
+      "model": "gpt-override",
+      "provider": "openai_compatible",
+    },
++   {
++     "configured": false,
++     "is_default": false,
++     "model": null,
++     "provider": "acp",
++   },
+  ]
+
+ ❯ tests/contexts/model_resolution.test.ts:103:21
+    101|       credentials: { dashscope: "sk-dash", openaiCompatible: "" },
+    102|     });
+    103|     expect(catalog).toEqual([
+       |                     ^
+    104|       { provider: "mock", configured: true, model: "deterministic-stor…
+    105|       { provider: "dashscope", configured: true, model: "qwen-override…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  3 failed | 2 passed (5)
+      Tests  5 failed | 19 passed (24)
+   Start at  16:11:58
+   Duration  2.63s (transform 691ms, setup 0ms, import 1.66s, tests 2.77s, environment 0ms)
+

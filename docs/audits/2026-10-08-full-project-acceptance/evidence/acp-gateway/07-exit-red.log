@@ -1,0 +1,43 @@
+
+ RUN  v4.1.11 /Users/jackela/.codex/worktrees/acp-full-acceptance/Novel-Engine/server
+
+ ❯ tests/acp/AcpGatewayLimits.test.ts (5 tests | 1 failed | 4 skipped) 98ms
+   × reaps an agent after stdout or process failure: exit 97ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/acp/AcpGatewayLimits.test.ts > reaps an agent after stdout or process failure: exit
+Error: ACP process group 97013 SIGTERM cleanup failed.
+ ❯ kill src/shared/infrastructure/acp/AcpAgentProcess.ts:157:17
+    155|       } catch (error) {
+    156|         if (!(error instanceof Error && "code" in error && error.code …
+    157|           throw new Error(`ACP process group ${pid} ${signal} cleanup …
+       |                 ^
+    158|         }
+    159|       }
+ ❯ AcpAgentProcess.killTree src/shared/infrastructure/acp/AcpAgentProcess.ts:161:5
+ ❯ AcpAgentProcess.close src/shared/infrastructure/acp/AcpAgentProcess.ts:133:27
+ ❯ AcpGatewaySession_service.close src/shared/application/AcpGatewaySession_service.ts:103:23
+ ❯ WebSocket.<anonymous> src/shared/interface/acp/AcpGateway.ts:109:31
+ ❯ WebSocket.emitClose ../node_modules/.pnpm/ws@8.22.0/node_modules/ws/lib/websocket.js:292:10
+ ❯ Receiver.receiverOnFinish ../node_modules/.pnpm/ws@8.22.0/node_modules/ws/lib/websocket.js:1242:20
+
+Caused by: Error: kill EPERM
+ ❯ kill src/shared/infrastructure/acp/AcpAgentProcess.ts:154:17
+ ❯ AcpAgentProcess.killTree src/shared/infrastructure/acp/AcpAgentProcess.ts:161:5
+ ❯ AcpAgentProcess.close src/shared/infrastructure/acp/AcpAgentProcess.ts:133:27
+ ❯ AcpGatewaySession_service.close src/shared/application/AcpGatewaySession_service.ts:103:23
+ ❯ WebSocket.<anonymous> src/shared/interface/acp/AcpGateway.ts:109:31
+ ❯ WebSocket.emitClose ../node_modules/.pnpm/ws@8.22.0/node_modules/ws/lib/websocket.js:292:10
+ ❯ Receiver.receiverOnFinish ../node_modules/.pnpm/ws@8.22.0/node_modules/ws/lib/websocket.js:1242:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: -1, code: 'EPERM', syscall: 'kill' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 4 skipped (5)
+   Start at  16:01:15
+   Duration  212ms (transform 21ms, setup 0ms, import 41ms, tests 98ms, environment 0ms)
+

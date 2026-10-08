@@ -1,0 +1,35 @@
+src/contexts/ai/infrastructure/providers/buildAcpClient.ts:110:16 lint/suspicious/noControlCharactersInRegex ━━━━━━━━━━
+
+  × Unexpected control character in a regular expression.
+  
+    108 │ function safeToolTitle(value: string): string {
+    109 │   return value
+  > 110 │     .replace(/[\x00-\x1f\x7f]/gu, " ")
+        │                ^^^^
+    111 │     .replace(/\b(?:api[_ -]?key|token|password|secret|authorization)\s*[:=]\s*\S+/giu, "[redacted]")
+    112 │     .replace(/\b(?:sk-|xai-)[A-Za-z0-9_-]{12,}/gu, "[redacted]")
+  
+  i Control characters are unusual and potentially incorrect inputs, so they are disallowed.
+  
+
+src/contexts/ai/infrastructure/providers/buildAcpClient.ts:110:21 lint/suspicious/noControlCharactersInRegex ━━━━━━━━━━
+
+  × Unexpected control character in a regular expression.
+  
+    108 │ function safeToolTitle(value: string): string {
+    109 │   return value
+  > 110 │     .replace(/[\x00-\x1f\x7f]/gu, " ")
+        │                     ^^^^
+    111 │     .replace(/\b(?:api[_ -]?key|token|password|secret|authorization)\s*[:=]\s*\S+/giu, "[redacted]")
+    112 │     .replace(/\b(?:sk-|xai-)[A-Za-z0-9_-]{12,}/gu, "[redacted]")
+  
+  i Control characters are unusual and potentially incorrect inputs, so they are disallowed.
+  
+
+Checked 5 files in 34ms. Fixed 4 files.
+Found 2 errors.
+check ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Some errors were emitted while applying fixes.
+  
+

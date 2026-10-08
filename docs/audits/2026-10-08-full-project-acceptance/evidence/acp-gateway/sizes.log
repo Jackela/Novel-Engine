@@ -1,0 +1,5 @@
+$ node scripts/qa/check_file_sizes.mjs
+[file-size] files over the allowed code-line budget:
+  frontend/src/app/proposalStream.ts: 306 code lines exceeds limit 300
+[file-size] split the file or, for an intentional legacy baseline change, update LEGACY_LIMITS with review evidence.
+[ELIFECYCLE] Command failed with exit code 1.

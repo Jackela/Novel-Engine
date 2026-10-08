@@ -1,0 +1,53 @@
+
+Running 2 tests using 1 worker
+
+(node:11514) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘  1 [chromium] › tests/e2e-acp/studio_acp.spec.ts:74:5 › coupled ACP tools through the real Studio API › observes all four steps, sends permission choices, and changes the manuscript only after acceptance (9.9s)
+  -  2 [chromium] › tests/e2e-acp/studio_acp.spec.ts:153:5 › coupled ACP tools through the real Studio API › Stop keeps file-effect evidence and navigation discards pending permission controls
+
+
+  1) [chromium] › tests/e2e-acp/studio_acp.spec.ts:74:5 › coupled ACP tools through the real Studio API › observes all four steps, sends permission choices, and changes the manuscript only after acceptance 
+
+    Error: expect(locator).toHaveText(expected) failed
+
+    Locator: locator('.cm-content')
+    Timeout: 5000ms
+    - Expected  - 4
+    + Received  + 1
+
+    - # Chapter 1
+    -
+    -
+    - Mira kept a dry notebook beside the harbor lantern.
+    + # Chapter 1Mira kept a dry notebook beside the harbor lantern.
+
+    Call log:
+      - Expect "toHaveText" with timeout 5000ms
+      - waiting for locator('.cm-content')
+        14 × locator resolved to <div translate="no" role="textbox" autocorrect="off" spellcheck="false" autocapitalize="off" aria-multiline="true" contenteditable="true" data-language="markdown" writingsuggestions="false" aria-label="Markdown editor" class="cm-content cm-lineWrapping">…</div>
+           - unexpected value "# Chapter 1Mira kept a dry notebook beside the harbor lantern."
+
+
+      93 |       await allowTool(page);
+      94 |       await expect(page.getByText("Proposed Markdown", { exact: true })).toBeVisible();
+    > 95 |       await expect(editor).toHaveText(original);
+         |                            ^
+      96 |       expect(await documentState(page, projectId)).toEqual(savedBefore);
+      97 |       await page.getByRole("button", { name: "Accept", exact: true }).click();
+      98 |       await expect(page.getByText("Proposed Markdown", { exact: true })).toHaveCount(0);
+        at /Users/jackela/.codex/worktrees/acp-full-acceptance/Novel-Engine/frontend/tests/e2e-acp/studio_acp.spec.ts:95:28
+
+    Error Context: test-results/studio_acp-coupled-ACP-too-0a8c0-cript-only-after-acceptance-chromium/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/studio_acp-coupled-ACP-too-0a8c0-cript-only-after-acceptance-chromium/trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace test-results/studio_acp-coupled-ACP-too-0a8c0-cript-only-after-acceptance-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    [chromium] › tests/e2e-acp/studio_acp.spec.ts:74:5 › coupled ACP tools through the real Studio API › observes all four steps, sends permission choices, and changes the manuscript only after acceptance 
+  1 did not run

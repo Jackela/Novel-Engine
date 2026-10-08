@@ -1,0 +1,112 @@
+
+ RUN  v4.1.11 /Users/jackela/.codex/worktrees/acp-full-acceptance/Novel-Engine/server
+
+ ❯ tests/contexts/acp_native_output.test.ts (4 tests | 4 failed) 28ms
+     × filters bounded commentary across chunks while yielding real chapter deltas before end_turn 15ms
+     × refuses extra objects, trailing prose or missing structured output 7ms
+     × refuses extra objects, trailing prose or missing structured output 3ms
+     × refuses extra objects, trailing prose or missing structured output 2ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/contexts/acp_native_output.test.ts > native ACP commentary before final structured output > filters bounded commentary across chunks while yielding real chapter deltas before end_turn
+TextGenerationProviderError: Provider stream payload did not satisfy the chapter_markdown JSON contract: expected a JSON object wrapper
+ ❯ contractFailure src/contexts/ai/infrastructure/providers/stream_json_unwrap.ts:42:10
+     40|
+     41| function contractFailure(detail: string): TextGenerationProviderError {
+     42|   return new TextGenerationProviderError(
+       |          ^
+     43|     `Provider stream payload did not satisfy the chapter_markdown JSON…
+     44|   );
+ ❯ Object.stepLeading [as leading] src/contexts/ai/infrastructure/providers/stream_json_unwrap.ts:140:25
+ ❯ Object.feed src/contexts/ai/infrastructure/providers/stream_json_unwrap.ts:242:60
+ ❯ src/contexts/ai/infrastructure/providers/AcpTextProvider.ts:106:31
+ ❯ onText src/contexts/ai/infrastructure/providers/AcpTextProvider.ts:188:9
+ ❯ src/contexts/ai/infrastructure/providers/buildAcpClient.ts:36:11
+ ❯ ../node_modules/.pnpm/@agentclientprotocol+sdk@1.7.0_zod@4.4.3/node_modules/@agentclientprotocol/sdk/src/acp.ts:1157:20
+ ❯ Object.handleMessage ../node_modules/.pnpm/@agentclientprotocol+sdk@1.7.0_zod@4.4.3/node_modules/@agentclientprotocol/sdk/src/jsonrpc.ts:1642:22
+ ❯ Connection.processIncomingMessage ../node_modules/.pnpm/@agentclientprotocol+sdk@1.7.0_zod@4.4.3/node_modules/@agentclientprotocol/sdk/src/jsonrpc.ts:1398:38
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  tests/contexts/acp_native_output.test.ts > native ACP commentary before final structured output > refuses extra objects, trailing prose or missing structured output
+AssertionError: promise resolved "{ step: 'chapter_draft', …(6) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "completionTokens": null,
++   "content": {
++     "chapter_markdown": "Draft",
++   },
++   "model": "fake-model",
++   "promptTokens": null,
++   "provider": "acp",
++   "rawText": "{\"chapter_markdown\":\"Draft\"}{\"chapter_markdown\":\"Extra\"}",
++   "step": "chapter_draft",
+  }
+
+ ❯ tests/contexts/acp_native_output.test.ts:26:86
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  tests/contexts/acp_native_output.test.ts > native ACP commentary before final structured output > refuses extra objects, trailing prose or missing structured output
+AssertionError: promise resolved "{ step: 'chapter_draft', …(6) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "completionTokens": null,
++   "content": {
++     "chapter_markdown": "Draft",
++   },
++   "model": "fake-model",
++   "promptTokens": null,
++   "provider": "acp",
++   "rawText": "{\"chapter_markdown\":\"Draft\"} afterword",
++   "step": "chapter_draft",
+  }
+
+ ❯ tests/contexts/acp_native_output.test.ts:26:86
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  tests/contexts/acp_native_output.test.ts > native ACP commentary before final structured output > refuses extra objects, trailing prose or missing structured output
+AssertionError: promise resolved "{ step: 'chapter_draft', …(6) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "completionTokens": null,
++   "content": {
++     "chapter_markdown": "Plain prose without JSON",
++   },
++   "model": "fake-model",
++   "promptTokens": null,
++   "provider": "acp",
++   "rawText": "Plain prose without JSON",
++   "step": "chapter_draft",
+  }
+
+ ❯ tests/contexts/acp_native_output.test.ts:26:86
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed (4)
+   Start at  16:15:00
+   Duration  212ms (transform 35ms, setup 0ms, import 108ms, tests 28ms, environment 0ms)
+

@@ -1,0 +1,36 @@
+
+ RUN  v4.1.11 /Users/jackela/.codex/worktrees/acp-full-acceptance/Novel-Engine/server
+
+ ❯ tests/acp/AcpGatewayBoundaries.test.ts (15 tests | 1 failed) 1625ms
+   × forwards an agent JSON object exactly at the 1 MiB limit excluding its NDJSON delimiter 1033ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/acp/AcpGatewayBoundaries.test.ts > forwards an agent JSON object exactly at the 1 MiB limit excluding its NDJSON delimiter
+AssertionError: expected 1 to be 2 // Object.is equality
+
+- Expected
++ Received
+
+- 2
++ 1
+
+ ❯ tests/acp/AcpGatewayBoundaries.test.ts:63:46
+     61|     const messages: string[] = []; socket.on("message", (raw) => messa…
+     62|     harness.initialize(socket);
+     63|     await expect.poll(() => messages.length).toBe(2);
+       |                                              ^
+     64|     expect(Buffer.byteLength(messages[1] ?? "")).toBe(1024 * 1024);
+     65|     expect(JSON.parse(messages[1] ?? "{}").method).toBe("bounded");
+
+Caused by: Error: Matcher did not succeed in time.
+ ❯ tests/acp/AcpGatewayBoundaries.test.ts:63:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 14 passed (15)
+   Start at  15:58:19
+   Duration  1.74s (transform 23ms, setup 0ms, import 43ms, tests 1.62s, environment 0ms)
+

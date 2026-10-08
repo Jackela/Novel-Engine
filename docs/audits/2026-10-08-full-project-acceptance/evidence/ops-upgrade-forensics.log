@@ -1,0 +1,36 @@
+$ docker compose --project-name ne-ops-release-6805c076 --project-directory /tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-ne-ops-release-6805c076 --env-file /dev/null -f /Users/jackela/.codex/worktrees/acp-full-acceptance/Novel-Engine/compose.yaml -f /tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-ne-ops-release-6805c076/ops-compose.override.yaml stop novel-engine
+ Container ne-ops-release-6805c076-novel-engine-1 Stopping 
+ Container ne-ops-release-6805c076-novel-engine-1 Stopped 
+
+$ docker run --rm --read-only --cap-drop ALL --security-opt no-new-privileges --user root -v ne-ops-release-6805c076_novel-engine-data:/audit:ro --entrypoint node ghcr.io/jackela/novel-engine@sha256:15df0fa2b7aca06b30fd412c5dce46a353f57d1de905a7aac1db29440f742c93 -e const D=require('/app/server/node_modules/better-sqlite3'),c=require('crypto'),d=new D('/audit/novel-engine.sqlite3',{readonly:true});const r=d.prepare('select r.content_markdown from documents d join revisions r on r.id=d.current_revision_id where d.id=?').get(process.argv[1]);console.log(JSON.stringify({check:d.pragma('quick_check',{simple:true}),migrations:d.prepare('select count(*) n from __drizzle_migrations').get().n,body_sha256:c.createHash('sha256').update(r.content_markdown).digest('hex')}));d.close(); 6b97c631-260e-49af-a66c-6076668b5f50
+/app/node_modules/.pnpm/better-sqlite3@13.0.3/node_modules/better-sqlite3/lib/methods/wrappers.js:5
+	return this[cppdb].prepare(sql, this, false, false);
+	                   ^
+
+SqliteError: unable to open database file
+    at Database.prepare (/app/node_modules/.pnpm/better-sqlite3@13.0.3/node_modules/better-sqlite3/lib/methods/wrappers.js:5:21)
+    at [eval]:1:156
+    at [eval]:1:531
+    at runScriptInThisContext (node:internal/vm:219:10)
+    at node:internal/process/execution:451:12
+    at [eval]-wrapper:6:24
+    at runScriptInContext (node:internal/process/execution:449:60)
+    at evalFunction (node:internal/process/execution:283:30)
+    at evalTypeScript (node:internal/process/execution:295:3)
+    at node:internal/main/eval_string:71:3 {
+  code: 'SQLITE_CANTOPEN'
+}
+
+Node.js v24.21.0
+
+$ docker cp b1f35ceb1dd18be588637287ce5344b79ea8fb00ec8a97c73849cd210b2016b5:/app/data/novel-engine.sqlite3 /tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-upgrade-copy/novel-engine.sqlite3
+
+$ docker cp b1f35ceb1dd18be588637287ce5344b79ea8fb00ec8a97c73849cd210b2016b5:/app/data/novel-engine.sqlite3-wal /tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-upgrade-copy/novel-engine.sqlite3-wal
+Error response from daemon: Could not find the file /app/data/novel-engine.sqlite3-wal in container b1f35ceb1dd18be588637287ce5344b79ea8fb00ec8a97c73849cd210b2016b5
+
+$ docker cp b1f35ceb1dd18be588637287ce5344b79ea8fb00ec8a97c73849cd210b2016b5:/app/data/novel-engine.sqlite3-shm /tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-upgrade-copy/novel-engine.sqlite3-shm
+Error response from daemon: Could not find the file /app/data/novel-engine.sqlite3-shm in container b1f35ceb1dd18be588637287ce5344b79ea8fb00ec8a97c73849cd210b2016b5
+
+$ node -e const D=require('/Users/jackela/.codex/worktrees/acp-full-acceptance/Novel-Engine/server/node_modules/better-sqlite3'),c=require('crypto'),d=new D(process.argv[1],{readonly:true});const r=d.prepare('select r.content_markdown from documents d join document_revisions r on r.id=d.current_revision_id where d.id=?').get(process.argv[2]);console.log(JSON.stringify({check:d.pragma('quick_check',{simple:true}),migrations:d.prepare('select count(*) n from __drizzle_migrations').get().n,body_sha256:c.createHash('sha256').update(r.content_markdown).digest('hex')}));d.close(); /tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-upgrade-copy/novel-engine.sqlite3 6b97c631-260e-49af-a66c-6076668b5f50
+{"check":"ok","migrations":23,"body_sha256":"47b306541ebc5cb9b7c179dc9cafb82bad0836b34eb418cae6f01ce1b00489e6"}
+

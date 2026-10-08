@@ -1,0 +1,125 @@
+DEPRECATED: The legacy builder is deprecated and will be removed in a future release.
+            Install the buildx component to build images with BuildKit:
+            https://docs.docker.com/go/buildx/
+
+Sending build context to Docker daemon  21.29MB
+Step 1/30 : FROM node:24-bookworm-slim AS build
+ ---> 2fe369e96955
+Step 2/30 : WORKDIR /app
+ ---> Using cache
+ ---> dd7b1c9bd2b9
+Step 3/30 : RUN corepack enable
+ ---> Using cache
+ ---> 0d542f6b56da
+Step 4/30 : COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
+ ---> Using cache
+ ---> fe5b01420a3e
+Step 5/30 : COPY frontend/package.json ./frontend/package.json
+ ---> Using cache
+ ---> 1a9216458f7b
+Step 6/30 : COPY server/package.json ./server/package.json
+ ---> Using cache
+ ---> c787e66a75fb
+Step 7/30 : RUN pnpm install --frozen-lockfile
+ ---> Using cache
+ ---> b70fb7a19705
+Step 8/30 : COPY frontend ./frontend
+ ---> 56074d1be8c5
+Step 9/30 : COPY server ./server
+ ---> 0ca6efe0c0db
+Step 10/30 : RUN pnpm --dir frontend build && pnpm --dir server build
+ ---> Running in f434d89fbdb6
+[91m$ vite build && node scripts/check-build-identity.mjs
+[0mvite v8.2.2 building client environment for production...
+transforming...
+✓ 2080 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                                                      2.44 kB │ gzip:   1.05 kB
+dist/assets/ibm-plex-sans-vietnamese-wght-normal-Dg1JeJN0.woff2     13.16 kB
+dist/assets/ibm-plex-sans-greek-wght-normal-CmyJS8uq.woff2          19.50 kB
+dist/assets/ibm-plex-sans-cyrillic-ext-wght-normal-d45eAU9y.woff2   23.56 kB
+dist/assets/ibm-plex-sans-cyrillic-wght-normal-BAAhND-U.woff2       29.51 kB
+dist/assets/ibm-plex-sans-latin-ext-wght-normal-CIII54If.woff2      30.96 kB
+dist/assets/ibm-plex-sans-latin-wght-normal-IvpUvPa2.woff2          45.71 kB
+dist/assets/index-DE8x6k7s.css                                      40.78 kB │ gzip:   7.37 kB
+dist/assets/MarkdownEditor-uCXpj1bx.js                               7.55 kB │ gzip:   2.98 kB
+dist/assets/dist-CfW1HieG.js                                        20.82 kB │ gzip:   7.04 kB
+dist/assets/dist-BtKjq9YY.js                                        29.00 kB │ gzip:   9.51 kB
+dist/assets/dist-BsDtBo2R.js                                        48.97 kB │ gzip:  16.33 kB
+dist/assets/dist-BT1z_k_-.js                                        49.22 kB │ gzip:  16.92 kB
+dist/assets/dist-BaE1Wntn.js                                       199.78 kB │ gzip:  64.47 kB
+dist/assets/dist-Bl-MOTjP.js                                       216.75 kB │ gzip:  82.53 kB
+dist/assets/index-WV5GqD1R.js                                      620.96 kB │ gzip: 180.19 kB
+
+[91m[plugin builtin:vite-reporter] 
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rolldownOptions.output.codeSplitting to improve chunking: https://rolldown.rs/reference/OutputOptions.codeSplitting
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+[0m✓ built in 262ms
+[build-identity] Novel Engine 0.8.0 verified in HTML and 8 JavaScript bundles
+[91m$ tsc -p tsconfig.build.json
+[0m ---> Removed intermediate container f434d89fbdb6
+ ---> 6883cc185bd1
+Step 11/30 : FROM node:24-bookworm-slim AS runtime
+ ---> 2fe369e96955
+Step 12/30 : WORKDIR /app
+ ---> Using cache
+ ---> dd7b1c9bd2b9
+Step 13/30 : ENV NODE_ENV=production     APP_ENVIRONMENT=production     DB_URL=sqlite:///./data/novel-engine.sqlite3
+ ---> Using cache
+ ---> c8f5c5fa5031
+Step 14/30 : RUN corepack enable
+ ---> Using cache
+ ---> 3e5b84fae0e4
+Step 15/30 : COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
+ ---> Using cache
+ ---> dbeb8fb6600e
+Step 16/30 : COPY frontend/package.json ./frontend/package.json
+ ---> Using cache
+ ---> 94c8f171d17d
+Step 17/30 : COPY server/package.json ./server/package.json
+ ---> Using cache
+ ---> 4757edaa8b0b
+Step 18/30 : RUN pnpm install --frozen-lockfile --prod --filter novel-engine-server...     && rm -rf /root/.cache
+ ---> Using cache
+ ---> 361b3beae480
+Step 19/30 : COPY --from=build /app/frontend/dist ./frontend/dist
+ ---> 7294a7865f3a
+Step 20/30 : COPY --from=build /app/server/dist ./server/dist
+ ---> b12494e240e4
+Step 21/30 : COPY server/drizzle.config.ts ./server/drizzle.config.ts
+ ---> c96de1762a44
+Step 22/30 : COPY server/drizzle ./server/drizzle
+ ---> 46d463d5fa4c
+Step 23/30 : COPY LICENSE README.md ./
+ ---> 891223df42d7
+Step 24/30 : COPY docker/entrypoint.sh ./docker/entrypoint.sh
+ ---> 59b6c632f4dd
+Step 25/30 : RUN chmod 0755 ./docker/entrypoint.sh && mkdir -p /app/data && chown -R node:node /app/data
+ ---> Running in a45a512b9bfc
+ ---> Removed intermediate container a45a512b9bfc
+ ---> b9a029eb5b23
+Step 26/30 : EXPOSE 8000
+ ---> Running in 0d7fc6dfa4ab
+ ---> Removed intermediate container 0d7fc6dfa4ab
+ ---> fabd8e58d95c
+Step 27/30 : USER node
+ ---> Running in 98cb69518f37
+ ---> Removed intermediate container 98cb69518f37
+ ---> 96d582ae5533
+Step 28/30 : ENTRYPOINT ["/app/docker/entrypoint.sh"]
+ ---> Running in 0fcbcfc6d29a
+ ---> Removed intermediate container 0fcbcfc6d29a
+ ---> fdb3466502a6
+Step 29/30 : CMD ["node", "server/dist/apps/cli/main.js", "serve", "--host", "0.0.0.0", "--port", "8000"]
+ ---> Running in 9ef5825e9a42
+ ---> Removed intermediate container 9ef5825e9a42
+ ---> 8cdcc198b11f
+Step 30/30 : LABEL org.opencontainers.image.revision=da025b7de90a6b2106892d5d8490bbdfd8628a20
+ ---> Running in d44f51f7ae6a
+ ---> Removed intermediate container d44f51f7ae6a
+ ---> c3286465ec20
+Successfully built c3286465ec20
+Successfully tagged novel-engine-acp-audit:final

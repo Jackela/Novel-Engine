@@ -1,0 +1,58 @@
+
+ RUN  v4.1.11 /Users/jackela/.codex/worktrees/acp-full-acceptance/Novel-Engine/server
+
+stdout | tests/apps/cli/AcpCommand.test.ts > dispatches ACP connect through the single CLI without loading studio config and preserves repeated arguments
+Usage: novel-engine <command> [options]
+
+Commands:
+  serve [--host HOST] [--port PORT]
+      Back up, migrate, reconcile exports, recover jobs, then serve the API.
+  import --source DIR [--owner NAME]
+      Import a legacy file workspace as the owner principal.
+  backup
+      Write a SQLite backup beneath the backups directory and print its path.
+      Backups are plaintext SQLite files; keep them where only the operator can read.
+  restore --input BACKUP
+      Verify a backup file, back up the current database, then replace it atomically.
+  reindex
+      Rebuild the full-text index from every document's current revision.
+  doctor
+      Report product identity, database integrity, journal mode, foreign keys, owner, and
+      migration state. Read-only: never migrates, backs up, reconciles, or takes the write lock.
+  migrate
+      Apply pending migrations and data reconciliation (backing up when migrations are pending).
+  owner reset
+      Delete the local Owner and its sessions so first-run setup is available again.
+
+ ❯ tests/apps/cli/AcpCommand.test.ts (1 test | 1 failed) 1037ms
+   × dispatches ACP connect through the single CLI without loading studio config and preserves repeated arguments 1037ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/apps/cli/AcpCommand.test.ts > dispatches ACP connect through the single CLI without loading studio config and preserves repeated arguments
+AssertionError: expected '' to contain '"args":["--acp","中文"]'
+
+- Expected
++ Received
+
+- "args":["--acp","中文"]
+
+ ❯ tests/apps/cli/AcpCommand.test.ts:29:39
+     27|     });
+     28|     input.write('{"jsonrpc":"2.0","id":1,"method":"initialize","params…
+     29|     await expect.poll(() => received).toContain('"args":["--acp","中文"]…
+       |                                       ^
+     30|     input.end();
+     31|     expect(await running).toBe(0);
+
+Caused by: Error: Matcher did not succeed in time.
+ ❯ tests/apps/cli/AcpCommand.test.ts:29:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  15:53:49
+   Duration  2.05s (transform 434ms, setup 0ms, import 930ms, tests 1.04s, environment 0ms)
+

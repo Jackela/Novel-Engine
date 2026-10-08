@@ -1,0 +1,25 @@
+
+ RUN  v4.1.11 /Users/jackela/.codex/worktrees/acp-full-acceptance/Novel-Engine/server
+
+ ❯ tests/acp/AcpConnect.test.ts (0 test)
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/acp/AcpConnect.test.ts [ tests/acp/AcpConnect.test.ts ]
+Error: Cannot find module '../../src/shared/interface/acp/AcpConnect.js' imported from /Users/jackela/.codex/worktrees/acp-full-acceptance/Novel-Engine/server/tests/acp/AcpConnect.test.ts
+ ❯ tests/acp/AcpConnect.test.ts:7:1
+      5| import { PassThrough } from "node:stream";
+      6| import { expect, it } from "vitest";
+      7| import { AcpConnect } from "../../src/shared/interface/acp/AcpConnect.…
+       | ^
+      8| import { AcpGateway } from "../../src/shared/interface/acp/AcpGateway.…
+      9| import { AcpAgentProcess } from "../../src/shared/infrastructure/acp/A…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  no tests
+   Start at  15:52:10
+   Duration  89ms (transform 9ms, setup 0ms, import 0ms, tests 0ms, environment 0ms)
+

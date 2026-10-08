@@ -1,0 +1,17 @@
+$ tsc -p tsconfig.json --noEmit
+src/contexts/ai/infrastructure/AiOperationRegistry.ts(80,10): error TS1472: 'catch' or 'finally' expected.
+src/contexts/ai/infrastructure/AiOperationRegistry.ts(82,7): error TS1109: Expression expected.
+src/contexts/ai/infrastructure/AiOperationRegistry.ts(101,6): error TS1005: ',' expected.
+src/contexts/ai/infrastructure/AiOperationRegistry.ts(103,16): error TS1005: ',' expected.
+src/contexts/ai/infrastructure/AiOperationRegistry.ts(103,48): error TS1005: ',' expected.
+src/contexts/ai/infrastructure/AiOperationRegistry.ts(103,66): error TS1005: ',' expected.
+src/contexts/ai/infrastructure/AiOperationRegistry.ts(103,75): error TS1005: ';' expected.
+src/contexts/ai/infrastructure/AiOperationRegistry.ts(104,11): error TS1005: ':' expected.
+src/contexts/ai/infrastructure/AiOperationRegistry.ts(104,37): error TS1005: ',' expected.
+src/contexts/ai/infrastructure/AiOperationRegistry.ts(105,11): error TS1005: ':' expected.
+src/contexts/ai/infrastructure/AiOperationRegistry.ts(105,54): error TS1005: ',' expected.
+src/contexts/ai/infrastructure/AiOperationRegistry.ts(106,9): error TS1003: Identifier expected.
+src/contexts/ai/infrastructure/AiOperationRegistry.ts(106,17): error TS1005: ',' expected.
+src/contexts/ai/infrastructure/AiOperationRegistry.ts(106,83): error TS1005: ',' expected.
+src/contexts/ai/infrastructure/AiOperationRegistry.ts(106,85): error TS1136: Property assignment expected.
+[ELIFECYCLE] Command failed with exit code 1.

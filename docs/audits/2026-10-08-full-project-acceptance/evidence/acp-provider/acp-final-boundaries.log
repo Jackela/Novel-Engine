@@ -1,0 +1,34 @@
+
+ RUN  v4.1.11 /Users/jackela/.codex/worktrees/acp-full-acceptance/Novel-Engine/server
+
+⎯⎯⎯⎯⎯⎯ Unhandled Errors ⎯⎯⎯⎯⎯⎯
+
+Vitest caught 1 unhandled error during the test run.
+This might cause false positive tests. Resolve unhandled errors to make sure your tests are not affected.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+Error: WebSocket was closed before the connection was established
+ ❯ WebSocket.close ../node_modules/.pnpm/ws@8.22.0/node_modules/ws/lib/websocket.js:319:7
+ ❯ WebSocketStreamTransport.closeSocket ../node_modules/.pnpm/@agentclientprotocol+sdk@1.7.0_zod@4.4.3/node_modules/@agentclientprotocol/sdk/dist/ws-stream.js:152:25
+ ❯ WebSocketStreamTransport.close ../node_modules/.pnpm/@agentclientprotocol+sdk@1.7.0_zod@4.4.3/node_modules/@agentclientprotocol/sdk/dist/ws-stream.js:147:14
+ ❯ Object.cancel ../node_modules/.pnpm/@agentclientprotocol+sdk@1.7.0_zod@4.4.3/node_modules/@agentclientprotocol/sdk/dist/ws-stream.js:83:26
+ ❯ Object.<anonymous> node:internal/webstreams/util:190:25
+ ❯ readableStreamDefaultControllerCancelSteps node:internal/webstreams/readablestream:2608:37
+ ❯ ReadableStreamDefaultController.[kCancel] node:internal/webstreams/readablestream:1170:12
+ ❯ readableStreamCancel node:internal/webstreams/readablestream:2161:39
+ ❯ readableStreamReaderGenericCancel node:internal/webstreams/readablestream:2304:10
+ ❯ ReadableStreamDefaultReader.cancel node:internal/webstreams/readablestream:972:12
+
+This error originated in "tests/contexts/acp_final_boundaries.test.ts" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "rejects an already aborted request without a submitted prompt". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+
+
+ Test Files  1 passed (1)
+      Tests  19 passed (19)
+     Errors  1 error
+   Start at  04:22:32
+   Duration  494ms (transform 52ms, setup 0ms, import 130ms, tests 292ms, environment 0ms)
+

@@ -1,0 +1,46 @@
+
+Running 2 tests using 1 worker
+
+(node:7140) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘  1 [chromium] › tests/e2e-acp/studio_acp.spec.ts:37:5 › coupled ACP tools through the real Studio API › observes all four steps, sends permission choices, and changes the manuscript only after acceptance (10.5s)
+  -  2 [chromium] › tests/e2e-acp/studio_acp.spec.ts:98:5 › coupled ACP tools through the real Studio API › Stop keeps file-effect evidence and navigation discards pending permission controls
+
+
+  1) [chromium] › tests/e2e-acp/studio_acp.spec.ts:37:5 › coupled ACP tools through the real Studio API › observes all four steps, sends permission choices, and changes the manuscript only after acceptance 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByRole('region', { name: 'Agent tools' }).getByText('Operation completed', { exact: true })
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" with timeout 5000ms
+      - waiting for getByRole('region', { name: 'Agent tools' }).getByText('Operation completed', { exact: true })
+
+
+      28 |   await expect(tools.getByRole("button", { name: "Allow once", exact: true })).toBeEnabled();
+      29 |   await tools.getByRole("button", { name: "Allow once", exact: true }).click();
+    > 30 |   await expect(tools.getByText("Operation completed", { exact: true })).toBeVisible();
+         |                                                                         ^
+      31 | }
+      32 |
+      33 | test.describe
+        at allowTool (/Users/jackela/.codex/worktrees/acp-full-acceptance/Novel-Engine/frontend/tests/e2e-acp/studio_acp.spec.ts:30:73)
+        at /Users/jackela/.codex/worktrees/acp-full-acceptance/Novel-Engine/frontend/tests/e2e-acp/studio_acp.spec.ts:54:7
+
+    Error Context: test-results/studio_acp-coupled-ACP-too-0a8c0-cript-only-after-acceptance-chromium/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/studio_acp-coupled-ACP-too-0a8c0-cript-only-after-acceptance-chromium/trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace test-results/studio_acp-coupled-ACP-too-0a8c0-cript-only-after-acceptance-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    [chromium] › tests/e2e-acp/studio_acp.spec.ts:37:5 › coupled ACP tools through the real Studio API › observes all four steps, sends permission choices, and changes the manuscript only after acceptance 
+  1 did not run

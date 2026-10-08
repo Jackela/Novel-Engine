@@ -1,0 +1,30 @@
+
+ RUN  v4.1.11 /Users/jackela/.codex/worktrees/acp-full-acceptance/Novel-Engine/server
+
+ ❯ tests/api/review_autosave_capture.test.ts (2 tests | 1 failed) 1482ms
+     × records the original captured revision after two saves (autosave=true) 701ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/api/review_autosave_capture.test.ts > Review capture across live editor autosaves > records the original captured revision after two saves (autosave=true)
+AssertionError: {"id":"6211c59d-9654-4921-a358-e0a6acf9e048","project_id":"2adfbe1a-a1f7-42e5-acd7-518addea9ff6","document_id":null,"kind":"review","operation":"review","status":"failed","provider":"mock","model":"captured-review-model","request":{},"result":{"review_id":null,"snapshot_id":null,"summary":"","issues":[]},"error":"Review source changed before the evaluated result could be recorded.","retry_of_job_id":null,"created_at":"2026-10-08T09:03:50.443Z","updated_at":"2026-10-08T09:03:50.443Z","events":[{"id":"a8afa300-5569-45e3-8530-2a03ba225aff","status":"failed","details":{"error":"Review source changed before the evaluated result could be recorded."},"created_at":"2026-10-08T09:03:50.443Z"}]}: expected 'failed' to be 'completed' // Object.is equality
+
+Expected: "completed"
+Received: "failed"
+
+ ❯ tests/api/review_autosave_capture.test.ts:35:57
+     33|       release();
+     34|       const completion = await pending;
+     35|       expect(completion.json().status, completion.body).toBe("complete…
+       |                                                         ^
+     36|       const pinned = app.studioDb?.db.select().from(snapshotDocuments)…
+     37|       expect(pinned?.find((row) => row.documentId === document.id)).to…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed (2)
+   Start at  17:03:47
+   Duration  3.27s (transform 698ms, setup 0ms, import 1.61s, tests 1.48s, environment 0ms)
+

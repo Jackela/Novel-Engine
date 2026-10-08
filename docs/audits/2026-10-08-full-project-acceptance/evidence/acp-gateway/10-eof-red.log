@@ -1,0 +1,33 @@
+
+ RUN  v4.1.11 /Users/jackela/.codex/worktrees/acp-full-acceptance/Novel-Engine/server
+
+ ❯ tests/acp/AcpConnect.test.ts (2 tests | 1 failed) 624ms
+   × closes normally when stdin reached EOF before the WebSocket handshake 259ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/acp/AcpConnect.test.ts > closes normally when stdin reached EOF before the WebSocket handshake
+AssertionError: expected 'timeout' to be +0 // Object.is equality
+
+- Expected:
+0
+
++ Received:
+"timeout"
+
+ ❯ tests/acp/AcpConnect.test.ts:84:123
+     82|   try {
+     83|     const connecting = AcpConnect({ url: harness.url, token: harness.t…
+     84|     expect(await Promise.race([connecting, new Promise<string>((resolv…
+       |                                                                                                                           ^
+     85|   } finally { input.destroy(); output.destroy(); await harness.close()…
+     86| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed (2)
+   Start at  16:06:46
+   Duration  748ms (transform 25ms, setup 0ms, import 45ms, tests 624ms, environment 0ms)
+

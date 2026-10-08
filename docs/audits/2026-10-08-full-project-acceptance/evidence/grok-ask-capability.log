@@ -1,0 +1,4 @@
+error: invalid value 'ask' for '--permission-mode <MODE>'
+  [possible values: default, acceptEdits, auto, dontAsk, bypassPermissions, plan]
+
+For more information, try '--help'.

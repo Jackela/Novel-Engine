@@ -1,0 +1,18 @@
+$ tsc -p tsconfig.json --noEmit
+src/contexts/ai/infrastructure/providers/AcpTextProvider.ts(79,53): error TS2353: Object literal may only specify known properties, and 'version' does not exist in type 'AppOptions'.
+src/contexts/ai/infrastructure/providers/AcpTextProvider.ts(80,44): error TS2339: Property 'sessionId' does not exist on type 'ClientNotificationContext<SessionNotification>'.
+src/contexts/ai/infrastructure/providers/AcpTextProvider.ts(80,65): error TS2339: Property 'update' does not exist on type 'ClientNotificationContext<SessionNotification>'.
+src/contexts/ai/infrastructure/providers/AcpTextProvider.ts(97,21): error TS2339: Property 'sessionId' does not exist on type 'ClientRequestContext<RequestPermissionRequest>'.
+src/contexts/ai/infrastructure/providers/AcpTextProvider.ts(101,99): error TS2339: Property 'toolCall' does not exist on type 'ClientRequestContext<RequestPermissionRequest>'.
+src/contexts/ai/infrastructure/providers/AcpTextProvider.ts(101,145): error TS2339: Property 'toolCall' does not exist on type 'ClientRequestContext<RequestPermissionRequest>'.
+src/contexts/ai/infrastructure/providers/AcpTextProvider.ts(101,190): error TS2339: Property 'options' does not exist on type 'ClientRequestContext<RequestPermissionRequest>'.
+src/contexts/ai/infrastructure/providers/AcpTextProvider.ts(101,203): error TS7006: Parameter 'option' implicitly has an 'any' type.
+src/contexts/ai/infrastructure/providers/AcpTextProvider.ts(103,24): error TS2339: Property 'options' does not exist on type 'ClientRequestContext<RequestPermissionRequest>'.
+src/contexts/ai/infrastructure/providers/AcpTextProvider.ts(103,38): error TS7006: Parameter 'option' implicitly has an 'any' type.
+src/contexts/ai/infrastructure/providers/AcpTextProvider.ts(107,67): error TS2739: Type 'ClientRequestContext<ReadTextFileRequest>' is missing the following properties from type 'ReadTextFileRequest': sessionId, path
+src/contexts/ai/infrastructure/providers/AcpTextProvider.ts(108,53): error TS2322: Type 'Promise<null>' is not assignable to type 'MaybePromise<void | WriteTextFileResponse>'.
+  Type 'Promise<null>' is not assignable to type 'Promise<void | WriteTextFileResponse>'.
+    Type 'null' is not assignable to type 'void | WriteTextFileResponse'.
+src/contexts/ai/infrastructure/providers/AcpTextProvider.ts(108,69): error TS2739: Type 'ClientRequestContext<WriteTextFileRequest>' is missing the following properties from type 'WriteTextFileRequest': sessionId, path, content
+src/contexts/ai/infrastructure/providers/AcpWorkspace.ts(33,94): error TS18047: 'request.limit' is possibly 'null'.
+[ELIFECYCLE] Command failed with exit code 1.

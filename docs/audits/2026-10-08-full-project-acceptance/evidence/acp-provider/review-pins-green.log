@@ -1,0 +1,33 @@
+
+ RUN  v4.1.11 /Users/jackela/.codex/worktrees/acp-full-acceptance/Novel-Engine/server
+
+ ❯ tests/contexts/review_capture_lease.test.ts (7 tests | 1 failed) 3235ms
+     × protects old captures from pruning until the last release, then restores bounded retention 561ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/contexts/review_capture_lease.test.ts > Review revision capture lease > protects old captures from pruning until the last release, then restores bounded retention
+AssertionError: expected [ Array(207) ] to have a length of 200 but got 207
+
+- Expected
++ Received
+
+- 200
++ 207
+
+ ❯ tests/contexts/review_capture_lease.test.ts:173:20
+    171|       expect(revisionRows(harness.studio).some((row) => row.id === cap…
+    172|       const rows = revisionRows(harness.studio);
+    173|       expect(rows).toHaveLength(200);
+       |                    ^
+    174|       const ids = new Set(rows.map((row) => row.id));
+    175|       expect(
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  1 failed | 10 passed (11)
+   Start at  17:08:05
+   Duration  3.83s (transform 530ms, setup 0ms, import 1.41s, tests 5.35s, environment 0ms)
+

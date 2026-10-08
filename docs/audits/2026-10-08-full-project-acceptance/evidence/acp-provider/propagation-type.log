@@ -1,0 +1,10 @@
+$ tsc -p tsconfig.json --noEmit
+src/contexts/studio/application/job_history_service.ts(1,53): error TS2307: Cannot find module '../../../ai/application/ports/text_generation.js' or its corresponding type declarations.
+src/contexts/studio/application/job_retry_executor.ts(1,53): error TS2307: Cannot find module '../../../ai/application/ports/text_generation.js' or its corresponding type declarations.
+src/contexts/studio/application/lore_extract_service.ts(1,53): error TS2307: Cannot find module '../../../ai/application/ports/text_generation.js' or its corresponding type declarations.
+src/contexts/studio/application/proposal_admission.ts(1,53): error TS2307: Cannot find module '../../../ai/application/ports/text_generation.js' or its corresponding type declarations.
+src/contexts/studio/application/proposal_service.ts(1,53): error TS2307: Cannot find module '../../../ai/application/ports/text_generation.js' or its corresponding type declarations.
+src/contexts/studio/application/proposal_stream_accumulation.ts(1,53): error TS2307: Cannot find module '../../../ai/application/ports/text_generation.js' or its corresponding type declarations.
+src/contexts/studio/application/proposal_streaming.ts(1,53): error TS2307: Cannot find module '../../../ai/application/ports/text_generation.js' or its corresponding type declarations.
+src/contexts/studio/application/review_service.ts(1,53): error TS2307: Cannot find module '../../../ai/application/ports/text_generation.js' or its corresponding type declarations.
+[ELIFECYCLE] Command failed with exit code 1.

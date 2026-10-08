@@ -1,0 +1,33 @@
+
+ RUN  v4.1.11 /Users/jackela/.codex/worktrees/acp-full-acceptance/Novel-Engine/frontend
+
+ ❯ src/app/observeAiOperation.test.ts (8 tests | 4 failed) 8ms
+   × treats mismatched, unannounced, private, and truncated streams as failed observation 0ms
+   × treats mismatched, unannounced, private, and truncated streams as failed observation 0ms
+   × treats mismatched, unannounced, private, and truncated streams as failed observation 0ms
+   × treats mismatched, unannounced, private, and truncated streams as failed observation 0ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/app/observeAiOperation.test.ts > treats mismatched, unannounced, private, and truncated streams as failed observation
+ FAIL  src/app/observeAiOperation.test.ts > treats mismatched, unannounced, private, and truncated streams as failed observation
+ FAIL  src/app/observeAiOperation.test.ts > treats mismatched, unannounced, private, and truncated streams as failed observation
+ FAIL  src/app/observeAiOperation.test.ts > treats mismatched, unannounced, private, and truncated streams as failed observation
+TypeError: events.map is not a function
+ ❯ eventResponse src/app/observeAiOperation.test.ts:61:30
+     59|
+     60| function eventResponse(events: readonly unknown[]) {
+     61|   return new Response(events.map((event) => `data: ${JSON.stringify(ev…
+       |                              ^
+     62| }
+     63| it("rejects an expired owner session before ready with the typed HTTP …
+ ❯ src/app/observeAiOperation.test.ts:97:54
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  4 failed | 13 passed (17)
+   Start at  16:31:39
+   Duration  876ms (transform 262ms, setup 248ms, import 357ms, tests 14ms, environment 912ms)
+

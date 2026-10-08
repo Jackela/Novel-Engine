@@ -1,0 +1,4 @@
+$ depcruise src --config .dependency-cruiser.cjs
+
+✔ no dependency violations found (319 modules, 1419 dependencies cruised)
+

@@ -1,0 +1,42 @@
+
+ RUN  v4.1.11 /Users/jackela/.codex/worktrees/acp-full-acceptance/Novel-Engine/server
+
+⎯⎯⎯⎯⎯⎯ Unhandled Errors ⎯⎯⎯⎯⎯⎯
+
+Vitest caught 1 unhandled error during the test run.
+This might cause false positive tests. Resolve unhandled errors to make sure your tests are not affected.
+
+⎯⎯⎯⎯ Unhandled Rejection ⎯⎯⎯⎯⎯
+Error: kill EPERM
+ ❯ process.kill node:internal/process/per_thread:277:13
+ ❯ kill src/shared/infrastructure/acp/AcpAgentProcess.ts:151:17
+    149|     const kill = (signal: NodeJS.Signals) => {
+    150|       try {
+    151|         process.kill(-pid, signal);
+       |                 ^
+    152|       } catch (error) {
+    153|         if (!(error instanceof Error && "code" in error && error.code …
+ ❯ AcpAgentProcess.killTree src/shared/infrastructure/acp/AcpAgentProcess.ts:156:5
+ ❯ AcpAgentProcess.close src/shared/infrastructure/acp/AcpAgentProcess.ts:130:27
+ ❯ AcpGatewaySession_service.close src/shared/application/AcpGatewaySession_service.ts:103:23
+ ❯ WebSocket.<anonymous> src/shared/interface/acp/AcpGateway.ts:108:31
+ ❯ Object.onceWrapper node:events:631:26
+ ❯ WebSocket.emit node:events:521:24
+ ❯ WebSocket.emitClose ../node_modules/.pnpm/ws@8.22.0/node_modules/ws/lib/websocket.js:292:10
+ ❯ Receiver.receiverOnFinish ../node_modules/.pnpm/ws@8.22.0/node_modules/ws/lib/websocket.js:1242:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: -1, code: 'EPERM', syscall: 'kill' }
+This error originated in "tests/acp/AcpGatewayLimits.test.ts" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "reaps an agent after stdout or process failure: exit". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+
+
+ Test Files  1 passed (1)
+      Tests  5 passed (5)
+     Errors  1 error
+   Start at  16:00:36
+   Duration  1.14s (transform 23ms, setup 0ms, import 42ms, tests 1.03s, environment 0ms)
+

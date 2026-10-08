@@ -1,0 +1,58 @@
+
+ RUN  v4.1.11 /private/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/baseline/server
+
+ ❯ ../../../../../tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/audit_baseline.test.ts (3 tests | 3 failed) 601ms
+     × multibyte mismatched CSRF should return 403 rather than an internal error 580ms
+     × backup must report permission failure rather than no database 8ms
+     × restore input must survive safety backup retention 13ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  ../../../../../tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/audit_baseline.test.ts > fixed-baseline acceptance reproductions > multibyte mismatched CSRF should return 403 rather than an internal error
+AssertionError: expected 500 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 500
+
+ ❯ ../../audit_baseline.test.ts:15:642
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  ../../../../../tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/audit_baseline.test.ts > fixed-baseline acceptance reproductions > backup must report permission failure rather than no database
+AssertionError: expected null not to be null
+ ❯ ../../audit_baseline.test.ts:16:246
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  ../../../../../tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/audit_baseline.test.ts > fixed-baseline acceptance reproductions > restore input must survive safety backup retention
+AssertionError: expected Error: ENOENT: no such file or directory,… { …(5) } to be undefined
+
+- Expected:
+undefined
+
++ Received:
+Error {
+  "message": "ENOENT: no such file or directory, copyfile '/var/folders/wc/1_2962m52c3fkkcjdyqvrkfm0000gn/T/ne-audit-database-RFZJLq/backups/novel-engine-20200101T000000000Z.sqlite3.bak' -> '/var/folders/wc/1_2962m52c3fkkcjdyqvrkfm0000gn/T/ne-audit-database-RFZJLq/.novel-engine.sqlite3.49cfaab8f2b4.restore-tmp'",
+  "errno": -2,
+  "code": "ENOENT",
+  "syscall": "copyfile",
+  "path": "/var/folders/wc/1_2962m52c3fkkcjdyqvrkfm0000gn/T/ne-audit-database-RFZJLq/backups/novel-engine-20200101T000000000Z.sqlite3.bak",
+  "dest": "/var/folders/wc/1_2962m52c3fkkcjdyqvrkfm0000gn/T/ne-audit-database-RFZJLq/.novel-engine.sqlite3.49cfaab8f2b4.restore-tmp",
+}
+
+ ❯ ../../audit_baseline.test.ts:17:971
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed (3)
+   Start at  16:08:59
+   Duration  1.58s (transform 410ms, setup 0ms, import 903ms, tests 601ms, environment 0ms)
+

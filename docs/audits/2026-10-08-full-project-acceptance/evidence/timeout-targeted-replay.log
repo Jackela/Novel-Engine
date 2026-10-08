@@ -1,0 +1,13 @@
+
+ RUN  v4.1.11 /Users/jackela/.codex/worktrees/acp-full-acceptance/Novel-Engine/server
+
+{"level":30,"time":1791490334973,"product_name":"Novel Engine","product_version":"0.8.0","export_publication_recovery":true,"manifestsReconciled":0,"committedArtifactsVerified":0,"finalsRestored":0,"orphanFilesRemoved":0,"sidecarsRemoved":0,"deletedProjectDirectoriesRemoved":0,"msg":"export publication recovery completed"}
+{"level":30,"time":1791490334974,"product_name":"Novel Engine","product_version":"0.8.0","setup_token":"[REDACTED_SYNTHETIC_TOKEN]","msg":"first-start setup token"}
+{"level":30,"time":1791490335076,"product_name":"Novel Engine","product_version":"0.8.0","export_publication_recovery":true,"manifestsReconciled":0,"committedArtifactsVerified":0,"finalsRestored":0,"orphanFilesRemoved":0,"sidecarsRemoved":0,"deletedProjectDirectoriesRemoved":0,"msg":"export publication recovery completed"}
+{"level":30,"time":1791490335077,"product_name":"Novel Engine","product_version":"0.8.0","setup_token":"[REDACTED_SYNTHETIC_TOKEN]","msg":"first-start setup token"}
+
+ Test Files  3 passed (3)
+      Tests  7 passed (7)
+   Start at  04:12:13
+   Duration  2.59s (transform 622ms, setup 0ms, import 1.67s, tests 1.97s, environment 0ms)
+

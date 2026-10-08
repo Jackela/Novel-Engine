@@ -1,0 +1,25 @@
+
+ RUN  v4.1.11 /Users/jackela/.codex/worktrees/acp-full-acceptance/Novel-Engine/server
+
+ ❯ tests/acp/AcpGateway.test.ts (0 test)
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/acp/AcpGateway.test.ts [ tests/acp/AcpGateway.test.ts ]
+Error: Cannot find package 'ws' imported from /Users/jackela/.codex/worktrees/acp-full-acceptance/Novel-Engine/server/tests/acp/AcpGateway.test.ts
+ ❯ tests/acp/AcpGateway.test.ts:7:1
+      5| import { randomBytes } from "node:crypto";
+      6| import { expect, it } from "vitest";
+      7| import WebSocket from "ws";
+       | ^
+      8| import { AcpGateway } from "../../src/shared/interface/acp/AcpGateway.…
+      9| import { AcpAgentProcess } from "../../src/shared/infrastructure/acp/A…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  no tests
+   Start at  15:48:43
+   Duration  91ms (transform 9ms, setup 0ms, import 0ms, tests 0ms, environment 0ms)
+

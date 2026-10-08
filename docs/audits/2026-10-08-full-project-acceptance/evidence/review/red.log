@@ -1,0 +1,97 @@
+
+ RUN  v4.1.11 /Users/jackela/.codex/worktrees/acp-full-acceptance/Novel-Engine/server
+
+ ❯ tests/contexts/review_service.input.test.ts (4 tests | 4 failed) 2248ms
+     × sends different prose for equal-title, equal-word-count revisions 447ms
+     × sends captured reading order and exact revision identities without non-chapter bodies 432ms
+     × keeps the evaluated source and outgoing prose bound while the live chapter changes 424ms
+     × refuses the shared prompt byte budget before constructing a provider without truncation 945ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/contexts/review_service.input.test.ts > ReviewService captured manuscript input > sends different prose for equal-title, equal-word-count revisions
+AssertionError: expected undefined to be 'Alice trusts Bob.' // Object.is equality
+
+- Expected:
+"Alice trusts Bob."
+
++ Received:
+undefined
+
+ ❯ tests/contexts/review_service.input.test.ts:116:66
+    114|       });
+    115|       await harness.reviews.evaluateProject(harness.principal, harness…
+    116|       expect(chaptersIn(captured.tasks[0])[0]?.content_markdown).toBe(…
+       |                                                                  ^
+    117|       expect(chaptersIn(captured.tasks[1])[0]?.content_markdown).toBe(…
+    118|       expect(captured.tasks[0]?.metadata.documents).toEqual(captured.t…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  tests/contexts/review_service.input.test.ts > ReviewService captured manuscript input > sends captured reading order and exact revision identities without non-chapter bodies
+AssertionError: expected [ undefined, undefined ] to deeply equal [ …(2) ]
+
+- Expected
++ Received
+
+  [
+-   "6e426ddd-b9b8-4fd1-9ba9-5fd6ceaa44d6",
+-   "b73e38ce-cb56-4dae-967a-71516248cf5a",
++   undefined,
++   undefined,
+  ]
+
+ ❯ tests/contexts/review_service.input.test.ts:147:62
+    145|       const chapters = chaptersIn(captured.tasks[0]);
+    146|       expect(chapters.map((chapter) => chapter.id)).toEqual([second.id…
+    147|       expect(chapters.map((chapter) => chapter.revision_id)).toEqual([
+       |                                                              ^
+    148|         second.current_revision_id,
+    149|         harness.seed.current_revision_id,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  tests/contexts/review_service.input.test.ts > ReviewService captured manuscript input > keeps the evaluated source and outgoing prose bound while the live chapter changes
+AssertionError: expected undefined to be '77b6be62-cc12-4bdf-b3ea-68d70228ac36' // Object.is equality
+
+- Expected:
+"77b6be62-cc12-4bdf-b3ea-68d70228ac36"
+
++ Received:
+undefined
+
+ ❯ tests/contexts/review_service.input.test.ts:178:35
+    176|       release();
+    177|       const evaluation = await pending;
+    178|       expect(before?.revision_id).toBe(harness.seed.current_revision_i…
+       |                                   ^
+    179|       expect(before?.content_markdown).toBe("# Chapter 1");
+    180|       expect(evaluation.source.documents[0]?.revisionId).toBe(harness.…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  tests/contexts/review_service.input.test.ts > ReviewService captured manuscript input > refuses the shared prompt byte budget before constructing a provider without truncation
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/contexts/review_service.input.test.ts:204:64
+    202|       const error = await harness.reviews.evaluateProject(harness.prin…
+    203|         .then(() => null, (failure: unknown) => failure);
+    204|       expect(error instanceof GenerationCapacityExceededError).toBe(tr…
+       |                                                                ^
+    205|       expect(factory).not.toHaveBeenCalled();
+    206|       expect(captured.tasks).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed (4)
+   Start at  15:49:47
+   Duration  2.74s (transform 139ms, setup 0ms, import 423ms, tests 2.25s, environment 0ms)
+

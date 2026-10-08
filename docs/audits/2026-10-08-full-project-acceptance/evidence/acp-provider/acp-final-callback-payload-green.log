@@ -1,0 +1,30 @@
+
+ RUN  v4.1.11 /Users/jackela/.codex/worktrees/acp-full-acceptance/Novel-Engine/server
+
+ ❯ tests/contexts/acp_final_payloads.test.ts (15 tests | 1 failed) 678ms
+     × refuses hardlinked originals, oversized materials and non-directory workspaces 5ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/contexts/acp_final_payloads.test.ts > ACP final payload and resource boundaries > refuses hardlinked originals, oversized materials and non-directory workspaces
+AssertionError: expected [Function] to throw error including 'unshared file' but got 'ACP filesystem target is outside the …'
+
+Expected: "unshared file"
+Received: "ACP filesystem target is outside the permitted material workspace."
+
+ ❯ tests/contexts/acp_final_payloads.test.ts:91:71
+     89|       await link(original, material);
+     90|       const workspace = await AcpWorkspace.open(directory);
+     91|       await expect(workspace.read({ sessionId: "s", path: material }))…
+       |                                                                       ^
+     92|         "unshared file",
+     93|       );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  1 failed | 19 passed (20)
+   Start at  04:26:14
+   Duration  789ms (transform 77ms, setup 0ms, import 161ms, tests 712ms, environment 0ms)
+

@@ -1,0 +1,65 @@
+
+ RUN  v4.1.11 /Users/jackela/.codex/worktrees/acp-full-acceptance/Novel-Engine/frontend
+
+ ❯ src/features/studio/components/StudioAcpJobActions.test.tsx (1 test | 1 failed) 47ms
+   × requires a fresh explicit confirmation before retrying an ACP job that changed files 46ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/features/studio/components/StudioAcpJobActions.test.tsx > requires a fresh explicit confirmation before retrying an ACP job that changed files
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Retry rewrite"
+
+Here are the accessible roles:
+
+  button:
+
+  Name "View tool activity":
+  [36m<button[39m
+    [33mclass[39m=[32m"ui-command"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Retry continue":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Retry continue"[39m
+    [33mclass[39m=[32m"ui-command"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"ui-command"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [0mView tool activity[0m
+    [36m</button>[39m
+    [36m<button[39m
+      [33maria-label[39m=[32m"Retry continue"[39m
+      [33mclass[39m=[32m"ui-command"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [0mRetry continue[0m
+    [36m</button>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError ../node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/features/studio/components/StudioAcpJobActions.test.tsx:19:48
+
+ ❯ Proxy.process.env.NODE_ENV.exports.act ../node_modules/.pnpm/react@19.2.8/node_modules/react/cjs/react.development.js:814:22
+ ❯ src/features/studio/components/StudioAcpJobActions.test.tsx:19:9
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  16:05:18
+   Duration  709ms (transform 98ms, setup 82ms, import 125ms, tests 47ms, environment 366ms)
+

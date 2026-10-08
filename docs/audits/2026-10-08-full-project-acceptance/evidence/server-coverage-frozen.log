@@ -1,0 +1,106 @@
+$ vitest run --coverage
+
+ RUN  v4.1.11 /Users/jackela/.codex/worktrees/acp-full-acceptance/Novel-Engine/server
+      Coverage enabled with v8
+
+ ❯ tests/api/studio_usage_provenance.test.ts (2 tests | 2 failed) 22036ms
+     × labels the word-count fallback as an estimate and the provider counts as provider 11921ms
+     × records a failed provider attempt as an unreported zero-token usage row 10082ms
+{"level":30,"time":1791451409541,"product_name":"Novel Engine","product_version":"0.8.0","export_publication_recovery":true,"manifestsReconciled":0,"committedArtifactsVerified":0,"finalsRestored":0,"orphanFilesRemoved":0,"sidecarsRemoved":0,"deletedProjectDirectoriesRemoved":0,"msg":"export publication recovery completed"}
+{"level":30,"time":1791451409543,"product_name":"Novel Engine","product_version":"0.8.0","setup_token":"[REDACTED_SYNTHETIC_TOKEN]","msg":"first-start setup token"}
+{"level":30,"time":1791451456559,"product_name":"Novel Engine","product_version":"0.8.0","export_publication_recovery":true,"manifestsReconciled":0,"committedArtifactsVerified":0,"finalsRestored":0,"orphanFilesRemoved":0,"sidecarsRemoved":0,"deletedProjectDirectoriesRemoved":0,"msg":"export publication recovery completed"}
+{"level":30,"time":1791451456562,"product_name":"Novel Engine","product_version":"0.8.0","setup_token":"[REDACTED_SYNTHETIC_TOKEN]","msg":"first-start setup token"}
+{"level":30,"time":1791451456803,"product_name":"Novel Engine","product_version":"0.8.0","export_publication_recovery":true,"manifestsReconciled":0,"committedArtifactsVerified":0,"finalsRestored":0,"orphanFilesRemoved":0,"sidecarsRemoved":0,"deletedProjectDirectoriesRemoved":0,"msg":"export publication recovery completed"}
+{"level":30,"time":1791451456804,"product_name":"Novel Engine","product_version":"0.8.0","setup_token":"[REDACTED_SYNTHETIC_TOKEN]","msg":"first-start setup token"}
+{"level":30,"time":1791451456966,"product_name":"Novel Engine","product_version":"0.8.0","export_publication_recovery":true,"manifestsReconciled":0,"committedArtifactsVerified":0,"finalsRestored":0,"orphanFilesRemoved":0,"sidecarsRemoved":0,"deletedProjectDirectoriesRemoved":0,"msg":"export publication recovery completed"}
+{"level":30,"time":1791451456967,"product_name":"Novel Engine","product_version":"0.8.0","setup_token":"[REDACTED_SYNTHETIC_TOKEN]","msg":"first-start setup token"}
+{"level":30,"time":1791451457143,"product_name":"Novel Engine","product_version":"0.8.0","export_publication_recovery":true,"manifestsReconciled":0,"committedArtifactsVerified":0,"finalsRestored":0,"orphanFilesRemoved":0,"sidecarsRemoved":0,"deletedProjectDirectoriesRemoved":0,"msg":"export publication recovery completed"}
+{"level":30,"time":1791451457148,"product_name":"Novel Engine","product_version":"0.8.0","setup_token":"[REDACTED_SYNTHETIC_TOKEN]","msg":"first-start setup token"}
+{"level":30,"time":1791451457317,"product_name":"Novel Engine","product_version":"0.8.0","export_publication_recovery":true,"manifestsReconciled":0,"committedArtifactsVerified":0,"finalsRestored":0,"orphanFilesRemoved":0,"sidecarsRemoved":0,"deletedProjectDirectoriesRemoved":0,"msg":"export publication recovery completed"}
+{"level":30,"time":1791451457318,"product_name":"Novel Engine","product_version":"0.8.0","setup_token":"[REDACTED_SYNTHETIC_TOKEN]","msg":"first-start setup token"}
+{"level":30,"time":1791451457473,"product_name":"Novel Engine","product_version":"0.8.0","export_publication_recovery":true,"manifestsReconciled":0,"committedArtifactsVerified":0,"finalsRestored":0,"orphanFilesRemoved":0,"sidecarsRemoved":0,"deletedProjectDirectoriesRemoved":0,"msg":"export publication recovery completed"}
+{"level":30,"time":1791451457474,"product_name":"Novel Engine","product_version":"0.8.0","setup_token":"[REDACTED_SYNTHETIC_TOKEN]","msg":"first-start setup token"}
+{"level":30,"time":1791451457623,"product_name":"Novel Engine","product_version":"0.8.0","export_publication_recovery":true,"manifestsReconciled":0,"committedArtifactsVerified":0,"finalsRestored":0,"orphanFilesRemoved":0,"sidecarsRemoved":0,"deletedProjectDirectoriesRemoved":0,"msg":"export publication recovery completed"}
+{"level":30,"time":1791451457624,"product_name":"Novel Engine","product_version":"0.8.0","setup_token":"[REDACTED_SYNTHETIC_TOKEN]","msg":"first-start setup token"}
+{"level":30,"time":1791451457761,"product_name":"Novel Engine","product_version":"0.8.0","export_publication_recovery":true,"manifestsReconciled":0,"committedArtifactsVerified":0,"finalsRestored":0,"orphanFilesRemoved":0,"sidecarsRemoved":0,"deletedProjectDirectoriesRemoved":0,"msg":"export publication recovery completed"}
+{"level":30,"time":1791451457761,"product_name":"Novel Engine","product_version":"0.8.0","setup_token":"[REDACTED_SYNTHETIC_TOKEN]","msg":"first-start setup token"}
+{"level":30,"time":1791451466176,"product_name":"Novel Engine","product_version":"0.8.0","export_publication_recovery":true,"manifestsReconciled":0,"committedArtifactsVerified":0,"finalsRestored":0,"orphanFilesRemoved":0,"sidecarsRemoved":0,"deletedProjectDirectoriesRemoved":0,"msg":"export publication recovery completed"}
+{"level":30,"time":1791451466178,"product_name":"Novel Engine","product_version":"0.8.0","setup_token":"[REDACTED_SYNTHETIC_TOKEN]","msg":"first-start setup token"}
+{"level":30,"time":1791451466442,"product_name":"Novel Engine","product_version":"0.8.0","export_publication_recovery":true,"manifestsReconciled":0,"committedArtifactsVerified":0,"finalsRestored":0,"orphanFilesRemoved":0,"sidecarsRemoved":0,"deletedProjectDirectoriesRemoved":0,"msg":"export publication recovery completed"}
+{"level":30,"time":1791451466443,"product_name":"Novel Engine","product_version":"0.8.0","setup_token":"[REDACTED_SYNTHETIC_TOKEN]","msg":"first-start setup token"}
+{"level":30,"time":1791451466603,"product_name":"Novel Engine","product_version":"0.8.0","export_publication_recovery":true,"manifestsReconciled":0,"committedArtifactsVerified":0,"finalsRestored":0,"orphanFilesRemoved":0,"sidecarsRemoved":0,"deletedProjectDirectoriesRemoved":0,"msg":"export publication recovery completed"}
+{"level":30,"time":1791451466603,"product_name":"Novel Engine","product_version":"0.8.0","setup_token":"[REDACTED_SYNTHETIC_TOKEN]","msg":"first-start setup token"}
+{"level":30,"time":1791451466742,"product_name":"Novel Engine","product_version":"0.8.0","export_publication_recovery":true,"manifestsReconciled":0,"committedArtifactsVerified":0,"finalsRestored":0,"orphanFilesRemoved":0,"sidecarsRemoved":0,"deletedProjectDirectoriesRemoved":0,"msg":"export publication recovery completed"}
+{"level":30,"time":1791451466743,"product_name":"Novel Engine","product_version":"0.8.0","setup_token":"[REDACTED_SYNTHETIC_TOKEN]","msg":"first-start setup token"}
+{"level":30,"time":1791451536452,"product_name":"Novel Engine","product_version":"0.8.0","export_publication_recovery":true,"manifestsReconciled":0,"committedArtifactsVerified":0,"finalsRestored":0,"orphanFilesRemoved":0,"sidecarsRemoved":0,"deletedProjectDirectoriesRemoved":0,"msg":"export publication recovery completed"}
+{"level":30,"time":1791451536469,"product_name":"Novel Engine","product_version":"0.8.0","setup_token":"[REDACTED_SYNTHETIC_TOKEN]","msg":"first-start setup token"}
+ ❯ tests/contexts/generation_capacity_admission.test.ts (2 tests | 1 failed) 53797ms
+     × refuses synchronous generation before constructing a Provider 53279ms
+{"level":30,"time":1791451536857,"product_name":"Novel Engine","product_version":"0.8.0","export_publication_recovery":true,"manifestsReconciled":0,"committedArtifactsVerified":0,"finalsRestored":0,"orphanFilesRemoved":0,"sidecarsRemoved":0,"deletedProjectDirectoriesRemoved":0,"msg":"export publication recovery completed"}
+{"level":30,"time":1791451536858,"product_name":"Novel Engine","product_version":"0.8.0","setup_token":"[REDACTED_SYNTHETIC_TOKEN]","msg":"first-start setup token"}
+ ❯ tests/apps/cli/backup_policy_cli.test.ts (3 tests | 1 failed) 54036ms
+     × backs up once for a pending migration and not on the following restart 53536ms
+{"level":30,"time":1791451540753,"product_name":"Novel Engine","product_version":"0.8.0","export_publication_recovery":true,"manifestsReconciled":0,"committedArtifactsVerified":0,"finalsRestored":0,"orphanFilesRemoved":0,"sidecarsRemoved":0,"deletedProjectDirectoriesRemoved":0,"msg":"export publication recovery completed"}
+{"level":30,"time":1791451540764,"product_name":"Novel Engine","product_version":"0.8.0","setup_token":"[REDACTED_SYNTHETIC_TOKEN]","msg":"first-start setup token"}
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/api/studio_usage_provenance.test.ts > usage provenance and failed attempts (DR-028) > labels the word-count fallback as an estimate and the provider counts as provider
+Error: Test timed out in 10000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ tests/api/studio_usage_provenance.test.ts:31:3
+     29|
+     30| describe("usage provenance and failed attempts (DR-028)", () => {
+     31|   it("labels the word-count fallback as an estimate and the provider c…
+       |   ^
+     32|     const estimate = capturingFactory({});
+     33|     const counts = capturingFactory({ promptTokens: 21, completionToke…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  tests/api/studio_usage_provenance.test.ts > usage provenance and failed attempts (DR-028) > records a failed provider attempt as an unreported zero-token usage row
+Error: Test timed out in 10000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ tests/api/studio_usage_provenance.test.ts:98:3
+     96|   });
+     97|
+     98|   it("records a failed provider attempt as an unreported zero-token us…
+       |   ^
+     99|     const factory = failingFactory("provider transport failed");
+    100|     const { app } = await buildStudioApp(undefined, { textProviderFact…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  tests/contexts/generation_capacity_admission.test.ts > fresh proposal prompt admission > refuses synchronous generation before constructing a Provider
+Error: Test timed out in 10000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ tests/contexts/generation_capacity_admission.test.ts:112:3
+    110|
+    111| describe("fresh proposal prompt admission", () => {
+    112|   it("refuses synchronous generation before constructing a Provider", …
+       |   ^
+    113|     const harness = admissionHarness();
+    114|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  tests/apps/cli/backup_policy_cli.test.ts > backup CLI policy > backs up once for a pending migration and not on the following restart
+Error: Test timed out in 10000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ tests/apps/cli/backup_policy_cli.test.ts:56:3
+     54|
+     55| describe("backup CLI policy", () => {
+     56|   it("backs up once for a pending migration and not on the following r…
+       |   ^
+     57|     const harness = await cliHarness();
+     58|     seedPreMigrationDatabase(harness);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  3 failed | 297 passed (300)
+      Tests  4 failed | 1762 passed (1766)
+   Start at  17:17:11
+   Duration  573.16s (transform 5.22s, setup 0ms, import 226.49s, tests 845.80s, environment 27ms)
+
+[ELIFECYCLE] Command failed with exit code 1.

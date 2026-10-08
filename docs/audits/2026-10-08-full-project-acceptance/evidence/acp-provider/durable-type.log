@@ -1,0 +1,3 @@
+$ tsc -p tsconfig.json --noEmit
+src/contexts/studio/application/job_retry_executor.ts(203,150): error TS2339: Property 'resultJson' does not exist on type 'FailedJobOutcome'.
+[ELIFECYCLE] Command failed with exit code 1.

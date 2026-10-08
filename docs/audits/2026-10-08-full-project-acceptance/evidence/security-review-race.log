@@ -1,0 +1,33 @@
+
+ RUN  v4.1.11 /Users/jackela/.codex/worktrees/acp-full-acceptance/Novel-Engine/server
+
+ ❯ ../../../../../../../tmp/security-review-race.test.ts (2 tests | 1 failed) 917ms
+     × completes captured review after two later saves (autosave=true) 449ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  ../../../../../../../tmp/security-review-race.test.ts > Review autosave race independent probe > completes captured review after two later saves (autosave=true)
+ReviewSourceInvalidatedError: Review source changed before the evaluated result could be recorded.
+ ❯ assertReviewSourceAvailable src/contexts/studio/infrastructure/db/review_records.ts:162:34
+    160|   for (const document of source) {
+    161|     const row = available.get(`${document.documentId}\u0000${document.…
+    162|     if (row === undefined) throw new ReviewSourceInvalidatedError();
+       |                                  ^
+    163|     if (
+    164|       row.contentMarkdown !== document.contentMarkdown ||
+ ❯ persistReviewAssessment src/contexts/studio/infrastructure/db/review_records.ts:70:3
+ ❯ sqliteTransaction.db.transaction.behavior src/contexts/studio/infrastructure/review_store_part.ts:55:28
+ ❯ sqliteTransaction ../node_modules/.pnpm/better-sqlite3@13.0.3/node_modules/better-sqlite3/lib/methods/transaction.js:65:24
+ ❯ BetterSQLiteSession.transaction ../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+better-sqlite3@9.6.0_better-sqlite3@13.0.3/node_modules/src/better-sqlite3/session.ts:81:49
+ ❯ BetterSQLite3Database.transaction ../node_modules/.pnpm/drizzle-orm@0.45.2_@opentelemetry+api@1.9.1_@types+better-sqlite3@9.6.0_better-sqlite3@13.0.3/node_modules/src/sqlite-core/db.ts:593:22
+ ❯ ReviewStorePart.recordCompletedReviewJob src/contexts/studio/infrastructure/review_store_part.ts:52:20
+ ❯ ../../../../../../../private/tmp/security-review-race.test.ts:122:43
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed (2)
+   Start at  16:56:56
+   Duration  1.59s (transform 149ms, setup 0ms, import 585ms, tests 917ms, environment 0ms)
+

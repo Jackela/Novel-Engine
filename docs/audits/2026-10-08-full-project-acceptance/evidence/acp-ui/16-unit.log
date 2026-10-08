@@ -1,0 +1,10 @@
+$ vitest run --config vitest.config.ts
+
+ RUN  v4.1.11 /Users/jackela/.codex/worktrees/acp-full-acceptance/Novel-Engine/frontend
+
+
+ Test Files  160 passed (160)
+      Tests  864 passed (864)
+   Start at  16:06:52
+   Duration  17.64s (transform 5.59s, setup 16.24s, import 24.27s, tests 15.60s, environment 81.62s)
+

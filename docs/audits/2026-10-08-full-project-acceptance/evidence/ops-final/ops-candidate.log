@@ -1,0 +1,393 @@
+$ docker compose --project-name ne-ops-candidate-1b4441bd --project-directory /tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-final-replay/ops-ne-ops-candidate-1b4441bd --env-file /dev/null -f /Users/jackela/.codex/worktrees/acp-full-acceptance/Novel-Engine/compose.yaml -f /tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-final-replay/ops-ne-ops-candidate-1b4441bd/ops-compose.override.yaml up -d --no-build --pull never
+ Network ne-ops-candidate-1b4441bd_default Creating 
+ Volume ne-ops-candidate-1b4441bd_novel-engine-data Creating 
+ Volume ne-ops-candidate-1b4441bd_novel-engine-data Creating 
+ Network ne-ops-candidate-1b4441bd_default Creating 
+ Volume ne-ops-candidate-1b4441bd_novel-engine-data Created 
+ Volume ne-ops-candidate-1b4441bd_novel-engine-data Created 
+ Network ne-ops-candidate-1b4441bd_default Created 
+ Network ne-ops-candidate-1b4441bd_default Created 
+ Container ne-ops-candidate-1b4441bd-novel-engine-1 Creating 
+ Container ne-ops-candidate-1b4441bd-novel-engine-1 Created 
+ Container ne-ops-candidate-1b4441bd-novel-engine-1 Starting 
+ Container ne-ops-candidate-1b4441bd-novel-engine-1 Started 
+
+$ docker compose --project-name ne-ops-candidate-1b4441bd --project-directory /tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-final-replay/ops-ne-ops-candidate-1b4441bd --env-file /dev/null -f /Users/jackela/.codex/worktrees/acp-full-acceptance/Novel-Engine/compose.yaml -f /tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-final-replay/ops-ne-ops-candidate-1b4441bd/ops-compose.override.yaml ps -q novel-engine
+3e09bde9c76609c523422923eb78e5ef7be6dc8df47c3cac1a6ff10c02d6d8c1
+
+$ docker inspect 3e09bde9c76609c523422923eb78e5ef7be6dc8df47c3cac1a6ff10c02d6d8c1
+[
+    {
+        "Id": "3e09bde9c76609c523422923eb78e5ef7be6dc8df47c3cac1a6ff10c02d6d8c1",
+        "Created": "2026-10-08T09:24:16.836832659Z",
+        "Path": "/app/docker/entrypoint.sh",
+        "Args": [
+            "node",
+            "server/dist/apps/cli/main.js",
+            "serve",
+            "--host",
+            "0.0.0.0",
+            "--port",
+            "8000"
+        ],
+        "State": {
+            "Status": "running",
+            "Running": true,
+            "Paused": false,
+            "Restarting": false,
+            "OOMKilled": false,
+            "Dead": false,
+            "Pid": 27932,
+            "ExitCode": 0,
+            "Error": "",
+            "StartedAt": "2026-10-08T09:24:16.903561439Z",
+            "FinishedAt": "0001-01-01T00:00:00Z",
+            "Health": {
+                "Status": "starting",
+                "FailingStreak": 0,
+                "Log": []
+            }
+        },
+        "Image": "sha256:b52f1812833a7123ce10b605a9770595468a643ace86c2687b4a80638142c59a",
+        "ResolvConfPath": "/var/lib/docker/containers/3e09bde9c76609c523422923eb78e5ef7be6dc8df47c3cac1a6ff10c02d6d8c1/resolv.conf",
+        "HostnamePath": "/var/lib/docker/containers/3e09bde9c76609c523422923eb78e5ef7be6dc8df47c3cac1a6ff10c02d6d8c1/hostname",
+        "HostsPath": "/var/lib/docker/containers/3e09bde9c76609c523422923eb78e5ef7be6dc8df47c3cac1a6ff10c02d6d8c1/hosts",
+        "LogPath": "/var/lib/docker/containers/3e09bde9c76609c523422923eb78e5ef7be6dc8df47c3cac1a6ff10c02d6d8c1/3e09bde9c76609c523422923eb78e5ef7be6dc8df47c3cac1a6ff10c02d6d8c1-json.log",
+        "Name": "/ne-ops-candidate-1b4441bd-novel-engine-1",
+        "RestartCount": 0,
+        "Driver": "overlayfs",
+        "Platform": "linux",
+        "MountLabel": "",
+        "ProcessLabel": "",
+        "AppArmorProfile": "docker-default",
+        "ExecIDs": null,
+        "HostConfig": {
+            "Binds": [
+                "ne-ops-candidate-1b4441bd_novel-engine-data:/app/data:rw"
+            ],
+            "ContainerIDFile": "",
+            "LogConfig": {
+                "Type": "json-file",
+                "Config": {}
+            },
+            "NetworkMode": "ne-ops-candidate-1b4441bd_default",
+            "PortBindings": {
+                "8000/tcp": [
+                    {
+                        "HostIp": "127.0.0.1",
+                        "HostPort": "60355"
+                    }
+                ]
+            },
+            "RestartPolicy": {
+                "Name": "unless-stopped",
+                "MaximumRetryCount": 0
+            },
+            "AutoRemove": false,
+            "VolumeDriver": "",
+            "VolumesFrom": null,
+            "ConsoleSize": [
+                0,
+                0
+            ],
+            "CapAdd": null,
+            "CapDrop": [
+                "ALL"
+            ],
+            "CgroupnsMode": "private",
+            "Dns": null,
+            "DnsOptions": null,
+            "DnsSearch": null,
+            "ExtraHosts": [],
+            "GroupAdd": null,
+            "IpcMode": "private",
+            "Cgroup": "",
+            "Links": null,
+            "OomScoreAdj": 0,
+            "PidMode": "",
+            "Privileged": false,
+            "PublishAllPorts": false,
+            "ReadonlyRootfs": true,
+            "SecurityOpt": [
+                "no-new-privileges:true"
+            ],
+            "Tmpfs": {
+                "/tmp": "size=64m"
+            },
+            "UTSMode": "",
+            "UsernsMode": "",
+            "ShmSize": 67108864,
+            "Runtime": "runc",
+            "Isolation": "",
+            "CpuShares": 0,
+            "Memory": 1073741824,
+            "NanoCpus": 2000000000,
+            "CgroupParent": "",
+            "BlkioWeight": 0,
+            "BlkioWeightDevice": null,
+            "BlkioDeviceReadBps": null,
+            "BlkioDeviceWriteBps": null,
+            "BlkioDeviceReadIOps": null,
+            "BlkioDeviceWriteIOps": null,
+            "CpuPeriod": 0,
+            "CpuQuota": 0,
+            "CpuRealtimePeriod": 0,
+            "CpuRealtimeRuntime": 0,
+            "CpusetCpus": "",
+            "CpusetMems": "",
+            "Devices": null,
+            "DeviceCgroupRules": null,
+            "DeviceRequests": null,
+            "MemoryReservation": 0,
+            "MemorySwap": 2147483648,
+            "MemorySwappiness": null,
+            "OomKillDisable": null,
+            "PidsLimit": 512,
+            "Ulimits": null,
+            "CpuCount": 0,
+            "CpuPercent": 0,
+            "IOMaximumIOps": 0,
+            "IOMaximumBandwidth": 0,
+            "MaskedPaths": [
+                "/proc/acpi",
+                "/proc/asound",
+                "/proc/interrupts",
+                "/proc/kcore",
+                "/proc/keys",
+                "/proc/latency_stats",
+                "/proc/sched_debug",
+                "/proc/scsi",
+                "/proc/timer_list",
+                "/proc/timer_stats",
+                "/sys/devices/virtual/powercap",
+                "/sys/firmware"
+            ],
+            "ReadonlyPaths": [
+                "/proc/bus",
+                "/proc/fs",
+                "/proc/irq",
+                "/proc/sys",
+                "/proc/sysrq-trigger"
+            ]
+        },
+        "Storage": {
+            "RootFS": {
+                "Snapshot": {
+                    "Name": "overlayfs"
+                }
+            }
+        },
+        "Mounts": [
+            {
+                "Type": "volume",
+                "Name": "ne-ops-candidate-1b4441bd_novel-engine-data",
+                "Source": "/var/lib/docker/volumes/ne-ops-candidate-1b4441bd_novel-engine-data/_data",
+                "Destination": "/app/data",
+                "Driver": "local",
+                "Mode": "rw",
+                "RW": true,
+                "Propagation": ""
+            }
+        ],
+        "Config": {
+            "Hostname": "3e09bde9c766",
+            "Domainname": "",
+            "User": "node",
+            "AttachStdin": false,
+            "AttachStdout": true,
+            "AttachStderr": true,
+            "ExposedPorts": {
+                "8000/tcp": {}
+            },
+            "Tty": false,
+            "OpenStdin": false,
+            "StdinOnce": false,
+            "Env": [
+                "SECURITY_SECRET_KEY=",
+                "LLM_STREAM_FIRST_BYTE_TIMEOUT_MS=",
+                "LLM_API_BASE=",
+                "APP_ENVIRONMENT=production",
+                "OPENAI_API_KEY=",
+                "ACP_MODEL=",
+                "ACP_PROXY_TOKEN_FILE=",
+                "SECURITY_CORS_ORIGINS=https://ops.example.invalid",
+                "SECURITY_TRUSTED_PROXIES=",
+                "DASHSCOPE_MODEL=",
+                "LLM_TIMEOUT=",
+                "DASHSCOPE_TRANSPORT_MODE=",
+                "LLM_LOREBOOK_BUDGET_CHARACTERS=",
+                "ACP_PROXY_URL=",
+                "LLM_API_KEY=",
+                "LLM_PROVIDER=mock",
+                "LLM_STREAM_IDLE_TIMEOUT_MS=",
+                "ACP_WORKSPACE_ROOT=",
+                "OPENAI_API_BASE=",
+                "DASHSCOPE_API_BASE=",
+                "ACP_AGENT_ARGS=",
+                "LOG_LEVEL=warn",
+                "DASHSCOPE_REVIEW_MODEL=",
+                "ACP_AGENT_COMMAND=",
+                "OPENAI_COMPATIBLE_MODEL=",
+                "DASHSCOPE_API_KEY=",
+                "DB_URL=sqlite:///./data/novel-engine.sqlite3",
+                "LLM_RETRY_DELAY=",
+                "LLM_MODEL=",
+                "LLM_RETRY_ATTEMPTS=",
+                "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+                "NODE_VERSION=24.21.0",
+                "YARN_VERSION=1.22.22",
+                "NODE_ENV=production"
+            ],
+            "Cmd": [
+                "node",
+                "server/dist/apps/cli/main.js",
+                "serve",
+                "--host",
+                "0.0.0.0",
+                "--port",
+                "8000"
+            ],
+            "Healthcheck": {
+                "Test": [
+                    "CMD",
+                    "node",
+                    "-e",
+                    "fetch('http://127.0.0.1:8000/health/ready').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+                ],
+                "Interval": 30000000000,
+                "Timeout": 5000000000,
+                "Retries": 5
+            },
+            "Image": "novel-engine-acp-audit:final",
+            "Volumes": null,
+            "WorkingDir": "/app",
+            "Entrypoint": [
+                "/app/docker/entrypoint.sh"
+            ],
+            "Labels": {
+                "com.docker.compose.config-hash": "aa4a1eae45daf77a185657002065585aaebd05a848918b16b4d266f91c0f04ba",
+                "com.docker.compose.container-number": "1",
+                "com.docker.compose.depends_on": "",
+                "com.docker.compose.image": "sha256:b52f1812833a7123ce10b605a9770595468a643ace86c2687b4a80638142c59a",
+                "com.docker.compose.oneoff": "False",
+                "com.docker.compose.project": "ne-ops-candidate-1b4441bd",
+                "com.docker.compose.project.config_files": "/Users/jackela/.codex/worktrees/acp-full-acceptance/Novel-Engine/compose.yaml,/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-final-replay/ops-ne-ops-candidate-1b4441bd/ops-compose.override.yaml",
+                "com.docker.compose.project.environment_file": "/dev/null",
+                "com.docker.compose.project.working_dir": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-final-replay/ops-ne-ops-candidate-1b4441bd",
+                "com.docker.compose.service": "novel-engine",
+                "com.docker.compose.version": "5.5.1",
+                "org.opencontainers.image.revision": "0799ddf8909dd28f9c31dd72e418636c5a7a8992"
+            }
+        },
+        "NetworkSettings": {
+            "SandboxID": "fe44724586b81bc1d3055131c66b43aef0745fbe45e669f4ea9cf725c050b63f",
+            "SandboxKey": "/var/run/docker/netns/fe44724586b8",
+            "Ports": {
+                "8000/tcp": [
+                    {
+                        "HostIp": "127.0.0.1",
+                        "HostPort": "60355"
+                    }
+                ]
+            },
+            "Networks": {
+                "ne-ops-candidate-1b4441bd_default": {
+                    "IPAMConfig": null,
+                    "Links": null,
+                    "Aliases": [
+                        "ne-ops-candidate-1b4441bd-novel-engine-1",
+                        "novel-engine"
+                    ],
+                    "DriverOpts": null,
+                    "GwPriority": 0,
+                    "NetworkID": "ceeee3ac390749b1e89eed18f2f287152106fcfdbed4e9f8b6ebee66983c761d",
+                    "EndpointID": "63c23eea29ab2cc645482db10b6f16b9c46d363c821e62e91b574b0a3fabc4d8",
+                    "Gateway": "172.18.0.1",
+                    "IPAddress": "172.18.0.2",
+                    "MacAddress": "8a:c9:75:ed:95:ca",
+                    "IPPrefixLen": 16,
+                    "IPv6Gateway": "",
+                    "GlobalIPv6Address": "",
+                    "GlobalIPv6PrefixLen": 0,
+                    "DNSNames": [
+                        "ne-ops-candidate-1b4441bd-novel-engine-1",
+                        "novel-engine",
+                        "3e09bde9c766"
+                    ]
+                }
+            }
+        },
+        "ImageManifestDescriptor": {
+            "mediaType": "application/vnd.oci.image.manifest.v1+json",
+            "digest": "sha256:b52f1812833a7123ce10b605a9770595468a643ace86c2687b4a80638142c59a",
+            "size": 4253,
+            "platform": {
+                "architecture": "arm64",
+                "os": "linux"
+            }
+        }
+    }
+]
+
+$ docker exec 3e09bde9c76609c523422923eb78e5ef7be6dc8df47c3cac1a6ff10c02d6d8c1 cat /app/data/.setup-token
+[REDACTED_SYNTHETIC_TOKEN]
+
+POST /api/session/login -> 200
+POST /api/projects -> 201
+POST /api/projects/c1aaad44-715f-4cfa-bf2b-01aa3ad4ffcd/documents -> 201
+GET /version -> 200
+$ docker exec 3e09bde9c76609c523422923eb78e5ef7be6dc8df47c3cac1a6ff10c02d6d8c1 node -e const D=require('/app/server/node_modules/better-sqlite3');const d=new D('/app/data/novel-engine.sqlite3',{readonly:true});console.log(JSON.stringify({check:d.pragma('quick_check',{simple:true}),migrations:d.prepare('select count(*) n from __drizzle_migrations').get().n,uid:process.getuid()}));d.close();
+{"check":"ok","migrations":26,"uid":1000}
+
+$ docker compose --project-name ne-ops-candidate-1b4441bd --project-directory /tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-final-replay/ops-ne-ops-candidate-1b4441bd --env-file /dev/null -f /Users/jackela/.codex/worktrees/acp-full-acceptance/Novel-Engine/compose.yaml -f /tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-final-replay/ops-ne-ops-candidate-1b4441bd/ops-compose.override.yaml restart novel-engine
+ Container ne-ops-candidate-1b4441bd-novel-engine-1 Restarting 
+ Container ne-ops-candidate-1b4441bd-novel-engine-1 Started 
+
+GET /api/projects/c1aaad44-715f-4cfa-bf2b-01aa3ad4ffcd/documents/f8c4447c-5855-487d-bd38-458f8b90d8a8 -> 200
+GET /api/session -> 200
+$ docker exec 3e09bde9c76609c523422923eb78e5ef7be6dc8df47c3cac1a6ff10c02d6d8c1 node -e process.kill(1,'SIGKILL')
+
+GET /api/projects/c1aaad44-715f-4cfa-bf2b-01aa3ad4ffcd/documents/f8c4447c-5855-487d-bd38-458f8b90d8a8 -> 200
+GET /api/session -> 200
+POST /api/projects/c1aaad44-715f-4cfa-bf2b-01aa3ad4ffcd/exports -> 201
+POST /api/projects/c1aaad44-715f-4cfa-bf2b-01aa3ad4ffcd/exports -> 201
+POST /api/projects/c1aaad44-715f-4cfa-bf2b-01aa3ad4ffcd/exports -> 201
+GET /api/projects/c1aaad44-715f-4cfa-bf2b-01aa3ad4ffcd/exports -> 200
+GET /api/projects/c1aaad44-715f-4cfa-bf2b-01aa3ad4ffcd/exports/01dac1cf-119f-437c-a4ce-177e4ba1342f/download -> 200
+GET /api/projects/c1aaad44-715f-4cfa-bf2b-01aa3ad4ffcd/exports/e2dbe422-f88f-4a00-ac99-aad1d8ab0b5f/download -> 200
+GET /api/projects/c1aaad44-715f-4cfa-bf2b-01aa3ad4ffcd/exports/31a1bc4a-3c14-4da5-87f7-e731d8292cf6/download -> 200
+$ docker compose --project-name ne-ops-candidate-1b4441bd --project-directory /tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-final-replay/ops-ne-ops-candidate-1b4441bd --env-file /dev/null -f /Users/jackela/.codex/worktrees/acp-full-acceptance/Novel-Engine/compose.yaml -f /tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-final-replay/ops-ne-ops-candidate-1b4441bd/ops-compose.override.yaml stop novel-engine
+ Container ne-ops-candidate-1b4441bd-novel-engine-1 Stopping 
+ Container ne-ops-candidate-1b4441bd-novel-engine-1 Stopped 
+
+$ docker compose --project-name ne-ops-candidate-1b4441bd --project-directory /tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-final-replay/ops-ne-ops-candidate-1b4441bd --env-file /dev/null -f /Users/jackela/.codex/worktrees/acp-full-acceptance/Novel-Engine/compose.yaml -f /tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-final-replay/ops-ne-ops-candidate-1b4441bd/ops-compose.override.yaml run --rm --no-deps --pull never -T novel-engine node server/dist/apps/cli/main.js backup
+/app/data/backups/novel-engine-20261008T092426266Z.sqlite3.bak
+ Container ne-ops-candidate-1b4441bd-novel-engine-run-eb840332d774 Creating 
+ Container ne-ops-candidate-1b4441bd-novel-engine-run-eb840332d774 Created 
+
+$ docker compose --project-name ne-ops-candidate-1b4441bd --project-directory /tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-final-replay/ops-ne-ops-candidate-1b4441bd --env-file /dev/null -f /Users/jackela/.codex/worktrees/acp-full-acceptance/Novel-Engine/compose.yaml -f /tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-final-replay/ops-ne-ops-candidate-1b4441bd/ops-compose.override.yaml start novel-engine
+ Container ne-ops-candidate-1b4441bd-novel-engine-1 Starting 
+ Container ne-ops-candidate-1b4441bd-novel-engine-1 Started 
+
+GET /api/projects/c1aaad44-715f-4cfa-bf2b-01aa3ad4ffcd/documents/f8c4447c-5855-487d-bd38-458f8b90d8a8 -> 200
+PUT /api/projects/c1aaad44-715f-4cfa-bf2b-01aa3ad4ffcd/documents/f8c4447c-5855-487d-bd38-458f8b90d8a8 -> 200
+$ docker compose --project-name ne-ops-candidate-1b4441bd --project-directory /tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-final-replay/ops-ne-ops-candidate-1b4441bd --env-file /dev/null -f /Users/jackela/.codex/worktrees/acp-full-acceptance/Novel-Engine/compose.yaml -f /tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-final-replay/ops-ne-ops-candidate-1b4441bd/ops-compose.override.yaml stop novel-engine
+ Container ne-ops-candidate-1b4441bd-novel-engine-1 Stopping 
+ Container ne-ops-candidate-1b4441bd-novel-engine-1 Stopped 
+
+$ docker compose --project-name ne-ops-candidate-1b4441bd --project-directory /tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-final-replay/ops-ne-ops-candidate-1b4441bd --env-file /dev/null -f /Users/jackela/.codex/worktrees/acp-full-acceptance/Novel-Engine/compose.yaml -f /tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-final-replay/ops-ne-ops-candidate-1b4441bd/ops-compose.override.yaml run --rm --no-deps --pull never -T novel-engine node server/dist/apps/cli/main.js restore --input /app/data/backups/novel-engine-20261008T092426266Z.sqlite3.bak
+Verifying restore input: /app/data/backups/novel-engine-20261008T092426266Z.sqlite3.bak
+Backed up the replaced database: /app/data/backups/novel-engine-20261008T092429991Z.sqlite3.bak
+Restored the database: /app/data/novel-engine.sqlite3
+ Container ne-ops-candidate-1b4441bd-novel-engine-run-3e2084a5f1d8 Creating 
+ Container ne-ops-candidate-1b4441bd-novel-engine-run-3e2084a5f1d8 Created 
+
+$ docker compose --project-name ne-ops-candidate-1b4441bd --project-directory /tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-final-replay/ops-ne-ops-candidate-1b4441bd --env-file /dev/null -f /Users/jackela/.codex/worktrees/acp-full-acceptance/Novel-Engine/compose.yaml -f /tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-final-replay/ops-ne-ops-candidate-1b4441bd/ops-compose.override.yaml start novel-engine
+ Container ne-ops-candidate-1b4441bd-novel-engine-1 Starting 
+ Container ne-ops-candidate-1b4441bd-novel-engine-1 Started 
+
+POST /api/session/login -> 200
+GET /api/projects/c1aaad44-715f-4cfa-bf2b-01aa3ad4ffcd/documents/f8c4447c-5855-487d-bd38-458f8b90d8a8 -> 200
+$ docker exec 3e09bde9c76609c523422923eb78e5ef7be6dc8df47c3cac1a6ff10c02d6d8c1 node -e const D=require('/app/server/node_modules/better-sqlite3');const d=new D('/app/data/novel-engine.sqlite3',{readonly:true});console.log(JSON.stringify({check:d.pragma('quick_check',{simple:true}),migrations:d.prepare('select count(*) n from __drizzle_migrations').get().n,uid:process.getuid()}));d.close();
+{"check":"ok","migrations":26,"uid":1000}
+

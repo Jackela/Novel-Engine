@@ -1,0 +1,608 @@
+$ biome check .
+src/app/proposalStream.ts:238:11 lint/complexity/noUselessContinue  FIXABLE  ━━━━━━━━━━━━━━━━━━━━━━━
+
+  i Unnecessary continue statement
+  
+    236 │       for (const frame of parser.append(decoder.decode(value, { stream: true }))) {
+    237 │         if (frame.type === "started") {
+  > 238 │           continue;
+        │           ^^^^^^^^^
+    239 │         } else if (frame.type === "delta") {
+    240 │           progress.deltaFrames += 1;
+  
+  i Safe fix: Delete the unnecessary continue statement
+  
+    236 236 │         for (const frame of parser.append(decoder.decode(value, { stream: true }))) {
+    237 237 │           if (frame.type === "started") {
+    238     │ - ··········continue;
+    239 238 │           } else if (frame.type === "delta") {
+    240 239 │             progress.deltaFrames += 1;
+  
+
+src/app/AgentExecutionContract.ts:1:1 assist/source/organizeImports  FIXABLE  ━━━━━━━━━━━━━━━━━━━━━━
+
+  × Sort these imports.
+  
+  > 1 │ import { ApiContractError, objectValue } from "./apiContract";
+      │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  > 2 │ import { parseAiOperationEvent, type AiOperationEvent } from "./AiOperationEvents";
+      │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    3 │ 
+    4 │ export interface AgentExecution {
+  
+  i Safe fix: Organize imports and exports (Biome)
+  
+     1    │ - import·{·ApiContractError,·objectValue·}·from·"./apiContract";
+     2    │ - import·{·parseAiOperationEvent,·type·AiOperationEvent·}·from·"./AiOperationEvents";
+        1 │ + import·{·type·AiOperationEvent,·parseAiOperationEvent·}·from·"./AiOperationEvents";
+        2 │ + import·{·ApiContractError,·objectValue·}·from·"./apiContract";
+     3  3 │   
+     4  4 │   export interface AgentExecution {
+  
+
+src/app/AgentExecutionContract.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+    12 12 │     if (value === undefined) return undefined;
+    13 13 │     const execution = objectValue(value, "agent execution");
+    14    │ - ··if·(typeof·execution.operation_id·!==·"string"·||·typeof·execution.outcome_unknown·!==·"boolean"·||·!Array.isArray(execution.external_effects))·throw·new·ApiContractError("agent·execution");
+       14 │ + ··if·(
+       15 │ + ····typeof·execution.operation_id·!==·"string"·||
+       16 │ + ····typeof·execution.outcome_unknown·!==·"boolean"·||
+       17 │ + ····!Array.isArray(execution.external_effects)
+       18 │ + ··)
+       19 │ + ····throw·new·ApiContractError("agent·execution");
+    15 20 │     return {
+    16 21 │       operation_id: execution.operation_id,
+  
+
+src/app/AiExecutionOptions.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+    1 1 │   /** Per-operation transport options; ACP has a 600s server budget plus response grace. */
+    2   │ - export·interface·AiExecutionOptions·extends·RequestInit·{·readonly·timeoutMs?:·number;·}
+      2 │ + export·interface·AiExecutionOptions·extends·RequestInit·{
+      3 │ + ··readonly·timeoutMs?:·number;
+      4 │ + }
+    3 5 │   export const ACP_REQUEST_TIMEOUT_MS = 610_000;
+    4 6 │   
+  
+
+src/app/AiOperationEvents.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+     1  1 │   import { ApiContractError, objectValue } from "./apiContract";
+     2  2 │   
+     3    │ - export·interface·AgentTool·{·readonly·title:·string;·readonly·kind:·string;·readonly·target?:·string;·}
+     4    │ - export·interface·AgentPermissionOption·{·readonly·option_id:·string;·readonly·name:·string;·readonly·kind:·string;·}
+        3 │ + export·interface·AgentTool·{
+        4 │ + ··readonly·title:·string;
+        5 │ + ··readonly·kind:·string;
+        6 │ + ··readonly·target?:·string;
+        7 │ + }
+        8 │ + export·interface·AgentPermissionOption·{
+        9 │ + ··readonly·option_id:·string;
+       10 │ + ··readonly·name:·string;
+       11 │ + ··readonly·kind:·string;
+       12 │ + }
+     5 13 │   export type ExternalEffects = "completed" | "unknown" | "none";
+     6 14 │   export type AiOperationEvent =
+     7 15 │     | { readonly type: "ready"; readonly operation_id: string }
+     8 16 │     | ({ readonly type: "tool"; readonly tool_id: string; readonly status: string } & AgentTool)
+     9    │ - ··|·{·readonly·type:·"permission";·readonly·permission_id:·string;·readonly·tool:·AgentTool;·readonly·options:·readonly·AgentPermissionOption[]·}
+       17 │ + ··|·{
+       18 │ + ······readonly·type:·"permission";
+       19 │ + ······readonly·permission_id:·string;
+       20 │ + ······readonly·tool:·AgentTool;
+       21 │ + ······readonly·options:·readonly·AgentPermissionOption[];
+       22 │ + ····}
+    10 23 │     | { readonly type: "completed"; readonly external_effects: ExternalEffects }
+    11    │ - ··|·{·readonly·type:·"error";·readonly·message:·string;·readonly·external_effects:·ExternalEffects·};
+       24 │ + ··|·{
+       25 │ + ······readonly·type:·"error";
+       26 │ + ······readonly·message:·string;
+       27 │ + ······readonly·external_effects:·ExternalEffects;
+       28 │ + ····};
+    12 29 │   
+    13 30 │   function field(value: Record<string, unknown>, key: string): string {
+    ····· │ 
+    16 33 │   }
+    17 34 │   function tool(value: Record<string, unknown>): AgentTool {
+    18    │ - ··return·{·title:·field(value,·"title"),·kind:·field(value,·"kind"),·...(value.target·===·undefined·?·{}·:·{·target:·field(value,·"target")·})·};
+       35 │ + ··return·{
+       36 │ + ····title:·field(value,·"title"),
+       37 │ + ····kind:·field(value,·"kind"),
+       38 │ + ····...(value.target·===·undefined·?·{}·:·{·target:·field(value,·"target")·}),
+       39 │ + ··};
+    19 40 │   }
+    20 41 │   function effects(value: Record<string, unknown>): ExternalEffects {
+    21 42 │     const effect = value.external_effects;
+    22    │ - ··if·(effect·!==·"completed"·&&·effect·!==·"unknown"·&&·effect·!==·"none")·throw·new·ApiContractError("AI·operation:·external_effects");
+       43 │ + ··if·(effect·!==·"completed"·&&·effect·!==·"unknown"·&&·effect·!==·"none")
+       44 │ + ····throw·new·ApiContractError("AI·operation:·external_effects");
+    23 45 │     return effect;
+    24 46 │   }
+    ····· │ 
+    28 50 │     const event = objectValue(value, "AI operation");
+    29 51 │     switch (event.type) {
+    30    │ - ····case·"ready":·return·{·type:·"ready",·operation_id:·field(event,·"operation_id")·};
+    31    │ - ····case·"tool":·return·{·type:·"tool",·tool_id:·field(event,·"tool_id"),·status:·field(event,·"status"),·...tool(event)·};
+       52 │ + ····case·"ready":
+       53 │ + ······return·{·type:·"ready",·operation_id:·field(event,·"operation_id")·};
+       54 │ + ····case·"tool":
+       55 │ + ······return·{
+       56 │ + ········type:·"tool",
+       57 │ + ········tool_id:·field(event,·"tool_id"),
+       58 │ + ········status:·field(event,·"status"),
+       59 │ + ········...tool(event),
+       60 │ + ······};
+    32 61 │       case "permission": {
+    33    │ - ······if·(!Array.isArray(event.options)·||·event.options.length·===·0)·throw·new·ApiContractError("AI·operation:·options");
+    34    │ - ······return·{·type:·"permission",·permission_id:·field(event,·"permission_id"),·tool:·tool(objectValue(event.tool,·"permission·tool")),·options:·event.options.map((value)·=>·{
+    35    │ - ········const·option·=·objectValue(value,·"permission·option");
+    36    │ - ········return·{·option_id:·field(option,·"option_id"),·name:·field(option,·"name"),·kind:·field(option,·"kind")·};
+    37    │ - ······})·};
+       62 │ + ······if·(!Array.isArray(event.options)·||·event.options.length·===·0)
+       63 │ + ········throw·new·ApiContractError("AI·operation:·options");
+       64 │ + ······return·{
+       65 │ + ········type:·"permission",
+       66 │ + ········permission_id:·field(event,·"permission_id"),
+       67 │ + ········tool:·tool(objectValue(event.tool,·"permission·tool")),
+       68 │ + ········options:·event.options.map((value)·=>·{
+       69 │ + ··········const·option·=·objectValue(value,·"permission·option");
+       70 │ + ··········return·{
+       71 │ + ············option_id:·field(option,·"option_id"),
+       72 │ + ············name:·field(option,·"name"),
+       73 │ + ············kind:·field(option,·"kind"),
+       74 │ + ··········};
+       75 │ + ········}),
+       76 │ + ······};
+    38 77 │       }
+    39    │ - ····case·"completed":·return·{·type:·"completed",·external_effects:·effects(event)·};
+    40    │ - ····case·"error":·return·{·type:·"error",·message:·field(event,·"message"),·external_effects:·effects(event)·};
+    41    │ - ····default:·throw·new·ApiContractError(`AI·operation:·unknown·event·(${String(event.type)})`);
+       78 │ + ····case·"completed":
+       79 │ + ······return·{·type:·"completed",·external_effects:·effects(event)·};
+       80 │ + ····case·"error":
+       81 │ + ······return·{·type:·"error",·message:·field(event,·"message"),·external_effects:·effects(event)·};
+       82 │ + ····default:
+       83 │ + ······throw·new·ApiContractError(`AI·operation:·unknown·event·(${String(event.type)})`);
+    42 84 │     }
+    43 85 │   }
+  
+
+src/app/AiOperationObserver.test.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+     7  7 │     const encoder = new TextEncoder();
+     8  8 │     const received: unknown[] = [];
+     9    │ - ··vi.stubGlobal("fetch",·vi.fn().mockResolvedValue(new·Response(new·ReadableStream({
+    10    │ - ····start(controller)·{
+    11    │ - ······controller.enqueue(encoder.encode('data:·{"type":"ready","operation_id":"op"}\n\n'));
+    12    │ - ······controller.enqueue(encoder.encode('data:·{"type":"permission","permission_id":"p","tool":{"title":"Write·notes","kind":"edit","target":"notes.md"},"options":['));
+    13    │ - ······controller.enqueue(encoder.encode('{"option_id":"allow","name":"Allow·once","kind":"allow_once"}],"raw_stdout":"secret"}\n\n'));
+    14    │ - ······controller.enqueue(encoder.encode('data:·{"type":"completed","external_effects":"none"}\n\n'));
+    15    │ - ······controller.close();
+    16    │ - ····},
+    17    │ - ··}))));
+    18    │ - ··const·observation·=·observeAiOperation({·projectId:·"project",·operationId:·"op",·signal:·new·AbortController().signal,·onEvent:·(event)·=>·received.push(event)·});
+        9 │ + ··vi.stubGlobal(
+       10 │ + ····"fetch",
+       11 │ + ····vi.fn().mockResolvedValue(
+       12 │ + ······new·Response(
+       13 │ + ········new·ReadableStream({
+       14 │ + ··········start(controller)·{
+       15 │ + ············controller.enqueue(encoder.encode('data:·{"type":"ready","operation_id":"op"}\n\n'));
+       16 │ + ············controller.enqueue(
+       17 │ + ··············encoder.encode(
+       18 │ + ················'data:·{"type":"permission","permission_id":"p","tool":{"title":"Write·notes","kind":"edit","target":"notes.md"},"options":[',
+       19 │ + ··············),
+       20 │ + ············);
+       21 │ + ············controller.enqueue(
+       22 │ + ··············encoder.encode(
+       23 │ + ················'{"option_id":"allow","name":"Allow·once","kind":"allow_once"}],"raw_stdout":"secret"}\n\n',
+       24 │ + ··············),
+       25 │ + ············);
+       26 │ + ············controller.enqueue(
+       27 │ + ··············encoder.encode('data:·{"type":"completed","external_effects":"none"}\n\n'),
+       28 │ + ············);
+       29 │ + ············controller.close();
+       30 │ + ··········},
+       31 │ + ········}),
+       32 │ + ······),
+       33 │ + ····),
+       34 │ + ··);
+       35 │ + ··const·observation·=·observeAiOperation({
+       36 │ + ····projectId:·"project",
+       37 │ + ····operationId:·"op",
+       38 │ + ····signal:·new·AbortController().signal,
+       39 │ + ····onEvent:·(event)·=>·received.push(event),
+       40 │ + ··});
+    19 41 │     await observation.ready;
+    20 42 │     await observation.done;
+    21    │ - ··expect(fetch).toHaveBeenCalledWith("/api/projects/project/ai-operations/op/events",·expect.objectContaining({·credentials:·"include"·}));
+       43 │ + ··expect(fetch).toHaveBeenCalledWith(
+       44 │ + ····"/api/projects/project/ai-operations/op/events",
+       45 │ + ····expect.objectContaining({·credentials:·"include"·}),
+       46 │ + ··);
+    22 47 │     expect(received).toEqual([
+    23 48 │       { type: "ready", operation_id: "op" },
+    24    │ - ····{·type:·"permission",·permission_id:·"p",·tool:·{·title:·"Write·notes",·kind:·"edit",·target:·"notes.md"·},·options:·[{·option_id:·"allow",·name:·"Allow·once",·kind:·"allow_once"·}]·},
+       49 │ + ····{
+       50 │ + ······type:·"permission",
+       51 │ + ······permission_id:·"p",
+       52 │ + ······tool:·{·title:·"Write·notes",·kind:·"edit",·target:·"notes.md"·},
+       53 │ + ······options:·[{·option_id:·"allow",·name:·"Allow·once",·kind:·"allow_once"·}],
+       54 │ + ····},
+    25 55 │       { type: "completed", external_effects: "none" },
+    26 56 │     ]);
+  
+
+src/app/AiOperationObserver.ts:1:1 assist/source/organizeImports  FIXABLE  ━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Sort the imported names.
+  
+  > 1 │ import { parseAiOperationEvent, type AiOperationEvent } from "./AiOperationEvents";
+      │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    2 │ import { ApiContractError } from "./apiContract";
+    3 │ import { apiUrl, readHttpError } from "./httpClient";
+  
+  i Safe fix: Organize imports and exports (Biome)
+  
+     1    │ - import·{·parseAiOperationEvent,·type·AiOperationEvent·}·from·"./AiOperationEvents";
+        1 │ + import·{·type·AiOperationEvent,·parseAiOperationEvent·}·from·"./AiOperationEvents";
+     2  2 │   import { ApiContractError } from "./apiContract";
+     3  3 │   import { apiUrl, readHttpError } from "./httpClient";
+  
+
+src/app/AiOperationObserver.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+    13 13 │   
+    14 14 │   /** Open the authenticated observation before starting an ACP operation. */
+    15    │ - export·function·observeAiOperation({·projectId,·operationId,·signal,·onEvent·}:·ObservationOptions)·{
+       15 │ + export·function·observeAiOperation({
+       16 │ + ··projectId,
+       17 │ + ··operationId,
+       18 │ + ··signal,
+       19 │ + ··onEvent,
+       20 │ + }:·ObservationOptions)·{
+    16 21 │     let resolveReady: () => void = () => undefined;
+    17 22 │     let rejectReady: (reason: unknown) => void = () => undefined;
+    18    │ - ··const·ready·=·new·Promise<void>((resolve,·reject)·=>·{·resolveReady·=·resolve;·rejectReady·=·reject;·});
+       23 │ + ··const·ready·=·new·Promise<void>((resolve,·reject)·=>·{
+       24 │ + ····resolveReady·=·resolve;
+       25 │ + ····rejectReady·=·reject;
+       26 │ + ··});
+    19 27 │     const done = (async () => {
+    20 28 │       let reader: ReadableStreamDefaultReader<Uint8Array> | undefined;
+    21 29 │       let terminal = false;
+    22 30 │       let isReady = false;
+    23    │ - ····const·cancel·=·()·=>·{·void·reader?.cancel().catch(()·=>·undefined);·};
+       31 │ + ····const·cancel·=·()·=>·{
+       32 │ + ······void·reader?.cancel().catch(()·=>·undefined);
+       33 │ + ····};
+    24 34 │       signal.addEventListener("abort", cancel, { once: true });
+    25 35 │       try {
+    26    │ - ······const·response·=·await·fetch(apiUrl(`/api/projects/${encodeURIComponent(projectId)}/ai-operations/${encodeURIComponent(operationId)}/events`),·{·credentials:·"include",·headers:·{·Accept:·"text/event-stream"·},·signal·});
+    27    │ - ······if·(!response.ok)·throw·await·readHttpError(response,·translateActive("errors.transport.requestFailed",·{·status:·response.status·}));
+       36 │ + ······const·response·=·await·fetch(
+       37 │ + ········apiUrl(
+       38 │ + ··········`/api/projects/${encodeURIComponent(projectId)}/ai-operations/${encodeURIComponent(operationId)}/events`,
+       39 │ + ········),
+       40 │ + ········{·credentials:·"include",·headers:·{·Accept:·"text/event-stream"·},·signal·},
+       41 │ + ······);
+       42 │ + ······if·(!response.ok)
+       43 │ + ········throw·await·readHttpError(
+       44 │ + ··········response,
+       45 │ + ··········translateActive("errors.transport.requestFailed",·{·status:·response.status·}),
+       46 │ + ········);
+    28 47 │         if (!response.body) throw new ApiContractError("AI operation: no event stream");
+    29 48 │         reader = response.body.getReader();
+    ····· │ 
+    39 58 │             const frame = buffer.slice(0, boundary);
+    40 59 │             buffer = buffer.slice(boundary + 2);
+    41    │ - ··········const·data·=·frame.split("\n").filter((line)·=>·line.startsWith("data:")).map((line)·=>·line.slice(5).trimStart()).join("\n");
+       60 │ + ··········const·data·=·frame
+       61 │ + ············.split("\n")
+       62 │ + ············.filter((line)·=>·line.startsWith("data:"))
+       63 │ + ············.map((line)·=>·line.slice(5).trimStart())
+       64 │ + ············.join("\n");
+    42 65 │             if (data) {
+    43 66 │               const event = parseAiOperationEvent(JSON.parse(data));
+    44 67 │               if (event.type === "ready") {
+    45    │ - ··············if·(event.operation_id·!==·operationId)·throw·new·ApiContractError("AI·operation:·mismatched·operation·ID");
+       68 │ + ··············if·(event.operation_id·!==·operationId)
+       69 │ + ················throw·new·ApiContractError("AI·operation:·mismatched·operation·ID");
+    46 70 │                 isReady = true;
+    47 71 │                 resolveReady();
+  
+
+src/app/api.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+    183 183 │       request(reviewDetailPath(projectId, reviewId), init, parseReviewDetail),
+    184 184 │     createReview: (projectId: string, init?: AiExecutionOptions) =>
+    185     │ - ····request(`/api/projects/${projectId}/reviews`,·{·...init,·method:·"POST"·},·parseReviewJobResponse),
+        185 │ + ····request(
+        186 │ + ······`/api/projects/${projectId}/reviews`,
+        187 │ + ······{·...init,·method:·"POST"·},
+        188 │ + ······parseReviewJobResponse,
+        189 │ + ····),
+    186 190 │     exports: (projectId: string, options: ExportsRequestOptions = {}) => {
+    187 191 │       const [path, init] = projectExportsRequest(projectId, options);
+    ······· │ 
+    224 228 │     diagnostics: (projectId: string, init?: RequestInit) =>
+    225 229 │       request(`/api/projects/${projectId}/diagnostics`, init, parseDiagnostics),
+    226     │ - ··retryJob:·(projectId:·string,·jobId:·string,·idempotencyKey:·string,·execution?:·AiExecutionOptions)·=>·{
+        230 │ + ··retryJob:·(
+        231 │ + ····projectId:·string,
+        232 │ + ····jobId:·string,
+        233 │ + ····idempotencyKey:·string,
+        234 │ + ····execution?:·AiExecutionOptions,
+        235 │ + ··)·=>·{
+    227 236 │       const [path, init] = retryJobRequest(projectId, jobId, idempotencyKey);
+    228     │ - ····return·request(path,·{·...execution,·...init,·headers:·{·...execution?.headers,·...init.headers·}·},·parseJob);
+        237 │ + ····return·request(
+        238 │ + ······path,
+        239 │ + ······{·...execution,·...init,·headers:·{·...execution?.headers,·...init.headers·}·},
+        240 │ + ······parseJob,
+        241 │ + ····);
+    229 242 │     },
+    230     │ - ··respondAiPermission:·(projectId:·string,·operationId:·string,·permissionId:·string,·optionId:·string,·init?:·RequestInit)·=>
+    231     │ - ····postJson(`/api/projects/${encodeURIComponent(projectId)}/ai-operations/${encodeURIComponent(operationId)}/permissions/${encodeURIComponent(permissionId)}`,·{·option_id:·optionId·},·parseVoid,·init),
+        243 │ + ··respondAiPermission:·(
+        244 │ + ····projectId:·string,
+        245 │ + ····operationId:·string,
+        246 │ + ····permissionId:·string,
+        247 │ + ····optionId:·string,
+        248 │ + ····init?:·RequestInit,
+        249 │ + ··)·=>
+        250 │ + ····postJson(
+        251 │ + ······`/api/projects/${encodeURIComponent(projectId)}/ai-operations/${encodeURIComponent(operationId)}/permissions/${encodeURIComponent(permissionId)}`,
+        252 │ + ······{·option_id:·optionId·},
+        253 │ + ······parseVoid,
+        254 │ + ······init,
+        255 │ + ····),
+    232 256 │     download: (path: string, init?: RequestInit) => downloadBlob(path, init),
+    233 257 │   };
+  
+
+src/app/apiWorkflowContract.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+    173 173 │       request: recordField(item, "request", label),
+    174 174 │       result: {
+    175     │ - ······...(result.agent_execution·===·undefined·?·{}·:·{·agent_execution:·parseAgentExecution(result.agent_execution)·}),
+        175 │ + ······...(result.agent_execution·===·undefined
+        176 │ + ········?·{}
+        177 │ + ········:·{·agent_execution:·parseAgentExecution(result.agent_execution)·}),
+    176 178 │         proposal_markdown: optionalString(
+    177 179 │           result,
+  
+
+src/app/httpClient.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+     37  37 │    * caller's status message.
+     38  38 │    */
+     39     │ - export·async·function·readHttpError(response:·Response,·fallbackMessage:·string):·Promise<HttpError>·{
+         39 │ + export·async·function·readHttpError(
+         40 │ + ··response:·Response,
+         41 │ + ··fallbackMessage:·string,
+         42 │ + ):·Promise<HttpError>·{
+     40  43 │     const payload = await response.json().catch(() => null);
+     41  44 │     if (isRecord(payload) && isRecord(payload.error)) {
+  
+
+src/app/i18n/dictionaries/en.shared.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+    33 33 │     "acp.effects.none": "No file changes were recorded.",
+    34 34 │     "acp.retry.confirmation": "Confirm retry after checking files",
+    35    │ - ··"acp.retry.warning":·"Your·material·files·may·have·changed.·Check·the·working·folder·before·retrying.",
+       35 │ + ··"acp.retry.warning":
+       36 │ + ····"Your·material·files·may·have·changed.·Check·the·working·folder·before·retrying.",
+    36 37 │     "acp.retry.confirm": "I checked the working folder; retry",
+    37 38 │     "acp.retry.cancel": "Cancel",
+    ····· │ 
+    44 45 │     "acp.action.stop": "Stop operation",
+    45 46 │     "acp.effects.completed": "Completed file changes remain in your working folder.",
+    46    │ - ··"acp.effects.unknown":·"Review·your·working·folder·before·running·this·operation·again;·file·changes·may·have·completed.",
+    47    │ - ··"acp.error.observationLost":·"Tool·observation·ended·unexpectedly.·Review·your·working·folder·before·trying·again.",
+       47 │ + ··"acp.effects.unknown":
+       48 │ + ····"Review·your·working·folder·before·running·this·operation·again;·file·changes·may·have·completed.",
+       49 │ + ··"acp.error.observationLost":
+       50 │ + ····"Tool·observation·ended·unexpectedly.·Review·your·working·folder·before·trying·again.",
+    48 51 │     "acp.error.missingObserver": "Reconnect to the project before using ACP.",
+    49 52 │     "acp.error.permission": "Unable to send your decision. Try again while the request is active.",
+    50 53 │     "settings.provider.acpNotConfigured": "not configured (ACP connection)",
+    51    │ - ··"settings.provider.acpMissingConnection":·"The·server·ACP·connection·is·not·configured.·Configure·the·connection·and·restart,·or·choose·another·provider.",
+       54 │ + ··"settings.provider.acpMissingConnection":
+       55 │ + ····"The·server·ACP·connection·is·not·configured.·Configure·the·connection·and·restart,·or·choose·another·provider.",
+    52 56 │   
+    53 57 │     // Count units pick their leaf at the call site (`count === 1 ? ... : ...`)
+  
+
+src/app/i18n/dictionaries/zh.shared.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+    44 44 │     "acp.error.permission": "未能发送你的决定。请求仍有效时可以重试。",
+    45 45 │     "settings.provider.acpNotConfigured": "未配置（ACP 连接）",
+    46    │ - ··"settings.provider.acpMissingConnection":·"服务器尚未配置·ACP·连接。请配置连接并重启，或选择其他服务。",
+       46 │ + ··"settings.provider.acpMissingConnection":
+       47 │ + ····"服务器尚未配置·ACP·连接。请配置连接并重启，或选择其他服务。",
+    47 48 │   
+    48 49 │     "noun.chapter": "章",
+  
+
+src/app/parseProposalStreamFrame.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+    19 19 │     const type = frame.type;
+    20 20 │     if (type === "started") {
+    21    │ - ····if·(typeof·frame.operation_id·!==·"string")·throw·new·ApiContractError("proposal·frame:·started.operation_id");
+       21 │ + ····if·(typeof·frame.operation_id·!==·"string")
+       22 │ + ······throw·new·ApiContractError("proposal·frame:·started.operation_id");
+    22 23 │       return { type: "started", operation_id: frame.operation_id };
+    23 24 │     }
+    ····· │ 
+    44 45 │     throw new ApiContractError(`proposal frame: unknown type (${String(type)})`);
+    45 46 │   }
+    46    │ - 
+    47 47 │   
+  
+
+src/app/proposalStream.ts:15:1 assist/source/organizeImports  FIXABLE  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Some imports or exports are not organized.
+  
+    13 │ import type { StudioJob } from "@/app/types/studio";
+    14 │ import type { AiExecutionOptions } from "./AiExecutionOptions";
+  > 15 │ import { parseProposalStreamFrame, type ProposalStreamFrame } from "./parseProposalStreamFrame";
+       │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  > 16 │ export type { ProposalStreamFrame } from "./parseProposalStreamFrame";
+       │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    17 │ 
+    18 │ /**
+  
+  i Sort the imported names.
+  
+    13 │ import type { StudioJob } from "@/app/types/studio";
+    14 │ import type { AiExecutionOptions } from "./AiExecutionOptions";
+  > 15 │ import { parseProposalStreamFrame, type ProposalStreamFrame } from "./parseProposalStreamFrame";
+       │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    16 │ export type { ProposalStreamFrame } from "./parseProposalStreamFrame";
+    17 │ 
+  
+  i This statement must be preceded by a blank line. Add a newline before this statement.
+  
+    14 │ import type { AiExecutionOptions } from "./AiExecutionOptions";
+    15 │ import { parseProposalStreamFrame, type ProposalStreamFrame } from "./parseProposalStreamFrame";
+  > 16 │ export type { ProposalStreamFrame } from "./parseProposalStreamFrame";
+       │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    17 │ 
+    18 │ /**
+  
+  i Safe fix: Organize imports and exports (Biome)
+  
+     13  13 │   import type { StudioJob } from "@/app/types/studio";
+     14  14 │   import type { AiExecutionOptions } from "./AiExecutionOptions";
+     15     │ - import·{·parseProposalStreamFrame,·type·ProposalStreamFrame·}·from·"./parseProposalStreamFrame";
+         15 │ + import·{·type·ProposalStreamFrame,·parseProposalStreamFrame·}·from·"./parseProposalStreamFrame";
+         16 │ + 
+     16  17 │   export type { ProposalStreamFrame } from "./parseProposalStreamFrame";
+     17  18 │   
+  
+
+src/app/proposalStream.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+     40  40 │   }
+     41  41 │   
+     42     │ - 
+     43  42 │   /**
+     44  43 │    * One SSE event as a frame, or `undefined` for a data-less event.
+  
+
+src/app/requestAbortScope.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+     2  2 │   
+     3  3 │   /** Combine caller cancellation with the API timeout and expose its winning cause. */
+     4    │ - export·function·createRequestAbortScope(externalSignal:·AbortSignal·|·null·|·undefined,·timeoutMs·=·appConfig.apiTimeoutMs)·{
+        4 │ + export·function·createRequestAbortScope(
+        5 │ + ··externalSignal:·AbortSignal·|·null·|·undefined,
+        6 │ + ··timeoutMs·=·appConfig.apiTimeoutMs,
+        7 │ + )·{
+     5  8 │     const controller = new AbortController();
+     6  9 │     let timedOut = false;
+  
+
+src/features/studio/AcpOperationProvider.tsx format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+    11 11 │   
+    12 12 │   /** One project owns the observation state used by all four generation steps. */
+    13    │ - export·function·AcpOperationProvider({·projectId,·children·}:·{·readonly·projectId:·string;·readonly·children:·ReactNode·})·{
+       13 │ + export·function·AcpOperationProvider({
+       14 │ + ··projectId,
+       15 │ + ··children,
+       16 │ + }:·{
+       17 │ + ··readonly·projectId:·string;
+       18 │ + ··readonly·children:·ReactNode;
+       19 │ + })·{
+    14 20 │     const onSessionLost = useSessionExpiredRedirect();
+    15 21 │     const value = useAcpOperation(projectId, onSessionLost);
+    16 22 │     return <AcpOperationContext value={value}>{children}</AcpOperationContext>;
+    17 23 │   }
+    18    │ - export·function·useAcpExecution():·AcpExecute·{·return·useContext(AcpOperationContext)?.execute·??·executeWithoutObserver;·}
+    19    │ - export·function·useAcpOperationView()·{·return·useContext(AcpOperationContext);·}
+       24 │ + export·function·useAcpExecution():·AcpExecute·{
+       25 │ + ··return·useContext(AcpOperationContext)?.execute·??·executeWithoutObserver;
+       26 │ + }
+       27 │ + export·function·useAcpOperationView()·{
+       28 │ + ··return·useContext(AcpOperationContext);
+       29 │ + }
+    20 30 │   
+  
+
+src/features/studio/StudioInspector.tsx format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+    56 56 │           </summary>
+    57 57 │           <div className="studio-inspector__content">
+    58    │ - ··········{acp·?·<StudioAcpOperations·operations={acp.operations}·onRespond={acp.respond}·onCancel={acp.cancel}·/>·:·null}
+       58 │ + ··········{acp·?·(
+       59 │ + ············<StudioAcpOperations
+       60 │ + ··············operations={acp.operations}
+       61 │ + ··············onRespond={acp.respond}
+       62 │ + ··············onCancel={acp.cancel}
+       63 │ + ············/>
+       64 │ + ··········)·:·null}
+    59 65 │             {inspector !== "settings" && (
+    60 66 │               <StudioInspectorTabs
+  
+
+src/features/studio/StudioPage.tsx format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+    88 88 │     // Switching projects unmounts the complete workbench before old state can
+    89 89 │     // remain interactive while the next aggregate loads.
+    90    │ - ··return·<AcpOperationProvider·key={projectId}·projectId={projectId}><StudioProjectPage·projectId={projectId}·route={route}·/></AcpOperationProvider>;
+       90 │ + ··return·(
+       91 │ + ····<AcpOperationProvider·key={projectId}·projectId={projectId}>
+       92 │ + ······<StudioProjectPage·projectId={projectId}·route={route}·/>
+       93 │ + ····</AcpOperationProvider>
+       94 │ + ··);
+    91 95 │   }
+    92 96 │   
+  
+
+The number of diagnostics exceeds the limit allowed. Use --max-diagnostics to increase it.
+Diagnostics not shown: 16.
+Checked 462 files in 142ms. No fixes applied.
+Found 35 errors.
+Found 1 info.
+check ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Some errors were emitted while running checks.
+  
+
+[ELIFECYCLE] Command failed with exit code 1.

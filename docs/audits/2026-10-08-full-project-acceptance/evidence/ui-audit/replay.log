@@ -1,0 +1,58 @@
+RISK FLOWS COMPLETE
+THEME CONTROLS {"radios":["","","","",""],"buttons":["","","","","","","","","","MarkdownPortable source textExport","Word documentEditable documentExport","EPUBE-reader packageExport"]}
+locator.check: Timeout 30000ms exceeded.
+Call log:
+[2m  - waiting for getByRole('radio', { name: 'Dark', exact: true })[22m
+[2m    - locator resolved to <input type="radio" value="dark" name="theme" class="ui-theme-switch__input"/>[22m
+[2m  - attempting click action[22m
+[2m    2 × waiting for element to be visible, enabled and stable[22m
+[2m      - element is visible, enabled and stable[22m
+[2m      - scrolling into view if needed[22m
+[2m      - done scrolling[22m
+[2m      - <span>Dark</span> intercepts pointer events[22m
+[2m    - retrying click action[22m
+[2m    - waiting 20ms[22m
+[2m    2 × waiting for element to be visible, enabled and stable[22m
+[2m      - element is visible, enabled and stable[22m
+[2m      - scrolling into view if needed[22m
+[2m      - done scrolling[22m
+[2m      - <span>Dark</span> intercepts pointer events[22m
+[2m    - retrying click action[22m
+[2m      - waiting 100ms[22m
+[2m    58 × waiting for element to be visible, enabled and stable[22m
+[2m       - element is visible, enabled and stable[22m
+[2m       - scrolling into view if needed[22m
+[2m       - done scrolling[22m
+[2m       - <span>Dark</span> intercepts pointer events[22m
+[2m     - retrying click action[22m
+[2m       - waiting 500ms[22m
+
+    at /private/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ui-audit-browser/replay.mjs:28:408 {
+  log: [
+    "  - waiting for getByRole('radio', { name: 'Dark', exact: true })",
+    '    - locator resolved to <input type="radio" value="dark" name="theme" class="ui-theme-switch__input"/>',
+    '  - attempting click action',
+    '    2 × waiting for element to be visible, enabled and stable',
+    '      - element is visible, enabled and stable',
+    '      - scrolling into view if needed',
+    '      - done scrolling',
+    '      - <span>Dark</span> intercepts pointer events',
+    '    - retrying click action',
+    '    - waiting 20ms',
+    '    2 × waiting for element to be visible, enabled and stable',
+    '      - element is visible, enabled and stable',
+    '      - scrolling into view if needed',
+    '      - done scrolling',
+    '      - <span>Dark</span> intercepts pointer events',
+    '    - retrying click action',
+    '      - waiting 100ms',
+    '    58 × waiting for element to be visible, enabled and stable',
+    '       - element is visible, enabled and stable',
+    '       - scrolling into view if needed',
+    '       - done scrolling',
+    '       - <span>Dark</span> intercepts pointer events',
+    '     - retrying click action',
+    '       - waiting 500ms'
+  ],
+  name: 'TimeoutError'
+}
