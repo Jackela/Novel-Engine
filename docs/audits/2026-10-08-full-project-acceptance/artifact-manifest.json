@@ -4,8 +4,8 @@
   "files": [
     {
       "path": "REPORT.md",
-      "sha256": "a0a0b7769c520a48e481d1df10955aa1c87c7bdc4996838572ee6a223672a6fa",
-      "bytes": 38913
+      "sha256": "4cfa70c825f053523823a70dbb2af11b8b6835a6330c2b920104e4d2ccafc303",
+      "bytes": 39239
     },
     {
       "path": "evidence/acp-gateway/01-token-green.log",
@@ -693,6 +693,11 @@
       "bytes": 97242
     },
     {
+      "path": "evidence/delivery-verification.json",
+      "sha256": "192592e757c89b5b377feb2986ebccfc95ad62c3f64d176b1accc9f8134bf0f4",
+      "bytes": 13809
+    },
+    {
       "path": "evidence/dependency-full.json",
       "sha256": "ff1cb5e52a631248760ec1146c8799ac12b1b1ec9ec5436a73b5f26049abe903",
       "bytes": 1040
@@ -1264,8 +1269,8 @@
     },
     {
       "path": "evidence-registry.json",
-      "sha256": "820e386606bd5a2c42e40e8d049238dc19c7e75d05ac08f1ca58eec027b689ae",
-      "bytes": 37040
+      "sha256": "7a5866a47a8df34ed63cec09f293feb3d9230d170018451439d41d5dcb2a72f6",
+      "bytes": 37769
     },
     {
       "path": "findings.json",
@@ -1294,8 +1299,8 @@
     },
     {
       "path": "replay/README.md",
-      "sha256": "4b66c26a9d9cf69b26e08d81dc377b19e0f9a906df9d39fc4f036cb43bb710ec",
-      "bytes": 5165
+      "sha256": "df9fe28f2b757e4ad032ce97cc4efdd6aa31e1b9d05c0392a51defe3508736cd",
+      "bytes": 5480
     },
     {
       "path": "replay/baseline.py",

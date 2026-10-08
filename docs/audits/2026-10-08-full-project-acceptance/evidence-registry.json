@@ -758,6 +758,20 @@
       "result": "Actual SIGKILL tests cover savedmanuscript/session/DB persistence, not this activeAgent crash window. Normal disconnect/cancel failures and durablefinalJob effects are tested separately.",
       "owner": "project maintainer",
       "closure": "Use a delayed fakeAgent onisolateddata; capture toolwrite→hardkill→restart files/Job/effect provenance, classify completed/unknown operations and verify noautomatic replay; resolve anydurability gap beforeclaiming this branch passes."
+    },
+    {
+      "id": "post-delivery-gates-spec-source-diff",
+      "status": "pass",
+      "candidate_sha": "da025b7de90a6b2106892d5d8490bbdfd8628a20",
+      "environment": "macOS27.0 ARM64 / Node24.19.0 / pnpm11.6.0",
+      "operation": "pnpm --dir server gates; pnpm spec:validate; git diff --check baseline HEAD excluding curated evidence",
+      "artifacts": [
+        {
+          "path": "evidence/delivery-verification.json",
+          "sha256": "192592e757c89b5b377feb2986ebccfc95ad62c3f64d176b1accc9f8134bf0f4"
+        }
+      ],
+      "result": "All gates/spec pass; source and document whitespace clean. Full unfiltered diff returns2 for terminal whitespace in preserved evidence logs only; not a product failure."
     }
   ],
   "machine_interruption": "Host date advanced overnight; timeout outcomes preserved and unchanged isolated replays recorded. No root-cause claim based only on timing.",

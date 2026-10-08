@@ -36,6 +36,8 @@ pnpm audit --audit-level high
 pnpm --dir frontend test:e2e:ts --workers=2
 ```
 
+源码和文档差异可用 `git diff --check 066d923d HEAD -- . ":(exclude)docs/audits/2026-10-08-full-project-acceptance/evidence/**"` 检查。未排除证据时，原始终端日志的尾随空白和末尾空行会使检查返回非零；日志保留原貌，参见 `../evidence/delivery-verification.json`。
+
 全依赖审计已知返回非零，因为开发工具链的 braces 告警仍未处理；生产依赖检查通过。覆盖率阈值和断言未降低。浏览器标准套件使用其自身新建的数据目录，禁用浏览器安全选项未使用。
 
 ## ACP 浏览器权限、取消及正式正文边界
