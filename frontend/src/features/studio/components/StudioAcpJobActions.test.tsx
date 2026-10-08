@@ -75,6 +75,9 @@ it("shows a failed evidence read and refuses to retry without it", async () => {
   await act(async () => fireEvent.click(screen.getByRole("button", { name: "Retry continue" })));
   expect(screen.getByRole("alert").textContent).toContain("Evidence unavailable");
   expect(retry).not.toHaveBeenCalled();
+  expect(screen.getByRole<HTMLButtonElement>("button", { name: "Retry continue" }).disabled).toBe(
+    false,
+  );
 });
 const harness = createMountHarness();
 afterEach(() => {

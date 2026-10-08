@@ -54,10 +54,8 @@ export function StudioAcpJobActions({
     } catch (reason) {
       if (!controller.signal.aborted) setError(toErrorMessage(reason, t("acp.error.evidence")));
     } finally {
-      if (controllerRef.current === controller) {
-        controllerRef.current = null;
-        if (!controller.signal.aborted) setBusy(false);
-      }
+      if (controllerRef.current === controller) controllerRef.current = null;
+      setBusy(false);
     }
   };
   const confirm = async () => {
