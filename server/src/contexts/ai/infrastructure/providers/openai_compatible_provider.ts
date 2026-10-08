@@ -6,6 +6,7 @@ import {
   type TextGenerationStreamOptions,
   type TextGenerationTask,
 } from "../../application/ports/text_generation.js";
+import { isProviderStreamTerminal } from "./isProviderStreamTerminal.js";
 import {
   DEFAULT_PROVIDER_RETRY_POLICY,
   DEFAULT_PROVIDER_TIMEOUT_SECONDS,
@@ -210,6 +211,7 @@ export class OpenAICompatibleTextProvider implements TextGenerationProvider {
       usageTokens,
       {
         ...options,
+        isTerminalChunk: (data) => isProviderStreamTerminal(data, "openai_compatible"),
         extractStreamFailure: (data) => {
           const failure = openAiCompatibleStreamFailure(data);
           return failure === undefined ? undefined : providerStreamFailure(context, failure);

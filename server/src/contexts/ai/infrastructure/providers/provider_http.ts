@@ -270,6 +270,8 @@ export interface ProviderStreamOptions extends TextGenerationStreamOptions {
   readonly extractStreamFailure?:
     | ((chunk: Record<string, unknown>) => ProviderTransportError | undefined)
     | undefined;
+  /** Recognize protocol completion without skipping trailing usage or errors. */
+  readonly isTerminalChunk?: ((chunk: Record<string, unknown>) => boolean) | undefined;
 }
 
 /**

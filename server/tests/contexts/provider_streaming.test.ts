@@ -198,6 +198,7 @@ describe("OpenAI-compatible adapter streaming", () => {
         sseResponse([
           JSON.stringify({ choices: [{ delta: { content: '{"chapter_markdown": "a\\' } }] }),
           JSON.stringify({ choices: [{ delta: { content: 'n\\"b\\\\c" }' } }] }),
+          "[DONE]",
         ]),
       ],
       [],
@@ -210,7 +211,12 @@ describe("OpenAI-compatible adapter streaming", () => {
 
   it("fails the stream when the json_object payload lacks chapter_markdown", async () => {
     const transport = scriptedTransport(
-      [sseResponse([JSON.stringify({ choices: [{ delta: { content: '{"other": "value"}' } }] })])],
+      [
+        sseResponse([
+          JSON.stringify({ choices: [{ delta: { content: '{"other": "value"}' } }] }),
+          "[DONE]",
+        ]),
+      ],
       [],
     );
     await expect(
@@ -298,6 +304,9 @@ describe("DashScope adapter streaming", () => {
         sseResponse([
           JSON.stringify({
             output: { choices: [{ message: { content: '{"chapter_markdown": "  padded  "}' } }] },
+          }),
+          JSON.stringify({
+            output: { choices: [{ message: { content: "" }, finish_reason: "stop" }] },
           }),
         ]),
       ],
