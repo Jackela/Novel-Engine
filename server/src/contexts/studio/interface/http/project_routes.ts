@@ -7,6 +7,7 @@ import {
   ERROR_CODES,
   errorEnvelopeResponse,
 } from "../../../../shared/interface/http/error_envelope.js";
+import type { AiOperations } from "../../../ai/application/ports/ai_operations.js";
 import { matchPageLimit } from "../../application/ports/document_store.js";
 import { projectPageLimit } from "../../application/ports/project_catalog_store.js";
 import { scopeForPrincipal } from "../../application/ports/studio_store.js";
@@ -36,6 +37,7 @@ import {
 } from "./studio_schemas.js";
 
 export interface StudioRoutesOptions {
+  aiOperations?: AiOperations | undefined;
   /** Absent while the app is database-free; studio surfaces then answer 503. */
   authService?: AuthService | undefined;
   services?: StudioServices | undefined;

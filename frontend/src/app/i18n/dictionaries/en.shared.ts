@@ -27,6 +27,33 @@ export const enShared = {
   "provider.mock": "Mock (trial — no API key)",
   "provider.dashscope": "DashScope",
   "provider.openaiCompatible": "OpenAI-compatible",
+  "provider.acp": "Grok (ACP)",
+  "acp.action.viewActivity": "View tool activity",
+  "acp.error.evidence": "Unable to load tool activity. Retry after the details are available.",
+  "acp.effects.none": "No file changes were recorded.",
+  "acp.retry.confirmation": "Confirm retry after checking files",
+  "acp.retry.warning":
+    "Your material files may have changed. Check the working folder before retrying.",
+  "acp.retry.confirm": "I checked the working folder; retry",
+  "acp.retry.cancel": "Cancel",
+  "acp.heading": "Agent tools",
+  "acp.status.running": "Working…",
+  "acp.status.connecting": "Connecting…",
+  "acp.status.waiting": "Waiting for your decision",
+  "acp.status.completed": "Operation completed",
+  "acp.status.error": "Operation failed",
+  "acp.status.cancelled": "Operation stopped",
+  "acp.action.stop": "Stop operation",
+  "acp.effects.completed": "Completed file changes remain in your working folder.",
+  "acp.effects.unknown":
+    "Review your working folder before running this operation again; file changes may have completed.",
+  "acp.error.observationLost":
+    "Tool observation ended unexpectedly. Review your working folder before trying again.",
+  "acp.error.missingObserver": "Reconnect to the project before using ACP.",
+  "acp.error.permission": "Unable to send your decision. Try again while the request is active.",
+  "settings.provider.acpNotConfigured": "not configured (ACP connection)",
+  "settings.provider.acpMissingConnection":
+    "The server ACP connection is not configured. Configure the connection and restart, or choose another provider.",
 
   // Count units pick their leaf at the call site (`count === 1 ? ... : ...`)
   // so templates stay word-order free; Chinese uses one form for both.

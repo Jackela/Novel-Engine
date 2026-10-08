@@ -1,5 +1,7 @@
+import type { AgentExecutionEvidence } from "../../../../contexts/ai/application/ports/ai_operations.js";
 import type { JobRecord } from "./job_records.js";
 import { pageLimit } from "./page_limit.js";
+import type { RevisionCaptureLease } from "./revision_pins.js";
 import type { ProjectScope } from "./studio_store.js";
 
 /** A document/revision pair read for provider evaluation without persistence. */
@@ -110,6 +112,9 @@ export interface ReviewSummaryPage {
 
 /** Valid provider output ready for one all-or-nothing persistence command. */
 export interface EvaluatedReview {
+  /** The consumer lands this source or releases it on abandonment; it is never serialized. */
+  readonly sourceLease?: RevisionCaptureLease | undefined;
+  readonly agentExecution?: AgentExecutionEvidence | undefined;
   readonly source: ReviewSource;
   readonly provider: string;
   readonly model: string;
@@ -136,6 +141,12 @@ export interface ReviewOutcomeStore {
    */
   readProjectProvider(scope: ProjectScope, projectId: string): string;
   readReviewSource(scope: ProjectScope, projectId: string, capturedAt: Date): ReviewSource;
+  /** Atomically read and retain a provider source when the adapter owns retention. */
+  captureReviewSource?(
+    scope: ProjectScope,
+    projectId: string,
+    capturedAt: Date,
+  ): { source: ReviewSource; lease: RevisionCaptureLease };
   recordCompletedReviewJob(scope: ProjectScope, input: EvaluatedReview): ReviewCompletionRecord;
   completeReviewRetryJob(
     scope: ProjectScope,

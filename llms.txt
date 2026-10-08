@@ -33,6 +33,8 @@ A self-hosted writing studio: a TypeScript/Fastify + SQLite backend with a React
 - [Studio workspace](https://raw.githubusercontent.com/Jackela/Novel-Engine/main/openwiki/frontend/studio-workspace.md): The browser workspace: routes, workspace hooks, drafts and revisions, streaming proposals, and accessibility behavior.
 - [Product specification](https://raw.githubusercontent.com/Jackela/Novel-Engine/main/openspec/specs/novel-engine/spec.md): Canonical OpenSpec capability specification for Novel Engine.
 
+- [ACP agents and Grok](https://raw.githubusercontent.com/Jackela/Novel-Engine/main/docs/acp.md): Owner-only ACP proxy, stdio connection, host credentials, workspace protection, tool permissions and recovery.
+
 ## Planning and deployment
 
 - [Roadmap](https://raw.githubusercontent.com/Jackela/Novel-Engine/main/docs/roadmap.md): Owner-decided direction, the release gate before 0.9.0, and provider policy.
@@ -59,6 +61,7 @@ A self-hosted writing studio: a TypeScript/Fastify + SQLite backend with a React
 - [ADR-0008: Bounded project shell and explicit current-document resource](https://raw.githubusercontent.com/Jackela/Novel-Engine/main/docs/adr/0008-bounded-project-shell-current-document.md): Project open returns a bounded shell plus one explicit current document instead of full document payloads.
 - [ADR-0009: Frosted-glass design language](https://raw.githubusercontent.com/Jackela/Novel-Engine/main/docs/adr/0009-frosted-glass-design-language.md): A frosted-glass visual language implemented purely in the plain-CSS custom-property token layer.
 - [ADR-0010: Dual-theme token architecture](https://raw.githubusercontent.com/Jackela/Novel-Engine/main/docs/adr/0010-dual-theme-token-architecture.md): Light and dark themes render from one CSS custom-property system with data-theme attribute selection.
+- [ADR-0011: Owner ACP proxy](https://raw.githubusercontent.com/Jackela/Novel-Engine/main/docs/adr/0011-owner-acp-proxy.md): Trusted-owner custom WebSocket transport, request permissions, and external tool effects.
 - [OpenAPI snapshot](https://raw.githubusercontent.com/Jackela/Novel-Engine/main/server/qa-baselines/openapi.current.json): Frozen code-first OpenAPI snapshot used as the API contract baseline. A running server also serves the equivalent live document at `/openapi.json` (registered in `server/src/apps/api/app.ts`); the snapshot is regenerated deliberately via `pnpm --dir server openapi:snapshot`, so drift between the two means it is time to re-snapshot.
 - [Changelog](https://raw.githubusercontent.com/Jackela/Novel-Engine/main/CHANGELOG.md): Release history and notable changes per version.
 - [Design notes](https://raw.githubusercontent.com/Jackela/Novel-Engine/main/DESIGN.md): Product design rationale and direction.

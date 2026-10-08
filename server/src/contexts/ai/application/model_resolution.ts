@@ -5,10 +5,11 @@ export const HARD_DEFAULT_MODELS = {
   mock: "deterministic-story-v1",
   dashscope: "qwen3.5-flash",
   openai_compatible: "gpt-4o-mini",
-} as const satisfies Record<TextProviderName, string>;
+} as const satisfies Record<Exclude<TextProviderName, "acp">, string>;
 
 /** Optional server configuration for the provider-model resolution chain. */
 export interface LlmModelSettings {
+  readonly acpModel?: string | undefined;
   readonly genericModel?: string | undefined;
   readonly dashscopeModel?: string | undefined;
   readonly openaiCompatibleModel?: string | undefined;
@@ -25,13 +26,14 @@ export interface ProviderCatalogOptions {
   readonly defaultProvider: TextProviderName;
   readonly settings: LlmModelSettings;
   readonly credentials: ProviderCredentials;
+  readonly acpConfigured?: boolean | undefined;
 }
 
 /** One provider's server-owned facts as the catalog endpoint exposes them. */
 interface ProviderCatalogEntry {
   readonly provider: TextProviderName;
   readonly configured: boolean;
-  readonly model: string;
+  readonly model: string | null;
   readonly is_default: boolean;
 }
 
@@ -44,6 +46,7 @@ function providerOverride(
   provider: TextProviderName,
   settings: LlmModelSettings,
 ): string | undefined {
+  if (provider === "acp") return nonBlank(settings.acpModel);
   if (provider === "dashscope") return nonBlank(settings.dashscopeModel);
   if (provider === "openai_compatible") return nonBlank(settings.openaiCompatibleModel);
   return undefined;
@@ -54,6 +57,7 @@ export function resolveProviderModel(
   provider: TextProviderName,
   settings: LlmModelSettings = {},
 ): string {
+  if (provider === "acp") return nonBlank(settings.acpModel) ?? "";
   return (
     providerOverride(provider, settings) ??
     nonBlank(settings.genericModel) ??
@@ -83,8 +87,11 @@ function isConfigured(provider: TextProviderName, credentials: ProviderCredentia
 export function buildProviderCatalog(options: ProviderCatalogOptions): ProviderCatalogEntry[] {
   return PROVIDER_NAMES.map((provider) => ({
     provider,
-    configured: isConfigured(provider, options.credentials),
-    model: resolveProviderModel(provider, options.settings),
+    configured:
+      provider === "acp"
+        ? options.acpConfigured === true
+        : isConfigured(provider, options.credentials),
+    model: resolveProviderModel(provider, options.settings) || null,
     is_default: provider === options.defaultProvider,
   }));
 }

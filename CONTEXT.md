@@ -126,3 +126,21 @@ The authenticated actor of a request — the Owner.
 
 **Session**:
 An authenticated Owner session, identified by an HMAC-derived token.
+
+### Agent-assisted work
+
+**ACP agent**:
+An external agent selected to perform generation and supporting tool work.
+It does not become the authority for a Project's accepted manuscript.
+
+**ACP proxy**:
+A connection service that lets the Owner's trusted clients use an ACP agent.
+Each client connection owns its agent execution independently.
+
+**Agent operation**:
+One request-scoped AI execution, including progress and any pending permission
+decision. It is distinct from the durable Job and from an authenticated Session.
+
+**Tool operation**:
+An agent action on supporting materials or working files. Its file effects are
+distinct from accepting a Proposal or saving a Document as a Revision.

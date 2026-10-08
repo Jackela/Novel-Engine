@@ -138,6 +138,7 @@ export function useStudioPageModel(projectId: string, route: StudioRouteState, n
   );
   const diagnosticsDownload = useDiagnosticsDownload(projectId);
   const studioActions = useStudioActions({
+    jobs,
     project,
     projectId,
     setProject,

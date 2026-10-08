@@ -15,6 +15,7 @@ import {
   operationInFlightSchema,
   revisionConflictSchema,
 } from "./studio_schemas.js";
+import { withAiExecution } from "./withAiExecution.js";
 
 /**
  * The stream endpoint hijacks the reply and writes raw SSE frames, so its
@@ -57,7 +58,7 @@ export const proposalRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fa
         }),
       },
     },
-    async (request) => {
+    async (request, reply) => {
       const reportCleanupFailure = (failure: unknown): void => {
         request.log.error(
           { err: failure, errorId: request.id, provider_cleanup_failed: true },
@@ -65,17 +66,20 @@ export const proposalRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fa
         );
       };
       return withAsyncStudioErrors(() =>
-        requireServices(options).proposals.draftProposal(
-          requirePrincipal(request),
-          request.params.projectId,
-          request.params.documentId,
-          {
-            operation: request.body.operation,
-            instruction: request.body.instruction ?? "",
-            provider: request.body.provider ?? "mock",
-          },
-          reportCleanupFailure,
-          request.headers["idempotency-key"],
+        withAiExecution(request, reply, options, request.params.projectId, async (execution) =>
+          requireServices(options).proposals.draftProposal(
+            requirePrincipal(request),
+            request.params.projectId,
+            request.params.documentId,
+            {
+              operation: request.body.operation,
+              instruction: request.body.instruction ?? "",
+              provider: request.body.provider ?? "mock",
+            },
+            reportCleanupFailure,
+            request.headers["idempotency-key"],
+            execution,
+          ),
         ),
       );
     },
@@ -109,34 +113,52 @@ export const proposalRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fa
       // socket is the disconnect signal: since Node 16 the IncomingMessage
       // itself emits "close" as soon as the request message is fully read,
       // which would abort every stream before it starts.
-      const disconnect = new AbortController();
-      const streamSession = requireServices(options).proposals.draftProposalStream(
-        requirePrincipal(request),
+      await withAiExecution(
+        request,
+        reply,
+        options,
         request.params.projectId,
-        request.params.documentId,
-        {
-          operation: request.body.operation,
-          instruction: request.body.instruction ?? "",
-          provider: request.body.provider ?? "mock",
+        async (execution) => {
+          const disconnect = new AbortController();
+          const streamSession = requireServices(options).proposals.draftProposalStream(
+            requirePrincipal(request),
+            request.params.projectId,
+            request.params.documentId,
+            {
+              operation: request.body.operation,
+              instruction: request.body.instruction ?? "",
+              provider: request.body.provider ?? "mock",
+            },
+            reportCleanupFailure,
+            AbortSignal.any([execution.signal ?? disconnect.signal, disconnect.signal]),
+            request.headers["idempotency-key"],
+            execution,
+          );
+          let failed = false;
+          const observedFrames = async function* () {
+            for await (const frame of streamSession.frames) {
+              if (frame.type === "error") failed = true;
+              yield frame;
+            }
+          };
+          const frames = observedFrames();
+          await writeProposalStreamResponse({
+            response: reply.raw,
+            socket: request.raw.socket,
+            frames,
+            disconnect,
+            // The hijack result is discarded on purpose: the option contract is
+            // `() => void`, and Fastify types hijack() as returning the reply for
+            // chaining. Returning it here would hand a thenable to a void slot.
+            hijack: () => {
+              reply.hijack();
+            },
+            pullFirst: () => withAsyncStudioErrors(() => frames.next()),
+            releaseCapacity: streamSession.releaseCapacity,
+          });
+          return { status: failed ? "failed" : "completed" };
         },
-        reportCleanupFailure,
-        disconnect.signal,
-        request.headers["idempotency-key"],
       );
-      await writeProposalStreamResponse({
-        response: reply.raw,
-        socket: request.raw.socket,
-        frames: streamSession.frames,
-        disconnect,
-        // The hijack result is discarded on purpose: the option contract is
-        // `() => void`, and Fastify types hijack() as returning the reply for
-        // chaining. Returning it here would hand a thenable to a void slot.
-        hijack: () => {
-          reply.hijack();
-        },
-        pullFirst: () => withAsyncStudioErrors(() => streamSession.frames.next()),
-        releaseCapacity: streamSession.releaseCapacity,
-      });
     },
   );
 

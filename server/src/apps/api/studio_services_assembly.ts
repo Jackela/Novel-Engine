@@ -94,7 +94,10 @@ export function assembleStudioServices(
         },
         provider: {
           id: provider.defaultProvider,
-          configured: providerConfigured(provider.defaultProvider, provider.providerApiKeys),
+          configured:
+            provider.defaultProvider === "acp"
+              ? provider.acpConfigured
+              : providerConfigured(provider.defaultProvider, provider.providerApiKeys),
         },
         keys: {
           sessionSecret: inputs.sessionSecretConfigured,

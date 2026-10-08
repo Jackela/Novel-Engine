@@ -1,6 +1,8 @@
 import cookie from "@fastify/cookie";
 import type { FastifyInstance } from "fastify";
+import { aiOperationRoutes } from "../../contexts/ai/interface/http/aiOperationRoutes.js";
 import { providerCatalogRoutes } from "../../contexts/ai/interface/http/provider_routes.js";
+import { withStudioErrors } from "../../contexts/studio/interface/http/studio_error_mapping.js";
 import { studioRoutes } from "../../contexts/studio/interface/http/studio_routes.js";
 import type { HealthProbe } from "../../shared/application/ports/health.js";
 import { sqliteHealthProbe } from "../../shared/infrastructure/db/sqlite_health_probe.js";
@@ -88,8 +90,18 @@ export async function registerApiPlugins(
     defaultProvider: provider.defaultProvider,
     settings: provider.providerModelSettings,
     credentials: provider.providerApiKeys,
+    acpConfigured: provider.acpConfigured,
+  });
+  await app.register(aiOperationRoutes, {
+    authService,
+    operations: provider.aiOperations,
+    authorize: (principal, projectId) => {
+      if (studioServices === undefined) throw new Error("Studio services unavailable.");
+      withStudioErrors(() => studioServices.projects.projectShell(principal, projectId));
+    },
   });
   await app.register(studioRoutes, {
+    aiOperations: provider.aiOperations,
     authService,
     services: studioServices,
     dataDirectory,

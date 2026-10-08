@@ -8,6 +8,7 @@ evidence for its named commit, not the status of a later checkout.
 ## Use and operate Novel Engine
 
 - [Project overview](../README.md): installation, configuration, CLI, and upgrades.
+- [ACP agents and Grok](acp.md): independent proxy, server configuration, tool permissions and recovery.
 - [UI screenshots](screenshots/): live captures of the Studio in Chinese and
   English, light and dark themes.
 - [Quickstart](../openwiki/quickstart.md): cross-platform setup, first Owner

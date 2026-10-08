@@ -29,7 +29,17 @@ export const jobDetailParamsSchema = Type.Object({
   jobId: Type.String({ minLength: 1, maxLength: 64 }),
 });
 
+export const aiOperationHeadersSchema = Type.Object({
+  "x-ai-operation-id": Type.Optional(
+    Type.String({
+      format: "uuid",
+      description: "Pre-opened Owner/project AI observation channel.",
+    }),
+  ),
+});
+
 export const jobRetryHeadersSchema = Type.Object({
+  ...aiOperationHeadersSchema.properties,
   "idempotency-key": Type.String({
     minLength: 16,
     maxLength: 128,
@@ -43,6 +53,7 @@ export const jobRetryHeadersSchema = Type.Object({
  * character contract as the retry header so both routes share one key format.
  */
 export const idempotencyKeyHeadersSchema = Type.Object({
+  ...aiOperationHeadersSchema.properties,
   "idempotency-key": Type.Optional(
     Type.String({
       minLength: 16,

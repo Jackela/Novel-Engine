@@ -31,6 +31,7 @@ import type {
   UsageDailyBucket,
   UsageModelRow,
 } from "@/app/types/studio";
+import { parseAgentExecution } from "./parseAgentExecution";
 
 const exportFormats = ["markdown", "docx", "epub"] as const;
 const jobKinds = ["proposal", "review", "export", "lore-extract"] as const;
@@ -171,6 +172,9 @@ export function parseJob(value: unknown, label = "job"): StudioJob {
     model: stringField(item, "model", label),
     request: recordField(item, "request", label),
     result: {
+      ...(result.agent_execution === undefined
+        ? {}
+        : { agent_execution: parseAgentExecution(result.agent_execution) }),
       proposal_markdown: optionalString(
         result,
         "proposal_markdown",

@@ -280,6 +280,7 @@ export interface StudioJob {
   model: string;
   request: Record<string, unknown>;
   result: {
+    agent_execution?: import("../parseAgentExecution").AgentExecution;
     proposal_markdown?: string;
     base_revision_id?: string;
     accepted_revision_id?: string | null;

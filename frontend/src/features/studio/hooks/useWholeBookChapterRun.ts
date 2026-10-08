@@ -4,6 +4,7 @@ import { translateActive } from "@/app/i18n/translate";
 import { ProposalOutcomeUnknownError, streamProposal } from "@/app/proposalStream";
 import { clearGenerateAttempt, getOrCreateGenerateAttemptKey } from "@/app/retryAttemptRegistry";
 import type { Project, StudioDocument } from "@/app/types/studio";
+import { useAcpExecution } from "../AcpOperationProvider";
 import { AcceptedProposalRefreshError, acceptProposalAndRefresh } from "./acceptProposalAndRefresh";
 import { toErrorMessage } from "./toErrorMessage";
 import type { ProposalAuditControl } from "./useStudioJobs";
@@ -62,6 +63,7 @@ export function useWholeBookChapterRun({
   captureAcceptedDocument,
   ledger,
 }: UseWholeBookChapterRunArgs) {
+  const execute = useAcpExecution();
   const committedChaptersRef = useRef<CommittedChapters>({
     projectId,
     documentIds: new Set<string>(),
@@ -130,16 +132,22 @@ export function useWholeBookChapterRun({
             const proposalController = new AbortController();
             currentRun.proposalController = proposalController;
             // react-doctor-disable-next-line async-await-in-loop
-            const job = await streamProposal({
-              projectId,
-              documentId: chapter.id,
-              operation: "generate",
-              instruction: "",
+            const job = await execute(
               provider,
-              signal: proposalController.signal,
-              ...(failingChapterKey === null ? {} : { idempotencyKey: failingChapterKey }),
-              onDelta: () => undefined,
-            });
+              (execution) =>
+                streamProposal({
+                  projectId,
+                  documentId: chapter.id,
+                  operation: "generate",
+                  instruction: "",
+                  provider,
+                  signal: execution?.signal ?? proposalController.signal,
+                  execution,
+                  ...(failingChapterKey === null ? {} : { idempotencyKey: failingChapterKey }),
+                  onDelta: () => undefined,
+                }),
+              proposalController.signal,
+            );
             if (failingChapterKey !== null) {
               clearGenerateAttempt(projectId, chapter.id, "generate", failingChapterKey);
               failingChapterKey = null;
@@ -227,6 +235,7 @@ export function useWholeBookChapterRun({
     },
     [
       beginRun,
+      execute,
       captureAcceptedDocument,
       detachRun,
       getActiveRun,

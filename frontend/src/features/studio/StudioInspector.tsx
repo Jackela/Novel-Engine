@@ -2,6 +2,8 @@ import { ChevronDown } from "lucide-react";
 import { type Dispatch, type SetStateAction, useId } from "react";
 
 import { useTranslation } from "@/app/i18n/useTranslation";
+import { useAcpOperationView } from "./AcpOperationProvider";
+import { StudioAcpOperations } from "./components/StudioAcpOperations";
 import { StudioInspectorPanels } from "./StudioInspectorPanels";
 import { StudioInspectorTabs } from "./StudioInspectorTabs";
 import type { InspectorTab } from "./studioConstants";
@@ -30,6 +32,7 @@ export function StudioInspector({
   pending = DEFAULT_INSPECTOR_PENDING,
   model,
 }: StudioInspectorProps) {
+  const acp = useAcpOperationView();
   const inspectorId = useId();
   const { t } = useTranslation();
   const tabId = (tab: Exclude<InspectorTab, "settings">) => `${inspectorId}-${tab}-tab`;
@@ -52,6 +55,13 @@ export function StudioInspector({
           <ChevronDown aria-hidden="true" />
         </summary>
         <div className="studio-inspector__content">
+          {acp ? (
+            <StudioAcpOperations
+              operations={acp.operations}
+              onRespond={acp.respond}
+              onCancel={acp.cancel}
+            />
+          ) : null}
           {inspector !== "settings" && (
             <StudioInspectorTabs
               inspector={inspector}

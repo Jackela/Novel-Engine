@@ -93,7 +93,7 @@ export class ProposalGenerationPipeline {
         const target = this.resolveTarget(request, step, providerName);
         try {
           provider = this.providerFactory(providerName);
-          const result = await provider.generateStructured(target.task);
+          const result = await provider.generateStructured(target.task, request.execution);
           const { proposal } = validatedProposalOrThrow(result);
           return completedProposalJob(this.jobs, request.scope, target.seed, target.revisionId, {
             proposal,
@@ -102,11 +102,19 @@ export class ProposalGenerationPipeline {
             promptTokens: result.promptTokens,
             completionTokens: result.completionTokens,
             instruction: request.instruction,
+            agentExecution: request.execution?.agentExecution,
           });
         } catch (error) {
           const disposition = firstRunFailureDisposition(error, "proposal");
           if (disposition.kind === "propagate") throw error;
-          return failedProposalJob(this.jobs, request.scope, target, disposition.failure.message);
+          return failedProposalJob(
+            this.jobs,
+            request.scope,
+            target,
+            disposition.failure.message,
+            "",
+            request.execution?.agentExecution,
+          );
         }
       } finally {
         if (provider !== undefined) {
@@ -158,11 +166,14 @@ export class ProposalGenerationPipeline {
             `Provider '${providerName}' does not support streaming generation.`,
           );
         }
+        if (providerName === "acp" && request.execution?.operationId !== undefined)
+          yield { type: "started", operation_id: request.execution.operationId };
         const { reported } = yield* accumulateStreamedDeltas(
           stream,
           target.task,
           options.signal,
           accumulated,
+          request.execution,
         );
         // Drain the sink: a completed stream keeps no partial, so only text from
         // a stream that actually broke mid-flight survives for the failed job.
@@ -181,6 +192,7 @@ export class ProposalGenerationPipeline {
               promptTokens: reported?.promptTokens ?? null,
               completionTokens: reported?.completionTokens ?? null,
               instruction: request.instruction,
+              agentExecution: request.execution?.agentExecution,
             }),
           ),
         };
@@ -191,12 +203,30 @@ export class ProposalGenerationPipeline {
         // PROVIDER_NOT_CONFIGURED envelope naming the missing credential;
         // unknown failures take the same propagate exit.
         if (disposition.kind === "propagate") throw error;
-        if (disposition.kind === "abort") return;
+        if (disposition.kind === "abort") {
+          if (providerName === "acp" && request.execution?.agentExecution !== undefined)
+            failedProposalJob(
+              this.jobs,
+              request.scope,
+              target,
+              "ACP turn cancelled; inspect external tool effects before retry.",
+              accumulated.join(""),
+              request.execution.agentExecution,
+            );
+          return;
+        }
         // DR-006: a stream that broke mid-flight persists its accumulated text
         // (sanitized) as `partial_markdown`; a completed stream drained the sink
         // above and persists none.
         const failure = disposition.failure.message;
-        failedProposalJob(this.jobs, request.scope, target, failure, accumulated.join(""));
+        failedProposalJob(
+          this.jobs,
+          request.scope,
+          target,
+          failure,
+          accumulated.join(""),
+          request.execution?.agentExecution,
+        );
         yield { type: "error", error: { code: "PROVIDER_FAILED", message: failure } };
       }
     } finally {
@@ -230,7 +260,7 @@ export class ProposalGenerationPipeline {
       provider = this.providerFactory(recovery.providerName);
       // A retried generation is a proposal generation too (#314): it assembles
       // the same resident context instead of the amnesiac historical shape.
-      const result = await provider.generateStructured(task);
+      const result = await provider.generateStructured(task, request.execution);
       const outcome = validatedProposalOrThrow(result);
       // #392: the outcome transition and its usage event commit together, in
       // the same landing shape a fresh draft lands by construction.
@@ -246,6 +276,7 @@ export class ProposalGenerationPipeline {
             promptTokens: result.promptTokens,
             completionTokens: result.completionTokens,
             instruction: recovery.instruction,
+            agentExecution: request.execution?.agentExecution,
           },
           { operation: retry.operation, revisionId: recovery.baseRevisionId, now: request.now() },
         ),

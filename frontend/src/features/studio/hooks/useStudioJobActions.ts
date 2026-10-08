@@ -4,6 +4,7 @@ import { api, HttpError } from "@/app/api";
 import { translateActive } from "@/app/i18n/translate";
 import { clearRetryAttempt, getOrCreateRetryAttemptKey } from "@/app/retryAttemptRegistry";
 import type { ReviewsPage } from "@/app/types/studio";
+import { useAcpExecution } from "../AcpOperationProvider";
 import { toErrorMessage } from "./toErrorMessage";
 import { usePendingAction } from "./usePendingAction";
 import type { StudioActionsOwner } from "./useStudioActionOwner";
@@ -18,6 +19,8 @@ type JobActionErrorSource = "review" | "retryJob";
 const DEFINITIVE_RETRY_REJECTIONS = new Set([401, 403, 404, 422]);
 
 interface UseStudioJobActionsOptions {
+  readonly provider?: string;
+  readonly jobs?: readonly { readonly id: string; readonly provider: string }[];
   readonly projectId: string;
   readonly currentOwner: () => StudioActionsOwner | null;
   readonly isCurrentOwner: (owner: StudioActionsOwner) => boolean;
@@ -37,6 +40,8 @@ interface UseStudioJobActionsOptions {
  * idempotency keys.
  */
 export function useStudioJobActions({
+  provider = "mock",
+  jobs,
   projectId,
   currentOwner,
   isCurrentOwner,
@@ -45,6 +50,7 @@ export function useStudioJobActions({
   loadJobs,
   isProposalActionGated,
 }: UseStudioJobActionsOptions) {
+  const execute = useAcpExecution();
   const { pending, begin, finish } = usePendingAction<ActionKey>(ACTION_KEYS);
   const [retryingJobId, setRetryingJobId] = useState<string | null>(null);
 
@@ -63,7 +69,9 @@ export function useStudioJobActions({
     try {
       // The synchronous job contract (#272): the response is the terminal
       // review job; one cursorless first-page refresh follows (#459).
-      const job = await api.createReview(projectId);
+      const job = await execute(provider, (execution) =>
+        execution ? api.createReview(projectId, execution) : api.createReview(projectId),
+      );
       if (job.status !== "completed") {
         throw new Error(job.error ?? translateActive("errors.runReview"));
       }
@@ -79,7 +87,17 @@ export function useStudioJobActions({
       if (reviewController) owner.controllers.delete(reviewController);
       finishForOwner(owner, "runReview");
     }
-  }, [begin, currentOwner, finishForOwner, isCurrentOwner, projectId, publishError, setReviewPage]);
+  }, [
+    begin,
+    currentOwner,
+    execute,
+    provider,
+    finishForOwner,
+    isCurrentOwner,
+    projectId,
+    publishError,
+    setReviewPage,
+  ]);
 
   const retryJob = useCallback(
     async (jobId: string) => {
@@ -91,7 +109,13 @@ export function useStudioJobActions({
       let idempotencyKey: string | null = null;
       try {
         idempotencyKey = getOrCreateRetryAttemptKey(projectId, jobId);
-        await api.retryJob(projectId, jobId, idempotencyKey);
+        const key = idempotencyKey;
+        const jobProvider = jobs?.find((job) => job.id === jobId)?.provider ?? provider;
+        await execute(jobProvider, (execution) =>
+          execution
+            ? api.retryJob(projectId, jobId, key, execution)
+            : api.retryJob(projectId, jobId, key),
+        );
         clearRetryAttempt(projectId, jobId, idempotencyKey);
         if (!isCurrentOwner(owner)) return;
         await loadJobs("retry");
@@ -111,6 +135,9 @@ export function useStudioJobActions({
     },
     [
       begin,
+      execute,
+      provider,
+      jobs,
       currentOwner,
       finishForOwner,
       isProposalActionGated,

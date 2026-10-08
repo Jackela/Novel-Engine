@@ -4,6 +4,7 @@ import { translateActive } from "@/app/i18n/translate";
 import { ProposalOutcomeUnknownError, streamProposal } from "@/app/proposalStream";
 import { clearGenerateAttempt, getOrCreateGenerateAttemptKey } from "@/app/retryAttemptRegistry";
 import type { Project, StudioDocument, StudioJob } from "@/app/types/studio";
+import { useAcpExecution } from "../AcpOperationProvider";
 import { toErrorMessage } from "./toErrorMessage";
 import type { PendingActionController } from "./usePendingAction";
 import type { ProposalAuditControl } from "./useStudioJobs";
@@ -92,6 +93,7 @@ export function useProposalStreamSession({
   nextRequestEpoch,
   isProjectLive,
 }: ProposalStreamSessionOptions) {
+  const execute = useAcpExecution();
   const [proposalState, setProposalState] = useState<DocumentProposal | null>(null);
   const [instruction, setInstruction] = useState("");
   // #308: the in-flight streamed markdown lands in the proposal preview only;
@@ -179,31 +181,37 @@ export function useProposalStreamSession({
         stopped: false,
       });
       try {
-        const nextProposal = await streamProposal({
-          projectId,
-          documentId: activeDocument.id,
-          operation,
-          instruction,
-          provider: String(project.settings.provider ?? "mock"),
-          signal: controller.signal,
-          ...(idempotencyKey === null ? {} : { idempotencyKey }),
-          onDelta: (text) => {
-            if (
-              proposalAudit.epoch() !== auditEpoch ||
-              !isCurrentRequest(ownerKey, requestEpoch) ||
-              controller.signal.aborted
-            ) {
-              return;
-            }
-            setStreaming((current) =>
-              current?.ownerKey === ownerKey &&
-              current.auditEpoch === auditEpoch &&
-              current.requestEpoch === requestEpoch
-                ? { ...current, text: current.text + text }
-                : current,
-            );
-          },
-        });
+        const nextProposal = await execute(
+          String(project.settings.provider ?? "mock"),
+          (execution) =>
+            streamProposal({
+              projectId,
+              documentId: activeDocument.id,
+              operation,
+              instruction,
+              provider: String(project.settings.provider ?? "mock"),
+              signal: execution?.signal ?? controller.signal,
+              execution,
+              ...(idempotencyKey === null ? {} : { idempotencyKey }),
+              onDelta: (text) => {
+                if (
+                  proposalAudit.epoch() !== auditEpoch ||
+                  !isCurrentRequest(ownerKey, requestEpoch) ||
+                  controller.signal.aborted
+                ) {
+                  return;
+                }
+                setStreaming((current) =>
+                  current?.ownerKey === ownerKey &&
+                  current.auditEpoch === auditEpoch &&
+                  current.requestEpoch === requestEpoch
+                    ? { ...current, text: current.text + text }
+                    : current,
+                );
+              },
+            }),
+          controller.signal,
+        );
         if (
           proposalAudit.epoch() !== auditEpoch ||
           !isCurrentRequest(ownerKey, requestEpoch) ||
@@ -286,6 +294,7 @@ export function useProposalStreamSession({
     },
     [
       activeDocument,
+      execute,
       begin,
       finish,
       instruction,

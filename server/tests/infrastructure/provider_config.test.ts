@@ -28,6 +28,14 @@ describe("provider configuration parser", () => {
   it("uses the server-owned defaults without exposing a model choice", () => {
     expect(loadLlmServerConfig(environment())).toEqual({
       defaultProvider: "mock",
+      acp: {
+        proxyUrl: "ws://127.0.0.1:8710/acp",
+        tokenFile: undefined,
+        command: "grok",
+        args: ["--no-auto-update", "--sandbox", "novel-engine", "agent", "--no-leader", "stdio"],
+        workspaceRoot: undefined,
+        model: undefined,
+      },
       genericModel: undefined,
       dashscopeModel: undefined,
       dashscopeReviewModel: undefined,
@@ -154,5 +162,25 @@ describe("provider configuration parser", () => {
       loadLlmServerConfig(environment({ LLM_LOREBOOK_BUDGET_CHARACTERS: "1" }))
         .lorebookBudgetCharacters,
     ).toBe(1);
+  });
+  it("loads server-owned ACP arguments as an array and refuses shell-shaped or invalid input", () => {
+    const config = loadLlmServerConfig(
+      environment({
+        LLM_PROVIDER: "acp",
+        ACP_PROXY_TOKEN_FILE: "/isolated/proxy-token",
+        ACP_WORKSPACE_ROOT: "/isolated/materials",
+        ACP_AGENT_ARGS: '["agent","stdio"]',
+        ACP_MODEL: "confirmed-model",
+      }),
+    );
+    expect(config.acp).toMatchObject({
+      args: ["agent", "stdio"],
+      model: "confirmed-model",
+      workspaceRoot: "/isolated/materials",
+    });
+    for (const raw of ['"agent; rm -rf data"', '["agent",42]', "not-json"])
+      expect(() => loadLlmServerConfig(environment({ ACP_AGENT_ARGS: raw }))).toThrow(
+        "ACP_AGENT_ARGS must be a JSON string array",
+      );
   });
 });

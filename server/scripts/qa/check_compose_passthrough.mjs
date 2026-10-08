@@ -32,6 +32,12 @@ const COMPOSE_FILES = ["compose.yaml", "deploy/compose.yaml"];
 // must surface from the extraction or the gate fails loudly.
 const PROVIDER_ANCHORS = [
   "LLM_PROVIDER",
+  "ACP_PROXY_URL",
+  "ACP_PROXY_TOKEN_FILE",
+  "ACP_AGENT_COMMAND",
+  "ACP_AGENT_ARGS",
+  "ACP_WORKSPACE_ROOT",
+  "ACP_MODEL",
   "LLM_MODEL",
   "DASHSCOPE_MODEL",
   "DASHSCOPE_REVIEW_MODEL",

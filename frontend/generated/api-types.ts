@@ -579,6 +579,159 @@ export interface paths {
         };
         trace?: never;
     };
+    "/api/projects/{projectId}/ai-operations/{operationId}/events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    projectId: string;
+                    operationId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description AI operation events (ready/tool/permission/completed/error) */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/event-stream": string;
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/projects/{projectId}/ai-operations/{operationId}/permissions/{permissionId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    projectId: string;
+                    operationId: string;
+                    permissionId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        option_id: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/projects/{projectId}/ai-proposals/{jobId}/accept": {
         parameters: {
             query?: never;
@@ -1432,6 +1585,8 @@ export interface paths {
             parameters: {
                 query?: never;
                 header?: {
+                    /** @description Pre-opened Owner/project AI observation channel. */
+                    "x-ai-operation-id"?: string;
                     "idempotency-key"?: string;
                 };
                 path: {
@@ -1451,7 +1606,7 @@ export interface paths {
                          * @default mock
                          * @enum {string}
                          */
-                        provider?: "mock" | "dashscope" | "openai_compatible";
+                        provider?: "mock" | "dashscope" | "openai_compatible" | "acp";
                     };
                 };
             };
@@ -1653,6 +1808,8 @@ export interface paths {
             parameters: {
                 query?: never;
                 header?: {
+                    /** @description Pre-opened Owner/project AI observation channel. */
+                    "x-ai-operation-id"?: string;
                     "idempotency-key"?: string;
                 };
                 path: {
@@ -1672,7 +1829,7 @@ export interface paths {
                          * @default mock
                          * @enum {string}
                          */
-                        provider?: "mock" | "dashscope" | "openai_compatible";
+                        provider?: "mock" | "dashscope" | "openai_compatible" | "acp";
                     };
                 };
             };
@@ -3304,6 +3461,8 @@ export interface paths {
             parameters: {
                 query?: never;
                 header: {
+                    /** @description Pre-opened Owner/project AI observation channel. */
+                    "x-ai-operation-id"?: string;
                     "idempotency-key": string;
                 };
                 path: {
@@ -3519,7 +3678,10 @@ export interface paths {
         post: {
             parameters: {
                 query?: never;
-                header?: never;
+                header?: {
+                    /** @description Pre-opened Owner/project AI observation channel. */
+                    "x-ai-operation-id"?: string;
+                };
                 path: {
                     projectId: string;
                 };
@@ -3532,7 +3694,7 @@ export interface paths {
                          * @default mock
                          * @enum {string}
                          */
-                        provider?: "mock" | "dashscope" | "openai_compatible";
+                        provider?: "mock" | "dashscope" | "openai_compatible" | "acp";
                         segment: string;
                     };
                 };
@@ -3749,7 +3911,10 @@ export interface paths {
         post: {
             parameters: {
                 query?: never;
-                header?: never;
+                header?: {
+                    /** @description Pre-opened Owner/project AI observation channel. */
+                    "x-ai-operation-id"?: string;
+                };
                 path: {
                     projectId: string;
                 };
@@ -4804,9 +4969,9 @@ export interface paths {
                             providers: {
                                 configured: boolean;
                                 is_default: boolean;
-                                model: string;
+                                model: string | null;
                                 /** @enum {string} */
-                                provider: "mock" | "dashscope" | "openai_compatible";
+                                provider: "mock" | "dashscope" | "openai_compatible" | "acp";
                             }[];
                         };
                     };

@@ -38,6 +38,14 @@ services:
       SECURITY_TRUSTED_PROXIES: ${SECURITY_TRUSTED_PROXIES:-}
       DB_URL: sqlite:///./data/novel-engine.sqlite3
       LLM_PROVIDER: ${LLM_PROVIDER:-mock}
+      # ACP proxy runs on the operator host; its token file is mounted separately.
+      # Agent command/model are server-owned, never supplied by Studio requests.
+      ACP_PROXY_URL: ${ACP_PROXY_URL:-}
+      ACP_PROXY_TOKEN_FILE: ${ACP_PROXY_TOKEN_FILE:-}
+      ACP_AGENT_COMMAND: ${ACP_AGENT_COMMAND:-}
+      ACP_AGENT_ARGS: ${ACP_AGENT_ARGS:-}
+      ACP_WORKSPACE_ROOT: ${ACP_WORKSPACE_ROOT:-}
+      ACP_MODEL: ${ACP_MODEL:-}
       # Provider settings pass through from the shell environment or the
       # project .env file, so writing a key into .env and running
       # `docker compose up -d` is enough. This list mirrors every provider

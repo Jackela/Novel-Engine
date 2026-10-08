@@ -1,4 +1,5 @@
 import type {
+  TextGenerationExecutionOptions,
   TextGenerationStreamOptions,
   TextGenerationStreamOutcome,
   TextGenerationTask,
@@ -24,6 +25,7 @@ export async function* accumulateStreamedDeltas(
   signal: AbortSignal | undefined,
   // Caller-owned sink so a mid-stream failure can still read the text (#DR-006).
   accumulated: string[],
+  execution?: TextGenerationExecutionOptions,
 ): AsyncGenerator<
   ProposalStreamFramePayload,
   { reported: TextGenerationStreamOutcome | undefined },
@@ -32,6 +34,7 @@ export async function* accumulateStreamedDeltas(
   const codePoints = createProposalCodePointCounter();
   let reported: TextGenerationStreamOutcome | undefined;
   for await (const delta of generate(task, {
+    ...execution,
     signal,
     onOutcome: (value) => {
       reported = value;

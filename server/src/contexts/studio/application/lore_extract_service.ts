@@ -1,4 +1,5 @@
 import type {
+  TextGenerationExecutionOptions,
   TextGenerationProvider,
   TextGenerationProviderFactory,
   TextGenerationTask,
@@ -42,6 +43,7 @@ export interface LoreExtractSegmentInput {
 
 /** A claimed lore-extract retry row plus the scope and clock executing it. */
 export interface LoreExtractRetryRequest {
+  readonly execution?: TextGenerationExecutionOptions | undefined;
   readonly scope: ProjectScope;
   readonly retry: JobRecord;
   readonly reportCleanupFailure: ProviderCleanupFailureReporter;
@@ -98,11 +100,12 @@ async function generateLoreCandidates(
   providerName: TextProviderName,
   task: TextGenerationTask,
   reportCleanupFailure: ProviderCleanupFailureReporter,
+  execution?: TextGenerationExecutionOptions,
 ): Promise<ExtractionOutcome> {
   let provider: TextGenerationProvider | undefined;
   try {
     provider = providerFactory(providerName);
-    const result = await provider.generateStructured(task);
+    const result = await provider.generateStructured(task, execution);
     return {
       candidates: validatedLoreCandidates(result.content),
       model: result.model,
@@ -135,6 +138,7 @@ export class LoreExtractService {
     projectId: string,
     input: LoreExtractSegmentInput,
     reportCleanupFailure: ProviderCleanupFailureReporter,
+    execution?: TextGenerationExecutionOptions,
   ): Promise<Record<string, unknown>> {
     const scope = scopeForPrincipal(principal);
     const providerName = admitTextProvider(input.provider);
@@ -148,8 +152,14 @@ export class LoreExtractService {
         providerName,
         task,
         reportCleanupFailure,
+        execution,
       );
-      const resultJson = dumpJson({ candidates: outcome.candidates });
+      const resultJson = dumpJson({
+        candidates: outcome.candidates,
+        ...(providerName === "acp" && execution?.agentExecution !== undefined
+          ? { agent_execution: execution.agentExecution }
+          : {}),
+      });
       return jobPayload(
         this.jobs.recordJobWithUsage(scope, {
           job: {
@@ -189,7 +199,12 @@ export class LoreExtractService {
             provider: providerName,
             model: "",
             requestJson,
-            resultJson: dumpJson({ candidates: [] }),
+            resultJson: dumpJson({
+              candidates: [],
+              ...(providerName === "acp" && execution?.agentExecution !== undefined
+                ? { agent_execution: execution.agentExecution }
+                : {}),
+            }),
             error: disposition.failure.message,
             now: this.now(),
           }),
@@ -218,8 +233,14 @@ export class LoreExtractService {
       providerName,
       task,
       request.reportCleanupFailure,
+      request.execution,
     );
-    const resultJson = dumpJson({ candidates: outcome.candidates });
+    const resultJson = dumpJson({
+      candidates: outcome.candidates,
+      ...(providerName === "acp" && request.execution?.agentExecution !== undefined
+        ? { agent_execution: request.execution.agentExecution }
+        : {}),
+    });
     return this.jobs.markJobOutcomeWithUsage(request.scope, retry.projectId, retry.id, {
       outcome: {
         status: "completed",

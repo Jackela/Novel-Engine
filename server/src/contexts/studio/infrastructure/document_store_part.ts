@@ -1,5 +1,4 @@
 import { and, desc, eq } from "drizzle-orm";
-
 import { InvalidOperationError } from "../../../shared/domain/exceptions.js";
 import type { StudioSqliteDatabase } from "../../../shared/infrastructure/db/connection.js";
 import type {
@@ -13,6 +12,7 @@ import type {
   RevisionSummaryPage,
 } from "../application/ports/document_store.js";
 import { revisionPageLimit } from "../application/ports/document_store.js";
+import type { RevisionPins } from "../application/ports/revision_pins.js";
 import type { ProjectScope } from "../application/ports/studio_store.js";
 import type { WritingStatsHistory } from "../application/ports/writing_stats.js";
 import { DuplicateDocumentError, NotFoundError, SnapshotConflict } from "../domain/exceptions.js";
@@ -45,7 +45,10 @@ import { buildRevisionSummariesQuery } from "./revision_page_queries.js";
 export class DocumentStorePart implements DocumentStore {
   protected readonly db: StudioSqliteDatabase;
 
-  constructor(db: StudioSqliteDatabase) {
+  constructor(
+    db: StudioSqliteDatabase,
+    private readonly revisionPins?: RevisionPins,
+  ) {
     this.db = db;
   }
 
@@ -112,7 +115,7 @@ export class DocumentStorePart implements DocumentStore {
     input: AdvanceDocumentInput,
   ): DocumentWithCurrent {
     return this.db.transaction((tx) =>
-      advanceDocumentInTransaction(tx, scope, projectId, documentId, input),
+      advanceDocumentInTransaction(tx, scope, projectId, documentId, input, this.revisionPins),
     );
   }
 

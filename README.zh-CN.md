@@ -79,3 +79,7 @@ docker compose up -d
 - [升级](openwiki/guides/zh/upgrading.md)
 - [故障排除](openwiki/guides/zh/troubleshooting.md)
 - [常见问题](openwiki/guides/zh/faq.md)
+
+## ACP 代理与 Grok
+
+当前未发布候选支持通过 `acp` Provider 续写、改写、Review 和提取设定。独立宿主代理复用本机 Grok 登录态；工作室只选择 Provider，命令和模型由后端配置。工具授权与执行记录显示在工作室中，文件影响不会因取消而撤销。安装、资料目录保护、容器连接和恢复说明见 [ACP 使用指南](docs/acp.md)。已发布的 0.8.0 镜像不包含本功能，需从本候选构建。

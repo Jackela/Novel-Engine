@@ -15,6 +15,7 @@ import {
 } from "../../shared/infrastructure/db/database_authority.js";
 import { buildApp } from "../api/app.js";
 import { closeResourceAndRethrow } from "../api/app_lifecycle.js";
+import { AcpCommand, type AcpCommandContext } from "./AcpCommand.js";
 import { runDoctorCommand } from "./doctor_command.js";
 import { runLegacyImportCommand } from "./legacy_import_command.js";
 import { runMigrateCommand } from "./migrate_command.js";
@@ -51,6 +52,8 @@ type ImportRunner = (
 ) => Promise<number>;
 
 interface CliContext {
+  /** ACP uses stdio and an independent gateway; it never loads Studio configuration. */
+  readonly acp?: AcpCommandContext;
   /** Process-style variables; defaults to `process.env`. */
   readonly env?: LoadServerConfigInput["env"];
   /** `.env.local` location; `null` disables file loading (tests). */
@@ -92,6 +95,8 @@ const USAGE = [
   "      Apply pending migrations and data reconciliation (backing up when migrations are pending).",
   "  owner reset",
   "      Delete the local Owner and its sessions so first-run setup is available again.",
+  "  acp serve --token-file PATH [--host HOST] [--port PORT]",
+  "  acp connect --url URL --token-file PATH --command COMMAND [--arg ARG ...] --cwd DIR",
 ].join("\n");
 
 const NO_DATABASE_MESSAGE = "No database exists yet.";
@@ -238,6 +243,15 @@ const legacyImportRunner: ImportRunner = async (args, context) => {
 
 /** Dispatch one CLI invocation; the returned number is the exit code. */
 export async function runCli(argv: readonly string[], context: CliContext = {}): Promise<number> {
+  if (argv[0] === "acp") {
+    return AcpCommand(argv.slice(1), {
+      ...context.acp,
+      ...(context.writeLine === undefined ? {} : { diagnostic: context.writeLine }),
+      ...(context.shutdownSignalSource === undefined
+        ? {}
+        : { shutdownSignalSource: context.shutdownSignalSource }),
+    });
+  }
   const writeLine = context.writeLine ?? console.log;
   const parsed = parseArguments(argv);
   try {

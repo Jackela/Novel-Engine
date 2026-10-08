@@ -36,7 +36,10 @@ type ResponseParser<T> = (value: unknown) => T;
  * `{ error: { code, message, details } }`. Unknown bodies fall back to the
  * caller's status message.
  */
-async function readHttpError(response: Response, fallbackMessage: string): Promise<HttpError> {
+export async function readHttpError(
+  response: Response,
+  fallbackMessage: string,
+): Promise<HttpError> {
   const payload = await response.json().catch(() => null);
   if (isRecord(payload) && isRecord(payload.error)) {
     const envelope = payload.error;
@@ -49,10 +52,10 @@ async function readHttpError(response: Response, fallbackMessage: string): Promi
 
 export async function request<T>(
   path: string,
-  init: RequestInit | undefined,
+  init: import("./AiExecutionOptions").AiExecutionOptions | undefined,
   parse: ResponseParser<T>,
 ): Promise<T> {
-  const abortScope = createRequestAbortScope(init?.signal);
+  const abortScope = createRequestAbortScope(init?.signal, init?.timeoutMs);
   try {
     let response: Response;
     try {

@@ -8,7 +8,7 @@ import {
 } from "../../../../shared/interface/http/error_envelope.js";
 import { reviewPageLimit } from "../../application/ports/review_outcome_store.js";
 import { reviewPayload, reviewSummaryPayload } from "../../application/review_payloads.js";
-import { jobResponseSchema } from "./job_schemas.js";
+import { aiOperationHeadersSchema, jobResponseSchema } from "./job_schemas.js";
 import { requireServices, type StudioRoutesOptions } from "./project_routes.js";
 import { decodeReviewCursor, encodeReviewCursor } from "./review_cursor.js";
 import {
@@ -21,6 +21,7 @@ import { authedReadResponses, authedWriteResponses } from "./route_responses.js"
 import { withAsyncStudioErrors, withStudioErrors } from "./studio_error_mapping.js";
 import { projectIdParams, reviewIdParams } from "./studio_request_schemas.js";
 import { operationCapacityResponseSchema, operationInFlightSchema } from "./studio_schemas.js";
+import { withAiExecution } from "./withAiExecution.js";
 
 /** Snapshot-bound editorial assessments, with server-owned provider provenance. */
 export const reviewRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fastify, options) => {
@@ -60,6 +61,7 @@ export const reviewRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fast
       preHandler: [guard],
       schema: {
         params: projectIdParams,
+        headers: aiOperationHeadersSchema,
         body: reviewCreateSchema,
         response: authedWriteResponses({
           201: jobResponseSchema,
@@ -84,10 +86,13 @@ export const reviewRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fast
         );
       };
       const payload = await withAsyncStudioErrors(() =>
-        requireServices(options).jobHistory.recordReviewJob(
-          requirePrincipal(request),
-          request.params.projectId,
-          reportCleanupFailure,
+        withAiExecution(request, reply, options, request.params.projectId, async (execution) =>
+          requireServices(options).jobHistory.recordReviewJob(
+            requirePrincipal(request),
+            request.params.projectId,
+            reportCleanupFailure,
+            execution,
+          ),
         ),
       );
       reply.status(201);

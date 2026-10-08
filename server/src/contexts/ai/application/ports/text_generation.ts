@@ -20,7 +20,7 @@ export function isProviderStep(value: string): value is ProviderStep {
 }
 
 /** The provider names clients may choose from; models are never client input. */
-export const PROVIDER_NAMES = ["mock", "dashscope", "openai_compatible"] as const;
+export const PROVIDER_NAMES = ["mock", "dashscope", "openai_compatible", "acp"] as const;
 
 export type TextProviderName = (typeof PROVIDER_NAMES)[number];
 
@@ -107,7 +107,17 @@ export interface TextGenerationStreamOutcome {
   readonly completionTokens: number | null;
 }
 
-export interface TextGenerationStreamOptions {
+export interface TextGenerationExecutionOptions {
+  readonly agentExecution?: import("./ai_operations.js").AgentExecutionEvidence | undefined;
+  readonly operationId?: string | undefined;
+  readonly signal?: AbortSignal | undefined;
+  readonly onAgentEvent?: ((event: import("./ai_operations.js").AgentEvent) => void) | undefined;
+  readonly requestPermission?:
+    | ((request: import("./ai_operations.js").AgentPermissionRequest) => Promise<string | null>)
+    | undefined;
+}
+
+export interface TextGenerationStreamOptions extends TextGenerationExecutionOptions {
   /**
    * Aborts the upstream request and stops the stream; deltas already yielded
    * stay valid, but the stream outcome is never reported after an abort.
@@ -138,7 +148,10 @@ export interface TextGenerationProvider {
    * schema-invalid JSON. Anything else is a programming error and stays
    * unnormalized.
    */
-  generateStructured(task: TextGenerationTask): Promise<TextGenerationResult>;
+  generateStructured(
+    task: TextGenerationTask,
+    options?: TextGenerationExecutionOptions,
+  ): Promise<TextGenerationResult>;
   /**
    * Optional streaming capability (#308): yields raw chapter_markdown deltas
    * as the provider produces them — the concatenation of every delta is the

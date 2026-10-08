@@ -106,6 +106,14 @@ describe("environment configuration surface", () => {
     }) as ServerConfig;
 
     expect(config.llm).toEqual({
+      acp: {
+        proxyUrl: "ws://127.0.0.1:8710/acp",
+        tokenFile: undefined,
+        command: "grok",
+        args: ["--no-auto-update", "--sandbox", "novel-engine", "agent", "--no-leader", "stdio"],
+        workspaceRoot: undefined,
+        model: undefined,
+      },
       defaultProvider: "dashscope",
       genericModel: "env-model",
       dashscopeModel: "env-dashscope-model",

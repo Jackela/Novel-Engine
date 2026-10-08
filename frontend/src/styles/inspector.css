@@ -258,3 +258,19 @@
   border-radius: 5px;
   text-align: center;
 }
+.studio-acp p {
+  overflow-wrap: anywhere;
+}
+
+.studio-acp__permission {
+  min-width: 0;
+  margin: 0 0 12px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+
+.studio-acp__permission legend {
+  padding: 0 4px;
+  font-weight: 600;
+}

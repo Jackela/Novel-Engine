@@ -39,6 +39,7 @@ import { parseRevisionDetail } from "@/app/revisionDetailContract";
 import { parseSearch } from "@/app/searchContract";
 import { parseWritingStats } from "@/app/statsContract";
 import type { DocumentKind, ExportFormat, LoreStatus, ProjectUpdateBody } from "@/app/types/studio";
+import type { AiExecutionOptions } from "./AiExecutionOptions";
 
 export { apiUrl, getCsrfToken, HttpError } from "@/app/httpClient";
 
@@ -180,8 +181,12 @@ export const api = {
     request(...reviewsRequest(projectId, options), parseReviews),
   reviewDetail: (projectId: string, reviewId: string, init?: RequestInit) =>
     request(reviewDetailPath(projectId, reviewId), init, parseReviewDetail),
-  createReview: (projectId: string) =>
-    request(`/api/projects/${projectId}/reviews`, { method: "POST" }, parseReviewJobResponse),
+  createReview: (projectId: string, init?: AiExecutionOptions) =>
+    request(
+      `/api/projects/${projectId}/reviews`,
+      { ...init, method: "POST" },
+      parseReviewJobResponse,
+    ),
   exports: (projectId: string, options: ExportsRequestOptions = {}) => {
     const [path, init] = projectExportsRequest(projectId, options);
     return request(path, init, parseExports);
@@ -214,17 +219,39 @@ export const api = {
       init,
       parseWritingStats,
     ),
-  extractLore: (projectId: string, segment: string, provider: string) =>
-    postJson(
+  extractLore: (projectId: string, segment: string, provider: string, init?: AiExecutionOptions) =>
+    request(
       `/api/projects/${projectId}/lore-extractions`,
-      { segment, provider },
+      { ...init, method: "POST", body: json({ segment, provider }) },
       parseLoreExtractJob,
     ),
   diagnostics: (projectId: string, init?: RequestInit) =>
     request(`/api/projects/${projectId}/diagnostics`, init, parseDiagnostics),
-  retryJob: (projectId: string, jobId: string, idempotencyKey: string) => {
+  retryJob: (
+    projectId: string,
+    jobId: string,
+    idempotencyKey: string,
+    execution?: AiExecutionOptions,
+  ) => {
     const [path, init] = retryJobRequest(projectId, jobId, idempotencyKey);
-    return request(path, init, parseJob);
+    return request(
+      path,
+      { ...execution, ...init, headers: { ...execution?.headers, ...init.headers } },
+      parseJob,
+    );
   },
+  respondAiPermission: (
+    projectId: string,
+    operationId: string,
+    permissionId: string,
+    optionId: string,
+    init?: RequestInit,
+  ) =>
+    postJson(
+      `/api/projects/${encodeURIComponent(projectId)}/ai-operations/${encodeURIComponent(operationId)}/permissions/${encodeURIComponent(permissionId)}`,
+      { option_id: optionId },
+      parseVoid,
+      init,
+    ),
   download: (path: string, init?: RequestInit) => downloadBlob(path, init),
 };

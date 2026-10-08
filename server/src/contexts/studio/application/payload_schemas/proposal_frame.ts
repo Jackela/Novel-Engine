@@ -40,7 +40,13 @@ export const proposalErrorFrameSchema = Type.Object(
   { additionalProperties: false },
 );
 
+export const proposalStartedFrameSchema = Type.Object(
+  { type: Type.Literal("started"), operation_id: Type.String({ format: "uuid" }) },
+  { additionalProperties: false },
+);
+
 const proposalStreamFrameSchema = Type.Union([
+  proposalStartedFrameSchema,
   proposalDeltaFrameSchema,
   proposalDoneFrameSchema,
   proposalErrorFrameSchema,

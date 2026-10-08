@@ -1,3 +1,4 @@
+import type { TextGenerationExecutionOptions } from "../../../contexts/ai/application/ports/text_generation.js";
 import {
   isTextProviderName,
   type ProviderStep,
@@ -97,6 +98,7 @@ export function buildProposalSeed(params: {
 
 /** One proposal generation request, decoded from its transport and scoped. */
 export interface ProposalGenerationRequest {
+  readonly execution?: TextGenerationExecutionOptions | undefined;
   readonly scope: ProjectScope;
   readonly projectId: string;
   readonly documentId: string;
@@ -125,6 +127,7 @@ export function replayedProposalJob(
 
 /** Streaming-only options: cleanup reporting, abort, and permit handoff. */
 export interface ProposalStreamOptions {
+  readonly execution?: TextGenerationExecutionOptions | undefined;
   readonly reportCleanupFailure: ProviderCleanupFailureReporter;
   /** Aborted when the client disconnects: the stream ends with no job. */
   readonly signal?: AbortSignal | undefined;
@@ -136,6 +139,7 @@ export interface ProposalStreamOptions {
  * every timestamp on the retry chain (claim, outcomes, landing) sourced from
  * the single JobRetryExecutor injection point. */
 export interface ProposalRetryRequest {
+  readonly execution?: TextGenerationExecutionOptions | undefined;
   readonly scope: ProjectScope;
   readonly retry: JobRecord;
   readonly reportCleanupFailure: ProviderCleanupFailureReporter;

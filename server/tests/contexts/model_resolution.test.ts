@@ -71,7 +71,7 @@ describe("review model override groundwork", () => {
 });
 
 describe("provider catalog (GET /api/providers payload)", () => {
-  it("lists all three providers with configured/default flags and resolved models", () => {
+  it("lists all four providers with configured/default flags and resolved models", () => {
     const catalog = buildProviderCatalog({
       defaultProvider: "mock",
       settings: noSettings,
@@ -91,6 +91,7 @@ describe("provider catalog (GET /api/providers payload)", () => {
         model: "gpt-4o-mini",
         is_default: false,
       },
+      { provider: "acp", configured: false, model: null, is_default: false },
     ]);
   });
 
@@ -109,6 +110,25 @@ describe("provider catalog (GET /api/providers payload)", () => {
         model: "gpt-override",
         is_default: false,
       },
+      { provider: "acp", configured: false, model: null, is_default: false },
     ]);
+  });
+  it("separates local ACP configuration from API keys and keeps an unknown model null", () => {
+    expect(
+      buildProviderCatalog({
+        defaultProvider: "acp",
+        settings: {},
+        credentials: {},
+        acpConfigured: true,
+      }).at(-1),
+    ).toEqual({ provider: "acp", configured: true, model: null, is_default: true });
+    expect(
+      buildProviderCatalog({
+        defaultProvider: "acp",
+        settings: { acpModel: "confirmed-model" },
+        credentials: {},
+        acpConfigured: true,
+      }).at(-1)?.model,
+    ).toBe("confirmed-model");
   });
 });

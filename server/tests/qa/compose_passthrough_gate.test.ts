@@ -56,6 +56,14 @@ export interface LlmServerConfig {
 export function loadLlmServerConfig(env: ReadonlyMap<string, string>): LlmServerConfig {
   return {
     defaultProvider: enumFrom(env, "LLM_PROVIDER", LLM_PROVIDERS, "mock"),
+    acp: {
+      proxyUrl: nonBlankStringFrom(env, "ACP_PROXY_URL"),
+      tokenFile: nonBlankStringFrom(env, "ACP_PROXY_TOKEN_FILE"),
+      command: nonBlankStringFrom(env, "ACP_AGENT_COMMAND"),
+      args: nonBlankStringFrom(env, "ACP_AGENT_ARGS"),
+      workspaceRoot: nonBlankStringFrom(env, "ACP_WORKSPACE_ROOT"),
+      model: nonBlankStringFrom(env, "ACP_MODEL"),
+    },
     genericModel: nonBlankStringFrom(env, "LLM_MODEL"),
     dashscopeModel: nonBlankStringFrom(env, "DASHSCOPE_MODEL"),
     dashscopeReviewModel: nonBlankStringFrom(env, "DASHSCOPE_REVIEW_MODEL"),
@@ -149,6 +157,12 @@ const COMPOSE_FIXTURE = `services:
       SECURITY_TRUSTED_PROXIES: \${SECURITY_TRUSTED_PROXIES:-}
       LOG_LEVEL: \${LOG_LEVEL:-}
       LLM_PROVIDER: \${LLM_PROVIDER:-mock}
+      ACP_PROXY_URL: \${ACP_PROXY_URL:-}
+      ACP_PROXY_TOKEN_FILE: \${ACP_PROXY_TOKEN_FILE:-}
+      ACP_AGENT_COMMAND: \${ACP_AGENT_COMMAND:-}
+      ACP_AGENT_ARGS: \${ACP_AGENT_ARGS:-}
+      ACP_WORKSPACE_ROOT: \${ACP_WORKSPACE_ROOT:-}
+      ACP_MODEL: \${ACP_MODEL:-}
       LLM_MODEL: \${LLM_MODEL:-}
       DASHSCOPE_MODEL: \${DASHSCOPE_MODEL:-}
       DASHSCOPE_REVIEW_MODEL: \${DASHSCOPE_REVIEW_MODEL:-}
@@ -198,7 +212,7 @@ describe("compose passthrough gate", () => {
       expect(result.status).toBe(0);
       expect(result.stdout).toContain("[compose-passthrough] clean");
       expect(result.stdout).toContain("compose.yaml and deploy/compose.yaml");
-      expect(result.stdout).toContain("all 18 provider variables");
+      expect(result.stdout).toContain("all 24 provider variables");
     } finally {
       await rm(root, { recursive: true, force: true });
     }

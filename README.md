@@ -223,6 +223,8 @@ pnpm --dir server cli reindex
 pnpm --dir server cli doctor
 pnpm --dir server cli migrate
 pnpm --dir server cli owner reset
+pnpm --dir server cli acp serve --token-file <proxy-token-file>
+pnpm --dir server cli acp connect --url <ws-url> --token-file <proxy-token-file> --command <executable> --arg <argument> --cwd <materials-directory>
 ```
 
 `backup` writes a consistent online backup beneath `data/backups/` and prints
@@ -308,3 +310,7 @@ a Python-era database is unsupported and must not be reused as the new
 a fresh data directory, create the Owner account, then re-import legacy
 workspaces with the import command above. The pre-cutover Python stack remains
 available at git tag `python-final`.
+
+### ACP agents and Grok
+
+The current unreleased candidate supports an `acp` provider for continuation, rewrite, review, and lore extraction. A separately authenticated host proxy launches one trusted ACP process per connection; Grok uses its existing host login. Studio selects the provider while the server owns command and model configuration. See [ACP setup, permissions, and recovery](docs/acp.md). The published 0.8.0 image predates this implementation; build this candidate before configuring ACP.

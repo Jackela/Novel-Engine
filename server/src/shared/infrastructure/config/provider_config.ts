@@ -1,7 +1,7 @@
 import { ConfigurationError } from "./configuration_error.js";
 import { integerFrom, numberFrom, stringFrom } from "./env_values.js";
 
-const LLM_PROVIDERS = ["mock", "dashscope", "openai_compatible"] as const;
+const LLM_PROVIDERS = ["mock", "dashscope", "openai_compatible", "acp"] as const;
 const DASHSCOPE_TRANSPORT_MODES = [
   "text_generation",
   "multimodal_generation",
@@ -41,6 +41,16 @@ export type DashscopeTransportMode = (typeof DASHSCOPE_TRANSPORT_MODES)[number];
 /** Server-only provider settings; clients select providers but never models. */
 export interface LlmServerConfig {
   readonly defaultProvider: LlmProvider;
+  readonly acp?:
+    | {
+        readonly proxyUrl: string;
+        readonly tokenFile: string | undefined;
+        readonly command: string;
+        readonly args: readonly string[];
+        readonly workspaceRoot: string | undefined;
+        readonly model: string | undefined;
+      }
+    | undefined;
   readonly genericModel: string | undefined;
   readonly dashscopeModel: string | undefined;
   readonly dashscopeReviewModel: string | undefined;
@@ -71,6 +81,14 @@ export interface LlmServerConfig {
 export function loadLlmServerConfig(env: ReadonlyMap<string, string>): LlmServerConfig {
   return {
     defaultProvider: enumFrom(env, "LLM_PROVIDER", LLM_PROVIDERS, "mock"),
+    acp: {
+      proxyUrl: nonBlankStringFrom(env, "ACP_PROXY_URL") ?? "ws://127.0.0.1:8710/acp",
+      tokenFile: nonBlankStringFrom(env, "ACP_PROXY_TOKEN_FILE"),
+      command: nonBlankStringFrom(env, "ACP_AGENT_COMMAND") ?? "grok",
+      args: acpArgs(env),
+      workspaceRoot: nonBlankStringFrom(env, "ACP_WORKSPACE_ROOT"),
+      model: nonBlankStringFrom(env, "ACP_MODEL"),
+    },
     genericModel: nonBlankStringFrom(env, "LLM_MODEL"),
     dashscopeModel: nonBlankStringFrom(env, "DASHSCOPE_MODEL"),
     dashscopeReviewModel: nonBlankStringFrom(env, "DASHSCOPE_REVIEW_MODEL"),
@@ -159,4 +177,21 @@ function enumFrom<Values extends readonly string[]>(
     throw new ConfigurationError(`${key} must be one of ${values.join(", ")}`);
   }
   return value as Values[number];
+}
+
+/** Parse a command argument array without a shell; values are never echoed on refusal. */
+function acpArgs(env: ReadonlyMap<string, string>): readonly string[] {
+  const raw = nonBlankStringFrom(env, "ACP_AGENT_ARGS");
+  if (raw === undefined)
+    return ["--no-auto-update", "--sandbox", "novel-engine", "agent", "--no-leader", "stdio"];
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch (error) {
+    if (!(error instanceof SyntaxError)) throw error;
+    throw new ConfigurationError("ACP_AGENT_ARGS must be a JSON string array.");
+  }
+  if (!Array.isArray(parsed) || parsed.some((arg) => typeof arg !== "string" || arg.includes("\0")))
+    throw new ConfigurationError("ACP_AGENT_ARGS must be a JSON string array.");
+  return parsed;
 }

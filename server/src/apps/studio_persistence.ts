@@ -5,6 +5,7 @@ import { LoreStorePart } from "../contexts/studio/infrastructure/lore_store_part
 import { ProjectStorePart } from "../contexts/studio/infrastructure/project_store_part.js";
 import { ProposalAcceptanceStorePart } from "../contexts/studio/infrastructure/proposal_acceptance_store_part.js";
 import { ProposalContextStorePart } from "../contexts/studio/infrastructure/proposal_context_store_part.js";
+import { RevisionRetentionPins } from "../contexts/studio/infrastructure/RevisionRetentionPins.js";
 import { ReviewStorePart } from "../contexts/studio/infrastructure/review_store_part.js";
 import { VolumeStorePart } from "../contexts/studio/infrastructure/volume_store_part.js";
 import type { StudioSqliteDatabase } from "../shared/infrastructure/db/connection.js";
@@ -15,13 +16,14 @@ import type { StudioSqliteDatabase } from "../shared/infrastructure/db/connectio
  * Each application service receives only the parts it actually uses.
  */
 export function createStudioPersistence(database: StudioSqliteDatabase): StudioPersistence {
+  const revisionPins = new RevisionRetentionPins();
   return {
     projects: new ProjectStorePart(database),
-    documents: new DocumentStorePart(database),
+    documents: new DocumentStorePart(database, revisionPins),
     volumes: new VolumeStorePart(database),
     lore: new LoreStorePart(database),
     jobs: new JobStorePart(database),
-    reviewOutcomes: new ReviewStorePart(database),
+    reviewOutcomes: new ReviewStorePart(database, revisionPins),
     proposalContext: new ProposalContextStorePart(database),
     proposalAcceptance: new ProposalAcceptanceStorePart(database),
   };

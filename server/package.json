@@ -30,6 +30,7 @@
     "gates": "pnpm run gate:ssot && pnpm run gate:hygiene && pnpm run gate:compose-passthrough && pnpm run gate:sizes && pnpm run gate:migrations && pnpm run gate:llms-txt && pnpm run gate:error-codes && pnpm run gate:openapi"
   },
   "dependencies": {
+    "@agentclientprotocol/sdk": "1.7.0",
     "@fastify/cookie": "^11.1.2",
     "@fastify/cors": "^11.3.0",
     "@fastify/static": "^10.1.3",
@@ -40,13 +41,15 @@
     "docx": "^9.7.1",
     "drizzle-orm": "0.45.2",
     "fastify": "^5.12.5",
-    "jszip": "^3.10.1"
+    "jszip": "^3.10.1",
+    "ws": "8.22.0"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.11",
     "@swc/core": "^1.16.1",
     "@types/better-sqlite3": "9.6.0",
     "@types/node": "^24.13.3",
+    "@types/ws": "8.18.1",
     "@vitest/coverage-v8": "^4.1.11",
     "ajv": "^8.12.0",
     "dependency-cruiser": "^18.2.0",

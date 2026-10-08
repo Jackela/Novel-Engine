@@ -4,6 +4,7 @@ import { api } from "@/app/api";
 import { translateActive } from "@/app/i18n/translate";
 import type { LoreExtractCandidate } from "@/app/types/lore";
 import type { DocumentSummary } from "@/app/types/studio";
+import { useAcpExecution } from "../AcpOperationProvider";
 import { confirmLoreCandidate, type LoreConfirmResult, writeLoreAliases } from "./lorebookConfirm";
 import { type MergedLoreCandidate, mergeLoreCandidates } from "./loreCandidateMerge";
 import { toErrorMessage } from "./toErrorMessage";
@@ -31,6 +32,7 @@ export interface LoreSegmentState {
  * the same extracted segments.
  */
 export function useLorebookWizard(projectId: string, provider: string) {
+  const execute = useAcpExecution();
   const [segments, setSegments] = useState<LoreSegmentState[]>([]);
   const [deselected, setDeselected] = useState<ReadonlySet<string>>(new Set());
   const [aliasDrafts, setAliasDrafts] = useState<Record<string, string>>({});
@@ -48,7 +50,11 @@ export function useLorebookWizard(projectId: string, provider: string) {
   const extractText = useCallback(
     async (segment: LoreSegmentState) => {
       try {
-        const job = await api.extractLore(projectId, segment.text, provider);
+        const job = await execute(provider, (execution) =>
+          execution
+            ? api.extractLore(projectId, segment.text, provider, execution)
+            : api.extractLore(projectId, segment.text, provider),
+        );
         if (job.status === "failed") {
           resolveSegment(segment.id, {
             status: "failed",
@@ -70,7 +76,7 @@ export function useLorebookWizard(projectId: string, provider: string) {
         });
       }
     },
-    [projectId, provider, resolveSegment],
+    [execute, projectId, provider, resolveSegment],
   );
 
   /** Submit one pasted segment as its own extraction Job; an identical in-flight paste is a no-op. */

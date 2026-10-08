@@ -70,6 +70,7 @@ describe("provider catalog API", () => {
             model: "catalog-compatible-model",
             is_default: false,
           },
+          { provider: "acp", configured: false, model: null, is_default: false },
         ],
       });
       expect(response.body).not.toContain("test-dashscope-catalog-credential");
@@ -124,6 +125,7 @@ describe("provider catalog API", () => {
             model: "gpt-4o-mini",
             is_default: false,
           },
+          { provider: "acp", configured: false, model: null, is_default: false },
         ],
       });
     } finally {

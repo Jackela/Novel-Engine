@@ -1,3 +1,4 @@
+import type { TextGenerationExecutionOptions } from "../../../contexts/ai/application/ports/text_generation.js";
 import type { Principal } from "../../../shared/application/ports/auth.js";
 import { NotFoundError, OperationInFlightError } from "../domain/exceptions.js";
 import type { SnapshotArtifactService } from "./export_artifact_service.js";
@@ -106,6 +107,7 @@ export class JobHistoryService {
     principal: Principal,
     projectId: string,
     reportCleanupFailure?: (failure: unknown) => void,
+    execution?: TextGenerationExecutionOptions,
   ): Promise<Record<string, unknown>> {
     const scope = scopeForPrincipal(principal);
     // #392: like proposal/export/retry, a review runs real provider work
@@ -114,7 +116,7 @@ export class JobHistoryService {
     return withInFlightPermit(
       this.inFlight,
       { projectId, documentId: null, operation: "review" },
-      () => this.recordReviewJobInner(principal, scope, projectId, reportCleanupFailure),
+      () => this.recordReviewJobInner(principal, scope, projectId, reportCleanupFailure, execution),
     );
   }
 
@@ -123,6 +125,7 @@ export class JobHistoryService {
     scope: ProjectScope,
     projectId: string,
     reportCleanupFailure?: (failure: unknown) => void,
+    execution?: TextGenerationExecutionOptions,
   ): Promise<Record<string, unknown>> {
     // DR-024: the review runs on the project's own provider, so its job row
     // must name that provider even when the attempt fails before an evaluation
@@ -132,6 +135,7 @@ export class JobHistoryService {
     try {
       evaluation = await this.reviews.evaluateProject(principal, projectId, {
         reportCleanupFailure,
+        execution,
       });
       const completed = this.reviewOutcomes.recordCompletedReviewJob(scope, evaluation);
       return jobPayload(completed.job);
@@ -149,12 +153,22 @@ export class JobHistoryService {
             provider: evaluation?.provider ?? projectProvider,
             model: evaluation?.model ?? "",
             requestJson: dumpJson({}),
-            resultJson: dumpJson({ review_id: null, snapshot_id: null, summary: "", issues: [] }),
+            resultJson: dumpJson({
+              review_id: null,
+              snapshot_id: null,
+              summary: "",
+              issues: [],
+              ...(projectProvider === "acp" && execution?.agentExecution !== undefined
+                ? { agent_execution: execution.agentExecution }
+                : {}),
+            }),
             error: disposition.failure.message,
             now: this.now(),
           }),
         ),
       );
+    } finally {
+      evaluation?.sourceLease?.release();
     }
   }
 
@@ -218,6 +232,7 @@ export class JobHistoryService {
     jobId: string,
     requestKey: string,
     reportCleanupFailure: (failure: unknown) => void,
+    execution?: TextGenerationExecutionOptions,
   ): Promise<Record<string, unknown>> {
     // Project deletion removes persistence before artifact cleanup completes;
     // preserve its exclusive 409 boundary before any durable replay lookup.
@@ -253,6 +268,7 @@ export class JobHistoryService {
           jobId,
           requestKey,
           reportCleanupFailure,
+          execution,
         ),
     );
   }

@@ -3,6 +3,7 @@ import { useRef } from "react";
 import { Navigate, useLocation, useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "@/app/i18n/useTranslation";
 import { LanguageSwitch } from "@/app/LanguageSwitch";
+import { AcpOperationProvider } from "./AcpOperationProvider";
 import { useCommandFocusRestoration } from "./hooks/useCommandFocusRestoration";
 import { useStudioPageModel } from "./hooks/useStudioPageModel";
 import { StudioPageView } from "./StudioPageView";
@@ -86,5 +87,9 @@ export function StudioPage() {
   // The route project identity owns every local hook below this boundary.
   // Switching projects unmounts the complete workbench before old state can
   // remain interactive while the next aggregate loads.
-  return <StudioProjectPage key={projectId} projectId={projectId} route={route} />;
+  return (
+    <AcpOperationProvider key={projectId} projectId={projectId}>
+      <StudioProjectPage projectId={projectId} route={route} />
+    </AcpOperationProvider>
+  );
 }

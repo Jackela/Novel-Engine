@@ -1,3 +1,4 @@
+import type { TextGenerationExecutionOptions } from "../../../contexts/ai/application/ports/text_generation.js";
 import type { Principal } from "../../../shared/application/ports/auth.js";
 import type { InFlightOperationPermit } from "./operation_in_flight.js";
 import type { ProposalStreamFramePayload } from "./payload_schemas/proposal_frame.js";
@@ -15,6 +16,7 @@ import type { ProposalGenerationPipeline } from "./proposal_pipeline.js";
 export type ProposalStreamFrame = ProposalStreamFramePayload;
 
 export interface ProposalStreamRequest {
+  readonly execution?: TextGenerationExecutionOptions | undefined;
   readonly principal: Principal;
   readonly projectId: string;
   readonly documentId: string;
@@ -60,10 +62,12 @@ export function streamProposal(
     instruction: request.input.instruction,
     provider: request.input.provider,
     requestKey: request.requestKey,
+    execution: request.execution,
   };
   const frames = pipeline.stream(generation, {
     reportCleanupFailure: request.reportCleanupFailure,
     signal: request.signal,
+    execution: request.execution,
     ownPermit: (acquired) => {
       permit = acquired;
     },

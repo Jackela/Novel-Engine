@@ -1,5 +1,4 @@
 import { eq } from "drizzle-orm";
-
 import type { StudioSqliteDatabase } from "../../../shared/infrastructure/db/connection.js";
 import type { AddJobInput } from "../application/ports/job_records.js";
 import {
@@ -10,6 +9,7 @@ import {
   type ReviewSource,
   reviewPageLimit,
 } from "../application/ports/review_outcome_store.js";
+import type { RevisionPins } from "../application/ports/revision_pins.js";
 import type { ProjectScope } from "../application/ports/studio_store.js";
 import { InvalidJobTransitionError, NotFoundError } from "../domain/exceptions.js";
 import { applyJobOutcome, insertJobAndEvent } from "./db/job_writes.js";
@@ -24,11 +24,15 @@ import {
 import { jobs } from "./db/schema.js";
 import { scopedProject, type Tx } from "./db/studio_query_helpers.js";
 import { jobWithEvents } from "./job_store_part.js";
+import { RevisionRetentionPins } from "./RevisionRetentionPins.js";
 import { buildReviewSummariesQuery } from "./review_page_queries.js";
 
 /** Atomic persistence adapter for source reads and successful review outcomes. */
 export class ReviewStorePart implements ReviewOutcomeStore {
-  constructor(protected readonly db: StudioSqliteDatabase) {}
+  constructor(
+    protected readonly db: StudioSqliteDatabase,
+    private readonly revisionPins: RevisionPins = new RevisionRetentionPins(),
+  ) {}
 
   readProjectProvider(scope: ProjectScope, projectId: string): string {
     return this.db.transaction((tx) =>
@@ -48,18 +52,37 @@ export class ReviewStorePart implements ReviewOutcomeStore {
     });
   }
 
+  /** Capture and acquire synchronously, before provider work can yield to an autosave. */
+  captureReviewSource(scope: ProjectScope, projectId: string, capturedAt: Date) {
+    const source = this.readReviewSource(scope, projectId, capturedAt);
+    return {
+      source,
+      lease: this.revisionPins.acquire(source.documents.map((document) => document.revisionId)),
+    };
+  }
+
   recordCompletedReviewJob(scope: ProjectScope, input: EvaluatedReview): ReviewCompletionRecord {
-    return this.db.transaction(
-      (tx) => {
-        scopedProject(tx, scope, input.source.projectId);
-        const assessment = persistReviewAssessment(tx, input.source.projectId, input, (reviewId) =>
-          this.beforeReviewInsert(tx, reviewId),
-        );
-        const jobId = this.insertFreshCompletedJob(tx, completedReviewJobInput(input, assessment));
-        return { assessment, job: jobWithEvents(tx, jobId) };
-      },
-      { behavior: "immediate" },
-    );
+    try {
+      return this.db.transaction(
+        (tx) => {
+          scopedProject(tx, scope, input.source.projectId);
+          const assessment = persistReviewAssessment(
+            tx,
+            input.source.projectId,
+            input,
+            (reviewId) => this.beforeReviewInsert(tx, reviewId),
+          );
+          const jobId = this.insertFreshCompletedJob(
+            tx,
+            completedReviewJobInput(input, assessment),
+          );
+          return { assessment, job: jobWithEvents(tx, jobId) };
+        },
+        { behavior: "immediate" },
+      );
+    } finally {
+      input.sourceLease?.release();
+    }
   }
 
   completeReviewRetryJob(
@@ -68,34 +91,38 @@ export class ReviewStorePart implements ReviewOutcomeStore {
     jobId: string,
     input: EvaluatedReview,
   ): ReviewCompletionRecord {
-    return this.db.transaction(
-      (tx) => {
-        scopedProject(tx, scope, projectId);
-        const job = tx.select().from(jobs).where(eq(jobs.id, jobId)).get();
-        if (
-          job === undefined ||
-          job.project_id !== projectId ||
-          job.kind !== "review" ||
-          job.operation !== "review" ||
-          job.document_id !== null ||
-          job.retry_of_job_id === null
-        ) {
-          throw new NotFoundError(`Review retry job not found: ${jobId}.`);
-        }
-        if (job.status !== "running" && job.status !== "pending") {
-          throw new InvalidJobTransitionError(job.id, job.status, "completed");
-        }
-        if (job.provider !== input.provider) {
-          throw new Error("Review evaluation provider does not match the retry job.");
-        }
-        const assessment = persistReviewAssessment(tx, projectId, input, (reviewId) =>
-          this.beforeReviewInsert(tx, reviewId),
-        );
-        this.applyRetryCompletion(tx, job.id, input, assessment);
-        return { assessment, job: jobWithEvents(tx, job.id) };
-      },
-      { behavior: "immediate" },
-    );
+    try {
+      return this.db.transaction(
+        (tx) => {
+          scopedProject(tx, scope, projectId);
+          const job = tx.select().from(jobs).where(eq(jobs.id, jobId)).get();
+          if (
+            job === undefined ||
+            job.project_id !== projectId ||
+            job.kind !== "review" ||
+            job.operation !== "review" ||
+            job.document_id !== null ||
+            job.retry_of_job_id === null
+          ) {
+            throw new NotFoundError(`Review retry job not found: ${jobId}.`);
+          }
+          if (job.status !== "running" && job.status !== "pending") {
+            throw new InvalidJobTransitionError(job.id, job.status, "completed");
+          }
+          if (job.provider !== input.provider) {
+            throw new Error("Review evaluation provider does not match the retry job.");
+          }
+          const assessment = persistReviewAssessment(tx, projectId, input, (reviewId) =>
+            this.beforeReviewInsert(tx, reviewId),
+          );
+          this.applyRetryCompletion(tx, job.id, input, assessment);
+          return { assessment, job: jobWithEvents(tx, job.id) };
+        },
+        { behavior: "immediate" },
+      );
+    } finally {
+      input.sourceLease?.release();
+    }
   }
 
   /** The bounded review-history index: summaries newest first, detail reads separately. */
@@ -160,7 +187,7 @@ export class ReviewStorePart implements ReviewOutcomeStore {
       {
         status: "completed",
         model: input.model,
-        resultJson: reviewResultJson(assessment),
+        resultJson: reviewResultJson(assessment, input),
         error: null,
         eventDetailsJson: JSON.stringify({ review_id: assessment.id }),
         now: input.completedAt,
@@ -183,16 +210,22 @@ function completedReviewJobInput(
     provider: input.provider,
     model: input.model,
     requestJson: JSON.stringify({}),
-    resultJson: reviewResultJson(assessment),
+    resultJson: reviewResultJson(assessment, input),
     error: null,
     eventDetailsJson: JSON.stringify({ review_id: assessment.id }),
     now: input.completedAt,
   };
 }
 
-function reviewResultJson(assessment: ReviewCompletionRecord["assessment"]): string {
+function reviewResultJson(
+  assessment: ReviewCompletionRecord["assessment"],
+  input: EvaluatedReview,
+): string {
   return JSON.stringify({
     review_id: assessment.id,
+    ...(input.provider === "acp" && input.agentExecution !== undefined
+      ? { agent_execution: input.agentExecution }
+      : {}),
     snapshot_id: assessment.snapshotId,
     summary: assessment.summary,
   });

@@ -22,6 +22,7 @@ import {
   keyedRetryInFlightResponseSchema,
   operationCapacityResponseSchema,
 } from "./studio_schemas.js";
+import { withAiExecution } from "./withAiExecution.js";
 
 /**
  * The snake_case wire view of one usage aggregation, shared by the usage
@@ -137,7 +138,7 @@ export const jobRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fastify
         }),
       },
     },
-    async (request) => {
+    async (request, reply) => {
       const reportCleanupFailure = (failure: unknown): void => {
         request.log.error(
           {
@@ -152,12 +153,15 @@ export const jobRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fastify
         );
       };
       return withAsyncStudioErrors(() =>
-        requireServices(options).jobHistory.reexecuteProjectJob(
-          requirePrincipal(request),
-          request.params.projectId,
-          request.params.jobId,
-          request.headers["idempotency-key"],
-          reportCleanupFailure,
+        withAiExecution(request, reply, options, request.params.projectId, async (execution) =>
+          requireServices(options).jobHistory.reexecuteProjectJob(
+            requirePrincipal(request),
+            request.params.projectId,
+            request.params.jobId,
+            request.headers["idempotency-key"],
+            reportCleanupFailure,
+            execution,
+          ),
         ),
       );
     },

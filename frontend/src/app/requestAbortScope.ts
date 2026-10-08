@@ -1,7 +1,10 @@
 import { appConfig } from "./config";
 
 /** Combine caller cancellation with the API timeout and expose its winning cause. */
-export function createRequestAbortScope(externalSignal: AbortSignal | null | undefined) {
+export function createRequestAbortScope(
+  externalSignal: AbortSignal | null | undefined,
+  timeoutMs = appConfig.apiTimeoutMs,
+) {
   const controller = new AbortController();
   let timedOut = false;
   const abortFromExternal = () => controller.abort(externalSignal?.reason);
@@ -10,7 +13,7 @@ export function createRequestAbortScope(externalSignal: AbortSignal | null | und
   const timeout = window.setTimeout(() => {
     timedOut = true;
     controller.abort();
-  }, appConfig.apiTimeoutMs);
+  }, timeoutMs);
   return {
     signal: controller.signal,
     timedOut: () => timedOut,

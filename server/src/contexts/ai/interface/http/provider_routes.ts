@@ -25,9 +25,9 @@ const providerCatalogResponseSchema = {
         type: "object",
         additionalProperties: false,
         properties: {
-          provider: { type: "string", enum: ["mock", "dashscope", "openai_compatible"] },
+          provider: { type: "string", enum: ["mock", "dashscope", "openai_compatible", "acp"] },
           configured: { type: "boolean" },
-          model: { type: "string" },
+          model: { type: "string", nullable: true },
           is_default: { type: "boolean" },
         },
         required: ["provider", "configured", "model", "is_default"],

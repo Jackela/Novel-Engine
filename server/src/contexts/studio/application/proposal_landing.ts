@@ -1,3 +1,4 @@
+import type { AgentExecutionEvidence } from "../../../contexts/ai/application/ports/ai_operations.js";
 import {
   type ProviderStep,
   TextGenerationProviderError,
@@ -135,6 +136,7 @@ export interface ProposalJobSeed {
 
 /** The terminal payload shape of a completed proposal job. */
 interface ProposalLanding {
+  readonly agentExecution?: AgentExecutionEvidence | undefined;
   readonly proposal: string;
   readonly provider: TextProviderName;
   readonly model: string;
@@ -209,6 +211,9 @@ export function completedProposalLanding(
       model: landing.model,
       resultJson: dumpJson({
         proposal_markdown: landing.proposal,
+        ...(landing.provider === "acp" && landing.agentExecution !== undefined
+          ? { agent_execution: landing.agentExecution }
+          : {}),
         base_revision_id: evidence.revisionId,
         accepted_revision_id: null,
       }),
@@ -247,6 +252,7 @@ export function failedProposalJob(
   // DR-006: raw text accumulated before a mid-stream failure; the persisted
   // `partial_markdown` is its sanitized form, "" when nothing was accumulated.
   partialMarkdown = "",
+  agentExecution?: AgentExecutionEvidence,
 ): JobRecord {
   return jobs.recordJobWithUsage(scope, {
     job: failedJobInput({
@@ -259,6 +265,9 @@ export function failedProposalJob(
       requestJson: target.seed.requestJson,
       resultJson: dumpJson({
         proposal_markdown: "",
+        ...(target.seed.provider === "acp" && agentExecution !== undefined
+          ? { agent_execution: agentExecution }
+          : {}),
         partial_markdown: sanitizeProposalMarkdown(partialMarkdown),
         base_revision_id: target.revisionId,
         accepted_revision_id: null,

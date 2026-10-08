@@ -1,9 +1,9 @@
 import { eq } from "drizzle-orm";
-
 import type {
   AdvanceDocumentInput,
   DocumentWithCurrent,
 } from "../../application/ports/document_store.js";
+import type { RevisionPins } from "../../application/ports/revision_pins.js";
 import type { ProjectScope } from "../../application/ports/studio_store.js";
 import { NotFoundError, RevisionConflictError } from "../../domain/exceptions.js";
 import { refreshDocumentIndex } from "./document_search.js";
@@ -39,6 +39,7 @@ export function advanceDocumentInTransaction(
   projectId: string,
   documentId: string,
   input: AdvanceDocumentInput,
+  revisionPins?: RevisionPins,
 ): DocumentWithCurrent {
   const project = scopedProject(tx, scope, projectId);
   const document = scopedDocument(tx, scope, projectId, documentId);
@@ -77,6 +78,7 @@ export function advanceDocumentInTransaction(
         createdAt: current.createdAt,
       },
       input.now,
+      revisionPins,
     );
   const revision = insertRevision(tx, {
     documentId: document.id,
@@ -102,12 +104,16 @@ export function advanceDocumentInTransaction(
   });
   tx.update(projects).set({ updatedAt: input.now }).where(eq(projects.id, project.id)).run();
   if (input.autosave === true) {
-    pruneRetainedRevisions(tx, {
-      documentId: document.id,
-      currentRevisionId: revision.id,
-      currentRevisionNumber: revision.revisionNumber,
-      now: input.now,
-    });
+    pruneRetainedRevisions(
+      tx,
+      {
+        documentId: document.id,
+        currentRevisionId: revision.id,
+        currentRevisionNumber: revision.revisionNumber,
+        now: input.now,
+      },
+      revisionPins,
+    );
   }
   return {
     ...document,

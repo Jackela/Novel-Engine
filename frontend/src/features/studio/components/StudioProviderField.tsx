@@ -49,7 +49,7 @@ export function StudioProviderField({
             >
               {candidate.configured
                 ? providerLabel(candidate.provider)
-                : `${providerLabel(candidate.provider)} — ${t("settings.provider.notConfigured")}`}
+                : `${providerLabel(candidate.provider)} — ${t(candidate.provider === "acp" ? "settings.provider.acpNotConfigured" : "settings.provider.notConfigured")}`}
             </option>
           ))}
         </select>
@@ -60,7 +60,11 @@ export function StudioProviderField({
       </div>
       {selected !== undefined && !selected.configured ? (
         <p className="studio-inspector__settings-notice" id={noticeId} role="status">
-          {t("settings.provider.missingCredential")}{" "}
+          {t(
+            provider === "acp"
+              ? "settings.provider.acpMissingConnection"
+              : "settings.provider.missingCredential",
+          )}{" "}
           <a href={providerSetupGuideUrl()} rel="noreferrer" target="_blank">
             {t("settings.provider.setupGuide")}
           </a>

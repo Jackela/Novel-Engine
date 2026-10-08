@@ -1,3 +1,4 @@
+import type { TextGenerationExecutionOptions } from "../../../contexts/ai/application/ports/text_generation.js";
 import type { Principal } from "../../../shared/application/ports/auth.js";
 import { InvalidOperationError } from "../../../shared/domain/exceptions.js";
 import { ReviewSourceInvalidatedError } from "../domain/exceptions.js";
@@ -6,6 +7,7 @@ import { isExportArtifactFormat } from "./export_artifact_identity.js";
 import type { SnapshotArtifactService } from "./export_artifact_service.js";
 import { exportRetryCapacityOutcome } from "./export_retry_capacity_outcome.js";
 import { failedJobOutcome } from "./failed_job_input.js";
+import { failedAcpJobOutcome } from "./failedAcpJobOutcome.js";
 import { generationRetryCapacityOutcome } from "./generation_retry_capacity_outcome.js";
 import { replayedJobPayload } from "./job_replay_payload.js";
 import type { LoreExtractService } from "./lore_extract_service.js";
@@ -68,6 +70,7 @@ export class JobRetryExecutor {
     jobId: string,
     requestKey: string,
     reportCleanupFailure: (failure: unknown) => void,
+    execution?: TextGenerationExecutionOptions,
   ): Promise<Record<string, unknown>> {
     const scope = scopeForPrincipal(principal);
     const replay = this.jobs.findJobRetry(scope, projectId, jobId, requestKey);
@@ -79,12 +82,21 @@ export class JobRetryExecutor {
         jobId,
         requestKey,
         reportCleanupFailure,
+        execution,
       );
     }
     const source = this.jobs.findJob(scope, projectId, jobId);
     if (source.kind === "export") {
       return this.artifacts.withRendererPermit(projectId, () =>
-        this.claimAndExecute(principal, scope, projectId, jobId, requestKey, reportCleanupFailure),
+        this.claimAndExecute(
+          principal,
+          scope,
+          projectId,
+          jobId,
+          requestKey,
+          reportCleanupFailure,
+          execution,
+        ),
       );
     }
     return this.claimAndExecute(
@@ -94,6 +106,7 @@ export class JobRetryExecutor {
       jobId,
       requestKey,
       reportCleanupFailure,
+      execution,
     );
   }
 
@@ -104,6 +117,7 @@ export class JobRetryExecutor {
     jobId: string,
     requestKey: string,
     reportCleanupFailure: (failure: unknown) => void,
+    execution?: TextGenerationExecutionOptions,
   ): Promise<Record<string, unknown>> {
     const claim = this.jobs.claimJobRetry(scope, {
       projectId,
@@ -116,9 +130,9 @@ export class JobRetryExecutor {
     }
     const retry = claim.job;
     try {
-      return await this.executeByKind(principal, scope, retry, reportCleanupFailure);
+      return await this.executeByKind(principal, scope, retry, reportCleanupFailure, execution);
     } catch (error) {
-      return this.classifyRetryFailure(scope, projectId, retry, error);
+      return this.classifyRetryFailure(scope, projectId, retry, error, execution);
     }
   }
 
@@ -135,18 +149,19 @@ export class JobRetryExecutor {
     scope: ProjectScope,
     retry: JobRecord,
     reportCleanupFailure: (failure: unknown) => void,
+    execution?: TextGenerationExecutionOptions,
   ): Promise<Record<string, unknown>> {
     if (retry.kind === "proposal") {
-      return this.reexecuteProposalJob(scope, retry, reportCleanupFailure);
+      return this.reexecuteProposalJob(scope, retry, reportCleanupFailure, execution);
     }
     if (retry.kind === "review") {
-      return this.reexecuteReviewJob(principal, scope, retry, reportCleanupFailure);
+      return this.reexecuteReviewJob(principal, scope, retry, reportCleanupFailure, execution);
     }
     if (retry.kind === "export") {
       return this.reexecuteExportJob(principal, retry, reportCleanupFailure);
     }
     if (retry.kind === "lore-extract") {
-      return this.reexecuteLoreExtractJob(scope, retry, reportCleanupFailure);
+      return this.reexecuteLoreExtractJob(scope, retry, reportCleanupFailure, execution);
     }
     throw new InvalidOperationError(`Unsupported job kind for retry: ${retry.kind}`);
   }
@@ -166,6 +181,7 @@ export class JobRetryExecutor {
     projectId: string,
     retry: JobRecord,
     error: unknown,
+    execution?: TextGenerationExecutionOptions,
   ): Record<string, unknown> {
     const disposition = retryFailureDisposition(error, retry.kind);
     if (disposition.kind === "capacity-export") {
@@ -192,7 +208,7 @@ export class JobRetryExecutor {
     if (disposition.kind === "propagate") {
       throw error;
     }
-    const outcome = failedJobOutcome(disposition.failure.message, this.now());
+    const outcome = failedAcpJobOutcome(retry, disposition.failure.message, this.now(), execution);
     // DR-028: a retried provider attempt that reached the provider keeps its
     // failed outcome and a zero-token `unreported` usage row in one
     // transaction. Kinds that never write usage rows (review, export) keep
@@ -218,12 +234,13 @@ export class JobRetryExecutor {
     scope: ProjectScope,
     retry: JobRecord,
     reportCleanupFailure: (failure: unknown) => void,
+    execution?: TextGenerationExecutionOptions,
   ): Promise<Record<string, unknown>> {
     // The full retry sequence — stored-request decoding, admission, the
     // stale-base judgment, generation, and the landing on this reserved row —
     // lives in the pipeline, shared with the synchronous draft and the stream.
     return jobPayload(
-      await this.proposals.retry({ scope, retry, reportCleanupFailure, now: this.now }),
+      await this.proposals.retry({ scope, retry, reportCleanupFailure, execution, now: this.now }),
     );
   }
 
@@ -231,12 +248,19 @@ export class JobRetryExecutor {
     scope: ProjectScope,
     retry: JobRecord,
     reportCleanupFailure: (failure: unknown) => void,
+    execution?: TextGenerationExecutionOptions,
   ): Promise<Record<string, unknown>> {
     // The lore-extract retry sequence — stored-segment recovery, admission,
     // provider generation, and the reserved-row landing with its single usage
     // event — lives in the service, shared with the fresh extraction.
     return jobPayload(
-      await this.loreExtractions.retry({ scope, retry, reportCleanupFailure, now: this.now }),
+      await this.loreExtractions.retry({
+        scope,
+        retry,
+        reportCleanupFailure,
+        execution,
+        now: this.now,
+      }),
     );
   }
 
@@ -245,10 +269,12 @@ export class JobRetryExecutor {
     scope: ProjectScope,
     retry: JobRecord,
     reportCleanupFailure: (failure: unknown) => void,
+    execution?: TextGenerationExecutionOptions,
   ): Promise<Record<string, unknown>> {
     const evaluation = await this.reviews.evaluateProject(principal, retry.projectId, {
       provider: admitTextProvider(retry.provider),
       reportCleanupFailure,
+      execution,
     });
     try {
       return jobPayload(
@@ -265,6 +291,8 @@ export class JobRetryExecutor {
           failedJobOutcome(error.message, this.now(), evaluation.model),
         ),
       );
+    } finally {
+      evaluation.sourceLease?.release();
     }
   }
 

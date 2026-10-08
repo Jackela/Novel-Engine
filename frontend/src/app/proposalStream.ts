@@ -11,6 +11,10 @@ import {
   type StreamProgress,
 } from "@/app/proposalStreamWatchdog";
 import type { StudioJob } from "@/app/types/studio";
+import type { AiExecutionOptions } from "./AiExecutionOptions";
+import { type ProposalStreamFrame, parseProposalStreamFrame } from "./parseProposalStreamFrame";
+
+export type { ProposalStreamFrame } from "./parseProposalStreamFrame";
 
 /**
  * Streaming proposal client (#308): consumes the server's
@@ -36,44 +40,6 @@ export class ProposalOutcomeUnknownError extends Error {
   }
 }
 
-export type ProposalStreamFrame =
-  | { type: "delta"; text: string }
-  | { type: "done"; job: StudioJob }
-  | { type: "error"; error: { code: string; message: string } };
-
-/** Runtime-validates one frame against the closed server frame contract. */
-function parseFramePayload(data: string): ProposalStreamFrame {
-  let value: unknown;
-  try {
-    value = JSON.parse(data);
-  } catch {
-    throw new ApiContractError(`proposal frame: not JSON (${data.slice(0, 64)})`);
-  }
-  const frame = objectValue(value, "proposal frame");
-  const type = frame.type;
-  if (type === "delta") {
-    if (typeof frame.text !== "string") throw new ApiContractError("proposal frame: delta.text");
-    return { type: "delta", text: frame.text };
-  }
-  if (type === "done") {
-    if (typeof frame.job !== "object" || frame.job === null || Array.isArray(frame.job)) {
-      throw new ApiContractError("proposal frame: done.job");
-    }
-    return frame as unknown as ProposalStreamFrame;
-  }
-  if (type === "error") {
-    const error = objectValue(frame.error, "proposal frame.error");
-    if (typeof error.code !== "string") throw new ApiContractError("proposal frame: error.code");
-    if (typeof error.message !== "string")
-      throw new ApiContractError("proposal frame: error.message");
-    return {
-      type: "error",
-      error: { code: error.code, message: error.message },
-    };
-  }
-  throw new ApiContractError(`proposal frame: unknown type (${String(type)})`);
-}
-
 /**
  * One SSE event as a frame, or `undefined` for a data-less event.
  * `: heartbeat` comments (and other events without a `data:` field) carry no
@@ -87,7 +53,7 @@ function parseFrameEvent(rawEvent: string): ProposalStreamFrame | undefined {
     .map((line) => (line.startsWith("data: ") ? line.slice(6) : line.slice(5)))
     .join("\n");
   if (data === "") return undefined;
-  return parseFramePayload(data);
+  return parseProposalStreamFrame(data);
 }
 
 async function readPreStreamError(response: Response): Promise<HttpError> {
@@ -161,6 +127,7 @@ export interface ProposalStreamRequest {
    * the server keeps its current behavior.
    */
   readonly idempotencyKey?: string;
+  readonly execution?: AiExecutionOptions;
 }
 
 /** Consume one streamed proposal; resolves with the terminal job payload. */
@@ -174,6 +141,7 @@ export async function streamProposal({
   onDelta,
   stallTimeoutMs,
   idempotencyKey,
+  execution,
 }: ProposalStreamRequest): Promise<StudioJob> {
   const path = `/api/projects/${projectId}/documents/${documentId}/ai-proposals/stream`;
   const csrfToken = getCsrfToken();
@@ -209,6 +177,7 @@ export async function streamProposal({
         "Content-Type": "application/json",
         ...(csrfToken ? { "X-CSRF-Token": csrfToken } : {}),
         ...(idempotencyKey === undefined ? {} : { "Idempotency-Key": idempotencyKey }),
+        ...execution?.headers,
       },
       body: JSON.stringify({ operation, instruction, provider }),
       signal: watchdog.signal,
@@ -265,7 +234,8 @@ export async function streamProposal({
       watchdog.arm();
       progress.receivedBytes += value.byteLength;
       for (const frame of parser.append(decoder.decode(value, { stream: true }))) {
-        if (frame.type === "delta") {
+        if (frame.type === "started") {
+        } else if (frame.type === "delta") {
           progress.deltaFrames += 1;
           onDelta(frame.text);
         } else if (frame.type === "done") {

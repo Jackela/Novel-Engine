@@ -15,6 +15,7 @@ import { useStudioLoreStatusActions } from "./useStudioLoreStatusActions";
 import { useStudioVolumeActions } from "./useStudioVolumeActions";
 
 interface UseStudioActionsOptions {
+  jobs?: readonly { readonly id: string; readonly provider: string }[];
   project: Project | null;
   projectId: string;
   setProject: Dispatch<SetStateAction<Project | null>>;
@@ -38,6 +39,7 @@ const PROPOSAL_ACTIONS_UNGATED = () => false;
  * surface pinned by the page model and its tests.
  */
 export function useStudioActions({
+  jobs,
   project,
   projectId,
   setProject,
@@ -109,6 +111,8 @@ export function useStudioActions({
     onProjectMissing: onSettingsProjectMissing,
   });
   const jobActions = useStudioJobActions({
+    jobs,
+    provider: String(project?.settings.provider ?? "mock"),
     projectId,
     currentOwner,
     isCurrentOwner,

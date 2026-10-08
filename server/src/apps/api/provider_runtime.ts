@@ -1,8 +1,11 @@
 import { resolveReviewModel } from "../../contexts/ai/application/model_resolution.js";
+import type { AiOperations } from "../../contexts/ai/application/ports/ai_operations.js";
 import type { TextGenerationProviderFactory } from "../../contexts/ai/application/ports/text_generation.js";
+import { AiOperationRegistry } from "../../contexts/ai/infrastructure/AiOperationRegistry.js";
 import { textProviderFactory } from "../../contexts/ai/infrastructure/providers/text_provider_factory.js";
 import type { LlmProvider } from "../../shared/infrastructure/config/provider_config.js";
 import type { ServerConfig } from "../../shared/infrastructure/config/server_config.js";
+import { validateAcpWorkspace } from "./validateAcpWorkspace.js";
 
 /** Credentials for the HTTP providers; absent keys leave them unconfigured. */
 export interface ProviderApiKeys {
@@ -12,9 +15,12 @@ export interface ProviderApiKeys {
 
 /** Provider identity and model settings shared by generation and catalog routes. */
 export interface ProviderRuntime {
+  aiOperations: AiOperations;
+  acpConfigured: boolean;
   providerFactory: TextGenerationProviderFactory;
   providerApiKeys: ProviderApiKeys;
   providerModelSettings: {
+    acpModel: string | undefined;
     genericModel: string | undefined;
     dashscopeModel: string | undefined;
     dashscopeReviewModel: string | undefined;
@@ -26,6 +32,7 @@ export interface ProviderRuntime {
 }
 
 interface ProviderRuntimeInputs {
+  studioDataDirectory?: string | undefined;
   /**
    * Per-request AI provider factory override (tests inject capturing
    * providers). The default builds providers from `providerApiKeys`; HTTP
@@ -49,7 +56,10 @@ export function buildProviderRuntime(
     dashscope: llm?.dashscopeApiKey,
     openaiCompatible: llm?.openaiCompatibleApiKey,
   };
+  const acp = llm?.acp;
+  validateAcpWorkspace(acp, inputs.studioDataDirectory);
   const providerModelSettings = {
+    acpModel: acp?.model,
     genericModel: llm?.genericModel,
     dashscopeModel: llm?.dashscopeModel,
     dashscopeReviewModel: llm?.dashscopeReviewModel,
@@ -60,6 +70,7 @@ export function buildProviderRuntime(
     inputs.textProviderFactory ??
     textProviderFactory(providerApiKeys, {
       modelSettings: providerModelSettings,
+      acp,
       ...(llm === undefined
         ? {}
         : {
@@ -84,6 +95,8 @@ export function buildProviderRuntime(
     });
   return {
     providerFactory,
+    aiOperations: new AiOperationRegistry(),
+    acpConfigured: acp?.tokenFile !== undefined && acp?.workspaceRoot !== undefined,
     providerApiKeys,
     providerModelSettings,
     defaultProvider,

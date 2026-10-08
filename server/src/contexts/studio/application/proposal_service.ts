@@ -1,3 +1,4 @@
+import type { TextGenerationExecutionOptions } from "../../../contexts/ai/application/ports/text_generation.js";
 import type { Principal } from "../../../shared/application/ports/auth.js";
 import { jobPayload } from "./payloads.js";
 import type { ProposalAcceptanceStore } from "./ports/proposal_acceptance_store.js";
@@ -47,6 +48,7 @@ export class AiProposalService {
     documentId: string,
     input: ProposalDraftInput,
     requestKey?: string | undefined,
+    execution?: TextGenerationExecutionOptions | undefined,
   ): ProposalGenerationRequest {
     return {
       scope: scopeForPrincipal(principal),
@@ -56,6 +58,7 @@ export class AiProposalService {
       instruction: input.instruction,
       provider: input.provider,
       requestKey,
+      execution,
     };
   }
 
@@ -70,10 +73,11 @@ export class AiProposalService {
     input: ProposalDraftInput,
     reportCleanupFailure: ProviderCleanupFailureReporter,
     requestKey?: string | undefined,
+    execution?: TextGenerationExecutionOptions | undefined,
   ): Promise<Record<string, unknown>> {
     return jobPayload(
       await this.pipeline.draft(
-        this.generationRequest(principal, projectId, documentId, input, requestKey),
+        this.generationRequest(principal, projectId, documentId, input, requestKey, execution),
         reportCleanupFailure,
       ),
     );
@@ -94,6 +98,7 @@ export class AiProposalService {
     reportCleanupFailure: ProviderCleanupFailureReporter,
     signal?: AbortSignal,
     requestKey?: string | undefined,
+    execution?: TextGenerationExecutionOptions | undefined,
   ): ProposalStreamSession {
     return streamProposal(this.pipeline, {
       principal,
@@ -103,6 +108,7 @@ export class AiProposalService {
       reportCleanupFailure,
       signal,
       requestKey,
+      execution,
     });
   }
 

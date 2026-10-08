@@ -1,4 +1,5 @@
 import { and, eq, inArray, lt, lte, ne, sql } from "drizzle-orm";
+import type { RevisionPins } from "../../application/ports/revision_pins.js";
 
 import { documentRevisions, snapshotDocuments } from "./schema.js";
 import type { Tx } from "./studio_query_helpers.js";
@@ -61,13 +62,14 @@ export function isSnapshotReferencedRevision(tx: Tx, revisionId: string): boolea
  * author revision (autosave lineage — never a restore or an accepted
  * proposal), it was written inside the collapse window, it carries a parent
  * (the document's first revision is its origin record and is never folded
- * away), and no snapshot pins it. A referenced revision is immutable, so it
+ * away), and no snapshot or in-flight evaluation pins it. A retained revision
  * is never a candidate.
  */
 export function isCollapsibleAutosavePredecessor(
   tx: Tx,
   predecessor: PredecessorFacts,
   now: Date,
+  revisionPins?: RevisionPins,
 ): boolean {
   if (predecessor.source !== "author" || predecessor.parentRevisionId === null) {
     return false;
@@ -76,7 +78,10 @@ export function isCollapsibleAutosavePredecessor(
   if (age < 0 || age > AUTOSAVE_COLLAPSE_WINDOW_MS) {
     return false;
   }
-  return !isSnapshotReferencedRevision(tx, predecessor.revisionId);
+  return (
+    !revisionPins?.has(predecessor.revisionId) &&
+    !isSnapshotReferencedRevision(tx, predecessor.revisionId)
+  );
 }
 
 export interface RevisionPruneInput {
@@ -92,7 +97,8 @@ export interface RevisionPruneInput {
  * Prune old unreferenced autosave revisions of one document (DR-047c). A row
  * is prunable when all of these hold: its source is `author` (autosave
  * lineage), it is not the current revision, it sits below the newest-N floor,
- * it is older than the retention window, and no snapshot pins it.
+ * it is older than the retention window, and neither a snapshot nor an
+ * in-flight evaluation pins it.
  *
  * Surviving children of a pruned row are re-linked to the pruned row's own
  * parent before the delete, so the lineage chain never dangles — the stats
@@ -103,7 +109,11 @@ export interface RevisionPruneInput {
  * Returns the number of pruned rows; one pass is bounded by
  * `PRUNE_BATCH_LIMIT` and later saves continue where it stopped.
  */
-export function pruneRetainedRevisions(tx: Tx, input: RevisionPruneInput): number {
+export function pruneRetainedRevisions(
+  tx: Tx,
+  input: RevisionPruneInput,
+  revisionPins?: RevisionPins,
+): number {
   const boundary = input.currentRevisionNumber - REVISION_RETENTION_KEEP_NEWEST;
   if (boundary < 1) {
     return 0;
@@ -124,7 +134,8 @@ export function pruneRetainedRevisions(tx: Tx, input: RevisionPruneInput): numbe
     )
     .orderBy(documentRevisions.revisionNumber)
     .limit(PRUNE_BATCH_LIMIT)
-    .all();
+    .all()
+    .filter((candidate) => !revisionPins?.has(candidate.id));
   if (candidates.length === 0) {
     return 0;
   }

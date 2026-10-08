@@ -113,6 +113,7 @@ const PROVIDER_MESSAGE_KEYS: Record<string, MessageKey> = {
   mock: "provider.mock",
   dashscope: "provider.dashscope",
   openai_compatible: "provider.openaiCompatible",
+  acp: "provider.acp",
 };
 
 export function providerLabel(provider: string): string {

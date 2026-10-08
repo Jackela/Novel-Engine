@@ -7,11 +7,12 @@ import {
   type TextProviderName,
 } from "../../../ai/application/ports/text_generation.js";
 import { loreExtraction422ResponseSchema } from "./generation_capacity_schemas.js";
-import { jobResponseSchema } from "./job_schemas.js";
+import { aiOperationHeadersSchema, jobResponseSchema } from "./job_schemas.js";
 import { requireServices, type StudioRoutesOptions } from "./project_routes.js";
 import { authedWriteResponses } from "./route_responses.js";
 import { withAsyncStudioErrors } from "./studio_error_mapping.js";
 import { projectIdParams } from "./studio_request_schemas.js";
+import { withAiExecution } from "./withAiExecution.js";
 
 /**
  * The wizard's segment-extraction request (#614): one segment and the named
@@ -54,6 +55,7 @@ export const loreExtractRoutes: FastifyPluginAsync<StudioRoutesOptions> = async 
       preHandler: [guard],
       schema: {
         params: projectIdParams,
+        headers: aiOperationHeadersSchema,
         body: loreExtractCreateSchema,
         response: authedWriteResponses({
           200: jobResponseSchema,
@@ -61,7 +63,7 @@ export const loreExtractRoutes: FastifyPluginAsync<StudioRoutesOptions> = async 
         }),
       },
     },
-    async (request) => {
+    async (request, reply) => {
       const reportCleanupFailure = (failure: unknown): void => {
         request.log.error(
           { err: failure, errorId: request.id, provider_cleanup_failed: true },
@@ -69,14 +71,17 @@ export const loreExtractRoutes: FastifyPluginAsync<StudioRoutesOptions> = async 
         );
       };
       return withAsyncStudioErrors(() =>
-        requireServices(options).loreExtractions.extractSegment(
-          requirePrincipal(request),
-          request.params.projectId,
-          {
-            provider: request.body.provider ?? "mock",
-            segment: request.body.segment,
-          },
-          reportCleanupFailure,
+        withAiExecution(request, reply, options, request.params.projectId, async (execution) =>
+          requireServices(options).loreExtractions.extractSegment(
+            requirePrincipal(request),
+            request.params.projectId,
+            {
+              provider: request.body.provider ?? "mock",
+              segment: request.body.segment,
+            },
+            reportCleanupFailure,
+            execution,
+          ),
         ),
       );
     },

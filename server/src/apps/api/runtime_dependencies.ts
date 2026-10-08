@@ -167,7 +167,11 @@ export async function createRuntimeDependencies(
   const environment =
     options.environment ?? options.config?.environment ?? process.env.NODE_ENV ?? "development";
   const auth = createAuthRuntime(app, options, persistence, environment);
-  const provider = buildProviderRuntime(options.config, options);
+  const provider = buildProviderRuntime(options.config, {
+    ...options,
+    studioDataDirectory: persistence?.dataDirectory,
+  });
+  app.addHook("onClose", async () => provider.aiOperations.close());
   const studioServices =
     persistence === undefined
       ? undefined

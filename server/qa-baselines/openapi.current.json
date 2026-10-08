@@ -1160,6 +1160,181 @@
         }
       }
     },
+    "/api/projects/{projectId}/ai-operations/{operationId}/events": {
+      "get": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "operationId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "text/event-stream": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "AI operation events (ready/tool/permission/completed/error)"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          }
+        }
+      }
+    },
+    "/api/projects/{projectId}/ai-operations/{operationId}/permissions/{permissionId}": {
+      "post": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "operationId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "permissionId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "option_id": {
+                    "maxLength": 200,
+                    "minLength": 1,
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "option_id"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Default Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unified error envelope: every API failure renders as {error:{code,message,details?}}."
+          }
+        }
+      }
+    },
     "/api/projects/{projectId}/ai-proposals/{jobId}/accept": {
       "post": {
         "parameters": [
@@ -3012,6 +3187,16 @@
             }
           },
           {
+            "description": "Pre-opened Owner/project AI observation channel.",
+            "in": "header",
+            "name": "x-ai-operation-id",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
             "in": "header",
             "name": "idempotency-key",
             "required": false,
@@ -3047,7 +3232,8 @@
                     "enum": [
                       "mock",
                       "dashscope",
-                      "openai_compatible"
+                      "openai_compatible",
+                      "acp"
                     ],
                     "type": "string"
                   }
@@ -3622,6 +3808,16 @@
             }
           },
           {
+            "description": "Pre-opened Owner/project AI observation channel.",
+            "in": "header",
+            "name": "x-ai-operation-id",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
             "in": "header",
             "name": "idempotency-key",
             "required": false,
@@ -3657,7 +3853,8 @@
                     "enum": [
                       "mock",
                       "dashscope",
-                      "openai_compatible"
+                      "openai_compatible",
+                      "acp"
                     ],
                     "type": "string"
                   }
@@ -7063,6 +7260,16 @@
             }
           },
           {
+            "description": "Pre-opened Owner/project AI observation channel.",
+            "in": "header",
+            "name": "x-ai-operation-id",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
             "in": "header",
             "name": "idempotency-key",
             "required": true,
@@ -7668,6 +7875,16 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "description": "Pre-opened Owner/project AI observation channel.",
+            "in": "header",
+            "name": "x-ai-operation-id",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
           }
         ],
         "requestBody": {
@@ -7681,7 +7898,8 @@
                     "enum": [
                       "mock",
                       "dashscope",
-                      "openai_compatible"
+                      "openai_compatible",
+                      "acp"
                     ],
                     "type": "string"
                   },
@@ -8174,6 +8392,16 @@
             "name": "projectId",
             "required": true,
             "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Pre-opened Owner/project AI observation channel.",
+            "in": "header",
+            "name": "x-ai-operation-id",
+            "required": false,
+            "schema": {
+              "format": "uuid",
               "type": "string"
             }
           }
@@ -10226,13 +10454,15 @@
                             "type": "boolean"
                           },
                           "model": {
+                            "nullable": true,
                             "type": "string"
                           },
                           "provider": {
                             "enum": [
                               "mock",
                               "dashscope",
-                              "openai_compatible"
+                              "openai_compatible",
+                              "acp"
                             ],
                             "type": "string"
                           }

@@ -4,6 +4,7 @@ import type {
   TextGenerationProviderFactory,
   TextProviderName,
 } from "../../application/ports/text_generation.js";
+import { type AcpProviderOptions, AcpTextProvider } from "./AcpTextProvider.js";
 import { DashScopeTextProvider, type DashScopeTextProviderOptions } from "./dashscope_provider.js";
 import { DeterministicStoryProvider } from "./deterministic_story_provider.js";
 import {
@@ -26,6 +27,7 @@ interface ProviderAdapterOptions {
 }
 
 export interface TextProviderFactoryConfiguration {
+  readonly acp?: AcpProviderOptions | undefined;
   readonly modelSettings?: LlmModelSettings | undefined;
   readonly adapterOptions?: ProviderAdapterOptions | undefined;
 }
@@ -65,6 +67,11 @@ export function createTextGenerationProvider(
   options: TextProviderFactoryOptions,
 ): TextGenerationProvider {
   const { adapterOptions, apiKeys, modelSettings, provider } = options;
+  if (provider === "acp") {
+    return options.acp?.tokenFile === undefined || options.acp?.workspaceRoot === undefined
+      ? new UnconfiguredTextProvider("ACP local provider is not configured.")
+      : new AcpTextProvider(options.acp);
+  }
   if (provider === "mock") {
     return new DeterministicStoryProvider("mock", resolveProviderModel("mock", modelSettings));
   }

@@ -9,6 +9,8 @@ import { toErrorMessage } from "../hooks/toErrorMessage";
 import { useCommandFocusRestoration } from "../hooks/useCommandFocusRestoration";
 import type { JobsLoadInitiator } from "../hooks/useStudioJobs";
 import { providerLabel } from "../studioConstants";
+import { StudioAcpJobActions } from "./StudioAcpJobActions";
+import { StudioJobProposalText } from "./StudioJobProposalText";
 
 interface StudioJobsPanelProps {
   jobs: StudioJobSummary[];
@@ -119,6 +121,7 @@ export function StudioJobsPanel({
                 ) : null}
               </div>
               {job.kind !== "import" &&
+              job.provider !== "acp" &&
               (job.status === "failed" || job.status === "interrupted") ? (
                 <button
                   aria-busy={retryingJobId === job.id}
@@ -142,6 +145,14 @@ export function StudioJobsPanel({
                   <RotateCcw />
                 </button>
               ) : null}
+              {job.provider === "acp" && job.kind !== "import" ? (
+                <StudioAcpJobActions
+                  projectId={projectId}
+                  job={job}
+                  disabled={isBusy}
+                  onRetry={onRetryJob}
+                />
+              ) : null}
               {job.kind === "proposal" && job.status === "completed" ? (
                 <button
                   className="ui-command"
@@ -158,26 +169,7 @@ export function StudioJobsPanel({
                 </button>
               ) : null}
               {viewedProposal?.jobId === job.id ? (
-                <div className="studio-inspector__proposal">
-                  {viewedProposal.error !== null ? (
-                    <p role="alert">{viewedProposal.error}</p>
-                  ) : viewedProposal.text !== null ? (
-                    <>
-                      <pre>{viewedProposal.text}</pre>
-                      <button
-                        className="ui-command"
-                        onClick={() => {
-                          void navigator.clipboard.writeText(viewedProposal.text ?? "");
-                        }}
-                        type="button"
-                      >
-                        {t("jobs.proposal.copy")}
-                      </button>
-                    </>
-                  ) : (
-                    <p role="status">{t("jobs.proposal.loading")}</p>
-                  )}
-                </div>
+                <StudioJobProposalText text={viewedProposal.text} error={viewedProposal.error} />
               ) : null}
             </article>
           ))}
