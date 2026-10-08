@@ -10,113 +10,20 @@ import {
   runWithRetryPolicy,
 } from "./provider_http.js";
 import {
-  boundedProviderBodyChunks,
   dispatchProviderResponse,
-  MAX_PROVIDER_STREAM_EVENT_BYTES,
   type ProviderResponseDeadline,
   startProviderResponseDeadline,
-  streamEventSizeFailure,
 } from "./provider_response_lifecycle.js";
+import { sseDataPayloads } from "./sseDataPayloads.js";
+
+export { sseDataPayloads } from "./sseDataPayloads.js";
 
 type JsonObject = Record<string, unknown>;
-
-const MAX_BOUNDARY_PREFIX_BYTES = 3;
 
 /** Ceiling on silence before the upstream sends its first stream byte. */
 const DEFAULT_STREAM_FIRST_BYTE_TIMEOUT_MS = 30_000;
 /** Ceiling on silence between consecutive stream frames. */
 const DEFAULT_STREAM_IDLE_TIMEOUT_MS = 60_000;
-
-/** Strip exactly the one leading space the SSE `data:` field rule allows. */
-function dataFieldValue(line: string): string {
-  const value = line.slice("data:".length);
-  return value.startsWith(" ") ? value.slice(1) : value;
-}
-
-function nextEventBoundary(
-  buffer: string,
-  fromIndex: number,
-): { readonly index: number; readonly length: number } | undefined {
-  let firstLf = buffer.indexOf("\n", fromIndex);
-  while (firstLf >= 0) {
-    const secondStart = firstLf + 1;
-    const secondLength =
-      buffer[secondStart] === "\n"
-        ? 1
-        : buffer[secondStart] === "\r" && buffer[secondStart + 1] === "\n"
-          ? 2
-          : 0;
-    if (secondLength > 0) {
-      const firstStart = buffer[firstLf - 1] === "\r" ? firstLf - 1 : firstLf;
-      return { index: firstStart, length: firstLf + 1 + secondLength - firstStart };
-    }
-    firstLf = buffer.indexOf("\n", firstLf + 1);
-  }
-  return undefined;
-}
-
-/**
- * Parse an SSE body into `data:` payload strings: multi-line data fields join
- * with newlines, comments and other SSE fields are ignored, and a final
- * buffered event flushes even without a trailing blank line.
- */
-export async function* sseDataPayloads(
-  body: ReadableStream<Uint8Array>,
-  options?: {
-    readonly context: string;
-    readonly deadline?: ProviderResponseDeadline | undefined;
-  },
-): AsyncGenerator<string, void, void> {
-  const decoder = new TextDecoder();
-  const encoder = new TextEncoder();
-  const context = options?.context ?? "Provider stream";
-  const deadline = options?.deadline;
-  let buffer = "";
-  let bufferedBytes = 0;
-  let boundaryScanIndex = 0;
-  const assertEventSize = (rawEvent: string): void => {
-    if (encoder.encode(rawEvent).byteLength <= MAX_PROVIDER_STREAM_EVENT_BYTES) return;
-    const failure = streamEventSizeFailure(context);
-    throw deadline?.interrupt(failure) ?? failure;
-  };
-  for await (const chunk of boundedProviderBodyChunks(body, context, deadline)) {
-    buffer += decoder.decode(chunk, { stream: true });
-    bufferedBytes += chunk.byteLength;
-    let consumedCharacters = 0;
-    let boundary = nextEventBoundary(buffer, boundaryScanIndex);
-    while (boundary !== undefined) {
-      const rawEvent = buffer.slice(consumedCharacters, boundary.index);
-      assertEventSize(rawEvent);
-      const payload = dataPayload(rawEvent);
-      if (payload !== undefined) yield payload;
-      consumedCharacters = boundary.index + boundary.length;
-      boundary = nextEventBoundary(buffer, consumedCharacters);
-    }
-    if (consumedCharacters > 0) {
-      buffer = buffer.slice(consumedCharacters);
-      bufferedBytes = encoder.encode(buffer).byteLength;
-    }
-    boundaryScanIndex = Math.max(0, buffer.length - MAX_BOUNDARY_PREFIX_BYTES);
-    if (bufferedBytes > MAX_PROVIDER_STREAM_EVENT_BYTES + MAX_BOUNDARY_PREFIX_BYTES) {
-      const failure = streamEventSizeFailure(context);
-      throw deadline?.interrupt(failure) ?? failure;
-    }
-  }
-  buffer += decoder.decode();
-  if (buffer.trim() !== "") {
-    assertEventSize(buffer);
-    const payload = dataPayload(buffer);
-    if (payload !== undefined) yield payload;
-  }
-}
-
-function dataPayload(rawEvent: string): string | undefined {
-  const dataLines = rawEvent
-    .split(/\r?\n/u)
-    .filter((line) => line.startsWith("data:"))
-    .map(dataFieldValue);
-  return dataLines.length === 0 ? undefined : dataLines.join("\n");
-}
 
 /** One outbound SSE generation request; failed response bodies never cross this boundary. */
 export interface StreamingTextRequest {
@@ -230,6 +137,7 @@ async function openStreamAttempt(
   readonly deadline: ProviderResponseDeadline;
   readonly frames: AsyncGenerator<string, void, void>;
   readonly firstFrame: IteratorResult<string, void>;
+  readonly diagnostics: { frames: number; bytes: number };
 }> {
   const deadline = startProviderResponseDeadline(
     request.context,
@@ -237,6 +145,7 @@ async function openStreamAttempt(
     request.signal,
   );
   let frames: AsyncGenerator<string, void, void> | undefined;
+  const diagnostics = { frames: 0, bytes: 0 };
   try {
     const response = await dispatchProviderResponse(
       transport,
@@ -255,7 +164,13 @@ async function openStreamAttempt(
     if (body === null) {
       throw new ProviderTransportError(`${request.context}: transport returned no stream body`);
     }
-    frames = sseDataPayloads(body, { context: request.context, deadline });
+    frames = sseDataPayloads(body, {
+      context: request.context,
+      deadline,
+      onBytesReceived: (bytes) => {
+        diagnostics.bytes += bytes;
+      },
+    });
     const firstFrame = await nextFrameWithin(
       frames.next(),
       firstByteTimeoutMs(request),
@@ -263,7 +178,7 @@ async function openStreamAttempt(
       request,
       deadline,
     );
-    return { deadline, frames, firstFrame };
+    return { deadline, frames, firstFrame, diagnostics };
   } catch (error) {
     await closeFrames(frames);
     deadline.finish();
@@ -278,6 +193,7 @@ async function openStreamAttempt(
  * through the adapter's policy; after the first frame reached the extractor a
  * stream is never retried — a replay would corrupt the incremental unwrapper.
  * DR-026: the adapter's `extractStreamFailure` hook raises provider failure frames.
+ * EOF without explicit protocol completion is a non-retryable provider failure.
  */
 export async function* streamProviderTextDeltas(
   request: StreamingTextRequest,
@@ -287,18 +203,24 @@ export async function* streamProviderTextDeltas(
   options?: ProviderStreamOptions,
 ): AsyncGenerator<string, void, void> {
   const open = () => openStreamAttempt(request, transport);
-  const { deadline, frames, firstFrame } =
+  const { deadline, frames, firstFrame, diagnostics } =
     request.retry === undefined ? await open() : await runWithRetryPolicy(request.retry, open);
   let promptTokens: number | null = null;
   let completionTokens: number | null = null;
   let step = firstFrame;
+  let terminalSeen = false;
   try {
     while (step.done !== true) {
       const payload = step.value;
-      if (payload.trim() === "[DONE]") break;
+      diagnostics.frames += 1;
+      if (payload.trim() === "[DONE]") {
+        terminalSeen = true;
+        break;
+      }
       const data = streamChunkObject(payload, request.context);
       const failure = options?.extractStreamFailure?.(data);
       if (failure !== undefined) throw failure;
+      if (options?.isTerminalChunk?.(data) === true) terminalSeen = true;
       const [prompt, completion] = extractUsage(data);
       if (prompt !== null) promptTokens = prompt;
       if (completion !== null) completionTokens = completion;
@@ -311,6 +233,14 @@ export async function* streamProviderTextDeltas(
         "idle",
         request,
         deadline,
+      );
+    }
+    deadline.assertActive();
+    if (!terminalSeen) {
+      throw deadline.interrupt(
+        new ProviderTransportError(
+          `${request.context}: stream ended without a terminal frame (frames=${diagnostics.frames}, bytes=${diagnostics.bytes}).`,
+        ),
       );
     }
   } finally {
