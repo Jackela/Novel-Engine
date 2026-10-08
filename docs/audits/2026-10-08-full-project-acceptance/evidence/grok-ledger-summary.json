@@ -1,0 +1,258 @@
+{
+  "source_candidate_sha": "0799ddf8909dd28f9c31dd72e418636c5a7a8992",
+  "datasets": [
+    {
+      "dataset": "real-grok-data",
+      "jobs": [
+        {
+          "kind": "lore-extract",
+          "status": "completed",
+          "model": "grok-4.7",
+          "count": 2
+        },
+        {
+          "kind": "proposal",
+          "status": "completed",
+          "model": "grok-4.7",
+          "count": 4
+        },
+        {
+          "kind": "review",
+          "status": "completed",
+          "model": "grok-4.7",
+          "count": 2
+        }
+      ],
+      "usage": [
+        {
+          "id": "e2b3f6ef-2d13-41e8-89cc-24aba16cd127",
+          "project_id": "023f0c65-96ad-4b3a-a241-41d05db35b04",
+          "job_id": "5431e575-b397-4d19-a48b-f1321cbb6819",
+          "provider": "acp",
+          "model": "grok-4.7",
+          "prompt_tokens": 34,
+          "completion_tokens": 458,
+          "outcome": "completed",
+          "token_source": "estimated",
+          "request_evidence_json": "{\"operation\":\"continue\",\"base_revision_id\":\"8808b1e3-816c-414b-96b3-04a8a1c13ce6\"}",
+          "created_at": 1791448100844
+        },
+        {
+          "id": "5f6debf2-477f-4770-b57c-154fb5315ce2",
+          "project_id": "023f0c65-96ad-4b3a-a241-41d05db35b04",
+          "job_id": "92f69883-a6b8-4ff6-8d79-e26187ab8ca4",
+          "provider": "acp",
+          "model": "grok-4.7",
+          "prompt_tokens": 34,
+          "completion_tokens": 257,
+          "outcome": "completed",
+          "token_source": "estimated",
+          "request_evidence_json": "{\"operation\":\"rewrite\",\"base_revision_id\":\"8808b1e3-816c-414b-96b3-04a8a1c13ce6\"}",
+          "created_at": 1791448194276
+        },
+        {
+          "id": "e7325915-8685-4164-b33f-8e963988482e",
+          "project_id": "023f0c65-96ad-4b3a-a241-41d05db35b04",
+          "job_id": "b1b7bd8a-e91b-4c5e-bb76-53a2bce76772",
+          "provider": "acp",
+          "model": "grok-4.7",
+          "prompt_tokens": 37,
+          "completion_tokens": 113,
+          "outcome": "completed",
+          "token_source": "estimated",
+          "request_evidence_json": "{\"operation\":\"extract\",\"segment_code_points\":222}",
+          "created_at": 1791448314676
+        },
+        {
+          "id": "ff466045-3644-48de-a7e9-32ff2ea4b273",
+          "project_id": "c67d742b-7b64-4b88-a86c-ba42e9df2227",
+          "job_id": "9df35e53-f2db-44ae-a3c7-35b1dca41938",
+          "provider": "acp",
+          "model": "grok-4.7",
+          "prompt_tokens": 54,
+          "completion_tokens": 958,
+          "outcome": "completed",
+          "token_source": "estimated",
+          "request_evidence_json": "{\"operation\":\"continue\",\"base_revision_id\":\"ac91b01e-7f51-47b4-a547-9a1f10a8d04b\"}",
+          "created_at": 1791448314706
+        },
+        {
+          "id": "63417a2b-cf1c-439b-9220-1488ce9ffe91",
+          "project_id": "c67d742b-7b64-4b88-a86c-ba42e9df2227",
+          "job_id": "79108d32-d29c-45a5-ac8f-07ad87170744",
+          "provider": "acp",
+          "model": "grok-4.7",
+          "prompt_tokens": 54,
+          "completion_tokens": 1059,
+          "outcome": "completed",
+          "token_source": "estimated",
+          "request_evidence_json": "{\"operation\":\"rewrite\",\"base_revision_id\":\"ac91b01e-7f51-47b4-a547-9a1f10a8d04b\"}",
+          "created_at": 1791448400720
+        },
+        {
+          "id": "562094a5-1d96-426c-9a01-f071406592d7",
+          "project_id": "c67d742b-7b64-4b88-a86c-ba42e9df2227",
+          "job_id": "36ed66c9-3cf4-404d-81d8-68d27617c657",
+          "provider": "acp",
+          "model": "grok-4.7",
+          "prompt_tokens": 52,
+          "completion_tokens": 163,
+          "outcome": "completed",
+          "token_source": "estimated",
+          "request_evidence_json": "{\"operation\":\"extract\",\"segment_code_points\":59}",
+          "created_at": 1791448606984
+        }
+      ],
+      "source": "read-only synthetic DB projection only, no auth/secrets"
+    },
+    {
+      "dataset": "final-grok-data",
+      "jobs": [
+        {
+          "kind": "lore-extract",
+          "status": "completed",
+          "model": "grok-4.7",
+          "count": 1
+        },
+        {
+          "kind": "proposal",
+          "status": "completed",
+          "model": "grok-4.7",
+          "count": 2
+        },
+        {
+          "kind": "review",
+          "status": "completed",
+          "model": "grok-4.7",
+          "count": 1
+        }
+      ],
+      "usage": [
+        {
+          "id": "36e5bb38-7259-4fbf-8d6d-19db063b58d9",
+          "project_id": "4bb0a72c-a501-47ab-a03e-af26c5f09cf7",
+          "job_id": "70e8e903-5387-4def-b011-f869d2c6051c",
+          "provider": "acp",
+          "model": "grok-4.7",
+          "prompt_tokens": 84,
+          "completion_tokens": 719,
+          "outcome": "completed",
+          "token_source": "estimated",
+          "request_evidence_json": "{\"operation\":\"continue\",\"base_revision_id\":\"1d5fa466-46c9-49a8-9664-0b22869fdb1a\"}",
+          "created_at": 1791448946979
+        },
+        {
+          "id": "a4b69b4a-07e9-4b57-bd3e-235b69585543",
+          "project_id": "4bb0a72c-a501-47ab-a03e-af26c5f09cf7",
+          "job_id": "a0f2a86c-f39e-44d3-b448-f4a164aef98b",
+          "provider": "acp",
+          "model": "grok-4.7",
+          "prompt_tokens": 84,
+          "completion_tokens": 900,
+          "outcome": "completed",
+          "token_source": "estimated",
+          "request_evidence_json": "{\"operation\":\"rewrite\",\"base_revision_id\":\"1d5fa466-46c9-49a8-9664-0b22869fdb1a\"}",
+          "created_at": 1791449008407
+        },
+        {
+          "id": "b61ce2af-bdb4-44e9-9e90-dbedfb1f806b",
+          "project_id": "4bb0a72c-a501-47ab-a03e-af26c5f09cf7",
+          "job_id": "bdf15af7-b789-43ee-b3e4-445349f7737f",
+          "provider": "acp",
+          "model": "grok-4.7",
+          "prompt_tokens": 52,
+          "completion_tokens": 209,
+          "outcome": "completed",
+          "token_source": "estimated",
+          "request_evidence_json": "{\"operation\":\"extract\",\"segment_code_points\":59}",
+          "created_at": 1791449170297
+        }
+      ],
+      "source": "read-only synthetic DB projection only, no auth/secrets"
+    },
+    {
+      "dataset": "frozen-grok-data",
+      "jobs": [
+        {
+          "kind": "review",
+          "status": "completed",
+          "model": "grok-4.7",
+          "count": 1
+        },
+        {
+          "kind": "review",
+          "status": "failed",
+          "model": "",
+          "count": 1
+        }
+      ],
+      "usage": [],
+      "source": "read-only synthetic DB projection only, no auth/secrets"
+    },
+    {
+      "dataset": "replay-grok-data",
+      "jobs": [
+        {
+          "kind": "lore-extract",
+          "status": "failed",
+          "model": "",
+          "count": 1
+        },
+        {
+          "kind": "proposal",
+          "status": "failed",
+          "model": "",
+          "count": 2
+        },
+        {
+          "kind": "review",
+          "status": "failed",
+          "model": "",
+          "count": 1
+        }
+      ],
+      "usage": [
+        {
+          "id": "b45abc67-0b85-4aa2-b8f1-2e083062ea2f",
+          "project_id": "00361044-dfbd-4657-b62e-ef1ecd725cf9",
+          "job_id": "620950fc-fc94-4add-b29d-51e47bbfe1c5",
+          "provider": "acp",
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "outcome": "failed",
+          "token_source": "unreported",
+          "request_evidence_json": "{\"operation\":\"continue\",\"base_revision_id\":\"7093767b-0098-41c1-93b3-cd3367163574\"}",
+          "created_at": 1791490524097
+        },
+        {
+          "id": "b8370a53-3d7a-430c-8cdf-e9d5159bfd1a",
+          "project_id": "00361044-dfbd-4657-b62e-ef1ecd725cf9",
+          "job_id": "e53324fc-c979-4450-9482-79d5c3b485ac",
+          "provider": "acp",
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "outcome": "failed",
+          "token_source": "unreported",
+          "request_evidence_json": "{\"operation\":\"rewrite\",\"base_revision_id\":\"7093767b-0098-41c1-93b3-cd3367163574\"}",
+          "created_at": 1791490714396
+        },
+        {
+          "id": "ed23f679-61d3-42b1-9561-a3fc38b82176",
+          "project_id": "00361044-dfbd-4657-b62e-ef1ecd725cf9",
+          "job_id": "74b64335-0fe6-4b37-8a10-8a6dc3cd90e5",
+          "provider": "acp",
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "outcome": "failed",
+          "token_source": "unreported",
+          "request_evidence_json": "{\"operation\":\"extract\",\"segment_code_points\":495}",
+          "created_at": 1791491094791
+        }
+      ],
+      "source": "read-only synthetic DB projection only, no auth/secrets"
+    }
+  ]
+}

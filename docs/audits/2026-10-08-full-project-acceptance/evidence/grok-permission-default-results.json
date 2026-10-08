@@ -1,0 +1,95 @@
+[
+  {
+    "case": "unknown-custom-profile",
+    "status": "pass",
+    "refused": true,
+    "message": "ACP connection closed before a complete outcome.",
+    "unknown_profile_diagnostic": true
+  },
+  {
+    "case": "native-permission-reject",
+    "status": "not_run",
+    "model": "grok-4.7",
+    "events": [
+      {
+        "type": "tool",
+        "tool_id": "call-ac277a04-4e3b-4ff8-a67d-5c9efc627391-0",
+        "title": "run_terminal_command",
+        "kind": "other",
+        "status": "pending"
+      },
+      {
+        "type": "tool",
+        "tool_id": "call-ac277a04-4e3b-4ff8-a67d-5c9efc627391-0",
+        "title": "Execute `rm -f /tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/grok-permission-materials/disposable-reject.md`",
+        "kind": "execute",
+        "status": "pending"
+      },
+      {
+        "type": "tool",
+        "tool_id": "call-ac277a04-4e3b-4ff8-a67d-5c9efc627391-0",
+        "title": "Execute `rm -f /tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/grok-permission-materials/disposable-reject.md`",
+        "kind": "execute",
+        "status": "in_progress"
+      },
+      {
+        "type": "tool",
+        "tool_id": "call-ac277a04-4e3b-4ff8-a67d-5c9efc627391-0",
+        "title": "Execute `rm -f /tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/grok-permission-materials/disposable-reject.md`",
+        "kind": "execute",
+        "status": "completed"
+      }
+    ],
+    "permissions": [],
+    "file_exists": false,
+    "counts": {
+      "prompt": null,
+      "completion": null
+    },
+    "native_execution_status": "pass",
+    "reason": "Installed Grok emitted no permission request under the existing CLI rules; an intended allow/reject callback was not invoked. Native execution succeeded and must not be mistaken for a permission roundtrip pass."
+  },
+  {
+    "case": "native-permission-allow",
+    "status": "not_run",
+    "model": "grok-4.7",
+    "events": [
+      {
+        "type": "tool",
+        "tool_id": "call-598dc826-319a-4b9b-bda4-40b4c3137fe7-0",
+        "title": "run_terminal_command",
+        "kind": "other",
+        "status": "pending"
+      },
+      {
+        "type": "tool",
+        "tool_id": "call-598dc826-319a-4b9b-bda4-40b4c3137fe7-0",
+        "title": "Execute `rm -f /tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/grok-permission-materials/disposable-allow.md`",
+        "kind": "execute",
+        "status": "pending"
+      },
+      {
+        "type": "tool",
+        "tool_id": "call-598dc826-319a-4b9b-bda4-40b4c3137fe7-0",
+        "title": "Execute `rm -f /tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/grok-permission-materials/disposable-allow.md`",
+        "kind": "execute",
+        "status": "in_progress"
+      },
+      {
+        "type": "tool",
+        "tool_id": "call-598dc826-319a-4b9b-bda4-40b4c3137fe7-0",
+        "title": "Execute `rm -f /tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/grok-permission-materials/disposable-allow.md`",
+        "kind": "execute",
+        "status": "completed"
+      }
+    ],
+    "permissions": [],
+    "file_exists": false,
+    "counts": {
+      "prompt": null,
+      "completion": null
+    },
+    "native_execution_status": "pass",
+    "reason": "Installed Grok emitted no permission request under the existing CLI rules; an intended allow/reject callback was not invoked. Native execution succeeded and must not be mistaken for a permission roundtrip pass."
+  }
+]

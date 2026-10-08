@@ -1,0 +1,111 @@
+{
+  "source": "read-only SQLite synthetic fixture",
+  "db": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/fake-data/novel-engine.sqlite3",
+  "evidence": [
+    {
+      "flow": "rescue-500",
+      "projectId": "81940952-392c-4fd7-986f-a35537f5bae7",
+      "documentId": "2ceac448-9ccd-4112-8c3c-e7bd8773d113",
+      "revisions": [
+        {
+          "project_id": "81940952-392c-4fd7-986f-a35537f5bae7",
+          "document_id": "2ceac448-9ccd-4112-8c3c-e7bd8773d113",
+          "current_revision_id": "1dfbe3b4-dfbf-4b67-b1e8-68ae94f88a53",
+          "revision_id": "83de92bf-172a-4c53-9689-f1dac139c9a4",
+          "revision_number": 1,
+          "parent_revision_id": null,
+          "source": "author",
+          "content_sha256": "276c17273c50237157780f3f377266be49cb909d8dbc9b713f7e9a867f244b46",
+          "characters": 13,
+          "preview": "# Chapter 1\n\n"
+        },
+        {
+          "project_id": "81940952-392c-4fd7-986f-a35537f5bae7",
+          "document_id": "2ceac448-9ccd-4112-8c3c-e7bd8773d113",
+          "current_revision_id": "1dfbe3b4-dfbf-4b67-b1e8-68ae94f88a53",
+          "revision_id": "1dfbe3b4-dfbf-4b67-b1e8-68ae94f88a53",
+          "revision_number": 2,
+          "parent_revision_id": "83de92bf-172a-4c53-9689-f1dac139c9a4",
+          "source": "author",
+          "content_sha256": "f8f5330add760df91aaca6d6f1a79a74b0b5a3d394b33082b8c29a175a78bfbb",
+          "characters": 39,
+          "preview": "# Chapter 1\n\nSaved audit reference 500."
+        }
+      ]
+    },
+    {
+      "flow": "rescue-503",
+      "projectId": "d3432634-2466-4fd1-a4e0-af4c34406cfa",
+      "documentId": "006c8423-f4c4-4c98-9ff1-e9d0e3f7e9da",
+      "revisions": [
+        {
+          "project_id": "d3432634-2466-4fd1-a4e0-af4c34406cfa",
+          "document_id": "006c8423-f4c4-4c98-9ff1-e9d0e3f7e9da",
+          "current_revision_id": "dbf22022-d06a-47a3-bdae-2c5b343e7298",
+          "revision_id": "bffd15ef-336a-40d2-816d-0d2b13bfd2b0",
+          "revision_number": 1,
+          "parent_revision_id": null,
+          "source": "author",
+          "content_sha256": "276c17273c50237157780f3f377266be49cb909d8dbc9b713f7e9a867f244b46",
+          "characters": 13,
+          "preview": "# Chapter 1\n\n"
+        },
+        {
+          "project_id": "d3432634-2466-4fd1-a4e0-af4c34406cfa",
+          "document_id": "006c8423-f4c4-4c98-9ff1-e9d0e3f7e9da",
+          "current_revision_id": "dbf22022-d06a-47a3-bdae-2c5b343e7298",
+          "revision_id": "dbf22022-d06a-47a3-bdae-2c5b343e7298",
+          "revision_number": 2,
+          "parent_revision_id": "bffd15ef-336a-40d2-816d-0d2b13bfd2b0",
+          "source": "author",
+          "content_sha256": "6c36471cef6ddfa982b3c2abba4db5e6fb034ae75ac5b812874571b46cbbc13f",
+          "characters": 39,
+          "preview": "# Chapter 1\n\nSaved audit reference 503."
+        }
+      ]
+    },
+    {
+      "flow": "accept-refresh-503",
+      "projectId": "a1e5820c-1dd0-42cd-a57a-722df55bb2c9",
+      "documentId": "072449c7-81f9-472a-a22b-2eb7e0cb1d9a",
+      "revisions": [
+        {
+          "project_id": "a1e5820c-1dd0-42cd-a57a-722df55bb2c9",
+          "document_id": "072449c7-81f9-472a-a22b-2eb7e0cb1d9a",
+          "current_revision_id": "01622b63-2c07-4fec-b267-cd5c68c7ae97",
+          "revision_id": "e791c7b5-cbdf-461c-b114-8ffb4bf74dfa",
+          "revision_number": 1,
+          "parent_revision_id": null,
+          "source": "author",
+          "content_sha256": "276c17273c50237157780f3f377266be49cb909d8dbc9b713f7e9a867f244b46",
+          "characters": 13,
+          "preview": "# Chapter 1\n\n"
+        },
+        {
+          "project_id": "a1e5820c-1dd0-42cd-a57a-722df55bb2c9",
+          "document_id": "072449c7-81f9-472a-a22b-2eb7e0cb1d9a",
+          "current_revision_id": "01622b63-2c07-4fec-b267-cd5c68c7ae97",
+          "revision_id": "d352ad76-01be-47b5-b9b7-c4b83a2a4252",
+          "revision_number": 2,
+          "parent_revision_id": "e791c7b5-cbdf-461c-b114-8ffb4bf74dfa",
+          "source": "author",
+          "content_sha256": "6eebe0c25f5de03a65cc1baad50a078912969e20d4fa88f11b5ab51980315221",
+          "characters": 58,
+          "preview": "# Chapter 1\n\nThe audit author kept the old harbor passage."
+        },
+        {
+          "project_id": "a1e5820c-1dd0-42cd-a57a-722df55bb2c9",
+          "document_id": "072449c7-81f9-472a-a22b-2eb7e0cb1d9a",
+          "current_revision_id": "01622b63-2c07-4fec-b267-cd5c68c7ae97",
+          "revision_id": "01622b63-2c07-4fec-b267-cd5c68c7ae97",
+          "revision_number": 3,
+          "parent_revision_id": "d352ad76-01be-47b5-b9b7-c4b83a2a4252",
+          "source": "ai-accepted",
+          "content_sha256": "993c4eb357b16e4a80e1d488beab77363b74c5c1cde87da22414b04aa918b159",
+          "characters": 1128,
+          "preview": "# Chapter 1: The Debt in the Rain\n\nMira waited until the platform emptied before she opened the parc"
+        }
+      ]
+    }
+  ]
+}

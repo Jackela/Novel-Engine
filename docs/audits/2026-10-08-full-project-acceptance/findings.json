@@ -1,0 +1,874 @@
+{
+  "comparison_sha": "066d923d8bb92a47c7d6a12d8352b2aa471cbd4b",
+  "candidate_sha": "da025b7de90a6b2106892d5d8490bbdfd8628a20",
+  "semantics": "Scans, source conflicts, runtime bugs, fixed candidates and unverified items remain separate. All rows carry an explicit acceptance status.",
+  "findings": [
+    {
+      "id": "FE-01",
+      "priority": "P1",
+      "classification": "confirmed_bug",
+      "status": "fail",
+      "title": "应用内导航补存失败导致未保存草稿静默丢失",
+      "source": [
+        "frontend/src/features/studio/hooks/useDocumentDraftRescue.ts:66"
+      ],
+      "trigger": "1.5秒自动保存防抖内导航，唯一补存PUT返回500或503",
+      "impact": "新草稿丢失，回到文稿只看到旧稿；beforeunload原生关闭保护仍存在。",
+      "evidence": [
+        "frontend-evidence.json",
+        "evidence/ui-audit/results.json"
+      ],
+      "existing_issues": [
+        "#467 已关闭，仅成功切换路径背景"
+      ],
+      "owner": "项目维护者",
+      "closure": "导航失败保留可恢复Draft并明确提示；重放500/503并核对正文/Revision与关闭保护。",
+      "candidate_sha": "da025b7de90a6b2106892d5d8490bbdfd8628a20",
+      "baseline_sha": "066d923d8bb92a47c7d6a12d8352b2aa471cbd4b",
+      "tested_scope_note": "Actual evidence retains baseline/intermediate/fixed0799 or7c155 SHA as recorded; candidate field identifies reviewed source only."
+    },
+    {
+      "id": "OPS-UPGRADE-VOLUME-OWNERSHIP",
+      "priority": "P1",
+      "classification": "confirmed_bug",
+      "status": "fail",
+      "title": "旧发布数据卷无法直接升级到当前非root镜像",
+      "source": [
+        "Dockerfile:50",
+        "docker/entrypoint.sh:18"
+      ],
+      "trigger": "0.8发布镜像创建的root-owned0600 .secret交给USER node候选",
+      "impact": "入口无法读取.secret，ExitCode2，服务无法启动。",
+      "evidence": [
+        "operations-evidence.json",
+        "evidence/ops-upgrade-startup-error.log"
+      ],
+      "existing_issues": [
+        "DR-041 加固整改背景"
+      ],
+      "owner": "项目维护者",
+      "closure": "设计受支持的旧卷权限迁移或恢复流程，在旧镜像创建的卷副本上完成升级与回退。",
+      "candidate_sha": "da025b7de90a6b2106892d5d8490bbdfd8628a20",
+      "baseline_sha": "066d923d8bb92a47c7d6a12d8352b2aa471cbd4b",
+      "tested_scope_note": "Actual evidence retains baseline/intermediate/fixed0799 or7c155 SHA as recorded; candidate field identifies reviewed source only."
+    },
+    {
+      "id": "OPS-RESTORE-RETENTION",
+      "priority": "P1",
+      "classification": "confirmed_bug",
+      "status": "fail",
+      "title": "恢复最旧备份时安全备份剪枝删除恢复输入",
+      "source": [
+        "server/src/shared/infrastructure/db/restore.ts:52",
+        "server/src/shared/infrastructure/db/backup.ts"
+      ],
+      "trigger": "管理目录已有3个备份，restore以最旧文件为输入",
+      "impact": "输入先验证后被新安全备份触发剪枝删除，copyFile ENOENT；当前DB未替换。",
+      "evidence": [
+        "evidence/baseline-observations.json",
+        "evidence/baseline-reproductions.log"
+      ],
+      "existing_issues": [
+        "DR-031 备份保留整改背景"
+      ],
+      "owner": "项目维护者",
+      "closure": "保护已验证的恢复输入跨越剪枝和复制，重放最旧输入/损坏输入/失败恢复。",
+      "candidate_sha": "da025b7de90a6b2106892d5d8490bbdfd8628a20",
+      "baseline_sha": "066d923d8bb92a47c7d6a12d8352b2aa471cbd4b",
+      "tested_scope_note": "Actual evidence retains baseline/intermediate/fixed0799 or7c155 SHA as recorded; candidate field identifies reviewed source only."
+    },
+    {
+      "id": "OPS-PUBLISHED-IMAGE-DRIFT",
+      "priority": "P1",
+      "classification": "release_artifact_drift",
+      "status": "fail",
+      "title": "发布镜像与当前加固和首启说明不一致",
+      "source": [
+        "deploy/compose.yaml:9",
+        "README.md:114",
+        "README.md:193"
+      ],
+      "trigger": "按当前文档拉取ghcr.io/jackela/novel-engine:0.8.0",
+      "impact": "镜像revision520be9a、UID0、23迁移，无.setup-token和ACP；当前源码是另一候选。",
+      "evidence": [
+        "operations-evidence.json"
+      ],
+      "existing_issues": [
+        "DR-041 加固整改背景"
+      ],
+      "owner": "项目维护者",
+      "closure": "由Owner批准发布新tag/digest并绑定验收源码；验证文档、首启、升级和回退，不用旧镜像冒充当前源码。",
+      "candidate_sha": "da025b7de90a6b2106892d5d8490bbdfd8628a20",
+      "baseline_sha": "066d923d8bb92a47c7d6a12d8352b2aa471cbd4b",
+      "tested_scope_note": "Actual evidence retains baseline/intermediate/fixed0799 or7c155 SHA as recorded; candidate field identifies reviewed source only."
+    },
+    {
+      "id": "BACKUP-PERMISSION",
+      "priority": "P2",
+      "classification": "confirmed_bug",
+      "status": "fail",
+      "title": "备份吞掉访问错误并返回无数据库结果",
+      "source": [
+        "server/src/shared/infrastructure/db/backup.ts:45"
+      ],
+      "trigger": "存在DB但其父目录不可访问(EACCES)",
+      "impact": "返回null掩盖备份失败；CLI可据此报告No database exists yet。",
+      "evidence": [
+        "evidence/baseline-observations.json",
+        "evidence/baseline-reproductions.log"
+      ],
+      "existing_issues": [
+        "DR-031 背景"
+      ],
+      "owner": "项目维护者",
+      "closure": "仅ENOENT表示不存在；权限/IO错误保留并退出失败，复核启动备份与CLI语义。",
+      "candidate_sha": "da025b7de90a6b2106892d5d8490bbdfd8628a20",
+      "baseline_sha": "066d923d8bb92a47c7d6a12d8352b2aa471cbd4b",
+      "tested_scope_note": "Actual evidence retains baseline/intermediate/fixed0799 or7c155 SHA as recorded; candidate field identifies reviewed source only."
+    },
+    {
+      "id": "CSRF-UNICODE",
+      "priority": "P2",
+      "classification": "confirmed_bug",
+      "status": "fail",
+      "title": "CSRF按字符长度比较引发UTF8长度异常",
+      "source": [
+        "server/src/shared/interface/http/auth_guard.ts:24"
+      ],
+      "trigger": "认证会话仍有效，CSRF header含é，JS字符长度等于cookie但编码字节不同",
+      "impact": "返回500而非403；没有认证绕过或进程DoS证据，同样影响新增permission接口。",
+      "evidence": [
+        "evidence/baseline-observations.json",
+        "security-evidence.json"
+      ],
+      "existing_issues": [],
+      "owner": "项目维护者",
+      "closure": "编码后先比较字节长度再timingSafeEqual；无效请求403、后续会话仍可用。",
+      "candidate_sha": "da025b7de90a6b2106892d5d8490bbdfd8628a20",
+      "baseline_sha": "066d923d8bb92a47c7d6a12d8352b2aa471cbd4b",
+      "tested_scope_note": "Actual evidence retains baseline/intermediate/fixed0799 or7c155 SHA as recorded; candidate field identifies reviewed source only."
+    },
+    {
+      "id": "FE-02",
+      "priority": "P2",
+      "classification": "confirmed_bug",
+      "status": "fail",
+      "title": "接受成功但刷新失败后旧稿仍显示已保存",
+      "source": [
+        "frontend/src/features/studio/hooks/acceptProposalAndRefresh.ts:51",
+        "frontend/src/features/studio/hooks/useProposalAcceptance.ts:135"
+      ],
+      "trigger": "accept200之后document GET503",
+      "impact": "数据库为新ai-accepted Revision，编辑器仍是旧稿/Saved。底部已有accepted/Undo；不能称完全未告知提交。",
+      "evidence": [
+        "frontend-evidence.json",
+        "evidence/ui-audit/sqlite-evidence.json"
+      ],
+      "existing_issues": [
+        "#397 已关闭，仅函数抽取背景"
+      ],
+      "owner": "项目维护者",
+      "closure": "明确展示已接受但刷新失败，保持可重新同步状态，不重复接受；验证Undo与网络恢复。",
+      "candidate_sha": "da025b7de90a6b2106892d5d8490bbdfd8628a20",
+      "baseline_sha": "066d923d8bb92a47c7d6a12d8352b2aa471cbd4b",
+      "tested_scope_note": "Actual evidence retains baseline/intermediate/fixed0799 or7c155 SHA as recorded; candidate field identifies reviewed source only."
+    },
+    {
+      "id": "FE-03",
+      "priority": "P2",
+      "classification": "confirmed_bug",
+      "status": "fail",
+      "title": "导出按钮未应用控件样式",
+      "source": [
+        "frontend/src/features/studio/components/StudioExportPanel.tsx:78",
+        "DESIGN.md:134"
+      ],
+      "trigger": "375px屏幕打开Export",
+      "impact": "三个按钮实际26px高、0圆角、文案串接，低于设计44px要求。",
+      "evidence": [
+        "frontend-evidence.json",
+        "evidence/ui-audit/controls.json"
+      ],
+      "existing_issues": [
+        "#442 已关闭，CSS迁移背景"
+      ],
+      "owner": "项目维护者",
+      "closure": "按已有tokens修复控件样式，验证44px、键盘、窄屏与三格式。",
+      "candidate_sha": "da025b7de90a6b2106892d5d8490bbdfd8628a20",
+      "baseline_sha": "066d923d8bb92a47c7d6a12d8352b2aa471cbd4b",
+      "tested_scope_note": "Actual evidence retains baseline/intermediate/fixed0799 or7c155 SHA as recorded; candidate field identifies reviewed source only."
+    },
+    {
+      "id": "DOC-UPGRADE-PROJECT",
+      "priority": "P2",
+      "classification": "document_conflict",
+      "status": "fail",
+      "title": "ZIP升级改变Compose项目名可能挂载新空卷",
+      "source": [
+        "openwiki/guides/upgrading.md:19",
+        "deploy/README.md:221"
+      ],
+      "trigger": "解压新版本到另一文件夹后按文档启动",
+      "impact": "目录推导的新项目使用另一卷；不是已证明删除旧数据。",
+      "evidence": [
+        "operations-evidence.json"
+      ],
+      "existing_issues": [],
+      "owner": "项目维护者",
+      "closure": "固定项目名/卷名并回放跨目录升级，保留旧卷与回退说明。",
+      "candidate_sha": "da025b7de90a6b2106892d5d8490bbdfd8628a20",
+      "baseline_sha": "066d923d8bb92a47c7d6a12d8352b2aa471cbd4b",
+      "tested_scope_note": "Actual evidence retains baseline/intermediate/fixed0799 or7c155 SHA as recorded; candidate field identifies reviewed source only."
+    },
+    {
+      "id": "DEV-DEPENDENCY-AUDIT",
+      "priority": "P2",
+      "classification": "scanner_alert",
+      "status": "fail",
+      "title": "braces3.0.3开发工具链高风险告警",
+      "source": [
+        "pnpm-lock.yaml"
+      ],
+      "trigger": "全依赖审计，包括OpenSpec和React Doctor",
+      "impact": "开发工具链包含栈耗尽DoS告警；生产依赖审计0告警，不能把二者混同。",
+      "evidence": [
+        "evidence/dependency-full.json",
+        "evidence/dependency-production.json"
+      ],
+      "existing_issues": [
+        "#672 OPEN"
+      ],
+      "owner": "项目维护者",
+      "closure": "处理或明确批准开发依赖风险，并在候选锁文件重跑全审计。",
+      "candidate_sha": "da025b7de90a6b2106892d5d8490bbdfd8628a20",
+      "baseline_sha": "066d923d8bb92a47c7d6a12d8352b2aa471cbd4b",
+      "tested_scope_note": "Actual evidence retains baseline/intermediate/fixed0799 or7c155 SHA as recorded; candidate field identifies reviewed source only."
+    },
+    {
+      "id": "REVIEW-USAGE",
+      "priority": "P2",
+      "classification": "confirmed_behavior_gap",
+      "status": "fail",
+      "title": "Review不进入Provider用量账本",
+      "source": [
+        "server/src/contexts/studio/application/attempt_usage.ts:13",
+        "server/src/contexts/studio/application/job_retry_executor.ts:211"
+      ],
+      "trigger": "运行真实中英四类任务共8个Job",
+      "impact": "实际账本只有4个Proposal和2个Lore，2个Review无usage row；总量不是全部模型请求或账单。",
+      "evidence": [
+        "evidence/grok-ledger-summary.json"
+      ],
+      "existing_issues": [
+        "#675 费用/预算开放事项背景"
+      ],
+      "owner": "项目维护者",
+      "closure": "统一全AI任务的用量范围或明确界面排除Review，保留provider/estimated/unreported来源并验证重试。",
+      "candidate_sha": "da025b7de90a6b2106892d5d8490bbdfd8628a20",
+      "baseline_sha": "066d923d8bb92a47c7d6a12d8352b2aa471cbd4b",
+      "tested_scope_note": "Actual evidence retains baseline/intermediate/fixed0799 or7c155 SHA as recorded; candidate field identifies reviewed source only."
+    },
+    {
+      "id": "HTTP-REVIEW-LANGUAGE",
+      "priority": "P2",
+      "classification": "confirmed_static_gap",
+      "status": "not run",
+      "title": "既有HTTP Provider没有使用Review任务language标记",
+      "source": [
+        "server/src/contexts/ai/infrastructure/providers/provider_json.ts:19"
+      ],
+      "trigger": "Review/lore系统提示为英文而task.language=zh；HTTP请求构造不携带language",
+      "impact": "中文输出没有明确语言约束。本轮ACP已专门修复并真实验证，既有云HTTP输出未运行。",
+      "evidence": [
+        "spec-coverage.json"
+      ],
+      "existing_issues": [
+        "DR-023 语言整改背景"
+      ],
+      "owner": "项目维护者",
+      "closure": "在真实HTTP供应商合成稿上复现并修订语言通道；不能用mock中文输出替代供应商验证。",
+      "candidate_sha": "da025b7de90a6b2106892d5d8490bbdfd8628a20",
+      "baseline_sha": "066d923d8bb92a47c7d6a12d8352b2aa471cbd4b",
+      "tested_scope_note": "Actual evidence retains baseline/intermediate/fixed0799 or7c155 SHA as recorded; candidate field identifies reviewed source only."
+    },
+    {
+      "id": "DOC-PRIVACY",
+      "priority": "P2",
+      "classification": "document_conflict",
+      "status": "fail",
+      "title": "本地存储表述不足以说明云模型与CLI会话副本",
+      "source": [
+        "README.zh-CN.md:3",
+        "openwiki/guides/faq.md",
+        "openwiki/guides/zh/faq.md"
+      ],
+      "trigger": "选择真实云模型或本机Grok",
+      "impact": "正文和上下文发送给模型；Grok保留本机会话。SQLite本地不等于内容没有外部副本。",
+      "evidence": [
+        "docs/acp.md",
+        "evidence/final-grok-studio-summary.json"
+      ],
+      "existing_issues": [],
+      "owner": "项目维护者",
+      "closure": "按Provider、CLI保留和配置说明内容去向与费用，核对双语FAQ/README。",
+      "candidate_sha": "da025b7de90a6b2106892d5d8490bbdfd8628a20",
+      "baseline_sha": "066d923d8bb92a47c7d6a12d8352b2aa471cbd4b",
+      "tested_scope_note": "Actual evidence retains baseline/intermediate/fixed0799 or7c155 SHA as recorded; candidate field identifies reviewed source only."
+    },
+    {
+      "id": "GROK-TIMEOUT",
+      "priority": "P1",
+      "classification": "integration_validation_failure",
+      "status": "fail",
+      "title": "最终真实Grok对照Review及后续任务超过执行时限",
+      "source": [
+        "server/src/contexts/ai/infrastructure/providers/AcpTurnBudget.ts:38",
+        "server/src/contexts/ai/infrastructure/providers/AcpTextProvider.ts"
+      ],
+      "trigger": "最终候选正确对照Review连续两次及后续真实Agent任务无及时进展，超过180秒执行预算",
+      "impact": "Job失败并保留outcome_unknown；首次并发Review成功不能覆盖后续稳定性失败。尚未归因到产品、CLI或外部服务。",
+      "evidence": [
+        "evidence/frozen-grok.log",
+        "evidence/replay-grok-studio-results.json",
+        "evidence/replay-grok-studio.log"
+      ],
+      "existing_issues": [],
+      "owner": "项目维护者",
+      "closure": "保留原失败，获取实际CLI/传输/外部服务诊断后，在同权限配置和合成对照上稳定完成四类任务；核查无自动重放、失败进程清理及未知操作结果。",
+      "candidate_sha": "da025b7de90a6b2106892d5d8490bbdfd8628a20",
+      "baseline_sha": "066d923d8bb92a47c7d6a12d8352b2aa471cbd4b",
+      "tested_scope_note": "Actual evidence retains baseline/intermediate/fixed0799 or7c155 SHA as recorded; candidate field identifies reviewed source only."
+    },
+    {
+      "id": "SPEC-001",
+      "priority": "P2",
+      "classification": "specification_conflict",
+      "status": "fail",
+      "title": "修订版本不可变与合并、清理策略冲突",
+      "source": [
+        "server/src/contexts/studio/infrastructure/db/document_revision_writes.ts",
+        "server/src/contexts/studio/infrastructure/db/revision_retention.ts"
+      ],
+      "trigger": "R008要求前驱版本A仍可读；R009允许30秒内合并未被引用的作者版本、清理旧版本并改写父引用，需区分内容不可修改与保留规则",
+      "impact": "规格与现有整改或同一规格内部不一致，不能自动判实现通过。",
+      "evidence": [
+        "spec-coverage.json"
+      ],
+      "existing_issues": [],
+      "owner": "项目维护者",
+      "closure": "明确规范意图并以OpenSpec校正对应正文/场景；再验证具体断言。",
+      "candidate_sha": "da025b7de90a6b2106892d5d8490bbdfd8628a20",
+      "baseline_sha": "066d923d8bb92a47c7d6a12d8352b2aa471cbd4b",
+      "tested_scope_note": "Actual evidence retains baseline/intermediate/fixed0799 or7c155 SHA as recorded; candidate field identifies reviewed source only.",
+      "spec_topic": "revision_immutability_retention"
+    },
+    {
+      "id": "SPEC-002",
+      "priority": "P2",
+      "classification": "specification_conflict",
+      "status": "fail",
+      "title": "禁止自动删除备份与保留三份策略冲突",
+      "source": [
+        "server/src/shared/infrastructure/db/backup.ts"
+      ],
+      "trigger": "R013禁止自动删除备份；DR031及当前代码自动剪枝，只保留三份管理目录备份",
+      "impact": "规格与现有整改或同一规格内部不一致，不能自动判实现通过。",
+      "evidence": [
+        "spec-coverage.json"
+      ],
+      "existing_issues": [],
+      "owner": "项目维护者",
+      "closure": "明确规范意图并以OpenSpec校正对应正文/场景；再验证具体断言。",
+      "candidate_sha": "da025b7de90a6b2106892d5d8490bbdfd8628a20",
+      "baseline_sha": "066d923d8bb92a47c7d6a12d8352b2aa471cbd4b",
+      "tested_scope_note": "Actual evidence retains baseline/intermediate/fixed0799 or7c155 SHA as recorded; candidate field identifies reviewed source only.",
+      "spec_topic": "backup_retention"
+    },
+    {
+      "id": "SPEC-003",
+      "priority": "P2",
+      "classification": "specification_conflict",
+      "status": "fail",
+      "title": "Markdown章节标题规范与当前导出不一致",
+      "source": [
+        "server/src/contexts/studio/infrastructure/bounded_export_rendering.ts"
+      ],
+      "trigger": "R028要求项目标题后直接输出正文；DR015的当前导出增加二级章标题，并移除正文中的重复标题",
+      "impact": "规格与现有整改或同一规格内部不一致，不能自动判实现通过。",
+      "evidence": [
+        "spec-coverage.json"
+      ],
+      "existing_issues": [],
+      "owner": "项目维护者",
+      "closure": "明确规范意图并以OpenSpec校正对应正文/场景；再验证具体断言。",
+      "candidate_sha": "da025b7de90a6b2106892d5d8490bbdfd8628a20",
+      "baseline_sha": "066d923d8bb92a47c7d6a12d8352b2aa471cbd4b",
+      "tested_scope_note": "Actual evidence retains baseline/intermediate/fixed0799 or7c155 SHA as recorded; candidate field identifies reviewed source only.",
+      "spec_topic": "markdown_chapter_headings"
+    },
+    {
+      "id": "SPEC-004",
+      "priority": "P2",
+      "classification": "specification_conflict",
+      "status": "fail",
+      "title": "导入章节命名规范与保留原题规则冲突",
+      "source": [
+        "server/src/contexts/studio/infrastructure/fs_legacy_workspace_reader.ts"
+      ],
+      "trigger": "R032要求Chapter N标题；DR037的导入逻辑保留正文或文件名中的原章节标题",
+      "impact": "规格与现有整改或同一规格内部不一致，不能自动判实现通过。",
+      "evidence": [
+        "spec-coverage.json"
+      ],
+      "existing_issues": [],
+      "owner": "项目维护者",
+      "closure": "明确规范意图并以OpenSpec校正对应正文/场景；再验证具体断言。",
+      "candidate_sha": "da025b7de90a6b2106892d5d8490bbdfd8628a20",
+      "baseline_sha": "066d923d8bb92a47c7d6a12d8352b2aa471cbd4b",
+      "tested_scope_note": "Actual evidence retains baseline/intermediate/fixed0799 or7c155 SHA as recorded; candidate field identifies reviewed source only.",
+      "spec_topic": "import_chapter_titles"
+    },
+    {
+      "id": "SPEC-005",
+      "priority": "P2",
+      "classification": "specification_conflict",
+      "status": "fail",
+      "title": "预估费用及用量结构规范与整改结果冲突",
+      "source": [
+        "server/src/contexts/studio/infrastructure/db/job_usage_tables.ts",
+        "server/src/contexts/studio/application/attempt_usage.ts"
+      ],
+      "trigger": "R033要求estimated cost，R065要求成功结果结构不变；DR028已移除estimated_cost并增加来源、失败和预估计数",
+      "impact": "规格与现有整改或同一规格内部不一致，不能自动判实现通过。",
+      "evidence": [
+        "spec-coverage.json"
+      ],
+      "existing_issues": [],
+      "owner": "项目维护者",
+      "closure": "明确规范意图并以OpenSpec校正对应正文/场景；再验证具体断言。",
+      "candidate_sha": "da025b7de90a6b2106892d5d8490bbdfd8628a20",
+      "baseline_sha": "066d923d8bb92a47c7d6a12d8352b2aa471cbd4b",
+      "tested_scope_note": "Actual evidence retains baseline/intermediate/fixed0799 or7c155 SHA as recorded; candidate field identifies reviewed source only.",
+      "spec_topic": "usage_cost_shape"
+    },
+    {
+      "id": "SPEC-006",
+      "priority": "P2",
+      "classification": "specification_conflict",
+      "status": "fail",
+      "title": "开发环境重启登出与持久会话规则冲突",
+      "source": [
+        "server/src/shared/infrastructure/config/session_secret.ts"
+      ],
+      "trigger": "R041要求非生产重启后登出；DR040通过持久化.secret继续保留会话",
+      "impact": "规格与现有整改或同一规格内部不一致，不能自动判实现通过。",
+      "evidence": [
+        "spec-coverage.json"
+      ],
+      "existing_issues": [],
+      "owner": "项目维护者",
+      "closure": "明确规范意图并以OpenSpec校正对应正文/场景；再验证具体断言。",
+      "candidate_sha": "da025b7de90a6b2106892d5d8490bbdfd8628a20",
+      "baseline_sha": "066d923d8bb92a47c7d6a12d8352b2aa471cbd4b",
+      "tested_scope_note": "Actual evidence retains baseline/intermediate/fixed0799 or7c155 SHA as recorded; candidate field identifies reviewed source only.",
+      "spec_topic": "development_session_secret"
+    },
+    {
+      "id": "SPEC-007",
+      "priority": "P2",
+      "classification": "specification_conflict",
+      "status": "fail",
+      "title": "失败流禁止留存与部分正文、用量证据冲突",
+      "source": [
+        "server/src/contexts/studio/application/proposal_streaming.ts",
+        "server/src/contexts/studio/application/proposal_landing.ts"
+      ],
+      "trigger": "R067和R070禁止失败流保留部分正文或用量；DR006、DR028及EOF增量保留partial_markdown和failed/unreported用量",
+      "impact": "规格与现有整改或同一规格内部不一致，不能自动判实现通过。",
+      "evidence": [
+        "spec-coverage.json"
+      ],
+      "existing_issues": [],
+      "owner": "项目维护者",
+      "closure": "明确规范意图并以OpenSpec校正对应正文/场景；再验证具体断言。",
+      "candidate_sha": "da025b7de90a6b2106892d5d8490bbdfd8628a20",
+      "baseline_sha": "066d923d8bb92a47c7d6a12d8352b2aa471cbd4b",
+      "tested_scope_note": "Actual evidence retains baseline/intermediate/fixed0799 or7c155 SHA as recorded; candidate field identifies reviewed source only.",
+      "spec_topic": "failed_stream_partial_and_usage"
+    },
+    {
+      "id": "SPEC-008",
+      "priority": "P2",
+      "classification": "specification_conflict",
+      "status": "fail",
+      "title": "任务列表及详情的事件顺序表述冲突",
+      "source": [
+        "server/src/contexts/studio/application/payload_schemas/job.ts",
+        "server/src/contexts/studio/application/job_history_service.ts"
+      ],
+      "trigger": "R077正文不允许列表携带events，却要求列表事件按新到旧；R030和R100要求详情事件按旧到新",
+      "impact": "规格与现有整改或同一规格内部不一致，不能自动判实现通过。",
+      "evidence": [
+        "spec-coverage.json"
+      ],
+      "existing_issues": [],
+      "owner": "项目维护者",
+      "closure": "明确规范意图并以OpenSpec校正对应正文/场景；再验证具体断言。",
+      "candidate_sha": "da025b7de90a6b2106892d5d8490bbdfd8628a20",
+      "baseline_sha": "066d923d8bb92a47c7d6a12d8352b2aa471cbd4b",
+      "tested_scope_note": "Actual evidence retains baseline/intermediate/fixed0799 or7c155 SHA as recorded; candidate field identifies reviewed source only.",
+      "spec_topic": "job_event_order"
+    },
+    {
+      "id": "SPEC-009",
+      "priority": "P2",
+      "classification": "specification_conflict",
+      "status": "fail",
+      "title": "禁止历史版本详情资源与已实现接口冲突",
+      "source": [
+        "server/src/contexts/studio/interface/http/revision_routes.ts"
+      ],
+      "trigger": "R088禁止独立的历史版本详情资源；DR011已提供GET revisions/:revisionId，当前正文语义本身仍正确",
+      "impact": "规格与现有整改或同一规格内部不一致，不能自动判实现通过。",
+      "evidence": [
+        "spec-coverage.json"
+      ],
+      "existing_issues": [],
+      "owner": "项目维护者",
+      "closure": "明确规范意图并以OpenSpec校正对应正文/场景；再验证具体断言。",
+      "candidate_sha": "da025b7de90a6b2106892d5d8490bbdfd8628a20",
+      "baseline_sha": "066d923d8bb92a47c7d6a12d8352b2aa471cbd4b",
+      "tested_scope_note": "Actual evidence retains baseline/intermediate/fixed0799 or7c155 SHA as recorded; candidate field identifies reviewed source only.",
+      "spec_topic": "historical_revision_detail"
+    },
+    {
+      "id": "SPEC-010",
+      "priority": "P2",
+      "classification": "specification_conflict",
+      "status": "fail",
+      "title": "统计统一UTC要求与本地日期分桶冲突",
+      "source": [
+        "server/src/contexts/studio/application/writing_stats_service.ts"
+      ],
+      "trigger": "R103要求写作日、周和连续天数按UTC且与用量一致；DR045写作统计采用客户端时区偏移，用量保持自己的分桶",
+      "impact": "规格与现有整改或同一规格内部不一致，不能自动判实现通过。",
+      "evidence": [
+        "spec-coverage.json"
+      ],
+      "existing_issues": [],
+      "owner": "项目维护者",
+      "closure": "明确规范意图并以OpenSpec校正对应正文/场景；再验证具体断言。",
+      "candidate_sha": "da025b7de90a6b2106892d5d8490bbdfd8628a20",
+      "baseline_sha": "066d923d8bb92a47c7d6a12d8352b2aa471cbd4b",
+      "tested_scope_note": "Actual evidence retains baseline/intermediate/fixed0799 or7c155 SHA as recorded; candidate field identifies reviewed source only.",
+      "spec_topic": "calendar_timezones"
+    },
+    {
+      "id": "SPEC-011",
+      "priority": "P2",
+      "classification": "specification_conflict",
+      "status": "fail",
+      "title": "三类Provider步骤规范未覆盖Lore提取",
+      "source": [
+        "server/src/contexts/ai/application/ports/text_generation.ts"
+      ],
+      "trigger": "R017仅列三个步骤；R105及既有ProviderStep已有lore_extract，ACP没有新增第五种业务步骤",
+      "impact": "规格与现有整改或同一规格内部不一致，不能自动判实现通过。",
+      "evidence": [
+        "spec-coverage.json"
+      ],
+      "existing_issues": [],
+      "owner": "项目维护者",
+      "closure": "明确规范意图并以OpenSpec校正对应正文/场景；再验证具体断言。",
+      "candidate_sha": "da025b7de90a6b2106892d5d8490bbdfd8628a20",
+      "baseline_sha": "066d923d8bb92a47c7d6a12d8352b2aa471cbd4b",
+      "tested_scope_note": "Actual evidence retains baseline/intermediate/fixed0799 or7c155 SHA as recorded; candidate field identifies reviewed source only.",
+      "spec_topic": "closed_provider_steps"
+    },
+    {
+      "id": "SPEC-012",
+      "priority": "P1",
+      "classification": "specification_conflict",
+      "status": "fail",
+      "title": "草稿补存规范的静默失败与DR002不丢稿验收冲突",
+      "source": [
+        "openspec/specs/novel-engine/spec.md:2078",
+        "docs/audits/2026-10-01-devil-advocate-fix-backlog.md:128"
+      ],
+      "trigger": "canonical R046S05要求补存失败不显示错误或恢复Draft，DR002要求切换/关闭不静默丢失未保存内容",
+      "impact": "500/503实际执行符合该窄规范，但违反更强的历史整改验收，不能同时声称两项通过。",
+      "evidence": [
+        "spec-coverage.json:SPEC-014",
+        "evidence/ui-audit/results.json"
+      ],
+      "existing_issues": [
+        "DR-002 历史整改背景"
+      ],
+      "owner": "Owner与项目维护者",
+      "closure": "明确失败离开时应保留可恢复草稿或阻止离开/明确提示，更新规范后回放500/503离开重开及Revision。",
+      "candidate_sha": "da025b7de90a6b2106892d5d8490bbdfd8628a20",
+      "baseline_sha": "066d923d8bb92a47c7d6a12d8352b2aa471cbd4b",
+      "tested_scope_note": "Actual evidence retains baseline/intermediate/fixed0799 or7c155 SHA as recorded; candidate field identifies reviewed source only."
+    },
+    {
+      "id": "DR-036-STATUS",
+      "priority": "P2",
+      "classification": "record_conflict",
+      "status": "fail",
+      "title": "DR036状态与交付汇总不一致",
+      "source": [
+        "docs/audits/2026-10-01-devil-advocate-fix-backlog.md"
+      ],
+      "trigger": "47个DR已勾选，DR036未勾选，但交付和章节10声称48全部完成",
+      "impact": "整改记录不能证明该项当前验收。",
+      "evidence": [
+        "historical-remediation.json"
+      ],
+      "existing_issues": [
+        "DR-036"
+      ],
+      "owner": "项目维护者",
+      "closure": "核实代码与所列验收证据后由维护者一致更新记录，不因汇总自动勾选。",
+      "candidate_sha": "da025b7de90a6b2106892d5d8490bbdfd8628a20",
+      "baseline_sha": "066d923d8bb92a47c7d6a12d8352b2aa471cbd4b",
+      "tested_scope_note": "Actual evidence retains baseline/intermediate/fixed0799 or7c155 SHA as recorded; candidate field identifies reviewed source only."
+    },
+    {
+      "id": "ACP-SEC-01",
+      "priority": "P2",
+      "classification": "implemented_fix",
+      "status": "pass",
+      "title": "目录alias保护",
+      "source": [
+        "server/src/contexts/ai/infrastructure/providers/AcpWorkspace.ts"
+      ],
+      "trigger": "工作副本路径经过父目录符号链接，单独检查文件O_NOFOLLOW不能识别该目录别名",
+      "impact": "已实现并由针对性回归支持；最终SHA/完整检查见evidence registry。",
+      "evidence": [
+        "security-evidence.json",
+        "evidence/security-fixes-green.log",
+        "evidence/final-grok-studio-summary.json",
+        "evidence/security-final-targeted.log"
+      ],
+      "existing_issues": [],
+      "owner": "项目维护者",
+      "closure": "候选代码与最终回归一致；通用宿主profile内容和平台边界需目标环境独立验证。",
+      "candidate_sha": "da025b7de90a6b2106892d5d8490bbdfd8628a20",
+      "baseline_sha": "066d923d8bb92a47c7d6a12d8352b2aa471cbd4b",
+      "tested_scope_note": "Actual evidence retains baseline/intermediate/fixed0799 or7c155 SHA as recorded; candidate field identifies reviewed source only."
+    },
+    {
+      "id": "ACP-SEC-02",
+      "priority": "P1",
+      "classification": "implemented_fix",
+      "status": "pass",
+      "title": "自定义沙箱启动拒绝降级",
+      "source": [
+        "server/src/apps/api/validateAcpWorkspace.ts"
+      ],
+      "trigger": "使用内建sandbox profile或重复sandbox参数；未知profile可能产生与预期不同的运行约束",
+      "impact": "已实现并由针对性回归支持；最终SHA/完整检查见evidence registry。",
+      "evidence": [
+        "security-evidence.json",
+        "evidence/security-fixes-green.log",
+        "evidence/final-grok-studio-summary.json"
+      ],
+      "existing_issues": [],
+      "owner": "项目维护者",
+      "closure": "候选代码与最终回归一致；通用宿主profile内容和平台边界需目标环境独立验证。",
+      "candidate_sha": "da025b7de90a6b2106892d5d8490bbdfd8628a20",
+      "baseline_sha": "066d923d8bb92a47c7d6a12d8352b2aa471cbd4b",
+      "tested_scope_note": "Actual evidence retains baseline/intermediate/fixed0799 or7c155 SHA as recorded; candidate field identifies reviewed source only."
+    },
+    {
+      "id": "ACP-SEC-03",
+      "priority": "P2",
+      "classification": "implemented_fix",
+      "status": "pass",
+      "title": "客户端文件写入独立记录",
+      "source": [
+        "server/src/contexts/ai/infrastructure/providers/buildAcpClient.ts"
+      ],
+      "trigger": "Agent调用客户端fs/write_text_file但未发出原生tool_call通知，文件已改而工具证据缺失",
+      "impact": "已实现并由针对性回归支持；最终SHA/完整检查见evidence registry。",
+      "evidence": [
+        "security-evidence.json",
+        "evidence/security-fixes-green.log",
+        "evidence/final-grok-studio-summary.json",
+        "evidence/security-final-targeted.log"
+      ],
+      "existing_issues": [],
+      "owner": "项目维护者",
+      "closure": "候选代码与最终回归一致；通用宿主profile内容和平台边界需目标环境独立验证。",
+      "candidate_sha": "da025b7de90a6b2106892d5d8490bbdfd8628a20",
+      "baseline_sha": "066d923d8bb92a47c7d6a12d8352b2aa471cbd4b",
+      "tested_scope_note": "Actual evidence retains baseline/intermediate/fixed0799 or7c155 SHA as recorded; candidate field identifies reviewed source only."
+    },
+    {
+      "id": "ACP-SEC-04",
+      "priority": "P2",
+      "classification": "implemented_fix",
+      "status": "pass",
+      "title": "工具记录上限保留未知结果",
+      "source": [
+        "server/src/contexts/studio/interface/http/withAiExecution.ts"
+      ],
+      "trigger": "一次请求产生第101个不同工具记录，原证据截断可能误报结果已完全确定",
+      "impact": "已实现并由针对性回归支持；最终SHA/完整检查见evidence registry。",
+      "evidence": [
+        "security-evidence.json",
+        "evidence/security-fixes-green.log",
+        "evidence/final-grok-studio-summary.json",
+        "evidence/security-final-targeted.log"
+      ],
+      "existing_issues": [],
+      "owner": "项目维护者",
+      "closure": "候选代码与最终回归一致；通用宿主profile内容和平台边界需目标环境独立验证。",
+      "candidate_sha": "da025b7de90a6b2106892d5d8490bbdfd8628a20",
+      "baseline_sha": "066d923d8bb92a47c7d6a12d8352b2aa471cbd4b",
+      "tested_scope_note": "Actual evidence retains baseline/intermediate/fixed0799 or7c155 SHA as recorded; candidate field identifies reviewed source only."
+    },
+    {
+      "id": "ACP-NATIVE-JSON",
+      "priority": "P1",
+      "classification": "implemented_fix",
+      "status": "pass",
+      "title": "Grok过程说明与结构化正文分离",
+      "source": [
+        "server/src/contexts/ai/infrastructure/providers/AcpJsonResponse.ts"
+      ],
+      "trigger": "Grok先输出过程说明再输出JSON，直接解析全部文本会把成功模型结果判为无效",
+      "impact": "已实现并由针对性回归支持；最终SHA/完整检查见evidence registry。",
+      "evidence": [
+        "security-evidence.json",
+        "evidence/security-fixes-green.log",
+        "evidence/final-grok-studio-summary.json"
+      ],
+      "existing_issues": [],
+      "owner": "项目维护者",
+      "closure": "候选代码与最终回归一致；通用宿主profile内容和平台边界需目标环境独立验证。",
+      "candidate_sha": "da025b7de90a6b2106892d5d8490bbdfd8628a20",
+      "baseline_sha": "066d923d8bb92a47c7d6a12d8352b2aa471cbd4b",
+      "tested_scope_note": "Actual evidence retains baseline/intermediate/fixed0799 or7c155 SHA as recorded; candidate field identifies reviewed source only."
+    },
+    {
+      "id": "ACP-LANGUAGE",
+      "priority": "P2",
+      "classification": "implemented_fix",
+      "status": "pass",
+      "title": "ACP中文Review和设定语言",
+      "source": [
+        "server/src/contexts/ai/infrastructure/providers/buildAcpSystemContent.ts"
+      ],
+      "trigger": "中文Review任务的模型意见曾返回英文，ACP未明确传入任务语言",
+      "impact": "已实现并由针对性回归支持；最终SHA/完整检查见evidence registry。",
+      "evidence": [
+        "security-evidence.json",
+        "evidence/security-fixes-green.log",
+        "evidence/final-grok-studio-summary.json"
+      ],
+      "existing_issues": [],
+      "owner": "项目维护者",
+      "closure": "候选代码与最终回归一致；通用宿主profile内容和平台边界需目标环境独立验证。",
+      "candidate_sha": "da025b7de90a6b2106892d5d8490bbdfd8628a20",
+      "baseline_sha": "066d923d8bb92a47c7d6a12d8352b2aa471cbd4b",
+      "tested_scope_note": "Actual evidence retains baseline/intermediate/fixed0799 or7c155 SHA as recorded; candidate field identifies reviewed source only."
+    },
+    {
+      "id": "REVIEW-BODY",
+      "priority": "P1",
+      "classification": "implemented_fix",
+      "status": "pass",
+      "title": "Review捕获完整正文与Revision",
+      "source": [
+        "server/src/contexts/studio/application/review_service.ts"
+      ],
+      "trigger": "Review模型输入只有标题和字数，无法区别同标题、同字数的不同正文",
+      "impact": "已实现并由针对性回归支持；最终SHA/完整检查见evidence registry。",
+      "evidence": [
+        "security-evidence.json",
+        "evidence/security-fixes-green.log",
+        "evidence/final-grok-studio-summary.json"
+      ],
+      "existing_issues": [],
+      "owner": "项目维护者",
+      "closure": "候选代码与最终回归一致；通用宿主profile内容和平台边界需目标环境独立验证。",
+      "candidate_sha": "da025b7de90a6b2106892d5d8490bbdfd8628a20",
+      "baseline_sha": "066d923d8bb92a47c7d6a12d8352b2aa471cbd4b",
+      "tested_scope_note": "Actual evidence retains baseline/intermediate/fixed0799 or7c155 SHA as recorded; candidate field identifies reviewed source only."
+    },
+    {
+      "id": "REVIEW-AUTOSAVE-RACE",
+      "priority": "P1",
+      "classification": "implemented_fix",
+      "status": "pass",
+      "title": "Review等待期间捕获Revision被autosave删除",
+      "source": [
+        "server/src/contexts/studio/infrastructure/db/revision_retention.ts",
+        "server/src/contexts/studio/infrastructure/db/review_records.ts:162"
+      ],
+      "trigger": "Review捕获R2后连续autosave折叠删除R2",
+      "impact": "原失败：连续自动保存删除评审捕获版本，落库失败。候选以应用实例共享的临时Revision pin保护捕获版本到原子落库，失败/回滚后释放。",
+      "evidence": [
+        "security-evidence.json",
+        "evidence/security-final-targeted.log",
+        "evidence/security-review-race-fixed.log",
+        "evidence/acp-provider/review-pins-regression.log",
+        "evidence/frozen-grok-results.json"
+      ],
+      "existing_issues": [],
+      "owner": "项目维护者",
+      "closure": "共享应用实例保护捕获Revision直到landing/失败finally，真实HTTP+autosave及释放/并发回归通过。",
+      "candidate_sha": "da025b7de90a6b2106892d5d8490bbdfd8628a20",
+      "baseline_sha": "066d923d8bb92a47c7d6a12d8352b2aa471cbd4b",
+      "resolution": "14文件58测试及独立原重现对照通过；固定候选真实Grok等待期间两次autosave后Snapshot仍引用原Revision。",
+      "tested_scope_note": "Actual evidence retains baseline/intermediate/fixed0799 or7c155 SHA as recorded; candidate field identifies reviewed source only."
+    },
+    {
+      "id": "ACP-CONNECTING-CANCEL",
+      "priority": "P1",
+      "classification": "implemented_fix",
+      "status": "pass",
+      "title": "升级连接前取消导致未处理WebSocket异常已修复",
+      "source": [
+        "server/src/contexts/ai/infrastructure/providers/AcpWebSocket.ts:8",
+        "server/src/contexts/ai/infrastructure/providers/AcpTextProvider.ts:148"
+      ],
+      "trigger": "预先abort，或TCP已连接但WebSocket upgrade未完成时取消／超时",
+      "impact": "SDK1.7移除error监听后ws异步抛预期关闭异常，可能使进程异常退出；局部保护仅处理精确预期关闭异常，普通网络错误保持可见。",
+      "evidence": [
+        "evidence/acp-provider/acp-final-boundaries.log",
+        "evidence/acp-provider/acp-final-targeted.log",
+        "evidence/security-acp-connecting-final.log",
+        "evidence/security-acp-network-error.log"
+      ],
+      "existing_issues": [],
+      "owner": "本轮实现",
+      "closure": "原预取消及真实TCP等待upgrade的cancel/timeout、普通拒绝连接回归已通过；最终fullcoverage与运行回归见registry。",
+      "candidate_sha": "da025b7de90a6b2106892d5d8490bbdfd8628a20",
+      "baseline_sha": "066d923d8bb92a47c7d6a12d8352b2aa471cbd4b"
+    },
+    {
+      "id": "ACP-REACT-BUSY-GATE",
+      "priority": "P2",
+      "classification": "implemented_gate_fix",
+      "status": "pass",
+      "title": "ACP重试忙碌标记的条件清理触发React诊断警告",
+      "source": [
+        "frontend/src/features/studio/components/StudioAcpJobActions.tsx:56"
+      ],
+      "trigger": "ReactDoctor no-loading-flag-reset-outside-finally 对条件嵌套清理报1条warning，CI要求零diagnostics",
+      "impact": "原代码已在finally但取消分支不清理；警告不能直接当已复现UI卡死。将忙碌状态无条件清理，不忽略规则；错误读取后按钮可再次操作。",
+      "evidence": [
+        "evidence/react-doctor-final-candidate.json",
+        "evidence/react-busy-fix.log",
+        "evidence/frontend-closure-candidate.log"
+      ],
+      "existing_issues": [],
+      "owner": "本轮实现",
+      "closure": "失败证据保留；组件测试明确失败读取后按钮enabled，最终全量/React零诊断和浏览器回归见registry。",
+      "candidate_sha": "da025b7de90a6b2106892d5d8490bbdfd8628a20",
+      "baseline_sha": "066d923d8bb92a47c7d6a12d8352b2aa471cbd4b"
+    }
+  ]
+}

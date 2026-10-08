@@ -1,0 +1,182 @@
+{
+  "observed_at": "2026-10-08T20:38:36.105309+00:00",
+  "main_sha": "490e19458e019641fb6394d33db1fe54ef032d28",
+  "protection": {
+    "url": "https://api.github.com/repos/Jackela/Novel-Engine/branches/main/protection/required_status_checks",
+    "strict": true,
+    "contexts": [
+      "Analyze (javascript-typescript)",
+      "validate",
+      "container"
+    ],
+    "contexts_url": "https://api.github.com/repos/Jackela/Novel-Engine/branches/main/protection/required_status_checks/contexts",
+    "checks": [
+      {
+        "context": "Analyze (javascript-typescript)",
+        "app_id": 15368
+      },
+      {
+        "context": "validate",
+        "app_id": 15368
+      },
+      {
+        "context": "container",
+        "app_id": 15368
+      }
+    ]
+  },
+  "releases": [
+    {
+      "tag": "v0.8.0",
+      "draft": true,
+      "prerelease": false,
+      "published_at": null,
+      "url": "https://github.com/Jackela/Novel-Engine/releases/tag/untagged-89bd11b66807761cd4a0"
+    },
+    {
+      "tag": "v0.7.0",
+      "draft": false,
+      "prerelease": false,
+      "published_at": "2026-09-11T04:20:47Z",
+      "url": "https://github.com/Jackela/Novel-Engine/releases/tag/v0.7.0"
+    },
+    {
+      "tag": "v0.6.0",
+      "draft": false,
+      "prerelease": false,
+      "published_at": "2026-08-30T05:41:42Z",
+      "url": "https://github.com/Jackela/Novel-Engine/releases/tag/v0.6.0"
+    },
+    {
+      "tag": "v0.5.0",
+      "draft": false,
+      "prerelease": false,
+      "published_at": "2026-08-29T01:08:29Z",
+      "url": "https://github.com/Jackela/Novel-Engine/releases/tag/v0.5.0"
+    },
+    {
+      "tag": "v0.4.0",
+      "draft": false,
+      "prerelease": false,
+      "published_at": "2026-08-25T14:34:52Z",
+      "url": "https://github.com/Jackela/Novel-Engine/releases/tag/v0.4.0"
+    }
+  ],
+  "tags": [
+    {
+      "tag": "v0.8.0",
+      "sha": "520be9a8300957c3c5400bc3561b64d86bdc2333"
+    },
+    {
+      "tag": "v0.7.0",
+      "sha": "8a0e1328dbda723db0b9956c66086845682bab05"
+    },
+    {
+      "tag": "v0.6.0",
+      "sha": "2a1d959fc0afb644de0bfbde9f6fa840ace58da4"
+    },
+    {
+      "tag": "v0.5.0",
+      "sha": "e3f0a112ab4e09754837db1dce76df83e6814a1f"
+    },
+    {
+      "tag": "v0.4.0",
+      "sha": "2f74b2c3bf5c0d6c0767667446716cf3298aeecb"
+    },
+    {
+      "tag": "v0.3.1",
+      "sha": "4378524ac7f689d2d5087dfdf15a32515ef1ed56"
+    },
+    {
+      "tag": "v0.2.1-m2-character-gen",
+      "sha": "4f3c28dcf47f6d6ddbf44556b9e19dd5338878ac"
+    },
+    {
+      "tag": "v0.2.0-golden-master",
+      "sha": "a3c9a090b35ae1ad8ab32ed548fee5158e840ea8"
+    },
+    {
+      "tag": "python-final",
+      "sha": "1597de37f17242f763faaff888cf8b8f6b849356"
+    }
+  ],
+  "main_checks": [
+    {
+      "name": "audit",
+      "head_sha": "490e19458e019641fb6394d33db1fe54ef032d28",
+      "conclusion": "failure",
+      "url": "https://github.com/Jackela/Novel-Engine/actions/runs/37765220704/job/113271102241",
+      "completed_at": "2026-10-08T10:42:45Z"
+    },
+    {
+      "name": "container",
+      "head_sha": "490e19458e019641fb6394d33db1fe54ef032d28",
+      "conclusion": "success",
+      "url": "https://github.com/Jackela/Novel-Engine/actions/runs/37635973025/job/112847245701",
+      "completed_at": "2026-10-07T14:32:23Z"
+    },
+    {
+      "name": "validate",
+      "head_sha": "490e19458e019641fb6394d33db1fe54ef032d28",
+      "conclusion": "success",
+      "url": "https://github.com/Jackela/Novel-Engine/actions/runs/37635973025/job/112842188420",
+      "completed_at": "2026-10-07T14:31:43Z"
+    },
+    {
+      "name": "server",
+      "head_sha": "490e19458e019641fb6394d33db1fe54ef032d28",
+      "conclusion": "success",
+      "url": "https://github.com/Jackela/Novel-Engine/actions/runs/37635973025/job/112842188017",
+      "completed_at": "2026-10-07T14:27:59Z"
+    },
+    {
+      "name": "Analyze (javascript-typescript)",
+      "head_sha": "490e19458e019641fb6394d33db1fe54ef032d28",
+      "conclusion": "success",
+      "url": "https://github.com/Jackela/Novel-Engine/actions/runs/37635973020/job/112842175547",
+      "completed_at": "2026-10-07T14:23:34Z"
+    }
+  ],
+  "code_candidate_sha": "da025b7de90a6b2106892d5d8490bbdfd8628a20",
+  "candidate_ci_status": "not run",
+  "candidate_ci_reason": "local unpublished branch; no push/PR/CI dispatch or release requested",
+  "previous_observation": {
+    "observed_at": "2026-10-08T09:24:08.481391+00:00",
+    "main_sha": "490e19458e019641fb6394d33db1fe54ef032d28",
+    "main_checks": [
+      {
+        "name": "container",
+        "head_sha": "490e19458e019641fb6394d33db1fe54ef032d28",
+        "conclusion": "success",
+        "url": "https://github.com/Jackela/Novel-Engine/actions/runs/37635973025/job/112847245701",
+        "completed_at": "2026-10-07T14:32:23Z"
+      },
+      {
+        "name": "validate",
+        "head_sha": "490e19458e019641fb6394d33db1fe54ef032d28",
+        "conclusion": "success",
+        "url": "https://github.com/Jackela/Novel-Engine/actions/runs/37635973025/job/112842188420",
+        "completed_at": "2026-10-07T14:31:43Z"
+      },
+      {
+        "name": "server",
+        "head_sha": "490e19458e019641fb6394d33db1fe54ef032d28",
+        "conclusion": "success",
+        "url": "https://github.com/Jackela/Novel-Engine/actions/runs/37635973025/job/112842188017",
+        "completed_at": "2026-10-07T14:27:59Z"
+      },
+      {
+        "name": "Analyze (javascript-typescript)",
+        "head_sha": "490e19458e019641fb6394d33db1fe54ef032d28",
+        "conclusion": "success",
+        "url": "https://github.com/Jackela/Novel-Engine/actions/runs/37635973020/job/112842175547",
+        "completed_at": "2026-10-07T14:23:34Z"
+      }
+    ]
+  },
+  "published_tag_recheck": {
+    "status": "pass",
+    "artifact": "evidence/published-tag-pull-final.log",
+    "digest": "sha256:15df0fa2b7aca06b30fd412c5dce46a353f57d1de905a7aac1db29440f742c93"
+  }
+}

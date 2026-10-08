@@ -1,0 +1,91 @@
+[
+    {
+        "Id": "sha256:15df0fa2b7aca06b30fd412c5dce46a353f57d1de905a7aac1db29440f742c93",
+        "RepoTags": [
+            "ghcr.io/jackela/novel-engine:0.8.0"
+        ],
+        "RepoDigests": [
+            "ghcr.io/jackela/novel-engine@sha256:15df0fa2b7aca06b30fd412c5dce46a353f57d1de905a7aac1db29440f742c93"
+        ],
+        "Comment": "buildkit.dockerfile.v0",
+        "Created": "2026-09-14T03:38:16.344008457Z",
+        "Config": {
+            "ExposedPorts": {
+                "8000/tcp": {}
+            },
+            "Env": [
+                "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+                "NODE_VERSION=24.21.0",
+                "YARN_VERSION=1.22.22",
+                "NODE_ENV=production",
+                "APP_ENVIRONMENT=production",
+                "DB_URL=sqlite:///./data/novel-engine.sqlite3"
+            ],
+            "Entrypoint": [
+                "/app/docker/entrypoint.sh"
+            ],
+            "Cmd": [
+                "node",
+                "server/dist/apps/cli/main.js",
+                "serve",
+                "--host",
+                "0.0.0.0",
+                "--port",
+                "8000"
+            ],
+            "WorkingDir": "/app",
+            "Labels": {
+                "org.opencontainers.image.created": "2026-09-14T03:58:06.536Z",
+                "org.opencontainers.image.description": "Self-hosted AI novel-writing studio: Fastify/TypeScript + React. Volume-aware drafting with beats, resident context, LLM review, whole-book generation.",
+                "org.opencontainers.image.licenses": "MIT",
+                "org.opencontainers.image.revision": "520be9a8300957c3c5400bc3561b64d86bdc2333",
+                "org.opencontainers.image.source": "https://github.com/Jackela/Novel-Engine",
+                "org.opencontainers.image.title": "Novel-Engine",
+                "org.opencontainers.image.url": "https://github.com/Jackela/Novel-Engine",
+                "org.opencontainers.image.version": "0.8.0"
+            },
+            "ArgsEscaped": true
+        },
+        "Architecture": "arm64",
+        "Os": "linux",
+        "Size": 114409673,
+        "RootFS": {
+            "Type": "layers",
+            "Layers": [
+                "sha256:13a56b6535801be2adde694dabaf1c2df1d862a390661907dac821c42cd565cc",
+                "sha256:41e44bd596eb77861977399231c8075f0f25aed92a110f1b3b9ac4eedf821636",
+                "sha256:0dde8ff85f5f8ef28637238bf773b77a5702c09f2a5c5bf7717810ad03e30e60",
+                "sha256:333672ac957fc91eaa777994fc6710227f60ab7d875689f73f16f3bc9b4c510c",
+                "sha256:414600af71a50c6b37a8abb7a77129ba2e0e9d7d548461332e50f77d569f347a",
+                "sha256:57cfc381f0610d1d3c72fe6d3d244fd1ea3233ec623d650f9a22e85e8414cbb2",
+                "sha256:dd2ef760c3a2793e337ffae35b63d111d0e6b3a99fbf651d75c69b6fa7aa9c6c",
+                "sha256:30ccc9477528c7b78ddcb1ace596a33201b4a947d2fdfd63a365c35cd7a74fce",
+                "sha256:c38c5fd495feb33267ceabd58c639f244c74cde4ac817de4996b84b9d90df07a",
+                "sha256:14cd3a75ae9fb597d3c6b2c7e73576285edf4453cf34da36607a58aa249c88bb",
+                "sha256:84daf7b8f43691fee34c3695673c5aa8ae5f0cde6e8aa97b8d3703a3a295a6e7",
+                "sha256:706723dbd9851e85bd51623cffaec326e5cc25e3111068f33eafafabf99b2169",
+                "sha256:f3abf99fdd1b0995eac0908c5d3fcc47dad3e12d10aa008bc6c3da00d4e2eceb",
+                "sha256:96b81d44846d268330acf273b81797d2215045c93fa5a3c808b4f7acc29e84b9",
+                "sha256:9fee56da133d072d8c235e0eb27bececa9ba5e2db426a55f87d3eba80ca3a769",
+                "sha256:0a1e062b148d538d9438a27a96de9ea9ea2f13f499ed0d2b870309ecbdda4041",
+                "sha256:375989d3ed636c7a2c4c57c8a34e73b682851623278df3d8963e60565f6e8a69",
+                "sha256:1d77b9f6024083fe239273b77457a68e38867adcb2cbbca34ed83622419bce06"
+            ]
+        },
+        "Metadata": {
+            "LastTagTime": "2026-10-08T08:26:40.611371814Z"
+        },
+        "Descriptor": {
+            "mediaType": "application/vnd.oci.image.index.v1+json",
+            "digest": "sha256:15df0fa2b7aca06b30fd412c5dce46a353f57d1de905a7aac1db29440f742c93",
+            "size": 647
+        },
+        "Identity": {
+            "Pull": [
+                {
+                    "Repository": "ghcr.io/jackela/novel-engine"
+                }
+            ]
+        }
+    }
+]

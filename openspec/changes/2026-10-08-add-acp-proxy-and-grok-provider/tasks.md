@@ -25,8 +25,9 @@
 
 ## 5. Acceptance and evidence
 
-- [ ] 5.1 Regenerate OpenAPI/types deliberately and validate all applicable gates.
+- [x] 5.1 Regenerate OpenAPI/types deliberately and validate all applicable gates.
 - [ ] 5.2 Run real configured Grok and browser/isolated deployment scenarios.
-- [ ] 5.3 Record complete specification/historical matrices and reproduced findings.
-- [ ] 5.4 Report current-version, historical-remediation and release-readiness states.
-- [ ] 5.5 Leave human, candidate-CI and release stages explicitly unclosed where not run.
+  - Partial: real Grok, Chromium/Chrome and isolated Compose exercised; native Grok permission request did not occur, final cloud tasks timed out, Firefox/Safari and reader/human gates remain open. See the acceptance report and registry. No release acceptance implied.
+- [x] 5.3 Record complete specification/historical matrices and reproduced findings.
+- [x] 5.4 Report current-version, historical-remediation and release-readiness states.
+- [x] 5.5 Leave human, candidate-CI and release stages explicitly unclosed where not run.

@@ -1,0 +1,232 @@
+{
+  "started": "2026-10-08T08:43:29.833Z",
+  "url": "http://127.0.0.1:4381",
+  "browser": "151.0.7922.34",
+  "flows": [
+    {
+      "name": "rescue-500",
+      "projectId": "81940952-392c-4fd7-986f-a35537f5bae7",
+      "documentId": "2ceac448-9ccd-4112-8c3c-e7bd8773d113",
+      "before": {
+        "id": "2ceac448-9ccd-4112-8c3c-e7bd8773d113",
+        "project_id": "81940952-392c-4fd7-986f-a35537f5bae7",
+        "kind": "chapter",
+        "title": "Chapter 1",
+        "position": 1,
+        "volume_id": "40c7dda7-86fd-46b1-ae38-1d808d14b2d3",
+        "beat_ref": null,
+        "lore_status": null,
+        "current_revision_id": "1dfbe3b4-dfbf-4b67-b1e8-68ae94f88a53",
+        "content_markdown": "# Chapter 1\n\nSaved audit reference 500.",
+        "metadata": {},
+        "revision_source": "author",
+        "word_count": 6,
+        "created_at": "2026-10-08T08:43:31.008Z",
+        "updated_at": "2026-10-08T08:43:32.633Z"
+      },
+      "after": {
+        "id": "2ceac448-9ccd-4112-8c3c-e7bd8773d113",
+        "project_id": "81940952-392c-4fd7-986f-a35537f5bae7",
+        "kind": "chapter",
+        "title": "Chapter 1",
+        "position": 1,
+        "volume_id": "40c7dda7-86fd-46b1-ae38-1d808d14b2d3",
+        "beat_ref": null,
+        "lore_status": null,
+        "current_revision_id": "1dfbe3b4-dfbf-4b67-b1e8-68ae94f88a53",
+        "content_markdown": "# Chapter 1\n\nSaved audit reference 500.",
+        "metadata": {},
+        "revision_source": "author",
+        "word_count": 6,
+        "created_at": "2026-10-08T08:43:31.008Z",
+        "updated_at": "2026-10-08T08:43:32.633Z"
+      },
+      "network": [
+        {
+          "method": "PUT",
+          "url": "http://127.0.0.1:4381/api/projects/81940952-392c-4fd7-986f-a35537f5bae7/documents/2ceac448-9ccd-4112-8c3c-e7bd8773d113",
+          "status": 500,
+          "body": {
+            "content_markdown": "UNSAVED AUDIT DRAFT 500 lost on navigation",
+            "base_revision_id": "1dfbe3b4-dfbf-4b67-b1e8-68ae94f88a53",
+            "title": "Chapter 1",
+            "autosave": true
+          }
+        }
+      ],
+      "libraryText": "Novel Engine\nLanguage\nEnglish\n中文\nTheme\nSystem (light)\nLight\nDark\nProjects\n\nOpen a manuscript or start a new novel.\n\nNew project\nTitle\nPremise\nCreate project\nUI Audit Rescue 500 1791449010951\nNo premise yet\n10/8/2026\nUI Audit Accept Refresh 1791448978478\nNo premise yet\n10/8/2026\nUI Audit Rescue 503 1791448974085\nNo premise yet\n10/8/2026\nUI Audit Rescue 500 1791448968963\nNo premise yet\n10/8/2026\nUI Audit Rescue 500 1791448937372\nNo premise yet\n10/8/2026\nACP Navigation\nNo premise yet\n10/8/2026\nACP Cancellation\nNo premise yet\n10/8/2026\nACP Four Steps\nNo premise yet\n10/8/2026\nACP Cancellation\nNo premise yet\n10/8/2026\nACP Four Steps\nNo premise yet\n10/8/2026\nACP Four Steps\nNo premise yet\n10/8/2026\nACP Four Steps\nNo premise yet\n10/8/2026\n\nEnd of project catalog.",
+      "reopened": "# Chapter 1\n\n\nSaved audit reference 500.",
+      "marker": "UNSAVED AUDIT DRAFT 500 lost on navigation",
+      "assertions": {
+        "rescueAttemptOne": true,
+        "revisionUnchanged": true,
+        "bodyUnchanged": true,
+        "draftMissing": true,
+        "visibleFailure": false
+      }
+    },
+    {
+      "name": "rescue-503",
+      "projectId": "d3432634-2466-4fd1-a4e0-af4c34406cfa",
+      "documentId": "006c8423-f4c4-4c98-9ff1-e9d0e3f7e9da",
+      "before": {
+        "id": "006c8423-f4c4-4c98-9ff1-e9d0e3f7e9da",
+        "project_id": "d3432634-2466-4fd1-a4e0-af4c34406cfa",
+        "kind": "chapter",
+        "title": "Chapter 1",
+        "position": 1,
+        "volume_id": "077773bd-b3e2-46fb-86b2-dda78ff1e904",
+        "beat_ref": null,
+        "lore_status": null,
+        "current_revision_id": "dbf22022-d06a-47a3-bdae-2c5b343e7298",
+        "content_markdown": "# Chapter 1\n\nSaved audit reference 503.",
+        "metadata": {},
+        "revision_source": "author",
+        "word_count": 6,
+        "created_at": "2026-10-08T08:43:35.378Z",
+        "updated_at": "2026-10-08T08:43:36.974Z"
+      },
+      "after": {
+        "id": "006c8423-f4c4-4c98-9ff1-e9d0e3f7e9da",
+        "project_id": "d3432634-2466-4fd1-a4e0-af4c34406cfa",
+        "kind": "chapter",
+        "title": "Chapter 1",
+        "position": 1,
+        "volume_id": "077773bd-b3e2-46fb-86b2-dda78ff1e904",
+        "beat_ref": null,
+        "lore_status": null,
+        "current_revision_id": "dbf22022-d06a-47a3-bdae-2c5b343e7298",
+        "content_markdown": "# Chapter 1\n\nSaved audit reference 503.",
+        "metadata": {},
+        "revision_source": "author",
+        "word_count": 6,
+        "created_at": "2026-10-08T08:43:35.378Z",
+        "updated_at": "2026-10-08T08:43:36.974Z"
+      },
+      "network": [
+        {
+          "method": "PUT",
+          "url": "http://127.0.0.1:4381/api/projects/d3432634-2466-4fd1-a4e0-af4c34406cfa/documents/006c8423-f4c4-4c98-9ff1-e9d0e3f7e9da",
+          "status": 503,
+          "body": {
+            "content_markdown": "UNSAVED AUDIT DRAFT 503 lost on navigation",
+            "base_revision_id": "dbf22022-d06a-47a3-bdae-2c5b343e7298",
+            "title": "Chapter 1",
+            "autosave": true
+          }
+        }
+      ],
+      "libraryText": "Novel Engine\nLanguage\nEnglish\n中文\nTheme\nSystem (light)\nLight\nDark\nProjects\n\nOpen a manuscript or start a new novel.\n\nNew project\nTitle\nPremise\nCreate project\nUI Audit Rescue 503 1791449015311\nNo premise yet\n10/8/2026\nUI Audit Rescue 500 1791449010951\nNo premise yet\n10/8/2026\nUI Audit Accept Refresh 1791448978478\nNo premise yet\n10/8/2026\nUI Audit Rescue 503 1791448974085\nNo premise yet\n10/8/2026\nUI Audit Rescue 500 1791448968963\nNo premise yet\n10/8/2026\nUI Audit Rescue 500 1791448937372\nNo premise yet\n10/8/2026\nACP Navigation\nNo premise yet\n10/8/2026\nACP Cancellation\nNo premise yet\n10/8/2026\nACP Four Steps\nNo premise yet\n10/8/2026\nACP Cancellation\nNo premise yet\n10/8/2026\nACP Four Steps\nNo premise yet\n10/8/2026\nACP Four Steps\nNo premise yet\n10/8/2026\nACP Four Steps\nNo premise yet\n10/8/2026\n\nEnd of project catalog.",
+      "reopened": "# Chapter 1\n\n\nSaved audit reference 503.",
+      "marker": "UNSAVED AUDIT DRAFT 503 lost on navigation",
+      "assertions": {
+        "rescueAttemptOne": true,
+        "revisionUnchanged": true,
+        "bodyUnchanged": true,
+        "draftMissing": true,
+        "visibleFailure": false
+      }
+    },
+    {
+      "name": "accept-refresh-503",
+      "projectId": "a1e5820c-1dd0-42cd-a57a-722df55bb2c9",
+      "documentId": "072449c7-81f9-472a-a22b-2eb7e0cb1d9a",
+      "before": {
+        "id": "072449c7-81f9-472a-a22b-2eb7e0cb1d9a",
+        "project_id": "a1e5820c-1dd0-42cd-a57a-722df55bb2c9",
+        "kind": "chapter",
+        "title": "Chapter 1",
+        "position": 1,
+        "volume_id": "49a414aa-e245-4972-a35b-520642c03ff0",
+        "beat_ref": null,
+        "lore_status": null,
+        "current_revision_id": "d352ad76-01be-47b5-b9b7-c4b83a2a4252",
+        "content_markdown": "# Chapter 1\n\nThe audit author kept the old harbor passage.",
+        "metadata": {},
+        "revision_source": "author",
+        "word_count": 10,
+        "created_at": "2026-10-08T08:43:39.757Z",
+        "updated_at": "2026-10-08T08:43:41.762Z"
+      },
+      "after": {
+        "id": "072449c7-81f9-472a-a22b-2eb7e0cb1d9a",
+        "project_id": "a1e5820c-1dd0-42cd-a57a-722df55bb2c9",
+        "kind": "chapter",
+        "title": "Chapter 1",
+        "position": 1,
+        "volume_id": "49a414aa-e245-4972-a35b-520642c03ff0",
+        "beat_ref": null,
+        "lore_status": null,
+        "current_revision_id": "01622b63-2c07-4fec-b267-cd5c68c7ae97",
+        "content_markdown": "# Chapter 1: The Debt in the Rain\n\nMira waited until the platform emptied before she opened the parcel again. The page still carried the heading Chapter 1, though the words beneath it had begun to argue with each other. The danger had sounded tidy in Tomas's mouth, as if fear could be catalogued and shelved. It could not. The page trembled whenever she breathed on it, and each tremor pulled another memory loose: her father's sleeve dark with rain, her mother refusing to answer the door, Tomas pretending not to know which name had been crossed out first.\n\n\"Say it plainly,\" she told him.\n\nTomas looked at the tunnel instead. \"Plainly gets people killed.\"\n\n\"So does ornament.\"\n\nThat made him face her. Something changed there, not on the page: he stopped performing caution and let the old grief show. When the train arrived, neither of them boarded. They stayed beside the wet rail until the city moved around them, and the ledger page named the next cost in a line too sharp to mistake for metaphor.\n\nThe bell struck again. This time the name it carried was hers, and every lamp along the platform leaned toward the sound.",
+        "metadata": {
+          "ai_job_id": "dd4dd7f6-140f-42c2-a6fa-2ff8f9bc5f9d"
+        },
+        "revision_source": "ai-accepted",
+        "word_count": 198,
+        "created_at": "2026-10-08T08:43:39.757Z",
+        "updated_at": "2026-10-08T08:43:42.154Z"
+      },
+      "network": [
+        {
+          "method": "POST",
+          "path": "/api/projects/a1e5820c-1dd0-42cd-a57a-722df55bb2c9/documents/072449c7-81f9-472a-a22b-2eb7e0cb1d9a/ai-proposals/stream",
+          "status": 200
+        },
+        {
+          "method": "POST",
+          "path": "/api/projects/a1e5820c-1dd0-42cd-a57a-722df55bb2c9/ai-proposals/dd4dd7f6-140f-42c2-a6fa-2ff8f9bc5f9d/accept",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/api/projects/a1e5820c-1dd0-42cd-a57a-722df55bb2c9",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/api/projects/a1e5820c-1dd0-42cd-a57a-722df55bb2c9/documents/072449c7-81f9-472a-a22b-2eb7e0cb1d9a",
+          "status": 503
+        },
+        {
+          "method": "GET",
+          "path": "/api/projects/a1e5820c-1dd0-42cd-a57a-722df55bb2c9",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/api/projects/a1e5820c-1dd0-42cd-a57a-722df55bb2c9/documents/072449c7-81f9-472a-a22b-2eb7e0cb1d9a",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/api/projects/a1e5820c-1dd0-42cd-a57a-722df55bb2c9/documents/072449c7-81f9-472a-a22b-2eb7e0cb1d9a/beat",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/api/projects/a1e5820c-1dd0-42cd-a57a-722df55bb2c9/documents/072449c7-81f9-472a-a22b-2eb7e0cb1d9a/revisions",
+          "status": 200
+        }
+      ],
+      "visibleText": "Novel Engine\nUI Audit Accept Refresh 1791449019692\nLanguage\nEnglish\n中文\nTheme\nSystem (light)\nLight\nDark\nProject navigation\nManuscript\nOutline\nCharacters\nWorld\nSettings\n\nDrafts empty chapters in reading order; chapters that already have text are replaced only after you confirm.\n\nGenerate whole book\nMANUSCRIPT\nAdd volume\n\nDEFAULT VOLUME\n\n1\nChapter 1\nOUTLINE\nCHARACTERS\nWORLD\nNOTES\nSaved\n10 words\nDraft 58 B of 1.0 MB · 10 words\nMARKDOWN\n# Chapter 1\n\n\nThe audit author kept the old harbor passage.\nInspector\nCopilot\nReview\nHistory\nExport\nJobs\nUsage\nStats\nLore\nThe service is not available right now. Check the server and retry.\nBeat\nChoose a beat…\n\nLinks the chapter to an outline beat by its heading title.\n\nLink beat\nClear\nRefresh beats\n\nAI proposal\n\nCopilot never changes the manuscript until you accept a proposal.\n\nRewrite or Continue drafts a proposal to preview here; Accept applies it to the manuscript.\n\nRewrite\nContinue\n\nProposal accepted — you can undo this once.\n\nUndo\nSaved\nRevision d352ad76\n10 words\nNovel Engine 0.8.0",
+      "editorAfter": "# Chapter 1\n\n\nThe audit author kept the old harbor passage.",
+      "alerts": [
+        "The service is not available right now. Check the server and retry."
+      ],
+      "healed": "# Chapter 1: The Debt in the Rain\n\n\nMira waited until the platform emptied before she opened the parcel again. The page still carried the heading Chapter 1, though the words beneath it had begun to argue with each other. The danger had sounded tidy in Tomas's mouth, as if fear could be catalogued and shelved. It could not. The page trembled whenever she breathed on it, and each tremor pulled another memory loose: her father's sleeve dark with rain, her mother refusing to answer the door, Tomas pretending not to know which name had been crossed out first.\n\n\n\"Say it plainly,\" she told him.\n\n\nTomas looked at the tunnel instead. \"Plainly gets people killed.\"\n\n\n\"So does ornament.\"\n\n\nThat made him face her. Something changed there, not on the page: he stopped performing caution and let the old grief show. When the train arrived, neither of them boarded. They stayed beside the wet rail until the city moved around them, and the ledger page named the next cost in a line too sharp to mistake for metaphor.",
+      "assertions": {
+        "revisionChanged": true,
+        "bodyChanged": true,
+        "editorStale": true,
+        "acceptanceUndoNoticeVisible": true,
+        "acceptanceExplainedInFailureAlert": false
+      },
+      "interpretation": "底部已有明确 accepted/Undo；缺陷是刷新失败错误没有说明已提交及同步恢复动作，同时旧稿仍标 Saved。不能报告为完全未告知已接受。"
+    }
+  ],
+  "failure": {
+    "message": "locator.check: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('radio', { name: 'Dark', exact: true })\u001b[22m\n\u001b[2m    - locator resolved to <input type=\"radio\" value=\"dark\" name=\"theme\" class=\"ui-theme-switch__input\"/>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <span>Dark</span> intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <span>Dark</span> intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    58 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m       - element is visible, enabled and stable\u001b[22m\n\u001b[2m       - scrolling into view if needed\u001b[22m\n\u001b[2m       - done scrolling\u001b[22m\n\u001b[2m       - <span>Dark</span> intercepts pointer events\u001b[22m\n\u001b[2m     - retrying click action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n",
+    "stack": "locator.check: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('radio', { name: 'Dark', exact: true })\u001b[22m\n\u001b[2m    - locator resolved to <input type=\"radio\" value=\"dark\" name=\"theme\" class=\"ui-theme-switch__input\"/>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <span>Dark</span> intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <span>Dark</span> intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    58 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m       - element is visible, enabled and stable\u001b[22m\n\u001b[2m       - scrolling into view if needed\u001b[22m\n\u001b[2m       - done scrolling\u001b[22m\n\u001b[2m       - <span>Dark</span> intercepts pointer events\u001b[22m\n\u001b[2m     - retrying click action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n\n    at /private/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ui-audit-browser/replay.mjs:28:408"
+  }
+}

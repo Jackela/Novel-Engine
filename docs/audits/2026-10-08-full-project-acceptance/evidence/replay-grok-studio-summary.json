@@ -1,0 +1,76 @@
+{
+  "candidate_sha": "0799ddf8909dd28f9c31dd72e418636c5a7a8992",
+  "results": [
+    {
+      "language": "zh",
+      "step": "editorial_review",
+      "status": "failed",
+      "error": "ACP execution or handshake timeout.",
+      "model": "",
+      "events": [
+        "ready",
+        "error"
+      ],
+      "elapsed_ms": 189390,
+      "agent_execution": {
+        "operation_id": "1a4f5845-650f-4cca-adc0-dc9b1e847e6b",
+        "external_effects": [],
+        "outcome_unknown": true
+      }
+    },
+    {
+      "language": "zh",
+      "step": "chapter_draft",
+      "status": "failed",
+      "error": "ACP execution or handshake timeout.",
+      "model": "",
+      "events": [
+        "ready",
+        "error"
+      ],
+      "elapsed_ms": 190291,
+      "agent_execution": {
+        "operation_id": "2dc04fdc-1e65-4745-87c7-803c39e28dbd",
+        "external_effects": [],
+        "outcome_unknown": true
+      }
+    },
+    {
+      "language": "zh",
+      "step": "chapter_revision",
+      "status": "failed",
+      "error": "ACP execution or handshake timeout.",
+      "model": "",
+      "events": [
+        "ready",
+        "error"
+      ],
+      "elapsed_ms": 190202,
+      "agent_execution": {
+        "operation_id": "85deeb56-a0f8-4500-a6af-dca9d20d4f59",
+        "external_effects": [],
+        "outcome_unknown": true
+      }
+    },
+    {
+      "language": "zh",
+      "step": "lore_extract",
+      "status": "failed",
+      "error": "ACP execution or handshake timeout.",
+      "model": "",
+      "events": [
+        "ready",
+        "error"
+      ],
+      "elapsed_ms": 190199,
+      "agent_execution": {
+        "operation_id": "f8dec55b-26e8-4827-8f6d-8c087e81b4ad",
+        "external_effects": [],
+        "outcome_unknown": true
+      }
+    }
+  ],
+  "notes": null,
+  "canary": "SYNTHETIC_AUTHORITY_CANARY",
+  "diagnostic_lines": 312
+}

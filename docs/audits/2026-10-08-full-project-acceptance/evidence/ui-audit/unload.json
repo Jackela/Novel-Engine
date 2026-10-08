@@ -1,0 +1,9 @@
+{
+  "url": "http://127.0.0.1:4381/projects/cd408685-e03d-4d4a-98b3-1bf2237f74f5/manuscript",
+  "type": "beforeunload",
+  "message": "",
+  "action": "dismiss",
+  "reloadError": "page.reload: Timeout 5000ms exceeded.\nCall log:\n\u001b[2m  - waiting for navigation until \"load\"\u001b[22m\n",
+  "editor": "UNSAVED BEFOREUNLOAD AUDIT",
+  "guardObserved": true
+}

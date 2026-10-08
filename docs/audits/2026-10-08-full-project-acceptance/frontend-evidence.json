@@ -1,0 +1,457 @@
+{
+  "scope": "Read-only frontend/product audit; only own synthetic fixture projects and isolated temp replay artifacts. No product code/tests/config modifications. No paid provider or real material use.",
+  "baseline_sha": "066d923d8bb92a47c7d6a12d8352b2aa471cbd4b",
+  "candidate": {
+    "workspace": "/Users/jackela/.codex/worktrees/acp-full-acceptance/Novel-Engine",
+    "state": "uncommitted candidate; HEAD remains baseline",
+    "source_manifest": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ui-audit-browser/manifest.json",
+    "baseline_archive": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/baseline",
+    "baseline_runtime": "archive has no built frontend/server; replay current built candidate, compare exact audited source hashes to baseline; this is not a clean-baseline whole-system runtime certification",
+    "url": "http://127.0.0.1:4381",
+    "browser": "151.0.7922.34",
+    "web_security": "normal Playwright Chromium; no disable-web-security; normal Owner session, CSRF and credentials preserved"
+  },
+  "evidence_level": "targeted actual browser + fault injection + API + read-only synthetic SQLite; excludes human acceptance/release",
+  "findings": [
+    {
+      "id": "FE-01",
+      "status": "confirmed_existing_bug",
+      "priority": "P1",
+      "title": "应用内导航遇到草稿补存 500/503 后静默丢失未保存草稿",
+      "source": [
+        {
+          "path": "frontend/src/features/studio/hooks/useDocumentDraftRescue.ts",
+          "lines": "66-79"
+        },
+        {
+          "path": "frontend/src/features/studio/hooks/useDocumentDraftRescue.ts",
+          "lines": "89-112"
+        }
+      ],
+      "reproduction": [
+        "创建独立 synthetic project；保存旧稿并读取 current_revision_id。",
+        "编辑新 marker，在 1.5s autosave debounce 内点击 Back to projects。",
+        "仅将该文稿 PUT 注入500或503；捕获唯一 rescue 请求。",
+        "Library 无失败提示，重新打开只恢复旧稿；API与只读SQLite均显示原Revision2，marker不存在。"
+      ],
+      "variants": [
+        {
+          "status": 500,
+          "project_id": "81940952-392c-4fd7-986f-a35537f5bae7",
+          "assertions": {
+            "rescueAttemptOne": true,
+            "revisionUnchanged": true,
+            "bodyUnchanged": true,
+            "draftMissing": true,
+            "visibleFailure": false
+          }
+        },
+        {
+          "status": 503,
+          "project_id": "d3432634-2466-4fd1-a4e0-af4c34406cfa",
+          "assertions": {
+            "rescueAttemptOne": true,
+            "revisionUnchanged": true,
+            "bodyUnchanged": true,
+            "draftMissing": true,
+            "visibleFailure": false
+          }
+        }
+      ],
+      "qualification": "useDocumentDraft.ts:152-164 的 beforeunload 保护存在，不能称浏览器关闭保护缺失；本缺陷由应用内路由导航触发。",
+      "evidence": [
+        "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ui-audit-browser/results.json",
+        "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ui-audit-browser/sqlite-evidence.json",
+        "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ui-audit-browser/rescue-503-departed.png",
+        "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ui-audit-browser/rescue-503-reopened.png"
+      ],
+      "issue": {
+        "matching_ticket": null,
+        "related_closed": [
+          {
+            "number": 467,
+            "url": "https://github.com/Jackela/Novel-Engine/issues/467",
+            "relation": "已有E2E仅成功补存路径，本失败分支不在关闭证据中"
+          }
+        ],
+        "action": "未创建或重开Issue；提交协调者分诊"
+      },
+      "closure_conditions": [
+        "网络500/503/离线时，应用内离开文稿不会永久丢失未保存文字；用户能明确选择保留/重试/放弃。",
+        "失败与恢复显示在可达、可读出的区域；返回文稿仍能恢复并保存原 marker。",
+        "正常补存仅一次写入，不跨project；409冲突仍留在显式冲突处理；浏览器 beforeunload 保留。",
+        "浏览器网络注入/API/Revision联合回放证明失败保留、恢复后精确持久化。"
+      ]
+    },
+    {
+      "id": "FE-02",
+      "status": "confirmed_existing_bug",
+      "priority": "P2",
+      "title": "接受已提交但文稿刷新503后，旧稿仍标已保存，通用失败提示缺少同步恢复说明",
+      "source": [
+        {
+          "path": "frontend/src/features/studio/hooks/acceptProposalAndRefresh.ts",
+          "lines": "51-65"
+        },
+        {
+          "path": "frontend/src/features/studio/hooks/useProposalAcceptance.ts",
+          "lines": "135-151"
+        }
+      ],
+      "reproduction": [
+        "Mock生成有效Proposal；accept请求成功，允许project GET，只注入随后的document GET503。",
+        "Proposal预览清除，底部明确显示 Proposal accepted—Undo；错误区域仅通用 service unavailable/check server/retry。",
+        "API及SQLite出现新Revision3/source ai-accepted；编辑器和状态栏仍是旧Revision2、旧稿及Saved。",
+        "解除注入并重新加载，界面恢复新稿。"
+      ],
+      "assertions": {
+        "revisionChanged": true,
+        "bodyChanged": true,
+        "editorStale": true,
+        "acceptanceUndoNoticeVisible": true,
+        "acceptanceExplainedInFailureAlert": false
+      },
+      "qualification": "已接受事实并非完全未告知；底部成功提示/Undo已存在。本问题是错误提示、当前稿及Saved状态未协同表达刷新失败。没有发现accept重复提交或数据库事务失败。",
+      "evidence": [
+        "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ui-audit-browser/results.json",
+        "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ui-audit-browser/sqlite-evidence.json",
+        "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ui-audit-browser/accepted-refresh-failed.png",
+        "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ui-audit-browser/accepted-refresh-reloaded.png"
+      ],
+      "issue": {
+        "matching_ticket": null,
+        "related_closed": [
+          {
+            "number": 397,
+            "url": "https://github.com/Jackela/Novel-Engine/issues/397",
+            "relation": "抽取accept-refresh编排的历史重构"
+          }
+        ],
+        "action": "未创建或重开Issue；提交协调者分诊"
+      },
+      "closure_conditions": [
+        "project或document读取失败均明确说明Proposal已接受、当前显示尚未同步，给出可执行的只刷新恢复操作。",
+        "旧Draft不能在无解释情况下呈现为新提交稿的Saved状态；恢复过程保持新Revision权威。",
+        "刷新重试不重新执行accept，不创建额外ai-accepted Revision；Undo仍正确指向原稿。",
+        "网络注入分别覆盖project/document GET失败、恢复、导航及迟到响应隔离。"
+      ]
+    },
+    {
+      "id": "FE-03",
+      "status": "confirmed_existing_bug",
+      "priority": "P2",
+      "title": "导出格式按钮缺少样式规则，实际26px高且标签、说明、动作连在一起",
+      "source": [
+        {
+          "path": "frontend/src/features/studio/components/StudioExportPanel.tsx",
+          "lines": "78-105"
+        },
+        {
+          "path": "DESIGN.md",
+          "lines": "53-58,134-136"
+        },
+        {
+          "path": "frontend/src/styles/base.css",
+          "lines": "261-274"
+        }
+      ],
+      "reproduction": [
+        "375px浏览器打开自建项目Export Inspector。",
+        "三个export-format按钮实测高度均26px，min-height0、padding1px 6px、border-radius0；styles中没有export-format或export-format-list规则。",
+        "按钮文本显示 MarkdownPortable source textExport 等无间隔串接；不符合44px共享目标及设计控件。"
+      ],
+      "measurements": [
+        {
+          "text": "MarkdownPortable source textExport",
+          "rect": {
+            "x": 14,
+            "y": 624.75,
+            "width": 262.921875,
+            "height": 26,
+            "top": 624.75,
+            "right": 276.921875,
+            "bottom": 650.75,
+            "left": 14
+          },
+          "styles": {
+            "minHeight": "0px",
+            "padding": "1px 6px",
+            "display": "inline-block",
+            "font": "16px \"IBM Plex Sans Variable\", system-ui, sans-serif",
+            "borderRadius": "0px"
+          }
+        },
+        {
+          "text": "Word documentEditable documentExport",
+          "rect": {
+            "x": 14,
+            "y": 650.75,
+            "width": 295.859375,
+            "height": 26,
+            "top": 650.75,
+            "right": 309.859375,
+            "bottom": 676.75,
+            "left": 14
+          },
+          "styles": {
+            "minHeight": "0px",
+            "padding": "1px 6px",
+            "display": "inline-block",
+            "font": "16px \"IBM Plex Sans Variable\", system-ui, sans-serif",
+            "borderRadius": "0px"
+          }
+        },
+        {
+          "text": "EPUBE-reader packageExport",
+          "rect": {
+            "x": 14,
+            "y": 676.75,
+            "width": 210.578125,
+            "height": 26,
+            "top": 676.75,
+            "right": 224.578125,
+            "bottom": 702.75,
+            "left": 14
+          },
+          "styles": {
+            "minHeight": "0px",
+            "padding": "1px 6px",
+            "display": "inline-block",
+            "font": "16px \"IBM Plex Sans Variable\", system-ui, sans-serif",
+            "borderRadius": "0px"
+          }
+        }
+      ],
+      "keyboard_focus": {
+        "active": true,
+        "outline": "rgb(15, 118, 110) solid 3px",
+        "outlineOffset": "2px"
+      },
+      "qualification": "键盘Tab可到首按钮，focus-visible 3px teal outline实测存在；不扩大为键盘不可达或focus缺失。",
+      "evidence": [
+        "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ui-audit-browser/controls.json",
+        "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ui-audit-browser/export-controls-375.png",
+        "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ui-audit-browser/narrow-375-inspector.png"
+      ],
+      "issue": {
+        "matching_ticket": null,
+        "related_closed": [
+          {
+            "number": 442,
+            "url": "https://github.com/Jackela/Novel-Engine/issues/442",
+            "relation": "旧扁平CSS类迁移背景；不可仅据此断定本次缺样式由该迁移造成"
+          }
+        ],
+        "action": "未创建或重开Issue；提交协调者分诊"
+      },
+      "closure_conditions": [
+        "导出3按钮使用现有Design控件tokens，目标至少44px、标签/说明/动作清楚分隔。",
+        "375/768/desktop、light/dark下实测样式及键盘focus均符合设计；不改变快照导出权威。",
+        "保留导出pending禁用、失败重试、focus恢复、准确快照Revision集合的既有浏览器检查。"
+      ]
+    }
+  ],
+  "boundary_checks": {
+    "source": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ui-audit-browser/boundaries.json",
+    "chinese": {
+      "mode": "programmatic composition events plus insertText, not operating-system IME",
+      "expected": "中文输入边界：潮水经过旧港，作者继续写作。",
+      "persisted": "中文输入边界：潮水经过旧港，作者继续写作。",
+      "exact": true
+    },
+    "long_draft": {
+      "characters": 48426,
+      "elapsedMs": 24723,
+      "exact": true,
+      "revision": "51f78fb5-bcdf-4f4c-9148-45f2aa338ebb",
+      "elapsed_ms_qualification": "entire save/reload/keyboard/screenshots sequence, not isolated keystroke/save latency benchmark",
+      "reloaded": "browser reload restores chapter; exact API persistence checked"
+    },
+    "keyboard": {
+      "journey": [
+        " Jobs",
+        " Export",
+        {
+          "tag": "SELECT",
+          "name": "Beat title",
+          "text": "Choose a beat…"
+        }
+      ],
+      "export_target_focus": {
+        "active": true,
+        "outline": "rgb(15, 118, 110) solid 3px",
+        "outlineOffset": "2px"
+      },
+      "coverage": "Jobs ArrowLeft activates/focuses Export; Tab exits tablist; Tab reaches export target with visible outline. Not all interactive targets or screen-reader output audited."
+    },
+    "responsive": {
+      "widths": [
+        1440,
+        768,
+        375
+      ],
+      "horizontal_overflow": false,
+      "geometry": [
+        {
+          "width": 768,
+          "scrollWidth": 768,
+          "editor": {
+            "x": 46.078125,
+            "y": -150960.28125,
+            "width": 675.84375,
+            "height": 150535.5625,
+            "top": -150960.28125,
+            "right": 721.921875,
+            "bottom": -424.71875,
+            "left": 46.078125
+          },
+          "inspector": {
+            "x": 0,
+            "y": 400.28125,
+            "width": 768,
+            "height": 465.4375,
+            "top": 400.28125,
+            "right": 768,
+            "bottom": 865.71875,
+            "left": 0
+          }
+        },
+        {
+          "width": 375,
+          "scrollWidth": 375,
+          "editor": {
+            "x": 22.5,
+            "y": -151542,
+            "width": 330,
+            "height": 151116.75,
+            "top": -151542,
+            "right": 352.5,
+            "bottom": -425.25,
+            "left": 22.5
+          },
+          "inspector": {
+            "x": 0,
+            "y": 399.75,
+            "width": 375,
+            "height": 491.4375,
+            "top": 399.75,
+            "right": 375,
+            "bottom": 891.1875,
+            "left": 0
+          }
+        }
+      ],
+      "long_scroll": "~151kpx content height at375; editor-first single scroll matches DESIGN.md:136-137 and layout.css:64-95. Inspector can be scrolled into view. Long-document mobile convenience needs human judgment."
+    },
+    "theme": {
+      "actual_lock_switches": [
+        {
+          "theme": "dark",
+          "colorScheme": "dark",
+          "bodyBackground": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "theme": "light",
+          "colorScheme": "light",
+          "bodyBackground": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "mode": "system emulated dark",
+          "colorScheme": "dark",
+          "bodyBackground": "rgba(0, 0, 0, 0)"
+        }
+      ],
+      "system_qualification": "OS colorScheme emulated through browser, not physical display/system setting change",
+      "screenshots": [
+        "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ui-audit-browser/theme-dark.png",
+        "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ui-audit-browser/theme-light.png",
+        "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ui-audit-browser/chinese-ui.png"
+      ]
+    },
+    "chinese_ui": "actual UI switched to 中文; headings, saved status, theme and controls localized. Chinese authored content exact. Document titles remain owner data.",
+    "beforeunload": {
+      "source": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ui-audit-browser/unload.json",
+      "result": {
+        "url": "http://127.0.0.1:4381/projects/cd408685-e03d-4d4a-98b3-1bf2237f74f5/manuscript",
+        "type": "beforeunload",
+        "message": "",
+        "action": "dismiss",
+        "reloadError": "page.reload: Timeout 5000ms exceeded.\nCall log:\n\u001b[2m  - waiting for navigation until \"load\"\u001b[22m\n",
+        "editor": "UNSAVED BEFOREUNLOAD AUDIT",
+        "guardObserved": true
+      },
+      "qualification": "Actual Chromium reload after user editor gesture raises native beforeunload dialog; dismiss leaves unsaved draft visible. Navigation wait timeout is expected after dismissal, not server failure. Browser-close confirmation not equivalent to application-internal route guard."
+    }
+  },
+  "journey_regression_evidence": [
+    {
+      "owner": "root",
+      "log": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/browser-standard-chromium.log",
+      "result": "35 passed (1.1m), log read in audit; not rerun here",
+      "coverage": "project/document save/search, volumes/reorder/delete, settings/provider, conflicts/CSRF, review, export/retry/history, lore accept/abandon, request isolation/navigation, jobs/usage/stats, busy/focus/Stop"
+    },
+    {
+      "owner": "frontend_grounding prior authorized implementation round",
+      "log": "/tmp/novel-engine-acp-ui-evidence/32-coupled-final.log",
+      "result": "2 passed (11.1s), real gateway to independent fake process and Studio API",
+      "coverage": "all4 ACP steps permission allow; 4 actual workfile writes; Draft/Revision unchanged before acceptance; Stop and navigation preserve/cancel evidence without hidden tool retry",
+      "qualification": "same task candidate prior build; not repeated this read-only round; real Grok/root browser engines tracked separately"
+    },
+    {
+      "log": "/tmp/novel-engine-acp-ui-evidence/35-coverage.log",
+      "result": "statements91.13 branches84.23 functions90.47 lines93.99, thresholds preserved; prior candidate log read",
+      "qualification": "whole coverage green does not cover these network-injected failure paths or human UX acceptance"
+    }
+  ],
+  "human_gates": [
+    {
+      "check": "OS Chinese IME candidate selection/composition, backspace/Enter while composing, changing document and focus before commit",
+      "status": "not_run",
+      "reason": "Programmatic composition events are not physical input-method acceptance; requires owner/native browser manual session"
+    },
+    {
+      "check": "Safari native browser behavior and mobile hardware keyboard/touch",
+      "status": "not_run_by_this_agent",
+      "reason": "Chromium automation only; root tracks other engines and Safari scope independently"
+    },
+    {
+      "check": "screen-reader announcements of save errors, acceptance refresh failure, pending permissions and Stop",
+      "status": "not_run",
+      "reason": "live-region DOM/keyboard presence does not prove actual assistive-technology output"
+    },
+    {
+      "check": "48k+ long manuscript typing/selection/scroll comfort, editor-first mobile layout with far-end Inspector, light/dark readability",
+      "status": "needs_human_judgment",
+      "reason": "persisted exactness, geometry and rendered screenshots verified; subjective fluency/long-session comfort unaccepted"
+    }
+  ],
+  "artifacts": {
+    "directory": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ui-audit-browser",
+    "manifest": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ui-audit-browser/manifest.json",
+    "replay_commands": [
+      "node /tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ui-audit-browser/replay.mjs",
+      "node /tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ui-audit-browser/boundaries.mjs",
+      "node /tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ui-audit-browser/controls.mjs",
+      "node /tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ui-audit-browser/unload.mjs"
+    ],
+    "known_harness_failures": [
+      "initial textContent matcher treated CodeMirror line-node boundaries as newline text; fixed isolated script matcher only",
+      "SERVICE_UNAVAILABLE intentionally localizes injected raw text; changed script to capture actual generic alert",
+      "theme radio label overlays input by design; click enclosing label, no forced click or product change",
+      "direct query inspector selection raced initial hydration in controls harness; explicit visible Export tab activation used",
+      "beforeunload reload promise times out after native dialog dismissal, intentionally preventing navigation; guardObserved true"
+    ]
+  },
+  "issue_policy": "Issue tracker/triage docs read; read-only gh searches/views only. Related closed tickets are context, not new bug coverage/approval. No issue creation, comments, labels, commits or push.",
+  "integrator_final_candidate": {
+    "source_sha": "da025b7de90a6b2106892d5d8490bbdfd8628a20",
+    "scope": "Frontend final890 tests/coverage+React100/0+Chrome35+ACP2; server/security source/tests equal7c155; original specialist records retain their actual source/time.",
+    "source_equivalence_verified": "git diff7c155..da025 changesonlyStudioAcpJobActions.tsx andits test",
+    "log_paths": [
+      "evidence/frontend-closure-candidate.log",
+      "evidence/browser-closure-candidate.log",
+      "evidence/coupled-closure-candidate.log"
+    ],
+    "original_findings": "FE01/02/03 and UnicodeCSRF remain open; no issueclosure/humanacceptance inferred."
+  }
+}

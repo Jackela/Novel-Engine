@@ -1,0 +1,18 @@
+{
+  "baseline": "066d923d8bb92a47c7d6a12d8352b2aa471cbd4b",
+  "csrf_multibyte": {
+    "status": 500,
+    "error": "INTERNAL_ERROR",
+    "session_after_status": 200
+  },
+  "backup_permission": {
+    "result": null
+  },
+  "restore_retention": {
+    "failure": "ENOENT: no such file or directory, copyfile '/var/folders/wc/1_2962m52c3fkkcjdyqvrkfm0000gn/T/ne-audit-database-RFZJLq/backups/novel-engine-20200101T000000000Z.sqlite3.bak' -> '/var/folders/wc/1_2962m52c3fkkcjdyqvrkfm0000gn/T/ne-audit-database-RFZJLq/.novel-engine.sqlite3.49cfaab8f2b4.restore-tmp'",
+    "input_exists": false,
+    "owner": {
+      "username": "after"
+    }
+  }
+}

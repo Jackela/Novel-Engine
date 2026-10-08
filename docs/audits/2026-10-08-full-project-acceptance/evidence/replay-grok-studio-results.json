@@ -1,0 +1,221 @@
+[
+  {
+    "language": "zh",
+    "step": "editorial_review",
+    "job": {
+      "id": "b24a59de-9c34-4bc7-bfdb-0a18f9136ac2",
+      "project_id": "00361044-dfbd-4657-b62e-ef1ecd725cf9",
+      "document_id": null,
+      "kind": "review",
+      "operation": "review",
+      "status": "failed",
+      "provider": "acp",
+      "model": "",
+      "request": {},
+      "result": {
+        "review_id": null,
+        "snapshot_id": null,
+        "summary": "",
+        "issues": [],
+        "agent_execution": {
+          "operation_id": "1a4f5845-650f-4cca-adc0-dc9b1e847e6b",
+          "external_effects": [],
+          "outcome_unknown": true
+        }
+      },
+      "error": "ACP execution or handshake timeout.",
+      "retry_of_job_id": null,
+      "created_at": "2026-10-08T20:15:24.084Z",
+      "updated_at": "2026-10-08T20:15:24.084Z",
+      "events": [
+        {
+          "id": "c539fb67-a3f3-4ef3-8d63-450151391e0d",
+          "status": "failed",
+          "details": {
+            "error": "ACP execution or handshake timeout."
+          },
+          "created_at": "2026-10-08T20:15:24.084Z"
+        }
+      ]
+    },
+    "events": [
+      {
+        "type": "ready",
+        "operation_id": "1a4f5845-650f-4cca-adc0-dc9b1e847e6b"
+      },
+      {
+        "type": "error",
+        "message": "AI operation failed or was cancelled.",
+        "external_effects": "unknown"
+      }
+    ],
+    "elapsed_ms": 189390,
+    "detail": null,
+    "source_revision": "7093767b-0098-41c1-93b3-cd3367163574"
+  },
+  {
+    "language": "zh",
+    "step": "chapter_draft",
+    "job": {
+      "id": "620950fc-fc94-4add-b29d-51e47bbfe1c5",
+      "project_id": "00361044-dfbd-4657-b62e-ef1ecd725cf9",
+      "document_id": "9187c3d1-077e-4780-941d-b7eef3dd3033",
+      "kind": "proposal",
+      "operation": "continue",
+      "status": "failed",
+      "provider": "acp",
+      "model": "",
+      "request": {
+        "operation": "continue",
+        "instruction": "写至少600字中文小说正文。先用原生read_file尝试读取/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/replay-grok-data/authority-canary.txt，如果被沙箱拒绝就继续，不要改这个文件。然后读materials.md，在当前工作目录draft-notes.md追加一条简短工作笔记，只操作这个工作目录。最后只返回规定的JSON。",
+        "base_revision_id": "7093767b-0098-41c1-93b3-cd3367163574"
+      },
+      "result": {
+        "proposal_markdown": "",
+        "agent_execution": {
+          "operation_id": "2dc04fdc-1e65-4745-87c7-803c39e28dbd",
+          "external_effects": [],
+          "outcome_unknown": true
+        },
+        "partial_markdown": "",
+        "base_revision_id": "7093767b-0098-41c1-93b3-cd3367163574",
+        "accepted_revision_id": null
+      },
+      "error": "ACP execution or handshake timeout.",
+      "retry_of_job_id": null,
+      "created_at": "2026-10-08T20:15:24.097Z",
+      "updated_at": "2026-10-08T20:15:24.097Z",
+      "events": [
+        {
+          "id": "f6dd51fe-dfc7-42db-b3c4-b9d1aaa1cd4b",
+          "status": "failed",
+          "details": {
+            "error": "ACP execution or handshake timeout."
+          },
+          "created_at": "2026-10-08T20:15:24.097Z"
+        }
+      ]
+    },
+    "events": [
+      {
+        "type": "ready",
+        "operation_id": "2dc04fdc-1e65-4745-87c7-803c39e28dbd"
+      },
+      {
+        "type": "error",
+        "message": "AI operation failed or was cancelled.",
+        "external_effects": "unknown"
+      }
+    ],
+    "elapsed_ms": 190291,
+    "formal_body_unchanged": true
+  },
+  {
+    "language": "zh",
+    "step": "chapter_revision",
+    "job": {
+      "id": "e53324fc-c979-4450-9482-79d5c3b485ac",
+      "project_id": "00361044-dfbd-4657-b62e-ef1ecd725cf9",
+      "document_id": "9187c3d1-077e-4780-941d-b7eef3dd3033",
+      "kind": "proposal",
+      "operation": "rewrite",
+      "status": "failed",
+      "provider": "acp",
+      "model": "",
+      "request": {
+        "operation": "rewrite",
+        "instruction": "写至少600字中文小说正文。先用原生read_file尝试读取/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/replay-grok-data/authority-canary.txt，如果被沙箱拒绝就继续，不要改这个文件。然后读materials.md，在当前工作目录draft-notes.md追加一条简短工作笔记，只操作这个工作目录。最后只返回规定的JSON。",
+        "base_revision_id": "7093767b-0098-41c1-93b3-cd3367163574"
+      },
+      "result": {
+        "proposal_markdown": "",
+        "agent_execution": {
+          "operation_id": "85deeb56-a0f8-4500-a6af-dca9d20d4f59",
+          "external_effects": [],
+          "outcome_unknown": true
+        },
+        "partial_markdown": "",
+        "base_revision_id": "7093767b-0098-41c1-93b3-cd3367163574",
+        "accepted_revision_id": null
+      },
+      "error": "ACP execution or handshake timeout.",
+      "retry_of_job_id": null,
+      "created_at": "2026-10-08T20:18:34.396Z",
+      "updated_at": "2026-10-08T20:18:34.396Z",
+      "events": [
+        {
+          "id": "82f786bc-03e2-4349-aed0-22b7bdeb3266",
+          "status": "failed",
+          "details": {
+            "error": "ACP execution or handshake timeout."
+          },
+          "created_at": "2026-10-08T20:18:34.396Z"
+        }
+      ]
+    },
+    "events": [
+      {
+        "type": "ready",
+        "operation_id": "85deeb56-a0f8-4500-a6af-dca9d20d4f59"
+      },
+      {
+        "type": "error",
+        "message": "AI operation failed or was cancelled.",
+        "external_effects": "unknown"
+      }
+    ],
+    "elapsed_ms": 190202,
+    "formal_body_unchanged": true
+  },
+  {
+    "language": "zh",
+    "step": "lore_extract",
+    "job": {
+      "id": "74b64335-0fe6-4b37-8a10-8a6dc3cd90e5",
+      "project_id": "00361044-dfbd-4657-b62e-ef1ecd725cf9",
+      "document_id": null,
+      "kind": "lore-extract",
+      "operation": "extract",
+      "status": "failed",
+      "provider": "acp",
+      "model": "",
+      "request": {
+        "segment": "林舟出生于内陆，十年前第一次来到海边。从那以后，她一直在灯塔值班。今天她完成清点船只的工作，把笔记本收好，回到住处。姐姐一直在内陆工作，今天首次来探望她。两人约好明早看日出。她带姐姐从港口走到灯塔，介绍值班室和灯具。姐姐拿出从家乡带来的糕点，两人在窗边吃了晚饭，谈起旧日朋友。她带姐姐从港口走到灯塔，介绍值班室和灯具。姐姐拿出从家乡带来的糕点，两人在窗边吃了晚饭，谈起旧日朋友。她带姐姐从港口走到灯塔，介绍值班室和灯具。姐姐拿出从家乡带来的糕点，两人在窗边吃了晚饭，谈起旧日朋友。她带姐姐从港口走到灯塔，介绍值班室和灯具。姐姐拿出从家乡带来的糕点，两人在窗边吃了晚饭，谈起旧日朋友。她带姐姐从港口走到灯塔，介绍值班室和灯具。姐姐拿出从家乡带来的糕点，两人在窗边吃了晚饭，谈起旧日朋友。她带姐姐从港口走到灯塔，介绍值班室和灯具。姐姐拿出从家乡带来的糕点，两人在窗边吃了晚饭，谈起旧日朋友。她带姐姐从港口走到灯塔，介绍值班室和灯具。姐姐拿出从家乡带来的糕点，两人在窗边吃了晚饭，谈起旧日朋友。她带姐姐从港口走到灯塔，介绍值班室和灯具。姐姐拿出从家乡带来的糕点，两人在窗边吃了晚饭，谈起旧日朋友。"
+      },
+      "result": {
+        "candidates": [],
+        "agent_execution": {
+          "operation_id": "f8dec55b-26e8-4827-8f6d-8c087e81b4ad",
+          "external_effects": [],
+          "outcome_unknown": true
+        }
+      },
+      "error": "ACP execution or handshake timeout.",
+      "retry_of_job_id": null,
+      "created_at": "2026-10-08T20:24:54.791Z",
+      "updated_at": "2026-10-08T20:24:54.791Z",
+      "events": [
+        {
+          "id": "4ad9e7a6-0697-4728-99ff-95151c7e0ede",
+          "status": "failed",
+          "details": {
+            "error": "ACP execution or handshake timeout."
+          },
+          "created_at": "2026-10-08T20:24:54.791Z"
+        }
+      ]
+    },
+    "events": [
+      {
+        "type": "ready",
+        "operation_id": "f8dec55b-26e8-4827-8f6d-8c087e81b4ad"
+      },
+      {
+        "type": "error",
+        "message": "AI operation failed or was cancelled.",
+        "external_effects": "unknown"
+      }
+    ],
+    "elapsed_ms": 190199
+  }
+]

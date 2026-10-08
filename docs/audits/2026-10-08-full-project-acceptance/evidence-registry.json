@@ -1,0 +1,810 @@
+{
+  "code_candidate_sha": "da025b7de90a6b2106892d5d8490bbdfd8628a20",
+  "comparison_sha": "066d923d8bb92a47c7d6a12d8352b2aa471cbd4b",
+  "generated_at": "2026-10-08T20:24:09.769424+00:00",
+  "allowed_statuses": [
+    "pass",
+    "fail",
+    "not run",
+    "blocked",
+    "not applicable"
+  ],
+  "evidence_semantics": "Every pass is limited to operation/environment/actual source. Intermediate hashes, remote mainCI and reader structure do not promote final host/human acceptance.",
+  "checks": [
+    {
+      "id": "baseline-csrf-backup-restore",
+      "status": "fail",
+      "candidate_sha": "066d923d8bb92a47c7d6a12d8352b2aa471cbd4b",
+      "environment": "macOS27.0 ARM64 / Node24.19.0 / pnpm11.6.0, isolated synthetic data",
+      "operation": "pnpm --dir isolated-baseline/server exec vitest run --config vitest.audit.config.mjs",
+      "artifacts": [
+        {
+          "path": "evidence/baseline-observations.json",
+          "sha256": "b2f0722aaabf039dcb9d62dda0b86117b5f1f702c153e7e5d82cbf04ca097ce0"
+        },
+        {
+          "path": "evidence/baseline-reproductions.log",
+          "sha256": "2419453018bf5450fe7b4316d686b3d137017046932e2001a26d4d47252d80b3"
+        }
+      ],
+      "result": "3 expected correct-behavior assertions failed; original DB not replaced after failed restore."
+    },
+    {
+      "id": "contracts",
+      "status": "pass",
+      "candidate_sha": "0799ddf8909dd28f9c31dd72e418636c5a7a8992",
+      "environment": "macOS27.0 ARM64 / Node24.19.0 / pnpm11.6.0, isolated synthetic data",
+      "operation": "server gates/type-check/lint/lint:types/arch/build; spec:validate; frontend check:api-types",
+      "artifacts": [
+        {
+          "path": "evidence/contracts-frozen.log",
+          "sha256": "92f19c5229aa2f26b8fbd4bc8bb1bf62ab4a605dc46b0ea265e681d3aa2b417f"
+        }
+      ],
+      "result": "All current gates pass; 336 modules no architecture violations; 3 spec items; API types clean."
+    },
+    {
+      "id": "frontend-full-first",
+      "status": "fail",
+      "candidate_sha": "0799ddf8909dd28f9c31dd72e418636c5a7a8992",
+      "environment": "macOS27.0 ARM64 / Node24.19.0 / pnpm11.6.0, isolated synthetic data",
+      "operation": "frontend test:unit --coverage (default worker count)",
+      "artifacts": [
+        {
+          "path": "evidence/frontend-frozen-first-output.md",
+          "sha256": "a2e10a4fa25ae85fe9bd571d30ddfd83652ad2d9efdb13320efac5eb3abefa40"
+        }
+      ],
+      "result": "889 pass/1 timeout; no assertions or thresholds changed."
+    },
+    {
+      "id": "frontend-full-replay",
+      "status": "pass",
+      "candidate_sha": "0799ddf8909dd28f9c31dd72e418636c5a7a8992",
+      "environment": "macOS27.0 ARM64 / Node24.19.0 / pnpm11.6.0, isolated synthetic data",
+      "operation": "frontend type-check/lint/lint:types/format:check/test:coverage --maxWorkers=2/build",
+      "artifacts": [
+        {
+          "path": "evidence/frontend-frozen-replay.log",
+          "sha256": "1e276338ce279045fbc14eb8c4010d340a1769b373eb0fa6091bee8f8fff810a"
+        }
+      ],
+      "result": "163 files/890 tests; coverage91.13/84.23/90.47/93.99 meets unchanged floors."
+    },
+    {
+      "id": "server-full-first-frozen",
+      "status": "fail",
+      "candidate_sha": "0799ddf8909dd28f9c31dd72e418636c5a7a8992",
+      "environment": "macOS27.0 ARM64 / Node24.19.0 / pnpm11.6.0, isolated synthetic data",
+      "operation": "server test:coverage",
+      "artifacts": [
+        {
+          "path": "evidence/server-coverage-frozen.log",
+          "sha256": "2493ca9ac55a5002b4d16f3ca081125326dcdab4fc0c5cdd73bb483343f3c6e3"
+        }
+      ],
+      "result": "1762 pass/4 timeout; three files. Replay exact failures separately all7passed."
+    },
+    {
+      "id": "server-timeout-targeted",
+      "status": "pass",
+      "candidate_sha": "0799ddf8909dd28f9c31dd72e418636c5a7a8992",
+      "environment": "macOS27.0 ARM64 / Node24.19.0 / pnpm11.6.0, isolated synthetic data",
+      "operation": "server vitest run tests/api/studio_usage_provenance.test.ts tests/contexts/generation_capacity_admission.test.ts tests/apps/cli/backup_policy_cli.test.ts",
+      "artifacts": [
+        {
+          "path": "evidence/timeout-targeted-replay.log",
+          "sha256": "da4251d5fd4bd8d3f51333ebdf2846e80b415093036d611ef73222c11f11dbb2"
+        }
+      ],
+      "result": "3 files/7 tests all passed with unchanged assertions."
+    },
+    {
+      "id": "server-full-quiet",
+      "status": "fail",
+      "candidate_sha": "0799ddf8909dd28f9c31dd72e418636c5a7a8992",
+      "environment": "macOS27.0 ARM64 / Node24.19.0 / pnpm11.6.0, isolated synthetic data",
+      "operation": "caffeinate -i pnpm --dir server test:coverage",
+      "artifacts": [
+        {
+          "path": "evidence/server-coverage-quiet-replay.log",
+          "sha256": "d3994d2698e6ebb6f6540a8a6d780aa9942f438d1acc30829ec727a3cbf148f9"
+        }
+      ],
+      "result": "300 files/1766 tests passed; coverage failed unchanged floors. Subsequent meaningful41 boundary tests and socket cancellation fix recorded separately."
+    },
+    {
+      "id": "react-doctor",
+      "status": "fail",
+      "candidate_sha": "0799ddf8909dd28f9c31dd72e418636c5a7a8992",
+      "environment": "macOS27.0 ARM64 / Node24.19.0 / pnpm11.6.0, isolated synthetic data",
+      "operation": "frontend exec react-doctor --json",
+      "artifacts": [
+        {
+          "path": "evidence/react-doctor-frozen.json",
+          "sha256": "cb2e819c02c07fba35b98684e680a1ea8a796ab284b7d3185e74e155d7088d62"
+        }
+      ],
+      "result": "Actual parsed JSON91score/1diagnostic; earlier pass summary corrected. Condition nested reset in finally, not proven runtime spinner. Final source removes condition, zero diagnostics separately."
+    },
+    {
+      "id": "chromium-final",
+      "status": "pass",
+      "candidate_sha": "0799ddf8909dd28f9c31dd72e418636c5a7a8992",
+      "environment": "macOS27.0 ARM64 / Node24.19.0 / pnpm11.6.0, isolated synthetic data",
+      "operation": "frontend test:e2e:ts --workers=2",
+      "artifacts": [
+        {
+          "path": "evidence/browser-frozen.log",
+          "sha256": "2f57fa8c337b53b38bc5fd69d8a942585d45aa3225cca4e9e653f82f50add736"
+        }
+      ],
+      "result": "35/35 complete TS-backend workflows; same-origin cookies and CSRF enabled."
+    },
+    {
+      "id": "acp-browser-final",
+      "status": "pass",
+      "candidate_sha": "0799ddf8909dd28f9c31dd72e418636c5a7a8992",
+      "environment": "macOS27.0 ARM64 / Node24.19.0 / pnpm11.6.0, isolated synthetic data",
+      "operation": "NOVEL_ENGINE_ACP_E2E_URL=http://127.0.0.1:4381 NOVEL_ENGINE_ACP_E2E_MATERIALS_ROOT=isolated/fake-materials frontend exec playwright test -c playwright.acp.config.ts",
+      "artifacts": [
+        {
+          "path": "evidence/coupled-frozen.log",
+          "sha256": "90d1883264b59efbdf92b31fced45547fad15ffcefbe2c626112f2ba0040c786"
+        }
+      ],
+      "result": "2/2; all4steps allow, cancellation/navigation cleanup and durable effects; accept only formal write."
+    },
+    {
+      "id": "security-final",
+      "status": "pass",
+      "candidate_sha": "0799ddf8909dd28f9c31dd72e418636c5a7a8992",
+      "environment": "macOS27.0 ARM64 / Node24.19.0 / pnpm11.6.0, isolated synthetic data",
+      "operation": "server vitest run targeted ACP/Review boundaries; independent baseline race with fixed shared pin",
+      "artifacts": [
+        {
+          "path": "evidence/security-final-targeted.log",
+          "sha256": "29a5cbe539870600acb47898ae42a58e59d16e372f2ca6aef3ad7e56f6a51bad"
+        },
+        {
+          "path": "evidence/security-review-race-fixed.log",
+          "sha256": "1305c8e4e3fe4b6fe2a5e1edf39fb1645f63fc44e671d1252c03554ccc518eec"
+        },
+        {
+          "path": "evidence/security-final-source-invalidation.log",
+          "sha256": "fdc0ffa6ec20f61dee5cce10f551515358eee243666b26adc40541da5ac7bb0a"
+        }
+      ],
+      "result": "71 targeted tests plus2 independent race and2 source deletion tests passed."
+    },
+    {
+      "id": "grok-final-captured-review",
+      "status": "pass",
+      "candidate_sha": "0799ddf8909dd28f9c31dd72e418636c5a7a8992",
+      "environment": "macOS27.0 ARM64 / Node24.19.0 / pnpm11.6.0, isolated synthetic data",
+      "operation": "frozen-grok.mjs: review+two live autosaves; exact synthetic SQLite snapshot query",
+      "artifacts": [
+        {
+          "path": "evidence/frozen-grok-results.json",
+          "sha256": "ebfbfa19439bca5857e0447f55ec5a56c19fba4db2e35135e62e4681e29ec04b"
+        }
+      ],
+      "result": "Actual Grok4.7 contradiction review completed; snapshot revision equals captured while active body two revisions newer; native token absence not fabricated."
+    },
+    {
+      "id": "grok-final-correct-control",
+      "status": "fail",
+      "candidate_sha": "0799ddf8909dd28f9c31dd72e418636c5a7a8992",
+      "environment": "macOS27.0 ARM64 / Node24.19.0 / pnpm11.6.0, isolated synthetic data",
+      "operation": "frozen-grok.mjs correct Review, then explicit separate replay-grok-studio.mjs",
+      "artifacts": [
+        {
+          "path": "evidence/frozen-grok.log",
+          "sha256": "6404025bd08183ec115ff9a02d0dbbaa731106da6f7f9672ad2a5f498a0dea24"
+        },
+        {
+          "path": "evidence/replay-grok-studio-results.json",
+          "sha256": "52d98c0d306c2ba388fd0fdddd138a7165aa16e709dd9f0ae9c441ddbac4eb48"
+        },
+        {
+          "path": "evidence/replay-grok-studio.log",
+          "sha256": "3042124f3107ecc500cffe5f06099796815de0964262d49359518633ad29e4c6"
+        }
+      ],
+      "result": "Repeated180s execution expiry with no model result/progress. failed Jobs preserve outcome_unknown; no automatic replay. Actual root cause not established."
+    },
+    {
+      "id": "grok-intermediate-four-steps",
+      "status": "pass",
+      "candidate_sha": null,
+      "environment": "macOS27.0 ARM64 / Node24.19.0 / pnpm11.6.0, isolated synthetic data",
+      "operation": "real-grok-studio.mjs and final-grok-studio.mjs with synthetic en/zh manuscripts",
+      "artifacts": [
+        {
+          "path": "evidence/real-grok-studio-results.json",
+          "sha256": "1e6baa14eb9ab0173215724ecf4c570c5afb749f1bbdd45d90b799f7666a55a9"
+        },
+        {
+          "path": "evidence/final-grok-studio-results.json",
+          "sha256": "8f880177cf1f27331e89139a2ff11c69e361d4c839c06894045084e6767f8eab"
+        },
+        {
+          "path": "evidence/final-grok-studio-summary.json",
+          "sha256": "396de3389050b940aade2e1e129c25be1a1a87dd86294f8071d0d6553a708cd3"
+        }
+      ],
+      "result": "8 en/zh operations +4 latest zh operations passed on then-current source hashes; working notes changed, formal revisions unchanged. Historical supporting evidence, not final code stability.",
+      "source_identity": "uncommitted intermediate worktree; exact file hashes in specialist records"
+    },
+    {
+      "id": "native-permission",
+      "status": "not run",
+      "candidate_sha": "0799ddf8909dd28f9c31dd72e418636c5a7a8992",
+      "environment": "macOS27.0 ARM64 / Node24.19.0 / pnpm11.6.0, isolated synthetic data",
+      "operation": "installed Grok1.0.46 supported options and own synthetic rm probes",
+      "artifacts": [
+        {
+          "path": "evidence/grok-ask-capability.log",
+          "sha256": "aa096b1224b1915491e7872b59fc441143cc0712e707913460e69a22ce548305"
+        },
+        {
+          "path": "evidence/grok-permission-default-results.json",
+          "sha256": "559fafce1d4f215954d162065d7b869e66027703ec7d7ab4b2f69d0373b01e4c"
+        }
+      ],
+      "result": "--permission-mode ask unsupported; existing CLI produced0 request_permission. Fake allow/reject cannot replace native evidence.",
+      "owner": "project maintainer",
+      "closure": "Use an actually supported isolated permission policy to produce native request, allow/reject, actual target check and postfailure effects."
+    },
+    {
+      "id": "real-stream-final",
+      "status": "not run",
+      "candidate_sha": "0799ddf8909dd28f9c31dd72e418636c5a7a8992",
+      "environment": "macOS27.0 ARM64 / Node24.19.0 / pnpm11.6.0, isolated synthetic data",
+      "operation": "real Grok stream generation through Studio SSE",
+      "artifacts": [],
+      "result": "Final real-cloud stream success not obtained; fake coupled stream and native intermediate incremental channels are supporting only.",
+      "owner": "project maintainer",
+      "closure": "Complete real model through /ai-proposals/stream, verify started/delta/done timing/schema/body, cancellation and tool messages separated."
+    },
+    {
+      "id": "compose-final",
+      "status": "pass",
+      "candidate_sha": "0799ddf8909dd28f9c31dd72e418636c5a7a8992",
+      "environment": "macOS Colima ARM64 Docker29.5.2; actual compose hardening, temporary override and isolated volumes",
+      "operation": "docker final build + isolated ops-final-replay harness +container-to-hostfakeACP + LibreOffice",
+      "artifacts": [
+        {
+          "path": "evidence/docker-frozen.log",
+          "sha256": "0e94a01a37989822e2a4ab369ff6d81be986cb84af2d9c7a0a1d4c0ee0cb1de1"
+        },
+        {
+          "path": "evidence/ops-final/ops-final-image.json",
+          "sha256": "d4da8ec2641948440bfd94ea57515a9cf6b864e11c58324c7a90f87e62cc92b8"
+        },
+        {
+          "path": "evidence/ops-final/ops-candidate.log",
+          "sha256": "18464777105fca98845a32de1439ad40ecc6d2e93b1a70b9da0a99e3721f9479"
+        },
+        {
+          "path": "evidence/ops-final/ops-container-acp-result.json",
+          "sha256": "a1cc307b7c62992c6d85b79341630e514bf9d33d97d8ead28726b55f4758ebcc"
+        },
+        {
+          "path": "evidence/ops-final/ops-docx-reader.log",
+          "sha256": "cf9079d4d4ae77d4429a3ab0db4970fe8430c9b2d296854bc412c57c8092cf01"
+        }
+      ],
+      "result": "10 bounded checks pass. Fresh nonroot26migrations, persisted restart/SIGKILL/session,backuprestore,exports,actualDOCXread,toolwriteworkingcopy. Existing oldvolume failure kept separate."
+    },
+    {
+      "id": "production-dependencies",
+      "status": "pass",
+      "candidate_sha": "0799ddf8909dd28f9c31dd72e418636c5a7a8992",
+      "environment": "macOS27.0 ARM64 / Node24.19.0 / pnpm11.6.0, isolated synthetic data",
+      "operation": "pnpm audit --audit-level high --prod --json",
+      "artifacts": [
+        {
+          "path": "evidence/dependency-production.json",
+          "sha256": "b766fc7ff32728af9012fa7737abc3a391b5bb950c746346b7039db76f3dc655"
+        }
+      ],
+      "result": "Earlier production snapshot0vulnerabilities; latestfinal production audit0/141dependencies separately."
+    },
+    {
+      "id": "full-dependencies",
+      "status": "fail",
+      "candidate_sha": "0799ddf8909dd28f9c31dd72e418636c5a7a8992",
+      "environment": "macOS27.0 ARM64 / Node24.19.0 / pnpm11.6.0, isolated synthetic data",
+      "operation": "pnpm audit --audit-level high --json",
+      "artifacts": [
+        {
+          "path": "evidence/dependency-full.json",
+          "sha256": "ff1cb5e52a631248760ec1146c8799ac12b1b1ec9ec5436a73b5f26049abe903"
+        }
+      ],
+      "result": "braces3.0.3 development graph high stack exhaustion advisory #672; no runtime exploitation claim."
+    },
+    {
+      "id": "chrome-intermediate",
+      "status": "pass",
+      "candidate_sha": null,
+      "environment": "macOS27.0 ARM64 / Node24.19.0 / pnpm11.6.0, isolated synthetic data",
+      "operation": "actual installed Google Chrome Playwright35-workflow suite",
+      "artifacts": [
+        {
+          "path": "evidence/browser-google-chrome.log",
+          "sha256": "f209dffb055de292f42c86903217547289b1b052727bdc401c5dcdf38b7d40e4"
+        }
+      ],
+      "result": "35/35 on intermediate candidate. Final Chrome rerun not claimed."
+    },
+    {
+      "id": "webkit-intermediate",
+      "status": "pass",
+      "candidate_sha": null,
+      "environment": "macOS27.0 ARM64 / Node24.19.0 / pnpm11.6.0, isolated synthetic data",
+      "operation": "Playwright WebKit35-workflow suite",
+      "artifacts": [
+        {
+          "path": "evidence/browser-webkit.log",
+          "sha256": "f884183e9233f70f5ceb6e5828b370a1d99a1713d596a1e2361a6dff5f83dac3"
+        }
+      ],
+      "result": "35/35 on intermediate candidate; not actual Safari."
+    },
+    {
+      "id": "firefox",
+      "status": "blocked",
+      "candidate_sha": "0799ddf8909dd28f9c31dd72e418636c5a7a8992",
+      "environment": "macOS27.0 ARM64 / Node24.19.0 / pnpm11.6.0, isolated synthetic data",
+      "operation": "Playwright Firefox workflow launch",
+      "artifacts": [
+        {
+          "path": "evidence/browser-firefox.log",
+          "sha256": "c14f7e9c9f6a748019788723b1339ecb03b953797414d3f86c4f9cb1e14f4ae6"
+        }
+      ],
+      "result": "macOS sandbox_extension_issue_file_to_process Operationnotpermitted /SWGL failure.",
+      "owner": "maintainer",
+      "closure": "Ordinary supported Firefox environment without disabling security; replay35 workflows plusACP permissions."
+    },
+    {
+      "id": "safari",
+      "status": "blocked",
+      "candidate_sha": "0799ddf8909dd28f9c31dd72e418636c5a7a8992",
+      "environment": "macOS27.0 ARM64 / Node24.19.0 / pnpm11.6.0, isolated synthetic data",
+      "operation": "safaridriver WebDriver new session",
+      "artifacts": [
+        {
+          "path": "evidence/safari-session.json",
+          "sha256": "067b5cf0979bbc235397e845c2f61ff44152930eca5613f2f370f9c749e7809a"
+        }
+      ],
+      "result": "Remote Automation disabled; user settings unchanged.",
+      "owner": "Owner",
+      "closure": "Owner-supported Safari automation or actual manual writing/permission/recovery workflow."
+    },
+    {
+      "id": "windows-acp",
+      "status": "not run",
+      "candidate_sha": "0799ddf8909dd28f9c31dd72e418636c5a7a8992",
+      "environment": "macOS27.0 ARM64 / Node24.19.0 / pnpm11.6.0, isolated synthetic data",
+      "operation": "windows-acp",
+      "artifacts": [],
+      "result": "No Windows execution environment.",
+      "owner": "Owner / project maintainer",
+      "closure": "On Windows verify process-tree termination and stdio shim/permission lifecycle."
+    },
+    {
+      "id": "real-ime-at",
+      "status": "not run",
+      "candidate_sha": "0799ddf8909dd28f9c31dd72e418636c5a7a8992",
+      "environment": "macOS27.0 ARM64 / Node24.19.0 / pnpm11.6.0, isolated synthetic data",
+      "operation": "real-ime-at",
+      "artifacts": [],
+      "result": "Only programmatic composition/keyboard exercised.",
+      "owner": "Owner / project maintainer",
+      "closure": "Actual Chinese IME plus screen reader and keyboard focus, long-manuscript comfort review."
+    },
+    {
+      "id": "owner-product-retention",
+      "status": "not run",
+      "candidate_sha": "0799ddf8909dd28f9c31dd72e418636c5a7a8992",
+      "environment": "macOS27.0 ARM64 / Node24.19.0 / pnpm11.6.0, isolated synthetic data",
+      "operation": "owner-product-retention",
+      "artifacts": [],
+      "result": "Author interviews and retention explicitly skipped.",
+      "owner": "Owner / project maintainer",
+      "closure": "Owner completes original tenauthor and retention gates; preserve observations separately from mock browser runs."
+    },
+    {
+      "id": "candidate-ci",
+      "status": "not run",
+      "candidate_sha": "0799ddf8909dd28f9c31dd72e418636c5a7a8992",
+      "environment": "macOS27.0 ARM64 / Node24.19.0 / pnpm11.6.0, isolated synthetic data",
+      "operation": "candidate-ci",
+      "artifacts": [],
+      "result": "Local unpublished SHA; no push/PR/dispatch.",
+      "owner": "Owner / project maintainer",
+      "closure": "Exact candidate Analyze,validate,container green under live protection."
+    },
+    {
+      "id": "issue-disposition",
+      "status": "not run",
+      "candidate_sha": "0799ddf8909dd28f9c31dd72e418636c5a7a8992",
+      "environment": "macOS27.0 ARM64 / Node24.19.0 / pnpm11.6.0, isolated synthetic data",
+      "operation": "issue-disposition",
+      "artifacts": [],
+      "result": "Only read/mapping performed, no Issue mutation.",
+      "owner": "Owner / project maintainer",
+      "closure": "Read issue-tracker rules and owner-authorized dispositions separately."
+    },
+    {
+      "id": "merge-release",
+      "status": "not run",
+      "candidate_sha": "0799ddf8909dd28f9c31dd72e418636c5a7a8992",
+      "environment": "macOS27.0 ARM64 / Node24.19.0 / pnpm11.6.0, isolated synthetic data",
+      "operation": "merge-release",
+      "artifacts": [],
+      "result": "No requested merge/release or production deployment.",
+      "owner": "Owner / project maintainer",
+      "closure": "Owner accepts completed gates and approves exact SHA/digest publishing."
+    },
+    {
+      "id": "server-full-final",
+      "status": "pass",
+      "candidate_sha": "7c155bf44a4299a25310c98f76241e3c6f953682",
+      "environment": "macOS27.0 ARM64 / Node24.19.0 / pnpm11.6.0; isolated synthetic data",
+      "operation": "caffeinate -i pnpm --dir server test:coverage",
+      "artifacts": [
+        {
+          "path": "evidence/server-coverage-final-candidate.log",
+          "sha256": "bd081f11235cf6d1c07b664deb02e75ff98d15877cca3a78aaf7adca916dce89"
+        }
+      ],
+      "result": "303files1807tests allpass; statements92.11,branches83.86,functions96.26,lines93.76%; unchanged floors met."
+    },
+    {
+      "id": "contracts-final",
+      "status": "pass",
+      "candidate_sha": "7c155bf44a4299a25310c98f76241e3c6f953682",
+      "environment": "macOS27.0 ARM64 / Node24.19.0 / pnpm11.6.0; isolated synthetic data",
+      "operation": "server gates/type-check/lint/lint:types/arch/build; spec:validate; frontend check:api-types",
+      "artifacts": [
+        {
+          "path": "evidence/contracts-final-candidate.log",
+          "sha256": "23e4d11f44fff775d5f4a0b263448419ba90e1aefaccdf4d9cdd6f6920eb9f72"
+        }
+      ],
+      "result": "All current gates/types/style/architecture/specs/API drift pass."
+    },
+    {
+      "id": "frontend-full-final",
+      "status": "pass",
+      "candidate_sha": "7c155bf44a4299a25310c98f76241e3c6f953682",
+      "environment": "macOS27.0 ARM64 / Node24.19.0 / pnpm11.6.0; isolated synthetic data",
+      "operation": "frontend type-check/lint/lint:types/format:check/test:coverage --maxWorkers=2/build",
+      "artifacts": [
+        {
+          "path": "evidence/frontend-final-candidate.log",
+          "sha256": "e80aa8b9b2b5d46ace46b8c841bbca20e0b5b223385849b11bf84969c9ae8c44"
+        }
+      ],
+      "result": "163files890tests,91.13/84.23/90.47/93.99%; unchanged floors."
+    },
+    {
+      "id": "chromium-final-late",
+      "status": "pass",
+      "candidate_sha": "7c155bf44a4299a25310c98f76241e3c6f953682",
+      "environment": "macOS27.0 ARM64 / Node24.19.0 / pnpm11.6.0; isolated synthetic data",
+      "operation": "frontend test:e2e:ts --workers=2",
+      "artifacts": [
+        {
+          "path": "evidence/browser-final-candidate.log",
+          "sha256": "2c8313b190f62adcc2ffe62d509c35fa4fa8d1cc0a80e13c6ee489c6624b940c"
+        }
+      ],
+      "result": "35/35 TSruntime writing workflow."
+    },
+    {
+      "id": "acp-browser-final-late",
+      "status": "pass",
+      "candidate_sha": "7c155bf44a4299a25310c98f76241e3c6f953682",
+      "environment": "macOS27.0 ARM64 / Node24.19.0 / pnpm11.6.0; isolated synthetic data",
+      "operation": "NOVEL_ENGINE_ACP_E2E_URL=isolated4381 frontend exec playwright test -c playwright.acp.config.ts",
+      "artifacts": [
+        {
+          "path": "evidence/coupled-final-candidate.log",
+          "sha256": "e81d4e2a2f27a4bd65072bef86879e730bd0c4b0b6480314151a823219b35e3a"
+        }
+      ],
+      "result": "2/2 fourstep permission effects/cancel/navigation/revision boundaries."
+    },
+    {
+      "id": "chrome-installed-final",
+      "status": "pass",
+      "candidate_sha": "7c155bf44a4299a25310c98f76241e3c6f953682",
+      "environment": "macOS27.0 ARM64 / Node24.19.0 / pnpm11.6.0; isolated synthetic data",
+      "operation": "PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' frontend test:e2e:ts --workers=2",
+      "artifacts": [
+        {
+          "path": "evidence/chrome-final-candidate.log",
+          "sha256": "ae559a812733f55ed009ff15f09ef300f980b9d6b838d74634ccf0f3d9967724"
+        }
+      ],
+      "result": "Actual installedGoogleChrome35/35."
+    },
+    {
+      "id": "chrome-installed-acp-final",
+      "status": "pass",
+      "candidate_sha": "7c155bf44a4299a25310c98f76241e3c6f953682",
+      "environment": "macOS27.0 ARM64 / Node24.19.0 / pnpm11.6.0; isolated synthetic data",
+      "operation": "same installedGoogleChrome path +isolated coupledACP suite",
+      "artifacts": [
+        {
+          "path": "evidence/chrome-acp-final-candidate.log",
+          "sha256": "0a0bdf8eecfbeb95a4abc18b2381719442f7d11a79aa2865cadea320639fce89"
+        }
+      ],
+      "result": "Actual installedGoogleChromeACP2/2."
+    },
+    {
+      "id": "connecting-cancel-final",
+      "status": "pass",
+      "candidate_sha": "7c155bf44a4299a25310c98f76241e3c6f953682",
+      "environment": "macOS27.0 ARM64 / Node24.19.0 / pnpm11.6.0; isolated synthetic data",
+      "operation": "independent ACP realTCP pendingupgrade cancel/timeout and ordinarynetwork refusal",
+      "artifacts": [
+        {
+          "path": "evidence/security-acp-connecting-final.log",
+          "sha256": "45cfdabd8c6cb494d89432febe621e0e428daf77ff7e5c8bd0cbdb19e39d9f7d"
+        },
+        {
+          "path": "evidence/security-acp-network-error.log",
+          "sha256": "f94da3358b4c67b2bf7f870e4c16f28c2ef1b48c7fd5c5179dc32e9ea80441f3"
+        },
+        {
+          "path": "evidence/acp-provider/acp-final-targeted.log",
+          "sha256": "89c15fdc147faaf7245cff9097475a5116d0a24bf82a2da82ff9b328ed2eedb2"
+        }
+      ],
+      "result": "41 meaningfulregressions pass, independent34tests+refusednetwork1 pass, no unhandledexpectedWScloseerrors; originalredretained."
+    },
+    {
+      "id": "compose-late-final",
+      "status": "pass",
+      "candidate_sha": "7c155bf44a4299a25310c98f76241e3c6f953682",
+      "environment": "macOS27.0 ARM64 / Node24.19.0 / pnpm11.6.0; isolated synthetic data",
+      "operation": "isolated ops-late-candidate harness startup+restart/SIGKILL+backuprestore+exports+container-host ACP",
+      "artifacts": [
+        {
+          "path": "evidence/docker-final-candidate.log",
+          "sha256": "79d956cfc8df4b9a5cb7fa8e11ab466b99c2225104e24c6243f6474f17e19e45"
+        },
+        {
+          "path": "evidence/ops-late/ops-late-image.json",
+          "sha256": "66b8aec96d10de2c9bc136271a7c24ce5bc2972071994f8f27fd581ae8c4984a"
+        },
+        {
+          "path": "evidence/ops-late/ops-candidate.log",
+          "sha256": "91f53a15570f8aca54baed034fc79a51cda2f2ce0702db97f3e19a815fd54ecb"
+        },
+        {
+          "path": "evidence/ops-late/ops-container-acp-result.json",
+          "sha256": "f009ec650404e238d993a9395bf455e00ef8f6d37a853b79d07f7866721d0603"
+        },
+        {
+          "path": "evidence/ops-late/ops-cleanup.log",
+          "sha256": "4abdde107c95644992335758e1e0c55b0a037158cee1db154a51f7a81ecd5959"
+        }
+      ],
+      "result": "9 boundedchecks allpass, actualruntimeimage label7c155, allownresourcescleaned; DOCXreader retainedactual0799 scope."
+    },
+    {
+      "id": "matrix-completeness",
+      "status": "pass",
+      "candidate_sha": "7c155bf44a4299a25310c98f76241e3c6f953682",
+      "environment": "macOS27.0 ARM64 / Node24.19.0 / pnpm11.6.0; isolated synthetic data",
+      "operation": "python3 readonly-matrix-validator.py",
+      "artifacts": [
+        {
+          "path": "evidence/matrix-final-validation.json",
+          "sha256": "c380f13c1cbd680ce922ce06085b5749a225adb3a1e565aea106ffcf54292f60"
+        }
+      ],
+      "result": "Exactfullbody/counts/uniqueids/fivevalues/closures/391currenthashes and81testtitlemappings verified."
+    },
+    {
+      "id": "real-grok-late-final",
+      "status": "not run",
+      "candidate_sha": "7c155bf44a4299a25310c98f76241e3c6f953682",
+      "environment": "macOS27.0 ARM64 / Node24.19.0 / pnpm11.6.0; isolated synthetic data",
+      "operation": "Grok complete success afterconnecting cancellation-only patch",
+      "artifacts": [],
+      "result": "0799 real-capturedReviewpassed, nextfourtasks allfailed180s. Latefix changesconnectingteardown only; noextra paidnative replay. Native stability and actualpermissions remainunclosed.",
+      "owner": "project maintainer",
+      "closure": "Diagnose prior failures; runfoursteps plusrealSSE/cancel/permission underfinalsource; preserveexternalunknowns andnoreplay."
+    },
+    {
+      "id": "frontend-closure-final",
+      "status": "pass",
+      "candidate_sha": "da025b7de90a6b2106892d5d8490bbdfd8628a20",
+      "environment": "macOS27 ARM64 Node24.19 pnpm11.6 isolatedsyntheticdata",
+      "operation": "frontend type/lint/lint:types/format/test:coverage maxWorkers2/build +react-doctor --json",
+      "artifacts": [
+        {
+          "path": "evidence/frontend-closure-candidate.log",
+          "sha256": "aa63733a396be4a51270110b30274cfe4e952625b2b9a9dd332b4589866848aa"
+        }
+      ],
+      "result": "163files890tests;91.13/84.25/90.47/93.99, React100score/0diagnostics; existingreadfailure test assertsretrybutton enabled."
+    },
+    {
+      "id": "browser-closure-final",
+      "status": "pass",
+      "candidate_sha": "da025b7de90a6b2106892d5d8490bbdfd8628a20",
+      "environment": "macOS27 ARM64 Node24.19 pnpm11.6 isolatedsyntheticdata",
+      "operation": "installedGoogleChrome35-workflow +2coupledACPpermission/cancel",
+      "artifacts": [
+        {
+          "path": "evidence/browser-closure-candidate.log",
+          "sha256": "f01ba4717513e31c49d892f0b947c588e15ee91a162b965c0344f9499166ea40"
+        },
+        {
+          "path": "evidence/coupled-closure-candidate.log",
+          "sha256": "95e2b6e442a1f886fadf2a4ea7a69e71cea3330af36abd67b7af221030c3e86b"
+        }
+      ],
+      "result": "35+2 tests passed onfinalfrontend; backend sourceexactly7c155."
+    },
+    {
+      "id": "compose-closure-final",
+      "status": "pass",
+      "candidate_sha": "da025b7de90a6b2106892d5d8490bbdfd8628a20",
+      "environment": "macOS27 ARM64 Node24.19 pnpm11.6 isolatedsyntheticdata",
+      "operation": "finalimage isolatedCompose9checks +container-hostfakeACP +cleanup",
+      "artifacts": [
+        {
+          "path": "evidence/docker-closure-candidate.log",
+          "sha256": "9e410c5eedad1ba695a5c3109db62e71207ee849eb1a382d37c302b7900ca225"
+        },
+        {
+          "path": "evidence/ops-closure/ops-closure-image.json",
+          "sha256": "94964eb06b28f29c79540dc9d04eaaea12c7ce8922b103753450f8fdf18ea293"
+        },
+        {
+          "path": "evidence/ops-closure/ops-candidate.log",
+          "sha256": "0b893a5c5d682848e2ee0f4991931a5904eaa9c99a349d5ee73a9c8fffa21ac6"
+        },
+        {
+          "path": "evidence/ops-closure/ops-container-acp-result.json",
+          "sha256": "c74bcbc0edbbe8f45a6646919b0358025d9425a8549b5dcb4290121a0d094123"
+        },
+        {
+          "path": "evidence/ops-closure/ops-cleanup.log",
+          "sha256": "1960ecca7f4235ed6e956f542b10535ab58f882435211760de5ea018bb2319a2"
+        }
+      ],
+      "result": "Imagec328...,labelda025, actual9boundedchecks allpass; ownresourcescleaned. No nativeGrokclaim."
+    },
+    {
+      "id": "production-dependencies-closure",
+      "status": "pass",
+      "candidate_sha": "da025b7de90a6b2106892d5d8490bbdfd8628a20",
+      "environment": "macOS27 ARM64 Node24.19 pnpm11.6 isolatedsyntheticdata",
+      "operation": "pnpm audit --audit-level high --prod --json",
+      "artifacts": [
+        {
+          "path": "evidence/dependency-production-final.json",
+          "sha256": "bc265ae2f3c30e65a9b1cbc1942f4b3dd2c165d4b92e468c1b1cb61b4ddad34b"
+        }
+      ],
+      "result": "0advisories/141dependencies; oldfullbraces devadvisory retained."
+    },
+    {
+      "id": "document-gates-closure",
+      "status": "pass",
+      "candidate_sha": "da025b7de90a6b2106892d5d8490bbdfd8628a20",
+      "environment": "macOS27 ARM64 Node24.19 pnpm11.6 isolatedsyntheticdata",
+      "operation": "server gates +spec:validate +git diff --check",
+      "artifacts": [
+        {
+          "path": "evidence/final-document-gates.log",
+          "sha256": "bad4533c35f12dfffe96bd95aa893fe60c53d4bfa9aae61af13255a1dadb983b"
+        }
+      ],
+      "result": "Allpassed; OpenSpecchange remainsactive withnative/human/CI gatesunclosed."
+    },
+    {
+      "id": "published-tag-final-recheck",
+      "status": "pass",
+      "candidate_sha": "da025b7de90a6b2106892d5d8490bbdfd8628a20",
+      "environment": "macOS27 ARM64 Node24.19 pnpm11.6 isolatedsyntheticdata",
+      "operation": "docker pull ghcr.io/jackela/novel-engine:0.8.0",
+      "artifacts": [
+        {
+          "path": "evidence/published-tag-pull-final.log",
+          "sha256": "2a79403229ea4bf99220452517d0f721e1c2660c1b99d50ea7d2e6f250ca8a4e"
+        }
+      ],
+      "result": "Same digest15df0f...; mainrecheck unchanged490e. buildxmissing was tooling fallback, not product failure."
+    },
+    {
+      "id": "replay-portable-fixture",
+      "status": "pass",
+      "candidate_sha": "da025b7de90a6b2106892d5d8490bbdfd8628a20",
+      "environment": "macOS27 ARM64 Node24.19 pnpm11.6 isolatedsyntheticdata",
+      "operation": "generatedportable fakeACP stack+2 browserflows; fixedbaseline replay",
+      "artifacts": [
+        {
+          "path": "evidence/portable-replay-coupled.log",
+          "sha256": "dc8cc03013c2a3405613724b628f0a401f5288a938d5930157efb980a4b55fb5"
+        },
+        {
+          "path": "evidence/replay-script-validation.log",
+          "sha256": "3ab0dd32124603f6a9ed99b4ce78337a4269de8663dd9073f4e5a7c3a331682d"
+        }
+      ],
+      "result": "Portablefresh2flows passed; baselinecorrectassertions still3expectedfail, confirmsreplayability withoutrealdata."
+    },
+    {
+      "id": "backend-hard-kill-during-tool-window",
+      "status": "not run",
+      "candidate_sha": "da025b7de90a6b2106892d5d8490bbdfd8628a20",
+      "environment": "requires isolated backend process, gateway and material files",
+      "operation": "Kill backend after external tool write but before finalJob outcome commit, then restart and inspect actual file/Job/effect records",
+      "artifacts": [],
+      "result": "Actual SIGKILL tests cover savedmanuscript/session/DB persistence, not this activeAgent crash window. Normal disconnect/cancel failures and durablefinalJob effects are tested separately.",
+      "owner": "project maintainer",
+      "closure": "Use a delayed fakeAgent onisolateddata; capture toolwrite→hardkill→restart files/Job/effect provenance, classify completed/unknown operations and verify noautomatic replay; resolve anydurability gap beforeclaiming this branch passes."
+    }
+  ],
+  "machine_interruption": "Host date advanced overnight; timeout outcomes preserved and unchanged isolated replays recorded. No root-cause claim based only on timing.",
+  "subagents": {
+    "max_parallel": 3,
+    "roles": [
+      "spec/history",
+      "backend/data/AI",
+      "security",
+      "frontend/UX",
+      "operations/delivery",
+      "product/promises"
+    ],
+    "model_assignments": "gpt6.1-sol high bounded work; gpt6-astra high independent security; inherited main model unchanged"
+  },
+  "stages": {
+    "implementation": "pass",
+    "audit_inventory": "pass",
+    "existing_version_acceptance": "fail",
+    "historical_remediation_acceptance": "fail",
+    "release090_admission": "fail",
+    "human_acceptance": "not run",
+    "candidate_ci": "not run",
+    "issue_disposition": "not run",
+    "merge": "not run",
+    "formal_release": "not run",
+    "local_ci_equivalent": "pass",
+    "native_grok_acceptance": "fail",
+    "comprehensive_spec_assertion_acceptance": "not run"
+  },
+  "source_commits": [
+    "0799ddf8909dd28f9c31dd72e418636c5a7a8992",
+    "7c155bf44a4299a25310c98f76241e3c6f953682",
+    "da025b7de90a6b2106892d5d8490bbdfd8628a20"
+  ],
+  "source_equivalence": {
+    "final_sha": "da025b7de90a6b2106892d5d8490bbdfd8628a20",
+    "server_tested_sha": "7c155bf44a4299a25310c98f76241e3c6f953682",
+    "comparison": "git diff --name-only7c155..da025 only frontend StudioAcpJobActions.tsx andits test; server/**,compose*,Dockerfile identical",
+    "frontend_tested_sha": "da025b7de90a6b2106892d5d8490bbdfd8628a20",
+    "principle": "ExecutionSHA retained, source equivalence stated explicitly; no silentpromotion ofoldruntime results."
+  },
+  "closed_at": "2026-10-08T21:09:03.797322+00:00",
+  "cleanup": {
+    "status": "pass",
+    "scope": "own temporary gateways/servers/containers/networks/volumes",
+    "evidence": "operations-evidence closure_candidate_replay.cleanup; rootportablefakePID80664SIGTERM, original/tmpstack stopped; realGrok probes finallyclosed",
+    "real_user_state": "Original checkout tracked files untouched, only preexisting .commandcode/.zcode; no real config/DB/globalGroktranscripts cleaned"
+  }
+}

@@ -1,0 +1,138 @@
+{
+  "started": "2026-10-08T08:45:35.258Z",
+  "url": "http://127.0.0.1:4381",
+  "browser": "151.0.7922.34",
+  "flows": [
+    {
+      "name": "browser-boundaries",
+      "chineseUi": "Novel Engine\nUI Audit Browser Boundaries 1791449136504\n语言\nEnglish\n中文\n主题\n跟随系统（深色）\n浅色\n深色\n项目导航\n手稿\n大纲\n角色\n世界\n设置\n手稿\n添加卷\n\nDEFAULT VOLUME\n\n1\nChapter 1\n大纲\n角色\n世界\n笔记\n已保存\n37403 字\n草稿 133 KB / 1.0 MB · 37403 字\nMARKDOWN\n# Long synthetic chapter\n\n\n潮水经过旧港，作者保留中文、标点和段落。\n\n\n潮水经过旧港，作者保留中文、标点和段落。\n\n\n潮水经过旧港，作者保留中文、标点和段落。\n\n\n潮水经过旧港，作者保留中文、标点和段落。\n\n\n潮水经过旧港，作者保留中文、标点和段落。\n\n\n潮水经过旧港，作者保留中文、标点和段落。\n\n\n潮水经过旧港，作者保留中文、标点和段落。\n\n\n潮水经过旧港，作者保留中文、标点和段落。\n\n\n潮水经过旧港，作者保留中文、标点和段落。\n\n\n潮水经过旧港，作者保留中文、标点和段落。\n\n\n潮水经过旧港，作者保留中文、标点和段落。\n\n\n潮水经过旧港，作者保留中文、标点和段落。\n\n\n潮水经过旧港，作者保留中文、标点和段落。\n\n\n潮水经过旧港，作者保留中文、标点和段落。\n\n\n潮水经过旧港，作者保留中文、标点和段落。\n\n\n潮水经过旧港，作者保留中文、标点和段落。\n\n\n潮水经过旧港，作者保留中文、标点和段落。\n检查器\nCopilot\n评审\n历史\n导出\n任务\n用量\n统计\n设定集\n导出项目\n\n从当前不可变快照生成文件。\n\nMarkdown可移植的源文本导出Word 文档可编辑文档导出EPUB电子阅读器包导出\n导出历史\n\n暂无导出。\n\n已保存\n修订 51f78fb5\n37403 字\nNovel Engine 0.8.0",
+      "projectId": "3c0642ec-2710-48dc-9746-a9394e269991",
+      "documentId": "8bea7cfe-d71f-41a7-bd54-9319482d26e4",
+      "chinese": {
+        "mode": "programmatic composition events plus insertText, not operating-system IME",
+        "expected": "中文输入边界：潮水经过旧港，作者继续写作。",
+        "persisted": "中文输入边界：潮水经过旧港，作者继续写作。",
+        "exact": true
+      },
+      "longDraft": {
+        "characters": 48426,
+        "elapsedMs": 24723,
+        "exact": true,
+        "revision": "51f78fb5-bcdf-4f4c-9148-45f2aa338ebb"
+      },
+      "keyboard": [
+        " Jobs",
+        " Export",
+        {
+          "tag": "SELECT",
+          "name": "Beat title",
+          "text": "Choose a beat…"
+        }
+      ],
+      "desktopGeometry": {
+        "width": 1440,
+        "scrollWidth": 1440,
+        "editor": {
+          "x": 348,
+          "y": 246,
+          "width": 678,
+          "height": 150535.5625,
+          "top": 246,
+          "right": 1026,
+          "bottom": 150781.5625,
+          "left": 348
+        }
+      },
+      "narrow": [
+        {
+          "width": 768,
+          "scrollWidth": 768,
+          "editor": {
+            "x": 46.078125,
+            "y": -150960.28125,
+            "width": 675.84375,
+            "height": 150535.5625,
+            "top": -150960.28125,
+            "right": 721.921875,
+            "bottom": -424.71875,
+            "left": 46.078125
+          },
+          "inspector": {
+            "x": 0,
+            "y": 400.28125,
+            "width": 768,
+            "height": 465.4375,
+            "top": 400.28125,
+            "right": 768,
+            "bottom": 865.71875,
+            "left": 0
+          }
+        },
+        {
+          "width": 375,
+          "scrollWidth": 375,
+          "editor": {
+            "x": 22.5,
+            "y": -151542,
+            "width": 330,
+            "height": 151116.75,
+            "top": -151542,
+            "right": 352.5,
+            "bottom": -425.25,
+            "left": 22.5
+          },
+          "inspector": {
+            "x": 0,
+            "y": 399.75,
+            "width": 375,
+            "height": 491.4375,
+            "top": 399.75,
+            "right": 375,
+            "bottom": 891.1875,
+            "left": 0
+          }
+        }
+      ],
+      "theme": [
+        {
+          "theme": "dark",
+          "colorScheme": "dark",
+          "bodyBackground": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "theme": "light",
+          "colorScheme": "light",
+          "bodyBackground": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "mode": "system emulated dark",
+          "colorScheme": "dark",
+          "bodyBackground": "rgba(0, 0, 0, 0)"
+        }
+      ],
+      "themeControlInventory": {
+        "radios": [
+          "",
+          "",
+          "",
+          "",
+          ""
+        ],
+        "buttons": [
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "MarkdownPortable source textExport",
+          "Word documentEditable documentExport",
+          "EPUBE-reader packageExport"
+        ]
+      }
+    }
+  ]
+}

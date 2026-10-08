@@ -1,0 +1,407 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-10-08T20:29:37.124174+00:00",
+  "comparison_sha": "066d923d8bb92a47c7d6a12d8352b2aa471cbd4b",
+  "candidate_sha": "0799ddf8909dd28f9c31dd72e418636c5a7a8992",
+  "candidate_state": "code fixed at candidate SHA; audit documentation may be committed separately",
+  "reviewer": "security_counterreview",
+  "scope": "ACP candidate security and behavioral counterreview against ADR-0011 and 2026-10-08 OpenSpec delta; synthetic data only",
+  "prohibited_reads": "No .env, credentials, real databases, .commandcode or .zcode contents accessed",
+  "read_file_sha256": {
+    "server/src/shared/interface/acp/AcpGateway.ts": "09c64b286bb6b5eef3305f907e748302080fff03a4af3dce33d6e4934572fde7",
+    "server/src/shared/interface/acp/AcpConnect.ts": "b357160044cb3d65562ba57e5d4cae941de9ed572735edd540140464dbbd8ed2",
+    "server/src/shared/infrastructure/acp/AcpAgentProcess.ts": "77a4bb27b81a91245f46653fda6a60acfd89e644fd3fdd0852731a6f3fc4aef4",
+    "server/src/shared/infrastructure/acp/AcpTokenFile.ts": "82a333bfd979140e47270dcbbffa00f3180bd6cd6ea107f77b4684fc77ed6cd9",
+    "server/src/shared/application/AcpGatewaySession_service.ts": "6f91b0b37e49130912994eab91fc3d54a63dd3a1f0f4c6da74ad1cdf09dca248",
+    "server/src/contexts/ai/infrastructure/providers/AcpTextProvider.ts": "534db522eeb4be21745183bcf3649bc99f9e9b5ae69198f581ad221b7428e9db",
+    "server/src/contexts/ai/infrastructure/providers/buildAcpClient.ts": "2ad4deb0fedaa54b47d2255f9d711ce86a23118f0d979daaf523d83a4eb8501d",
+    "server/src/contexts/ai/infrastructure/providers/AcpWorkspace.ts": "3cf75e964eb9dc586083cd625b968741cf0ad5d93502ffde2bb9e61ce291b690",
+    "server/src/contexts/ai/infrastructure/AiOperationRegistry.ts": "4bc84bb651643cc49f8e2a1ecc68f7f212d4e238e0c8959232a4de6683582ab2",
+    "server/src/contexts/ai/interface/http/aiOperationRoutes.ts": "b885f99a1dba951f955cc410db16b293265069ed6eb1e0da9150daf1bbed0bd3",
+    "server/src/contexts/studio/interface/http/withAiExecution.ts": "0dfaa2194df7fe4354792157aa25eb4fd34cb65da19714dde3a1a9021ee38392",
+    "server/src/apps/api/validateAcpWorkspace.ts": "0a25f49056eacd2d5348342826ee8d9b078719caa5c5db658ee06282c6638e32",
+    "server/tests/contexts/acp_client_effects.test.ts": "effc07b596347036197cb9b519b6bf029c237d6701c7667969a3ca3320bacefd"
+  },
+  "findings": [
+    {
+      "id": "ACP-SEC-01",
+      "priority": "P2",
+      "title": "Client filesystem directory aliases bypassed protected-name filtering",
+      "baseline_status": "reproduced",
+      "current_status": "integrator_fix_targeted_pass",
+      "source": [
+        "server/src/contexts/ai/infrastructure/providers/AcpWorkspace.ts:36"
+      ],
+      "reproduction": "Synthetic materials/exports/original.md denied directly; materials/copies symlink to exports allowed both read and overwrite through copies/original.md. No real export was accessed.",
+      "evidence": [
+        "/tmp/security-acp-probes.mjs",
+        "/tmp/security-acp-probes.json"
+      ],
+      "root_cause": "Only lexical components and final leaf symlink were checked; canonical parent was checked solely for containment.",
+      "resolution": "Integrator added per-parent lstat symlink rejection and canonical protected-name validation. Concurrent hostile filesystem mutation is not proven race-free by this test."
+    },
+    {
+      "id": "ACP-SEC-02",
+      "priority": "P1",
+      "title": "Built-in strict profile did not establish protected runtime-file boundary",
+      "baseline_status": "configuration_gap_reproduced",
+      "current_status": "custom_profile_requirement_added_runtime_acceptance_owned_by_integrator",
+      "source": [
+        "server/src/apps/api/validateAcpWorkspace.ts:27",
+        "server/src/shared/infrastructure/config/provider_config.ts"
+      ],
+      "reproduction": "Sibling materials and Studio data directories in OS temp passed validation; custom profile was rejected in favor of literal strict. Agent does not enforce client callback confinement on its native tools.",
+      "evidence": [
+        "/tmp/security-acp-probes.mjs",
+        "/tmp/security-acp-probes.json"
+      ],
+      "primary_source": "https://github.com/xai-org/grok-build/blob/main/crates/codegen/xai-grok-pager/docs/user-guide/18-sandbox.md",
+      "qualification": "Official current documentation says built-in sandbox may fall back when unavailable; strict permits temp and selected home paths. Actual installed-version canary tests are owned by root; this reviewer did not launch a real paid Grok session.",
+      "resolution": "Integrator now requires a custom profile. Correct profile content, actual host paths, fail-closed startup and native denial still require runtime evidence; profile name alone is not proof."
+    },
+    {
+      "id": "ACP-SEC-03",
+      "priority": "P2",
+      "title": "Delegated file writes could succeed with empty durable tool evidence",
+      "baseline_status": "reproduced_and_red_tests",
+      "current_status": "fixed_targeted_pass",
+      "source": [
+        "server/src/contexts/ai/infrastructure/providers/buildAcpClient.ts:105"
+      ],
+      "reproduction": "A fake agent issued fs/write_text_file without any session tool notification then returned valid JSON/end_turn. Real client callback changed synthetic file while stored job said external_effects=[], outcome_unknown=false. Partial-write fault also erased uncertainty.",
+      "evidence": [
+        "/tmp/security-acp-effects.mjs",
+        "/tmp/security-acp-effects.json",
+        "/tmp/security-acp-effects-red.log",
+        "/tmp/security-acp-effects-green.log"
+      ],
+      "resolution": "Client emits unique novel-engine:client-write UUID in_progress/completed evidence independently. Failed writes emit unknown because truncate or partial data may already have occurred. Callbacks refuse to begin after abort; late completion leaves captured uncertainty. No original file content enters evidence.",
+      "regression_test": "server/tests/contexts/acp_client_effects.test.ts",
+      "write_owner": "security_counterreview"
+    },
+    {
+      "id": "ACP-SEC-04",
+      "priority": "P2",
+      "title": "One-hundred-tool evidence cap erased uncertainty for omitted tools",
+      "baseline_status": "reproduced",
+      "current_status": "fixed_targeted_api_pass",
+      "source": [
+        "server/src/contexts/studio/interface/http/withAiExecution.ts:79",
+        "server/src/contexts/ai/infrastructure/providers/AcpTextProvider.ts:229"
+      ],
+      "reproduction": "Fake ACP sent 100 completed tool events then a 101st in_progress tool, valid JSON, end_turn. Stored evidence retained 100 and recomputed outcome_unknown=false.",
+      "evidence": [
+        "/tmp/security-acp-effect-limit.mjs",
+        "/tmp/security-acp-effect-limit.json"
+      ],
+      "recommended_resolution": "Bound event growth by stopping safely or preserve explicit sticky truncation/unknown evidence; do not recompute certainty solely from a truncated list.",
+      "resolution": "The 101st distinct tool marks uncertainty and throws a provider error before success, aborting the turn. API regression preserves a failed job with 100 retained effects, outcome_unknown=true, and no prompt replay."
+    },
+    {
+      "id": "PREEXISTING-CSRF-UNICODE",
+      "priority": "P2",
+      "title": "Equal JS length with unequal UTF-8 byte length throws in CSRF comparison",
+      "baseline_status": "reproduced_in_initial_readonly_review",
+      "current_status": "still_present_on_this_read",
+      "source": [
+        "server/src/shared/interface/http/auth_guard.ts:24"
+      ],
+      "reproduction": "principalGuard with synthetic authenticated principal, CSRF cookie a and header é throws ERR_CRYPTO_TIMING_SAFE_EQUAL_LENGTH instead of expected rejection.",
+      "qualification": "Not an authentication bypass or proof of process DoS. Initial reproduction was against the same baseline source; this pass reread the unchanged function.",
+      "recommended_resolution": "Compare encoded byte lengths before timingSafeEqual; add API rejection and session-still-valid regression."
+    },
+    {
+      "id": "REVIEW-AUTOSAVE-RACE",
+      "priority": "P1",
+      "title": "Concurrent editor autosave deletes a captured Review source before persistence",
+      "baseline_status": "reproduced_against_current_source",
+      "current_status": "fixed_independent_targeted_and_api_pass",
+      "source": [
+        "server/src/contexts/studio/infrastructure/db/revision_retention.ts:69",
+        "server/src/contexts/studio/infrastructure/db/document_revision_writes.ts:93",
+        "server/src/contexts/studio/infrastructure/db/review_records.ts:162"
+      ],
+      "reproduction": "Real temporary SQLite and real ReviewService/DocumentService/ReviewStorePart. Save R2 using autosave, start delayed provider review which captures R2, save R3 then R4 with autosave=true inside 30 seconds, release provider. Captured prompt and evaluation still hold R2 and original prose, but recordCompletedReviewJob throws ReviewSourceInvalidatedError because autosave collapse deleted R2. Identical ordinary-save control completes successfully.",
+      "evidence": [
+        "/tmp/security-review-race.test.ts",
+        "/tmp/security-vitest.config.mjs",
+        "/tmp/security-review-race.log"
+      ],
+      "result": "1 control passed, 1 autosave case failed",
+      "qualification": "Controlled service/store reproduction on current TypeScript source, not stale dist, real provider, browser, or HTTP request. Existing source-invalidated handling converts missing source into a controlled failure but does not preserve the ongoing review when the author keeps typing.",
+      "recommended_resolution": "Preserve captured revisions across provider wait and successful persistence, without creating misleading completed review/snapshot records on failure. Add autosave-collapse regression alongside ordinary-edit and deleted-source checks.",
+      "resolution": {
+        "code_candidate_sha": "0799ddf8909dd28f9c31dd72e418636c5a7a8992",
+        "detail": "One app-owned refcounted RevisionRetentionPins instance is shared by document and review stores. Synchronous capture protects autosave collapse and retention pruning through provider wait and atomic outcome persistence. Finally paths release on failure and completion; successful snapshot references take over retention. Idempotent per-evaluation leases preserve concurrent reviews.",
+        "verification": [
+          "security-final-targeted",
+          "security-review-autosave-fixed-independent",
+          "security-final-deleted-source"
+        ],
+        "original_failure_evidence_preserved": true
+      }
+    }
+  ],
+  "evidence_registry": [
+    {
+      "id": "security-acp-initial-targeted",
+      "command": "pnpm --dir server exec vitest run tests/acp tests/contexts/acp_text_provider.test.ts tests/contexts/acp_native_output.test.ts tests/contexts/acp_workspace.test.ts tests/contexts/ai_operation_registry.test.ts tests/api/acp_interactions.test.ts tests/apps/acp_workspace_profile.test.ts tests/contexts/review_service.input.test.ts",
+      "status": "pass",
+      "result": "12 files, 50 tests passed before the independently found fixes",
+      "log": "/tmp/security-acp-targeted.log"
+    },
+    {
+      "id": "security-client-effects-red",
+      "command": "pnpm --dir server exec vitest run tests/contexts/acp_client_effects.test.ts",
+      "status": "expected_fail",
+      "result": "2 tests failed: real successful and synthetic partial writes had empty external effects and false certainty",
+      "log": "/tmp/security-acp-effects-red.log"
+    },
+    {
+      "id": "security-client-effects-green",
+      "command": "pnpm --dir server exec vitest run tests/contexts/acp_client_effects.test.ts tests/contexts/acp_text_provider.test.ts tests/api/acp_interactions.test.ts",
+      "status": "pass",
+      "result": "3 files, 13 tests passed",
+      "log": "/tmp/security-acp-effects-green.log"
+    },
+    {
+      "id": "security-types",
+      "command": "pnpm --dir server type-check",
+      "status": "pass",
+      "log": "/tmp/security-acp-typecheck.log"
+    },
+    {
+      "id": "security-own-lint",
+      "command": "pnpm --dir server exec biome check src/contexts/ai/infrastructure/providers/buildAcpClient.ts tests/contexts/acp_client_effects.test.ts; pnpm --dir server exec oxlint src/contexts/ai/infrastructure/providers/buildAcpClient.ts tests/contexts/acp_client_effects.test.ts",
+      "status": "pass",
+      "qualification": "Biome initially requested formatting; formatting was applied only to these two owned files, then passed."
+    },
+    {
+      "id": "security-protection-postfix",
+      "command": "pnpm --dir server exec vitest run tests/contexts/acp_workspace.test.ts tests/apps/acp_workspace_profile.test.ts tests/contexts/acp_client_effects.test.ts",
+      "status": "pass",
+      "result": "3 files, 5 tests passed after directory-alias and custom-profile integration",
+      "log": "/tmp/security-acp-protection-green.log"
+    },
+    {
+      "id": "security-report-integrity",
+      "command": "git diff --check; python3 -m json.tool docs/audits/2026-10-08-full-project-acceptance/security-evidence.json",
+      "status": "pass"
+    },
+    {
+      "id": "security-review-autosave-race",
+      "command": "pnpm --dir server exec vitest run --config /tmp/security-vitest.config.mjs",
+      "status": "expected_success_failed",
+      "result": "2 tests: ordinary-save control passed; autosave case failed with ReviewSourceInvalidatedError",
+      "log": "/tmp/security-review-race.log",
+      "test_sha256": "e626d9a4b90afb98973ca990621fd690c145bd2bf440f66b1749e881d64a9dab"
+    },
+    {
+      "id": "security-final-targeted",
+      "command": "pnpm --dir server exec vitest run tests/contexts/review_capture_lease.test.ts tests/api/review_autosave_capture.test.ts tests/contexts/review_service.input.test.ts tests/contexts/review_store_transactions.test.ts tests/contexts/acp_workspace.test.ts tests/contexts/acp_client_effects.test.ts tests/contexts/acp_prompt_budget.test.ts tests/contexts/acp_text_provider.test.ts tests/contexts/acp_native_output.test.ts tests/api/acp_effect_limits.test.ts tests/api/acp_interactions.test.ts tests/contexts/ai_operation_registry.test.ts tests/acp",
+      "status": "pass",
+      "result": "17 files, 71 tests passed",
+      "log": "/tmp/security-final-targeted.log",
+      "log_sha256": "29a5cbe539870600acb47898ae42a58e59d16e372f2ca6aef3ad7e56f6a51bad",
+      "code_candidate_sha": "0799ddf8909dd28f9c31dd72e418636c5a7a8992"
+    },
+    {
+      "id": "security-review-autosave-fixed-independent",
+      "command": "pnpm --dir server exec vitest run --config /tmp/security-vitest-fixed.config.mjs",
+      "status": "pass",
+      "result": "1 file, 2 tests passed; ordinary-save control and autosave both land captured revision",
+      "log": "/tmp/security-review-race-fixed.log",
+      "log_sha256": "1305c8e4e3fe4b6fe2a5e1edf39fb1645f63fc44e671d1252c03554ccc518eec",
+      "code_candidate_sha": "0799ddf8909dd28f9c31dd72e418636c5a7a8992"
+    },
+    {
+      "id": "security-final-deleted-source",
+      "command": "pnpm --dir server exec vitest run tests/api/review_source_invalidation.test.ts",
+      "status": "pass",
+      "result": "1 file, 2 tests passed; deleted source remains controlled failure for original and retry",
+      "log": "/tmp/security-final-source-invalidation.log",
+      "log_sha256": "fdc0ffa6ec20f61dee5cce10f551515358eee243666b26adc40541da5ac7bb0a",
+      "code_candidate_sha": "0799ddf8909dd28f9c31dd72e418636c5a7a8992"
+    }
+  ],
+  "reviewed_contracts": [
+    {
+      "surface": "Gateway upgrade/token",
+      "status": "targeted_pass",
+      "detail": "Separate byte-safe bearer authentication before launch; rejects browser Origin and non-/acp URL; maxPayload and bounded peer/stdio buffers; token file O_NOFOLLOW, owner/mode validation; gateway token stripped by value from inherited environment and diagnostics."
+    },
+    {
+      "surface": "Connection ownership and cleanup",
+      "status": "targeted_pass",
+      "detail": "One process per authenticated connection. Existing tests cover overlapping IDs, invalid/binary/oversized/UTF-8 frames, stdin backpressure, parent and descendant termination. No new claim of hostile detached-process containment."
+    },
+    {
+      "surface": "Owner/project/CSRF permission scope",
+      "status": "targeted_pass_with_preexisting_unicode_gap",
+      "detail": "API tests reject unauthenticated subscription, missing CSRF, foreign project decision and duplicate decision. Registry binds ownerId/projectId/operationId and finite waits."
+    },
+    {
+      "surface": "No automatic replay and durable uncertainty",
+      "status": "targeted_pass_after_cap_fix",
+      "detail": "Submitted prompt is not automatically replayed on EOF/cancellation. Existing API tests preserve failed-job unknown effects after observer disconnect; new client-write tests preserve writes omitted by agent notifications. Final candidate also passes 101st tool fail-closed evidence-cap regression."
+    },
+    {
+      "surface": "Review source",
+      "status": "fixed_targeted_and_api_pass",
+      "detail": "Existing targeted tests verify full captured text, chapter and revision IDs, reading order, later edit race, untrusted delimiter escaping, and oversized input refusal before provider creation. No real editorial quality or final rendered document judgment implied. Independent delayed-provider probe subsequently found autosave collapse removes the captured revision before completion; see REVIEW-AUTOSAVE-RACE. Final fixed candidate passes autosave/retry API, independent delayed-provider reproduction, lease release/refcount, atomic failure rollback, old-revision GC and deleted-source regressions. Original failing probe remains historical evidence."
+    },
+    {
+      "surface": "Model and usage",
+      "status": "reviewed_static_and_targeted_partial",
+      "detail": "ACP records model confirmed via session config, optional override must be acknowledged. Only finite safe usage numbers are accepted; absent usage remains null at provider port. Real installed Grok usage completeness is not certified here."
+    },
+    {
+      "surface": "Native tools and OS isolation",
+      "status": "not_run_by_this_reviewer",
+      "detail": "ACP client capabilities are not a native-tool security boundary. Directory confinement is not OS isolation. Custom sandbox content/runtime proof belongs to integrator. Cached CLI authentication was never inspected/copied."
+    }
+  ],
+  "code_scanning": {
+    "status": "historical_external_analysis_not_current_candidate",
+    "latest_observed_main_sha": "490e19458e019641fb6394d33db1fe54ef032d28",
+    "latest_observed_analysis_created_at": "2026-10-07T14:22:58Z",
+    "rules_count": 87,
+    "open_results": 14,
+    "tracking_issue": "https://github.com/Jackela/Novel-Engine/issues/680",
+    "classification": {
+      "1959": "Test-only script extraction regex, not runtime HTML sanitizer",
+      "1972": "Shared onRequest rate limiter covers setup/login; guarded, not confirmed missing limit",
+      "1960-1963": "Export directory containment/symlink/proof guards exist; targeted race/authorization validation required",
+      "1964-1965": "Legacy guard functions use nofollow/inode/canonical checks; Web vs CLI scope must be distinguished",
+      "1966-1971": "Project cleaner safe ID/realpath/identity/quarantine guards exist; arbitrary hostile local races not assumed closed"
+    },
+    "qualification": "No new candidate CodeQL run performed; 14 alerts are not 14 confirmed vulnerabilities. No dismissals or issue changes performed."
+  },
+  "skips": [
+    {
+      "check": "Full local/CI suite",
+      "status": "not_run_by_this_reviewer",
+      "owner": "root integrator",
+      "closure": "Run applicable full checks and exact final candidate CI after integration."
+    },
+    {
+      "check": "Real Grok/native tools, browser, Compose",
+      "status": "not_run_by_this_reviewer",
+      "owner": "root integrator",
+      "closure": "Use synthetic protected runtime canaries and normal-browser interaction; record actual environment and final hashes."
+    },
+    {
+      "check": "Full dependency audit",
+      "status": "not_run_this_phase",
+      "owner": "root integrator",
+      "closure": "Record current production/full-tree advisory results separately; historical #672 is not evidence of current exploitability."
+    }
+  ],
+  "approval_state": {
+    "human_acceptance": "not_asserted",
+    "release": "not_asserted"
+  },
+  "code_candidate_sha": "0799ddf8909dd28f9c31dd72e418636c5a7a8992",
+  "final_independent_review": {
+    "reviewed_at": "2026-10-08T09:19:58.858249+00:00",
+    "code_candidate_sha": "0799ddf8909dd28f9c31dd72e418636c5a7a8992",
+    "scope": "Read-only final counterreview of Review retention capture ownership/release/GC and ACP parent aliases, client-write effects, evidence cap, prompt transport budget, event channel close paths. Only this evidence JSON was modified.",
+    "conclusion": "No new blocker found in reviewed final fixes. REVIEW-AUTOSAVE-RACE and ACP-SEC-04 have current passing regression evidence. Earlier findings and failed logs remain preserved.",
+    "source_hashes_sha256": {
+      "server/src/apps/studio_persistence.ts": "b909ab8d40deeee9f310a7f0857c72f3b3958f4406b5157de258ffd360402963",
+      "server/src/contexts/studio/infrastructure/RevisionRetentionPins.ts": "e91f3a4b607426a7c0638ea460c67770c8cace4f8676da7c32568a973c5f9c97",
+      "server/src/contexts/studio/application/review_service.ts": "082a5ec2985c8e960dfbf629ba4686f3a0807dfc32910fd14643c861acf50762",
+      "server/src/contexts/studio/application/job_history_service.ts": "9123ae4403c4ce57e635ba12eed7bff6d1b9c2605ad1e6a489cb82217cd0f081",
+      "server/src/contexts/studio/application/job_retry_executor.ts": "ebc8081e447dd724fd1a77685cc82a50db70e2bac00e5ea8955fa3bfe908a093",
+      "server/src/contexts/studio/infrastructure/review_store_part.ts": "d6e5426aaf46e66e8b482487066def9f677e57cad808fac2b6010a5cef6991d3",
+      "server/src/contexts/studio/infrastructure/db/revision_retention.ts": "1715157a10561fef10af05f4316e9c226b2ff43f4e297e5265956ce6ca0c704e",
+      "server/src/contexts/studio/infrastructure/db/review_records.ts": "888e02c135d600e581e3de6a249ebc29c0bcfe5cbe357473d9cf56a8c85ee9d2",
+      "server/src/contexts/ai/infrastructure/providers/AcpWorkspace.ts": "3cf75e964eb9dc586083cd625b968741cf0ad5d93502ffde2bb9e61ce291b690",
+      "server/src/contexts/ai/infrastructure/providers/buildAcpClient.ts": "2ad4deb0fedaa54b47d2255f9d711ce86a23118f0d979daaf523d83a4eb8501d",
+      "server/src/contexts/ai/infrastructure/providers/AcpTextProvider.ts": "e45b19a4e08b0736ed34639dd46530a56e763842ce25a177e4d3f6fa2b4ced95",
+      "server/src/contexts/studio/interface/http/withAiExecution.ts": "0dfaa2194df7fe4354792157aa25eb4fd34cb65da19714dde3a1a9021ee38392",
+      "server/src/contexts/ai/infrastructure/AiOperationRegistry.ts": "4bc84bb651643cc49f8e2a1ecc68f7f212d4e238e0c8959232a4de6683582ab2",
+      "server/src/contexts/ai/interface/http/aiOperationRoutes.ts": "fb94c647993497ffa4f44eef6335327550498b524ef1e4a5f718197e3fcdf8c1"
+    },
+    "code_matches_candidate_commit": true,
+    "review_lease_observations": [
+      "Capture and acquire execute synchronously before provider yield. API/CLI persistence composition shares a single pin owner per app instance.",
+      "Successful evaluation transfers lease to caller; provider/invalid-output failures release in finally, completed and retry outcome stores release after transaction, application callers also idempotently release.",
+      "No provisional durable snapshots before success. Transaction failure rolls back snapshot/job/event changes while releasing pins.",
+      "Concurrent reviews release independently; after last release normal autosave collapse and retention pruning resume. Deleted source remains controlled failed job.",
+      "Pins are app-instance memory, not cross-process SQLite locks. No claim of coordination between independent servers writing the same database."
+    ],
+    "acp_observations": [
+      "Static parent symlink aliases into protected material names are rejected on read and write. Hostile concurrent path replacement remains outside this targeted proof.",
+      "Client writes have their own unique evidence, including partial-write uncertainty and abort checks.",
+      "Tool evidence capacity stops execution with unknown effects instead of silently succeeding after truncation.",
+      "Encoded prompt budget rejects before initialize/model/tool work; gateway transport defenses pass targeted tests.",
+      "Closed SSE observer write guard and idempotent channel cleanup were inspected; permission/disconnect tests pass."
+    ],
+    "skipped_or_not_claimed": [
+      "No real paid Grok/native-tool session, OS sandbox canary, normal-browser test, Compose run, full CI, CodeQL rerun or dependency audit by this reviewer; integrator and other agents own those evidence records.",
+      "No hostile filesystem race-proof claim and no cross-process revision pin coordination claim.",
+      "PREEXISTING-CSRF-UNICODE was not modified by this scope; its earlier finding remains recorded.",
+      "Human acceptance and release are not asserted."
+    ],
+    "independent_probe_note": "Original failing /tmp/security-review-race.test.ts and log remain unchanged. Fixed probe /tmp/security-review-race-fixed.test.ts changes only harness injection to share RevisionRetentionPins as production composition does; actual buildApp wiring is independently covered by review_autosave_capture API tests."
+  },
+  "post_candidate_patch_reviews": [
+    {
+      "reviewed_at": "2026-10-08T20:29:37.124174+00:00",
+      "base_code_candidate_sha": "0799ddf8909dd28f9c31dd72e418636c5a7a8992",
+      "head_at_review": "7c155bf44a4299a25310c98f76241e3c6f953682",
+      "patch_candidate_sha": "7c155bf44a4299a25310c98f76241e3c6f953682",
+      "state": "Fixed post-0799 patch commit; reviewed file hashes verified against commit",
+      "scope": "AcpWebSocket CONNECTING close expected-error handler and AcpTextProvider pre-abort checks only; no product or repository tests modified by this reviewer",
+      "conclusion": "No additional blocker found. Exact expected connecting-close error is consumed once; pre-aborted requests avoid transport. Cancellation and timeout during a real pending upgrade terminate without unhandled error. A separate connection-refused probe still rejects with a visible provider transport error.",
+      "source_hashes_sha256": {
+        "server/src/contexts/ai/infrastructure/providers/AcpWebSocket.ts": "43f71fb333974c0b4afa54d670de6258bd7beb8e77db40ac209a788ae5927285",
+        "server/src/contexts/ai/infrastructure/providers/AcpTextProvider.ts": "b4914fd37af8ab1be5f63c4f0d7c73c3b2873dedc25e0ee78809470c6cfff41d",
+        "server/tests/contexts/acp_final_callbacks.test.ts": "608ade24f6eb132d1b35b4b8fe32fc73728fbb697d7eefa2ea0e666c2b9be4dc",
+        "server/tests/contexts/acp_final_boundaries.test.ts": "fd1d9425d4ea6602d22b7be38e28ceccc8fdcd5e0d9ddf47c7c2752910ccec19",
+        "server/tests/contexts/acp_text_provider.test.ts": "68bce1174eaba21e0ffa69bcfcaa81817f5373abdbe88217fd0873dcf1aa92d1"
+      },
+      "mechanism_review": [
+        "Inspected installed @agentclientprotocol/sdk 1.7.0 ws-stream.js: cancellation calls socket.close, then closeReadable detaches SDK listeners.",
+        "Inspected installed ws 8.22.0 websocket.js: CONNECTING close aborts request and queues exact expected Error on process.nextTick.",
+        "The subclass installs one separate listener before first CONNECTING close; SDK listener detachment does not remove it. Only the exact expected message is consumed; any other event error is thrown.",
+        "Provider checks aborted signal before async workspace/token IO and after IO. There is no async yield between second check and budget/connection abort-listener wiring."
+      ],
+      "baseline_failure_log": "/tmp/novel-engine-acp-provider-evidence/acp-final-boundaries.log",
+      "baseline_failure": "19 assertions passed but Vitest recorded 1 unhandled connecting-close Error; not a passing baseline",
+      "verification": [
+        {
+          "command": "pnpm --dir server exec vitest run tests/contexts/acp_final_callbacks.test.ts tests/contexts/acp_final_boundaries.test.ts tests/contexts/acp_text_provider.test.ts",
+          "result": "3 files, 34 tests passed, zero reported unhandled errors",
+          "log": "/tmp/security-acp-connecting-final.log",
+          "log_sha256": "45cfdabd8c6cb494d89432febe621e0e428daf77ff7e5c8bd0cbdb19e39d9f7d"
+        },
+        {
+          "command": "pnpm --dir server exec vitest run --config /tmp/security-acp-network.config.mjs",
+          "result": "1 file, 1 independent negative-control test passed: connection refusal remains rejected",
+          "log": "/tmp/security-acp-network-error.log",
+          "probe": "/tmp/security-acp-network-error.test.ts",
+          "log_sha256": "f94da3358b4c67b2bf7f870e4c16f28c2ef1b48c7fd5c5179dc32e9ea80441f3"
+        }
+      ],
+      "limits": [
+        "Evidence is current installed SDK/ws dependency behavior; exact-message workaround must remain regression-tested after dependency updates.",
+        "No new real Grok/model calls, OS sandbox checks, browser run, full package checks, CI or release assertion; other agents/integrator own those checks."
+      ],
+      "code_matches_candidate_commit": true
+    }
+  ],
+  "latest_code_candidate_sha": "7c155bf44a4299a25310c98f76241e3c6f953682",
+  "integrator_final_candidate": {
+    "source_sha": "da025b7de90a6b2106892d5d8490bbdfd8628a20",
+    "scope": "Frontend final890 tests/coverage+React100/0+Chrome35+ACP2; server/security source/tests equal7c155; original specialist records retain their actual source/time.",
+    "source_equivalence_verified": "git diff7c155..da025 changesonlyStudioAcpJobActions.tsx andits test",
+    "log_paths": [
+      "evidence/frontend-closure-candidate.log",
+      "evidence/browser-closure-candidate.log",
+      "evidence/coupled-closure-candidate.log"
+    ],
+    "original_findings": "FE01/02/03 and UnicodeCSRF remain open; no issueclosure/humanacceptance inferred."
+  }
+}

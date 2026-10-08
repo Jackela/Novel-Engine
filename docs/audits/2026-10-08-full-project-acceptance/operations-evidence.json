@@ -1,0 +1,1789 @@
+{
+  "scope": "Read-only product audit; only synthetic isolated local Compose resources and evidence files.",
+  "baseline_sha": "066d923d8bb92a47c7d6a12d8352b2aa471cbd4b",
+  "candidate": {
+    "workspace": "/Users/jackela/.codex/worktrees/acp-full-acceptance/Novel-Engine",
+    "state": "uncommitted candidate; operation evidence bound to an intermediate successfully built image",
+    "source_manifest": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-source-manifest-5ed46a3ef479a35ea1d3da668cf69b5c0f1d0967e6382eff40503cfde2b36993.json",
+    "source_manifest_sha256": "5ed46a3ef479a35ea1d3da668cf69b5c0f1d0967e6382eff40503cfde2b36993",
+    "image_tag": "novel-engine-acp-audit:local",
+    "build_first_status": "invalidated_intermediate_tree",
+    "build_first_log": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/docker-build-first.log",
+    "note": "Root subsequently changed backend language/custom-profile behavior and plans a new final image. These operations do not establish that final image or current source acceptance. The actual image runtime manifest is authoritative for this evidence; source manifest is a timestamped candidate snapshot, not proof that source and image are identical.",
+    "image_id": "sha256:6eb0f9bc86ac278516107220ac5a2dec5650bc63774f5256b987aadcc1c9a2b7",
+    "architecture": "arm64",
+    "build_stable_status": "pass",
+    "build_stable_log": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/docker-build-stable.log",
+    "image_inspection_artifact": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-candidate-image.json",
+    "runtime_manifest": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-runtime-manifest.json",
+    "runtime_manifest_sha256": "60986118405a036b6d25782eb005d2ac893945a281bdd104af3e5a354a93a7ef",
+    "runtime_manifest_file_sha256": "b13e9413fb4f03977792bab8162201601bb3dd4ccd68b8784b75ee4f5fc6d071",
+    "image_id_kind": "Docker image configuration SHA256/content address; local legacy build has no registry RepoDigest or OCI manifest digest",
+    "registry_manifest_digest": null
+  },
+  "published_image": {
+    "tag": "0.8.0",
+    "index_digest": "sha256:15df0fa2b7aca06b30fd412c5dce46a353f57d1de905a7aac1db29440f742c93",
+    "arm64_manifest_digest": "sha256:1abbaf874f2024208ce552dd1908815be2ba136bbcd9efab1bc25b6222d5e7fd",
+    "image_id": "sha256:15df0fa2b7aca06b30fd412c5dce46a353f57d1de905a7aac1db29440f742c93",
+    "architecture": "arm64",
+    "config_user": "",
+    "runtime_uid": 0,
+    "version": "0.8.0",
+    "revision": "520be9a8300957c3c5400bc3561b64d86bdc2333",
+    "inspection_artifact": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-release-image.json",
+    "status": "differs_from_current_source_and_README"
+  },
+  "profiles": {
+    "release": {
+      "project": "ne-ops-release-6805c076",
+      "directory": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-ne-ops-release-6805c076",
+      "override": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-ne-ops-release-6805c076/ops-compose.override.yaml",
+      "image": "novel-engine-acp-audit:local",
+      "container": "b1f35ceb1dd18be588637287ce5344b79ea8fb00ec8a97c73849cd210b2016b5",
+      "port": 65295,
+      "base": "http://127.0.0.1:65295",
+      "volume": "ne-ops-release-6805c076_novel-engine-data",
+      "image_id": "sha256:15df0fa2b7aca06b30fd412c5dce46a353f57d1de905a7aac1db29440f742c93",
+      "hardening": {
+        "ReadonlyRootfs": true,
+        "CapDrop": [
+          "ALL"
+        ],
+        "SecurityOpt": [
+          "no-new-privileges:true"
+        ],
+        "Memory": 1073741824,
+        "NanoCpus": 2000000000,
+        "PidsLimit": 512,
+        "Tmpfs": {
+          "/tmp": "size=64m"
+        }
+      },
+      "user": "",
+      "setup_token_present": false,
+      "project_id": "dbf3cc18-37a7-4de6-a54e-cb4482eb7dd0",
+      "document_id": "6b97c631-260e-49af-a66c-6076668b5f50",
+      "revision": "2b9a24d5-e19a-4b4c-baf8-e1e0eed3d4d0",
+      "content": "# 第一章 验收\n\n合成验收正文 A：中文标点，英文 Alpha 123。\n\n第二段，包含 **加粗** 与 *强调*。",
+      "cleanup": {
+        "status": "pass",
+        "at": "2026-10-08T17:02:30+0800"
+      }
+    },
+    "candidate": {
+      "project": "ne-ops-candidate-b4bdb349",
+      "directory": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-ne-ops-candidate-b4bdb349",
+      "override": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-ne-ops-candidate-b4bdb349/ops-compose.override.yaml",
+      "image": "novel-engine-acp-audit:local",
+      "container": "88aaa2f38d56667bafd4970dad8c5923241f12830c9b80e8c7fe5491b98d1841",
+      "port": 50292,
+      "base": "http://127.0.0.1:50292",
+      "volume": "ne-ops-candidate-b4bdb349_novel-engine-data",
+      "image_id": "sha256:6eb0f9bc86ac278516107220ac5a2dec5650bc63774f5256b987aadcc1c9a2b7",
+      "hardening": {
+        "ReadonlyRootfs": true,
+        "CapDrop": [
+          "ALL"
+        ],
+        "SecurityOpt": [
+          "no-new-privileges:true"
+        ],
+        "Memory": 1073741824,
+        "NanoCpus": 2000000000,
+        "PidsLimit": 512,
+        "Tmpfs": {
+          "/tmp": "size=64m"
+        }
+      },
+      "user": "node",
+      "setup_token_present": true,
+      "project_id": "764cfa7f-58fd-492c-aae7-c908d1350d1a",
+      "document_id": "43dd5ebc-15b8-4e12-ab0b-4151b45da377",
+      "revision": "3426102d-9f48-4da0-96dd-8c0ea430f4c8",
+      "content": "# 第一章 验收\n\n合成验收正文 A：中文标点，英文 Alpha 123。\n\n第二段，包含 **加粗** 与 *强调*。",
+      "cleanup": {
+        "status": "pass",
+        "at": "2026-10-08T17:02:30+0800"
+      }
+    }
+  },
+  "checks": [
+    {
+      "name": "release-compose-start",
+      "source": "ghcr.io/jackela/novel-engine@sha256:15df0fa2b7aca06b30fd412c5dce46a353f57d1de905a7aac1db29440f742c93",
+      "log": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-release.log",
+      "at": "2026-10-08T16:29:53+0800",
+      "details": {
+        "ReadonlyRootfs": true,
+        "CapDrop": [
+          "ALL"
+        ],
+        "SecurityOpt": [
+          "no-new-privileges:true"
+        ],
+        "Memory": 1073741824,
+        "NanoCpus": 2000000000,
+        "PidsLimit": 512,
+        "Tmpfs": {
+          "/tmp": "size=64m"
+        }
+      },
+      "status": "pass"
+    },
+    {
+      "name": "release-fresh-owner-and-manuscript",
+      "source": "ghcr.io/jackela/novel-engine@sha256:15df0fa2b7aca06b30fd412c5dce46a353f57d1de905a7aac1db29440f742c93",
+      "log": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-release.log",
+      "at": "2026-10-08T16:29:55+0800",
+      "status": "fail",
+      "error": "command failed 1: docker exec 58eccac81b6036a0a16a3b8ec1962c65a5b75a8b5ab0f8e30ce07fe58acdf78f cat /app/data/.setup-token"
+    },
+    {
+      "name": "release-runtime-integrity",
+      "source": "ghcr.io/jackela/novel-engine@sha256:15df0fa2b7aca06b30fd412c5dce46a353f57d1de905a7aac1db29440f742c93",
+      "log": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-release.log",
+      "at": "2026-10-08T16:29:55+0800",
+      "details": {
+        "check": "ok",
+        "migrations": 23,
+        "uid": 0
+      },
+      "status": "pass"
+    },
+    {
+      "name": "release-legacy-setup-and-manuscript",
+      "source": "ghcr.io/jackela/novel-engine@sha256:15df0fa2b7aca06b30fd412c5dce46a353f57d1de905a7aac1db29440f742c93",
+      "log": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-release-seed.log",
+      "at": "2026-10-08T16:31:11+0800",
+      "details": {
+        "project_id": "dbf3cc18-37a7-4de6-a54e-cb4482eb7dd0",
+        "document_id": "6b97c631-260e-49af-a66c-6076668b5f50",
+        "version": {
+          "version": "0.8.0",
+          "name": "Novel Engine",
+          "runtime": {
+            "name": "node",
+            "version": "24.21.0"
+          },
+          "environment": "production",
+          "build": "unknown"
+        }
+      },
+      "status": "pass"
+    },
+    {
+      "name": "release-restart-persistence",
+      "source": "ghcr.io/jackela/novel-engine@sha256:15df0fa2b7aca06b30fd412c5dce46a353f57d1de905a7aac1db29440f742c93",
+      "log": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-release-seed.log",
+      "at": "2026-10-08T16:31:11+0800",
+      "status": "invalidated",
+      "error": "readiness did not become healthy in 45s",
+      "reason": "Harness used dynamic published ports and docker kill manual-stop semantics. Replaced by fixed-port restart and in-container PID1 SIGKILL."
+    },
+    {
+      "name": "release-sigkill-persistence",
+      "source": "ghcr.io/jackela/novel-engine@sha256:15df0fa2b7aca06b30fd412c5dce46a353f57d1de905a7aac1db29440f742c93",
+      "log": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-release-seed.log",
+      "at": "2026-10-08T16:31:59+0800",
+      "status": "invalidated",
+      "error": "readiness did not become healthy in 45s",
+      "reason": "Harness used dynamic published ports and docker kill manual-stop semantics. Replaced by fixed-port restart and in-container PID1 SIGKILL."
+    },
+    {
+      "name": "release-data-ownership",
+      "source": "ghcr.io/jackela/novel-engine@sha256:15df0fa2b7aca06b30fd412c5dce46a353f57d1de905a7aac1db29440f742c93",
+      "log": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-release-seed.log",
+      "at": "2026-10-08T16:32:46+0800",
+      "status": "invalidated",
+      "error": "command failed 1: docker exec 58eccac81b6036a0a16a3b8ec1962c65a5b75a8b5ab0f8e30ce07fe58acdf78f stat -c %u:%g %a %n /app/data /app/data/.secret /app/data/novel-engine.sqlite3",
+      "reason": "Harness queried manually stopped container; repeated after corrected restart/crash flow."
+    },
+    {
+      "name": "release-fixed-port-restart-persistence",
+      "source": "ghcr.io/jackela/novel-engine@sha256:15df0fa2b7aca06b30fd412c5dce46a353f57d1de905a7aac1db29440f742c93",
+      "log": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-release-replay.log",
+      "at": "2026-10-08T16:33:18+0800",
+      "details": {
+        "content_unchanged": true,
+        "session_retained": true,
+        "revision": "2b9a24d5-e19a-4b4c-baf8-e1e0eed3d4d0"
+      },
+      "status": "pass"
+    },
+    {
+      "name": "release-crash-sigkill-persistence",
+      "source": "ghcr.io/jackela/novel-engine@sha256:15df0fa2b7aca06b30fd412c5dce46a353f57d1de905a7aac1db29440f742c93",
+      "log": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-release-replay.log",
+      "at": "2026-10-08T16:33:20+0800",
+      "details": {
+        "content_unchanged": true,
+        "session_retained": true,
+        "revision": "2b9a24d5-e19a-4b4c-baf8-e1e0eed3d4d0"
+      },
+      "status": "pass"
+    },
+    {
+      "name": "release-data-ownership",
+      "source": "ghcr.io/jackela/novel-engine@sha256:15df0fa2b7aca06b30fd412c5dce46a353f57d1de905a7aac1db29440f742c93",
+      "log": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-release-replay.log",
+      "at": "2026-10-08T16:33:22+0800",
+      "details": "0:0 755 /app/data\n0:0 600 /app/data/.secret\n0:0 644 /app/data/novel-engine.sqlite3",
+      "status": "pass"
+    },
+    {
+      "name": "release-volume-readable-and-writable-as-current-node-user",
+      "source": "/Users/jackela/.codex/worktrees/acp-full-acceptance/Novel-Engine/Dockerfile:50",
+      "log": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-permission-probe.log",
+      "at": "2026-10-08T16:34:57+0800",
+      "status": "fail",
+      "error": "command failed 1: docker exec --user node 50969807d00846687951114a07bd0d638f9efb4786b3f253151183e7e61a8186 sh -c test -r /app/data/.secret && test -w /app/data && echo node-volume-permissions-ok"
+    },
+    {
+      "name": "candidate-compose-start",
+      "source": "sha256:6eb0f9bc86ac278516107220ac5a2dec5650bc63774f5256b987aadcc1c9a2b7",
+      "log": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-candidate.log",
+      "at": "2026-10-08T16:40:21+0800",
+      "details": {
+        "ReadonlyRootfs": true,
+        "CapDrop": [
+          "ALL"
+        ],
+        "SecurityOpt": [
+          "no-new-privileges:true"
+        ],
+        "Memory": 1073741824,
+        "NanoCpus": 2000000000,
+        "PidsLimit": 512,
+        "Tmpfs": {
+          "/tmp": "size=64m"
+        }
+      },
+      "status": "pass"
+    },
+    {
+      "name": "candidate-fresh-owner-and-manuscript",
+      "source": "sha256:6eb0f9bc86ac278516107220ac5a2dec5650bc63774f5256b987aadcc1c9a2b7",
+      "log": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-candidate.log",
+      "at": "2026-10-08T16:40:22+0800",
+      "details": {
+        "project_id": "764cfa7f-58fd-492c-aae7-c908d1350d1a",
+        "document_id": "43dd5ebc-15b8-4e12-ab0b-4151b45da377",
+        "version": {
+          "version": "0.8.0",
+          "name": "Novel Engine"
+        }
+      },
+      "status": "pass"
+    },
+    {
+      "name": "candidate-runtime-integrity",
+      "source": "sha256:6eb0f9bc86ac278516107220ac5a2dec5650bc63774f5256b987aadcc1c9a2b7",
+      "log": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-candidate.log",
+      "at": "2026-10-08T16:40:23+0800",
+      "details": {
+        "check": "ok",
+        "migrations": 26,
+        "uid": 1000
+      },
+      "status": "pass"
+    },
+    {
+      "name": "candidate-restart-persistence",
+      "source": "sha256:6eb0f9bc86ac278516107220ac5a2dec5650bc63774f5256b987aadcc1c9a2b7",
+      "log": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-candidate.log",
+      "at": "2026-10-08T16:40:23+0800",
+      "details": {
+        "content_unchanged": true,
+        "session_retained": true,
+        "revision": "3426102d-9f48-4da0-96dd-8c0ea430f4c8"
+      },
+      "status": "pass"
+    },
+    {
+      "name": "candidate-sigkill-persistence",
+      "source": "sha256:6eb0f9bc86ac278516107220ac5a2dec5650bc63774f5256b987aadcc1c9a2b7",
+      "log": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-candidate.log",
+      "at": "2026-10-08T16:40:25+0800",
+      "details": {
+        "content_unchanged": true,
+        "session_retained": true,
+        "revision": "3426102d-9f48-4da0-96dd-8c0ea430f4c8"
+      },
+      "status": "pass"
+    },
+    {
+      "name": "candidate-three-format-exports",
+      "source": "sha256:6eb0f9bc86ac278516107220ac5a2dec5650bc63774f5256b987aadcc1c9a2b7",
+      "log": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-candidate.log",
+      "at": "2026-10-08T16:40:27+0800",
+      "details": [
+        {
+          "format": "epub",
+          "path": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-epub.epub",
+          "sha256": "d1729d387810197e667a8b5f7adba2a6cfda95a729b75fec4c2047fb538c85e0",
+          "bytes": 3108,
+          "snapshot_id": "6434caea-53ba-4890-b481-fa72782e02c7",
+          "content_present": true,
+          "language": "zh",
+          "zip_and_opf_valid": true,
+          "verification_scope": "ZIP CRC and mimetype ordering/storage, OPF/XML well-formedness, CJK body and language; not EPUBCheck conformance"
+        },
+        {
+          "format": "docx",
+          "path": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-docx.docx",
+          "sha256": "f9fcf2c5d8bdf49710c78e7a42ff0e614d5b82d2e97516de088a06b30651c011",
+          "bytes": 9100,
+          "snapshot_id": "6434caea-53ba-4890-b481-fa72782e02c7",
+          "content_present": true,
+          "xml_well_formed": true,
+          "east_asia_font": true
+        },
+        {
+          "format": "markdown",
+          "path": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-markdown.md",
+          "sha256": "c0ef8d8abee861f2c06bbe2068d29518e9c49a177c0daf2871019c2bd129d94e",
+          "bytes": 168,
+          "snapshot_id": "6434caea-53ba-4890-b481-fa72782e02c7",
+          "content_present": true
+        }
+      ],
+      "status": "pass"
+    },
+    {
+      "name": "candidate-cli-backup-restore",
+      "source": "sha256:6eb0f9bc86ac278516107220ac5a2dec5650bc63774f5256b987aadcc1c9a2b7",
+      "log": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-candidate.log",
+      "at": "2026-10-08T16:40:27+0800",
+      "details": {
+        "backup": "/app/data/backups/novel-engine-20261008T084028307Z.sqlite3.bak",
+        "restored_original_content": true,
+        "restore_output": "Verifying restore input: /app/data/backups/novel-engine-20261008T084028307Z.sqlite3.bak\nBacked up the replaced database: /app/data/backups/novel-engine-20261008T084030291Z.sqlite3.bak\nRestored the database: /app/data/novel-engine.sqlite3"
+      },
+      "status": "pass"
+    },
+    {
+      "name": "candidate-post-restore-integrity",
+      "source": "sha256:6eb0f9bc86ac278516107220ac5a2dec5650bc63774f5256b987aadcc1c9a2b7",
+      "log": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-candidate.log",
+      "at": "2026-10-08T16:40:31+0800",
+      "details": {
+        "check": "ok",
+        "migrations": 26,
+        "uid": 1000
+      },
+      "status": "pass"
+    },
+    {
+      "name": "released-0.8-to-candidate-upgrade",
+      "source": "sha256:6eb0f9bc86ac278516107220ac5a2dec5650bc63774f5256b987aadcc1c9a2b7",
+      "log": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-upgrade.log",
+      "at": "2026-10-08T16:41:38+0800",
+      "status": "fail_confirmed",
+      "harness_error": "'8000/tcp'",
+      "reason": "Harness port lookup raised KeyError after container failed to start. Actual repeated entrypoint error and exited/restarting inspection establish product failure: cannot open /app/data/.secret: Permission denied.",
+      "evidence_artifacts": [
+        "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-upgrade-startup-error.log",
+        "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-upgrade.log"
+      ]
+    },
+    {
+      "name": "candidate-container-to-host-acp",
+      "status": "invalidated",
+      "details": {
+        "status": "fail",
+        "error": "",
+        "log": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-acp.log"
+      },
+      "source": "sha256:6eb0f9bc86ac278516107220ac5a2dec5650bc63774f5256b987aadcc1c9a2b7",
+      "log": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-acp.log",
+      "reason": "First harness did not complete its API/SSE wait; replaced by successful fully captured replay."
+    },
+    {
+      "name": "candidate-container-to-host-acp",
+      "status": "invalidated",
+      "details": {
+        "status": "fail",
+        "error": "{'id': '0d3b7591-2996-457b-a64d-a555c8015bd2', 'project_id': '764cfa7f-58fd-492c-aae7-c908d1350d1a', 'document_id': '43dd5ebc-15b8-4e12-ab0b-4151b45da377', 'kind': 'proposal', 'operation': 'rewrite', 'status': 'failed', 'provider': 'acp', 'model': '', 'request': {'operation': 'rewrite', 'instruction': '验证宿主材料工作副本；形成提议，不接受正文。', 'base_revision_id': '3426102d-9f48-4da0-96dd-8c0ea430f4c8'}, 'result': {'proposal_markdown': '', 'agent_execution': {'operation_id': '79f15ad3-00ce-4290-ac35-aad4c1970698', 'external_effects': [], 'outcome_unknown': False}, 'partial_markdown': '', 'base_revision_id': '3426102d-9f48-4da0-96dd-8c0ea430f4c8', 'accepted_revision_id': None}, 'error': 'ACP proxy token file is empty.', 'retry_of_job_id': None, 'created_at': '2026-10-08T08:53:30.241Z', 'updated_at': '2026-10-08T08:53:30.241Z', 'events': [{'id': 'cd3ce3ff-a100-4025-b379-961d4c563c09', 'status': 'failed', 'details': {'error': 'ACP proxy token file is empty.'}, 'created_at': '2026-10-08T08:53:30.241Z'}]}",
+        "log": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-acp.log"
+      },
+      "source": "sha256:6eb0f9bc86ac278516107220ac5a2dec5650bc63774f5256b987aadcc1c9a2b7",
+      "log": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-acp.log",
+      "reason": "Synthetic token seeder omitted docker run -i so token was empty. Seeder corrected; fully captured replay passed."
+    },
+    {
+      "name": "candidate-container-to-host-acp",
+      "status": "pass",
+      "details": {
+        "status": "pass",
+        "image_id": "sha256:6eb0f9bc86ac278516107220ac5a2dec5650bc63774f5256b987aadcc1c9a2b7",
+        "gateway_url": "ws://192.168.5.2:54304/acp",
+        "provider_catalog": {
+          "provider": "acp",
+          "configured": true,
+          "model": null,
+          "is_default": false
+        },
+        "job_id": "ec0a86c1-d7f9-416c-a6cb-22fba68f2791",
+        "job_status": "completed",
+        "model": "ops-fake-model",
+        "host_material_write": true,
+        "material_path": "/private/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-acp-materials/notes.md",
+        "database_content_unchanged": true,
+        "revision_unchanged": true,
+        "hardening": {
+          "ReadonlyRootfs": true,
+          "CapDrop": [
+            "ALL"
+          ],
+          "SecurityOpt": [
+            "no-new-privileges:true"
+          ],
+          "Memory": 1073741824,
+          "NanoCpus": 2000000000,
+          "PidsLimit": 512,
+          "Tmpfs": {
+            "/tmp": "size=64m"
+          }
+        },
+        "events": [
+          {
+            "type": "ready",
+            "operation_id": "4e263c43-51bd-4344-9306-4661e8f1565b"
+          },
+          {
+            "type": "tool",
+            "tool_id": "ops-write",
+            "title": "Write synthetic material notes",
+            "target": "notes.md",
+            "kind": "edit",
+            "status": "pending"
+          },
+          {
+            "type": "permission",
+            "permission_id": "c3d37692-cae2-4f7e-892b-8c41ac3a224e",
+            "tool": {
+              "title": "Write synthetic material notes",
+              "target": "notes.md",
+              "kind": "edit"
+            },
+            "options": [
+              {
+                "option_id": "allow_once",
+                "name": "Allow synthetic write once",
+                "kind": "allow_once"
+              },
+              {
+                "option_id": "reject_once",
+                "name": "Reject",
+                "kind": "reject_once"
+              }
+            ]
+          },
+          {
+            "type": "tool",
+            "tool_id": "ops-write",
+            "title": "Write synthetic material notes",
+            "target": "notes.md",
+            "kind": "edit",
+            "status": "completed"
+          },
+          {
+            "type": "completed",
+            "external_effects": "completed"
+          }
+        ],
+        "token_mount": "separate node-owned mode0600 synthetic token volume mounted read-only",
+        "credentials": "no Grok credentials accessed or copied",
+        "log": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-acp.log",
+        "durable_agent_execution": {
+          "operation_id": "4e263c43-51bd-4344-9306-4661e8f1565b",
+          "external_effects": [
+            {
+              "tool_id": "ops-write",
+              "title": "Write synthetic material notes",
+              "kind": "edit",
+              "status": "completed",
+              "target": "notes.md"
+            }
+          ],
+          "outcome_unknown": false
+        }
+      },
+      "source": "sha256:6eb0f9bc86ac278516107220ac5a2dec5650bc63774f5256b987aadcc1c9a2b7",
+      "log": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-acp.log"
+    },
+    {
+      "name": "failed-upgrade-preserves-old-database",
+      "status": "pass",
+      "details": {
+        "check": "ok",
+        "migrations": 23,
+        "body_sha256": "47b306541ebc5cb9b7c179dc9cafb82bad0836b34eb418cae6f01ce1b00489e6"
+      },
+      "source": "ghcr.io/jackela/novel-engine@sha256:15df0fa2b7aca06b30fd412c5dce46a353f57d1de905a7aac1db29440f742c93",
+      "log": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-upgrade-forensics.log",
+      "scope": "Stopped synthetic source volume copied with WAL/SHM to temporary folder; only the copy opened read-only."
+    }
+  ],
+  "findings": [
+    {
+      "id": "OPS-PUBLISHED-IMAGE-DRIFT",
+      "status": "confirmed",
+      "priority": "P1",
+      "source": [
+        "README.md:114",
+        "README.md:193",
+        "Dockerfile:50",
+        "deploy/compose.yaml:9"
+      ],
+      "evidence": [
+        "Published image Config.User empty; runtime UID0; revision520be9a830;23 migrations;no ACP CLI.",
+        "Current README setup-token instructions fail because published volume has no .setup-token."
+      ],
+      "closure": "Publish an owner-approved new immutable image/tag/digest corresponding to accepted source, then rerun digest-bound deployment checks. Do not overwrite old release evidence or imply the draft release is published."
+    },
+    {
+      "id": "OPS-UPGRADE-VOLUME-OWNERSHIP",
+      "status": "confirmed_actual_upgrade_failure",
+      "priority": "P1",
+      "source": [
+        "Dockerfile:46",
+        "Dockerfile:50",
+        "docker/entrypoint.sh:16",
+        "deploy/README.md:113"
+      ],
+      "evidence": [
+        "Published synthetic volume .secret is root:root mode0600 and data directory root:root mode0755. Accepted-source image runs UID1000.",
+        "Actual released-volume to image6eb replay fails repeatedly at entrypoint line18 reading .secret: Permission denied; container never healthy.",
+        "Quiescent copy of failed-upgrade source database retained23 migrations and quick_check=ok; body checksum preserved."
+      ],
+      "closure": "Publish blocking finding, not repaired in this ACP scope. Define and validate an explicit supported ownership migration/restore procedure, then repeat released-volume→final accepted-image upgrade on a copy. Verify data, auth/session and migrations after startup.",
+      "evidence_artifacts": [
+        "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-upgrade-startup-error.log",
+        "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-upgrade-preserved-data.json",
+        "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-permission-probe.log"
+      ]
+    },
+    {
+      "id": "OPS-RESTORE-RETENTION",
+      "status": "confirmed_baseline",
+      "priority": "P1",
+      "source": [
+        "server/src/shared/infrastructure/db/restore.ts:52",
+        "server/src/shared/infrastructure/db/backup.ts"
+      ],
+      "evidence_artifacts": [
+        "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/baseline-observations.json",
+        "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/baseline-reproductions.log"
+      ],
+      "evidence": "Restore verifies the oldest backup, then safety-backup retention prunes that input before copyFile, producing ENOENT. Original current database remains after failed restore.",
+      "closure": "Separate finding; preserve the verified restore source through retention, then rerun the oldest-input reproduction and corrupt/refusal/safety-backup tests."
+    },
+    {
+      "id": "OPS-ZIP-UPGRADE-PROJECT-NAME",
+      "status": "source_contradiction",
+      "priority": "P2",
+      "source": [
+        "openwiki/guides/upgrading.md:19",
+        "deploy/README.md:113",
+        "deploy/README.md:221"
+      ],
+      "evidence": "ZIP guide moves to a new folder while deployment guide says directory-derived Compose project creates an empty new volume.",
+      "closure": "Document a stable Compose project/volume mapping and replay the ZIP/new-folder upgrade path on synthetic data."
+    }
+  ],
+  "reader_checks": {
+    "markdown": "pass: UTF-8 CJK body, heading deduplication, snapshot/catalog size and SHA match",
+    "DOCX_structure": "pass: ZIP/XML well-formed, CJK content, SimSun East Asia declaration and catalog SHA/size",
+    "LibreOffice": {
+      "status": "pass_independent_reader_load_and_content",
+      "reader": "LibreOfficeDev26.8.0.0.alpha0 Writer",
+      "flow": "Loaded actual candidate DOCX and converted it with an isolated profile; output HTML includes Chinese heading/content and Alpha123.",
+      "log": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-docx-reader.log",
+      "output": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-reader/ops-docx.html",
+      "limit": "No Word/WPS visual pagination or human acceptance implied."
+    },
+    "WPS": {
+      "status": "opened_but_visual_body_review_blocked",
+      "reader": "WPS Office on current host",
+      "target": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-docx.docx",
+      "observations": [
+        "Window title ops-docx.docx; Writer editing controls and Chinese font names appeared; no repair dialog observed.",
+        "Computer-use screenshot exposed a small Stage Manager thumbnail, not a legible manuscript page. Raising the window failed stageManagerProcessNotRunning.",
+        "Closed only the synthetic document tab. DOCX SHA256 unchanged after reader open."
+      ],
+      "sha256": "f9fcf2c5d8bdf49710c78e7a42ff0e614d5b82d2e97516de088a06b30651c011",
+      "human_acceptance": "not_run"
+    },
+    "Word": "not_run: Microsoft Word unavailable on host",
+    "EPUB_structure": "pass_bounded: ZIP CRC, uncompressed first mimetype, OPF/XML well-formed, zh and CJK body. Not a full conformance claim.",
+    "EPUBCheck": "blocked: epubcheck absent and Java runtime unavailable",
+    "EPUB_reader": "not_run: Books.app installed but opening would import synthetic artifact into personal library; no isolated library reader exercised",
+    "human_acceptance": "not_run",
+    "closure": "Final image exports must be rechecked. Use an isolated EPUB reader and EPUBCheck/JRE; complete owner-authorized DOCX visual review in a usable Word/WPS window."
+  },
+  "remaining": [
+    {
+      "name": "final-image-digest-bound-operations-replay",
+      "status": "pass",
+      "owner": "integrator",
+      "reason": "Completed in final_candidate_replay on source0799ddf8909dd28f9c31dd72e418636c5a7a8992 and recorded local final image.",
+      "closure": "Completed bounded local checks; does not close retained publication/upgrade/reader findings."
+    },
+    {
+      "name": "published-volume-upgrade-and-migration",
+      "status": "blocked_by_confirmed_ownership_failure",
+      "closure": "Validate explicit ownership migration/restore, then run old23-migration database to final26+ candidate and verify contents/auth/integrity."
+    },
+    {
+      "name": "DOCX-visual-and-EPUB-reader/conformance",
+      "status": "partly_blocked",
+      "reason": "WPS Stage Manager window cannot be legibly inspected; EPUBCheck/JRE absent; personal Books library not modified.",
+      "closure": "Provide usable isolated reader environment; do not equate structural or LibreOffice parsing with human layout acceptance."
+    },
+    {
+      "name": "TLS-reverse-proxy/public-hosting",
+      "status": "not_run",
+      "reason": "This scope authorizes local isolated deployment only."
+    }
+  ],
+  "cleanup": {
+    "status": "pass",
+    "projects": [
+      {
+        "name": "ne-ops-release-6805c076",
+        "result": {
+          "status": "pass",
+          "at": "2026-10-08T17:02:30+0800"
+        }
+      },
+      {
+        "name": "ne-ops-candidate-b4bdb349",
+        "result": {
+          "status": "pass",
+          "at": "2026-10-08T17:02:30+0800"
+        }
+      }
+    ],
+    "gateway": "stopped",
+    "synthetic_token_file": "removed",
+    "external_secret_volume": "removed",
+    "logs": [
+      "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-cleanup.log",
+      "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-secret-volume-cleanup.log"
+    ],
+    "verification": "Exact-label project container listings empty after down --volumes --remove-orphans; external volume label checked before removal. Logs and synthetic artifact copies preserved. No real volumes/containers touched."
+  },
+  "recorded_at": "2026-10-08T17:08:08+0800",
+  "overall_status": "not_accepted: closureda025 operational replay passed; publication/old-volume upgrade/restore-retention blockers and reader gaps remain",
+  "container_to_host_acp": {
+    "status": "pass_on_recorded_image",
+    "result": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-container-acp-result.json",
+    "flow": "Real hardened Compose backend/provider catalog and HTTP/SSE AI task → bearer gateway → real stdio fake agent → allow_once permission → host material write → durable completed external effect; formal body and revision unchanged.",
+    "network_observation": "In this Colima VM, host.lima.internal and host.docker.internal resolved198.18.0.117/118 and were not reachable from the container. Explicit host gateway192.168.5.2 succeeded. This is an environment constraint; production compose networking was not changed.",
+    "isolation": "Only synthetic data and token; temporary gateway listened0.0.0.0 on random port with bearer protection and was stopped. Token0600 in separate node-owned volume mounted read-only; materials mounted at identical absolute host/container path. No Grok credentials accessed.",
+    "hardening": {
+      "ReadonlyRootfs": true,
+      "CapDrop": [
+        "ALL"
+      ],
+      "SecurityOpt": [
+        "no-new-privileges:true"
+      ],
+      "Memory": 1073741824,
+      "NanoCpus": 2000000000,
+      "PidsLimit": 512,
+      "Tmpfs": {
+        "/tmp": "size=64m"
+      }
+    },
+    "logs": [
+      "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-acp.log",
+      "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-host-dns.log",
+      "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-durable-evidence.log"
+    ],
+    "replay": "python3 /tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-container-acp.py (requires a fresh isolated candidate profile; gateway credentials and volumes are ephemeral)"
+  },
+  "evidence_scope": {
+    "compose": "Actual root compose.yaml with isolated overrides, --env-file /dev/null and clean process environment; read_only/cap_drop/security/resources retained.",
+    "plain_docker_ci": "Does not replace actual Compose evidence: CI plain docker omits Compose hardening/env/network differences.",
+    "replay_harness": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-harness.py",
+    "raw_state": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-state.json",
+    "raw_state_caution": "Synthetic auth cookies/CSRF only in local raw harness state, never copied into repo report.",
+    "unsupported_claims": [
+      "No release/merge/deploy/public exposure",
+      "No human acceptance",
+      "No full EPUB conformance",
+      "No real Grok credentials used",
+      "No multiuser sandbox guarantee"
+    ]
+  },
+  "final_candidate_replay": {
+    "status": "pass_bounded_operational_checks; retained_release_and_upgrade_blockers",
+    "recorded_at": "2026-10-09T04:13:54+0800",
+    "fixed_source_sha": "0799ddf8909dd28f9c31dd72e418636c5a7a8992",
+    "baseline_comparison_sha": "066d923d8bb92a47c7d6a12d8352b2aa471cbd4b",
+    "workspace": "/Users/jackela/.codex/worktrees/acp-full-acceptance/Novel-Engine",
+    "image": {
+      "tag": "novel-engine-acp-audit:final",
+      "id": "sha256:b52f1812833a7123ce10b605a9770595468a643ace86c2687b4a80638142c59a",
+      "repo_digests_observed": [
+        "novel-engine-acp-audit@sha256:b52f1812833a7123ce10b605a9770595468a643ace86c2687b4a80638142c59a"
+      ],
+      "descriptor_observed": {
+        "digest": "sha256:b52f1812833a7123ce10b605a9770595468a643ace86c2687b4a80638142c59a",
+        "mediaType": "application/vnd.oci.image.manifest.v1+json",
+        "size": 4253
+      },
+      "architecture": "arm64",
+      "revision_label": "0799ddf8909dd28f9c31dd72e418636c5a7a8992",
+      "runtime_user": "node",
+      "inspection_artifact": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-final-replay/ops-final-image.json",
+      "build_log": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/docker-frozen.log",
+      "note": "Exact local image inspect recorded; no registry publish performed."
+    },
+    "runtime_manifest": {
+      "path": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-final-replay/ops-runtime-manifest.json",
+      "tree_sha256": "729e1afa3b175e524456a41bf675be94d25976bdebaf0a8095c0c7b22bb66bd5",
+      "file_sha256": "71b2c473ec92708fef7498c6bd147d7184ef1d30b5b621845c6c307f593bbe74"
+    },
+    "environment": {
+      "host": "macOS; Colima arm64 Docker; local isolated loopback HTTP",
+      "process_env_allowlist": [
+        "PATH",
+        "HOME",
+        "DOCKER_HOST",
+        "DOCKER_CONTEXT"
+      ],
+      "compose_env_file": "/dev/null",
+      "synthetic_overrides": {
+        "SECURITY_CORS_ORIGINS": "https://ops.example.invalid",
+        "LLM_PROVIDER": "mock",
+        "LOG_LEVEL": "warn"
+      },
+      "no_real_env_or_data": "No forbidden real env, data or provider credential read/copied.",
+      "credentials": "Isolated synthetic setup token/password/session; raw local state/logs may hold synthetic values and are not committed."
+    },
+    "commands": [
+      "python3 /tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-final-replay/ops-harness.py candidate",
+      "LibreOffice headless with isolated UserInstallation profile --convert-to html --outdir /tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-final-replay/ops-reader /tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-final-replay/ops-docx.docx",
+      "python3 /tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-final-replay/ops-container-acp.py acp",
+      "GET /api/projects/:project/jobs/:job confirmed persisted agent_execution external_effects",
+      "python3 /tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-final-replay/ops-harness.py cleanup",
+      "docker volume inspect exact synthetic secret label; docker volume rm exact own volume; docker ps filter exact compose project"
+    ],
+    "profile": {
+      "project": "ne-ops-candidate-1b4441bd",
+      "directory": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-final-replay/ops-ne-ops-candidate-1b4441bd",
+      "override": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-final-replay/ops-ne-ops-candidate-1b4441bd/ops-compose.override.yaml",
+      "image": "novel-engine-acp-audit:final",
+      "container": "278137d52781f555bb9996cc6fad2ad39a7bc462ee94b415aa30495df0a9e671",
+      "port": 60355,
+      "base": "http://127.0.0.1:60355",
+      "volume": "ne-ops-candidate-1b4441bd_novel-engine-data",
+      "image_id": "sha256:b52f1812833a7123ce10b605a9770595468a643ace86c2687b4a80638142c59a",
+      "hardening": {
+        "ReadonlyRootfs": true,
+        "CapDrop": [
+          "ALL"
+        ],
+        "SecurityOpt": [
+          "no-new-privileges:true"
+        ],
+        "Memory": 1073741824,
+        "NanoCpus": 2000000000,
+        "PidsLimit": 512,
+        "Tmpfs": {
+          "/tmp": "size=64m"
+        }
+      },
+      "user": "node",
+      "setup_token_present": true,
+      "project_id": "c1aaad44-715f-4cfa-bf2b-01aa3ad4ffcd",
+      "document_id": "f8c4447c-5855-487d-bd38-458f8b90d8a8",
+      "revision": "e509aa44-e933-4ce3-b16a-086d616356b7",
+      "content": "# 第一章 验收\n\n合成验收正文 A：中文标点，英文 Alpha 123。\n\n第二段，包含 **加粗** 与 *强调*。",
+      "cleanup": {
+        "status": "pass",
+        "at": "2026-10-09T04:13:06+0800"
+      }
+    },
+    "checks": [
+      {
+        "name": "candidate-compose-start",
+        "source": "sha256:b52f1812833a7123ce10b605a9770595468a643ace86c2687b4a80638142c59a",
+        "log": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-final-replay/ops-candidate.log",
+        "at": "2026-10-08T17:24:16+0800",
+        "details": {
+          "ReadonlyRootfs": true,
+          "CapDrop": [
+            "ALL"
+          ],
+          "SecurityOpt": [
+            "no-new-privileges:true"
+          ],
+          "Memory": 1073741824,
+          "NanoCpus": 2000000000,
+          "PidsLimit": 512,
+          "Tmpfs": {
+            "/tmp": "size=64m"
+          }
+        },
+        "status": "pass"
+      },
+      {
+        "name": "candidate-fresh-owner-and-manuscript",
+        "source": "sha256:b52f1812833a7123ce10b605a9770595468a643ace86c2687b4a80638142c59a",
+        "log": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-final-replay/ops-candidate.log",
+        "at": "2026-10-08T17:24:19+0800",
+        "details": {
+          "project_id": "c1aaad44-715f-4cfa-bf2b-01aa3ad4ffcd",
+          "document_id": "f8c4447c-5855-487d-bd38-458f8b90d8a8",
+          "version": {
+            "version": "0.8.0",
+            "name": "Novel Engine"
+          }
+        },
+        "status": "pass"
+      },
+      {
+        "name": "candidate-runtime-integrity",
+        "source": "sha256:b52f1812833a7123ce10b605a9770595468a643ace86c2687b4a80638142c59a",
+        "log": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-final-replay/ops-candidate.log",
+        "at": "2026-10-08T17:24:20+0800",
+        "details": {
+          "check": "ok",
+          "migrations": 26,
+          "uid": 1000
+        },
+        "status": "pass"
+      },
+      {
+        "name": "candidate-restart-persistence",
+        "source": "sha256:b52f1812833a7123ce10b605a9770595468a643ace86c2687b4a80638142c59a",
+        "log": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-final-replay/ops-candidate.log",
+        "at": "2026-10-08T17:24:20+0800",
+        "details": {
+          "content_unchanged": true,
+          "session_retained": true,
+          "revision": "e509aa44-e933-4ce3-b16a-086d616356b7"
+        },
+        "status": "pass"
+      },
+      {
+        "name": "candidate-sigkill-persistence",
+        "source": "sha256:b52f1812833a7123ce10b605a9770595468a643ace86c2687b4a80638142c59a",
+        "log": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-final-replay/ops-candidate.log",
+        "at": "2026-10-08T17:24:22+0800",
+        "details": {
+          "content_unchanged": true,
+          "session_retained": true,
+          "revision": "e509aa44-e933-4ce3-b16a-086d616356b7"
+        },
+        "status": "pass"
+      },
+      {
+        "name": "candidate-three-format-exports",
+        "source": "sha256:b52f1812833a7123ce10b605a9770595468a643ace86c2687b4a80638142c59a",
+        "log": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-final-replay/ops-candidate.log",
+        "at": "2026-10-08T17:24:24+0800",
+        "details": [
+          {
+            "format": "epub",
+            "path": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-final-replay/ops-epub.epub",
+            "sha256": "c2a313d3c87568fa6481440761b1beea47824e76d8cfab8c096cc8ddbcb50c63",
+            "bytes": 3108,
+            "snapshot_id": "ddd702bd-d2b5-4a66-9735-bd1aa2f80572",
+            "content_present": true,
+            "zip_and_opf_valid": true,
+            "language": "zh",
+            "verification_scope": "ZIP CRC, first uncompressed mimetype, OPF/XML well-formedness, CJK body and zh; no EPUBCheck claim"
+          },
+          {
+            "format": "docx",
+            "path": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-final-replay/ops-docx.docx",
+            "sha256": "3826056eef9025d17af1ecf76544b505f695325ee4305953d727aa8aae44a103",
+            "bytes": 9100,
+            "snapshot_id": "ddd702bd-d2b5-4a66-9735-bd1aa2f80572",
+            "content_present": true,
+            "xml_well_formed": true,
+            "east_asia_font": true
+          },
+          {
+            "format": "markdown",
+            "path": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-final-replay/ops-markdown.md",
+            "sha256": "c0ef8d8abee861f2c06bbe2068d29518e9c49a177c0daf2871019c2bd129d94e",
+            "bytes": 168,
+            "snapshot_id": "ddd702bd-d2b5-4a66-9735-bd1aa2f80572",
+            "content_present": true
+          }
+        ],
+        "status": "pass"
+      },
+      {
+        "name": "candidate-cli-backup-restore",
+        "source": "sha256:b52f1812833a7123ce10b605a9770595468a643ace86c2687b4a80638142c59a",
+        "log": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-final-replay/ops-candidate.log",
+        "at": "2026-10-08T17:24:24+0800",
+        "details": {
+          "backup": "/app/data/backups/novel-engine-20261008T092426266Z.sqlite3.bak",
+          "restored_original_content": true,
+          "restore_output": "Verifying restore input: /app/data/backups/novel-engine-20261008T092426266Z.sqlite3.bak\nBacked up the replaced database: /app/data/backups/novel-engine-20261008T092429991Z.sqlite3.bak\nRestored the database: /app/data/novel-engine.sqlite3"
+        },
+        "status": "pass"
+      },
+      {
+        "name": "candidate-post-restore-integrity",
+        "source": "sha256:b52f1812833a7123ce10b605a9770595468a643ace86c2687b4a80638142c59a",
+        "log": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-final-replay/ops-candidate.log",
+        "at": "2026-10-08T17:24:32+0800",
+        "details": {
+          "check": "ok",
+          "migrations": 26,
+          "uid": 1000
+        },
+        "status": "pass"
+      },
+      {
+        "name": "candidate-container-to-host-acp",
+        "status": "pass",
+        "details": {
+          "status": "pass",
+          "image_id": "sha256:b52f1812833a7123ce10b605a9770595468a643ace86c2687b4a80638142c59a",
+          "gateway_url": "ws://192.168.5.2:60905/acp",
+          "provider_catalog": {
+            "provider": "acp",
+            "configured": true,
+            "model": null,
+            "is_default": false
+          },
+          "job_id": "d12eef5a-d87d-447a-bbd0-4bc64028d739",
+          "job_status": "completed",
+          "model": "ops-fake-model",
+          "host_material_write": true,
+          "material_path": "/private/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-final-replay/ops-acp-materials/notes.md",
+          "database_content_unchanged": true,
+          "revision_unchanged": true,
+          "hardening": {
+            "ReadonlyRootfs": true,
+            "CapDrop": [
+              "ALL"
+            ],
+            "SecurityOpt": [
+              "no-new-privileges:true"
+            ],
+            "Memory": 1073741824,
+            "NanoCpus": 2000000000,
+            "PidsLimit": 512,
+            "Tmpfs": {
+              "/tmp": "size=64m"
+            }
+          },
+          "events": [
+            {
+              "type": "ready",
+              "operation_id": "191a520b-110d-45f9-bbea-2b69444517fc"
+            },
+            {
+              "type": "tool",
+              "tool_id": "ops-write",
+              "title": "Write synthetic material notes",
+              "target": "notes.md",
+              "kind": "edit",
+              "status": "pending"
+            },
+            {
+              "type": "permission",
+              "permission_id": "0d1248e6-9060-4419-b729-e1a86a61d715",
+              "tool": {
+                "title": "Write synthetic material notes",
+                "target": "notes.md",
+                "kind": "edit"
+              },
+              "options": [
+                {
+                  "option_id": "allow_once",
+                  "name": "Allow synthetic write once",
+                  "kind": "allow_once"
+                },
+                {
+                  "option_id": "reject_once",
+                  "name": "Reject",
+                  "kind": "reject_once"
+                }
+              ]
+            },
+            {
+              "type": "tool",
+              "tool_id": "ops-write",
+              "title": "Write synthetic material notes",
+              "target": "notes.md",
+              "kind": "edit",
+              "status": "completed"
+            },
+            {
+              "type": "completed",
+              "external_effects": "completed"
+            }
+          ],
+          "token_mount": "separate node-owned mode0600 synthetic token volume mounted read-only",
+          "credentials": "no Grok credentials accessed or copied",
+          "log": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-final-replay/ops-acp.log",
+          "durable_agent_execution": {
+            "operation_id": "191a520b-110d-45f9-bbea-2b69444517fc",
+            "external_effects": [
+              {
+                "tool_id": "ops-write",
+                "title": "Write synthetic material notes",
+                "kind": "edit",
+                "status": "completed",
+                "target": "notes.md"
+              }
+            ],
+            "outcome_unknown": false
+          }
+        },
+        "source": "sha256:b52f1812833a7123ce10b605a9770595468a643ace86c2687b4a80638142c59a",
+        "log": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-final-replay/ops-acp.log"
+      },
+      {
+        "name": "final-candidate-DOCX-independent-reader",
+        "status": "pass",
+        "source": "sha256:b52f1812833a7123ce10b605a9770595468a643ace86c2687b4a80638142c59a",
+        "log": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-final-replay/ops-docx-reader.log",
+        "details": {
+          "reader": "LibreOfficeDev26.8.0.0.alpha0 Writer",
+          "actual_load": true,
+          "CJK_heading_body_and_english_present": true,
+          "scope": "Independent reader loading/content; no visual layout or human acceptance claim",
+          "harness_note": "Initial raw HTML substring assertion failed because reader wraps CJK paragraph across newline; normalized rendered HTML text preserved all required content."
+        }
+      }
+    ],
+    "container_to_host_acp_result": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-final-replay/ops-container-acp-result.json",
+    "host_acp_gateway_source": "Workspace compiled gateway, not container; fake agent only, temporary bearer-protected0.0.0.0 listener; stopped after test.",
+    "readers": {
+      "DOCX": "Actual LibreOffice Writer load, normalized CJK/English content verified; no visual human acceptance claim",
+      "WPS_Word": "Final-file visual review not_run; earlier WPS environment limitation retained",
+      "EPUBCheck": "blocked: no EPUBCheck/JRE",
+      "EPUB_reader": "not_run; no personal Books library modifications"
+    },
+    "published_old_volume_upgrade": {
+      "status": "retained_confirmed_failure_on_prior_image",
+      "replayed_on_final_image": false,
+      "reason": "Permission/ownership boundary unchanged; prior actual failed upgrade logs and source-data integrity retained. Final fresh volume tests do not prove published old-volume migration. No migration fix authorized/applied.",
+      "evidence": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-upgrade-startup-error.log",
+      "closure": "Supported ownership migration/restore procedure followed by released23-migration volume→accepted final-image replay."
+    },
+    "cleanup": {
+      "status": "pass",
+      "project": "ne-ops-candidate-1b4441bd",
+      "compose": {
+        "status": "pass",
+        "at": "2026-10-09T04:13:06+0800"
+      },
+      "gateway": "stopped",
+      "synthetic_token_file": "removed",
+      "external_secret_volume": "removed",
+      "verification": "own project containers empty; external secret volume and temporary token removed",
+      "logs": [
+        "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-final-replay/ops-cleanup.log",
+        "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-final-replay/ops-secret-cleanup.log"
+      ]
+    },
+    "logs": [
+      "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-final-replay/ops-candidate.log",
+      "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-final-replay/ops-acp.log",
+      "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-final-replay/ops-evidence.log",
+      "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-final-replay/ops-docx-reader.log"
+    ],
+    "supersedes": "Earlier final-image replay pending item only; prior image evidence and confirmed failures remain intact."
+  },
+  "late_candidate_replay": {
+    "status": "pass_bounded_operational_replay; retained_publication_upgrade_restore_reader_findings",
+    "recorded_at": "2026-10-09T04:33:38+0800",
+    "fixed_source_sha": "7c155bf44a4299a25310c98f76241e3c6f953682",
+    "baseline_sha": "066d923d8bb92a47c7d6a12d8352b2aa471cbd4b",
+    "image": {
+      "tag": "novel-engine-acp-audit:final",
+      "id": "sha256:c0fcfcb275a5625f3b908678c4ec715c70f201710f50e20ea3d3b872f24c80d4",
+      "revision_label": "7c155bf44a4299a25310c98f76241e3c6f953682",
+      "repo_digests_observed": [
+        "novel-engine-acp-audit@sha256:c0fcfcb275a5625f3b908678c4ec715c70f201710f50e20ea3d3b872f24c80d4"
+      ],
+      "descriptor_observed": {
+        "digest": "sha256:c0fcfcb275a5625f3b908678c4ec715c70f201710f50e20ea3d3b872f24c80d4",
+        "mediaType": "application/vnd.oci.image.manifest.v1+json",
+        "size": 4253
+      },
+      "architecture": "arm64",
+      "runtime_user": "node",
+      "inspection_artifact": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-late-candidate/ops-late-image.json"
+    },
+    "runtime_manifest": {
+      "path": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-late-candidate/ops-runtime-manifest.json",
+      "tree_sha256": "2abe17b4494da13663e5332faa867f1377f23f14362307e4dd1fe84c984a2cb5",
+      "file_sha256": "47473d20023215790d55cd597b3ed6c060c8b03057d10b8e96012feaade78f5d"
+    },
+    "scope": "Following cancellation/error-listener correction, normal real transport path rechecked. This operational replay does not independently test pending-handshake cancellation; targeted code regression tests are integrator-owned evidence. Database/Compose/output changes not asserted.",
+    "environment": {
+      "compose_env_file": "/dev/null",
+      "process_env_allowlist": [
+        "PATH",
+        "HOME",
+        "DOCKER_HOST",
+        "DOCKER_CONTEXT"
+      ],
+      "CORS": "https://ops.example.invalid",
+      "default_provider": "mock",
+      "host": "macOS Colima arm64 local isolated loopback deployment",
+      "data_and_credentials": "Only disposable synthetic owner/manuscript/token; no real env/data/provider keys read."
+    },
+    "commands": [
+      "python3 /tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-late-candidate/ops-harness.py candidate",
+      "python3 /tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-late-candidate/ops-container-acp.py acp",
+      "GET /api/projects/:project/jobs/:job for durable tool effect",
+      "python3 /tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-late-candidate/ops-harness.py cleanup",
+      "docker volume label inspection/removal; exact-project empty container verification"
+    ],
+    "profile": {
+      "project": "ne-ops-candidate-7c3120fc",
+      "directory": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-late-candidate/ops-ne-ops-candidate-7c3120fc",
+      "override": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-late-candidate/ops-ne-ops-candidate-7c3120fc/ops-compose.override.yaml",
+      "image": "novel-engine-acp-audit:final",
+      "container": "0a761385a279124b522b78ecb468d622f8b94b5370060e97bcdeb01905b8d130",
+      "port": 56966,
+      "base": "http://127.0.0.1:56966",
+      "volume": "ne-ops-candidate-7c3120fc_novel-engine-data",
+      "image_id": "sha256:c0fcfcb275a5625f3b908678c4ec715c70f201710f50e20ea3d3b872f24c80d4",
+      "hardening": {
+        "ReadonlyRootfs": true,
+        "CapDrop": [
+          "ALL"
+        ],
+        "SecurityOpt": [
+          "no-new-privileges:true"
+        ],
+        "Memory": 1073741824,
+        "NanoCpus": 2000000000,
+        "PidsLimit": 512,
+        "Tmpfs": {
+          "/tmp": "size=64m"
+        }
+      },
+      "user": "node",
+      "setup_token_present": true,
+      "project_id": "12ef9016-920b-4924-84be-87dad08c846f",
+      "document_id": "ada93697-c426-4f9d-a201-6941f37369ea",
+      "revision": "24ce443a-176d-46d7-842d-a54d07421303",
+      "content": "# 第一章 验收\n\n合成验收正文 A：中文标点，英文 Alpha 123。\n\n第二段，包含 **加粗** 与 *强调*。",
+      "cleanup": {
+        "status": "pass",
+        "at": "2026-10-09T04:33:38+0800"
+      }
+    },
+    "checks": [
+      {
+        "name": "candidate-compose-start",
+        "source": "sha256:c0fcfcb275a5625f3b908678c4ec715c70f201710f50e20ea3d3b872f24c80d4",
+        "log": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-late-candidate/ops-candidate.log",
+        "at": "2026-10-09T04:32:19+0800",
+        "details": {
+          "ReadonlyRootfs": true,
+          "CapDrop": [
+            "ALL"
+          ],
+          "SecurityOpt": [
+            "no-new-privileges:true"
+          ],
+          "Memory": 1073741824,
+          "NanoCpus": 2000000000,
+          "PidsLimit": 512,
+          "Tmpfs": {
+            "/tmp": "size=64m"
+          }
+        },
+        "status": "pass"
+      },
+      {
+        "name": "candidate-fresh-owner-and-manuscript",
+        "source": "sha256:c0fcfcb275a5625f3b908678c4ec715c70f201710f50e20ea3d3b872f24c80d4",
+        "log": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-late-candidate/ops-candidate.log",
+        "at": "2026-10-09T04:32:22+0800",
+        "details": {
+          "project_id": "12ef9016-920b-4924-84be-87dad08c846f",
+          "document_id": "ada93697-c426-4f9d-a201-6941f37369ea",
+          "version": {
+            "version": "0.8.0",
+            "name": "Novel Engine"
+          }
+        },
+        "status": "pass"
+      },
+      {
+        "name": "candidate-runtime-integrity",
+        "source": "sha256:c0fcfcb275a5625f3b908678c4ec715c70f201710f50e20ea3d3b872f24c80d4",
+        "log": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-late-candidate/ops-candidate.log",
+        "at": "2026-10-09T04:32:23+0800",
+        "details": {
+          "check": "ok",
+          "migrations": 26,
+          "uid": 1000
+        },
+        "status": "pass"
+      },
+      {
+        "name": "candidate-restart-persistence",
+        "source": "sha256:c0fcfcb275a5625f3b908678c4ec715c70f201710f50e20ea3d3b872f24c80d4",
+        "log": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-late-candidate/ops-candidate.log",
+        "at": "2026-10-09T04:32:23+0800",
+        "details": {
+          "content_unchanged": true,
+          "session_retained": true,
+          "revision": "24ce443a-176d-46d7-842d-a54d07421303"
+        },
+        "status": "pass"
+      },
+      {
+        "name": "candidate-sigkill-persistence",
+        "source": "sha256:c0fcfcb275a5625f3b908678c4ec715c70f201710f50e20ea3d3b872f24c80d4",
+        "log": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-late-candidate/ops-candidate.log",
+        "at": "2026-10-09T04:32:27+0800",
+        "details": {
+          "content_unchanged": true,
+          "session_retained": true,
+          "revision": "24ce443a-176d-46d7-842d-a54d07421303"
+        },
+        "status": "pass"
+      },
+      {
+        "name": "candidate-three-format-exports",
+        "source": "sha256:c0fcfcb275a5625f3b908678c4ec715c70f201710f50e20ea3d3b872f24c80d4",
+        "log": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-late-candidate/ops-candidate.log",
+        "at": "2026-10-09T04:32:29+0800",
+        "details": [
+          {
+            "format": "epub",
+            "path": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-late-candidate/ops-epub.epub",
+            "sha256": "3c22e3106016f387373aba33c94d8298152f4fb42e6801b6f9bef90a54882d16",
+            "bytes": 3108,
+            "snapshot_id": "c1d22ece-734c-4c9e-b7ec-6524e435852f",
+            "content_present": true,
+            "zip_and_opf_valid": true,
+            "language": "zh",
+            "verification_scope": "ZIP CRC/mimetype order-storage, well-formed OPF/XML, CJK content and zh; not EPUBCheck"
+          },
+          {
+            "format": "docx",
+            "path": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-late-candidate/ops-docx.docx",
+            "sha256": "08c6d208221f8cdfb87756f7cc0e2a46202fda48fe44c268bf47f5fb181fbaab",
+            "bytes": 9100,
+            "snapshot_id": "c1d22ece-734c-4c9e-b7ec-6524e435852f",
+            "content_present": true,
+            "xml_well_formed": true,
+            "east_asia_font": true
+          },
+          {
+            "format": "markdown",
+            "path": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-late-candidate/ops-markdown.md",
+            "sha256": "c0ef8d8abee861f2c06bbe2068d29518e9c49a177c0daf2871019c2bd129d94e",
+            "bytes": 168,
+            "snapshot_id": "c1d22ece-734c-4c9e-b7ec-6524e435852f",
+            "content_present": true
+          }
+        ],
+        "status": "pass"
+      },
+      {
+        "name": "candidate-cli-backup-restore",
+        "source": "sha256:c0fcfcb275a5625f3b908678c4ec715c70f201710f50e20ea3d3b872f24c80d4",
+        "log": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-late-candidate/ops-candidate.log",
+        "at": "2026-10-09T04:32:29+0800",
+        "details": {
+          "backup": "/app/data/backups/novel-engine-20261008T203231312Z.sqlite3.bak",
+          "restored_original_content": true,
+          "restore_output": "Verifying restore input: /app/data/backups/novel-engine-20261008T203231312Z.sqlite3.bak\nBacked up the replaced database: /app/data/backups/novel-engine-20261008T203235644Z.sqlite3.bak\nRestored the database: /app/data/novel-engine.sqlite3"
+        },
+        "status": "pass"
+      },
+      {
+        "name": "candidate-post-restore-integrity",
+        "source": "sha256:c0fcfcb275a5625f3b908678c4ec715c70f201710f50e20ea3d3b872f24c80d4",
+        "log": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-late-candidate/ops-candidate.log",
+        "at": "2026-10-09T04:32:38+0800",
+        "details": {
+          "check": "ok",
+          "migrations": 26,
+          "uid": 1000
+        },
+        "status": "pass"
+      },
+      {
+        "name": "candidate-container-to-host-acp",
+        "status": "pass",
+        "details": {
+          "status": "pass",
+          "image_id": "sha256:c0fcfcb275a5625f3b908678c4ec715c70f201710f50e20ea3d3b872f24c80d4",
+          "gateway_url": "ws://192.168.5.2:57168/acp",
+          "provider_catalog": {
+            "provider": "acp",
+            "configured": true,
+            "model": null,
+            "is_default": false
+          },
+          "job_id": "11418577-22ae-4cc4-a530-b716b6d4b413",
+          "job_status": "completed",
+          "model": "ops-fake-model",
+          "host_material_write": true,
+          "material_path": "/private/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-late-candidate/ops-acp-materials/notes.md",
+          "database_content_unchanged": true,
+          "revision_unchanged": true,
+          "hardening": {
+            "ReadonlyRootfs": true,
+            "CapDrop": [
+              "ALL"
+            ],
+            "SecurityOpt": [
+              "no-new-privileges:true"
+            ],
+            "Memory": 1073741824,
+            "NanoCpus": 2000000000,
+            "PidsLimit": 512,
+            "Tmpfs": {
+              "/tmp": "size=64m"
+            }
+          },
+          "events": [
+            {
+              "type": "ready",
+              "operation_id": "8902fad3-822a-462c-bb1c-01eedbb1d2be"
+            },
+            {
+              "type": "tool",
+              "tool_id": "ops-write",
+              "title": "Write synthetic material notes",
+              "target": "notes.md",
+              "kind": "edit",
+              "status": "pending"
+            },
+            {
+              "type": "permission",
+              "permission_id": "6be9b78c-2063-403d-a4e2-9673592c4d85",
+              "tool": {
+                "title": "Write synthetic material notes",
+                "target": "notes.md",
+                "kind": "edit"
+              },
+              "options": [
+                {
+                  "option_id": "allow_once",
+                  "name": "Allow synthetic write once",
+                  "kind": "allow_once"
+                },
+                {
+                  "option_id": "reject_once",
+                  "name": "Reject",
+                  "kind": "reject_once"
+                }
+              ]
+            },
+            {
+              "type": "tool",
+              "tool_id": "ops-write",
+              "title": "Write synthetic material notes",
+              "target": "notes.md",
+              "kind": "edit",
+              "status": "completed"
+            },
+            {
+              "type": "completed",
+              "external_effects": "completed"
+            }
+          ],
+          "token_mount": "separate node-owned mode0600 synthetic token volume mounted read-only",
+          "credentials": "no Grok credentials accessed or copied",
+          "log": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-late-candidate/ops-acp.log",
+          "durable_agent_execution": {
+            "operation_id": "8902fad3-822a-462c-bb1c-01eedbb1d2be",
+            "external_effects": [
+              {
+                "tool_id": "ops-write",
+                "title": "Write synthetic material notes",
+                "kind": "edit",
+                "status": "completed",
+                "target": "notes.md"
+              }
+            ],
+            "outcome_unknown": false
+          }
+        },
+        "source": "sha256:c0fcfcb275a5625f3b908678c4ec715c70f201710f50e20ea3d3b872f24c80d4",
+        "log": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-late-candidate/ops-acp.log"
+      }
+    ],
+    "container_to_host_acp_result": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-late-candidate/ops-container-acp-result.json",
+    "readers": "Three format structure/content checks repeated. Actual DOCX LibreOffice reader remains previous0799 evidence; unchanged output scope reported by root, no repeated WPS/EPUB blocked checks.",
+    "old_volume_upgrade": "Retained prior actual confirmed ownership failure; not repeated or repaired. Fresh migrations do not establish released-volume upgrade.",
+    "cleanup": {
+      "status": "pass",
+      "project": "ne-ops-candidate-7c3120fc",
+      "compose": {
+        "status": "pass",
+        "at": "2026-10-09T04:33:38+0800"
+      },
+      "gateway": "stopped",
+      "token_file": "removed",
+      "external_secret_volume": "removed",
+      "verification": "exact own Compose project container list empty; secret volume removed after label assertion; gateway stopped and synthetic token removed",
+      "logs": [
+        "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-late-candidate/ops-cleanup.log",
+        "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-late-candidate/ops-secret-cleanup.log"
+      ]
+    },
+    "supersedes": "Final candidate identity for affected normal operation only. Earlier0799 image and all old findings/evidence remain accurately retained."
+  },
+  "closure_candidate_replay": {
+    "status": "pass_bounded_operational_replay; retained_publication_upgrade_restore_reader_findings",
+    "recorded_at": "2026-10-09T04:50:45+0800",
+    "fixed_source_sha": "da025b7de90a6b2106892d5d8490bbdfd8628a20",
+    "baseline_sha": "066d923d8bb92a47c7d6a12d8352b2aa471cbd4b",
+    "image": {
+      "tag": "novel-engine-acp-audit:final",
+      "id": "sha256:c3286465ec20b6c26d04f52c4b360dbda50b53a6d5539c8991526ea26201843e",
+      "revision_label": "da025b7de90a6b2106892d5d8490bbdfd8628a20",
+      "repo_digests_observed": [
+        "novel-engine-acp-audit@sha256:c3286465ec20b6c26d04f52c4b360dbda50b53a6d5539c8991526ea26201843e"
+      ],
+      "descriptor_observed": {
+        "digest": "sha256:c3286465ec20b6c26d04f52c4b360dbda50b53a6d5539c8991526ea26201843e",
+        "mediaType": "application/vnd.oci.image.manifest.v1+json",
+        "size": 4253
+      },
+      "architecture": "arm64",
+      "runtime_user": "node",
+      "inspection_artifact": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-closure-candidate/ops-closure-image.json"
+    },
+    "runtime_manifest": {
+      "path": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-closure-candidate/ops-runtime-manifest.json",
+      "tree_sha256": "703d7a159ca91a0d7d3f67347cd4cb17a8300ff74c715f9d13318d2ae0e00e56",
+      "file_sha256": "6e2d6d653c1a822d1f573d2dcae1c49965e846095dfb7b342cadc9ef27fd0c70"
+    },
+    "scope": "Following the frontend busy-state finally cleanup, final-image normal real transport path rechecked. Backend equals7c155 per integrator. This local operational replay does not establish frontend component error-button behavior or pending-handshake cancellation; targeted regression/browser evidence remains integrator-owned.",
+    "environment": {
+      "compose_env_file": "/dev/null",
+      "process_env_allowlist": [
+        "PATH",
+        "HOME",
+        "DOCKER_HOST",
+        "DOCKER_CONTEXT"
+      ],
+      "CORS": "https://ops.example.invalid",
+      "default_provider": "mock",
+      "host": "macOS Colima arm64 local isolated loopback deployment",
+      "data_and_credentials": "Only disposable synthetic owner/manuscript/token; no real env/data/provider keys read."
+    },
+    "commands": [
+      "python3 /tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-closure-candidate/ops-harness.py candidate",
+      "python3 /tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-closure-candidate/ops-container-acp.py acp",
+      "GET /api/projects/:project/jobs/:job for durable tool effect",
+      "python3 /tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-closure-candidate/ops-harness.py cleanup",
+      "docker volume label inspection/removal; exact-project empty container verification"
+    ],
+    "profile": {
+      "project": "ne-ops-candidate-9770b872",
+      "directory": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-closure-candidate/ops-ne-ops-candidate-9770b872",
+      "override": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-closure-candidate/ops-ne-ops-candidate-9770b872/ops-compose.override.yaml",
+      "image": "novel-engine-acp-audit:final",
+      "container": "ae2536df15a120938601a22998d79512d26f10a4da6af751f5c7cba31c244a60",
+      "port": 60184,
+      "base": "http://127.0.0.1:60184",
+      "volume": "ne-ops-candidate-9770b872_novel-engine-data",
+      "image_id": "sha256:c3286465ec20b6c26d04f52c4b360dbda50b53a6d5539c8991526ea26201843e",
+      "hardening": {
+        "ReadonlyRootfs": true,
+        "CapDrop": [
+          "ALL"
+        ],
+        "SecurityOpt": [
+          "no-new-privileges:true"
+        ],
+        "Memory": 1073741824,
+        "NanoCpus": 2000000000,
+        "PidsLimit": 512,
+        "Tmpfs": {
+          "/tmp": "size=64m"
+        }
+      },
+      "user": "node",
+      "setup_token_present": true,
+      "project_id": "828ea4bf-6174-4251-a941-926586202a21",
+      "document_id": "f622389b-62ea-42f3-92b4-6617999c2692",
+      "revision": "f3644d13-ea5a-47e8-bcf3-ecb90891e286",
+      "content": "# 第一章 验收\n\n合成验收正文 A：中文标点，英文 Alpha 123。\n\n第二段，包含 **加粗** 与 *强调*。",
+      "cleanup": {
+        "status": "pass",
+        "at": "2026-10-09T04:50:44+0800"
+      }
+    },
+    "checks": [
+      {
+        "name": "candidate-compose-start",
+        "source": "sha256:c3286465ec20b6c26d04f52c4b360dbda50b53a6d5539c8991526ea26201843e",
+        "log": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-closure-candidate/ops-candidate.log",
+        "at": "2026-10-09T04:49:55+0800",
+        "details": {
+          "ReadonlyRootfs": true,
+          "CapDrop": [
+            "ALL"
+          ],
+          "SecurityOpt": [
+            "no-new-privileges:true"
+          ],
+          "Memory": 1073741824,
+          "NanoCpus": 2000000000,
+          "PidsLimit": 512,
+          "Tmpfs": {
+            "/tmp": "size=64m"
+          }
+        },
+        "status": "pass"
+      },
+      {
+        "name": "candidate-fresh-owner-and-manuscript",
+        "source": "sha256:c3286465ec20b6c26d04f52c4b360dbda50b53a6d5539c8991526ea26201843e",
+        "log": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-closure-candidate/ops-candidate.log",
+        "at": "2026-10-09T04:49:57+0800",
+        "details": {
+          "project_id": "828ea4bf-6174-4251-a941-926586202a21",
+          "document_id": "f622389b-62ea-42f3-92b4-6617999c2692",
+          "version": {
+            "version": "0.8.0",
+            "name": "Novel Engine"
+          }
+        },
+        "status": "pass"
+      },
+      {
+        "name": "candidate-runtime-integrity",
+        "source": "sha256:c3286465ec20b6c26d04f52c4b360dbda50b53a6d5539c8991526ea26201843e",
+        "log": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-closure-candidate/ops-candidate.log",
+        "at": "2026-10-09T04:49:57+0800",
+        "details": {
+          "check": "ok",
+          "migrations": 26,
+          "uid": 1000
+        },
+        "status": "pass"
+      },
+      {
+        "name": "candidate-restart-persistence",
+        "source": "sha256:c3286465ec20b6c26d04f52c4b360dbda50b53a6d5539c8991526ea26201843e",
+        "log": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-closure-candidate/ops-candidate.log",
+        "at": "2026-10-09T04:49:57+0800",
+        "details": {
+          "content_unchanged": true,
+          "session_retained": true,
+          "revision": "f3644d13-ea5a-47e8-bcf3-ecb90891e286"
+        },
+        "status": "pass"
+      },
+      {
+        "name": "candidate-sigkill-persistence",
+        "source": "sha256:c3286465ec20b6c26d04f52c4b360dbda50b53a6d5539c8991526ea26201843e",
+        "log": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-closure-candidate/ops-candidate.log",
+        "at": "2026-10-09T04:49:59+0800",
+        "details": {
+          "content_unchanged": true,
+          "session_retained": true,
+          "revision": "f3644d13-ea5a-47e8-bcf3-ecb90891e286"
+        },
+        "status": "pass"
+      },
+      {
+        "name": "candidate-three-format-exports",
+        "source": "sha256:c3286465ec20b6c26d04f52c4b360dbda50b53a6d5539c8991526ea26201843e",
+        "log": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-closure-candidate/ops-candidate.log",
+        "at": "2026-10-09T04:50:01+0800",
+        "details": [
+          {
+            "format": "epub",
+            "path": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-closure-candidate/ops-epub.epub",
+            "sha256": "1fe456f7f8f82174b94c4a570f065472a773c7dffe7c71a7e4c84293c5f13387",
+            "bytes": 3109,
+            "snapshot_id": "1301aa76-7bd9-4a73-8c16-bb83409cb14e",
+            "content_present": true,
+            "zip_and_opf_valid": true,
+            "language": "zh",
+            "verification_scope": "ZIP CRC/mimetype order-storage, well-formed OPF/XML, CJK content and zh; not EPUBCheck"
+          },
+          {
+            "format": "docx",
+            "path": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-closure-candidate/ops-docx.docx",
+            "sha256": "af2cda6f807153d9595fc7298d9a287ebf5fd78793bb72e0018761d1ea951766",
+            "bytes": 9099,
+            "snapshot_id": "1301aa76-7bd9-4a73-8c16-bb83409cb14e",
+            "content_present": true,
+            "xml_well_formed": true,
+            "east_asia_font": true
+          },
+          {
+            "format": "markdown",
+            "path": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-closure-candidate/ops-markdown.md",
+            "sha256": "c0ef8d8abee861f2c06bbe2068d29518e9c49a177c0daf2871019c2bd129d94e",
+            "bytes": 168,
+            "snapshot_id": "1301aa76-7bd9-4a73-8c16-bb83409cb14e",
+            "content_present": true
+          }
+        ],
+        "status": "pass"
+      },
+      {
+        "name": "candidate-cli-backup-restore",
+        "source": "sha256:c3286465ec20b6c26d04f52c4b360dbda50b53a6d5539c8991526ea26201843e",
+        "log": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-closure-candidate/ops-candidate.log",
+        "at": "2026-10-09T04:50:02+0800",
+        "details": {
+          "backup": "/app/data/backups/novel-engine-20261008T205002826Z.sqlite3.bak",
+          "restored_original_content": true,
+          "restore_output": "Verifying restore input: /app/data/backups/novel-engine-20261008T205002826Z.sqlite3.bak\nBacked up the replaced database: /app/data/backups/novel-engine-20261008T205004802Z.sqlite3.bak\nRestored the database: /app/data/novel-engine.sqlite3"
+        },
+        "status": "pass"
+      },
+      {
+        "name": "candidate-post-restore-integrity",
+        "source": "sha256:c3286465ec20b6c26d04f52c4b360dbda50b53a6d5539c8991526ea26201843e",
+        "log": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-closure-candidate/ops-candidate.log",
+        "at": "2026-10-09T04:50:06+0800",
+        "details": {
+          "check": "ok",
+          "migrations": 26,
+          "uid": 1000
+        },
+        "status": "pass"
+      },
+      {
+        "name": "candidate-container-to-host-acp",
+        "status": "pass",
+        "details": {
+          "status": "pass",
+          "image_id": "sha256:c3286465ec20b6c26d04f52c4b360dbda50b53a6d5539c8991526ea26201843e",
+          "gateway_url": "ws://192.168.5.2:60401/acp",
+          "provider_catalog": {
+            "provider": "acp",
+            "configured": true,
+            "model": null,
+            "is_default": false
+          },
+          "job_id": "1eee2a57-9244-47b2-a040-77ea7815460d",
+          "job_status": "completed",
+          "model": "ops-fake-model",
+          "host_material_write": true,
+          "material_path": "/private/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-closure-candidate/ops-acp-materials/notes.md",
+          "database_content_unchanged": true,
+          "revision_unchanged": true,
+          "hardening": {
+            "ReadonlyRootfs": true,
+            "CapDrop": [
+              "ALL"
+            ],
+            "SecurityOpt": [
+              "no-new-privileges:true"
+            ],
+            "Memory": 1073741824,
+            "NanoCpus": 2000000000,
+            "PidsLimit": 512,
+            "Tmpfs": {
+              "/tmp": "size=64m"
+            }
+          },
+          "events": [
+            {
+              "type": "ready",
+              "operation_id": "4b0ad459-afe6-4117-bb55-d5d2e627abff"
+            },
+            {
+              "type": "tool",
+              "tool_id": "ops-write",
+              "title": "Write synthetic material notes",
+              "target": "notes.md",
+              "kind": "edit",
+              "status": "pending"
+            },
+            {
+              "type": "permission",
+              "permission_id": "cdc99a30-c2d0-499a-a02b-e9d6142fdeb5",
+              "tool": {
+                "title": "Write synthetic material notes",
+                "target": "notes.md",
+                "kind": "edit"
+              },
+              "options": [
+                {
+                  "option_id": "allow_once",
+                  "name": "Allow synthetic write once",
+                  "kind": "allow_once"
+                },
+                {
+                  "option_id": "reject_once",
+                  "name": "Reject",
+                  "kind": "reject_once"
+                }
+              ]
+            },
+            {
+              "type": "tool",
+              "tool_id": "ops-write",
+              "title": "Write synthetic material notes",
+              "target": "notes.md",
+              "kind": "edit",
+              "status": "completed"
+            },
+            {
+              "type": "completed",
+              "external_effects": "completed"
+            }
+          ],
+          "token_mount": "separate node-owned mode0600 synthetic token volume mounted read-only",
+          "credentials": "no Grok credentials accessed or copied",
+          "log": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-closure-candidate/ops-acp.log",
+          "durable_agent_execution": {
+            "operation_id": "4b0ad459-afe6-4117-bb55-d5d2e627abff",
+            "external_effects": [
+              {
+                "tool_id": "ops-write",
+                "title": "Write synthetic material notes",
+                "kind": "edit",
+                "status": "completed",
+                "target": "notes.md"
+              }
+            ],
+            "outcome_unknown": false
+          }
+        },
+        "source": "sha256:c3286465ec20b6c26d04f52c4b360dbda50b53a6d5539c8991526ea26201843e",
+        "log": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-closure-candidate/ops-acp.log"
+      }
+    ],
+    "container_to_host_acp_result": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-closure-candidate/ops-container-acp-result.json",
+    "readers": "Three format structure/content checks repeated. Actual DOCX LibreOffice reader remains previous0799 evidence; unchanged output scope reported by root, no repeated WPS/EPUB blocked checks.",
+    "old_volume_upgrade": "Retained prior actual confirmed ownership failure; not repeated or repaired. Fresh migrations do not establish released-volume upgrade.",
+    "cleanup": {
+      "status": "pass",
+      "project": "ne-ops-candidate-9770b872",
+      "compose": {
+        "status": "pass",
+        "at": "2026-10-09T04:50:44+0800"
+      },
+      "gateway": "stopped",
+      "token_file": "removed",
+      "external_secret_volume": "removed",
+      "verification": "exact own Compose project container list empty; secret volume removed after label assertion; gateway stopped and synthetic token removed",
+      "logs": [
+        "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-closure-candidate/ops-cleanup.log",
+        "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-closure-candidate/ops-secret-cleanup.log"
+      ]
+    },
+    "supersedes": "Finalda025 candidate identity for actual deployed operations. Earlier0799 and7c155 image records and all old findings remain accurately retained."
+  }
+}

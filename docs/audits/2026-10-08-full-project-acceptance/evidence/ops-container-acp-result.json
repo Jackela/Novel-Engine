@@ -1,0 +1,96 @@
+{
+  "status": "pass",
+  "image_id": "sha256:6eb0f9bc86ac278516107220ac5a2dec5650bc63774f5256b987aadcc1c9a2b7",
+  "gateway_url": "ws://192.168.5.2:54304/acp",
+  "provider_catalog": {
+    "provider": "acp",
+    "configured": true,
+    "model": null,
+    "is_default": false
+  },
+  "job_id": "ec0a86c1-d7f9-416c-a6cb-22fba68f2791",
+  "job_status": "completed",
+  "model": "ops-fake-model",
+  "host_material_write": true,
+  "material_path": "/private/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-acp-materials/notes.md",
+  "database_content_unchanged": true,
+  "revision_unchanged": true,
+  "hardening": {
+    "ReadonlyRootfs": true,
+    "CapDrop": [
+      "ALL"
+    ],
+    "SecurityOpt": [
+      "no-new-privileges:true"
+    ],
+    "Memory": 1073741824,
+    "NanoCpus": 2000000000,
+    "PidsLimit": 512,
+    "Tmpfs": {
+      "/tmp": "size=64m"
+    }
+  },
+  "events": [
+    {
+      "type": "ready",
+      "operation_id": "4e263c43-51bd-4344-9306-4661e8f1565b"
+    },
+    {
+      "type": "tool",
+      "tool_id": "ops-write",
+      "title": "Write synthetic material notes",
+      "target": "notes.md",
+      "kind": "edit",
+      "status": "pending"
+    },
+    {
+      "type": "permission",
+      "permission_id": "c3d37692-cae2-4f7e-892b-8c41ac3a224e",
+      "tool": {
+        "title": "Write synthetic material notes",
+        "target": "notes.md",
+        "kind": "edit"
+      },
+      "options": [
+        {
+          "option_id": "allow_once",
+          "name": "Allow synthetic write once",
+          "kind": "allow_once"
+        },
+        {
+          "option_id": "reject_once",
+          "name": "Reject",
+          "kind": "reject_once"
+        }
+      ]
+    },
+    {
+      "type": "tool",
+      "tool_id": "ops-write",
+      "title": "Write synthetic material notes",
+      "target": "notes.md",
+      "kind": "edit",
+      "status": "completed"
+    },
+    {
+      "type": "completed",
+      "external_effects": "completed"
+    }
+  ],
+  "token_mount": "separate node-owned mode0600 synthetic token volume mounted read-only",
+  "credentials": "no Grok credentials accessed or copied",
+  "log": "/tmp/novel-engine-acceptance-20261008-066d923d-_vd_rrpd/ops-acp.log",
+  "durable_agent_execution": {
+    "operation_id": "4e263c43-51bd-4344-9306-4661e8f1565b",
+    "external_effects": [
+      {
+        "tool_id": "ops-write",
+        "title": "Write synthetic material notes",
+        "kind": "edit",
+        "status": "completed",
+        "target": "notes.md"
+      }
+    ],
+    "outcome_unknown": false
+  }
+}
