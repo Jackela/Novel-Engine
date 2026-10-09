@@ -9,6 +9,8 @@ RUN corepack enable
 COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
 COPY frontend/package.json ./frontend/package.json
 COPY server/package.json ./server/package.json
+# Full-tree development tooling resolves the reviewed local braces implementation.
+COPY vendor/braces ./vendor/braces
 RUN pnpm install --frozen-lockfile
 COPY frontend ./frontend
 COPY server ./server
