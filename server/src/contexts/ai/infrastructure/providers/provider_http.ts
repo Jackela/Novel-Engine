@@ -4,6 +4,13 @@ import {
   TextGenerationProviderError,
   type TextGenerationStreamOptions,
 } from "../../application/ports/text_generation.js";
+import { isJsonObject, type ProviderStreamFailure } from "./provider_stream_failure.js";
+
+export {
+  isJsonObject,
+  openAiCompatibleStreamFailure,
+  type ProviderStreamFailure,
+} from "./provider_stream_failure.js";
 
 const RETRYABLE_HTTP_STATUSES = new Set([429, 500, 502, 503, 504]);
 const MAX_PROVIDER_ATTEMPTS = 3;
@@ -18,10 +25,6 @@ export const LONG_FORM_TIMEOUT_FLOOR_SECONDS = 180;
 
 /** Adapter fallback when neither composition nor options carry a timeout. */
 export const DEFAULT_PROVIDER_TIMEOUT_SECONDS = 30;
-
-export function isJsonObject(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
 
 /** Structural usage token read; inexact or malformed values stay null. */
 export function usageToken(value: unknown): number | null {
@@ -222,12 +225,6 @@ export function timeoutFailure(context: string, timeoutSeconds: number): Provide
   });
 }
 
-/** A provider-reported failure payload embedded in a 200 SSE stream (DR-026). */
-export interface ProviderStreamFailure {
-  readonly message: string;
-  readonly code: string;
-}
-
 /** Normalize an in-stream provider failure; stable phrasing feeds the job error. */
 export function providerStreamFailure(
   context: string,
@@ -236,28 +233,6 @@ export function providerStreamFailure(
   return new ProviderTransportError(
     `${context}: provider reported ${failure.message} (code ${failure.code})`,
   );
-}
-
-function errorPayloadCode(error: Record<string, unknown>): string {
-  for (const candidate of [error.code, error.type]) {
-    if (typeof candidate === "string" && candidate.trim() !== "") return candidate.trim();
-    if (typeof candidate === "number" && Number.isFinite(candidate)) return String(candidate);
-  }
-  return "unknown";
-}
-
-/**
- * Recognize an OpenAI-compatible error payload (`{"error":{...}}`); a payload
- * without a readable message is left to the existing extraction path, so
- * mixed or provider-specific shapes keep their previous behavior.
- */
-export function openAiCompatibleStreamFailure(
-  data: Record<string, unknown>,
-): ProviderStreamFailure | undefined {
-  const error = data.error;
-  if (!isJsonObject(error)) return undefined;
-  const message = typeof error.message === "string" ? error.message.trim() : "";
-  return message === "" ? undefined : { message, code: errorPayloadCode(error) };
 }
 
 /**
@@ -270,6 +245,8 @@ export interface ProviderStreamOptions extends TextGenerationStreamOptions {
   readonly extractStreamFailure?:
     | ((chunk: Record<string, unknown>) => ProviderTransportError | undefined)
     | undefined;
+  /** Recognize protocol completion without skipping trailing usage or errors. */
+  readonly isTerminalChunk?: ((chunk: Record<string, unknown>) => boolean) | undefined;
 }
 
 /**

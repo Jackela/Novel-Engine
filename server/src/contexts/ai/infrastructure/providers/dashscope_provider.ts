@@ -15,6 +15,7 @@ import {
   type DashscopeTransportMode,
   resolveDashscopeTransport,
 } from "./dashscope_transport.js";
+import { isProviderStreamTerminal } from "./isProviderStreamTerminal.js";
 import {
   DEFAULT_PROVIDER_RETRY_POLICY,
   DEFAULT_PROVIDER_TIMEOUT_SECONDS,
@@ -163,6 +164,7 @@ export class DashScopeTextProvider implements TextGenerationProvider {
       extractDashscopeUsageTokens,
       {
         ...options,
+        isTerminalChunk: (data) => isProviderStreamTerminal(data, this.protocol.mode),
         extractStreamFailure: (data) => {
           const failure = extractDashscopeStreamFailure(data);
           return failure === undefined ? undefined : providerStreamFailure(context, failure);
