@@ -1,10 +1,10 @@
 import assert from "node:assert/strict";
-import { createRequire } from "node:module";
-import { readFileSync } from "node:fs";
+import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
+import { readFileSync } from "node:fs";
+import { createRequire } from "node:module";
 import { dirname, join } from "node:path";
 import { test } from "node:test";
-import { spawnSync } from "node:child_process";
 
 const require = createRequire(import.meta.url);
 const braces = require("@novel-engine/braces");
@@ -68,19 +68,19 @@ test("all six public APIs preserve 732 captured upstream semantics below the har
 for (const method of ["compile", "expand", "parse", "stringify", "create"]) {
   test(`${method} rejects the original 9003-character / 4500-level advisory PoC before recursion`, () => {
     assert.throws(
-      () => braces[method]("{".repeat(4500) + "a,b" + "}".repeat(4500)),
+      () => braces[method](`${"{".repeat(4500)}a,b${"}".repeat(4500)}`),
       /Brace nesting exceeds 32 levels/,
     );
   });
 }
 
 test("32 nesting levels are accepted and 33 are rejected, including mixed braces and parentheses", () => {
-  assert.doesNotThrow(() => braces.compile("{".repeat(32) + "x" + "}".repeat(32)));
-  assert.throws(() => braces.compile("{".repeat(33) + "x" + "}".repeat(33)), /nesting/);
-  assert.throws(() => braces.compile("(".repeat(33) + "x" + ")".repeat(33)), /nesting/);
-  assert.throws(() => braces.compile("{(".repeat(17) + "x" + ")}".repeat(17)), /nesting/);
+  assert.doesNotThrow(() => braces.compile(`${"{".repeat(32)}x${"}".repeat(32)}`));
+  assert.throws(() => braces.compile(`${"{".repeat(33)}x${"}".repeat(33)}`), /nesting/);
+  assert.throws(() => braces.compile(`${"(".repeat(33)}x${")".repeat(33)}`), /nesting/);
+  assert.throws(() => braces.compile(`${"{(".repeat(17)}x${")}".repeat(17)}`), /nesting/);
   // Quoted and escaped literals do not create AST nesting and retain upstream lexical rules.
-  assert.doesNotThrow(() => braces.compile('"' + "{".repeat(4999) + '"'));
+  assert.doesNotThrow(() => braces.compile(`"${"{".repeat(4999)}"`));
   assert.doesNotThrow(() => braces.compile("\\{".repeat(5000)));
 });
 
@@ -195,7 +195,7 @@ for (const chain of [
       }
       assert.equal(consumer("braces"), braces);
       assert.throws(
-        () => consumer("braces").expand("{".repeat(4500) + "a,b" + "}".repeat(4500)),
+        () => consumer("braces").expand(`${"{".repeat(4500)}a,b${"}".repeat(4500)}`),
         /Brace nesting exceeds 32 levels/,
       );
       assert.deepEqual(matching(["server/src/main.ts", "README.md"], "**/*.{ts,tsx}"), [
