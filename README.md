@@ -269,6 +269,7 @@ duplicating it, while a changed chapter imports as a new project.
 ## Validation
 
 ```bash
+pnpm run test:dependency-security
 pnpm --dir server gates
 pnpm --dir server type-check
 pnpm --dir server lint
@@ -288,6 +289,11 @@ pnpm --dir frontend build
 full automated contract ([workflow](.github/workflows/ci.yml)): it additionally runs
 the API-types drift check, React static diagnostics, Playwright workflows
 against the TS backend, and a container persistence check.
+The development-only OpenSpec and React Doctor glob chains use a controlled
+MIT-source braces replacement for [#672](https://github.com/Jackela/Novel-Engine/issues/672).
+Its [source manifest and bounds](vendor/braces/SOURCE.md), installed-chain regression
+tests, and lockfile make the local fix reviewable; it is not an upstream release.
+Production audit and the scheduled full-tree audit retain their existing policies.
 See [CI gates](docs/agents/ci-gates.md) for failure runbooks and the
 [quickstart](openwiki/quickstart.md#quick-validation) for browser prerequisites.
 

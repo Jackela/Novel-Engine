@@ -1,0 +1,8403 @@
+{
+  "authority": "Unmodified published braces 3.0.3, verified npm tarball integrity; outputs captured before the security replacement",
+  "cases": [
+    {
+      "method": "compile",
+      "input": "",
+      "options": {},
+      "result": ""
+    },
+    {
+      "method": "expand",
+      "input": "",
+      "options": {},
+      "result": []
+    },
+    {
+      "method": "stringify",
+      "input": "",
+      "options": {},
+      "result": ""
+    },
+    {
+      "method": "create",
+      "input": "",
+      "options": {},
+      "result": [
+        ""
+      ]
+    },
+    {
+      "method": "compile",
+      "input": "",
+      "options": {
+        "expand": true
+      },
+      "result": ""
+    },
+    {
+      "method": "expand",
+      "input": "",
+      "options": {
+        "expand": true
+      },
+      "result": []
+    },
+    {
+      "method": "stringify",
+      "input": "",
+      "options": {
+        "expand": true
+      },
+      "result": ""
+    },
+    {
+      "method": "create",
+      "input": "",
+      "options": {
+        "expand": true
+      },
+      "result": [
+        ""
+      ]
+    },
+    {
+      "method": "compile",
+      "input": "",
+      "options": {
+        "expand": true,
+        "nodupes": true,
+        "noempty": true
+      },
+      "result": ""
+    },
+    {
+      "method": "expand",
+      "input": "",
+      "options": {
+        "expand": true,
+        "nodupes": true,
+        "noempty": true
+      },
+      "result": []
+    },
+    {
+      "method": "stringify",
+      "input": "",
+      "options": {
+        "expand": true,
+        "nodupes": true,
+        "noempty": true
+      },
+      "result": ""
+    },
+    {
+      "method": "create",
+      "input": "",
+      "options": {
+        "expand": true,
+        "nodupes": true,
+        "noempty": true
+      },
+      "result": [
+        ""
+      ]
+    },
+    {
+      "method": "compile",
+      "input": "",
+      "options": {
+        "keepEscaping": true
+      },
+      "result": ""
+    },
+    {
+      "method": "expand",
+      "input": "",
+      "options": {
+        "keepEscaping": true
+      },
+      "result": []
+    },
+    {
+      "method": "stringify",
+      "input": "",
+      "options": {
+        "keepEscaping": true
+      },
+      "result": ""
+    },
+    {
+      "method": "create",
+      "input": "",
+      "options": {
+        "keepEscaping": true
+      },
+      "result": [
+        ""
+      ]
+    },
+    {
+      "method": "compile",
+      "input": "",
+      "options": {
+        "keepQuotes": true
+      },
+      "result": ""
+    },
+    {
+      "method": "expand",
+      "input": "",
+      "options": {
+        "keepQuotes": true
+      },
+      "result": []
+    },
+    {
+      "method": "stringify",
+      "input": "",
+      "options": {
+        "keepQuotes": true
+      },
+      "result": ""
+    },
+    {
+      "method": "create",
+      "input": "",
+      "options": {
+        "keepQuotes": true
+      },
+      "result": [
+        ""
+      ]
+    },
+    {
+      "method": "compile",
+      "input": "",
+      "options": {
+        "escapeInvalid": true
+      },
+      "result": ""
+    },
+    {
+      "method": "expand",
+      "input": "",
+      "options": {
+        "escapeInvalid": true
+      },
+      "result": []
+    },
+    {
+      "method": "stringify",
+      "input": "",
+      "options": {
+        "escapeInvalid": true
+      },
+      "result": ""
+    },
+    {
+      "method": "create",
+      "input": "",
+      "options": {
+        "escapeInvalid": true
+      },
+      "result": [
+        ""
+      ]
+    },
+    {
+      "method": "compile",
+      "input": "",
+      "options": {
+        "step": 2
+      },
+      "result": ""
+    },
+    {
+      "method": "expand",
+      "input": "",
+      "options": {
+        "step": 2
+      },
+      "result": []
+    },
+    {
+      "method": "stringify",
+      "input": "",
+      "options": {
+        "step": 2
+      },
+      "result": ""
+    },
+    {
+      "method": "create",
+      "input": "",
+      "options": {
+        "step": 2
+      },
+      "result": [
+        ""
+      ]
+    },
+    {
+      "method": "compile",
+      "input": "a",
+      "options": {},
+      "result": "a"
+    },
+    {
+      "method": "expand",
+      "input": "a",
+      "options": {},
+      "result": [
+        "a"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "a",
+      "options": {},
+      "result": "a"
+    },
+    {
+      "method": "create",
+      "input": "a",
+      "options": {},
+      "result": [
+        "a"
+      ]
+    },
+    {
+      "method": "compile",
+      "input": "a",
+      "options": {
+        "expand": true
+      },
+      "result": "a"
+    },
+    {
+      "method": "expand",
+      "input": "a",
+      "options": {
+        "expand": true
+      },
+      "result": [
+        "a"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "a",
+      "options": {
+        "expand": true
+      },
+      "result": "a"
+    },
+    {
+      "method": "create",
+      "input": "a",
+      "options": {
+        "expand": true
+      },
+      "result": [
+        "a"
+      ]
+    },
+    {
+      "method": "compile",
+      "input": "a",
+      "options": {
+        "expand": true,
+        "nodupes": true,
+        "noempty": true
+      },
+      "result": "a"
+    },
+    {
+      "method": "expand",
+      "input": "a",
+      "options": {
+        "expand": true,
+        "nodupes": true,
+        "noempty": true
+      },
+      "result": [
+        "a"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "a",
+      "options": {
+        "expand": true,
+        "nodupes": true,
+        "noempty": true
+      },
+      "result": "a"
+    },
+    {
+      "method": "create",
+      "input": "a",
+      "options": {
+        "expand": true,
+        "nodupes": true,
+        "noempty": true
+      },
+      "result": [
+        "a"
+      ]
+    },
+    {
+      "method": "compile",
+      "input": "a",
+      "options": {
+        "keepEscaping": true
+      },
+      "result": "a"
+    },
+    {
+      "method": "expand",
+      "input": "a",
+      "options": {
+        "keepEscaping": true
+      },
+      "result": [
+        "a"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "a",
+      "options": {
+        "keepEscaping": true
+      },
+      "result": "a"
+    },
+    {
+      "method": "create",
+      "input": "a",
+      "options": {
+        "keepEscaping": true
+      },
+      "result": [
+        "a"
+      ]
+    },
+    {
+      "method": "compile",
+      "input": "a",
+      "options": {
+        "keepQuotes": true
+      },
+      "result": "a"
+    },
+    {
+      "method": "expand",
+      "input": "a",
+      "options": {
+        "keepQuotes": true
+      },
+      "result": [
+        "a"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "a",
+      "options": {
+        "keepQuotes": true
+      },
+      "result": "a"
+    },
+    {
+      "method": "create",
+      "input": "a",
+      "options": {
+        "keepQuotes": true
+      },
+      "result": [
+        "a"
+      ]
+    },
+    {
+      "method": "compile",
+      "input": "a",
+      "options": {
+        "escapeInvalid": true
+      },
+      "result": "a"
+    },
+    {
+      "method": "expand",
+      "input": "a",
+      "options": {
+        "escapeInvalid": true
+      },
+      "result": [
+        "a"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "a",
+      "options": {
+        "escapeInvalid": true
+      },
+      "result": "a"
+    },
+    {
+      "method": "create",
+      "input": "a",
+      "options": {
+        "escapeInvalid": true
+      },
+      "result": [
+        "a"
+      ]
+    },
+    {
+      "method": "compile",
+      "input": "a",
+      "options": {
+        "step": 2
+      },
+      "result": "a"
+    },
+    {
+      "method": "expand",
+      "input": "a",
+      "options": {
+        "step": 2
+      },
+      "result": [
+        "a"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "a",
+      "options": {
+        "step": 2
+      },
+      "result": "a"
+    },
+    {
+      "method": "create",
+      "input": "a",
+      "options": {
+        "step": 2
+      },
+      "result": [
+        "a"
+      ]
+    },
+    {
+      "method": "compile",
+      "input": "abc",
+      "options": {},
+      "result": "abc"
+    },
+    {
+      "method": "expand",
+      "input": "abc",
+      "options": {},
+      "result": [
+        "abc"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "abc",
+      "options": {},
+      "result": "abc"
+    },
+    {
+      "method": "create",
+      "input": "abc",
+      "options": {},
+      "result": "abc"
+    },
+    {
+      "method": "compile",
+      "input": "abc",
+      "options": {
+        "expand": true
+      },
+      "result": "abc"
+    },
+    {
+      "method": "expand",
+      "input": "abc",
+      "options": {
+        "expand": true
+      },
+      "result": [
+        "abc"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "abc",
+      "options": {
+        "expand": true
+      },
+      "result": "abc"
+    },
+    {
+      "method": "create",
+      "input": "abc",
+      "options": {
+        "expand": true
+      },
+      "result": [
+        "abc"
+      ]
+    },
+    {
+      "method": "compile",
+      "input": "abc",
+      "options": {
+        "expand": true,
+        "nodupes": true,
+        "noempty": true
+      },
+      "result": "abc"
+    },
+    {
+      "method": "expand",
+      "input": "abc",
+      "options": {
+        "expand": true,
+        "nodupes": true,
+        "noempty": true
+      },
+      "result": [
+        "abc"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "abc",
+      "options": {
+        "expand": true,
+        "nodupes": true,
+        "noempty": true
+      },
+      "result": "abc"
+    },
+    {
+      "method": "create",
+      "input": "abc",
+      "options": {
+        "expand": true,
+        "nodupes": true,
+        "noempty": true
+      },
+      "result": [
+        "abc"
+      ]
+    },
+    {
+      "method": "compile",
+      "input": "abc",
+      "options": {
+        "keepEscaping": true
+      },
+      "result": "abc"
+    },
+    {
+      "method": "expand",
+      "input": "abc",
+      "options": {
+        "keepEscaping": true
+      },
+      "result": [
+        "abc"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "abc",
+      "options": {
+        "keepEscaping": true
+      },
+      "result": "abc"
+    },
+    {
+      "method": "create",
+      "input": "abc",
+      "options": {
+        "keepEscaping": true
+      },
+      "result": "abc"
+    },
+    {
+      "method": "compile",
+      "input": "abc",
+      "options": {
+        "keepQuotes": true
+      },
+      "result": "abc"
+    },
+    {
+      "method": "expand",
+      "input": "abc",
+      "options": {
+        "keepQuotes": true
+      },
+      "result": [
+        "abc"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "abc",
+      "options": {
+        "keepQuotes": true
+      },
+      "result": "abc"
+    },
+    {
+      "method": "create",
+      "input": "abc",
+      "options": {
+        "keepQuotes": true
+      },
+      "result": "abc"
+    },
+    {
+      "method": "compile",
+      "input": "abc",
+      "options": {
+        "escapeInvalid": true
+      },
+      "result": "abc"
+    },
+    {
+      "method": "expand",
+      "input": "abc",
+      "options": {
+        "escapeInvalid": true
+      },
+      "result": [
+        "abc"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "abc",
+      "options": {
+        "escapeInvalid": true
+      },
+      "result": "abc"
+    },
+    {
+      "method": "create",
+      "input": "abc",
+      "options": {
+        "escapeInvalid": true
+      },
+      "result": "abc"
+    },
+    {
+      "method": "compile",
+      "input": "abc",
+      "options": {
+        "step": 2
+      },
+      "result": "abc"
+    },
+    {
+      "method": "expand",
+      "input": "abc",
+      "options": {
+        "step": 2
+      },
+      "result": [
+        "abc"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "abc",
+      "options": {
+        "step": 2
+      },
+      "result": "abc"
+    },
+    {
+      "method": "create",
+      "input": "abc",
+      "options": {
+        "step": 2
+      },
+      "result": "abc"
+    },
+    {
+      "method": "compile",
+      "input": "{a,b}",
+      "options": {},
+      "result": "(a|b)"
+    },
+    {
+      "method": "expand",
+      "input": "{a,b}",
+      "options": {},
+      "result": [
+        "a",
+        "b"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "{a,b}",
+      "options": {},
+      "result": "{a,b}"
+    },
+    {
+      "method": "create",
+      "input": "{a,b}",
+      "options": {},
+      "result": "(a|b)"
+    },
+    {
+      "method": "compile",
+      "input": "{a,b}",
+      "options": {
+        "expand": true
+      },
+      "result": "(a|b)"
+    },
+    {
+      "method": "expand",
+      "input": "{a,b}",
+      "options": {
+        "expand": true
+      },
+      "result": [
+        "a",
+        "b"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "{a,b}",
+      "options": {
+        "expand": true
+      },
+      "result": "{a,b}"
+    },
+    {
+      "method": "create",
+      "input": "{a,b}",
+      "options": {
+        "expand": true
+      },
+      "result": [
+        "a",
+        "b"
+      ]
+    },
+    {
+      "method": "compile",
+      "input": "{a,b}",
+      "options": {
+        "expand": true,
+        "nodupes": true,
+        "noempty": true
+      },
+      "result": "(a|b)"
+    },
+    {
+      "method": "expand",
+      "input": "{a,b}",
+      "options": {
+        "expand": true,
+        "nodupes": true,
+        "noempty": true
+      },
+      "result": [
+        "a",
+        "b"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "{a,b}",
+      "options": {
+        "expand": true,
+        "nodupes": true,
+        "noempty": true
+      },
+      "result": "{a,b}"
+    },
+    {
+      "method": "create",
+      "input": "{a,b}",
+      "options": {
+        "expand": true,
+        "nodupes": true,
+        "noempty": true
+      },
+      "result": [
+        "a",
+        "b"
+      ]
+    },
+    {
+      "method": "compile",
+      "input": "{a,b}",
+      "options": {
+        "keepEscaping": true
+      },
+      "result": "(a|b)"
+    },
+    {
+      "method": "expand",
+      "input": "{a,b}",
+      "options": {
+        "keepEscaping": true
+      },
+      "result": [
+        "a",
+        "b"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "{a,b}",
+      "options": {
+        "keepEscaping": true
+      },
+      "result": "{a,b}"
+    },
+    {
+      "method": "create",
+      "input": "{a,b}",
+      "options": {
+        "keepEscaping": true
+      },
+      "result": "(a|b)"
+    },
+    {
+      "method": "compile",
+      "input": "{a,b}",
+      "options": {
+        "keepQuotes": true
+      },
+      "result": "(a|b)"
+    },
+    {
+      "method": "expand",
+      "input": "{a,b}",
+      "options": {
+        "keepQuotes": true
+      },
+      "result": [
+        "a",
+        "b"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "{a,b}",
+      "options": {
+        "keepQuotes": true
+      },
+      "result": "{a,b}"
+    },
+    {
+      "method": "create",
+      "input": "{a,b}",
+      "options": {
+        "keepQuotes": true
+      },
+      "result": "(a|b)"
+    },
+    {
+      "method": "compile",
+      "input": "{a,b}",
+      "options": {
+        "escapeInvalid": true
+      },
+      "result": "(a|b)"
+    },
+    {
+      "method": "expand",
+      "input": "{a,b}",
+      "options": {
+        "escapeInvalid": true
+      },
+      "result": [
+        "a",
+        "b"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "{a,b}",
+      "options": {
+        "escapeInvalid": true
+      },
+      "result": "{a,b}"
+    },
+    {
+      "method": "create",
+      "input": "{a,b}",
+      "options": {
+        "escapeInvalid": true
+      },
+      "result": "(a|b)"
+    },
+    {
+      "method": "compile",
+      "input": "{a,b}",
+      "options": {
+        "step": 2
+      },
+      "result": "(a|b)"
+    },
+    {
+      "method": "expand",
+      "input": "{a,b}",
+      "options": {
+        "step": 2
+      },
+      "result": [
+        "a",
+        "b"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "{a,b}",
+      "options": {
+        "step": 2
+      },
+      "result": "{a,b}"
+    },
+    {
+      "method": "create",
+      "input": "{a,b}",
+      "options": {
+        "step": 2
+      },
+      "result": "(a|b)"
+    },
+    {
+      "method": "compile",
+      "input": "{a,{b,c}}",
+      "options": {},
+      "result": "(a|(b|c))"
+    },
+    {
+      "method": "expand",
+      "input": "{a,{b,c}}",
+      "options": {},
+      "result": [
+        "a",
+        "b",
+        "c"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "{a,{b,c}}",
+      "options": {},
+      "result": "{a,{b,c}}"
+    },
+    {
+      "method": "create",
+      "input": "{a,{b,c}}",
+      "options": {},
+      "result": "(a|(b|c))"
+    },
+    {
+      "method": "compile",
+      "input": "{a,{b,c}}",
+      "options": {
+        "expand": true
+      },
+      "result": "(a|(b|c))"
+    },
+    {
+      "method": "expand",
+      "input": "{a,{b,c}}",
+      "options": {
+        "expand": true
+      },
+      "result": [
+        "a",
+        "b",
+        "c"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "{a,{b,c}}",
+      "options": {
+        "expand": true
+      },
+      "result": "{a,{b,c}}"
+    },
+    {
+      "method": "create",
+      "input": "{a,{b,c}}",
+      "options": {
+        "expand": true
+      },
+      "result": [
+        "a",
+        "b",
+        "c"
+      ]
+    },
+    {
+      "method": "compile",
+      "input": "{a,{b,c}}",
+      "options": {
+        "expand": true,
+        "nodupes": true,
+        "noempty": true
+      },
+      "result": "(a|(b|c))"
+    },
+    {
+      "method": "expand",
+      "input": "{a,{b,c}}",
+      "options": {
+        "expand": true,
+        "nodupes": true,
+        "noempty": true
+      },
+      "result": [
+        "a",
+        "b",
+        "c"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "{a,{b,c}}",
+      "options": {
+        "expand": true,
+        "nodupes": true,
+        "noempty": true
+      },
+      "result": "{a,{b,c}}"
+    },
+    {
+      "method": "create",
+      "input": "{a,{b,c}}",
+      "options": {
+        "expand": true,
+        "nodupes": true,
+        "noempty": true
+      },
+      "result": [
+        "a",
+        "b",
+        "c"
+      ]
+    },
+    {
+      "method": "compile",
+      "input": "{a,{b,c}}",
+      "options": {
+        "keepEscaping": true
+      },
+      "result": "(a|(b|c))"
+    },
+    {
+      "method": "expand",
+      "input": "{a,{b,c}}",
+      "options": {
+        "keepEscaping": true
+      },
+      "result": [
+        "a",
+        "b",
+        "c"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "{a,{b,c}}",
+      "options": {
+        "keepEscaping": true
+      },
+      "result": "{a,{b,c}}"
+    },
+    {
+      "method": "create",
+      "input": "{a,{b,c}}",
+      "options": {
+        "keepEscaping": true
+      },
+      "result": "(a|(b|c))"
+    },
+    {
+      "method": "compile",
+      "input": "{a,{b,c}}",
+      "options": {
+        "keepQuotes": true
+      },
+      "result": "(a|(b|c))"
+    },
+    {
+      "method": "expand",
+      "input": "{a,{b,c}}",
+      "options": {
+        "keepQuotes": true
+      },
+      "result": [
+        "a",
+        "b",
+        "c"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "{a,{b,c}}",
+      "options": {
+        "keepQuotes": true
+      },
+      "result": "{a,{b,c}}"
+    },
+    {
+      "method": "create",
+      "input": "{a,{b,c}}",
+      "options": {
+        "keepQuotes": true
+      },
+      "result": "(a|(b|c))"
+    },
+    {
+      "method": "compile",
+      "input": "{a,{b,c}}",
+      "options": {
+        "escapeInvalid": true
+      },
+      "result": "(a|(b|c))"
+    },
+    {
+      "method": "expand",
+      "input": "{a,{b,c}}",
+      "options": {
+        "escapeInvalid": true
+      },
+      "result": [
+        "a",
+        "b",
+        "c"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "{a,{b,c}}",
+      "options": {
+        "escapeInvalid": true
+      },
+      "result": "{a,{b,c}}"
+    },
+    {
+      "method": "create",
+      "input": "{a,{b,c}}",
+      "options": {
+        "escapeInvalid": true
+      },
+      "result": "(a|(b|c))"
+    },
+    {
+      "method": "compile",
+      "input": "{a,{b,c}}",
+      "options": {
+        "step": 2
+      },
+      "result": "(a|(b|c))"
+    },
+    {
+      "method": "expand",
+      "input": "{a,{b,c}}",
+      "options": {
+        "step": 2
+      },
+      "result": [
+        "a",
+        "b",
+        "c"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "{a,{b,c}}",
+      "options": {
+        "step": 2
+      },
+      "result": "{a,{b,c}}"
+    },
+    {
+      "method": "create",
+      "input": "{a,{b,c}}",
+      "options": {
+        "step": 2
+      },
+      "result": "(a|(b|c))"
+    },
+    {
+      "method": "compile",
+      "input": "foo/{a,b}/bar",
+      "options": {},
+      "result": "foo/(a|b)/bar"
+    },
+    {
+      "method": "expand",
+      "input": "foo/{a,b}/bar",
+      "options": {},
+      "result": [
+        "foo/a/bar",
+        "foo/b/bar"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "foo/{a,b}/bar",
+      "options": {},
+      "result": "foo/{a,b}/bar"
+    },
+    {
+      "method": "create",
+      "input": "foo/{a,b}/bar",
+      "options": {},
+      "result": "foo/(a|b)/bar"
+    },
+    {
+      "method": "compile",
+      "input": "foo/{a,b}/bar",
+      "options": {
+        "expand": true
+      },
+      "result": "foo/(a|b)/bar"
+    },
+    {
+      "method": "expand",
+      "input": "foo/{a,b}/bar",
+      "options": {
+        "expand": true
+      },
+      "result": [
+        "foo/a/bar",
+        "foo/b/bar"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "foo/{a,b}/bar",
+      "options": {
+        "expand": true
+      },
+      "result": "foo/{a,b}/bar"
+    },
+    {
+      "method": "create",
+      "input": "foo/{a,b}/bar",
+      "options": {
+        "expand": true
+      },
+      "result": [
+        "foo/a/bar",
+        "foo/b/bar"
+      ]
+    },
+    {
+      "method": "compile",
+      "input": "foo/{a,b}/bar",
+      "options": {
+        "expand": true,
+        "nodupes": true,
+        "noempty": true
+      },
+      "result": "foo/(a|b)/bar"
+    },
+    {
+      "method": "expand",
+      "input": "foo/{a,b}/bar",
+      "options": {
+        "expand": true,
+        "nodupes": true,
+        "noempty": true
+      },
+      "result": [
+        "foo/a/bar",
+        "foo/b/bar"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "foo/{a,b}/bar",
+      "options": {
+        "expand": true,
+        "nodupes": true,
+        "noempty": true
+      },
+      "result": "foo/{a,b}/bar"
+    },
+    {
+      "method": "create",
+      "input": "foo/{a,b}/bar",
+      "options": {
+        "expand": true,
+        "nodupes": true,
+        "noempty": true
+      },
+      "result": [
+        "foo/a/bar",
+        "foo/b/bar"
+      ]
+    },
+    {
+      "method": "compile",
+      "input": "foo/{a,b}/bar",
+      "options": {
+        "keepEscaping": true
+      },
+      "result": "foo/(a|b)/bar"
+    },
+    {
+      "method": "expand",
+      "input": "foo/{a,b}/bar",
+      "options": {
+        "keepEscaping": true
+      },
+      "result": [
+        "foo/a/bar",
+        "foo/b/bar"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "foo/{a,b}/bar",
+      "options": {
+        "keepEscaping": true
+      },
+      "result": "foo/{a,b}/bar"
+    },
+    {
+      "method": "create",
+      "input": "foo/{a,b}/bar",
+      "options": {
+        "keepEscaping": true
+      },
+      "result": "foo/(a|b)/bar"
+    },
+    {
+      "method": "compile",
+      "input": "foo/{a,b}/bar",
+      "options": {
+        "keepQuotes": true
+      },
+      "result": "foo/(a|b)/bar"
+    },
+    {
+      "method": "expand",
+      "input": "foo/{a,b}/bar",
+      "options": {
+        "keepQuotes": true
+      },
+      "result": [
+        "foo/a/bar",
+        "foo/b/bar"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "foo/{a,b}/bar",
+      "options": {
+        "keepQuotes": true
+      },
+      "result": "foo/{a,b}/bar"
+    },
+    {
+      "method": "create",
+      "input": "foo/{a,b}/bar",
+      "options": {
+        "keepQuotes": true
+      },
+      "result": "foo/(a|b)/bar"
+    },
+    {
+      "method": "compile",
+      "input": "foo/{a,b}/bar",
+      "options": {
+        "escapeInvalid": true
+      },
+      "result": "foo/(a|b)/bar"
+    },
+    {
+      "method": "expand",
+      "input": "foo/{a,b}/bar",
+      "options": {
+        "escapeInvalid": true
+      },
+      "result": [
+        "foo/a/bar",
+        "foo/b/bar"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "foo/{a,b}/bar",
+      "options": {
+        "escapeInvalid": true
+      },
+      "result": "foo/{a,b}/bar"
+    },
+    {
+      "method": "create",
+      "input": "foo/{a,b}/bar",
+      "options": {
+        "escapeInvalid": true
+      },
+      "result": "foo/(a|b)/bar"
+    },
+    {
+      "method": "compile",
+      "input": "foo/{a,b}/bar",
+      "options": {
+        "step": 2
+      },
+      "result": "foo/(a|b)/bar"
+    },
+    {
+      "method": "expand",
+      "input": "foo/{a,b}/bar",
+      "options": {
+        "step": 2
+      },
+      "result": [
+        "foo/a/bar",
+        "foo/b/bar"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "foo/{a,b}/bar",
+      "options": {
+        "step": 2
+      },
+      "result": "foo/{a,b}/bar"
+    },
+    {
+      "method": "create",
+      "input": "foo/{a,b}/bar",
+      "options": {
+        "step": 2
+      },
+      "result": "foo/(a|b)/bar"
+    },
+    {
+      "method": "compile",
+      "input": "{1..10}",
+      "options": {},
+      "result": "([1-9]|10)"
+    },
+    {
+      "method": "expand",
+      "input": "{1..10}",
+      "options": {},
+      "result": [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "10"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "{1..10}",
+      "options": {},
+      "result": "{1..10}"
+    },
+    {
+      "method": "create",
+      "input": "{1..10}",
+      "options": {},
+      "result": "([1-9]|10)"
+    },
+    {
+      "method": "compile",
+      "input": "{1..10}",
+      "options": {
+        "expand": true
+      },
+      "result": "([1-9]|10)"
+    },
+    {
+      "method": "expand",
+      "input": "{1..10}",
+      "options": {
+        "expand": true
+      },
+      "result": [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "10"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "{1..10}",
+      "options": {
+        "expand": true
+      },
+      "result": "{1..10}"
+    },
+    {
+      "method": "create",
+      "input": "{1..10}",
+      "options": {
+        "expand": true
+      },
+      "result": [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "10"
+      ]
+    },
+    {
+      "method": "compile",
+      "input": "{1..10}",
+      "options": {
+        "expand": true,
+        "nodupes": true,
+        "noempty": true
+      },
+      "result": "([1-9]|10)"
+    },
+    {
+      "method": "expand",
+      "input": "{1..10}",
+      "options": {
+        "expand": true,
+        "nodupes": true,
+        "noempty": true
+      },
+      "result": [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "10"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "{1..10}",
+      "options": {
+        "expand": true,
+        "nodupes": true,
+        "noempty": true
+      },
+      "result": "{1..10}"
+    },
+    {
+      "method": "create",
+      "input": "{1..10}",
+      "options": {
+        "expand": true,
+        "nodupes": true,
+        "noempty": true
+      },
+      "result": [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "10"
+      ]
+    },
+    {
+      "method": "compile",
+      "input": "{1..10}",
+      "options": {
+        "keepEscaping": true
+      },
+      "result": "([1-9]|10)"
+    },
+    {
+      "method": "expand",
+      "input": "{1..10}",
+      "options": {
+        "keepEscaping": true
+      },
+      "result": [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "10"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "{1..10}",
+      "options": {
+        "keepEscaping": true
+      },
+      "result": "{1..10}"
+    },
+    {
+      "method": "create",
+      "input": "{1..10}",
+      "options": {
+        "keepEscaping": true
+      },
+      "result": "([1-9]|10)"
+    },
+    {
+      "method": "compile",
+      "input": "{1..10}",
+      "options": {
+        "keepQuotes": true
+      },
+      "result": "([1-9]|10)"
+    },
+    {
+      "method": "expand",
+      "input": "{1..10}",
+      "options": {
+        "keepQuotes": true
+      },
+      "result": [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "10"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "{1..10}",
+      "options": {
+        "keepQuotes": true
+      },
+      "result": "{1..10}"
+    },
+    {
+      "method": "create",
+      "input": "{1..10}",
+      "options": {
+        "keepQuotes": true
+      },
+      "result": "([1-9]|10)"
+    },
+    {
+      "method": "compile",
+      "input": "{1..10}",
+      "options": {
+        "escapeInvalid": true
+      },
+      "result": "([1-9]|10)"
+    },
+    {
+      "method": "expand",
+      "input": "{1..10}",
+      "options": {
+        "escapeInvalid": true
+      },
+      "result": [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "10"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "{1..10}",
+      "options": {
+        "escapeInvalid": true
+      },
+      "result": "{1..10}"
+    },
+    {
+      "method": "create",
+      "input": "{1..10}",
+      "options": {
+        "escapeInvalid": true
+      },
+      "result": "([1-9]|10)"
+    },
+    {
+      "method": "compile",
+      "input": "{1..10}",
+      "options": {
+        "step": 2
+      },
+      "result": "(1|3|5|7|9)"
+    },
+    {
+      "method": "expand",
+      "input": "{1..10}",
+      "options": {
+        "step": 2
+      },
+      "result": [
+        "1",
+        "3",
+        "5",
+        "7",
+        "9"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "{1..10}",
+      "options": {
+        "step": 2
+      },
+      "result": "{1..10}"
+    },
+    {
+      "method": "create",
+      "input": "{1..10}",
+      "options": {
+        "step": 2
+      },
+      "result": "(1|3|5|7|9)"
+    },
+    {
+      "method": "compile",
+      "input": "{01..05}",
+      "options": {},
+      "result": "(0[1-5])"
+    },
+    {
+      "method": "expand",
+      "input": "{01..05}",
+      "options": {},
+      "result": [
+        "01",
+        "02",
+        "03",
+        "04",
+        "05"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "{01..05}",
+      "options": {},
+      "result": "{01..05}"
+    },
+    {
+      "method": "create",
+      "input": "{01..05}",
+      "options": {},
+      "result": "(0[1-5])"
+    },
+    {
+      "method": "compile",
+      "input": "{01..05}",
+      "options": {
+        "expand": true
+      },
+      "result": "(0[1-5])"
+    },
+    {
+      "method": "expand",
+      "input": "{01..05}",
+      "options": {
+        "expand": true
+      },
+      "result": [
+        "01",
+        "02",
+        "03",
+        "04",
+        "05"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "{01..05}",
+      "options": {
+        "expand": true
+      },
+      "result": "{01..05}"
+    },
+    {
+      "method": "create",
+      "input": "{01..05}",
+      "options": {
+        "expand": true
+      },
+      "result": [
+        "01",
+        "02",
+        "03",
+        "04",
+        "05"
+      ]
+    },
+    {
+      "method": "compile",
+      "input": "{01..05}",
+      "options": {
+        "expand": true,
+        "nodupes": true,
+        "noempty": true
+      },
+      "result": "(0[1-5])"
+    },
+    {
+      "method": "expand",
+      "input": "{01..05}",
+      "options": {
+        "expand": true,
+        "nodupes": true,
+        "noempty": true
+      },
+      "result": [
+        "01",
+        "02",
+        "03",
+        "04",
+        "05"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "{01..05}",
+      "options": {
+        "expand": true,
+        "nodupes": true,
+        "noempty": true
+      },
+      "result": "{01..05}"
+    },
+    {
+      "method": "create",
+      "input": "{01..05}",
+      "options": {
+        "expand": true,
+        "nodupes": true,
+        "noempty": true
+      },
+      "result": [
+        "01",
+        "02",
+        "03",
+        "04",
+        "05"
+      ]
+    },
+    {
+      "method": "compile",
+      "input": "{01..05}",
+      "options": {
+        "keepEscaping": true
+      },
+      "result": "(0[1-5])"
+    },
+    {
+      "method": "expand",
+      "input": "{01..05}",
+      "options": {
+        "keepEscaping": true
+      },
+      "result": [
+        "01",
+        "02",
+        "03",
+        "04",
+        "05"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "{01..05}",
+      "options": {
+        "keepEscaping": true
+      },
+      "result": "{01..05}"
+    },
+    {
+      "method": "create",
+      "input": "{01..05}",
+      "options": {
+        "keepEscaping": true
+      },
+      "result": "(0[1-5])"
+    },
+    {
+      "method": "compile",
+      "input": "{01..05}",
+      "options": {
+        "keepQuotes": true
+      },
+      "result": "(0[1-5])"
+    },
+    {
+      "method": "expand",
+      "input": "{01..05}",
+      "options": {
+        "keepQuotes": true
+      },
+      "result": [
+        "01",
+        "02",
+        "03",
+        "04",
+        "05"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "{01..05}",
+      "options": {
+        "keepQuotes": true
+      },
+      "result": "{01..05}"
+    },
+    {
+      "method": "create",
+      "input": "{01..05}",
+      "options": {
+        "keepQuotes": true
+      },
+      "result": "(0[1-5])"
+    },
+    {
+      "method": "compile",
+      "input": "{01..05}",
+      "options": {
+        "escapeInvalid": true
+      },
+      "result": "(0[1-5])"
+    },
+    {
+      "method": "expand",
+      "input": "{01..05}",
+      "options": {
+        "escapeInvalid": true
+      },
+      "result": [
+        "01",
+        "02",
+        "03",
+        "04",
+        "05"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "{01..05}",
+      "options": {
+        "escapeInvalid": true
+      },
+      "result": "{01..05}"
+    },
+    {
+      "method": "create",
+      "input": "{01..05}",
+      "options": {
+        "escapeInvalid": true
+      },
+      "result": "(0[1-5])"
+    },
+    {
+      "method": "compile",
+      "input": "{01..05}",
+      "options": {
+        "step": 2
+      },
+      "result": "(01|03|05)"
+    },
+    {
+      "method": "expand",
+      "input": "{01..05}",
+      "options": {
+        "step": 2
+      },
+      "result": [
+        "01",
+        "03",
+        "05"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "{01..05}",
+      "options": {
+        "step": 2
+      },
+      "result": "{01..05}"
+    },
+    {
+      "method": "create",
+      "input": "{01..05}",
+      "options": {
+        "step": 2
+      },
+      "result": "(01|03|05)"
+    },
+    {
+      "method": "compile",
+      "input": "{10..1}",
+      "options": {},
+      "result": "([1-9]|10)"
+    },
+    {
+      "method": "expand",
+      "input": "{10..1}",
+      "options": {},
+      "result": [
+        "10",
+        "9",
+        "8",
+        "7",
+        "6",
+        "5",
+        "4",
+        "3",
+        "2",
+        "1"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "{10..1}",
+      "options": {},
+      "result": "{10..1}"
+    },
+    {
+      "method": "create",
+      "input": "{10..1}",
+      "options": {},
+      "result": "([1-9]|10)"
+    },
+    {
+      "method": "compile",
+      "input": "{10..1}",
+      "options": {
+        "expand": true
+      },
+      "result": "([1-9]|10)"
+    },
+    {
+      "method": "expand",
+      "input": "{10..1}",
+      "options": {
+        "expand": true
+      },
+      "result": [
+        "10",
+        "9",
+        "8",
+        "7",
+        "6",
+        "5",
+        "4",
+        "3",
+        "2",
+        "1"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "{10..1}",
+      "options": {
+        "expand": true
+      },
+      "result": "{10..1}"
+    },
+    {
+      "method": "create",
+      "input": "{10..1}",
+      "options": {
+        "expand": true
+      },
+      "result": [
+        "10",
+        "9",
+        "8",
+        "7",
+        "6",
+        "5",
+        "4",
+        "3",
+        "2",
+        "1"
+      ]
+    },
+    {
+      "method": "compile",
+      "input": "{10..1}",
+      "options": {
+        "expand": true,
+        "nodupes": true,
+        "noempty": true
+      },
+      "result": "([1-9]|10)"
+    },
+    {
+      "method": "expand",
+      "input": "{10..1}",
+      "options": {
+        "expand": true,
+        "nodupes": true,
+        "noempty": true
+      },
+      "result": [
+        "10",
+        "9",
+        "8",
+        "7",
+        "6",
+        "5",
+        "4",
+        "3",
+        "2",
+        "1"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "{10..1}",
+      "options": {
+        "expand": true,
+        "nodupes": true,
+        "noempty": true
+      },
+      "result": "{10..1}"
+    },
+    {
+      "method": "create",
+      "input": "{10..1}",
+      "options": {
+        "expand": true,
+        "nodupes": true,
+        "noempty": true
+      },
+      "result": [
+        "10",
+        "9",
+        "8",
+        "7",
+        "6",
+        "5",
+        "4",
+        "3",
+        "2",
+        "1"
+      ]
+    },
+    {
+      "method": "compile",
+      "input": "{10..1}",
+      "options": {
+        "keepEscaping": true
+      },
+      "result": "([1-9]|10)"
+    },
+    {
+      "method": "expand",
+      "input": "{10..1}",
+      "options": {
+        "keepEscaping": true
+      },
+      "result": [
+        "10",
+        "9",
+        "8",
+        "7",
+        "6",
+        "5",
+        "4",
+        "3",
+        "2",
+        "1"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "{10..1}",
+      "options": {
+        "keepEscaping": true
+      },
+      "result": "{10..1}"
+    },
+    {
+      "method": "create",
+      "input": "{10..1}",
+      "options": {
+        "keepEscaping": true
+      },
+      "result": "([1-9]|10)"
+    },
+    {
+      "method": "compile",
+      "input": "{10..1}",
+      "options": {
+        "keepQuotes": true
+      },
+      "result": "([1-9]|10)"
+    },
+    {
+      "method": "expand",
+      "input": "{10..1}",
+      "options": {
+        "keepQuotes": true
+      },
+      "result": [
+        "10",
+        "9",
+        "8",
+        "7",
+        "6",
+        "5",
+        "4",
+        "3",
+        "2",
+        "1"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "{10..1}",
+      "options": {
+        "keepQuotes": true
+      },
+      "result": "{10..1}"
+    },
+    {
+      "method": "create",
+      "input": "{10..1}",
+      "options": {
+        "keepQuotes": true
+      },
+      "result": "([1-9]|10)"
+    },
+    {
+      "method": "compile",
+      "input": "{10..1}",
+      "options": {
+        "escapeInvalid": true
+      },
+      "result": "([1-9]|10)"
+    },
+    {
+      "method": "expand",
+      "input": "{10..1}",
+      "options": {
+        "escapeInvalid": true
+      },
+      "result": [
+        "10",
+        "9",
+        "8",
+        "7",
+        "6",
+        "5",
+        "4",
+        "3",
+        "2",
+        "1"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "{10..1}",
+      "options": {
+        "escapeInvalid": true
+      },
+      "result": "{10..1}"
+    },
+    {
+      "method": "create",
+      "input": "{10..1}",
+      "options": {
+        "escapeInvalid": true
+      },
+      "result": "([1-9]|10)"
+    },
+    {
+      "method": "compile",
+      "input": "{10..1}",
+      "options": {
+        "step": 2
+      },
+      "result": "(2|4|6|8|10)"
+    },
+    {
+      "method": "expand",
+      "input": "{10..1}",
+      "options": {
+        "step": 2
+      },
+      "result": [
+        "10",
+        "8",
+        "6",
+        "4",
+        "2"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "{10..1}",
+      "options": {
+        "step": 2
+      },
+      "result": "{10..1}"
+    },
+    {
+      "method": "create",
+      "input": "{10..1}",
+      "options": {
+        "step": 2
+      },
+      "result": "(2|4|6|8|10)"
+    },
+    {
+      "method": "compile",
+      "input": "{-10..-1}",
+      "options": {},
+      "result": "(-[1-9]|-10)"
+    },
+    {
+      "method": "expand",
+      "input": "{-10..-1}",
+      "options": {},
+      "result": [
+        "-10",
+        "-9",
+        "-8",
+        "-7",
+        "-6",
+        "-5",
+        "-4",
+        "-3",
+        "-2",
+        "-1"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "{-10..-1}",
+      "options": {},
+      "result": "{-10..-1}"
+    },
+    {
+      "method": "create",
+      "input": "{-10..-1}",
+      "options": {},
+      "result": "(-[1-9]|-10)"
+    },
+    {
+      "method": "compile",
+      "input": "{-10..-1}",
+      "options": {
+        "expand": true
+      },
+      "result": "(-[1-9]|-10)"
+    },
+    {
+      "method": "expand",
+      "input": "{-10..-1}",
+      "options": {
+        "expand": true
+      },
+      "result": [
+        "-10",
+        "-9",
+        "-8",
+        "-7",
+        "-6",
+        "-5",
+        "-4",
+        "-3",
+        "-2",
+        "-1"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "{-10..-1}",
+      "options": {
+        "expand": true
+      },
+      "result": "{-10..-1}"
+    },
+    {
+      "method": "create",
+      "input": "{-10..-1}",
+      "options": {
+        "expand": true
+      },
+      "result": [
+        "-10",
+        "-9",
+        "-8",
+        "-7",
+        "-6",
+        "-5",
+        "-4",
+        "-3",
+        "-2",
+        "-1"
+      ]
+    },
+    {
+      "method": "compile",
+      "input": "{-10..-1}",
+      "options": {
+        "expand": true,
+        "nodupes": true,
+        "noempty": true
+      },
+      "result": "(-[1-9]|-10)"
+    },
+    {
+      "method": "expand",
+      "input": "{-10..-1}",
+      "options": {
+        "expand": true,
+        "nodupes": true,
+        "noempty": true
+      },
+      "result": [
+        "-10",
+        "-9",
+        "-8",
+        "-7",
+        "-6",
+        "-5",
+        "-4",
+        "-3",
+        "-2",
+        "-1"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "{-10..-1}",
+      "options": {
+        "expand": true,
+        "nodupes": true,
+        "noempty": true
+      },
+      "result": "{-10..-1}"
+    },
+    {
+      "method": "create",
+      "input": "{-10..-1}",
+      "options": {
+        "expand": true,
+        "nodupes": true,
+        "noempty": true
+      },
+      "result": [
+        "-10",
+        "-9",
+        "-8",
+        "-7",
+        "-6",
+        "-5",
+        "-4",
+        "-3",
+        "-2",
+        "-1"
+      ]
+    },
+    {
+      "method": "compile",
+      "input": "{-10..-1}",
+      "options": {
+        "keepEscaping": true
+      },
+      "result": "(-[1-9]|-10)"
+    },
+    {
+      "method": "expand",
+      "input": "{-10..-1}",
+      "options": {
+        "keepEscaping": true
+      },
+      "result": [
+        "-10",
+        "-9",
+        "-8",
+        "-7",
+        "-6",
+        "-5",
+        "-4",
+        "-3",
+        "-2",
+        "-1"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "{-10..-1}",
+      "options": {
+        "keepEscaping": true
+      },
+      "result": "{-10..-1}"
+    },
+    {
+      "method": "create",
+      "input": "{-10..-1}",
+      "options": {
+        "keepEscaping": true
+      },
+      "result": "(-[1-9]|-10)"
+    },
+    {
+      "method": "compile",
+      "input": "{-10..-1}",
+      "options": {
+        "keepQuotes": true
+      },
+      "result": "(-[1-9]|-10)"
+    },
+    {
+      "method": "expand",
+      "input": "{-10..-1}",
+      "options": {
+        "keepQuotes": true
+      },
+      "result": [
+        "-10",
+        "-9",
+        "-8",
+        "-7",
+        "-6",
+        "-5",
+        "-4",
+        "-3",
+        "-2",
+        "-1"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "{-10..-1}",
+      "options": {
+        "keepQuotes": true
+      },
+      "result": "{-10..-1}"
+    },
+    {
+      "method": "create",
+      "input": "{-10..-1}",
+      "options": {
+        "keepQuotes": true
+      },
+      "result": "(-[1-9]|-10)"
+    },
+    {
+      "method": "compile",
+      "input": "{-10..-1}",
+      "options": {
+        "escapeInvalid": true
+      },
+      "result": "(-[1-9]|-10)"
+    },
+    {
+      "method": "expand",
+      "input": "{-10..-1}",
+      "options": {
+        "escapeInvalid": true
+      },
+      "result": [
+        "-10",
+        "-9",
+        "-8",
+        "-7",
+        "-6",
+        "-5",
+        "-4",
+        "-3",
+        "-2",
+        "-1"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "{-10..-1}",
+      "options": {
+        "escapeInvalid": true
+      },
+      "result": "{-10..-1}"
+    },
+    {
+      "method": "create",
+      "input": "{-10..-1}",
+      "options": {
+        "escapeInvalid": true
+      },
+      "result": "(-[1-9]|-10)"
+    },
+    {
+      "method": "compile",
+      "input": "{-10..-1}",
+      "options": {
+        "step": 2
+      },
+      "result": "(-(?:2|4|6|8|10))"
+    },
+    {
+      "method": "expand",
+      "input": "{-10..-1}",
+      "options": {
+        "step": 2
+      },
+      "result": [
+        "-10",
+        "-8",
+        "-6",
+        "-4",
+        "-2"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "{-10..-1}",
+      "options": {
+        "step": 2
+      },
+      "result": "{-10..-1}"
+    },
+    {
+      "method": "create",
+      "input": "{-10..-1}",
+      "options": {
+        "step": 2
+      },
+      "result": "(-(?:2|4|6|8|10))"
+    },
+    {
+      "method": "compile",
+      "input": "{a..z}",
+      "options": {},
+      "result": "([a-z])"
+    },
+    {
+      "method": "expand",
+      "input": "{a..z}",
+      "options": {},
+      "result": [
+        "a",
+        "b",
+        "c",
+        "d",
+        "e",
+        "f",
+        "g",
+        "h",
+        "i",
+        "j",
+        "k",
+        "l",
+        "m",
+        "n",
+        "o",
+        "p",
+        "q",
+        "r",
+        "s",
+        "t",
+        "u",
+        "v",
+        "w",
+        "x",
+        "y",
+        "z"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "{a..z}",
+      "options": {},
+      "result": "{a..z}"
+    },
+    {
+      "method": "create",
+      "input": "{a..z}",
+      "options": {},
+      "result": "([a-z])"
+    },
+    {
+      "method": "compile",
+      "input": "{a..z}",
+      "options": {
+        "expand": true
+      },
+      "result": "([a-z])"
+    },
+    {
+      "method": "expand",
+      "input": "{a..z}",
+      "options": {
+        "expand": true
+      },
+      "result": [
+        "a",
+        "b",
+        "c",
+        "d",
+        "e",
+        "f",
+        "g",
+        "h",
+        "i",
+        "j",
+        "k",
+        "l",
+        "m",
+        "n",
+        "o",
+        "p",
+        "q",
+        "r",
+        "s",
+        "t",
+        "u",
+        "v",
+        "w",
+        "x",
+        "y",
+        "z"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "{a..z}",
+      "options": {
+        "expand": true
+      },
+      "result": "{a..z}"
+    },
+    {
+      "method": "create",
+      "input": "{a..z}",
+      "options": {
+        "expand": true
+      },
+      "result": [
+        "a",
+        "b",
+        "c",
+        "d",
+        "e",
+        "f",
+        "g",
+        "h",
+        "i",
+        "j",
+        "k",
+        "l",
+        "m",
+        "n",
+        "o",
+        "p",
+        "q",
+        "r",
+        "s",
+        "t",
+        "u",
+        "v",
+        "w",
+        "x",
+        "y",
+        "z"
+      ]
+    },
+    {
+      "method": "compile",
+      "input": "{a..z}",
+      "options": {
+        "expand": true,
+        "nodupes": true,
+        "noempty": true
+      },
+      "result": "([a-z])"
+    },
+    {
+      "method": "expand",
+      "input": "{a..z}",
+      "options": {
+        "expand": true,
+        "nodupes": true,
+        "noempty": true
+      },
+      "result": [
+        "a",
+        "b",
+        "c",
+        "d",
+        "e",
+        "f",
+        "g",
+        "h",
+        "i",
+        "j",
+        "k",
+        "l",
+        "m",
+        "n",
+        "o",
+        "p",
+        "q",
+        "r",
+        "s",
+        "t",
+        "u",
+        "v",
+        "w",
+        "x",
+        "y",
+        "z"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "{a..z}",
+      "options": {
+        "expand": true,
+        "nodupes": true,
+        "noempty": true
+      },
+      "result": "{a..z}"
+    },
+    {
+      "method": "create",
+      "input": "{a..z}",
+      "options": {
+        "expand": true,
+        "nodupes": true,
+        "noempty": true
+      },
+      "result": [
+        "a",
+        "b",
+        "c",
+        "d",
+        "e",
+        "f",
+        "g",
+        "h",
+        "i",
+        "j",
+        "k",
+        "l",
+        "m",
+        "n",
+        "o",
+        "p",
+        "q",
+        "r",
+        "s",
+        "t",
+        "u",
+        "v",
+        "w",
+        "x",
+        "y",
+        "z"
+      ]
+    },
+    {
+      "method": "compile",
+      "input": "{a..z}",
+      "options": {
+        "keepEscaping": true
+      },
+      "result": "([a-z])"
+    },
+    {
+      "method": "expand",
+      "input": "{a..z}",
+      "options": {
+        "keepEscaping": true
+      },
+      "result": [
+        "a",
+        "b",
+        "c",
+        "d",
+        "e",
+        "f",
+        "g",
+        "h",
+        "i",
+        "j",
+        "k",
+        "l",
+        "m",
+        "n",
+        "o",
+        "p",
+        "q",
+        "r",
+        "s",
+        "t",
+        "u",
+        "v",
+        "w",
+        "x",
+        "y",
+        "z"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "{a..z}",
+      "options": {
+        "keepEscaping": true
+      },
+      "result": "{a..z}"
+    },
+    {
+      "method": "create",
+      "input": "{a..z}",
+      "options": {
+        "keepEscaping": true
+      },
+      "result": "([a-z])"
+    },
+    {
+      "method": "compile",
+      "input": "{a..z}",
+      "options": {
+        "keepQuotes": true
+      },
+      "result": "([a-z])"
+    },
+    {
+      "method": "expand",
+      "input": "{a..z}",
+      "options": {
+        "keepQuotes": true
+      },
+      "result": [
+        "a",
+        "b",
+        "c",
+        "d",
+        "e",
+        "f",
+        "g",
+        "h",
+        "i",
+        "j",
+        "k",
+        "l",
+        "m",
+        "n",
+        "o",
+        "p",
+        "q",
+        "r",
+        "s",
+        "t",
+        "u",
+        "v",
+        "w",
+        "x",
+        "y",
+        "z"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "{a..z}",
+      "options": {
+        "keepQuotes": true
+      },
+      "result": "{a..z}"
+    },
+    {
+      "method": "create",
+      "input": "{a..z}",
+      "options": {
+        "keepQuotes": true
+      },
+      "result": "([a-z])"
+    },
+    {
+      "method": "compile",
+      "input": "{a..z}",
+      "options": {
+        "escapeInvalid": true
+      },
+      "result": "([a-z])"
+    },
+    {
+      "method": "expand",
+      "input": "{a..z}",
+      "options": {
+        "escapeInvalid": true
+      },
+      "result": [
+        "a",
+        "b",
+        "c",
+        "d",
+        "e",
+        "f",
+        "g",
+        "h",
+        "i",
+        "j",
+        "k",
+        "l",
+        "m",
+        "n",
+        "o",
+        "p",
+        "q",
+        "r",
+        "s",
+        "t",
+        "u",
+        "v",
+        "w",
+        "x",
+        "y",
+        "z"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "{a..z}",
+      "options": {
+        "escapeInvalid": true
+      },
+      "result": "{a..z}"
+    },
+    {
+      "method": "create",
+      "input": "{a..z}",
+      "options": {
+        "escapeInvalid": true
+      },
+      "result": "([a-z])"
+    },
+    {
+      "method": "compile",
+      "input": "{a..z}",
+      "options": {
+        "step": 2
+      },
+      "result": "(a|c|e|g|i|k|m|o|q|s|u|w|y)"
+    },
+    {
+      "method": "expand",
+      "input": "{a..z}",
+      "options": {
+        "step": 2
+      },
+      "result": [
+        "a",
+        "c",
+        "e",
+        "g",
+        "i",
+        "k",
+        "m",
+        "o",
+        "q",
+        "s",
+        "u",
+        "w",
+        "y"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "{a..z}",
+      "options": {
+        "step": 2
+      },
+      "result": "{a..z}"
+    },
+    {
+      "method": "create",
+      "input": "{a..z}",
+      "options": {
+        "step": 2
+      },
+      "result": "(a|c|e|g|i|k|m|o|q|s|u|w|y)"
+    },
+    {
+      "method": "compile",
+      "input": "{a,b}{c,d}",
+      "options": {},
+      "result": "(a|b)(c|d)"
+    },
+    {
+      "method": "expand",
+      "input": "{a,b}{c,d}",
+      "options": {},
+      "result": [
+        "ac",
+        "ad",
+        "bc",
+        "bd"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "{a,b}{c,d}",
+      "options": {},
+      "result": "{a,b}{c,d}"
+    },
+    {
+      "method": "create",
+      "input": "{a,b}{c,d}",
+      "options": {},
+      "result": "(a|b)(c|d)"
+    },
+    {
+      "method": "compile",
+      "input": "{a,b}{c,d}",
+      "options": {
+        "expand": true
+      },
+      "result": "(a|b)(c|d)"
+    },
+    {
+      "method": "expand",
+      "input": "{a,b}{c,d}",
+      "options": {
+        "expand": true
+      },
+      "result": [
+        "ac",
+        "ad",
+        "bc",
+        "bd"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "{a,b}{c,d}",
+      "options": {
+        "expand": true
+      },
+      "result": "{a,b}{c,d}"
+    },
+    {
+      "method": "create",
+      "input": "{a,b}{c,d}",
+      "options": {
+        "expand": true
+      },
+      "result": [
+        "ac",
+        "ad",
+        "bc",
+        "bd"
+      ]
+    },
+    {
+      "method": "compile",
+      "input": "{a,b}{c,d}",
+      "options": {
+        "expand": true,
+        "nodupes": true,
+        "noempty": true
+      },
+      "result": "(a|b)(c|d)"
+    },
+    {
+      "method": "expand",
+      "input": "{a,b}{c,d}",
+      "options": {
+        "expand": true,
+        "nodupes": true,
+        "noempty": true
+      },
+      "result": [
+        "ac",
+        "ad",
+        "bc",
+        "bd"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "{a,b}{c,d}",
+      "options": {
+        "expand": true,
+        "nodupes": true,
+        "noempty": true
+      },
+      "result": "{a,b}{c,d}"
+    },
+    {
+      "method": "create",
+      "input": "{a,b}{c,d}",
+      "options": {
+        "expand": true,
+        "nodupes": true,
+        "noempty": true
+      },
+      "result": [
+        "ac",
+        "ad",
+        "bc",
+        "bd"
+      ]
+    },
+    {
+      "method": "compile",
+      "input": "{a,b}{c,d}",
+      "options": {
+        "keepEscaping": true
+      },
+      "result": "(a|b)(c|d)"
+    },
+    {
+      "method": "expand",
+      "input": "{a,b}{c,d}",
+      "options": {
+        "keepEscaping": true
+      },
+      "result": [
+        "ac",
+        "ad",
+        "bc",
+        "bd"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "{a,b}{c,d}",
+      "options": {
+        "keepEscaping": true
+      },
+      "result": "{a,b}{c,d}"
+    },
+    {
+      "method": "create",
+      "input": "{a,b}{c,d}",
+      "options": {
+        "keepEscaping": true
+      },
+      "result": "(a|b)(c|d)"
+    },
+    {
+      "method": "compile",
+      "input": "{a,b}{c,d}",
+      "options": {
+        "keepQuotes": true
+      },
+      "result": "(a|b)(c|d)"
+    },
+    {
+      "method": "expand",
+      "input": "{a,b}{c,d}",
+      "options": {
+        "keepQuotes": true
+      },
+      "result": [
+        "ac",
+        "ad",
+        "bc",
+        "bd"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "{a,b}{c,d}",
+      "options": {
+        "keepQuotes": true
+      },
+      "result": "{a,b}{c,d}"
+    },
+    {
+      "method": "create",
+      "input": "{a,b}{c,d}",
+      "options": {
+        "keepQuotes": true
+      },
+      "result": "(a|b)(c|d)"
+    },
+    {
+      "method": "compile",
+      "input": "{a,b}{c,d}",
+      "options": {
+        "escapeInvalid": true
+      },
+      "result": "(a|b)(c|d)"
+    },
+    {
+      "method": "expand",
+      "input": "{a,b}{c,d}",
+      "options": {
+        "escapeInvalid": true
+      },
+      "result": [
+        "ac",
+        "ad",
+        "bc",
+        "bd"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "{a,b}{c,d}",
+      "options": {
+        "escapeInvalid": true
+      },
+      "result": "{a,b}{c,d}"
+    },
+    {
+      "method": "create",
+      "input": "{a,b}{c,d}",
+      "options": {
+        "escapeInvalid": true
+      },
+      "result": "(a|b)(c|d)"
+    },
+    {
+      "method": "compile",
+      "input": "{a,b}{c,d}",
+      "options": {
+        "step": 2
+      },
+      "result": "(a|b)(c|d)"
+    },
+    {
+      "method": "expand",
+      "input": "{a,b}{c,d}",
+      "options": {
+        "step": 2
+      },
+      "result": [
+        "ac",
+        "ad",
+        "bc",
+        "bd"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "{a,b}{c,d}",
+      "options": {
+        "step": 2
+      },
+      "result": "{a,b}{c,d}"
+    },
+    {
+      "method": "create",
+      "input": "{a,b}{c,d}",
+      "options": {
+        "step": 2
+      },
+      "result": "(a|b)(c|d)"
+    },
+    {
+      "method": "compile",
+      "input": "a{b,c}d{e,f}",
+      "options": {},
+      "result": "a(b|c)d(e|f)"
+    },
+    {
+      "method": "expand",
+      "input": "a{b,c}d{e,f}",
+      "options": {},
+      "result": [
+        "abde",
+        "abdf",
+        "acde",
+        "acdf"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "a{b,c}d{e,f}",
+      "options": {},
+      "result": "a{b,c}d{e,f}"
+    },
+    {
+      "method": "create",
+      "input": "a{b,c}d{e,f}",
+      "options": {},
+      "result": "a(b|c)d(e|f)"
+    },
+    {
+      "method": "compile",
+      "input": "a{b,c}d{e,f}",
+      "options": {
+        "expand": true
+      },
+      "result": "a(b|c)d(e|f)"
+    },
+    {
+      "method": "expand",
+      "input": "a{b,c}d{e,f}",
+      "options": {
+        "expand": true
+      },
+      "result": [
+        "abde",
+        "abdf",
+        "acde",
+        "acdf"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "a{b,c}d{e,f}",
+      "options": {
+        "expand": true
+      },
+      "result": "a{b,c}d{e,f}"
+    },
+    {
+      "method": "create",
+      "input": "a{b,c}d{e,f}",
+      "options": {
+        "expand": true
+      },
+      "result": [
+        "abde",
+        "abdf",
+        "acde",
+        "acdf"
+      ]
+    },
+    {
+      "method": "compile",
+      "input": "a{b,c}d{e,f}",
+      "options": {
+        "expand": true,
+        "nodupes": true,
+        "noempty": true
+      },
+      "result": "a(b|c)d(e|f)"
+    },
+    {
+      "method": "expand",
+      "input": "a{b,c}d{e,f}",
+      "options": {
+        "expand": true,
+        "nodupes": true,
+        "noempty": true
+      },
+      "result": [
+        "abde",
+        "abdf",
+        "acde",
+        "acdf"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "a{b,c}d{e,f}",
+      "options": {
+        "expand": true,
+        "nodupes": true,
+        "noempty": true
+      },
+      "result": "a{b,c}d{e,f}"
+    },
+    {
+      "method": "create",
+      "input": "a{b,c}d{e,f}",
+      "options": {
+        "expand": true,
+        "nodupes": true,
+        "noempty": true
+      },
+      "result": [
+        "abde",
+        "abdf",
+        "acde",
+        "acdf"
+      ]
+    },
+    {
+      "method": "compile",
+      "input": "a{b,c}d{e,f}",
+      "options": {
+        "keepEscaping": true
+      },
+      "result": "a(b|c)d(e|f)"
+    },
+    {
+      "method": "expand",
+      "input": "a{b,c}d{e,f}",
+      "options": {
+        "keepEscaping": true
+      },
+      "result": [
+        "abde",
+        "abdf",
+        "acde",
+        "acdf"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "a{b,c}d{e,f}",
+      "options": {
+        "keepEscaping": true
+      },
+      "result": "a{b,c}d{e,f}"
+    },
+    {
+      "method": "create",
+      "input": "a{b,c}d{e,f}",
+      "options": {
+        "keepEscaping": true
+      },
+      "result": "a(b|c)d(e|f)"
+    },
+    {
+      "method": "compile",
+      "input": "a{b,c}d{e,f}",
+      "options": {
+        "keepQuotes": true
+      },
+      "result": "a(b|c)d(e|f)"
+    },
+    {
+      "method": "expand",
+      "input": "a{b,c}d{e,f}",
+      "options": {
+        "keepQuotes": true
+      },
+      "result": [
+        "abde",
+        "abdf",
+        "acde",
+        "acdf"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "a{b,c}d{e,f}",
+      "options": {
+        "keepQuotes": true
+      },
+      "result": "a{b,c}d{e,f}"
+    },
+    {
+      "method": "create",
+      "input": "a{b,c}d{e,f}",
+      "options": {
+        "keepQuotes": true
+      },
+      "result": "a(b|c)d(e|f)"
+    },
+    {
+      "method": "compile",
+      "input": "a{b,c}d{e,f}",
+      "options": {
+        "escapeInvalid": true
+      },
+      "result": "a(b|c)d(e|f)"
+    },
+    {
+      "method": "expand",
+      "input": "a{b,c}d{e,f}",
+      "options": {
+        "escapeInvalid": true
+      },
+      "result": [
+        "abde",
+        "abdf",
+        "acde",
+        "acdf"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "a{b,c}d{e,f}",
+      "options": {
+        "escapeInvalid": true
+      },
+      "result": "a{b,c}d{e,f}"
+    },
+    {
+      "method": "create",
+      "input": "a{b,c}d{e,f}",
+      "options": {
+        "escapeInvalid": true
+      },
+      "result": "a(b|c)d(e|f)"
+    },
+    {
+      "method": "compile",
+      "input": "a{b,c}d{e,f}",
+      "options": {
+        "step": 2
+      },
+      "result": "a(b|c)d(e|f)"
+    },
+    {
+      "method": "expand",
+      "input": "a{b,c}d{e,f}",
+      "options": {
+        "step": 2
+      },
+      "result": [
+        "abde",
+        "abdf",
+        "acde",
+        "acdf"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "a{b,c}d{e,f}",
+      "options": {
+        "step": 2
+      },
+      "result": "a{b,c}d{e,f}"
+    },
+    {
+      "method": "create",
+      "input": "a{b,c}d{e,f}",
+      "options": {
+        "step": 2
+      },
+      "result": "a(b|c)d(e|f)"
+    },
+    {
+      "method": "compile",
+      "input": "{a,,b}",
+      "options": {},
+      "result": "(a|b)"
+    },
+    {
+      "method": "expand",
+      "input": "{a,,b}",
+      "options": {},
+      "result": [
+        "a",
+        "",
+        "b"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "{a,,b}",
+      "options": {},
+      "result": "{a,,b}"
+    },
+    {
+      "method": "create",
+      "input": "{a,,b}",
+      "options": {},
+      "result": "(a|b)"
+    },
+    {
+      "method": "compile",
+      "input": "{a,,b}",
+      "options": {
+        "expand": true
+      },
+      "result": "(a|b)"
+    },
+    {
+      "method": "expand",
+      "input": "{a,,b}",
+      "options": {
+        "expand": true
+      },
+      "result": [
+        "a",
+        "",
+        "b"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "{a,,b}",
+      "options": {
+        "expand": true
+      },
+      "result": "{a,,b}"
+    },
+    {
+      "method": "create",
+      "input": "{a,,b}",
+      "options": {
+        "expand": true
+      },
+      "result": [
+        "a",
+        "",
+        "b"
+      ]
+    },
+    {
+      "method": "compile",
+      "input": "{a,,b}",
+      "options": {
+        "expand": true,
+        "nodupes": true,
+        "noempty": true
+      },
+      "result": "(a|b)"
+    },
+    {
+      "method": "expand",
+      "input": "{a,,b}",
+      "options": {
+        "expand": true,
+        "nodupes": true,
+        "noempty": true
+      },
+      "result": [
+        "a",
+        "b"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "{a,,b}",
+      "options": {
+        "expand": true,
+        "nodupes": true,
+        "noempty": true
+      },
+      "result": "{a,,b}"
+    },
+    {
+      "method": "create",
+      "input": "{a,,b}",
+      "options": {
+        "expand": true,
+        "nodupes": true,
+        "noempty": true
+      },
+      "result": [
+        "a",
+        "b"
+      ]
+    },
+    {
+      "method": "compile",
+      "input": "{a,,b}",
+      "options": {
+        "keepEscaping": true
+      },
+      "result": "(a|b)"
+    },
+    {
+      "method": "expand",
+      "input": "{a,,b}",
+      "options": {
+        "keepEscaping": true
+      },
+      "result": [
+        "a",
+        "",
+        "b"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "{a,,b}",
+      "options": {
+        "keepEscaping": true
+      },
+      "result": "{a,,b}"
+    },
+    {
+      "method": "create",
+      "input": "{a,,b}",
+      "options": {
+        "keepEscaping": true
+      },
+      "result": "(a|b)"
+    },
+    {
+      "method": "compile",
+      "input": "{a,,b}",
+      "options": {
+        "keepQuotes": true
+      },
+      "result": "(a|b)"
+    },
+    {
+      "method": "expand",
+      "input": "{a,,b}",
+      "options": {
+        "keepQuotes": true
+      },
+      "result": [
+        "a",
+        "",
+        "b"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "{a,,b}",
+      "options": {
+        "keepQuotes": true
+      },
+      "result": "{a,,b}"
+    },
+    {
+      "method": "create",
+      "input": "{a,,b}",
+      "options": {
+        "keepQuotes": true
+      },
+      "result": "(a|b)"
+    },
+    {
+      "method": "compile",
+      "input": "{a,,b}",
+      "options": {
+        "escapeInvalid": true
+      },
+      "result": "(a|b)"
+    },
+    {
+      "method": "expand",
+      "input": "{a,,b}",
+      "options": {
+        "escapeInvalid": true
+      },
+      "result": [
+        "a",
+        "",
+        "b"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "{a,,b}",
+      "options": {
+        "escapeInvalid": true
+      },
+      "result": "{a,,b}"
+    },
+    {
+      "method": "create",
+      "input": "{a,,b}",
+      "options": {
+        "escapeInvalid": true
+      },
+      "result": "(a|b)"
+    },
+    {
+      "method": "compile",
+      "input": "{a,,b}",
+      "options": {
+        "step": 2
+      },
+      "result": "(a|b)"
+    },
+    {
+      "method": "expand",
+      "input": "{a,,b}",
+      "options": {
+        "step": 2
+      },
+      "result": [
+        "a",
+        "",
+        "b"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "{a,,b}",
+      "options": {
+        "step": 2
+      },
+      "result": "{a,,b}"
+    },
+    {
+      "method": "create",
+      "input": "{a,,b}",
+      "options": {
+        "step": 2
+      },
+      "result": "(a|b)"
+    },
+    {
+      "method": "compile",
+      "input": "${a,b}",
+      "options": {},
+      "result": "${a,b}"
+    },
+    {
+      "method": "expand",
+      "input": "${a,b}",
+      "options": {},
+      "result": [
+        "${a,b}"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "${a,b}",
+      "options": {},
+      "result": "${a,b}"
+    },
+    {
+      "method": "create",
+      "input": "${a,b}",
+      "options": {},
+      "result": "${a,b}"
+    },
+    {
+      "method": "compile",
+      "input": "${a,b}",
+      "options": {
+        "expand": true
+      },
+      "result": "${a,b}"
+    },
+    {
+      "method": "expand",
+      "input": "${a,b}",
+      "options": {
+        "expand": true
+      },
+      "result": [
+        "${a,b}"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "${a,b}",
+      "options": {
+        "expand": true
+      },
+      "result": "${a,b}"
+    },
+    {
+      "method": "create",
+      "input": "${a,b}",
+      "options": {
+        "expand": true
+      },
+      "result": [
+        "${a,b}"
+      ]
+    },
+    {
+      "method": "compile",
+      "input": "${a,b}",
+      "options": {
+        "expand": true,
+        "nodupes": true,
+        "noempty": true
+      },
+      "result": "${a,b}"
+    },
+    {
+      "method": "expand",
+      "input": "${a,b}",
+      "options": {
+        "expand": true,
+        "nodupes": true,
+        "noempty": true
+      },
+      "result": [
+        "${a,b}"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "${a,b}",
+      "options": {
+        "expand": true,
+        "nodupes": true,
+        "noempty": true
+      },
+      "result": "${a,b}"
+    },
+    {
+      "method": "create",
+      "input": "${a,b}",
+      "options": {
+        "expand": true,
+        "nodupes": true,
+        "noempty": true
+      },
+      "result": [
+        "${a,b}"
+      ]
+    },
+    {
+      "method": "compile",
+      "input": "${a,b}",
+      "options": {
+        "keepEscaping": true
+      },
+      "result": "${a,b}"
+    },
+    {
+      "method": "expand",
+      "input": "${a,b}",
+      "options": {
+        "keepEscaping": true
+      },
+      "result": [
+        "${a,b}"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "${a,b}",
+      "options": {
+        "keepEscaping": true
+      },
+      "result": "${a,b}"
+    },
+    {
+      "method": "create",
+      "input": "${a,b}",
+      "options": {
+        "keepEscaping": true
+      },
+      "result": "${a,b}"
+    },
+    {
+      "method": "compile",
+      "input": "${a,b}",
+      "options": {
+        "keepQuotes": true
+      },
+      "result": "${a,b}"
+    },
+    {
+      "method": "expand",
+      "input": "${a,b}",
+      "options": {
+        "keepQuotes": true
+      },
+      "result": [
+        "${a,b}"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "${a,b}",
+      "options": {
+        "keepQuotes": true
+      },
+      "result": "${a,b}"
+    },
+    {
+      "method": "create",
+      "input": "${a,b}",
+      "options": {
+        "keepQuotes": true
+      },
+      "result": "${a,b}"
+    },
+    {
+      "method": "compile",
+      "input": "${a,b}",
+      "options": {
+        "escapeInvalid": true
+      },
+      "result": "$\\{a,b\\}"
+    },
+    {
+      "method": "expand",
+      "input": "${a,b}",
+      "options": {
+        "escapeInvalid": true
+      },
+      "result": [
+        "${a,b}"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "${a,b}",
+      "options": {
+        "escapeInvalid": true
+      },
+      "result": "${a,b}"
+    },
+    {
+      "method": "create",
+      "input": "${a,b}",
+      "options": {
+        "escapeInvalid": true
+      },
+      "result": "$\\{a,b\\}"
+    },
+    {
+      "method": "compile",
+      "input": "${a,b}",
+      "options": {
+        "step": 2
+      },
+      "result": "${a,b}"
+    },
+    {
+      "method": "expand",
+      "input": "${a,b}",
+      "options": {
+        "step": 2
+      },
+      "result": [
+        "${a,b}"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "${a,b}",
+      "options": {
+        "step": 2
+      },
+      "result": "${a,b}"
+    },
+    {
+      "method": "create",
+      "input": "${a,b}",
+      "options": {
+        "step": 2
+      },
+      "result": "${a,b}"
+    },
+    {
+      "method": "compile",
+      "input": "\\{a,b\\}",
+      "options": {},
+      "result": "{a,b}"
+    },
+    {
+      "method": "expand",
+      "input": "\\{a,b\\}",
+      "options": {},
+      "result": [
+        "{a,b}"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "\\{a,b\\}",
+      "options": {},
+      "result": "{a,b}"
+    },
+    {
+      "method": "create",
+      "input": "\\{a,b\\}",
+      "options": {},
+      "result": "{a,b}"
+    },
+    {
+      "method": "compile",
+      "input": "\\{a,b\\}",
+      "options": {
+        "expand": true
+      },
+      "result": "{a,b}"
+    },
+    {
+      "method": "expand",
+      "input": "\\{a,b\\}",
+      "options": {
+        "expand": true
+      },
+      "result": [
+        "{a,b}"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "\\{a,b\\}",
+      "options": {
+        "expand": true
+      },
+      "result": "{a,b}"
+    },
+    {
+      "method": "create",
+      "input": "\\{a,b\\}",
+      "options": {
+        "expand": true
+      },
+      "result": [
+        "{a,b}"
+      ]
+    },
+    {
+      "method": "compile",
+      "input": "\\{a,b\\}",
+      "options": {
+        "expand": true,
+        "nodupes": true,
+        "noempty": true
+      },
+      "result": "{a,b}"
+    },
+    {
+      "method": "expand",
+      "input": "\\{a,b\\}",
+      "options": {
+        "expand": true,
+        "nodupes": true,
+        "noempty": true
+      },
+      "result": [
+        "{a,b}"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "\\{a,b\\}",
+      "options": {
+        "expand": true,
+        "nodupes": true,
+        "noempty": true
+      },
+      "result": "{a,b}"
+    },
+    {
+      "method": "create",
+      "input": "\\{a,b\\}",
+      "options": {
+        "expand": true,
+        "nodupes": true,
+        "noempty": true
+      },
+      "result": [
+        "{a,b}"
+      ]
+    },
+    {
+      "method": "compile",
+      "input": "\\{a,b\\}",
+      "options": {
+        "keepEscaping": true
+      },
+      "result": "\\{a,b\\}"
+    },
+    {
+      "method": "expand",
+      "input": "\\{a,b\\}",
+      "options": {
+        "keepEscaping": true
+      },
+      "result": [
+        "\\{a,b\\}"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "\\{a,b\\}",
+      "options": {
+        "keepEscaping": true
+      },
+      "result": "\\{a,b\\}"
+    },
+    {
+      "method": "create",
+      "input": "\\{a,b\\}",
+      "options": {
+        "keepEscaping": true
+      },
+      "result": "\\{a,b\\}"
+    },
+    {
+      "method": "compile",
+      "input": "\\{a,b\\}",
+      "options": {
+        "keepQuotes": true
+      },
+      "result": "{a,b}"
+    },
+    {
+      "method": "expand",
+      "input": "\\{a,b\\}",
+      "options": {
+        "keepQuotes": true
+      },
+      "result": [
+        "{a,b}"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "\\{a,b\\}",
+      "options": {
+        "keepQuotes": true
+      },
+      "result": "{a,b}"
+    },
+    {
+      "method": "create",
+      "input": "\\{a,b\\}",
+      "options": {
+        "keepQuotes": true
+      },
+      "result": "{a,b}"
+    },
+    {
+      "method": "compile",
+      "input": "\\{a,b\\}",
+      "options": {
+        "escapeInvalid": true
+      },
+      "result": "{a,b}"
+    },
+    {
+      "method": "expand",
+      "input": "\\{a,b\\}",
+      "options": {
+        "escapeInvalid": true
+      },
+      "result": [
+        "{a,b}"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "\\{a,b\\}",
+      "options": {
+        "escapeInvalid": true
+      },
+      "result": "{a,b}"
+    },
+    {
+      "method": "create",
+      "input": "\\{a,b\\}",
+      "options": {
+        "escapeInvalid": true
+      },
+      "result": "{a,b}"
+    },
+    {
+      "method": "compile",
+      "input": "\\{a,b\\}",
+      "options": {
+        "step": 2
+      },
+      "result": "{a,b}"
+    },
+    {
+      "method": "expand",
+      "input": "\\{a,b\\}",
+      "options": {
+        "step": 2
+      },
+      "result": [
+        "{a,b}"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "\\{a,b\\}",
+      "options": {
+        "step": 2
+      },
+      "result": "{a,b}"
+    },
+    {
+      "method": "create",
+      "input": "\\{a,b\\}",
+      "options": {
+        "step": 2
+      },
+      "result": "{a,b}"
+    },
+    {
+      "method": "compile",
+      "input": "\"{a,b}\"",
+      "options": {},
+      "result": "{a,b}"
+    },
+    {
+      "method": "expand",
+      "input": "\"{a,b}\"",
+      "options": {},
+      "result": [
+        "{a,b}"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "\"{a,b}\"",
+      "options": {},
+      "result": "{a,b}"
+    },
+    {
+      "method": "create",
+      "input": "\"{a,b}\"",
+      "options": {},
+      "result": "{a,b}"
+    },
+    {
+      "method": "compile",
+      "input": "\"{a,b}\"",
+      "options": {
+        "expand": true
+      },
+      "result": "{a,b}"
+    },
+    {
+      "method": "expand",
+      "input": "\"{a,b}\"",
+      "options": {
+        "expand": true
+      },
+      "result": [
+        "{a,b}"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "\"{a,b}\"",
+      "options": {
+        "expand": true
+      },
+      "result": "{a,b}"
+    },
+    {
+      "method": "create",
+      "input": "\"{a,b}\"",
+      "options": {
+        "expand": true
+      },
+      "result": [
+        "{a,b}"
+      ]
+    },
+    {
+      "method": "compile",
+      "input": "\"{a,b}\"",
+      "options": {
+        "expand": true,
+        "nodupes": true,
+        "noempty": true
+      },
+      "result": "{a,b}"
+    },
+    {
+      "method": "expand",
+      "input": "\"{a,b}\"",
+      "options": {
+        "expand": true,
+        "nodupes": true,
+        "noempty": true
+      },
+      "result": [
+        "{a,b}"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "\"{a,b}\"",
+      "options": {
+        "expand": true,
+        "nodupes": true,
+        "noempty": true
+      },
+      "result": "{a,b}"
+    },
+    {
+      "method": "create",
+      "input": "\"{a,b}\"",
+      "options": {
+        "expand": true,
+        "nodupes": true,
+        "noempty": true
+      },
+      "result": [
+        "{a,b}"
+      ]
+    },
+    {
+      "method": "compile",
+      "input": "\"{a,b}\"",
+      "options": {
+        "keepEscaping": true
+      },
+      "result": "{a,b}"
+    },
+    {
+      "method": "expand",
+      "input": "\"{a,b}\"",
+      "options": {
+        "keepEscaping": true
+      },
+      "result": [
+        "{a,b}"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "\"{a,b}\"",
+      "options": {
+        "keepEscaping": true
+      },
+      "result": "{a,b}"
+    },
+    {
+      "method": "create",
+      "input": "\"{a,b}\"",
+      "options": {
+        "keepEscaping": true
+      },
+      "result": "{a,b}"
+    },
+    {
+      "method": "compile",
+      "input": "\"{a,b}\"",
+      "options": {
+        "keepQuotes": true
+      },
+      "result": "\"{a,b}\""
+    },
+    {
+      "method": "expand",
+      "input": "\"{a,b}\"",
+      "options": {
+        "keepQuotes": true
+      },
+      "result": [
+        "\"{a,b}\""
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "\"{a,b}\"",
+      "options": {
+        "keepQuotes": true
+      },
+      "result": "\"{a,b}\""
+    },
+    {
+      "method": "create",
+      "input": "\"{a,b}\"",
+      "options": {
+        "keepQuotes": true
+      },
+      "result": "\"{a,b}\""
+    },
+    {
+      "method": "compile",
+      "input": "\"{a,b}\"",
+      "options": {
+        "escapeInvalid": true
+      },
+      "result": "{a,b}"
+    },
+    {
+      "method": "expand",
+      "input": "\"{a,b}\"",
+      "options": {
+        "escapeInvalid": true
+      },
+      "result": [
+        "{a,b}"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "\"{a,b}\"",
+      "options": {
+        "escapeInvalid": true
+      },
+      "result": "{a,b}"
+    },
+    {
+      "method": "create",
+      "input": "\"{a,b}\"",
+      "options": {
+        "escapeInvalid": true
+      },
+      "result": "{a,b}"
+    },
+    {
+      "method": "compile",
+      "input": "\"{a,b}\"",
+      "options": {
+        "step": 2
+      },
+      "result": "{a,b}"
+    },
+    {
+      "method": "expand",
+      "input": "\"{a,b}\"",
+      "options": {
+        "step": 2
+      },
+      "result": [
+        "{a,b}"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "\"{a,b}\"",
+      "options": {
+        "step": 2
+      },
+      "result": "{a,b}"
+    },
+    {
+      "method": "create",
+      "input": "\"{a,b}\"",
+      "options": {
+        "step": 2
+      },
+      "result": "{a,b}"
+    },
+    {
+      "method": "compile",
+      "input": "'{a,b}'",
+      "options": {},
+      "result": "{a,b}"
+    },
+    {
+      "method": "expand",
+      "input": "'{a,b}'",
+      "options": {},
+      "result": [
+        "{a,b}"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "'{a,b}'",
+      "options": {},
+      "result": "{a,b}"
+    },
+    {
+      "method": "create",
+      "input": "'{a,b}'",
+      "options": {},
+      "result": "{a,b}"
+    },
+    {
+      "method": "compile",
+      "input": "'{a,b}'",
+      "options": {
+        "expand": true
+      },
+      "result": "{a,b}"
+    },
+    {
+      "method": "expand",
+      "input": "'{a,b}'",
+      "options": {
+        "expand": true
+      },
+      "result": [
+        "{a,b}"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "'{a,b}'",
+      "options": {
+        "expand": true
+      },
+      "result": "{a,b}"
+    },
+    {
+      "method": "create",
+      "input": "'{a,b}'",
+      "options": {
+        "expand": true
+      },
+      "result": [
+        "{a,b}"
+      ]
+    },
+    {
+      "method": "compile",
+      "input": "'{a,b}'",
+      "options": {
+        "expand": true,
+        "nodupes": true,
+        "noempty": true
+      },
+      "result": "{a,b}"
+    },
+    {
+      "method": "expand",
+      "input": "'{a,b}'",
+      "options": {
+        "expand": true,
+        "nodupes": true,
+        "noempty": true
+      },
+      "result": [
+        "{a,b}"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "'{a,b}'",
+      "options": {
+        "expand": true,
+        "nodupes": true,
+        "noempty": true
+      },
+      "result": "{a,b}"
+    },
+    {
+      "method": "create",
+      "input": "'{a,b}'",
+      "options": {
+        "expand": true,
+        "nodupes": true,
+        "noempty": true
+      },
+      "result": [
+        "{a,b}"
+      ]
+    },
+    {
+      "method": "compile",
+      "input": "'{a,b}'",
+      "options": {
+        "keepEscaping": true
+      },
+      "result": "{a,b}"
+    },
+    {
+      "method": "expand",
+      "input": "'{a,b}'",
+      "options": {
+        "keepEscaping": true
+      },
+      "result": [
+        "{a,b}"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "'{a,b}'",
+      "options": {
+        "keepEscaping": true
+      },
+      "result": "{a,b}"
+    },
+    {
+      "method": "create",
+      "input": "'{a,b}'",
+      "options": {
+        "keepEscaping": true
+      },
+      "result": "{a,b}"
+    },
+    {
+      "method": "compile",
+      "input": "'{a,b}'",
+      "options": {
+        "keepQuotes": true
+      },
+      "result": "'{a,b}'"
+    },
+    {
+      "method": "expand",
+      "input": "'{a,b}'",
+      "options": {
+        "keepQuotes": true
+      },
+      "result": [
+        "'{a,b}'"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "'{a,b}'",
+      "options": {
+        "keepQuotes": true
+      },
+      "result": "'{a,b}'"
+    },
+    {
+      "method": "create",
+      "input": "'{a,b}'",
+      "options": {
+        "keepQuotes": true
+      },
+      "result": "'{a,b}'"
+    },
+    {
+      "method": "compile",
+      "input": "'{a,b}'",
+      "options": {
+        "escapeInvalid": true
+      },
+      "result": "{a,b}"
+    },
+    {
+      "method": "expand",
+      "input": "'{a,b}'",
+      "options": {
+        "escapeInvalid": true
+      },
+      "result": [
+        "{a,b}"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "'{a,b}'",
+      "options": {
+        "escapeInvalid": true
+      },
+      "result": "{a,b}"
+    },
+    {
+      "method": "create",
+      "input": "'{a,b}'",
+      "options": {
+        "escapeInvalid": true
+      },
+      "result": "{a,b}"
+    },
+    {
+      "method": "compile",
+      "input": "'{a,b}'",
+      "options": {
+        "step": 2
+      },
+      "result": "{a,b}"
+    },
+    {
+      "method": "expand",
+      "input": "'{a,b}'",
+      "options": {
+        "step": 2
+      },
+      "result": [
+        "{a,b}"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "'{a,b}'",
+      "options": {
+        "step": 2
+      },
+      "result": "{a,b}"
+    },
+    {
+      "method": "create",
+      "input": "'{a,b}'",
+      "options": {
+        "step": 2
+      },
+      "result": "{a,b}"
+    },
+    {
+      "method": "compile",
+      "input": "a/!(foo)/{b,c}",
+      "options": {},
+      "result": "a/!(foo)/(b|c)"
+    },
+    {
+      "method": "expand",
+      "input": "a/!(foo)/{b,c}",
+      "options": {},
+      "result": [
+        "a/!(foo)/b",
+        "a/!(foo)/c"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "a/!(foo)/{b,c}",
+      "options": {},
+      "result": "a/!(foo)/{b,c}"
+    },
+    {
+      "method": "create",
+      "input": "a/!(foo)/{b,c}",
+      "options": {},
+      "result": "a/!(foo)/(b|c)"
+    },
+    {
+      "method": "compile",
+      "input": "a/!(foo)/{b,c}",
+      "options": {
+        "expand": true
+      },
+      "result": "a/!(foo)/(b|c)"
+    },
+    {
+      "method": "expand",
+      "input": "a/!(foo)/{b,c}",
+      "options": {
+        "expand": true
+      },
+      "result": [
+        "a/!(foo)/b",
+        "a/!(foo)/c"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "a/!(foo)/{b,c}",
+      "options": {
+        "expand": true
+      },
+      "result": "a/!(foo)/{b,c}"
+    },
+    {
+      "method": "create",
+      "input": "a/!(foo)/{b,c}",
+      "options": {
+        "expand": true
+      },
+      "result": [
+        "a/!(foo)/b",
+        "a/!(foo)/c"
+      ]
+    },
+    {
+      "method": "compile",
+      "input": "a/!(foo)/{b,c}",
+      "options": {
+        "expand": true,
+        "nodupes": true,
+        "noempty": true
+      },
+      "result": "a/!(foo)/(b|c)"
+    },
+    {
+      "method": "expand",
+      "input": "a/!(foo)/{b,c}",
+      "options": {
+        "expand": true,
+        "nodupes": true,
+        "noempty": true
+      },
+      "result": [
+        "a/!(foo)/b",
+        "a/!(foo)/c"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "a/!(foo)/{b,c}",
+      "options": {
+        "expand": true,
+        "nodupes": true,
+        "noempty": true
+      },
+      "result": "a/!(foo)/{b,c}"
+    },
+    {
+      "method": "create",
+      "input": "a/!(foo)/{b,c}",
+      "options": {
+        "expand": true,
+        "nodupes": true,
+        "noempty": true
+      },
+      "result": [
+        "a/!(foo)/b",
+        "a/!(foo)/c"
+      ]
+    },
+    {
+      "method": "compile",
+      "input": "a/!(foo)/{b,c}",
+      "options": {
+        "keepEscaping": true
+      },
+      "result": "a/!(foo)/(b|c)"
+    },
+    {
+      "method": "expand",
+      "input": "a/!(foo)/{b,c}",
+      "options": {
+        "keepEscaping": true
+      },
+      "result": [
+        "a/!(foo)/b",
+        "a/!(foo)/c"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "a/!(foo)/{b,c}",
+      "options": {
+        "keepEscaping": true
+      },
+      "result": "a/!(foo)/{b,c}"
+    },
+    {
+      "method": "create",
+      "input": "a/!(foo)/{b,c}",
+      "options": {
+        "keepEscaping": true
+      },
+      "result": "a/!(foo)/(b|c)"
+    },
+    {
+      "method": "compile",
+      "input": "a/!(foo)/{b,c}",
+      "options": {
+        "keepQuotes": true
+      },
+      "result": "a/!(foo)/(b|c)"
+    },
+    {
+      "method": "expand",
+      "input": "a/!(foo)/{b,c}",
+      "options": {
+        "keepQuotes": true
+      },
+      "result": [
+        "a/!(foo)/b",
+        "a/!(foo)/c"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "a/!(foo)/{b,c}",
+      "options": {
+        "keepQuotes": true
+      },
+      "result": "a/!(foo)/{b,c}"
+    },
+    {
+      "method": "create",
+      "input": "a/!(foo)/{b,c}",
+      "options": {
+        "keepQuotes": true
+      },
+      "result": "a/!(foo)/(b|c)"
+    },
+    {
+      "method": "compile",
+      "input": "a/!(foo)/{b,c}",
+      "options": {
+        "escapeInvalid": true
+      },
+      "result": "a/!(foo)/(b|c)"
+    },
+    {
+      "method": "expand",
+      "input": "a/!(foo)/{b,c}",
+      "options": {
+        "escapeInvalid": true
+      },
+      "result": [
+        "a/!(foo)/b",
+        "a/!(foo)/c"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "a/!(foo)/{b,c}",
+      "options": {
+        "escapeInvalid": true
+      },
+      "result": "a/!(foo)/{b,c}"
+    },
+    {
+      "method": "create",
+      "input": "a/!(foo)/{b,c}",
+      "options": {
+        "escapeInvalid": true
+      },
+      "result": "a/!(foo)/(b|c)"
+    },
+    {
+      "method": "compile",
+      "input": "a/!(foo)/{b,c}",
+      "options": {
+        "step": 2
+      },
+      "result": "a/!(foo)/(b|c)"
+    },
+    {
+      "method": "expand",
+      "input": "a/!(foo)/{b,c}",
+      "options": {
+        "step": 2
+      },
+      "result": [
+        "a/!(foo)/b",
+        "a/!(foo)/c"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "a/!(foo)/{b,c}",
+      "options": {
+        "step": 2
+      },
+      "result": "a/!(foo)/{b,c}"
+    },
+    {
+      "method": "create",
+      "input": "a/!(foo)/{b,c}",
+      "options": {
+        "step": 2
+      },
+      "result": "a/!(foo)/(b|c)"
+    },
+    {
+      "method": "compile",
+      "input": "[a-z]/{1..3}",
+      "options": {},
+      "result": "[a-z]/([1-3])"
+    },
+    {
+      "method": "expand",
+      "input": "[a-z]/{1..3}",
+      "options": {},
+      "result": [
+        "[a-z]/1",
+        "[a-z]/2",
+        "[a-z]/3"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "[a-z]/{1..3}",
+      "options": {},
+      "result": "[a-z]/{1..3}"
+    },
+    {
+      "method": "create",
+      "input": "[a-z]/{1..3}",
+      "options": {},
+      "result": "[a-z]/([1-3])"
+    },
+    {
+      "method": "compile",
+      "input": "[a-z]/{1..3}",
+      "options": {
+        "expand": true
+      },
+      "result": "[a-z]/([1-3])"
+    },
+    {
+      "method": "expand",
+      "input": "[a-z]/{1..3}",
+      "options": {
+        "expand": true
+      },
+      "result": [
+        "[a-z]/1",
+        "[a-z]/2",
+        "[a-z]/3"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "[a-z]/{1..3}",
+      "options": {
+        "expand": true
+      },
+      "result": "[a-z]/{1..3}"
+    },
+    {
+      "method": "create",
+      "input": "[a-z]/{1..3}",
+      "options": {
+        "expand": true
+      },
+      "result": [
+        "[a-z]/1",
+        "[a-z]/2",
+        "[a-z]/3"
+      ]
+    },
+    {
+      "method": "compile",
+      "input": "[a-z]/{1..3}",
+      "options": {
+        "expand": true,
+        "nodupes": true,
+        "noempty": true
+      },
+      "result": "[a-z]/([1-3])"
+    },
+    {
+      "method": "expand",
+      "input": "[a-z]/{1..3}",
+      "options": {
+        "expand": true,
+        "nodupes": true,
+        "noempty": true
+      },
+      "result": [
+        "[a-z]/1",
+        "[a-z]/2",
+        "[a-z]/3"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "[a-z]/{1..3}",
+      "options": {
+        "expand": true,
+        "nodupes": true,
+        "noempty": true
+      },
+      "result": "[a-z]/{1..3}"
+    },
+    {
+      "method": "create",
+      "input": "[a-z]/{1..3}",
+      "options": {
+        "expand": true,
+        "nodupes": true,
+        "noempty": true
+      },
+      "result": [
+        "[a-z]/1",
+        "[a-z]/2",
+        "[a-z]/3"
+      ]
+    },
+    {
+      "method": "compile",
+      "input": "[a-z]/{1..3}",
+      "options": {
+        "keepEscaping": true
+      },
+      "result": "[a-z]/([1-3])"
+    },
+    {
+      "method": "expand",
+      "input": "[a-z]/{1..3}",
+      "options": {
+        "keepEscaping": true
+      },
+      "result": [
+        "[a-z]/1",
+        "[a-z]/2",
+        "[a-z]/3"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "[a-z]/{1..3}",
+      "options": {
+        "keepEscaping": true
+      },
+      "result": "[a-z]/{1..3}"
+    },
+    {
+      "method": "create",
+      "input": "[a-z]/{1..3}",
+      "options": {
+        "keepEscaping": true
+      },
+      "result": "[a-z]/([1-3])"
+    },
+    {
+      "method": "compile",
+      "input": "[a-z]/{1..3}",
+      "options": {
+        "keepQuotes": true
+      },
+      "result": "[a-z]/([1-3])"
+    },
+    {
+      "method": "expand",
+      "input": "[a-z]/{1..3}",
+      "options": {
+        "keepQuotes": true
+      },
+      "result": [
+        "[a-z]/1",
+        "[a-z]/2",
+        "[a-z]/3"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "[a-z]/{1..3}",
+      "options": {
+        "keepQuotes": true
+      },
+      "result": "[a-z]/{1..3}"
+    },
+    {
+      "method": "create",
+      "input": "[a-z]/{1..3}",
+      "options": {
+        "keepQuotes": true
+      },
+      "result": "[a-z]/([1-3])"
+    },
+    {
+      "method": "compile",
+      "input": "[a-z]/{1..3}",
+      "options": {
+        "escapeInvalid": true
+      },
+      "result": "[a-z]/([1-3])"
+    },
+    {
+      "method": "expand",
+      "input": "[a-z]/{1..3}",
+      "options": {
+        "escapeInvalid": true
+      },
+      "result": [
+        "[a-z]/1",
+        "[a-z]/2",
+        "[a-z]/3"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "[a-z]/{1..3}",
+      "options": {
+        "escapeInvalid": true
+      },
+      "result": "[a-z]/{1..3}"
+    },
+    {
+      "method": "create",
+      "input": "[a-z]/{1..3}",
+      "options": {
+        "escapeInvalid": true
+      },
+      "result": "[a-z]/([1-3])"
+    },
+    {
+      "method": "compile",
+      "input": "[a-z]/{1..3}",
+      "options": {
+        "step": 2
+      },
+      "result": "[a-z]/(1|3)"
+    },
+    {
+      "method": "expand",
+      "input": "[a-z]/{1..3}",
+      "options": {
+        "step": 2
+      },
+      "result": [
+        "[a-z]/1",
+        "[a-z]/3"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "[a-z]/{1..3}",
+      "options": {
+        "step": 2
+      },
+      "result": "[a-z]/{1..3}"
+    },
+    {
+      "method": "create",
+      "input": "[a-z]/{1..3}",
+      "options": {
+        "step": 2
+      },
+      "result": "[a-z]/(1|3)"
+    },
+    {
+      "method": "compile",
+      "input": "{a...b}",
+      "options": {},
+      "result": "{a...b}"
+    },
+    {
+      "method": "expand",
+      "input": "{a...b}",
+      "options": {},
+      "result": [
+        "{a...b}"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "{a...b}",
+      "options": {},
+      "result": "{a...b}"
+    },
+    {
+      "method": "create",
+      "input": "{a...b}",
+      "options": {},
+      "result": "{a...b}"
+    },
+    {
+      "method": "compile",
+      "input": "{a...b}",
+      "options": {
+        "expand": true
+      },
+      "result": "{a...b}"
+    },
+    {
+      "method": "expand",
+      "input": "{a...b}",
+      "options": {
+        "expand": true
+      },
+      "result": [
+        "{a...b}"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "{a...b}",
+      "options": {
+        "expand": true
+      },
+      "result": "{a...b}"
+    },
+    {
+      "method": "create",
+      "input": "{a...b}",
+      "options": {
+        "expand": true
+      },
+      "result": [
+        "{a...b}"
+      ]
+    },
+    {
+      "method": "compile",
+      "input": "{a...b}",
+      "options": {
+        "expand": true,
+        "nodupes": true,
+        "noempty": true
+      },
+      "result": "{a...b}"
+    },
+    {
+      "method": "expand",
+      "input": "{a...b}",
+      "options": {
+        "expand": true,
+        "nodupes": true,
+        "noempty": true
+      },
+      "result": [
+        "{a...b}"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "{a...b}",
+      "options": {
+        "expand": true,
+        "nodupes": true,
+        "noempty": true
+      },
+      "result": "{a...b}"
+    },
+    {
+      "method": "create",
+      "input": "{a...b}",
+      "options": {
+        "expand": true,
+        "nodupes": true,
+        "noempty": true
+      },
+      "result": [
+        "{a...b}"
+      ]
+    },
+    {
+      "method": "compile",
+      "input": "{a...b}",
+      "options": {
+        "keepEscaping": true
+      },
+      "result": "{a...b}"
+    },
+    {
+      "method": "expand",
+      "input": "{a...b}",
+      "options": {
+        "keepEscaping": true
+      },
+      "result": [
+        "{a...b}"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "{a...b}",
+      "options": {
+        "keepEscaping": true
+      },
+      "result": "{a...b}"
+    },
+    {
+      "method": "create",
+      "input": "{a...b}",
+      "options": {
+        "keepEscaping": true
+      },
+      "result": "{a...b}"
+    },
+    {
+      "method": "compile",
+      "input": "{a...b}",
+      "options": {
+        "keepQuotes": true
+      },
+      "result": "{a...b}"
+    },
+    {
+      "method": "expand",
+      "input": "{a...b}",
+      "options": {
+        "keepQuotes": true
+      },
+      "result": [
+        "{a...b}"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "{a...b}",
+      "options": {
+        "keepQuotes": true
+      },
+      "result": "{a...b}"
+    },
+    {
+      "method": "create",
+      "input": "{a...b}",
+      "options": {
+        "keepQuotes": true
+      },
+      "result": "{a...b}"
+    },
+    {
+      "method": "compile",
+      "input": "{a...b}",
+      "options": {
+        "escapeInvalid": true
+      },
+      "result": "\\{a...b\\}"
+    },
+    {
+      "method": "expand",
+      "input": "{a...b}",
+      "options": {
+        "escapeInvalid": true
+      },
+      "result": [
+        "{a...b}"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "{a...b}",
+      "options": {
+        "escapeInvalid": true
+      },
+      "result": "{a...b}"
+    },
+    {
+      "method": "create",
+      "input": "{a...b}",
+      "options": {
+        "escapeInvalid": true
+      },
+      "result": "\\{a...b\\}"
+    },
+    {
+      "method": "compile",
+      "input": "{a...b}",
+      "options": {
+        "step": 2
+      },
+      "result": "{a...b}"
+    },
+    {
+      "method": "expand",
+      "input": "{a...b}",
+      "options": {
+        "step": 2
+      },
+      "result": [
+        "{a...b}"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "{a...b}",
+      "options": {
+        "step": 2
+      },
+      "result": "{a...b}"
+    },
+    {
+      "method": "create",
+      "input": "{a...b}",
+      "options": {
+        "step": 2
+      },
+      "result": "{a...b}"
+    },
+    {
+      "method": "compile",
+      "input": "{{a,b}}",
+      "options": {},
+      "result": "{(a|b)}"
+    },
+    {
+      "method": "expand",
+      "input": "{{a,b}}",
+      "options": {},
+      "result": [
+        "{a}",
+        "{b}"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "{{a,b}}",
+      "options": {},
+      "result": "{{a,b}}"
+    },
+    {
+      "method": "create",
+      "input": "{{a,b}}",
+      "options": {},
+      "result": "{(a|b)}"
+    },
+    {
+      "method": "compile",
+      "input": "{{a,b}}",
+      "options": {
+        "expand": true
+      },
+      "result": "{(a|b)}"
+    },
+    {
+      "method": "expand",
+      "input": "{{a,b}}",
+      "options": {
+        "expand": true
+      },
+      "result": [
+        "{a}",
+        "{b}"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "{{a,b}}",
+      "options": {
+        "expand": true
+      },
+      "result": "{{a,b}}"
+    },
+    {
+      "method": "create",
+      "input": "{{a,b}}",
+      "options": {
+        "expand": true
+      },
+      "result": [
+        "{a}",
+        "{b}"
+      ]
+    },
+    {
+      "method": "compile",
+      "input": "{{a,b}}",
+      "options": {
+        "expand": true,
+        "nodupes": true,
+        "noempty": true
+      },
+      "result": "{(a|b)}"
+    },
+    {
+      "method": "expand",
+      "input": "{{a,b}}",
+      "options": {
+        "expand": true,
+        "nodupes": true,
+        "noempty": true
+      },
+      "result": [
+        "{a}",
+        "{b}"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "{{a,b}}",
+      "options": {
+        "expand": true,
+        "nodupes": true,
+        "noempty": true
+      },
+      "result": "{{a,b}}"
+    },
+    {
+      "method": "create",
+      "input": "{{a,b}}",
+      "options": {
+        "expand": true,
+        "nodupes": true,
+        "noempty": true
+      },
+      "result": [
+        "{a}",
+        "{b}"
+      ]
+    },
+    {
+      "method": "compile",
+      "input": "{{a,b}}",
+      "options": {
+        "keepEscaping": true
+      },
+      "result": "{(a|b)}"
+    },
+    {
+      "method": "expand",
+      "input": "{{a,b}}",
+      "options": {
+        "keepEscaping": true
+      },
+      "result": [
+        "{a}",
+        "{b}"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "{{a,b}}",
+      "options": {
+        "keepEscaping": true
+      },
+      "result": "{{a,b}}"
+    },
+    {
+      "method": "create",
+      "input": "{{a,b}}",
+      "options": {
+        "keepEscaping": true
+      },
+      "result": "{(a|b)}"
+    },
+    {
+      "method": "compile",
+      "input": "{{a,b}}",
+      "options": {
+        "keepQuotes": true
+      },
+      "result": "{(a|b)}"
+    },
+    {
+      "method": "expand",
+      "input": "{{a,b}}",
+      "options": {
+        "keepQuotes": true
+      },
+      "result": [
+        "{a}",
+        "{b}"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "{{a,b}}",
+      "options": {
+        "keepQuotes": true
+      },
+      "result": "{{a,b}}"
+    },
+    {
+      "method": "create",
+      "input": "{{a,b}}",
+      "options": {
+        "keepQuotes": true
+      },
+      "result": "{(a|b)}"
+    },
+    {
+      "method": "compile",
+      "input": "{{a,b}}",
+      "options": {
+        "escapeInvalid": true
+      },
+      "result": "\\{(a|b)\\}"
+    },
+    {
+      "method": "expand",
+      "input": "{{a,b}}",
+      "options": {
+        "escapeInvalid": true
+      },
+      "result": [
+        "{a}",
+        "{b}"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "{{a,b}}",
+      "options": {
+        "escapeInvalid": true
+      },
+      "result": "{{a,b}}"
+    },
+    {
+      "method": "create",
+      "input": "{{a,b}}",
+      "options": {
+        "escapeInvalid": true
+      },
+      "result": "\\{(a|b)\\}"
+    },
+    {
+      "method": "compile",
+      "input": "{{a,b}}",
+      "options": {
+        "step": 2
+      },
+      "result": "{(a|b)}"
+    },
+    {
+      "method": "expand",
+      "input": "{{a,b}}",
+      "options": {
+        "step": 2
+      },
+      "result": [
+        "{a}",
+        "{b}"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "{{a,b}}",
+      "options": {
+        "step": 2
+      },
+      "result": "{{a,b}}"
+    },
+    {
+      "method": "create",
+      "input": "{{a,b}}",
+      "options": {
+        "step": 2
+      },
+      "result": "{(a|b)}"
+    },
+    {
+      "method": "compile",
+      "input": "a{b,c",
+      "options": {},
+      "result": "a{b,c"
+    },
+    {
+      "method": "expand",
+      "input": "a{b,c",
+      "options": {},
+      "result": [
+        "a{b,c"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "a{b,c",
+      "options": {},
+      "result": "a{b,c"
+    },
+    {
+      "method": "create",
+      "input": "a{b,c",
+      "options": {},
+      "result": "a{b,c"
+    },
+    {
+      "method": "compile",
+      "input": "a{b,c",
+      "options": {
+        "expand": true
+      },
+      "result": "a{b,c"
+    },
+    {
+      "method": "expand",
+      "input": "a{b,c",
+      "options": {
+        "expand": true
+      },
+      "result": [
+        "a{b,c"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "a{b,c",
+      "options": {
+        "expand": true
+      },
+      "result": "a{b,c"
+    },
+    {
+      "method": "create",
+      "input": "a{b,c",
+      "options": {
+        "expand": true
+      },
+      "result": [
+        "a{b,c"
+      ]
+    },
+    {
+      "method": "compile",
+      "input": "a{b,c",
+      "options": {
+        "expand": true,
+        "nodupes": true,
+        "noempty": true
+      },
+      "result": "a{b,c"
+    },
+    {
+      "method": "expand",
+      "input": "a{b,c",
+      "options": {
+        "expand": true,
+        "nodupes": true,
+        "noempty": true
+      },
+      "result": [
+        "a{b,c"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "a{b,c",
+      "options": {
+        "expand": true,
+        "nodupes": true,
+        "noempty": true
+      },
+      "result": "a{b,c"
+    },
+    {
+      "method": "create",
+      "input": "a{b,c",
+      "options": {
+        "expand": true,
+        "nodupes": true,
+        "noempty": true
+      },
+      "result": [
+        "a{b,c"
+      ]
+    },
+    {
+      "method": "compile",
+      "input": "a{b,c",
+      "options": {
+        "keepEscaping": true
+      },
+      "result": "a{b,c"
+    },
+    {
+      "method": "expand",
+      "input": "a{b,c",
+      "options": {
+        "keepEscaping": true
+      },
+      "result": [
+        "a{b,c"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "a{b,c",
+      "options": {
+        "keepEscaping": true
+      },
+      "result": "a{b,c"
+    },
+    {
+      "method": "create",
+      "input": "a{b,c",
+      "options": {
+        "keepEscaping": true
+      },
+      "result": "a{b,c"
+    },
+    {
+      "method": "compile",
+      "input": "a{b,c",
+      "options": {
+        "keepQuotes": true
+      },
+      "result": "a{b,c"
+    },
+    {
+      "method": "expand",
+      "input": "a{b,c",
+      "options": {
+        "keepQuotes": true
+      },
+      "result": [
+        "a{b,c"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "a{b,c",
+      "options": {
+        "keepQuotes": true
+      },
+      "result": "a{b,c"
+    },
+    {
+      "method": "create",
+      "input": "a{b,c",
+      "options": {
+        "keepQuotes": true
+      },
+      "result": "a{b,c"
+    },
+    {
+      "method": "compile",
+      "input": "a{b,c",
+      "options": {
+        "escapeInvalid": true
+      },
+      "result": "a\\{b,c"
+    },
+    {
+      "method": "expand",
+      "input": "a{b,c",
+      "options": {
+        "escapeInvalid": true
+      },
+      "result": [
+        "a{b,c"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "a{b,c",
+      "options": {
+        "escapeInvalid": true
+      },
+      "result": "a{b,c"
+    },
+    {
+      "method": "create",
+      "input": "a{b,c",
+      "options": {
+        "escapeInvalid": true
+      },
+      "result": "a\\{b,c"
+    },
+    {
+      "method": "compile",
+      "input": "a{b,c",
+      "options": {
+        "step": 2
+      },
+      "result": "a{b,c"
+    },
+    {
+      "method": "expand",
+      "input": "a{b,c",
+      "options": {
+        "step": 2
+      },
+      "result": [
+        "a{b,c"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "a{b,c",
+      "options": {
+        "step": 2
+      },
+      "result": "a{b,c"
+    },
+    {
+      "method": "create",
+      "input": "a{b,c",
+      "options": {
+        "step": 2
+      },
+      "result": "a{b,c"
+    },
+    {
+      "method": "compile",
+      "input": "a}b",
+      "options": {},
+      "result": "a}b"
+    },
+    {
+      "method": "expand",
+      "input": "a}b",
+      "options": {},
+      "result": [
+        "a}b"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "a}b",
+      "options": {},
+      "result": "a}b"
+    },
+    {
+      "method": "create",
+      "input": "a}b",
+      "options": {},
+      "result": "a}b"
+    },
+    {
+      "method": "compile",
+      "input": "a}b",
+      "options": {
+        "expand": true
+      },
+      "result": "a}b"
+    },
+    {
+      "method": "expand",
+      "input": "a}b",
+      "options": {
+        "expand": true
+      },
+      "result": [
+        "a}b"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "a}b",
+      "options": {
+        "expand": true
+      },
+      "result": "a}b"
+    },
+    {
+      "method": "create",
+      "input": "a}b",
+      "options": {
+        "expand": true
+      },
+      "result": [
+        "a}b"
+      ]
+    },
+    {
+      "method": "compile",
+      "input": "a}b",
+      "options": {
+        "expand": true,
+        "nodupes": true,
+        "noempty": true
+      },
+      "result": "a}b"
+    },
+    {
+      "method": "expand",
+      "input": "a}b",
+      "options": {
+        "expand": true,
+        "nodupes": true,
+        "noempty": true
+      },
+      "result": [
+        "a}b"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "a}b",
+      "options": {
+        "expand": true,
+        "nodupes": true,
+        "noempty": true
+      },
+      "result": "a}b"
+    },
+    {
+      "method": "create",
+      "input": "a}b",
+      "options": {
+        "expand": true,
+        "nodupes": true,
+        "noempty": true
+      },
+      "result": [
+        "a}b"
+      ]
+    },
+    {
+      "method": "compile",
+      "input": "a}b",
+      "options": {
+        "keepEscaping": true
+      },
+      "result": "a}b"
+    },
+    {
+      "method": "expand",
+      "input": "a}b",
+      "options": {
+        "keepEscaping": true
+      },
+      "result": [
+        "a}b"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "a}b",
+      "options": {
+        "keepEscaping": true
+      },
+      "result": "a}b"
+    },
+    {
+      "method": "create",
+      "input": "a}b",
+      "options": {
+        "keepEscaping": true
+      },
+      "result": "a}b"
+    },
+    {
+      "method": "compile",
+      "input": "a}b",
+      "options": {
+        "keepQuotes": true
+      },
+      "result": "a}b"
+    },
+    {
+      "method": "expand",
+      "input": "a}b",
+      "options": {
+        "keepQuotes": true
+      },
+      "result": [
+        "a}b"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "a}b",
+      "options": {
+        "keepQuotes": true
+      },
+      "result": "a}b"
+    },
+    {
+      "method": "create",
+      "input": "a}b",
+      "options": {
+        "keepQuotes": true
+      },
+      "result": "a}b"
+    },
+    {
+      "method": "compile",
+      "input": "a}b",
+      "options": {
+        "escapeInvalid": true
+      },
+      "result": "a}b"
+    },
+    {
+      "method": "expand",
+      "input": "a}b",
+      "options": {
+        "escapeInvalid": true
+      },
+      "result": [
+        "a}b"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "a}b",
+      "options": {
+        "escapeInvalid": true
+      },
+      "result": "a}b"
+    },
+    {
+      "method": "create",
+      "input": "a}b",
+      "options": {
+        "escapeInvalid": true
+      },
+      "result": "a}b"
+    },
+    {
+      "method": "compile",
+      "input": "a}b",
+      "options": {
+        "step": 2
+      },
+      "result": "a}b"
+    },
+    {
+      "method": "expand",
+      "input": "a}b",
+      "options": {
+        "step": 2
+      },
+      "result": [
+        "a}b"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "a}b",
+      "options": {
+        "step": 2
+      },
+      "result": "a}b"
+    },
+    {
+      "method": "create",
+      "input": "a}b",
+      "options": {
+        "step": 2
+      },
+      "result": "a}b"
+    },
+    {
+      "method": "compile",
+      "input": "{1..5..2}",
+      "options": {},
+      "result": "(1|3|5)"
+    },
+    {
+      "method": "expand",
+      "input": "{1..5..2}",
+      "options": {},
+      "result": [
+        "1",
+        "3",
+        "5"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "{1..5..2}",
+      "options": {},
+      "result": "{1..5..2}"
+    },
+    {
+      "method": "create",
+      "input": "{1..5..2}",
+      "options": {},
+      "result": "(1|3|5)"
+    },
+    {
+      "method": "compile",
+      "input": "{1..5..2}",
+      "options": {
+        "expand": true
+      },
+      "result": "(1|3|5)"
+    },
+    {
+      "method": "expand",
+      "input": "{1..5..2}",
+      "options": {
+        "expand": true
+      },
+      "result": [
+        "1",
+        "3",
+        "5"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "{1..5..2}",
+      "options": {
+        "expand": true
+      },
+      "result": "{1..5..2}"
+    },
+    {
+      "method": "create",
+      "input": "{1..5..2}",
+      "options": {
+        "expand": true
+      },
+      "result": [
+        "1",
+        "3",
+        "5"
+      ]
+    },
+    {
+      "method": "compile",
+      "input": "{1..5..2}",
+      "options": {
+        "expand": true,
+        "nodupes": true,
+        "noempty": true
+      },
+      "result": "(1|3|5)"
+    },
+    {
+      "method": "expand",
+      "input": "{1..5..2}",
+      "options": {
+        "expand": true,
+        "nodupes": true,
+        "noempty": true
+      },
+      "result": [
+        "1",
+        "3",
+        "5"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "{1..5..2}",
+      "options": {
+        "expand": true,
+        "nodupes": true,
+        "noempty": true
+      },
+      "result": "{1..5..2}"
+    },
+    {
+      "method": "create",
+      "input": "{1..5..2}",
+      "options": {
+        "expand": true,
+        "nodupes": true,
+        "noempty": true
+      },
+      "result": [
+        "1",
+        "3",
+        "5"
+      ]
+    },
+    {
+      "method": "compile",
+      "input": "{1..5..2}",
+      "options": {
+        "keepEscaping": true
+      },
+      "result": "(1|3|5)"
+    },
+    {
+      "method": "expand",
+      "input": "{1..5..2}",
+      "options": {
+        "keepEscaping": true
+      },
+      "result": [
+        "1",
+        "3",
+        "5"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "{1..5..2}",
+      "options": {
+        "keepEscaping": true
+      },
+      "result": "{1..5..2}"
+    },
+    {
+      "method": "create",
+      "input": "{1..5..2}",
+      "options": {
+        "keepEscaping": true
+      },
+      "result": "(1|3|5)"
+    },
+    {
+      "method": "compile",
+      "input": "{1..5..2}",
+      "options": {
+        "keepQuotes": true
+      },
+      "result": "(1|3|5)"
+    },
+    {
+      "method": "expand",
+      "input": "{1..5..2}",
+      "options": {
+        "keepQuotes": true
+      },
+      "result": [
+        "1",
+        "3",
+        "5"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "{1..5..2}",
+      "options": {
+        "keepQuotes": true
+      },
+      "result": "{1..5..2}"
+    },
+    {
+      "method": "create",
+      "input": "{1..5..2}",
+      "options": {
+        "keepQuotes": true
+      },
+      "result": "(1|3|5)"
+    },
+    {
+      "method": "compile",
+      "input": "{1..5..2}",
+      "options": {
+        "escapeInvalid": true
+      },
+      "result": "(1|3|5)"
+    },
+    {
+      "method": "expand",
+      "input": "{1..5..2}",
+      "options": {
+        "escapeInvalid": true
+      },
+      "result": [
+        "1",
+        "3",
+        "5"
+      ]
+    },
+    {
+      "method": "stringify",
+      "input": "{1..5..2}",
+      "options": {
+        "escapeInvalid": true
+      },
+      "result": "{1..5..2}"
+    },
+    {
+      "method": "create",
+      "input": "{1..5..2}",
+      "options": {
+        "escapeInvalid": true
+      },
+      "result": "(1|3|5)"
+    },
+    {
+      "method": "compile",
+      "input": "{1..5..2}",
+      "options": {
+        "step": 2
+      },
+      "result": "(1|3|5)"
+    },
+    {
+      "method": "expand",
+      "input": "{1..5..2}",
+      "options": {
+        "step": 2
+      },
+      "error": {
+        "name": "RangeError",
+        "message": "expanded array length exceeds range limit. Use options.rangeLimit to increase or disable the limit."
+      }
+    },
+    {
+      "method": "stringify",
+      "input": "{1..5..2}",
+      "options": {
+        "step": 2
+      },
+      "result": "{1..5..2}"
+    },
+    {
+      "method": "create",
+      "input": "{1..5..2}",
+      "options": {
+        "step": 2
+      },
+      "result": "(1|3|5)"
+    },
+    {
+      "method": "call",
+      "input": [
+        "",
+        "a",
+        "abc",
+        "{a,b}",
+        "{a,{b,c}}",
+        "foo/{a,b}/bar",
+        "{1..10}",
+        "{01..05}",
+        "{10..1}",
+        "{-10..-1}",
+        "{a..z}",
+        "{a,b}{c,d}",
+        "a{b,c}d{e,f}",
+        "{a,,b}",
+        "${a,b}",
+        "\\{a,b\\}",
+        "\"{a,b}\"",
+        "'{a,b}'",
+        "a/!(foo)/{b,c}",
+        "[a-z]/{1..3}",
+        "{a...b}",
+        "{{a,b}}",
+        "a{b,c",
+        "a}b",
+        "{1..5..2}"
+      ],
+      "options": {},
+      "result": [
+        "",
+        "a",
+        "abc",
+        "(a|b)",
+        "(a|(b|c))",
+        "foo/(a|b)/bar",
+        "([1-9]|10)",
+        "(0[1-5])",
+        "([1-9]|10)",
+        "(-[1-9]|-10)",
+        "([a-z])",
+        "(a|b)(c|d)",
+        "a(b|c)d(e|f)",
+        "(a|b)",
+        "${a,b}",
+        "{a,b}",
+        "{a,b}",
+        "{a,b}",
+        "a/!(foo)/(b|c)",
+        "[a-z]/([1-3])",
+        "{a...b}",
+        "{(a|b)}",
+        "a{b,c",
+        "a}b",
+        "(1|3|5)"
+      ]
+    },
+    {
+      "method": "call",
+      "input": [
+        "",
+        "a",
+        "abc",
+        "{a,b}",
+        "{a,{b,c}}",
+        "foo/{a,b}/bar",
+        "{1..10}",
+        "{01..05}",
+        "{10..1}",
+        "{-10..-1}",
+        "{a..z}",
+        "{a,b}{c,d}",
+        "a{b,c}d{e,f}",
+        "{a,,b}",
+        "${a,b}",
+        "\\{a,b\\}",
+        "\"{a,b}\"",
+        "'{a,b}'",
+        "a/!(foo)/{b,c}",
+        "[a-z]/{1..3}",
+        "{a...b}",
+        "{{a,b}}",
+        "a{b,c",
+        "a}b",
+        "{1..5..2}"
+      ],
+      "options": {
+        "expand": true
+      },
+      "result": [
+        "",
+        "a",
+        "abc",
+        "a",
+        "b",
+        "a",
+        "b",
+        "c",
+        "foo/a/bar",
+        "foo/b/bar",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "10",
+        "01",
+        "02",
+        "03",
+        "04",
+        "05",
+        "10",
+        "9",
+        "8",
+        "7",
+        "6",
+        "5",
+        "4",
+        "3",
+        "2",
+        "1",
+        "-10",
+        "-9",
+        "-8",
+        "-7",
+        "-6",
+        "-5",
+        "-4",
+        "-3",
+        "-2",
+        "-1",
+        "a",
+        "b",
+        "c",
+        "d",
+        "e",
+        "f",
+        "g",
+        "h",
+        "i",
+        "j",
+        "k",
+        "l",
+        "m",
+        "n",
+        "o",
+        "p",
+        "q",
+        "r",
+        "s",
+        "t",
+        "u",
+        "v",
+        "w",
+        "x",
+        "y",
+        "z",
+        "ac",
+        "ad",
+        "bc",
+        "bd",
+        "abde",
+        "abdf",
+        "acde",
+        "acdf",
+        "a",
+        "",
+        "b",
+        "${a,b}",
+        "{a,b}",
+        "{a,b}",
+        "{a,b}",
+        "a/!(foo)/b",
+        "a/!(foo)/c",
+        "[a-z]/1",
+        "[a-z]/2",
+        "[a-z]/3",
+        "{a...b}",
+        "{a}",
+        "{b}",
+        "a{b,c",
+        "a}b",
+        "1",
+        "3",
+        "5"
+      ]
+    },
+    {
+      "method": "call",
+      "input": [
+        "",
+        "a",
+        "abc",
+        "{a,b}",
+        "{a,{b,c}}",
+        "foo/{a,b}/bar",
+        "{1..10}",
+        "{01..05}",
+        "{10..1}",
+        "{-10..-1}",
+        "{a..z}",
+        "{a,b}{c,d}",
+        "a{b,c}d{e,f}",
+        "{a,,b}",
+        "${a,b}",
+        "\\{a,b\\}",
+        "\"{a,b}\"",
+        "'{a,b}'",
+        "a/!(foo)/{b,c}",
+        "[a-z]/{1..3}",
+        "{a...b}",
+        "{{a,b}}",
+        "a{b,c",
+        "a}b",
+        "{1..5..2}"
+      ],
+      "options": {
+        "expand": true,
+        "nodupes": true,
+        "noempty": true
+      },
+      "result": [
+        "",
+        "a",
+        "abc",
+        "b",
+        "c",
+        "foo/a/bar",
+        "foo/b/bar",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "10",
+        "01",
+        "02",
+        "03",
+        "04",
+        "05",
+        "-10",
+        "-9",
+        "-8",
+        "-7",
+        "-6",
+        "-5",
+        "-4",
+        "-3",
+        "-2",
+        "-1",
+        "d",
+        "e",
+        "f",
+        "g",
+        "h",
+        "i",
+        "j",
+        "k",
+        "l",
+        "m",
+        "n",
+        "o",
+        "p",
+        "q",
+        "r",
+        "s",
+        "t",
+        "u",
+        "v",
+        "w",
+        "x",
+        "y",
+        "z",
+        "ac",
+        "ad",
+        "bc",
+        "bd",
+        "abde",
+        "abdf",
+        "acde",
+        "acdf",
+        "${a,b}",
+        "{a,b}",
+        "a/!(foo)/b",
+        "a/!(foo)/c",
+        "[a-z]/1",
+        "[a-z]/2",
+        "[a-z]/3",
+        "{a...b}",
+        "{a}",
+        "{b}",
+        "a{b,c",
+        "a}b"
+      ]
+    },
+    {
+      "method": "call",
+      "input": [
+        "",
+        "a",
+        "abc",
+        "{a,b}",
+        "{a,{b,c}}",
+        "foo/{a,b}/bar",
+        "{1..10}",
+        "{01..05}",
+        "{10..1}",
+        "{-10..-1}",
+        "{a..z}",
+        "{a,b}{c,d}",
+        "a{b,c}d{e,f}",
+        "{a,,b}",
+        "${a,b}",
+        "\\{a,b\\}",
+        "\"{a,b}\"",
+        "'{a,b}'",
+        "a/!(foo)/{b,c}",
+        "[a-z]/{1..3}",
+        "{a...b}",
+        "{{a,b}}",
+        "a{b,c",
+        "a}b",
+        "{1..5..2}"
+      ],
+      "options": {
+        "keepEscaping": true
+      },
+      "result": [
+        "",
+        "a",
+        "abc",
+        "(a|b)",
+        "(a|(b|c))",
+        "foo/(a|b)/bar",
+        "([1-9]|10)",
+        "(0[1-5])",
+        "([1-9]|10)",
+        "(-[1-9]|-10)",
+        "([a-z])",
+        "(a|b)(c|d)",
+        "a(b|c)d(e|f)",
+        "(a|b)",
+        "${a,b}",
+        "\\{a,b\\}",
+        "{a,b}",
+        "{a,b}",
+        "a/!(foo)/(b|c)",
+        "[a-z]/([1-3])",
+        "{a...b}",
+        "{(a|b)}",
+        "a{b,c",
+        "a}b",
+        "(1|3|5)"
+      ]
+    },
+    {
+      "method": "call",
+      "input": [
+        "",
+        "a",
+        "abc",
+        "{a,b}",
+        "{a,{b,c}}",
+        "foo/{a,b}/bar",
+        "{1..10}",
+        "{01..05}",
+        "{10..1}",
+        "{-10..-1}",
+        "{a..z}",
+        "{a,b}{c,d}",
+        "a{b,c}d{e,f}",
+        "{a,,b}",
+        "${a,b}",
+        "\\{a,b\\}",
+        "\"{a,b}\"",
+        "'{a,b}'",
+        "a/!(foo)/{b,c}",
+        "[a-z]/{1..3}",
+        "{a...b}",
+        "{{a,b}}",
+        "a{b,c",
+        "a}b",
+        "{1..5..2}"
+      ],
+      "options": {
+        "keepQuotes": true
+      },
+      "result": [
+        "",
+        "a",
+        "abc",
+        "(a|b)",
+        "(a|(b|c))",
+        "foo/(a|b)/bar",
+        "([1-9]|10)",
+        "(0[1-5])",
+        "([1-9]|10)",
+        "(-[1-9]|-10)",
+        "([a-z])",
+        "(a|b)(c|d)",
+        "a(b|c)d(e|f)",
+        "(a|b)",
+        "${a,b}",
+        "{a,b}",
+        "\"{a,b}\"",
+        "'{a,b}'",
+        "a/!(foo)/(b|c)",
+        "[a-z]/([1-3])",
+        "{a...b}",
+        "{(a|b)}",
+        "a{b,c",
+        "a}b",
+        "(1|3|5)"
+      ]
+    },
+    {
+      "method": "call",
+      "input": [
+        "",
+        "a",
+        "abc",
+        "{a,b}",
+        "{a,{b,c}}",
+        "foo/{a,b}/bar",
+        "{1..10}",
+        "{01..05}",
+        "{10..1}",
+        "{-10..-1}",
+        "{a..z}",
+        "{a,b}{c,d}",
+        "a{b,c}d{e,f}",
+        "{a,,b}",
+        "${a,b}",
+        "\\{a,b\\}",
+        "\"{a,b}\"",
+        "'{a,b}'",
+        "a/!(foo)/{b,c}",
+        "[a-z]/{1..3}",
+        "{a...b}",
+        "{{a,b}}",
+        "a{b,c",
+        "a}b",
+        "{1..5..2}"
+      ],
+      "options": {
+        "escapeInvalid": true
+      },
+      "result": [
+        "",
+        "a",
+        "abc",
+        "(a|b)",
+        "(a|(b|c))",
+        "foo/(a|b)/bar",
+        "([1-9]|10)",
+        "(0[1-5])",
+        "([1-9]|10)",
+        "(-[1-9]|-10)",
+        "([a-z])",
+        "(a|b)(c|d)",
+        "a(b|c)d(e|f)",
+        "(a|b)",
+        "$\\{a,b\\}",
+        "{a,b}",
+        "{a,b}",
+        "{a,b}",
+        "a/!(foo)/(b|c)",
+        "[a-z]/([1-3])",
+        "\\{a...b\\}",
+        "\\{(a|b)\\}",
+        "a\\{b,c",
+        "a}b",
+        "(1|3|5)"
+      ]
+    },
+    {
+      "method": "call",
+      "input": [
+        "",
+        "a",
+        "abc",
+        "{a,b}",
+        "{a,{b,c}}",
+        "foo/{a,b}/bar",
+        "{1..10}",
+        "{01..05}",
+        "{10..1}",
+        "{-10..-1}",
+        "{a..z}",
+        "{a,b}{c,d}",
+        "a{b,c}d{e,f}",
+        "{a,,b}",
+        "${a,b}",
+        "\\{a,b\\}",
+        "\"{a,b}\"",
+        "'{a,b}'",
+        "a/!(foo)/{b,c}",
+        "[a-z]/{1..3}",
+        "{a...b}",
+        "{{a,b}}",
+        "a{b,c",
+        "a}b",
+        "{1..5..2}"
+      ],
+      "options": {
+        "step": 2
+      },
+      "result": [
+        "",
+        "a",
+        "abc",
+        "(a|b)",
+        "(a|(b|c))",
+        "foo/(a|b)/bar",
+        "(1|3|5|7|9)",
+        "(01|03|05)",
+        "(2|4|6|8|10)",
+        "(-(?:2|4|6|8|10))",
+        "(a|c|e|g|i|k|m|o|q|s|u|w|y)",
+        "(a|b)(c|d)",
+        "a(b|c)d(e|f)",
+        "(a|b)",
+        "${a,b}",
+        "{a,b}",
+        "{a,b}",
+        "{a,b}",
+        "a/!(foo)/(b|c)",
+        "[a-z]/(1|3)",
+        "{a...b}",
+        "{(a|b)}",
+        "a{b,c",
+        "a}b",
+        "(1|3|5)"
+      ]
+    },
+    {
+      "method": "parse",
+      "input": "",
+      "options": {},
+      "result": {
+        "type": "root",
+        "input": "",
+        "nodes": [
+          {
+            "type": "bos"
+          },
+          {
+            "type": "eos"
+          }
+        ]
+      }
+    },
+    {
+      "method": "parse",
+      "input": "a",
+      "options": {},
+      "result": {
+        "type": "root",
+        "input": "a",
+        "nodes": [
+          {
+            "type": "bos"
+          },
+          {
+            "type": "text",
+            "value": "a"
+          },
+          {
+            "type": "eos"
+          }
+        ]
+      }
+    },
+    {
+      "method": "parse",
+      "input": "abc",
+      "options": {},
+      "result": {
+        "type": "root",
+        "input": "abc",
+        "nodes": [
+          {
+            "type": "bos"
+          },
+          {
+            "type": "text",
+            "value": "abc"
+          },
+          {
+            "type": "eos"
+          }
+        ]
+      }
+    },
+    {
+      "method": "parse",
+      "input": "{a,b}",
+      "options": {},
+      "result": {
+        "type": "root",
+        "input": "{a,b}",
+        "nodes": [
+          {
+            "type": "bos"
+          },
+          {
+            "type": "brace",
+            "open": true,
+            "close": true,
+            "dollar": false,
+            "depth": 1,
+            "commas": 1,
+            "ranges": 0,
+            "nodes": [
+              {
+                "type": "open",
+                "value": "{"
+              },
+              {
+                "type": "text",
+                "value": "a"
+              },
+              {
+                "type": "comma",
+                "value": ","
+              },
+              {
+                "type": "text",
+                "value": "b"
+              },
+              {
+                "type": "close",
+                "value": "}"
+              }
+            ]
+          },
+          {
+            "type": "eos"
+          }
+        ]
+      }
+    },
+    {
+      "method": "parse",
+      "input": "{a,{b,c}}",
+      "options": {},
+      "result": {
+        "type": "root",
+        "input": "{a,{b,c}}",
+        "nodes": [
+          {
+            "type": "bos"
+          },
+          {
+            "type": "brace",
+            "open": true,
+            "close": true,
+            "dollar": false,
+            "depth": 1,
+            "commas": 1,
+            "ranges": 0,
+            "nodes": [
+              {
+                "type": "open",
+                "value": "{"
+              },
+              {
+                "type": "text",
+                "value": "a"
+              },
+              {
+                "type": "comma",
+                "value": ","
+              },
+              {
+                "type": "brace",
+                "open": true,
+                "close": true,
+                "dollar": false,
+                "depth": 2,
+                "commas": 1,
+                "ranges": 0,
+                "nodes": [
+                  {
+                    "type": "open",
+                    "value": "{"
+                  },
+                  {
+                    "type": "text",
+                    "value": "b"
+                  },
+                  {
+                    "type": "comma",
+                    "value": ","
+                  },
+                  {
+                    "type": "text",
+                    "value": "c"
+                  },
+                  {
+                    "type": "close",
+                    "value": "}"
+                  }
+                ]
+              },
+              {
+                "type": "close",
+                "value": "}"
+              }
+            ]
+          },
+          {
+            "type": "eos"
+          }
+        ]
+      }
+    },
+    {
+      "method": "parse",
+      "input": "foo/{a,b}/bar",
+      "options": {},
+      "result": {
+        "type": "root",
+        "input": "foo/{a,b}/bar",
+        "nodes": [
+          {
+            "type": "bos"
+          },
+          {
+            "type": "text",
+            "value": "foo/"
+          },
+          {
+            "type": "brace",
+            "open": true,
+            "close": true,
+            "dollar": false,
+            "depth": 1,
+            "commas": 1,
+            "ranges": 0,
+            "nodes": [
+              {
+                "type": "open",
+                "value": "{"
+              },
+              {
+                "type": "text",
+                "value": "a"
+              },
+              {
+                "type": "comma",
+                "value": ","
+              },
+              {
+                "type": "text",
+                "value": "b"
+              },
+              {
+                "type": "close",
+                "value": "}"
+              }
+            ]
+          },
+          {
+            "type": "text",
+            "value": "/bar"
+          },
+          {
+            "type": "eos"
+          }
+        ]
+      }
+    },
+    {
+      "method": "parse",
+      "input": "{1..10}",
+      "options": {},
+      "result": {
+        "type": "root",
+        "input": "{1..10}",
+        "nodes": [
+          {
+            "type": "bos"
+          },
+          {
+            "type": "brace",
+            "open": true,
+            "close": true,
+            "dollar": false,
+            "depth": 1,
+            "commas": 0,
+            "ranges": 1,
+            "nodes": [
+              {
+                "type": "open",
+                "value": "{"
+              },
+              {
+                "type": "text",
+                "value": "1"
+              },
+              {
+                "type": "range",
+                "value": ".."
+              },
+              {
+                "type": "text",
+                "value": "10"
+              },
+              {
+                "type": "close",
+                "value": "}"
+              }
+            ],
+            "range": [],
+            "args": []
+          },
+          {
+            "type": "eos"
+          }
+        ]
+      }
+    },
+    {
+      "method": "parse",
+      "input": "{01..05}",
+      "options": {},
+      "result": {
+        "type": "root",
+        "input": "{01..05}",
+        "nodes": [
+          {
+            "type": "bos"
+          },
+          {
+            "type": "brace",
+            "open": true,
+            "close": true,
+            "dollar": false,
+            "depth": 1,
+            "commas": 0,
+            "ranges": 1,
+            "nodes": [
+              {
+                "type": "open",
+                "value": "{"
+              },
+              {
+                "type": "text",
+                "value": "01"
+              },
+              {
+                "type": "range",
+                "value": ".."
+              },
+              {
+                "type": "text",
+                "value": "05"
+              },
+              {
+                "type": "close",
+                "value": "}"
+              }
+            ],
+            "range": [],
+            "args": []
+          },
+          {
+            "type": "eos"
+          }
+        ]
+      }
+    },
+    {
+      "method": "parse",
+      "input": "{10..1}",
+      "options": {},
+      "result": {
+        "type": "root",
+        "input": "{10..1}",
+        "nodes": [
+          {
+            "type": "bos"
+          },
+          {
+            "type": "brace",
+            "open": true,
+            "close": true,
+            "dollar": false,
+            "depth": 1,
+            "commas": 0,
+            "ranges": 1,
+            "nodes": [
+              {
+                "type": "open",
+                "value": "{"
+              },
+              {
+                "type": "text",
+                "value": "10"
+              },
+              {
+                "type": "range",
+                "value": ".."
+              },
+              {
+                "type": "text",
+                "value": "1"
+              },
+              {
+                "type": "close",
+                "value": "}"
+              }
+            ],
+            "range": [],
+            "args": []
+          },
+          {
+            "type": "eos"
+          }
+        ]
+      }
+    },
+    {
+      "method": "parse",
+      "input": "{-10..-1}",
+      "options": {},
+      "result": {
+        "type": "root",
+        "input": "{-10..-1}",
+        "nodes": [
+          {
+            "type": "bos"
+          },
+          {
+            "type": "brace",
+            "open": true,
+            "close": true,
+            "dollar": false,
+            "depth": 1,
+            "commas": 0,
+            "ranges": 1,
+            "nodes": [
+              {
+                "type": "open",
+                "value": "{"
+              },
+              {
+                "type": "text",
+                "value": "-10"
+              },
+              {
+                "type": "range",
+                "value": ".."
+              },
+              {
+                "type": "text",
+                "value": "-1"
+              },
+              {
+                "type": "close",
+                "value": "}"
+              }
+            ],
+            "range": [],
+            "args": []
+          },
+          {
+            "type": "eos"
+          }
+        ]
+      }
+    },
+    {
+      "method": "parse",
+      "input": "{a..z}",
+      "options": {},
+      "result": {
+        "type": "root",
+        "input": "{a..z}",
+        "nodes": [
+          {
+            "type": "bos"
+          },
+          {
+            "type": "brace",
+            "open": true,
+            "close": true,
+            "dollar": false,
+            "depth": 1,
+            "commas": 0,
+            "ranges": 1,
+            "nodes": [
+              {
+                "type": "open",
+                "value": "{"
+              },
+              {
+                "type": "text",
+                "value": "a"
+              },
+              {
+                "type": "range",
+                "value": ".."
+              },
+              {
+                "type": "text",
+                "value": "z"
+              },
+              {
+                "type": "close",
+                "value": "}"
+              }
+            ],
+            "range": [],
+            "args": []
+          },
+          {
+            "type": "eos"
+          }
+        ]
+      }
+    },
+    {
+      "method": "parse",
+      "input": "{a,b}{c,d}",
+      "options": {},
+      "result": {
+        "type": "root",
+        "input": "{a,b}{c,d}",
+        "nodes": [
+          {
+            "type": "bos"
+          },
+          {
+            "type": "brace",
+            "open": true,
+            "close": true,
+            "dollar": false,
+            "depth": 1,
+            "commas": 1,
+            "ranges": 0,
+            "nodes": [
+              {
+                "type": "open",
+                "value": "{"
+              },
+              {
+                "type": "text",
+                "value": "a"
+              },
+              {
+                "type": "comma",
+                "value": ","
+              },
+              {
+                "type": "text",
+                "value": "b"
+              },
+              {
+                "type": "close",
+                "value": "}"
+              }
+            ]
+          },
+          {
+            "type": "brace",
+            "open": true,
+            "close": true,
+            "dollar": false,
+            "depth": 1,
+            "commas": 1,
+            "ranges": 0,
+            "nodes": [
+              {
+                "type": "open",
+                "value": "{"
+              },
+              {
+                "type": "text",
+                "value": "c"
+              },
+              {
+                "type": "comma",
+                "value": ","
+              },
+              {
+                "type": "text",
+                "value": "d"
+              },
+              {
+                "type": "close",
+                "value": "}"
+              }
+            ]
+          },
+          {
+            "type": "eos"
+          }
+        ]
+      }
+    },
+    {
+      "method": "parse",
+      "input": "a{b,c}d{e,f}",
+      "options": {},
+      "result": {
+        "type": "root",
+        "input": "a{b,c}d{e,f}",
+        "nodes": [
+          {
+            "type": "bos"
+          },
+          {
+            "type": "text",
+            "value": "a"
+          },
+          {
+            "type": "brace",
+            "open": true,
+            "close": true,
+            "dollar": false,
+            "depth": 1,
+            "commas": 1,
+            "ranges": 0,
+            "nodes": [
+              {
+                "type": "open",
+                "value": "{"
+              },
+              {
+                "type": "text",
+                "value": "b"
+              },
+              {
+                "type": "comma",
+                "value": ","
+              },
+              {
+                "type": "text",
+                "value": "c"
+              },
+              {
+                "type": "close",
+                "value": "}"
+              }
+            ]
+          },
+          {
+            "type": "text",
+            "value": "d"
+          },
+          {
+            "type": "brace",
+            "open": true,
+            "close": true,
+            "dollar": false,
+            "depth": 1,
+            "commas": 1,
+            "ranges": 0,
+            "nodes": [
+              {
+                "type": "open",
+                "value": "{"
+              },
+              {
+                "type": "text",
+                "value": "e"
+              },
+              {
+                "type": "comma",
+                "value": ","
+              },
+              {
+                "type": "text",
+                "value": "f"
+              },
+              {
+                "type": "close",
+                "value": "}"
+              }
+            ]
+          },
+          {
+            "type": "eos"
+          }
+        ]
+      }
+    },
+    {
+      "method": "parse",
+      "input": "{a,,b}",
+      "options": {},
+      "result": {
+        "type": "root",
+        "input": "{a,,b}",
+        "nodes": [
+          {
+            "type": "bos"
+          },
+          {
+            "type": "brace",
+            "open": true,
+            "close": true,
+            "dollar": false,
+            "depth": 1,
+            "commas": 2,
+            "ranges": 0,
+            "nodes": [
+              {
+                "type": "open",
+                "value": "{"
+              },
+              {
+                "type": "text",
+                "value": "a"
+              },
+              {
+                "type": "comma",
+                "value": ","
+              },
+              {
+                "type": "comma",
+                "value": ","
+              },
+              {
+                "type": "text",
+                "value": "b"
+              },
+              {
+                "type": "close",
+                "value": "}"
+              }
+            ]
+          },
+          {
+            "type": "eos"
+          }
+        ]
+      }
+    },
+    {
+      "method": "parse",
+      "input": "${a,b}",
+      "options": {},
+      "result": {
+        "type": "root",
+        "input": "${a,b}",
+        "nodes": [
+          {
+            "type": "bos"
+          },
+          {
+            "type": "text",
+            "value": "$"
+          },
+          {
+            "type": "brace",
+            "open": true,
+            "close": true,
+            "dollar": true,
+            "depth": 1,
+            "commas": 1,
+            "ranges": 0,
+            "nodes": [
+              {
+                "type": "open",
+                "value": "{"
+              },
+              {
+                "type": "text",
+                "value": "a"
+              },
+              {
+                "type": "comma",
+                "value": ","
+              },
+              {
+                "type": "text",
+                "value": "b"
+              },
+              {
+                "type": "close",
+                "value": "}"
+              }
+            ]
+          },
+          {
+            "type": "eos"
+          }
+        ]
+      }
+    },
+    {
+      "method": "parse",
+      "input": "\\{a,b\\}",
+      "options": {},
+      "result": {
+        "type": "root",
+        "input": "\\{a,b\\}",
+        "nodes": [
+          {
+            "type": "bos"
+          },
+          {
+            "type": "text",
+            "value": "{a,b}"
+          },
+          {
+            "type": "eos"
+          }
+        ]
+      }
+    },
+    {
+      "method": "parse",
+      "input": "\"{a,b}\"",
+      "options": {},
+      "result": {
+        "type": "root",
+        "input": "\"{a,b}\"",
+        "nodes": [
+          {
+            "type": "bos"
+          },
+          {
+            "type": "text",
+            "value": "{a,b}"
+          },
+          {
+            "type": "eos"
+          }
+        ]
+      }
+    },
+    {
+      "method": "parse",
+      "input": "'{a,b}'",
+      "options": {},
+      "result": {
+        "type": "root",
+        "input": "'{a,b}'",
+        "nodes": [
+          {
+            "type": "bos"
+          },
+          {
+            "type": "text",
+            "value": "{a,b}"
+          },
+          {
+            "type": "eos"
+          }
+        ]
+      }
+    },
+    {
+      "method": "parse",
+      "input": "a/!(foo)/{b,c}",
+      "options": {},
+      "result": {
+        "type": "root",
+        "input": "a/!(foo)/{b,c}",
+        "nodes": [
+          {
+            "type": "bos"
+          },
+          {
+            "type": "text",
+            "value": "a/!"
+          },
+          {
+            "type": "paren",
+            "nodes": [
+              {
+                "type": "text",
+                "value": "(foo)/"
+              }
+            ]
+          },
+          {
+            "type": "brace",
+            "open": true,
+            "close": true,
+            "dollar": false,
+            "depth": 1,
+            "commas": 1,
+            "ranges": 0,
+            "nodes": [
+              {
+                "type": "open",
+                "value": "{"
+              },
+              {
+                "type": "text",
+                "value": "b"
+              },
+              {
+                "type": "comma",
+                "value": ","
+              },
+              {
+                "type": "text",
+                "value": "c"
+              },
+              {
+                "type": "close",
+                "value": "}"
+              }
+            ]
+          },
+          {
+            "type": "eos"
+          }
+        ]
+      }
+    },
+    {
+      "method": "parse",
+      "input": "[a-z]/{1..3}",
+      "options": {},
+      "result": {
+        "type": "root",
+        "input": "[a-z]/{1..3}",
+        "nodes": [
+          {
+            "type": "bos"
+          },
+          {
+            "type": "text",
+            "value": "[a-z]/"
+          },
+          {
+            "type": "brace",
+            "open": true,
+            "close": true,
+            "dollar": false,
+            "depth": 1,
+            "commas": 0,
+            "ranges": 1,
+            "nodes": [
+              {
+                "type": "open",
+                "value": "{"
+              },
+              {
+                "type": "text",
+                "value": "1"
+              },
+              {
+                "type": "range",
+                "value": ".."
+              },
+              {
+                "type": "text",
+                "value": "3"
+              },
+              {
+                "type": "close",
+                "value": "}"
+              }
+            ],
+            "range": [],
+            "args": []
+          },
+          {
+            "type": "eos"
+          }
+        ]
+      }
+    },
+    {
+      "method": "parse",
+      "input": "{a...b}",
+      "options": {},
+      "result": {
+        "type": "root",
+        "input": "{a...b}",
+        "nodes": [
+          {
+            "type": "bos"
+          },
+          {
+            "type": "brace",
+            "open": true,
+            "close": true,
+            "dollar": false,
+            "depth": 1,
+            "commas": 0,
+            "ranges": 0,
+            "nodes": [
+              {
+                "type": "open",
+                "value": "{"
+              },
+              {
+                "type": "text",
+                "value": "a...b"
+              },
+              {
+                "type": "close",
+                "value": "}"
+              }
+            ],
+            "range": [],
+            "args": []
+          },
+          {
+            "type": "eos"
+          }
+        ]
+      }
+    },
+    {
+      "method": "parse",
+      "input": "{{a,b}}",
+      "options": {},
+      "result": {
+        "type": "root",
+        "input": "{{a,b}}",
+        "nodes": [
+          {
+            "type": "bos"
+          },
+          {
+            "type": "brace",
+            "open": true,
+            "close": true,
+            "dollar": false,
+            "depth": 1,
+            "commas": 0,
+            "ranges": 0,
+            "nodes": [
+              {
+                "type": "open",
+                "value": "{"
+              },
+              {
+                "type": "brace",
+                "open": true,
+                "close": true,
+                "dollar": false,
+                "depth": 2,
+                "commas": 1,
+                "ranges": 0,
+                "nodes": [
+                  {
+                    "type": "open",
+                    "value": "{"
+                  },
+                  {
+                    "type": "text",
+                    "value": "a"
+                  },
+                  {
+                    "type": "comma",
+                    "value": ","
+                  },
+                  {
+                    "type": "text",
+                    "value": "b"
+                  },
+                  {
+                    "type": "close",
+                    "value": "}"
+                  }
+                ]
+              },
+              {
+                "type": "close",
+                "value": "}"
+              }
+            ]
+          },
+          {
+            "type": "eos"
+          }
+        ]
+      }
+    },
+    {
+      "method": "parse",
+      "input": "a{b,c",
+      "options": {},
+      "result": {
+        "type": "root",
+        "input": "a{b,c",
+        "nodes": [
+          {
+            "type": "bos"
+          },
+          {
+            "type": "text",
+            "value": "a"
+          },
+          {
+            "type": "text",
+            "value": "{",
+            "isOpen": true,
+            "invalid": true
+          },
+          {
+            "type": "text",
+            "value": "b",
+            "invalid": true
+          },
+          {
+            "type": "text",
+            "value": ",",
+            "invalid": true
+          },
+          {
+            "type": "text",
+            "value": "c",
+            "invalid": true
+          },
+          {
+            "type": "eos"
+          }
+        ]
+      }
+    },
+    {
+      "method": "parse",
+      "input": "a}b",
+      "options": {},
+      "result": {
+        "type": "root",
+        "input": "a}b",
+        "nodes": [
+          {
+            "type": "bos"
+          },
+          {
+            "type": "text",
+            "value": "a}b"
+          },
+          {
+            "type": "eos"
+          }
+        ]
+      }
+    },
+    {
+      "method": "parse",
+      "input": "{1..5..2}",
+      "options": {},
+      "result": {
+        "type": "root",
+        "input": "{1..5..2}",
+        "nodes": [
+          {
+            "type": "bos"
+          },
+          {
+            "type": "brace",
+            "open": true,
+            "close": true,
+            "dollar": false,
+            "depth": 1,
+            "commas": 0,
+            "ranges": 2,
+            "nodes": [
+              {
+                "type": "open",
+                "value": "{"
+              },
+              {
+                "type": "text",
+                "value": "1"
+              },
+              {
+                "type": "range",
+                "value": ".."
+              },
+              {
+                "type": "text",
+                "value": "5"
+              },
+              {
+                "type": "range",
+                "value": ".."
+              },
+              {
+                "type": "text",
+                "value": "2"
+              },
+              {
+                "type": "close",
+                "value": "}"
+              }
+            ],
+            "range": [],
+            "args": []
+          },
+          {
+            "type": "eos"
+          }
+        ]
+      }
+    }
+  ]
+}

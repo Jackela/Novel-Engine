@@ -1,0 +1,13 @@
+{
+  "name": "@novel-engine/braces",
+  "private": true,
+  "description": "Controlled MIT-source braces replacement with fixed recursion and expansion bounds",
+  "license": "MIT",
+  "main": "index.js",
+  "engines": {
+    "node": ">=24"
+  },
+  "dependencies": {
+    "fill-range": "7.1.1"
+  }
+}

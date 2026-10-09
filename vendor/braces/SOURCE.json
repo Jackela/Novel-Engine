@@ -1,0 +1,121 @@
+{
+  "upstream": {
+    "name": "braces",
+    "version": "3.0.3",
+    "commit": "74b2db2938fad48a2ea54a9c8bf27a37a62c350d",
+    "repository": "https://github.com/micromatch/braces",
+    "tarball": "https://registry.npmjs.org/braces/-/braces-3.0.3.tgz",
+    "integrity": "sha512-yQbXgO/OSZVD2IsiLlro+7Hf6Q18EJrKSEsdoMzKePKXct3gvD8oLcOQdIzGupr5Fj+EDe8gO/lxc1BzfMpxvA==",
+    "license": "MIT",
+    "sourceSha256": {
+      "index.js": "332ea07c7b006361aad12aa994ca75dc1db8e8382b884909e2f38f10b85c88a4",
+      "lib/compile.js": "dc98f22eee3d511785d92a00758d5f0d48efed5f5813bdecc2de430c529b5c9f",
+      "lib/constants.js": "c18ac5adb57308f1ce42a28552da3a31f5d83709743ebd9a636336813a744d4b",
+      "lib/expand.js": "41ccc196ebfa7b7781a634e721eb744e4e7bcb54cba427a7e3d6806a1b9e58f7",
+      "lib/parse.js": "e572166565f15fa6ad9865ae49d678218e32aabfd1b3720f6d0d43d39800d310",
+      "lib/stringify.js": "379f22d77bfa1478341ccd49c5e4267464aabcbba03558bab332aac23fc6f23a",
+      "lib/utils.js": "b5a7596aa67730412b3c029ef09e84e6b67b8e445cffd35d1d295549c89066c7"
+    },
+    "licenseSha256": "35bdd8a44339719441900fb50fbefc5e2dca1ca662cbaed7a687de842c8b70f2"
+  },
+  "advisory": "https://github.com/advisories/GHSA-vfj7-8cjw-p6xm",
+  "status": "local controlled replacement; not an upstream release",
+  "limits": {
+    "parserNesting": 32,
+    "astDepthIncludingLeaf": 33,
+    "astNodes": 20002,
+    "patternCharacters": 10000,
+    "expansionResults": 1000,
+    "outputCharacters": 1000000,
+    "numericEndpointsAndSteps": "safe integers; zero/negative steps retain upstream normalization"
+  },
+  "modifiedFiles": [
+    "index.js",
+    "lib/parse.js",
+    "lib/compile.js",
+    "lib/expand.js",
+    "lib/stringify.js",
+    "lib/utils.js",
+    "lib/limits.js"
+  ],
+  "review": "Novel Engine candidate pending independent review",
+  "publicApi": [
+    "call",
+    "parse",
+    "stringify",
+    "compile",
+    "expand",
+    "create"
+  ],
+  "patchedSourceSha256": {
+    "index.js": "be3f41a10d48b65026dd975c9c6adc8fae0f3e5077e6b53b529f56bca4d16c8a",
+    "lib/compile.js": "8d407d0a1f9c79a75db473db3cd7db646b5d62f2c14de635cc6cfee0b87f2d83",
+    "lib/constants.js": "c18ac5adb57308f1ce42a28552da3a31f5d83709743ebd9a636336813a744d4b",
+    "lib/expand.js": "39b75d8e8e18e6eadffe8217eccb1fdcbdcaab9eca95d796e448fe6694634991",
+    "lib/limits.js": "a6b11d6e94fc914ce65fcb91f230faaafbec2b06a5e338527c5b77133c4a79f6",
+    "lib/parse.js": "895438b07c3e4ffdc8c00693b2da0664092506efb7828a3c8234eed2d70bd130",
+    "lib/stringify.js": "a177d33d9206cbf10ef9471e5c48b06cd154defaaf7fc21e3569652fa3824d83",
+    "lib/utils.js": "feb3f7e1adfcca30f757ab8c02ef56cd38afd2b7166cff2a5a16d7d901ed3636"
+  },
+  "package": {
+    "name": "@novel-engine/braces",
+    "private": true,
+    "version": "omitted: server/package.json owns product identity; local package is not published"
+  },
+  "reusedFrom": {
+    "repository": "https://github.com/Jackela/ClarityOKR",
+    "sourceManifestSha256": "e1e460270af50f000a4aede43a7bbf9bc5054f4edc3e90cb9cfcdd5abcb967a3",
+    "securityPatchSha256": "3fdd1b192cf84ab483e24b025cb611f14e069403711348d669eef328bc11d03c",
+    "semanticsSha256": "55f303126f3b1986f042842122eee42b2f1581b70a752e6e1cc54be2cbd4ca1f",
+    "scope": "Exact independently reviewed MIT source and compatibility fixtures; package identity, provenance and installed-chain tests belong to Novel Engine"
+  },
+  "inheritedReview": {
+    "finding": "Unsafe integer range endpoints can prevent fill-range incrementing, bypassing the initial count guard",
+    "before": {
+      "pattern": "{9007199254740992..9007199254740994}",
+      "options": {
+        "rangeLimit": false
+      },
+      "observedBy": "parent independent review",
+      "timeoutMs": 1000,
+      "termination": "SIGTERM"
+    },
+    "status": "passed within recorded scope",
+    "date": "2026-10-09",
+    "scope": [
+      "official advisory root cause",
+      "complete security patch and recursion entry guards",
+      "installed package 15 security tests and 732 normal semantic comparisons",
+      "safe numeric endpoint and step regression recheck",
+      "MIT and original/patched source fingerprints"
+    ]
+  },
+  "verification": {
+    "date": "2026-10-09",
+    "node": "v24.19.0",
+    "upstreamTarballIntegrity": "verified against official npm tarball",
+    "upstreamSemanticComparisons": 732,
+    "baseline": "63d27cf004fdfc647f0616b728847bb9873e7547",
+    "dependencyChains": [
+      "@fission-ai/openspec@1.11.0 > fast-glob@3.3.3 > micromatch@4.0.8 > braces@3.0.3",
+      "react-doctor@0.9.12 > deslop-js@0.9.12 > fast-glob@3.3.3 > micromatch@4.0.8 > braces@3.0.3"
+    ],
+    "publishedVersion": "Official npm registry latest is 3.0.3; 3.0.4 is not published. The npm audit patched range >=3.0.4 does not establish a release.",
+    "audit": {
+      "before": {
+        "info": 0,
+        "low": 0,
+        "moderate": 0,
+        "high": 1,
+        "critical": 0
+      },
+      "after": {
+        "info": 0,
+        "low": 0,
+        "moderate": 0,
+        "high": 0,
+        "critical": 0
+      }
+    }
+  }
+}

@@ -37,6 +37,8 @@ jobs:
           pnpm config set fetch-retry-mintimeout 1000
           pnpm config set fetch-retry-maxtimeout 60000
           pnpm install --frozen-lockfile
+      - name: Verify controlled dependency source and installed chains
+        run: pnpm run test:dependency-security
       - name: Audit all dependencies
         id: audit
         run: pnpm audit --audit-level high
