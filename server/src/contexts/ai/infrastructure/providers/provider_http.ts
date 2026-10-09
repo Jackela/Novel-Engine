@@ -246,18 +246,36 @@ function errorPayloadCode(error: Record<string, unknown>): string {
   return "unknown";
 }
 
+function errorPayloadFailure(error: unknown): ProviderStreamFailure | undefined {
+  if (!isJsonObject(error)) return undefined;
+  const message = typeof error.message === "string" ? error.message.trim() : "";
+  return message === "" ? undefined : { message, code: errorPayloadCode(error) };
+}
+
 /**
- * Recognize an OpenAI-compatible error payload (`{"error":{...}}`); a payload
- * without a readable message is left to the existing extraction path, so
- * mixed or provider-specific shapes keep their previous behavior.
+ * Recognize compatible error payloads and failed/incomplete Responses events.
+ * An adverse Responses event fails immediately, even without readable error
+ * detail; a later DONE marker cannot turn that outcome into success.
  */
 export function openAiCompatibleStreamFailure(
   data: Record<string, unknown>,
 ): ProviderStreamFailure | undefined {
-  const error = data.error;
-  if (!isJsonObject(error)) return undefined;
-  const message = typeof error.message === "string" ? error.message.trim() : "";
-  return message === "" ? undefined : { message, code: errorPayloadCode(error) };
+  if (data.type !== "response.failed" && data.type !== "response.incomplete") {
+    return errorPayloadFailure(data.error);
+  }
+  const response = isJsonObject(data.response) ? data.response : {};
+  const failure = errorPayloadFailure(response.error);
+  if (failure !== undefined) return failure;
+  const details = response.incomplete_details;
+  const reason =
+    isJsonObject(details) && typeof details.reason === "string" ? details.reason.trim() : "";
+  return {
+    code: data.type,
+    message:
+      data.type === "response.failed"
+        ? "response failed"
+        : `response incomplete${reason === "" ? "" : `: ${reason}`}`,
+  };
 }
 
 /**

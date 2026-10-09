@@ -54,3 +54,12 @@ For an already-started Proposal API stream, unterminated Provider EOF MUST produ
 - **WHEN** stream termination or cleanup subsequently observes EOF without completion
 - **THEN** EOF handling preserves the authoritative cancellation or failure
 - **AND** cleanup does not replace it with a completion or a different failure
+
+#### Scenario: Failed or incomplete Responses outcome precedes DONE
+
+- **GIVEN** a Responses Provider stream delivers text followed by `response.failed` or `response.incomplete`
+- **WHEN** the adverse outcome event is processed, even if `[DONE]` follows
+- **THEN** generation fails immediately through the existing Provider failure path
+- **AND** the failure preserves the provider error message/code or incomplete reason
+- **AND** no success outcome or Proposal `done` frame is emitted
+- **AND** the failed Job preserves partial text without mutating the Document's Revision
