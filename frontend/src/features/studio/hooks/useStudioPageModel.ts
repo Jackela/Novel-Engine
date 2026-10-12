@@ -88,6 +88,7 @@ export function useStudioPageModel(projectId: string, route: StudioRouteState, n
     retryOverwrite,
     retrySave,
     saveNow,
+    serverVersionPreview,
   } = usePageDocumentDraft({
     projectId,
     activeDocument,
@@ -223,6 +224,7 @@ export function useStudioPageModel(projectId: string, route: StudioRouteState, n
         saveState,
         error: documentErrors.error,
         isConflictActionPending,
+        serverVersion: serverVersionPreview,
         // DR-029: the locate intent reaches the editor only once its target
         // document is the active one; other documents never consume it.
         reveal: reveal !== null && reveal.documentId === activeSummary?.id ? reveal : null,
