@@ -1,9 +1,20 @@
+import { Loader2 } from "lucide-react";
 import { createBrowserRouter, useRouteError } from "react-router-dom";
 
 import { AppCrashFallback } from "@/app/AppCrashFallback";
+import { useTranslation } from "@/app/i18n/useTranslation";
 import { EntryPage } from "@/features/studio/EntryPage";
 import { ProjectLibraryPage } from "@/features/studio/ProjectLibraryPage";
-import { StudioPage } from "@/features/studio/StudioPage";
+
+function StudioRouteLoading() {
+  const { t } = useTranslation();
+
+  return (
+    <main aria-live="polite" className="studio__loading" role="status">
+      <Loader2 aria-hidden="true" className="ui-spin" /> {t("shell.status.loading")}
+    </main>
+  );
+}
 
 function RouteErrorBoundary() {
   const error = useRouteError();
@@ -23,7 +34,8 @@ export const router = createBrowserRouter(
     { path: "/projects", element: <ProjectLibraryPage />, errorElement: <RouteErrorBoundary /> },
     {
       path: "/projects/:projectId/:section?",
-      element: <StudioPage />,
+      lazy: async () => ({ Component: (await import("@/features/studio/StudioPage")).StudioPage }),
+      HydrateFallback: StudioRouteLoading,
       errorElement: <RouteErrorBoundary />,
     },
     { path: "*", element: <EntryPage />, errorElement: <RouteErrorBoundary /> },
