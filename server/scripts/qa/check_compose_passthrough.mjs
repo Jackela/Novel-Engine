@@ -73,11 +73,6 @@ const SERVER_ANCHORS = [
 // documented Compose workflow instead of rebuilding the image.
 const OPERATOR_PASSTHROUGH = ["SECURITY_TRUSTED_PROXIES", "LOG_LEVEL"];
 
-// Compose entries the DR-034 reverse-proxy deployment contract depends on:
-// without the passthrough a proxied deployment cannot configure trusted
-// client identity through the documented Compose workflow.
-const REVERSE_PROXY_PASSTHROUGH = OPERATOR_PASSTHROUGH;
-
 // Matches `helper(env, "KEY")` across line breaks — the only shape in which
 // the config loaders pass a variable name. Helper definitions (`function
 // stringFrom(env: …)`) do not match: their `env` is followed by a type
@@ -187,7 +182,7 @@ for (const composeFile of COMPOSE_FILES) {
   // fake origin pass the production guard instead of failing fast on the
   // missing configuration.
   const contents = readTextLines(join(root, composeFile)).join("\n");
-  for (const key of REVERSE_PROXY_PASSTHROUGH) {
+  for (const key of OPERATOR_PASSTHROUGH) {
     if (!new RegExp(`${key}:\\s*\\$\\{${key}:-`).test(contents)) {
       failures.push(
         `${composeFile} must pass ${key} through as \${${key}:-} for reverse-proxy deployments`,

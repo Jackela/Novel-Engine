@@ -21,7 +21,6 @@ import { seedDocumentInTransaction } from "./db/document_seed_writes.js";
 import { jobs, projects, usageEvents } from "./db/schema.js";
 import {
   documentSummaries,
-  documentsWithCurrent,
   type ProjectRow,
   scopeCondition,
   scopedProject,
@@ -76,9 +75,7 @@ export class ProjectStorePart implements ProjectStore {
             position: 1,
             contentMarkdown: input.seed.contentMarkdown,
             metadataJson: input.seed.metadataJson,
-            revisionSource: "author",
             now: input.now,
-            touchDocumentUpdatedAt: false,
           }),
         );
       }
@@ -159,10 +156,7 @@ export class ProjectStorePart implements ProjectStore {
    * from the start, and every chapter document, revision, and FTS entry
    * commits in the same transaction — or not at all.
    */
-  addImportedProject(
-    scope: ProjectScope,
-    input: AddImportedProjectInput,
-  ): { project: ProjectRow; documents: DocumentWithCurrent[] } {
+  addImportedProject(scope: ProjectScope, input: AddImportedProjectInput): { project: ProjectRow } {
     return this.db.transaction((tx) => {
       const project: typeof projects.$inferInsert = {
         id: randomUUID(),
@@ -192,14 +186,11 @@ export class ProjectStorePart implements ProjectStore {
           position,
           contentMarkdown: chapter.contentMarkdown,
           metadataJson: chapter.metadataJson,
-          revisionSource: "author",
           now: input.now,
-          touchDocumentUpdatedAt: false,
         });
       }
       return {
         project: project as ProjectRow,
-        documents: documentsWithCurrent(tx, project.id),
       };
     });
   }

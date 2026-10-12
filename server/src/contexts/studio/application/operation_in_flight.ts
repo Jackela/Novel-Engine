@@ -102,7 +102,7 @@ export class InFlightOperationGuard {
     const ownedTarget = { ...target };
     this.running.set(key, { target: ownedTarget, token });
     this.projectActivity.set(target.projectId, projectInFlight + 1);
-    return this.permit(() => this.releaseOperation(key, ownedTarget, token));
+    return { release: () => this.releaseOperation(key, ownedTarget, token) };
   }
 
   private releaseOperation(key: string, target: InFlightTarget, token: symbol): void {
@@ -132,23 +132,12 @@ export class InFlightOperationGuard {
     }
     const token = Symbol("project-exclusive-operation");
     this.projectExclusive.set(projectId, { operation, token });
-    return this.permit(() => this.releaseProjectExclusive(projectId, token));
+    return { release: () => this.releaseProjectExclusive(projectId, token) };
   }
 
   private releaseProjectExclusive(projectId: string, token: symbol): void {
     if (this.projectExclusive.get(projectId)?.token !== token) return;
     this.projectExclusive.delete(projectId);
-  }
-
-  private permit(releaseOwned: () => void): InFlightOperationPermit {
-    let released = false;
-    return {
-      release: () => {
-        if (released) return;
-        released = true;
-        releaseOwned();
-      },
-    };
   }
 }
 

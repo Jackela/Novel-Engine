@@ -151,28 +151,6 @@ function* iteratePreparedInjectionLines(
   yield* emit([LOREBOOK_END]);
 }
 
-function fullInjectionLines(entries: readonly LoreEntrySource[]): string[] {
-  if (entries.length === 0) return [];
-  const sections: string[] = ["", LOREBOOK_SECTION_HEADER, LOREBOOK_BEGIN];
-  for (const entry of entries) {
-    const title = entry.title;
-    const contentMarkdown = entry.contentMarkdown;
-    sections.push(
-      ...fragmentLines(headingLine(title, "full"), escapePromptData(contentMarkdown?.trim() ?? "")),
-    );
-  }
-  sections.push(LOREBOOK_END);
-  return sections;
-}
-
-/**
- * Full-text rendering of already-matched entries (the pre-budget layout,
- * retained for the no-budget callers): one reference-data block per entry.
- */
-export function renderLoreSection(matched: readonly LoreEntrySource[]): string[] {
-  return fullInjectionLines(matched);
-}
-
 /** Match then plan then render in one step; an empty result renders nothing. */
 export function* iterateTriggeredLoreSections(
   input: {
@@ -194,16 +172,4 @@ export function* iterateTriggeredLoreSections(
     ),
     input.instrumentation,
   );
-}
-
-/** Compatibility materializer for callers that own an array-shaped boundary. */
-export function triggeredLoreSections(
-  input: {
-    entries: readonly LoreEntrySource[];
-    /** Character budget of the rendered section; defaults to the #445 value. */
-    budgetCharacters?: number | undefined;
-    instrumentation?: LorePlanningInstrumentation | undefined;
-  } & LoreMatchCorpora,
-): string[] {
-  return [...iterateTriggeredLoreSections(input)];
 }

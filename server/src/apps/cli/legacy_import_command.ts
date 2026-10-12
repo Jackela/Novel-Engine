@@ -1,16 +1,13 @@
 import { randomBytes } from "node:crypto";
-import { textProviderFactory } from "../../contexts/ai/infrastructure/providers/text_provider_factory.js";
-import type { LegacyImportResult } from "../../contexts/studio/application/import_service.js";
-import { createStudioServices } from "../../contexts/studio/application/studio_services.js";
-import { FilesystemExportArtifactGateway } from "../../contexts/studio/infrastructure/export_artifact_files.js";
-import { DatabaseExportPublicationCleanupJournal } from "../../contexts/studio/infrastructure/export_publication_cleanup_journal.js";
-import { ExportStorePart } from "../../contexts/studio/infrastructure/export_store_part.js";
+import {
+  ImportService,
+  type LegacyImportResult,
+} from "../../contexts/studio/application/import_service.js";
 import { FsLegacyWorkspaceReader } from "../../contexts/studio/infrastructure/fs_legacy_workspace_reader.js";
-import { FilesystemProjectArtifactCleaner } from "../../contexts/studio/infrastructure/project_artifact_files.js";
+import { ProjectStorePart } from "../../contexts/studio/infrastructure/project_store_part.js";
 import { openReconciledStudioDatabase } from "../../contexts/studio/infrastructure/reconciled_studio_database.js";
 import { AuthService } from "../../shared/application/auth_service.js";
 import { DrizzleAuthStore } from "../../shared/infrastructure/db/auth_store.js";
-import { createStudioPersistence } from "../studio_persistence.js";
 
 interface LegacyImportCommandInput {
   /** Exact database authority (backup → migrate → reconcile exports → recover jobs runs first). */
@@ -40,18 +37,11 @@ export async function runLegacyImportCommand(
       sessionSecret: randomBytes(32).toString("base64url"),
     });
     const principal = authService.localOwnerPrincipal(input.owner);
-    const services = createStudioServices(createStudioPersistence(database.db), {
-      providerFactory: textProviderFactory({}),
-      legacyWorkspaceReader: new FsLegacyWorkspaceReader(),
-      // The import command never touches exports, but the service graph is
-      // complete: the same store/gateway the API composition root wires.
-      artifactStore: new ExportStorePart(database.db),
-      artifactFiles: new FilesystemExportArtifactGateway(database.dataDirectory, {
-        cleanupJournal: new DatabaseExportPublicationCleanupJournal(database.db),
-      }),
-      projectArtifactCleaner: new FilesystemProjectArtifactCleaner(database.dataDirectory),
-    });
-    return await services.imports.importLegacyWorkspace(principal, input.source);
+    const imports = new ImportService(
+      new ProjectStorePart(database.db),
+      new FsLegacyWorkspaceReader(),
+    );
+    return await imports.importLegacyWorkspace(principal, input.source);
   } finally {
     database.close();
   }

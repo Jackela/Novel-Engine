@@ -73,7 +73,6 @@ export interface ProjectStore extends ProjectUpdateStore, ProjectCatalogStore {
     input: AddImportedProjectInput,
   ): {
     project: ProjectRecord;
-    documents: DocumentWithCurrent[];
   };
   dropProject(scope: ProjectScope, projectId: string): void;
 }

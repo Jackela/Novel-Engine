@@ -2,10 +2,13 @@ import {
   isProviderStep,
   type ProviderStep,
   TextGenerationProviderError,
+  type TextGenerationResult,
   type TextGenerationTask,
 } from "../../application/ports/text_generation.js";
 import {
+  discardHttpFailureResponse,
   isJsonObject,
+  isResponseLike,
   malformedJsonFailure,
   type ProviderTransport,
   ProviderTransportError,
@@ -13,7 +16,9 @@ import {
 import { payloadFromResponseText } from "./provider_payload.js";
 import {
   boundedProviderResponseText,
+  dispatchProviderResponse,
   type ProviderResponseDeadline,
+  startProviderResponseDeadline,
 } from "./provider_response_lifecycle.js";
 
 /** Shared system prompt channel: the JSON-only schema contract, verbatim. */
@@ -28,6 +33,49 @@ export function buildUserContent(task: TextGenerationTask): string {
 
 /** JSON-object payload shape shared by provider request/response helpers. */
 export type JsonObject = Record<string, unknown>;
+
+interface StructuredProviderRequest {
+  readonly url: string;
+  readonly headers: Record<string, string>;
+  readonly body: string;
+  readonly context: string;
+  readonly timeoutSeconds: number;
+}
+
+/**
+ * Complete one synchronous response under its absolute deadline, including
+ * protocol decoding and result construction. The caller serializes the request
+ * before entering this function and owns retry policy; expected HTTP failures
+ * discard their body, while result-builder errors propagate unchanged. The
+ * deadline always finishes after the result builder completes or throws.
+ */
+export async function structuredProviderResponse(
+  request: StructuredProviderRequest,
+  transport: ProviderTransport,
+  buildResult: (data: JsonObject) => TextGenerationResult,
+): Promise<TextGenerationResult> {
+  const { context, timeoutSeconds } = request;
+  const deadline = startProviderResponseDeadline(context, timeoutSeconds);
+  try {
+    const response = await dispatchProviderResponse(
+      transport,
+      request.url,
+      { method: "POST", headers: request.headers, body: request.body },
+      context,
+      deadline,
+    );
+    if (!isResponseLike(response)) {
+      throw new ProviderTransportError(`${context}: transport returned no response`);
+    }
+    if (!response.ok) {
+      throw await discardHttpFailureResponse(context, response, deadline.interrupt);
+    }
+    const data = await responseJsonObject(response, context, deadline);
+    return buildResult(data);
+  } finally {
+    deadline.finish();
+  }
+}
 
 export function supportedStep(step: string): ProviderStep {
   if (!isProviderStep(step)) {

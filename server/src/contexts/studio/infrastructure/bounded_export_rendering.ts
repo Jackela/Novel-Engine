@@ -5,7 +5,6 @@ import type {
   ArtifactChapter,
   ArtifactWriteRequest,
 } from "../application/ports/artifact_gateway.js";
-import type { ExportArtifactFormat } from "../application/ports/export_store.js";
 import { EXPORT_CAPACITY_LIMITS, ExportCapacityExceededError } from "../domain/exceptions.js";
 import { docxManuscriptStream } from "./docx_manuscript.js";
 import { epubStream } from "./epub_xml.js";
@@ -53,7 +52,7 @@ export async function collectBoundedArtifactStream(
   });
 }
 
-export function assertArtifactByteLength(_format: ExportArtifactFormat, observed: number): void {
+export function assertArtifactByteLength(observed: number): void {
   const limit = EXPORT_CAPACITY_LIMITS.artifact_bytes;
   if (observed > limit) {
     throw new ExportCapacityExceededError("artifact_bytes", limit, observed);

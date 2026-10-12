@@ -16,14 +16,7 @@ interface SeedDocumentWrite {
   readonly position: number;
   readonly contentMarkdown: string;
   readonly metadataJson: string;
-  /** The immutable first revision's provenance; seed and import paths differ. */
-  readonly revisionSource: string;
   readonly now: Date;
-  /**
-   * addDocument stamps `updatedAt` again when linking the first revision;
-   * project seeding and legacy import never touch it after the insert.
-   */
-  readonly touchDocumentUpdatedAt: boolean;
 }
 
 /**
@@ -51,15 +44,11 @@ export function seedDocumentInTransaction(tx: Tx, seed: SeedDocumentWrite): Docu
     revisionNumber: 1,
     contentMarkdown: seed.contentMarkdown,
     metadataJson: seed.metadataJson,
-    source: seed.revisionSource,
+    source: "author",
     now: seed.now,
   });
   tx.update(documents)
-    .set(
-      seed.touchDocumentUpdatedAt
-        ? { currentRevisionId: revision.id, updatedAt: seed.now }
-        : { currentRevisionId: revision.id },
-    )
+    .set({ currentRevisionId: revision.id })
     .where(eq(documents.id, document.id))
     .run();
   refreshDocumentIndex(tx, {

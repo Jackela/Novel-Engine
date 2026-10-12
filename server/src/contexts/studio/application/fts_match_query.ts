@@ -37,6 +37,6 @@ export function buildFtsMatchQuery(query: string): string | null {
  * exactly when `buildFtsMatchQuery` is null (same reduction input).
  */
 export function buildFtsLocateTerm(query: string): string | null {
-  const [first] = new Set(reduceFtsQueryElements(query.toLowerCase()));
+  const [first] = reduceFtsQueryElements(query.toLowerCase());
   return first === undefined ? null : restoreFtsDisplayText(first);
 }

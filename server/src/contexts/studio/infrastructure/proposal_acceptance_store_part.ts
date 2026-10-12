@@ -1,6 +1,7 @@
 import { and, desc, eq } from "drizzle-orm";
 import { InvalidOperationError } from "../../../shared/domain/exceptions.js";
 import type { StudioSqliteDatabase } from "../../../shared/infrastructure/db/connection.js";
+import { safeLoadJson } from "../application/payloads.js";
 import type { JobRecord } from "../application/ports/job_records.js";
 import type { ProposalAcceptanceStore } from "../application/ports/proposal_acceptance_store.js";
 import type { ProjectScope } from "../application/ports/studio_store.js";
@@ -39,7 +40,7 @@ export class ProposalAcceptanceStorePart implements ProposalAcceptanceStore {
           throw new InvalidOperationError("Only a completed proposal can be accepted.");
         }
         this.afterLockedJobRead(job.id);
-        const result = storedObject(job.result_json);
+        const result = safeLoadJson(job.result_json);
         if (result.accepted_revision_id) {
           return jobWithEvents(tx, job.id);
         }
@@ -51,7 +52,7 @@ export class ProposalAcceptanceStorePart implements ProposalAcceptanceStore {
           );
         }
         scopedDocument(tx, scope, projectId, job.document_id);
-        const request = storedObject(job.request_json);
+        const request = safeLoadJson(job.request_json);
         const baseRevisionId =
           typeof request.base_revision_id === "string" ? request.base_revision_id : null;
         const splitRevisionId = findLegacySplitRevision(
@@ -128,21 +129,9 @@ function findLegacySplitRevision(
       (revision) =>
         revision.contentMarkdown === proposal &&
         revision.parentRevisionId === baseRevisionId &&
-        storedObject(revision.metadataJson).ai_job_id === jobId,
+        safeLoadJson(revision.metadataJson).ai_job_id === jobId,
     )?.id ?? null
   );
-}
-
-function storedObject(value: string): Record<string, unknown> {
-  try {
-    const parsed: unknown = JSON.parse(value);
-    if (parsed !== null && typeof parsed === "object" && !Array.isArray(parsed)) {
-      return parsed as Record<string, unknown>;
-    }
-  } catch {
-    // Persisted advisory JSON follows the existing fail-closed object decoder.
-  }
-  return {};
 }
 
 function proposalNotFound(jobId: string): NotFoundError {

@@ -10,7 +10,7 @@ import { VolumeStorePart } from "../contexts/studio/infrastructure/volume_store_
 import type { StudioSqliteDatabase } from "../shared/infrastructure/db/connection.js";
 
 /**
- * Composition-root wiring shared by the API app and the CLI: one focused
+ * Composition-root wiring for the API app: one focused
  * store part per narrow port, all sharing the caller's database handle.
  * Each application service receives only the parts it actually uses.
  */

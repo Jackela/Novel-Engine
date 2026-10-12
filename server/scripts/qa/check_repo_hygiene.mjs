@@ -4,15 +4,9 @@ import { join } from "node:path";
 import { listRepoFiles, readTextLines, repoRoot } from "./common.mjs";
 
 /**
- * Node twin of scripts/qa/check_repo_hygiene.py: forbidden-residue scan
- * over the whole tracked tree. The pattern set, skip lists, allow rules,
- * and API-surface rules mirror the Python gate; the server API surface
- * joins its Python counterpart so the twin survives the cutover.
- *
- * The frozen Python gate scans these twin files too and cannot be edited
- * to skip them, so every forbidden literal below is stored as fragments
- * and joined at runtime — the compiled regexes are identical to the
- * Python originals, but the literals never appear in this source.
+ * Forbidden-residue scan over the current candidate tree. Forbidden
+ * literals are assembled from fragments so the gate does not match its
+ * own declarations. API-facing modules also reject private payload fields.
  */
 
 const forbidden = (source) => new RegExp(source.join(""), "i");
@@ -76,12 +70,6 @@ const FORBIDDEN_PATTERNS = [
     ]),
   },
 ];
-/**
- * Line-level exemptions from the forbidden-pattern scan. Empty: the
- * only historical exemptions named retired Python provider files, and
- * a match in those paths is no longer a reason to keep a line.
- */
-const ALLOW_RULES = [];
 const API_SURFACE_FORBIDDEN = [
   {
     name: "api_private_payload_surface",
@@ -98,10 +86,6 @@ function shouldSkip(relativePath) {
   return relativePath.split("/").some((part) => SKIP_PARTS.has(part));
 }
 
-function isAllowed(relativePath, line) {
-  return ALLOW_RULES.some((rule) => rule.pathRegex.test(relativePath) && rule.lineRegex.test(line));
-}
-
 function patternFailures(relativePath, lineNumber, line, patterns) {
   const failures = [];
   for (const pattern of patterns) {
@@ -113,9 +97,6 @@ function patternFailures(relativePath, lineNumber, line, patterns) {
 }
 
 function lineFailures(relativePath, lineNumber, line) {
-  if (isAllowed(relativePath, line)) {
-    return [];
-  }
   const failures = patternFailures(relativePath, lineNumber, line, FORBIDDEN_PATTERNS);
   if (API_SURFACE_PATHS.test(relativePath)) {
     failures.push(...patternFailures(relativePath, lineNumber, line, API_SURFACE_FORBIDDEN));

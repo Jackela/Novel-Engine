@@ -90,9 +90,7 @@ export class DocumentStorePart implements DocumentStore {
           position: input.position,
           contentMarkdown: input.contentMarkdown,
           metadataJson: input.metadataJson,
-          revisionSource: "author",
           now: input.now,
-          touchDocumentUpdatedAt: true,
         });
         tx.update(projects).set({ updatedAt: input.now }).where(eq(projects.id, project.id)).run();
         return seeded;

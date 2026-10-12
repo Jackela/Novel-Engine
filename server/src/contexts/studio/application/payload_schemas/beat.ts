@@ -32,8 +32,6 @@ const beatCandidateSchema = Type.Object(
   { additionalProperties: false },
 );
 
-type BeatCandidatePayload = Static<typeof beatCandidateSchema>;
-
 /**
  * The outline document the candidate catalog was read from, together with the
  * project's outline count. More than one outline is disclosed rather than
@@ -67,4 +65,3 @@ export const chapterBeatPayloadSchema = Type.Object(
 );
 
 export type ChapterBeatPayload = Static<typeof chapterBeatPayloadSchema>;
-export type BeatCandidate = BeatCandidatePayload;

@@ -1,14 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import {
-  renderLoreSection,
-  triggeredLoreSections,
-} from "../../src/contexts/studio/application/lore_injection.js";
+import { iterateTriggeredLoreSections } from "../../src/contexts/studio/application/lore_injection.js";
 import {
   asLoreStatus,
   type LoreEntrySource,
-  loreEntryKeys,
-  matchLoreEntries,
+  matchLoreEntriesWithRank,
   normalizeLoreAliases,
   parseLoreAliases,
 } from "../../src/contexts/studio/application/lorebook.js";
@@ -61,18 +57,26 @@ describe("alias normalization (#315 write-path contract)", () => {
 
 describe("lore entry keys (#315: title is always an implicit key)", () => {
   it("extends the title with aliases and never replaces it", () => {
-    const keys = loreEntryKeys(
-      entry({ title: "Mara", loreAliasesJson: '["the archivist","Keeper of Floods"]' }),
-    );
-    expect(keys).toContain("Mara");
-    expect(keys).toContain("the archivist");
-    expect(keys).toContain("Keeper of Floods");
+    const mara = entry({ title: "Mara", loreAliasesJson: '["the archivist","Keeper of Floods"]' });
+    for (const key of ["Mara", "the archivist", "Keeper of Floods"]) {
+      expect(matchLoreEntriesWithRank([mara], { resident: key, manuscript: "" })).toEqual([
+        { entry: mara, rank: key === "Mara" ? "title" : "alias" },
+      ]);
+    }
   });
 
   it("trims keys and drops blank ones, tolerating a whitespace-only title alias set", () => {
-    expect(loreEntryKeys(entry({ title: "  Mara  ", loreAliasesJson: '[" ", "  "]' }))).toEqual([
-      "Mara",
-    ]);
+    const mara = entry({ title: "  Mara  ", loreAliasesJson: '[" ", "  the archivist  "]' });
+    for (const key of ["Mara", "the archivist"]) {
+      expect(matchLoreEntriesWithRank([mara], { resident: key, manuscript: "" })).toEqual([
+        { entry: mara, rank: key === "Mara" ? "title" : "alias" },
+      ]);
+    }
+    expect(matchLoreEntriesWithRank([mara], { resident: "", manuscript: "" })).toEqual([]);
+    const blank = entry({ title: " ", loreAliasesJson: '[" ", "  "]' });
+    expect(
+      matchLoreEntriesWithRank([blank], { resident: "Any manuscript text", manuscript: "" }),
+    ).toEqual([]);
   });
 });
 
@@ -80,40 +84,46 @@ describe("keyword matching (#315 layer-2 selection)", () => {
   const corpora = (resident: string, manuscript: string) => ({ resident, manuscript });
 
   it("injects an entry when its title occurs in the manuscript", () => {
-    const matched = matchLoreEntries([entry({ title: "Mara" })], corpora("", "Mara walked home."));
-    expect(matched.map((candidate) => candidate.title)).toEqual(["Mara"]);
+    const matched = matchLoreEntriesWithRank(
+      [entry({ title: "Mara" })],
+      corpora("", "Mara walked home."),
+    );
+    expect(matched.map((candidate) => candidate.entry.title)).toEqual(["Mara"]);
   });
 
   it("matches case-insensitively across either corpus", () => {
     const mara = entry({ title: "Mara", loreAliasesJson: '["the archivist"]' });
-    const hitByResident = matchLoreEntries(
+    const hitByResident = matchLoreEntriesWithRank(
       [mara],
       corpora("THE ARCHIVIST keeps records.", "plain text"),
     );
-    expect(hitByResident.map((candidate) => candidate.title)).toEqual(["Mara"]);
+    expect(hitByResident.map((candidate) => candidate.entry.title)).toEqual(["Mara"]);
 
     const sable = entry({ title: "Sable" });
-    const hitByManuscript = matchLoreEntries([sable], corpora("nothing here", "sable fur"));
-    expect(hitByManuscript.map((candidate) => candidate.title)).toEqual(["Sable"]);
+    const hitByManuscript = matchLoreEntriesWithRank([sable], corpora("nothing here", "sable fur"));
+    expect(hitByManuscript.map((candidate) => candidate.entry.title)).toEqual(["Sable"]);
   });
 
   it("uses substring occurrence — a key inside a larger word still counts", () => {
     // Documented choice (#315): substring semantics; whole-token boundaries
     // are deliberately not required for multi-word fantasy names.
-    const matched = matchLoreEntries([entry({ title: "Vant" })], corpora("", "the Vantrice"));
-    expect(matched.map((candidate) => candidate.title)).toEqual(["Vant"]);
+    const matched = matchLoreEntriesWithRank(
+      [entry({ title: "Vant" })],
+      corpora("", "the Vantrice"),
+    );
+    expect(matched.map((candidate) => candidate.entry.title)).toEqual(["Vant"]);
   });
 
   it("omits entries without any key occurrence", () => {
-    const matched = matchLoreEntries(
+    const matched = matchLoreEntriesWithRank(
       [entry({ title: "Vantris" }), entry({ title: "Mara" })],
       corpora("outline mentions Mara only", "manuscript also mentions Mara"),
     );
-    expect(matched.map((candidate) => candidate.title)).toEqual(["Mara"]);
+    expect(matched.map((candidate) => candidate.entry.title)).toEqual(["Mara"]);
   });
 
   it("skips entries without injectable content even on a key hit", () => {
-    const matched = matchLoreEntries(
+    const matched = matchLoreEntriesWithRank(
       [
         entry({ title: "Empty", contentMarkdown: null }),
         entry({ title: "Blank", contentMarkdown: "   \n\t " }),
@@ -121,15 +131,15 @@ describe("keyword matching (#315 layer-2 selection)", () => {
       ],
       corpora("Empty Blank Real", ""),
     );
-    expect(matched.map((candidate) => candidate.title)).toEqual(["Real"]);
+    expect(matched.map((candidate) => candidate.entry.title)).toEqual(["Real"]);
   });
 
   it("keeps matches in reading order of their documents", () => {
-    const matched = matchLoreEntries(
+    const matched = matchLoreEntriesWithRank(
       [entry({ title: "First" }), entry({ title: "Second" }), entry({ title: "Third" })],
       corpora("Third then First", "Second"),
     );
-    expect(matched.map((candidate) => candidate.title)).toEqual(["First", "Second", "Third"]);
+    expect(matched.map((candidate) => candidate.entry.title)).toEqual(["First", "Second", "Third"]);
   });
 });
 
@@ -137,22 +147,17 @@ describe("lifecycle gating (#444: only stable entries inject)", () => {
   const corpora = { resident: "Mara and Vex", manuscript: "" };
 
   it("injects a stable entry on a key hit", () => {
-    const matched = matchLoreEntries([entry({ title: "Mara", status: "stable" })], corpora);
-    expect(matched.map((candidate) => candidate.title)).toEqual(["Mara"]);
+    const matched = matchLoreEntriesWithRank([entry({ title: "Mara", status: "stable" })], corpora);
+    expect(matched.map((candidate) => candidate.entry.title)).toEqual(["Mara"]);
   });
 
-  it("skips a draft entry even when its key occurs", () => {
-    const matched = matchLoreEntries([entry({ title: "Mara", status: "draft" })], corpora);
-    expect(matched).toEqual([]);
-  });
-
-  it("skips a deprecated entry even when its key occurs", () => {
-    const matched = matchLoreEntries([entry({ title: "Mara", status: "deprecated" })], corpora);
+  it.each(["draft", "deprecated"] as const)("skips a %s entry on a key hit", (status) => {
+    const matched = matchLoreEntriesWithRank([entry({ title: "Mara", status })], corpora);
     expect(matched).toEqual([]);
   });
 
   it("gates per entry: stable matches survive alongside gated-out neighbors", () => {
-    const matched = matchLoreEntries(
+    const matched = matchLoreEntriesWithRank(
       [
         entry({ title: "Mara", status: "draft" }),
         entry({ title: "Vex", status: "stable" }),
@@ -160,7 +165,7 @@ describe("lifecycle gating (#444: only stable entries inject)", () => {
       ],
       corpora,
     );
-    expect(matched.map((candidate) => candidate.title)).toEqual(["Vex"]);
+    expect(matched.map((candidate) => candidate.entry.title)).toEqual(["Vex"]);
   });
 
   it("reads an unknown stored status as draft — fail-closed, never injectable", () => {
@@ -197,38 +202,43 @@ describe("resident match corpus (#315 corpus equals the assembled resident view)
     expect(corpus).toContain("Sable watches the harbour.");
     expect(corpus).toContain("Rain floods the harbour.");
     expect(corpus).toContain("Ends beside Cadera.");
-    const corpusMatch = matchLoreEntries(
+    const corpusMatch = matchLoreEntriesWithRank(
       [entry({ title: "Cadera" }), entry({ title: "Absentia" })],
       { resident: corpus, manuscript: "" },
     );
-    expect(corpusMatch.map((candidate) => candidate.title)).toEqual(["Cadera"]);
+    expect(corpusMatch.map((candidate) => candidate.entry.title)).toEqual(["Cadera"]);
   });
 });
 
 describe("lorebook section rendering (#315 reference-data layout)", () => {
   it("renders nothing when no entry matched", () => {
-    expect(renderLoreSection([])).toEqual([]);
-    expect(
-      triggeredLoreSections({
-        entries: [entry({ title: "Mara" })],
-        resident: "",
-        manuscript: "",
-      }),
-    ).toEqual([]);
+    for (const entries of [[], [entry({ title: "Mara" })]]) {
+      expect([...iterateTriggeredLoreSections({ entries, resident: "", manuscript: "" })]).toEqual(
+        [],
+      );
+    }
   });
 
   it("renders one heading per matched entry over its writer-trusted content", () => {
-    const sections = renderLoreSection([
-      entry({
-        title: "Mara",
-        loreAliasesJson: '["the archivist"]',
-        contentMarkdown: "Mara keeps\n\nthe flooded archive.",
+    const sections = [
+      ...iterateTriggeredLoreSections({
+        entries: [
+          entry({
+            title: "Mara",
+            loreAliasesJson: '["the archivist"]',
+            contentMarkdown: "Mara keeps\n\nthe flooded archive.",
+          }),
+          entry({ title: "Sable", contentMarkdown: "Gull-winged pilot of the breakwater." }),
+        ],
+        resident: "Mara and Sable",
+        manuscript: "",
+        budgetCharacters: 10_000,
       }),
-      entry({ title: "Sable", contentMarkdown: "Gull-winged pilot of the breakwater." }),
-    ]);
+    ];
     const rendered = sections.join("\n");
     expect(rendered).toContain("### Mara");
-    expect(rendered).toContain("Mara keeps");
+    expect(rendered).toContain("Mara keeps\n\nthe flooded archive.");
+    expect(rendered).not.toContain("(summary only)");
     expect(rendered.indexOf("### Mara")).toBeLessThan(rendered.indexOf("### Sable"));
     expect(rendered).toContain("### Sable");
     // The section carries its own reference-data markers.
@@ -238,9 +248,14 @@ describe("lorebook section rendering (#315 reference-data layout)", () => {
   });
 
   it("flattens a multi-line title onto one heading line while keeping content raw", () => {
-    const rendered = renderLoreSection([
-      entry({ title: "Weird\nTitle", contentMarkdown: "Body stays untouched." }),
-    ]).join("\n");
+    const rendered = [
+      ...iterateTriggeredLoreSections({
+        entries: [entry({ title: "Weird\nTitle", contentMarkdown: "Body stays untouched." })],
+        resident: "Weird\nTitle",
+        manuscript: "",
+        budgetCharacters: 10_000,
+      }),
+    ].join("\n");
     expect(rendered).toContain("### Weird Title");
     expect(rendered).toContain("Body stays untouched.");
   });
