@@ -36,6 +36,11 @@ const DEFAULT_DASHSCOPE_RESPONSES_API_BASE = `https://dashscope.aliyuncs.com${RE
 const DEFAULT_DASHSCOPE_TEXT_ENDPOINT = "/services/aigc/text-generation/generation";
 const DEFAULT_DASHSCOPE_MULTIMODAL_ENDPOINT = "/services/aigc/multimodal-generation/generation";
 const DEFAULT_DASHSCOPE_RESPONSES_ENDPOINT = "/responses";
+const ENDPOINTS = {
+  text_generation: DEFAULT_DASHSCOPE_TEXT_ENDPOINT,
+  multimodal_generation: DEFAULT_DASHSCOPE_MULTIMODAL_ENDPOINT,
+  responses: DEFAULT_DASHSCOPE_RESPONSES_ENDPOINT,
+} as const;
 const DEFAULT_TEMPERATURE = 0.7;
 
 export type DashscopeTransportMode = "text_generation" | "multimodal_generation" | "responses";
@@ -103,23 +108,20 @@ function normalizeResponsesBase(apiBase: string | undefined): string {
 
 /** Pure transport descriptor; the later adapter owns fetch, timeout, retry, and lifecycle. */
 export class DashscopeTransport<Mode extends DashscopeTransportMode> {
-  constructor(
-    readonly mode: Mode,
-    private readonly endpoint: string,
-    private readonly responsesApi = false,
-    private readonly multimodalContent = false,
-  ) {}
+  constructor(readonly mode: Mode) {}
 
   normalizeApiBase(apiBase: string | undefined): string {
-    return this.responsesApi ? normalizeResponsesBase(apiBase) : normalizeGenerationBase(apiBase);
+    return this.mode === "responses"
+      ? normalizeResponsesBase(apiBase)
+      : normalizeGenerationBase(apiBase);
   }
 
   endpointPath(): string {
-    return this.endpoint;
+    return ENDPOINTS[this.mode];
   }
 
   buildRequestPayload(model: string, task: TextGenerationTask): RequestForMode<Mode> {
-    if (this.responsesApi) {
+    if (this.mode === "responses") {
       return {
         model,
         input: `System:\n${buildSystemContent(task)}\n\nUser:\n${buildUserContent(task)}`,
@@ -130,7 +132,7 @@ export class DashscopeTransport<Mode extends DashscopeTransportMode> {
     const systemContent = buildSystemContent(task);
     const userContent = buildUserContent(task);
     const messageContent = (content: string) =>
-      this.multimodalContent ? [{ text: content }] : content;
+      this.mode === "multimodal_generation" ? [{ text: content }] : content;
     return {
       model,
       input: {
@@ -149,26 +151,17 @@ export class DashscopeTransport<Mode extends DashscopeTransportMode> {
   }
 
   extractResponseText(data: JsonObject): string {
-    return this.responsesApi
+    return this.mode === "responses"
       ? extractDashscopeResponsesText(data)
       : extractDashscopeGenerationText(data);
   }
 }
 
-const RESPONSES_TRANSPORT = new DashscopeTransport(
-  "responses",
-  DEFAULT_DASHSCOPE_RESPONSES_ENDPOINT,
-  true,
-);
+const RESPONSES_TRANSPORT = new DashscopeTransport("responses");
 
 const TRANSPORTS = {
-  text_generation: new DashscopeTransport("text_generation", DEFAULT_DASHSCOPE_TEXT_ENDPOINT),
-  multimodal_generation: new DashscopeTransport(
-    "multimodal_generation",
-    DEFAULT_DASHSCOPE_MULTIMODAL_ENDPOINT,
-    false,
-    true,
-  ),
+  text_generation: new DashscopeTransport("text_generation"),
+  multimodal_generation: new DashscopeTransport("multimodal_generation"),
   responses: RESPONSES_TRANSPORT,
 } as const;
 

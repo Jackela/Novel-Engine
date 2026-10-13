@@ -186,15 +186,7 @@ export class VolumeStorePart implements StudioVolumeStore {
           .run();
       }
       touchProject(tx, projectId, now);
-      const updated = volumesInOrder(tx, projectId);
-      return volumeIds.map((id, orderIndex) => {
-        const volume = updated.find((candidate) => candidate.id === id);
-        if (volume === undefined) {
-          throw new NotFoundError(`Volume not found: ${id}.`);
-        }
-        // Position and timestamp restate what this transaction just wrote.
-        return { ...volume, position: orderIndex + 1, updatedAt: now };
-      });
+      return volumesInOrder(tx, projectId);
     });
   }
 

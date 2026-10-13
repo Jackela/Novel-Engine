@@ -86,6 +86,35 @@ async function writeMigrationFixture(
 }
 
 describe("QA gate regressions", () => {
+  it.each([
+    ["server/src/budget.ts", 300],
+    ["frontend/src/Budget.tsx", 200],
+    ["frontend/src/Budget.test.tsx", 300],
+  ] as const)("enforces the exact budget for %s at %i lines", async (relativePath, limit) => {
+    const root = await createQaRepository("check_file_sizes.mjs");
+    const source = Array.from({ length: limit }, (_, index) => `const line${index} = 0;`).join(
+      "\n",
+    );
+    try {
+      initializeGitRepository(root);
+      await writeCandidate(
+        root,
+        relativePath,
+        `${source}\n\n// A comment does not consume the budget.\n`,
+      );
+      const accepted = runGate(root, "check_file_sizes.mjs");
+      expect(accepted.status, accepted.stderr).toBe(0);
+      await writeCandidate(root, relativePath, `${source}\nconst overflow = 0;\n`);
+      const refused = runGate(root, "check_file_sizes.mjs");
+      expect(refused.status).toBe(1);
+      expect(refused.stderr).toContain(
+        `${relativePath}: ${limit + 1} code lines exceeds limit ${limit}`,
+      );
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+
   it("fails closed when a candidate file cannot be read", async () => {
     const root = await createQaRepository();
 

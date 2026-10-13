@@ -10,15 +10,12 @@ import { isProviderStreamTerminal } from "./isProviderStreamTerminal.js";
 import {
   DEFAULT_PROVIDER_RETRY_POLICY,
   DEFAULT_PROVIDER_TIMEOUT_SECONDS,
-  discardHttpFailureResponse,
   effectiveTimeoutSeconds,
   isJsonObject,
-  isResponseLike,
   normalizedTimeoutSeconds,
   openAiCompatibleStreamFailure,
   type ProviderRetryPolicy,
   type ProviderTransport,
-  ProviderTransportError,
   providerStreamFailure,
   requiredApiKey,
   runWithRetryPolicy,
@@ -29,15 +26,11 @@ import {
   buildUserContent,
   type JsonObject,
   providerDispatch,
-  responseJsonObject,
   structuredPayload,
+  structuredProviderResponse,
   supportedStep,
 } from "./provider_json.js";
 import { coercePayloadToSchema } from "./provider_payload.js";
-import {
-  dispatchProviderResponse,
-  startProviderResponseDeadline,
-} from "./provider_response_lifecycle.js";
 import { createChapterMarkdownUnwrapper } from "./stream_json_unwrap.js";
 import { streamProviderTextDeltas } from "./streaming_generation.js";
 
@@ -164,9 +157,39 @@ export class OpenAICompatibleTextProvider implements TextGenerationProvider {
     const context = `OpenAI-compatible generation failed for step '${step}'`;
     const url = `${this.apiBase}/chat/completions`;
 
-    return runWithRetryPolicy(this.retry, () =>
-      this.generateOnce(task, timeoutSeconds, context, url),
-    );
+    return runWithRetryPolicy(this.retry, () => {
+      const body = JSON.stringify(chatCompletionPayload(this.model, task));
+      return structuredProviderResponse(
+        {
+          url,
+          headers: {
+            Authorization: `Bearer ${this.apiKey}`,
+            "Content-Type": "application/json",
+          },
+          body,
+          context,
+          timeoutSeconds,
+        },
+        (target, init) => this.dispatch(target, init ?? {}),
+        (data) => {
+          const contentText = responseContentText(data);
+          const content = coercePayloadToSchema(
+            structuredPayload(contentText, task.responseSchema, context),
+            task.responseSchema,
+          );
+          const [promptTokens, completionTokens] = usageTokens(data);
+          return {
+            step: task.step,
+            provider: "openai_compatible",
+            model: this.model,
+            rawText: JSON.stringify(content),
+            content,
+            promptTokens,
+            completionTokens,
+          };
+        },
+      );
+    });
   }
 
   /**
@@ -219,57 +242,6 @@ export class OpenAICompatibleTextProvider implements TextGenerationProvider {
       },
     );
     unwrapper.finish();
-  }
-
-  private async generateOnce(
-    task: TextGenerationTask,
-    timeoutSeconds: number,
-    context: string,
-    url: string,
-  ): Promise<TextGenerationResult> {
-    const body = JSON.stringify(chatCompletionPayload(this.model, task));
-    const deadline = startProviderResponseDeadline(context, timeoutSeconds);
-    try {
-      const response = await dispatchProviderResponse(
-        (target, init) => this.dispatch(target, init ?? {}),
-        url,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${this.apiKey}`,
-            "Content-Type": "application/json",
-          },
-          body,
-        },
-        context,
-        deadline,
-      );
-      if (!isResponseLike(response)) {
-        throw new ProviderTransportError(`${context}: transport returned no response`);
-      }
-      if (!response.ok) {
-        throw await discardHttpFailureResponse(context, response, deadline.interrupt);
-      }
-
-      const data = await responseJsonObject(response, context, deadline);
-      const contentText = responseContentText(data);
-      const content = coercePayloadToSchema(
-        structuredPayload(contentText, task.responseSchema, context),
-        task.responseSchema,
-      );
-      const [promptTokens, completionTokens] = usageTokens(data);
-      return {
-        step: task.step,
-        provider: "openai_compatible",
-        model: this.model,
-        rawText: JSON.stringify(content),
-        content,
-        promptTokens,
-        completionTokens,
-      };
-    } finally {
-      deadline.finish();
-    }
   }
 
   private dispatch(url: string, init: RequestInit): Promise<Response | undefined> {

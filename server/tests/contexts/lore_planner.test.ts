@@ -3,7 +3,6 @@ import { describe, expect, it } from "vitest";
 import {
   iterateTriggeredLoreSections,
   type LorePlanningInstrumentation,
-  triggeredLoreSections,
 } from "../../src/contexts/studio/application/lore_injection.js";
 import type { LoreEntrySource, LoreMatch } from "../../src/contexts/studio/application/lorebook.js";
 
@@ -109,22 +108,28 @@ describe("linear lore injection planning", () => {
       resident: "Mara",
       manuscript: "",
     };
-    const fullyRendered = triggeredLoreSections({
-      ...input,
-      budgetCharacters: 10_000,
-    }).join("\n");
+    const fullyRendered = [
+      ...iterateTriggeredLoreSections({
+        ...input,
+        budgetCharacters: 10_000,
+      }),
+    ].join("\n");
 
     expect(
-      triggeredLoreSections({
-        ...input,
-        budgetCharacters: fullyRendered.length,
-      }).join("\n"),
+      [
+        ...iterateTriggeredLoreSections({
+          ...input,
+          budgetCharacters: fullyRendered.length,
+        }),
+      ].join("\n"),
     ).toBe(fullyRendered);
     expect(
-      triggeredLoreSections({
-        ...input,
-        budgetCharacters: fullyRendered.length - 1,
-      }).join("\n"),
+      [
+        ...iterateTriggeredLoreSections({
+          ...input,
+          budgetCharacters: fullyRendered.length - 1,
+        }),
+      ].join("\n"),
     ).toContain("### Mara (summary only)");
   });
 });

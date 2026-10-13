@@ -4,17 +4,9 @@ export interface PageRequestOptions extends RequestInit {
   readonly limit?: number;
 }
 
-/**
- * Encode one opaque path identifier so user-controlled ids stay uniformly
- * encoded in every request path (#479).
- */
-function encodePathSegment(value: string): string {
-  return encodeURIComponent(value);
-}
-
 /** Join API path segments into one request path, encoding every segment. */
 export function apiPath(...segments: readonly string[]): string {
-  return ["/api", ...segments.map(encodePathSegment)].join("/");
+  return ["/api", ...segments.map(encodeURIComponent)].join("/");
 }
 
 function assertPageLimit(limit: number, limitErrorSubject: string): void {

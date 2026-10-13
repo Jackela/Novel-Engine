@@ -27,14 +27,10 @@ import {
 import { parseChapterBeat } from "@/app/beatContract";
 import { browserTzOffsetMinutes } from "@/app/browserTimezone";
 import { parseDiagnostics } from "@/app/diagnosticsContract";
-import { type ExportsRequestOptions, projectExportsRequest } from "@/app/exportApiRequest";
 import { downloadBlob, json, patchJson, postJson, putJson, request } from "@/app/httpClient";
-import { type JobsRequestOptions, projectJobsRequest, retryJobRequest } from "@/app/jobApiRequest";
 import { parseLoreExtractJob } from "@/app/loreExtractContract";
-import { type ProjectsRequestOptions, projectCatalogRequest } from "@/app/projectApiRequest";
+import { apiPath, type PageRequestOptions, pageRequest } from "@/app/pageRequest";
 import { clearRetryAttemptSession, parseAndRecordRetrySession } from "@/app/retryAttemptRegistry";
-import { type ReviewListOptions, reviewDetailPath, reviewsRequest } from "@/app/reviewApiRequest";
-import { documentRevisionsRequest, type RevisionRequestOptions } from "@/app/revisionApiRequest";
 import { parseRevisionDetail } from "@/app/revisionDetailContract";
 import { parseSearch } from "@/app/searchContract";
 import { parseWritingStats } from "@/app/statsContract";
@@ -64,8 +60,8 @@ export const api = {
     return request("/api/session", { method: "DELETE" }, parseVoid);
   },
   providers: () => request("/api/providers", undefined, parseProviders),
-  projects: (options: ProjectsRequestOptions = {}) =>
-    request(...projectCatalogRequest(options), parseProjects),
+  projects: (options: PageRequestOptions = {}) =>
+    request(...pageRequest(apiPath("projects"), options, "Project page"), parseProjects),
   project: (projectId: string, init?: RequestInit) =>
     request(`/api/projects/${projectId}`, init, parseProjectShell),
   createProject: (title: string, description: string) =>
@@ -86,8 +82,6 @@ export const api = {
       { document_ids: documentIds },
       parseDocuments,
     ),
-  volumes: (projectId: string) =>
-    request(`/api/projects/${projectId}/volumes`, undefined, parseVolumes),
   createVolume: (projectId: string, title: string) =>
     postJson(`/api/projects/${projectId}/volumes`, { title }, parseVolume),
   renameVolume: (projectId: string, volumeId: string, title: string) =>
@@ -102,8 +96,6 @@ export const api = {
       { volume_id: volumeId },
       parseStudioDocument,
     ),
-  documentAliases: (projectId: string, documentId: string) =>
-    request(`/api/projects/${projectId}/documents/${documentId}/aliases`, undefined, parseAliases),
   saveDocumentAliases: (projectId: string, documentId: string, aliases: string[]) =>
     putJson(
       `/api/projects/${projectId}/documents/${documentId}/aliases`,
@@ -134,8 +126,15 @@ export const api = {
       autosave?: boolean;
     },
   ) => putJson(`/api/projects/${projectId}/documents/${documentId}`, payload, parseStudioDocument),
-  revisions: (projectId: string, documentId: string, options: RevisionRequestOptions = {}) =>
-    request(...documentRevisionsRequest(projectId, documentId, options), parseRevisions),
+  revisions: (projectId: string, documentId: string, options: PageRequestOptions = {}) =>
+    request(
+      ...pageRequest(
+        apiPath("projects", projectId, "documents", documentId, "revisions"),
+        options,
+        "Revision page",
+      ),
+      parseRevisions,
+    ),
   revision: (projectId: string, documentId: string, revisionId: string) =>
     request(
       `/api/projects/${projectId}/documents/${documentId}/revisions/${revisionId}`,
@@ -176,16 +175,20 @@ export const api = {
       { method: "POST" },
       parseJob,
     ),
-  reviews: (projectId: string, options: ReviewListOptions = {}) =>
-    request(...reviewsRequest(projectId, options), parseReviews),
+  reviews: (projectId: string, options: PageRequestOptions = {}) =>
+    request(
+      ...pageRequest(apiPath("projects", projectId, "reviews"), options, "Review page"),
+      parseReviews,
+    ),
   reviewDetail: (projectId: string, reviewId: string, init?: RequestInit) =>
-    request(reviewDetailPath(projectId, reviewId), init, parseReviewDetail),
+    request(apiPath("projects", projectId, "reviews", reviewId), init, parseReviewDetail),
   createReview: (projectId: string) =>
     request(`/api/projects/${projectId}/reviews`, { method: "POST" }, parseReviewJobResponse),
-  exports: (projectId: string, options: ExportsRequestOptions = {}) => {
-    const [path, init] = projectExportsRequest(projectId, options);
-    return request(path, init, parseExports);
-  },
+  exports: (projectId: string, options: PageRequestOptions = {}) =>
+    request(
+      ...pageRequest(apiPath("projects", projectId, "exports"), options, "Export page"),
+      parseExports,
+    ),
   createExport: (projectId: string, format: ExportFormat, init?: RequestInit) =>
     request(
       `/api/projects/${projectId}/exports`,
@@ -198,10 +201,11 @@ export const api = {
     request(`/api/projects/${projectId}`, { method: "DELETE" }, parseVoid),
   deleteDocument: (projectId: string, documentId: string) =>
     request(`/api/projects/${projectId}/documents/${documentId}`, { method: "DELETE" }, parseVoid),
-  jobs: (projectId: string, options: JobsRequestOptions = {}) => {
-    const [path, init] = projectJobsRequest(projectId, options);
-    return request(path, init, parseJobs);
-  },
+  jobs: (projectId: string, options: PageRequestOptions = {}) =>
+    request(
+      ...pageRequest(apiPath("projects", projectId, "jobs"), options, "Jobs page"),
+      parseJobs,
+    ),
   job: (projectId: string, jobId: string, init?: RequestInit) =>
     request(`/api/projects/${projectId}/jobs/${jobId}`, init, parseJob),
   usage: (projectId: string, init?: RequestInit) =>
@@ -222,9 +226,11 @@ export const api = {
     ),
   diagnostics: (projectId: string, init?: RequestInit) =>
     request(`/api/projects/${projectId}/diagnostics`, init, parseDiagnostics),
-  retryJob: (projectId: string, jobId: string, idempotencyKey: string) => {
-    const [path, init] = retryJobRequest(projectId, jobId, idempotencyKey);
-    return request(path, init, parseJob);
-  },
+  retryJob: (projectId: string, jobId: string, idempotencyKey: string) =>
+    request(
+      apiPath("projects", projectId, "jobs", jobId, "retry"),
+      { method: "POST", headers: { "Idempotency-Key": idempotencyKey } },
+      parseJob,
+    ),
   download: (path: string, init?: RequestInit) => downloadBlob(path, init),
 };

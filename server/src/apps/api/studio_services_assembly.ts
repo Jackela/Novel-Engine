@@ -106,6 +106,7 @@ export function assembleStudioServices(
     },
     now: options.clock,
     providerFactory: provider.providerFactory,
+    reviewProviderFactory: provider.reviewProviderFactory,
     legacyWorkspaceReader: new FsLegacyWorkspaceReader(),
     reviewProvenance: {
       provider: provider.defaultProvider,

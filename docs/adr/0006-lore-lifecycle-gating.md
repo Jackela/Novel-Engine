@@ -102,7 +102,7 @@ The adjudicated strategy, and the alternatives refused:
   section, not a hard cut: summaries survive any budget, so no input size
   can silently erase canon.
 - **Single assembly point**: the plan-and-render runs inside
-  `triggeredLoreSections` behind `buildProposalUserPrompt`, which every
+  `iterateTriggeredLoreSections` behind `buildProposalUserPrompt`, which every
   proposal pipeline (synchronous draft, SSE stream, retry, and the
   whole-book loop built on them) already shares. The budget never forks the
   prompt assembly.

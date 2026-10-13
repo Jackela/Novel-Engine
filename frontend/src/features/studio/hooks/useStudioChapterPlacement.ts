@@ -13,7 +13,6 @@ interface ChapterPlacementOwner {
 }
 
 interface PlacementIntent {
-  readonly epoch: number;
   readonly requestedVolumeId: string;
   promise: Promise<void>;
 }
@@ -56,7 +55,7 @@ function placementOf(document: StudioDocument) {
 /**
  * Navigator chapter volume placement (#481) under the #469 mutation
  * contract: every command captures its project, document, summary revision,
- * and a per-document intent epoch. A response patches only the summary
+ * and a per-document intent identity. A response patches only the summary
  * fields placement owns — volume, position, updated timestamp — and only
  * while its captured revision still owns the shell row and its intent is
  * still the latest. Anything older — a response outrun by a newer save or a
@@ -90,7 +89,6 @@ export function useStudioChapterPlacement<Owner extends ChapterPlacementOwner>({
       if (capturedRevision === null) return Promise.resolve();
 
       const intent: PlacementIntent = {
-        epoch: (existing?.epoch ?? 0) + 1,
         requestedVolumeId: volumeId,
         promise: Promise.resolve(),
       };

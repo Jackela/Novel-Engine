@@ -18,7 +18,6 @@ interface NarrowFieldLifecycleState<Value> {
 }
 
 interface NarrowFieldIntent<Value> {
-  readonly epoch: number;
   readonly requested: Value;
   promise: Promise<void>;
 }
@@ -26,8 +25,8 @@ interface NarrowFieldIntent<Value> {
 /**
  * Invoke one narrow summary command and settle it under the task 3.4 causal
  * contract: every command captures its project, Document, current revision,
- * and a field-specific intent epoch. A response patches only its owned
- * summary field, and only while its epoch is still the latest intent for
+ * and a field-specific intent identity. A response patches only its owned
+ * summary field, and only while that identity is still the latest intent for
  * that document and the captured revision still owns the shell row.
  * Anything older — reverse-order same-revision settlements, or a response
  * outrun by a newer revision — is stale and ignored.
@@ -76,7 +75,6 @@ export function useNarrowSummaryField<Owner extends NarrowFieldOwner, Value>({
       if (capturedRevision === null) return Promise.resolve();
 
       const intent: NarrowFieldIntent<Value> = {
-        epoch: (existing?.epoch ?? 0) + 1,
         requested,
         promise: Promise.resolve(),
       };

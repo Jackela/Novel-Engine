@@ -6,9 +6,9 @@ The lorebook is the keyword-triggered **layer 2** of the two-layer generation co
 
 ## Keyword triggering
 
-Selection lives in `matchLoreEntries` (`server/src/contexts/studio/application/lorebook.ts`):
+Selection lives in `matchLoreEntriesWithRank` (`server/src/contexts/studio/application/lorebook.ts`):
 
-- **Keys** — `loreEntryKeys` combines the trimmed title with the parsed alias list. Stored aliases live in the document's `loreAliasesJson` column (`server/src/contexts/studio/infrastructure/db/schema.ts`) and are parsed defensively: anything but a string array reads as no aliases, so a malformed stored value can never break prompt assembly.
+- **Keys** — the matcher checks the trimmed title and parsed aliases, recording whether the title or an alias triggered the entry. Stored aliases live in the document's `loreAliasesJson` column (`server/src/contexts/studio/infrastructure/db/schema.ts`) and are parsed defensively: anything but a string array reads as no aliases, so a malformed stored value can never break prompt assembly.
 - **Matching is case-insensitive substring occurrence** over the combined corpus (resident corpus + manuscript). Whole-token boundaries are deliberately *not* required, so a name embedded in a larger word still triggers. This is a documented #315 contract, not an oversight.
 - **Empty entries never render** — an entry whose current revision has no injectable markdown text is skipped even when its keys hit.
 - **Lifecycle fails closed** — `draft` and `deprecated` entries are omitted before key matching. An unreadable stored status behaves as `draft`; write paths accept only the closed set.

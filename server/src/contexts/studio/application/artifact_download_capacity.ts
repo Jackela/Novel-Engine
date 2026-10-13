@@ -9,7 +9,6 @@ interface ArtifactDownloadPermit {
 /** App-local, byte-weighted ownership for artifact response Buffers. */
 export class ArtifactDownloadCapacity {
   private reservedBytes = 0;
-  private readonly owners = new Map<symbol, number>();
 
   acquire(projectId: string, sizeBytes: number): ArtifactDownloadPermit {
     if (!Number.isSafeInteger(sizeBytes) || sizeBytes < 0) {
@@ -27,18 +26,13 @@ export class ArtifactDownloadCapacity {
         projectId,
       );
     }
-    const token = Symbol("artifact-download");
-    this.owners.set(token, sizeBytes);
     this.reservedBytes += sizeBytes;
     let released = false;
     return {
       release: () => {
         if (released) return;
         released = true;
-        const ownedBytes = this.owners.get(token);
-        if (ownedBytes === undefined) return;
-        this.owners.delete(token);
-        this.reservedBytes -= ownedBytes;
+        this.reservedBytes -= sizeBytes;
       },
     };
   }

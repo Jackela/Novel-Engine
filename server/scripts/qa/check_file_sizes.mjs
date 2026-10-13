@@ -6,8 +6,8 @@ import { fileSuffix, listRepoFiles, readTextLines, repoRoot } from "./common.mjs
  * Per-file code-line budget over the TypeScript workspace.
  * Most files share one default limit. A frontend component
  * (frontend/src, every .tsx file except tests) uses a tighter cap and
- * cannot be waived by a legacy baseline. A file over its cap fails
- * the gate; blank lines and `//` comments do not count.
+ * has no exceptions. A file over its cap fails the gate; blank lines
+ * and `//` comments do not count.
  */
 
 const MAX_CODE_LINES = 300;
@@ -47,14 +47,9 @@ const SKIP_PARTS = new Set([
   "playwright-report",
   "test-results",
 ]);
-// Intentional legacy baselines: relative path -> allowed code-line count.
-// A baseline is stale when the file shrinks to the default limit or its
-// count drifts from the configured value; both must fail loudly.
-const LEGACY_LIMITS = {};
-
 /**
  * Tighter cap for product components. Test files stay on the default
- * limit. A legacy baseline cannot raise this cap.
+ * limit.
  */
 function frontendComponentLimit(relativePath) {
   if (!relativePath.startsWith(FRONTEND_COMPONENT_ROOT)) {
@@ -94,59 +89,32 @@ function codeLineCount(absolutePath, suffix) {
   return readTextLines(absolutePath).filter((line) => isCodeLine(line, suffix)).length;
 }
 
-function legacyLimitViolations(root) {
-  const violations = [];
-  for (const relativePath of Object.keys(LEGACY_LIMITS).sort()) {
-    const absolutePath = join(root, relativePath);
-    const currentCount = codeLineCount(absolutePath, fileSuffix(relativePath));
-    const configuredLimit = LEGACY_LIMITS[relativePath];
-    if (currentCount <= MAX_CODE_LINES) {
-      violations.push(
-        `${relativePath}: stale legacy baseline; ${currentCount} code lines is at or below default limit ${MAX_CODE_LINES}`,
-      );
-    } else if (configuredLimit !== currentCount) {
-      violations.push(
-        `${relativePath}: stale legacy baseline; configured limit ${configuredLimit} differs from current count ${currentCount}`,
-      );
-    }
-  }
-  return violations;
-}
-
 const root = repoRoot();
-let failures = legacyLimitViolations(root);
-let violationHeader = "[file-size] invalid legacy baselines:";
+const failures = [];
 let checkedCount = 0;
 
-if (failures.length === 0) {
-  failures = [];
-  violationHeader = "[file-size] files over the allowed code-line budget:";
-  for (const relativePath of listRepoFiles(root)) {
-    if (!inScope(relativePath)) {
-      continue;
-    }
-    checkedCount += 1;
-    const suffix = fileSuffix(relativePath);
-    const codeLines = codeLineCount(join(root, relativePath), suffix);
-    const limit =
-      frontendComponentLimit(relativePath) ?? LEGACY_LIMITS[relativePath] ?? MAX_CODE_LINES;
-    if (codeLines > limit) {
-      failures.push(`${relativePath}: ${codeLines} code lines exceeds limit ${limit}`);
-    }
+for (const relativePath of listRepoFiles(root)) {
+  if (!inScope(relativePath)) {
+    continue;
+  }
+  checkedCount += 1;
+  const suffix = fileSuffix(relativePath);
+  const codeLines = codeLineCount(join(root, relativePath), suffix);
+  const limit = frontendComponentLimit(relativePath) ?? MAX_CODE_LINES;
+  if (codeLines > limit) {
+    failures.push(`${relativePath}: ${codeLines} code lines exceeds limit ${limit}`);
   }
 }
 
 if (failures.length > 0) {
-  console.error(violationHeader);
+  console.error("[file-size] files over the allowed code-line budget:");
   for (const failure of failures) {
     console.error(`  ${failure}`);
   }
-  console.error(
-    "[file-size] split the file or, for an intentional legacy baseline change, update LEGACY_LIMITS with review evidence.",
-  );
+  console.error("[file-size] split the file to stay within its code-line budget.");
   process.exitCode = 1;
 } else {
   console.log(
-    `[file-size] clean: ${checkedCount} files checked; new-file limit ${MAX_CODE_LINES}; frontend component limit ${FRONTEND_COMPONENT_LIMIT}; legacy baselines ${Object.keys(LEGACY_LIMITS).length}`,
+    `[file-size] clean: ${checkedCount} files checked; new-file limit ${MAX_CODE_LINES}; frontend component limit ${FRONTEND_COMPONENT_LIMIT}`,
   );
 }

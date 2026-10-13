@@ -90,15 +90,6 @@ export function normalizeLoreAliases(values: readonly string[]): string[] {
   return normalized;
 }
 
-/** The effective keys of an entry: the trimmed title plus trimmed non-blank aliases. */
-export function loreEntryKeys(entry: LoreEntrySource): string[] {
-  const keys = [
-    entry.title.trim(),
-    ...parseLoreAliases(entry.loreAliasesJson).map((alias) => alias.trim()),
-  ];
-  return keys.filter((key) => key !== "");
-}
-
 function hasInjectableContent(entry: LoreEntrySource): boolean {
   return entry.contentMarkdown !== null && entry.contentMarkdown.trim() !== "";
 }
@@ -151,14 +142,6 @@ export function matchLoreEntriesWithRank(
     }
   }
   return matched;
-}
-
-/** Rank-free view of a match list, preserving order; the pre-#445 shape. */
-export function matchLoreEntries(
-  entries: readonly LoreEntrySource[],
-  corpora: LoreMatchCorpora,
-): LoreEntrySource[] {
-  return matchLoreEntriesWithRank(entries, corpora).map((match) => match.entry);
 }
 
 /** The character cap of one rendered summary line (#445); see ADR-0006. */

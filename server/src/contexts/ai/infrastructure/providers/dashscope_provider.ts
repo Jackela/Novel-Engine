@@ -19,13 +19,10 @@ import { isProviderStreamTerminal } from "./isProviderStreamTerminal.js";
 import {
   DEFAULT_PROVIDER_RETRY_POLICY,
   DEFAULT_PROVIDER_TIMEOUT_SECONDS,
-  discardHttpFailureResponse,
   effectiveTimeoutSeconds,
-  isResponseLike,
   normalizedTimeoutSeconds,
   type ProviderRetryPolicy,
   type ProviderTransport,
-  ProviderTransportError,
   providerStreamFailure,
   requiredApiKey,
   runWithRetryPolicy,
@@ -33,15 +30,11 @@ import {
 import {
   type JsonObject,
   providerDispatch,
-  responseJsonObject,
   structuredPayload,
+  structuredProviderResponse,
   supportedStep,
 } from "./provider_json.js";
 import { coercePayloadToSchema } from "./provider_payload.js";
-import {
-  dispatchProviderResponse,
-  startProviderResponseDeadline,
-} from "./provider_response_lifecycle.js";
 import { createChapterMarkdownUnwrapper } from "./stream_json_unwrap.js";
 import { streamProviderTextDeltas } from "./streaming_generation.js";
 
@@ -120,9 +113,37 @@ export class DashScopeTextProvider implements TextGenerationProvider {
     const apiBase = this.protocol.normalizeApiBase(this.apiBase);
     const url = `${apiBase}${this.protocol.endpointPath()}`;
 
-    return runWithRetryPolicy(this.retry, () =>
-      this.generateOnce(task, timeoutSeconds, context, url),
-    );
+    return runWithRetryPolicy(this.retry, () => {
+      const body = JSON.stringify(this.protocol.buildRequestPayload(this.model, task));
+      return structuredProviderResponse(
+        {
+          url,
+          headers: {
+            Authorization: `Bearer ${this.apiKey}`,
+            "Content-Type": "application/json",
+          },
+          body,
+          context,
+          timeoutSeconds,
+        },
+        (target, init) => this.dispatch(target, init ?? {}),
+        (data) => {
+          const contentText = this.protocol.extractResponseText(data);
+          const [promptTokens, completionTokens] = extractDashscopeUsageTokens(data);
+          const parsed = structuredPayload(contentText, task.responseSchema, context);
+          const content = coercePayloadToSchema(parsed, task.responseSchema);
+          return {
+            step: task.step,
+            provider: "dashscope",
+            model: this.model,
+            rawText: JSON.stringify(content),
+            content,
+            promptTokens,
+            completionTokens,
+          };
+        },
+      );
+    });
   }
 
   /**
@@ -172,55 +193,6 @@ export class DashScopeTextProvider implements TextGenerationProvider {
       },
     );
     unwrapper.finish();
-  }
-
-  private async generateOnce(
-    task: TextGenerationTask,
-    timeoutSeconds: number,
-    context: string,
-    url: string,
-  ): Promise<TextGenerationResult> {
-    const body = JSON.stringify(this.protocol.buildRequestPayload(this.model, task));
-    const deadline = startProviderResponseDeadline(context, timeoutSeconds);
-    try {
-      const response = await dispatchProviderResponse(
-        (target, init) => this.dispatch(target, init ?? {}),
-        url,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${this.apiKey}`,
-            "Content-Type": "application/json",
-          },
-          body,
-        },
-        context,
-        deadline,
-      );
-      if (!isResponseLike(response)) {
-        throw new ProviderTransportError(`${context}: transport returned no response`);
-      }
-      if (!response.ok) {
-        throw await discardHttpFailureResponse(context, response, deadline.interrupt);
-      }
-
-      const data = await responseJsonObject(response, context, deadline);
-      const contentText = this.protocol.extractResponseText(data);
-      const [promptTokens, completionTokens] = extractDashscopeUsageTokens(data);
-      const parsed = structuredPayload(contentText, task.responseSchema, context);
-      const content = coercePayloadToSchema(parsed, task.responseSchema);
-      return {
-        step: task.step,
-        provider: "dashscope",
-        model: this.model,
-        rawText: JSON.stringify(content),
-        content,
-        promptTokens,
-        completionTokens,
-      };
-    } finally {
-      deadline.finish();
-    }
   }
 
   private dispatch(url: string, init: RequestInit): Promise<Response | undefined> {

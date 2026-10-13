@@ -1,6 +1,9 @@
 import { resolveReviewModel } from "../../contexts/ai/application/model_resolution.js";
 import type { TextGenerationProviderFactory } from "../../contexts/ai/application/ports/text_generation.js";
-import { textProviderFactory } from "../../contexts/ai/infrastructure/providers/text_provider_factory.js";
+import {
+  type TextProviderFactoryConfiguration,
+  textProviderFactory,
+} from "../../contexts/ai/infrastructure/providers/text_provider_factory.js";
 import type { LlmProvider } from "../../shared/infrastructure/config/provider_config.js";
 import type { ServerConfig } from "../../shared/infrastructure/config/server_config.js";
 
@@ -13,6 +16,8 @@ export interface ProviderApiKeys {
 /** Provider identity and model settings shared by generation and catalog routes. */
 export interface ProviderRuntime {
   providerFactory: TextGenerationProviderFactory;
+  /** Per-request review factory; DashScope alone uses the reviewer model override. */
+  reviewProviderFactory: TextGenerationProviderFactory;
   providerApiKeys: ProviderApiKeys;
   providerModelSettings: {
     genericModel: string | undefined;
@@ -56,34 +61,46 @@ export function buildProviderRuntime(
     openaiCompatibleModel: llm?.openaiCompatibleModel,
   };
   const defaultProvider = llm?.defaultProvider ?? "mock";
-  const providerFactory: TextGenerationProviderFactory =
-    inputs.textProviderFactory ??
-    textProviderFactory(providerApiKeys, {
-      modelSettings: providerModelSettings,
-      ...(llm === undefined
-        ? {}
-        : {
-            adapterOptions: {
-              dashscope: {
-                apiBase: llm.dashscopeApiBase,
-                transportMode: llm.dashscopeTransportMode,
-                timeoutSeconds: llm.timeoutSeconds,
-                retry: { maxAttempts: llm.retryAttempts, delayMs: llm.retryDelayMs },
-                firstByteTimeoutMs: llm.streamFirstByteTimeoutMs,
-                idleTimeoutMs: llm.streamIdleTimeoutMs,
-              },
-              openaiCompatible: {
-                apiBase: llm.openaiCompatibleApiBase,
-                timeoutSeconds: llm.timeoutSeconds,
-                retry: { maxAttempts: llm.retryAttempts, delayMs: llm.retryDelayMs },
-                firstByteTimeoutMs: llm.streamFirstByteTimeoutMs,
-                idleTimeoutMs: llm.streamIdleTimeoutMs,
-              },
+  const factoryConfiguration: TextProviderFactoryConfiguration = {
+    modelSettings: providerModelSettings,
+    ...(llm === undefined
+      ? {}
+      : {
+          adapterOptions: {
+            dashscope: {
+              apiBase: llm.dashscopeApiBase,
+              transportMode: llm.dashscopeTransportMode,
+              timeoutSeconds: llm.timeoutSeconds,
+              retry: { maxAttempts: llm.retryAttempts, delayMs: llm.retryDelayMs },
+              firstByteTimeoutMs: llm.streamFirstByteTimeoutMs,
+              idleTimeoutMs: llm.streamIdleTimeoutMs,
             },
-          }),
-    });
+            openaiCompatible: {
+              apiBase: llm.openaiCompatibleApiBase,
+              timeoutSeconds: llm.timeoutSeconds,
+              retry: { maxAttempts: llm.retryAttempts, delayMs: llm.retryDelayMs },
+              firstByteTimeoutMs: llm.streamFirstByteTimeoutMs,
+              idleTimeoutMs: llm.streamIdleTimeoutMs,
+            },
+          },
+        }),
+  };
+  const providerFactory =
+    inputs.textProviderFactory ?? textProviderFactory(providerApiKeys, factoryConfiguration);
+  const reviewProviderFactory =
+    inputs.textProviderFactory ??
+    (providerModelSettings.dashscopeReviewModel?.trim()
+      ? textProviderFactory(providerApiKeys, {
+          ...factoryConfiguration,
+          modelSettings: {
+            ...providerModelSettings,
+            dashscopeModel: resolveReviewModel("dashscope", providerModelSettings),
+          },
+        })
+      : providerFactory);
   return {
     providerFactory,
+    reviewProviderFactory,
     providerApiKeys,
     providerModelSettings,
     defaultProvider,

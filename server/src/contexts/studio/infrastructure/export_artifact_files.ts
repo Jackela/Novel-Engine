@@ -51,7 +51,7 @@ export class FilesystemExportArtifactGateway implements ExportArtifactGateway {
   ): Promise<ArtifactFileEvidence> {
     const names = exportArtifactNames(request.projectId, request.artifactId, request.format);
     const contents = await serializeBoundedArtifact(request);
-    assertArtifactByteLength(request.format, contents.length);
+    assertArtifactByteLength(contents.length);
     try {
       const directory = await artifactDirectory(this.dataDirectory, request.projectId, true);
       const target = resolve(directory, names.filename);

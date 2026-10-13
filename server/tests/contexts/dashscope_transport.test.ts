@@ -40,6 +40,10 @@ function task(): TextGenerationTask {
 }
 
 describe("dashscope transport modes", () => {
+  it("keeps Responses as the fallback for an unrecognized transport mode", () => {
+    expect(resolveDashscopeTransport("unrecognized")).toBe(resolveDashscopeTransport("responses"));
+  });
+
   it("defaults to multimodal generation against the native base", () => {
     const transport = resolveDashscopeTransport("multimodal_generation");
     expect(transport.endpointPath()).toBe("/services/aigc/multimodal-generation/generation");

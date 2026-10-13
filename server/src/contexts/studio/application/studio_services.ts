@@ -73,6 +73,8 @@ interface CreateStudioServicesOptions {
   now?: (() => Date) | undefined;
   /** Per-request provider factory; the composition root injects the concrete one. */
   providerFactory: TextGenerationProviderFactory;
+  /** Review-only factory override; other workflows keep the normal model chain. */
+  reviewProviderFactory?: TextGenerationProviderFactory | undefined;
   /** Server-owned review provenance; model choice is never an HTTP input. */
   reviewProvenance?: ReviewProviderProvenance | undefined;
   /** Export snapshots and artifact records have a focused persistence boundary. */
@@ -125,7 +127,7 @@ export function createStudioServices(
   const reviewAssessments = new ReviewService(persistence.reviewOutcomes, {
     now,
     provenance: options.reviewProvenance,
-    providerFactory: options.providerFactory,
+    providerFactory: options.reviewProviderFactory ?? options.providerFactory,
   });
   const artifacts = new SnapshotArtifactService(options.artifactStore, options.artifactFiles, {
     now,

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   DEFAULT_LOREBOOK_BUDGET_CHARACTERS,
-  triggeredLoreSections,
+  iterateTriggeredLoreSections,
 } from "../../src/contexts/studio/application/lore_injection.js";
 import {
   LOREBOOK_SUMMARY_CHARACTERS,
@@ -52,8 +52,9 @@ describe("entry summary line (#445 summary source: the entry's own opening)", ()
 });
 
 describe("progressive disclosure under the injection budget (#445, ADR-0006)", () => {
-  const matched = (entries: readonly LoreEntrySource[], resident: string, manuscript: string) =>
-    triggeredLoreSections({ entries, resident, manuscript, budgetCharacters: 10_000 });
+  const matched = (entries: readonly LoreEntrySource[], resident: string, manuscript: string) => [
+    ...iterateTriggeredLoreSections({ entries, resident, manuscript, budgetCharacters: 10_000 }),
+  ];
 
   it("expands every hit to full text while the section fits the budget", () => {
     const entries = [
@@ -72,12 +73,14 @@ describe("progressive disclosure under the injection budget (#445, ADR-0006)", (
     const body = `${"Long lore body padding. ".repeat(40)}TAIL-SENTENCE-BEYOND-THE-CAP`;
     const mara = entry({ title: "Mara", contentMarkdown: body });
     const entries = [mara, entry({ title: "Sable", contentMarkdown: "Tiny body." })];
-    const rendered = triggeredLoreSections({
-      entries,
-      resident: "Mara Sable",
-      manuscript: "",
-      budgetCharacters: 1,
-    }).join("\n");
+    const rendered = [
+      ...iterateTriggeredLoreSections({
+        entries,
+        resident: "Mara Sable",
+        manuscript: "",
+        budgetCharacters: 1,
+      }),
+    ].join("\n");
     expect(rendered).toContain(LOREBOOK_BEGIN);
     expect(rendered).toContain("### Mara (summary only)");
     expect(rendered).toContain("### Sable (summary only)");
@@ -96,12 +99,14 @@ describe("progressive disclosure under the injection budget (#445, ADR-0006)", (
       contentMarkdown: body,
     });
     const render = (budgetCharacters: number) =>
-      triggeredLoreSections({
-        entries: [mara, sable],
-        resident: "gull pilot and Mara",
-        manuscript: "",
-        budgetCharacters,
-      }).join("\n");
+      [
+        ...iterateTriggeredLoreSections({
+          entries: [mara, sable],
+          resident: "gull pilot and Mara",
+          manuscript: "",
+          budgetCharacters,
+        }),
+      ].join("\n");
     const floor = render(0);
     const full = render(10_000);
     const onePromotionBudget = floor.length + (full.length - floor.length) / 2;
@@ -119,12 +124,14 @@ describe("progressive disclosure under the injection budget (#445, ADR-0006)", (
       contentMarkdown: body,
     });
     const render = (budgetCharacters: number) =>
-      triggeredLoreSections({
-        entries: [first, second],
-        resident: "Second key and First",
-        manuscript: "",
-        budgetCharacters,
-      }).join("\n");
+      [
+        ...iterateTriggeredLoreSections({
+          entries: [first, second],
+          resident: "Second key and First",
+          manuscript: "",
+          budgetCharacters,
+        }),
+      ].join("\n");
     const floor = render(0);
     const full = render(10_000);
     const onePromotionBudget = floor.length + (full.length - floor.length) / 2;
@@ -137,9 +144,14 @@ describe("progressive disclosure under the injection budget (#445, ADR-0006)", (
   it("renders no section at all when nothing matches, at any budget", () => {
     const entries = [entry({ title: "Mara", contentMarkdown: "Body." })];
     for (const budgetCharacters of [0, 1, DEFAULT_LOREBOOK_BUDGET_CHARACTERS]) {
-      expect(
-        triggeredLoreSections({ entries, resident: "", manuscript: "", budgetCharacters }),
-      ).toEqual([]);
+      expect([
+        ...iterateTriggeredLoreSections({
+          entries,
+          resident: "",
+          manuscript: "",
+          budgetCharacters,
+        }),
+      ]).toEqual([]);
     }
   });
 
@@ -154,24 +166,30 @@ describe("progressive disclosure under the injection budget (#445, ADR-0006)", (
       entry({ title: "Rho", contentMarkdown: "Three. ".repeat(30) }),
     ];
     const runs = [
-      triggeredLoreSections({
-        entries,
-        resident: "the archivist, Sable and Rho",
-        manuscript: "",
-        budgetCharacters: 400,
-      }),
-      triggeredLoreSections({
-        entries,
-        resident: "the archivist, Sable and Rho",
-        manuscript: "",
-        budgetCharacters: 400,
-      }),
-      triggeredLoreSections({
-        entries,
-        resident: "the archivist, Sable and Rho",
-        manuscript: "",
-        budgetCharacters: 400,
-      }),
+      [
+        ...iterateTriggeredLoreSections({
+          entries,
+          resident: "the archivist, Sable and Rho",
+          manuscript: "",
+          budgetCharacters: 400,
+        }),
+      ],
+      [
+        ...iterateTriggeredLoreSections({
+          entries,
+          resident: "the archivist, Sable and Rho",
+          manuscript: "",
+          budgetCharacters: 400,
+        }),
+      ],
+      [
+        ...iterateTriggeredLoreSections({
+          entries,
+          resident: "the archivist, Sable and Rho",
+          manuscript: "",
+          budgetCharacters: 400,
+        }),
+      ],
     ];
     const [firstRun, secondRun, thirdRun] = runs;
     if (firstRun === undefined || secondRun === undefined || thirdRun === undefined) {
@@ -190,7 +208,9 @@ describe("progressive disclosure under the injection budget (#445, ADR-0006)", (
     const ranks = matchLoreEntriesWithRank([mara, sable], corpora);
     expect(ranks.map((match) => match.rank)).toEqual(["title", "title"]);
     const render = (budgetCharacters: number | undefined) =>
-      triggeredLoreSections({ entries: [mara, sable], ...corpora, budgetCharacters }).join("\n");
+      [
+        ...iterateTriggeredLoreSections({ entries: [mara, sable], ...corpora, budgetCharacters }),
+      ].join("\n");
     // The default budget holds both full bodies at this fixture size.
     expect(render(undefined)).not.toContain("(summary only)");
     // Shrinking to one promotion below the default demotes exactly one entry.
@@ -228,12 +248,14 @@ describe("progressive disclosure under the injection budget (#445, ADR-0006)", (
     expect(viaPrompt).not.toContain("FULL-BODY-SENTENCE-NEVER-SHOWN");
     // The prompt embeds the direct sections API's lore block byte-for-byte at
     // the same budget: every pipeline shares one assembly point.
-    const directSections = triggeredLoreSections({
-      entries,
-      resident: "",
-      manuscript: "Mara appears.",
-      budgetCharacters: 1,
-    }).join("\n");
+    const directSections = [
+      ...iterateTriggeredLoreSections({
+        entries,
+        resident: "",
+        manuscript: "Mara appears.",
+        budgetCharacters: 1,
+      }),
+    ].join("\n");
     expect(viaPrompt).toContain(directSections);
   });
 });

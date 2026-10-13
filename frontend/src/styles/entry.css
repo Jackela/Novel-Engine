@@ -102,21 +102,6 @@
   font-size: 13px;
   line-height: 1.5;
 }
-.entry__divider {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin: 20px 0;
-  color: var(--muted-soft);
-  font-size: 12px;
-}
-.entry__divider::before,
-.entry__divider::after {
-  content: "";
-  height: 1px;
-  flex: 1;
-  background: var(--line);
-}
 .entry footer {
   margin-top: 24px;
   text-align: center;

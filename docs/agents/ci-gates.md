@@ -120,7 +120,7 @@ Real floating rejections remain enforced in both packages by
 `typescript/no-floating-promises`, so narrowing the frontend rule does not open that
 gap.
 
-## Policy: file-size gate — split first, baseline exceptional
+## Policy: file-size gate — split at the limit
 
 The file-size gate (`server/scripts/qa/check_file_sizes.mjs`, run as part of
 `pnpm --dir server gates`) enforces a **300 code-line budget** per file
@@ -130,26 +130,11 @@ The file-size gate (`server/scripts/qa/check_file_sizes.mjs`, run as part of
 small and orchestration split out; the file-size gate in CI red means the
 tree breached it.
 
-The policy is **split-first, baseline exceptional**: when a file reaches the
-limit, split it. `LEGACY_LIMITS` in the checker (a relative-path → allowed
-count map, currently empty) is the only exception channel, reserved for
-intentional legacy files that genuinely cannot be split yet. It is never a
-way to raise the default limit for new or conveniently-large code.
-
-### Enabling a legacy baseline
-
-Beware when first populating `LEGACY_LIMITS`: the checker performs a
-two-way stale-baseline validation (`legacyLimitViolations`). A baseline
-entry fails loudly — even with **zero** size violations elsewhere — if:
-
-- the file has shrunk to at or below the default 300-line limit, or
-- the file's current code-line count differs from the configured value.
-
-So the first run with a new baseline entry that no longer matches reality
-fails with `[file-size] invalid legacy baselines:` — this is expected
-behavior, **not a gate malfunction**. Baselines must be regenerated
-deliberately (with review evidence) whenever the file changes; see the
-failure hint printed by the gate itself.
+Product components (`frontend/src/**/*.tsx`, excluding `.test.tsx`) have
+the tighter **200 code-line budget**. Test files retain the default 300-line
+limit. Both budgets accept a file exactly at the limit and reject the next
+code line. When a file reaches its limit, split it; there are no per-file
+exceptions.
 
 ### Current size evidence
 

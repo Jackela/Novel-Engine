@@ -14,11 +14,8 @@ export class ExportRendererGuard {
     }
     const token = Symbol("export-renderer");
     this.owner = token;
-    let released = false;
     return {
       release: () => {
-        if (released) return;
-        released = true;
         if (this.owner === token) this.owner = null;
       },
     };
