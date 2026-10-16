@@ -1,6 +1,7 @@
 import type { NavigateFunction } from "react-router-dom";
 
 import type { StudioRouteState } from "../studioRouteState";
+import { mergeCreatedProjectDocument } from "./mergeCreatedProjectDocument";
 import { buildNavigatorCommands } from "./navigatorCommands";
 import { buildProposalUndo } from "./proposalUndo";
 import { buildStudioInspectorModel, buildStudioNavigatorProps } from "./studioPageModelView";
@@ -248,6 +249,8 @@ export function useStudioPageModel(projectId: string, route: StudioRouteState, n
         model: buildStudioInspectorModel({
           projectId,
           lore: {
+            onDocumentCreated: (document) =>
+              setProject((current) => mergeCreatedProjectDocument(current, projectId, document)),
             provider: String(project.settings.provider ?? "mock"),
             documents: project.documents,
           },

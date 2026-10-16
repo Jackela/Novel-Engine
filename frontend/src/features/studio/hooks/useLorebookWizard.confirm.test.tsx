@@ -90,7 +90,7 @@ describe("useLorebookWizard confirmation", () => {
     }
   });
 
-  it("starts a new run over the same segments after clearing results", async () => {
+  it("keeps extracted segments but cannot create a confirmed candidate again", async () => {
     vi.mocked(api.extractLore).mockResolvedValue(loreJob([candidate("character", "Mira", [])]));
     vi.mocked(api.createDocument).mockResolvedValue({
       id: "doc-mira",
@@ -110,11 +110,47 @@ describe("useLorebookWizard confirmation", () => {
         hook.result().clearResults();
       });
 
-      // The confirmation clears, but the extracted segments — and the merged
-      // candidates they fold into — stay reachable for another run.
+      // The source segments survive, but accepted entries cannot be resubmitted.
       expect(hook.result().results).toEqual([]);
       expect(hook.result().segments).toHaveLength(1);
-      expect(hook.result().candidates.map((entry) => entry.title)).toEqual(["Mira"]);
+      expect(hook.result().candidates).toEqual([]);
+      await act(async () => {
+        await hook.result().confirmSelected();
+      });
+      expect(api.createDocument).toHaveBeenCalledTimes(1);
+    } finally {
+      hook.mountHarness.cleanup();
+    }
+  });
+  it("retries only uncreated candidates after a partially successful confirmation", async () => {
+    vi.mocked(api.extractLore).mockResolvedValue(
+      loreJob([candidate("character", "Mira", []), candidate("world", "Ridge", [])]),
+    );
+    vi.mocked(api.createDocument)
+      .mockResolvedValueOnce({ id: "mira-1" } as Awaited<ReturnType<typeof api.createDocument>>)
+      .mockRejectedValueOnce(new Error("Creation unavailable"))
+      .mockResolvedValueOnce({ id: "ridge-1" } as Awaited<ReturnType<typeof api.createDocument>>);
+    vi.mocked(api.saveDocumentAliases).mockResolvedValue({ aliases: [] } as Awaited<
+      ReturnType<typeof api.saveDocumentAliases>
+    >);
+    const hook = wizardHookHarness();
+    try {
+      await submitSegment(hook.result(), "text");
+      await act(async () => {
+        await hook.result().confirmSelected();
+      });
+      expect(hook.result().results.map((result) => result.outcome)).toEqual(["created", "failed"]);
+      act(() => {
+        hook.result().clearResults();
+      });
+      await act(async () => {
+        await hook.result().confirmSelected();
+      });
+      expect(vi.mocked(api.createDocument).mock.calls.map((call) => call[1].title)).toEqual([
+        "Mira",
+        "Ridge",
+        "Ridge",
+      ]);
     } finally {
       hook.mountHarness.cleanup();
     }

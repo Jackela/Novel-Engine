@@ -8,6 +8,7 @@ import type {
   Review,
   ReviewSummary,
   RevisionSummary,
+  StudioDocument,
   StudioExport,
   StudioJob,
   StudioJobSummary,
@@ -163,6 +164,7 @@ export interface InspectorLoreModel {
   readonly provider: string;
   /** The project shell's document summaries: picker chapters + empty state. */
   readonly documents: DocumentSummary[];
+  readonly onDocumentCreated?: (document: StudioDocument) => void;
 }
 
 interface InspectorSettingsModel {

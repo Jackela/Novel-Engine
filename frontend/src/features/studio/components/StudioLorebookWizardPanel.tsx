@@ -1,5 +1,5 @@
 import { useTranslation } from "@/app/i18n/useTranslation";
-import type { DocumentSummary } from "@/app/types/studio";
+import type { DocumentSummary, StudioDocument } from "@/app/types/studio";
 import { isLoreEntryKind } from "../studioConstants";
 import { LorebookWizard } from "./LorebookWizard";
 
@@ -9,6 +9,7 @@ interface StudioLorebookWizardPanelProps {
   readonly provider: string;
   /** The project shell's document summaries drive the picker and empty state. */
   readonly documents: DocumentSummary[];
+  readonly onDocumentCreated?: (document: StudioDocument) => void;
 }
 
 /**
@@ -22,6 +23,7 @@ export function StudioLorebookWizardPanel({
   projectId,
   provider,
   documents,
+  onDocumentCreated,
 }: StudioLorebookWizardPanelProps) {
   const { t } = useTranslation();
   const isTrialProvider = provider === "mock";
@@ -36,7 +38,12 @@ export function StudioLorebookWizardPanel({
         </div>
       </header>
       {isTrialProvider ? <p className="lore-wizard__trial-note">{t("lore.trialNote")}</p> : null}
-      <LorebookWizard documents={documents} projectId={projectId} provider={provider} />
+      <LorebookWizard
+        onDocumentCreated={onDocumentCreated}
+        documents={documents}
+        projectId={projectId}
+        provider={provider}
+      />
     </div>
   );
 }

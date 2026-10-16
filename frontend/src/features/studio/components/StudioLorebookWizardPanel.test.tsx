@@ -1,4 +1,4 @@
-import { fireEvent, getByRole, getByText } from "@testing-library/dom";
+import { fireEvent, getByRole, getByText, queryByRole } from "@testing-library/dom";
 import { act } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -242,7 +242,7 @@ describe("StudioLorebookWizardPanel", () => {
     },
   );
 
-  it("keeps the candidates reachable after a confirmation through Start over", async () => {
+  it("keeps segments without offering already-created candidates through Start over", async () => {
     const container = renderPanel("mock");
     await runExtraction(container, [
       { kind: "character", title: "Mira", aliases: [], summary: "a" },
@@ -265,9 +265,44 @@ describe("StudioLorebookWizardPanel", () => {
       await Promise.resolve();
     });
 
-    // The segments — and the merged candidates they fold into — survive the
-    // cleared results, so the author can run another confirmation.
-    expect(getByText(container, "Mira")).toBeVisible();
-    expect(getByRole(container, "button", { name: "Add 1 selected to lorebook" })).toBeEnabled();
+    expect(getByRole(container, "list", { name: "Extraction segments" })).toBeVisible();
+    expect(queryByRole(container, "checkbox", { name: "Mira" })).toBeNull();
+    expect(queryByRole(container, "button", { name: "Add 1 selected to lorebook" })).toBeNull();
+  });
+  it("keeps failed aliases retryable while continuing with an uncreated candidate", async () => {
+    const container = renderPanel("mock");
+    await runExtraction(container, [
+      { kind: "character", title: "Mira", aliases: ["Clerk"], summary: "a" },
+      { kind: "world", title: "Ridge", aliases: ["Pass"], summary: "b" },
+    ]);
+    vi.mocked(api.createDocument)
+      .mockResolvedValueOnce({ id: "mira-1" } as Awaited<ReturnType<typeof api.createDocument>>)
+      .mockRejectedValueOnce(new Error("Creation unavailable"))
+      .mockResolvedValueOnce({ id: "ridge-1" } as Awaited<ReturnType<typeof api.createDocument>>);
+    vi.mocked(api.saveDocumentAliases)
+      .mockRejectedValueOnce(new Error("Aliases unavailable"))
+      .mockResolvedValue({ aliases: [] } as Awaited<ReturnType<typeof api.saveDocumentAliases>>);
+    await act(async () => {
+      fireEvent.click(getByRole(container, "button", { name: "Add 2 selected to lorebook" }));
+    });
+    act(() => {
+      fireEvent.click(getByRole(container, "button", { name: "Start over" }));
+    });
+    expect(getByRole(container, "button", { name: "Retry alias write" })).toBeVisible();
+    expect(queryByRole(container, "checkbox", { name: "Mira" })).toBeNull();
+    expect(getByRole(container, "checkbox", { name: "Ridge" })).toBeChecked();
+    await act(async () => {
+      fireEvent.click(getByRole(container, "button", { name: "Add 1 selected to lorebook" }));
+    });
+    await act(async () => {
+      fireEvent.click(getByRole(container, "button", { name: "Retry alias write" }));
+    });
+    expect(api.saveDocumentAliases).toHaveBeenLastCalledWith("project-1", "mira-1", ["Clerk"]);
+    expect(vi.mocked(api.createDocument).mock.calls.map((call) => call[1].title)).toEqual([
+      "Mira",
+      "Ridge",
+      "Ridge",
+    ]);
+    expect(queryByRole(container, "button", { name: "Retry alias write" })).toBeNull();
   });
 });
