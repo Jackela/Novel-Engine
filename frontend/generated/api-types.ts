@@ -1284,6 +1284,12 @@ export interface paths {
                                 };
                                 message: string;
                             };
+                        } | {
+                            error: {
+                                /** @enum {string} */
+                                code: "DOCUMENT_CONFLICT";
+                                message: string;
+                            };
                         };
                     };
                 };

@@ -138,13 +138,29 @@ export function useDocumentDraftAutosave({
       clearRetryTimer();
     } catch (reason) {
       if (!isCurrentProject()) return;
-      const isConflict = reason instanceof HttpError && reason.status === 409;
+      const isTitleConflict = reason instanceof HttpError && reason.code === "DOCUMENT_CONFLICT";
+      const isPermanent =
+        reason instanceof HttpError &&
+        (reason.status === 413 || reason.status === 422 || isTitleConflict);
+      const isConflict = reason instanceof HttpError && reason.status === 409 && !isTitleConflict;
       if (!isConflict) {
+        if (
+          isPermanent &&
+          isCurrentOwner() &&
+          (draftRef.current.draft !== currentDraft || draftRef.current.titleDraft !== currentTitle)
+        ) {
+          clearRetryTimer();
+          return;
+        }
         setCurrentSaveState("error");
         if (isCurrentOwner()) {
           setError(toErrorMessage(reason, translateActive("errors.saveDocument")));
         }
-        scheduleRetryRef.current();
+        if (isPermanent) {
+          clearRetryTimer();
+        } else {
+          scheduleRetryRef.current();
+        }
         return;
       }
       // Land the winning body before publishing the conflict surface (#472):

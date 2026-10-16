@@ -147,6 +147,49 @@ describe("useDocumentDraft conflict recovery timing (#472)", () => {
     expect(view.result().error).toBeNull();
   });
 
+  it("keeps an overwrite title refusal as an editable error instead of a revision conflict", async () => {
+    vi.mocked(api.revisions).mockResolvedValue({ revisions: [initialRevision], next_cursor: null });
+    vi.mocked(api.document).mockResolvedValue(latestDocument);
+    vi.mocked(api.saveDocument)
+      .mockRejectedValueOnce(
+        new HttpError("revision conflict", 409, undefined, "REVISION_CONFLICT"),
+      )
+      .mockRejectedValueOnce(
+        new HttpError("Document title already exists.", 409, undefined, "DOCUMENT_CONFLICT"),
+      )
+      .mockResolvedValueOnce({
+        ...latestDocument,
+        title: "Unique title",
+        content_markdown: "Local draft",
+      });
+    const view = renderDocumentDraftHook();
+    await flushMicrotasks();
+    act(() => {
+      view.result().hook.setDraft("Local draft");
+      view.result().hook.setTitleDraft("Duplicate title");
+    });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1500);
+    });
+    expect(view.result().hook.saveState).toBe("conflict");
+    await act(async () => {
+      await view.result().hook.retryOverwrite();
+    });
+    expect(view.result().hook.saveState).toBe("error");
+    expect(view.result().hook.draft).toBe("Local draft");
+    expect(view.result().hook.titleDraft).toBe("Duplicate title");
+    expect(api.document).toHaveBeenCalledTimes(2);
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(65_000);
+    });
+    expect(api.saveDocument).toHaveBeenCalledTimes(2);
+    act(() => view.result().hook.setTitleDraft("Unique title"));
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1500);
+    });
+    expect(view.result().hook.saveState).toBe("saved");
+  });
+
   it("views the server version without changing the local draft", async () => {
     vi.mocked(api.revisions).mockResolvedValue({ revisions: [initialRevision], next_cursor: null });
     vi.mocked(api.document).mockResolvedValue(latestDocument);

@@ -1,10 +1,10 @@
 import { act, useState } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { api } from "@/app/api";
+import { api, HttpError } from "@/app/api";
 import type { Project, StudioDocument } from "@/app/types/studio";
 import { chapter, projectWith, revision } from "@/test/factories";
-import { createMountHarness, flushMicrotasks } from "@/test/harness";
+import { createMountHarness, deferred, flushMicrotasks } from "@/test/harness";
 
 import { useDocumentDraft } from "./useDocumentDraft";
 
@@ -146,6 +146,95 @@ describe("autosave recovery", () => {
     await advance(30000);
     expect(api.saveDocument).toHaveBeenCalledTimes(4);
     expect(view.result().hook.saveState).toBe("error");
+  });
+
+  it.each([413, 422])(
+    "keeps a permanent %s refusal without retrying unchanged text",
+    async (status) => {
+      vi.mocked(api.saveDocument)
+        .mockRejectedValueOnce(new HttpError("Chapter capacity exceeded.", status))
+        .mockResolvedValueOnce({ ...savedA, content_markdown: "Shorter draft" });
+      const view = renderDraft();
+      await flushMicrotasks();
+      act(() => view.result().hook.setDraft("Oversized draft"));
+      await advance(1500);
+      expect(view.result().hook.saveState).toBe("error");
+      const failureMessage = view.result().error;
+      expect(failureMessage).toBeTruthy();
+      expect(view.result().hook.draft).toBe("Oversized draft");
+
+      await advance(65_000);
+      expect(api.saveDocument).toHaveBeenCalledTimes(1);
+      expect(view.result().hook.saveState).toBe("error");
+      expect(view.result().error).toBe(failureMessage);
+
+      act(() => view.result().hook.setDraft("Shorter draft"));
+      await advance(1500);
+      expect(api.saveDocument).toHaveBeenCalledTimes(2);
+      expect(view.result().hook.saveState).toBe("saved");
+      expect(view.result().hook.draft).toBe("Shorter draft");
+    },
+  );
+
+  it.each([413, 422])(
+    "saves a corrected Draft edited while a %s response was pending",
+    async (status) => {
+      const firstSave = deferred<StudioDocument>();
+      vi.mocked(api.saveDocument)
+        .mockImplementationOnce(() =>
+          firstSave.promise.then(() => {
+            throw new HttpError("Chapter capacity exceeded.", status);
+          }),
+        )
+        .mockResolvedValueOnce({ ...savedA, content_markdown: "Shorter draft" });
+      const view = renderDraft();
+      await flushMicrotasks();
+      act(() => view.result().hook.setDraft("Oversized draft"));
+      await advance(1500);
+      act(() => view.result().hook.setDraft("Shorter draft"));
+      await act(async () => {
+        firstSave.resolve(documentA);
+      });
+      await advance(1500);
+      expect(api.saveDocument).toHaveBeenCalledTimes(2);
+      expect(vi.mocked(api.saveDocument).mock.lastCall?.[2].content_markdown).toBe("Shorter draft");
+      expect(view.result().hook.saveState).toBe("saved");
+      expect(view.result().hook.draft).toBe("Shorter draft");
+      expect(view.result().error).toBeNull();
+    },
+  );
+
+  it("keeps a title conflict editable without adopting a new revision baseline", async () => {
+    vi.mocked(api.saveDocument)
+      .mockRejectedValueOnce(
+        new HttpError("Document title already exists.", 409, undefined, "DOCUMENT_CONFLICT"),
+      )
+      .mockResolvedValueOnce({ ...savedA, title: "Unique title" });
+    const view = renderDraft();
+    await flushMicrotasks();
+    act(() => {
+      view.result().hook.setDraft(savedA.content_markdown);
+      view.result().hook.setTitleDraft("Duplicate title");
+    });
+    await advance(1500);
+    expect(view.result().hook.saveState).toBe("error");
+    expect(view.result().hook.draft).toBe(savedA.content_markdown);
+    expect(view.result().hook.titleDraft).toBe("Duplicate title");
+    expect(view.result().error).toBeTruthy();
+    expect(view.result().hook.loadedRevision.current).toBe(documentA.current_revision_id);
+    expect(api.document).not.toHaveBeenCalled();
+
+    await advance(65_000);
+    expect(api.saveDocument).toHaveBeenCalledTimes(1);
+    act(() => view.result().hook.setTitleDraft("Unique title"));
+    await advance(1500);
+    expect(api.saveDocument).toHaveBeenLastCalledWith(project.id, documentA.id, {
+      content_markdown: savedA.content_markdown,
+      base_revision_id: documentA.current_revision_id,
+      title: "Unique title",
+      autosave: true,
+    });
+    expect(view.result().hook.saveState).toBe("saved");
   });
 
   it("recovers on the next keystroke after a failure", async () => {

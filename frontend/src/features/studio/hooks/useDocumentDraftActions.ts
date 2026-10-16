@@ -157,7 +157,11 @@ export function useDocumentDraftActions({
     } catch (reason) {
       if (isCurrentOwner(owner)) {
         setCurrentSaveState(
-          reason instanceof HttpError && reason.status === 409 ? "conflict" : "error",
+          reason instanceof HttpError &&
+            reason.status === 409 &&
+            reason.code !== "DOCUMENT_CONFLICT"
+            ? "conflict"
+            : "error",
         );
         setError(toErrorMessage(reason, translateActive("errors.overwriteDocument")));
       }
