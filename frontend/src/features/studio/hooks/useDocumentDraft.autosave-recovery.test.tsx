@@ -1,12 +1,12 @@
-import { act, useState } from "react";
+import { act } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { api, HttpError } from "@/app/api";
-import type { Project, StudioDocument } from "@/app/types/studio";
+import type { StudioDocument } from "@/app/types/studio";
 import { chapter, projectWith, revision } from "@/test/factories";
-import { createMountHarness, deferred, flushMicrotasks } from "@/test/harness";
+import { deferred, flushMicrotasks } from "@/test/harness";
 
-import { useDocumentDraft } from "./useDocumentDraft";
+import { createDocumentDraftTestHarness } from "./createDocumentDraftTestHarness";
 
 vi.mock("@/app/api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/app/api")>();
@@ -20,8 +20,6 @@ vi.mock("@/app/api", async (importOriginal) => {
     },
   };
 });
-
-const harness = createMountHarness();
 
 const documentA = chapter("document-a", {
   title: "Chapter A",
@@ -43,39 +41,7 @@ const savedA = {
   updated_at: "2026-10-01T00:01:00Z",
 };
 
-function renderDraft() {
-  let body: StudioDocument | null = documentA;
-  let selectedId: string | null = documentA.id;
-  let current: { hook: ReturnType<typeof useDocumentDraft>; error: string | null } | undefined;
-  function Wrapper() {
-    const [, setProject] = useState<Project | null>(project);
-    const [error, setError] = useState<string | null>(null);
-    const hook = useDocumentDraft(
-      body,
-      project.id,
-      setProject,
-      setError,
-      setError,
-      setError,
-      selectedId,
-    );
-    current = { hook, error };
-    return null;
-  }
-  const { root } = harness.mount(<Wrapper />);
-  return {
-    result: () => {
-      if (!current) throw new Error("Expected mounted draft.");
-      return current;
-    },
-    select: async (document: StudioDocument | null, id: string | null = document?.id ?? null) => {
-      body = document;
-      selectedId = id;
-      act(() => root.render(<Wrapper />));
-      await flushMicrotasks();
-    },
-  };
-}
+const { renderDraft, cleanup } = createDocumentDraftTestHarness(project, documentA);
 
 async function advance(milliseconds: number) {
   await act(async () => {
@@ -96,7 +62,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
-  harness.cleanup();
+  cleanup();
   vi.clearAllTimers();
   vi.useRealTimers();
   vi.resetAllMocks();

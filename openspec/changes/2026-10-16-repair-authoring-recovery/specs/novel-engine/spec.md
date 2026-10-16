@@ -364,4 +364,3 @@ parameterized search.
 - **GIVEN** confirmation began in one project
 - **WHEN** the author switches to a different project before creation completes
 - **THEN** the created Document is not inserted into the newly active project's navigation
-

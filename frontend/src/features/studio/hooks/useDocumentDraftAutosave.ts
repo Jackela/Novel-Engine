@@ -1,49 +1,11 @@
-import {
-  type Dispatch,
-  type MutableRefObject,
-  type SetStateAction,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { HttpError } from "@/app/api";
 import { translateActive } from "@/app/i18n/translate";
-import type { SaveState, StudioDocument } from "@/app/types/studio";
-import type { DraftSnapshot, PersistedDraft } from "./documentDraftState";
+import type { AutosaveOptions } from "./documentDraftState";
 import { flushDraftNow } from "./flushDraftNow";
 import { toErrorMessage } from "./toErrorMessage";
 import { useDocumentDraftRescue } from "./useDocumentDraftRescue";
-
-interface AutosaveOptions {
-  readonly ownerKey: string;
-  readonly ownerToken: symbol;
-  readonly isCurrentOwner: () => boolean;
-  readonly isCurrentProject: () => boolean;
-  readonly activeDocument: StudioDocument | null;
-  readonly draft: string;
-  readonly titleDraft: string;
-  readonly saveState: SaveState;
-  readonly isConflictActionPending: boolean;
-  readonly draftRef: MutableRefObject<DraftSnapshot>;
-  readonly persistedDraftsRef: MutableRefObject<Map<string, PersistedDraft>>;
-  readonly loadedRevision: MutableRefObject<string | null>;
-  readonly saveStateRef: MutableRefObject<SaveState>;
-  readonly conflictActionPendingRef: MutableRefObject<symbol | null>;
-  readonly saveTimerRef: MutableRefObject<number | null>;
-  readonly saveInFlightRef: MutableRefObject<Set<string>>;
-  readonly persistDraft: (
-    document: StudioDocument,
-    content: string,
-    title: string,
-    baseRevisionId: string,
-    editVersion: number,
-  ) => Promise<StudioDocument | null>;
-  readonly refreshLatestDocument: (documentId: string) => Promise<StudioDocument | null>;
-  readonly setCurrentSaveState: (nextSaveState: SaveState) => void;
-  readonly setError: Dispatch<SetStateAction<string | null>>;
-}
 
 interface AutosaveHandle {
   readonly retrySave: () => void;
