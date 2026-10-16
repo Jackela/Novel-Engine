@@ -25,6 +25,7 @@ interface AutosaveOptions {
   readonly draft: string;
   readonly titleDraft: string;
   readonly saveState: SaveState;
+  readonly isConflictActionPending: boolean;
   readonly draftRef: MutableRefObject<DraftSnapshot>;
   readonly persistedDraftsRef: MutableRefObject<Map<string, PersistedDraft>>;
   readonly loadedRevision: MutableRefObject<string | null>;
@@ -86,6 +87,7 @@ export function useDocumentDraftAutosave({
   draft,
   titleDraft,
   saveState,
+  isConflictActionPending,
   draftRef,
   persistedDraftsRef,
   loadedRevision,
@@ -306,6 +308,7 @@ export function useDocumentDraftAutosave({
       saveStateRef.current === "conflict" ||
       saveStateRef.current === "error" ||
       isAutosavePending ||
+      isConflictActionPending ||
       conflictActionPendingRef.current === ownerToken
     ) {
       return;
@@ -327,6 +330,7 @@ export function useDocumentDraftAutosave({
     titleDraft,
     saveState,
     isAutosavePending,
+    isConflictActionPending,
     clearRetryTimer,
     executeSave,
     setCurrentSaveState,

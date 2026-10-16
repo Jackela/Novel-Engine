@@ -190,6 +190,44 @@ describe("useDocumentDraft conflict recovery timing (#472)", () => {
     expect(view.result().hook.saveState).toBe("saved");
   });
 
+  it.each([413, 422])("saves newer text after an older overwrite receives %s", async (status) => {
+    vi.mocked(api.revisions).mockResolvedValue({ revisions: [initialRevision], next_cursor: null });
+    vi.mocked(api.document).mockResolvedValue(latestDocument);
+    const overwriteResponse = deferred<StudioDocument>();
+    vi.mocked(api.saveDocument)
+      .mockRejectedValueOnce(new HttpError("revision conflict", 409))
+      .mockImplementationOnce(() =>
+        overwriteResponse.promise.then(() => {
+          throw new HttpError("capacity exceeded", status);
+        }),
+      )
+      .mockResolvedValueOnce({ ...latestDocument, content_markdown: "Corrected draft" });
+    const view = renderDocumentDraftHook();
+    await flushMicrotasks();
+    act(() => view.result().hook.setDraft("Oversized draft"));
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1500);
+    });
+    expect(view.result().hook.saveState).toBe("conflict");
+    let overwrite: Promise<void> | undefined;
+    await act(async () => {
+      overwrite = view.result().hook.retryOverwrite();
+    });
+    await flushMicrotasks();
+    expect(api.saveDocument).toHaveBeenCalledTimes(2);
+    act(() => view.result().hook.setDraft("Corrected draft"));
+    await act(async () => {
+      overwriteResponse.resolve(latestDocument);
+      await overwrite;
+    });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1500);
+    });
+    expect(api.saveDocument).toHaveBeenCalledTimes(3);
+    expect(view.result().hook.draft).toBe("Corrected draft");
+    expect(view.result().hook.saveState).toBe("saved");
+  });
+
   it("views the server version without changing the local draft", async () => {
     vi.mocked(api.revisions).mockResolvedValue({ revisions: [initialRevision], next_cursor: null });
     vi.mocked(api.document).mockResolvedValue(latestDocument);
