@@ -21,6 +21,30 @@ const DAY_MS = 24 * 60 * 60_000;
  * the lineage pointer of surviving children past the pruned ancestors.
  */
 describe("revision retention prune (#DR-047)", () => {
+  it("keeps the newest retained revisions when collapse leaves numbering gaps", async () => {
+    const harness = await openRetentionHarness();
+    try {
+      for (let index = 1; index <= 3; index += 1) {
+        save(harness, `old ${index}`, { at: index * MINUTE_MS });
+      }
+      const oldRevisions = revisionRows(harness.studio);
+      // A long pause ages the old rows; a continuous new session increases
+      // revision numbers while folding each new predecessor away.
+      for (let index = 1; index <= 201; index += 1) {
+        save(harness, `recent ${index}`, { at: 200 * DAY_MS + index * 1_000 });
+      }
+
+      const rows = revisionRows(harness.studio);
+      expect(rows).toHaveLength(5);
+      for (const revision of oldRevisions) {
+        expect(rows).toContainEqual(revision);
+      }
+      expect(rows.at(-1)?.revisionNumber).toBe(205);
+    } finally {
+      await harness.cleanup();
+    }
+  });
+
   it("prunes old unreferenced autosave revisions beyond the newest floor", async () => {
     const harness = await openRetentionHarness();
     try {
@@ -62,11 +86,16 @@ describe("revision retention prune (#DR-047)", () => {
       expect(pinnedRevisionId).not.toBe("");
       // Everything unreferenced below the newest-N floor and inside the
       // retention window's past is pruned.
-      for (const pruned of [1, 2, 3, 5, 6]) {
+      for (const pruned of [2, 3, 5, 6]) {
         expect(numbers).not.toContain(pruned);
       }
-      // The snapshot-pinned revision is immutable, and the latest survives
-      // even though it is old and unreferenced.
+      // The first revision remains the origin record even after aging beyond
+      // retention; the snapshot-pinned revision and the latest also survive.
+      expect(rows.find((row) => row.revisionNumber === 1)).toMatchObject({
+        id: harness.currentRevisionId,
+        parentRevisionId: null,
+        contentMarkdown: "seed",
+      });
       expect(numbers).toContain(pinnedNumber);
       expect(numbers).toContain(206);
       expect(rows.find((row) => row.revisionNumber === 206)?.id).toBe(latest);
@@ -78,7 +107,9 @@ describe("revision retention prune (#DR-047)", () => {
       // pruned ancestors instead of keeping a dangling reference, and the
       // pinned revision itself re-links to the chain root it survived.
       expect(rows.find((row) => row.revisionNumber === 7)?.parentRevisionId).toBe(pinnedRevisionId);
-      expect(rows.find((row) => row.revisionNumber === pinnedNumber)?.parentRevisionId).toBeNull();
+      expect(rows.find((row) => row.revisionNumber === pinnedNumber)?.parentRevisionId).toBe(
+        harness.currentRevisionId,
+      );
       const survivingIds = new Set(rows.map((row) => row.id));
       for (const row of rows) {
         if (row.parentRevisionId !== null) {
