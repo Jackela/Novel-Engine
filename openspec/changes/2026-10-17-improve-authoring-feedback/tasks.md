@@ -7,44 +7,53 @@
 
 ## 2. Saved-source and Review result feedback
 
-- [ ] 2.1 Add saved-chapter source text and derive the non-blocking notice from
+- [x] 2.1 Add saved-chapter source text and derive the non-blocking notice from
   actual active-chapter Draft title/body changes.
-- [ ] 2.2 Verify waiting, saving, failed, conflicted, reverted, saved, and
+- [x] 2.2 Verify waiting, saving, failed, conflicted, reverted, saved, and
   Document/Project-switch states without introducing a save prerequisite.
-- [ ] 2.3 Show the zero-finding statement only for successfully loaded Review
+- [x] 2.3 Show the zero-finding statement only for successfully loaded Review
   detail and verify pending, failure, no-review, and nonzero-result boundaries.
 
 ## 3. Copy feedback
 
-- [ ] 3.1 Give Copilot and Jobs shared success and retryable manual-copy
+- [x] 3.1 Give Copilot and Jobs shared success and retryable manual-copy
   feedback while keeping unexpected failures observable.
-- [ ] 3.2 Verify missing Clipboard API, known permission refusal, successful
+- [x] 3.2 Verify missing Clipboard API, known permission refusal, successful
   retry, overlapping attempts, and text-identity changes in both consumers.
 
 ## 4. Volume deletion freshness
 
-- [ ] 4.1 Update Project modification time with a successful Volume deletion.
-- [ ] 4.2 Verify recent-project order and unchanged timestamp after refused
+- [x] 4.1 Update Project modification time with a successful Volume deletion.
+- [x] 4.2 Verify recent-project order and unchanged timestamp after refused
   or rolled-back deletion, preserving existing chapter reassignment behavior.
 
 ## 5. Review manuscript and prompt capacity
 
-- [ ] 5.1 Supply full captured saved chapter Markdown with identity and
+- [x] 5.1 Supply full captured saved chapter Markdown with identity and
   reading order, excluding non-chapter documents and stored document metadata.
-- [ ] 5.2 Enforce the complete system/user prompt byte limit before provider
+- [x] 5.2 Enforce the complete system/user prompt byte limit before provider
   construction, without truncation and without fresh-refusal workflow evidence.
-- [ ] 5.3 Retain structured capacity failure on a reserved Review retry and
+- [x] 5.3 Retain structured capacity failure on a reserved Review retry and
   replay the same key's 422 without repeated source/provider work.
-- [ ] 5.4 Verify complete prose, source identity, untrusted text boundaries,
+- [x] 5.4 Verify complete prose, source identity, untrusted text boundaries,
   multibyte/escaped bytes, exact-limit admission, over-limit refusal, and
   same-key versus different-key retry behavior.
-- [ ] 5.5 Regenerate and check the OpenAPI baseline and frontend API types for
+- [x] 5.5 Regenerate and check the OpenAPI baseline and frontend API types for
   the Review capacity-refusal response.
 
-## 6. Integrated evidence
+## 6. Chinese trial Proposal completeness
 
-- [ ] 6.1 Run the affected frontend and backend checks on the integrated
+- [x] 6.1 Reproduce the short Chinese trial narrative's refusal through the
+  real prose guard and preserve the original failed stream evidence.
+- [x] 6.2 Complete the deterministic Chinese narrative without weakening the
+  existing prose guard; verify structured and streamed Rewrite and Continue.
+- [ ] 6.3 Verify a real Chinese Proposal preview and explicit author acceptance
+  in the browser, including unchanged accepted text before Accept.
+
+## 7. Integrated evidence
+
+- [ ] 7.1 Run the affected frontend and backend checks on the integrated
   candidate and inspect the complete diff.
-- [ ] 6.2 Exercise the affected authoring feedback in the browser and record
+- [ ] 7.2 Exercise the affected authoring feedback in the browser and record
   actual results, skipped checks, fixed candidate identity, and remaining
   acceptance gates under the repository's change-evidence contract.

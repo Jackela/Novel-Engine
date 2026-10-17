@@ -232,3 +232,29 @@ key MUST represent a distinct attempt and MAY read the newly saved manuscript.
 - **WHEN** the author retries using a different key
 - **THEN** the new attempt may capture that saved source and invoke the provider
 - **AND** replay of the earlier key still returns its original capacity refusal
+
+
+### Requirement: Valid Chinese trial Proposal prose
+
+For ordinary nonempty Chinese chapters, the deterministic trial provider's
+Rewrite and Continue outputs MUST contain complete narrative prose that passes
+the existing Proposal prose validation, through both structured and streamed
+generation. Repairing the trial narrative MUST NOT relax that validation,
+change other provider selection, or apply a Proposal without author acceptance.
+
+#### Scenario: Chinese trial generation produces an actionable preview
+
+- **GIVEN** a saved Chinese chapter and the deterministic trial provider
+- **WHEN** the author requests Rewrite or Continue
+- **THEN** generation completes with narrative prose that passes the existing
+  Proposal guard
+- **AND** that prose is available as a preview before the author chooses Accept
+- **AND** the accepted manuscript is unchanged until that choice
+
+#### Scenario: Streamed and structured trial prose follow the same guard
+
+- **GIVEN** the same Chinese trial generation input
+- **WHEN** the narrative is returned through structured generation or streamed
+  in chunks
+- **THEN** both complete outputs pass the existing prose validation
+- **AND** invalid Proposal content continues to be refused
