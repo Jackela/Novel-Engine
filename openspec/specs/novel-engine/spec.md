@@ -294,6 +294,15 @@ default false). Marked saves additionally apply the revision growth policy:
   the document, deleting at most one bounded batch per save and repairing the
   `parent_revision_id` pointer of surviving children past pruned ancestors.
 
+The newest-200 protection MUST count existing retained Revision rows rather
+than gaps in monotonic revision numbers left by autosave folding.
+
+A save that would reuse another Document's title within the same project and
+document kind MUST return 409 `DOCUMENT_CONFLICT`. It MUST leave the current
+Revision, title, content, revision history, search index, and project update
+time unchanged. A stale base Revision MUST continue to return
+`REVISION_CONFLICT` before a title collision is considered.
+
 Revisions referenced by a snapshot, the document's current revision, and the
 document's first revision MUST never be folded or pruned; revision content and
 metadata stay immutable, and only the lineage pointer of a surviving revision
@@ -341,6 +350,26 @@ keep plain append semantics.
 - **WHEN** an autosave inside the collapse window, and later a retention
   prune, consider unreferenced predecessors of that document
 - **THEN** the pinned revision remains readable and unchanged
+
+#### Scenario: The first Revision survives retention
+
+- **GIVEN** the first Revision is older than 90 days and lies outside the newest 200 retained Revisions
+- **WHEN** an autosave prunes eligible old author Revisions
+- **THEN** the first Revision remains readable
+- **AND** surviving parent pointers continue to name retained ancestors
+
+#### Scenario: Folded numbering gaps do not shrink the retained-history floor
+
+- **GIVEN** autosave folding has advanced the current Revision number beyond 200 while fewer than 200 Revision rows remain
+- **WHEN** an autosave evaluates old author Revisions for retention
+- **THEN** none of those retained rows is deleted merely because its number is more than 200 below the current number
+
+#### Scenario: A conflicting title rejects the whole save
+
+- **GIVEN** two Documents of the same kind in one project have distinct titles
+- **WHEN** one is saved with the other Document's title and a current base Revision
+- **THEN** the response is 409 `DOCUMENT_CONFLICT`
+- **AND** the title, content, current Revision, complete retained history, search index, and project update time remain unchanged
 
 ### Requirement: Full-text search over current content
 
@@ -2036,12 +2065,21 @@ the explicit save surface keeps ownership of user-visible save errors.
 After 1.5 seconds without a newer edit, the Studio MUST start the existing
 conflict-checked autosave attempt. The debounce bounds when an attempt starts;
 it MUST NOT be presented as a guarantee that the Draft is durable, because a
-request can fail, conflict, be cancelled, or lose its response. A 409 MUST
+request can fail, conflict, be cancelled, or lose its response. A 409 `REVISION_CONFLICT` MUST
 retain the local Draft and a separate latest-server baseline while that
 Document remains active. The active local Draft ends only by successful
 acceptance, an explicit conflict choice that replaces it, a departure that
 hands the newest text to its one rescue write, or a reload. A late save,
 rescue, or conflict outcome MUST NOT publish into a newly active Document.
+
+Automatic retries MUST NOT repeat an unchanged Draft after a permanent HTTP
+413 or 422 save refusal. The active Draft and its visible error MUST remain
+available for correction or an explicit retry. Editing that Draft MUST resume
+the ordinary debounced save path. Transient transport failure retry and the
+explicit `REVISION_CONFLICT` path MUST retain their existing behavior. A
+409 `DOCUMENT_CONFLICT` MUST retain the Draft as an editable save error,
+without presenting revision-conflict replacement actions or automatically
+repeating the unchanged title.
 
 #### Scenario: Switching documents discards the draft
 
@@ -2102,6 +2140,15 @@ rescue, or conflict outcome MUST NOT publish into a newly active Document.
 - **WHEN** the latest server Document is loaded as the conflict baseline
 - **THEN** the local Draft remains separately available for the explicit conflict actions
 - **AND** neither value silently overwrites the other
+
+#### Scenario: A permanent size or validation refusal stops automatic retry
+
+- **GIVEN** a save of the active Draft is refused with HTTP 413 or 422
+- **WHEN** automatic retry intervals elapse without another edit
+- **THEN** no further save request is sent for that unchanged Draft
+- **AND** the local title, content, and readable save error remain available
+- **WHEN** the author corrects the Draft
+- **THEN** the ordinary debounced save may persist the corrected text
 
 ### Requirement: Terminal-state job list without polling
 The Studio MUST NOT poll for job updates — no intervals, server-sent
@@ -5533,6 +5580,14 @@ the trial (mock) provider the wizard MUST still produce deterministic
 placeholder candidates per segment and MUST label the session with the
 trial-mode wording used by the first-run explainer.
 
+Every successfully created Document MUST immediately enter the current
+project's navigation through the existing project-shell state owner, including
+a Document whose alias write failed. This update MUST preserve the active Draft
+and MUST NOT publish into another project. Within one wizard session, starting
+over MUST allow work on uncreated candidates without reissuing creation for
+already-created candidates. Outstanding failed alias writes MUST keep their
+existing retry surface until resolved or the session is abandoned.
+
 Each input segment MUST be capped at 100,000 Unicode code points. A segment
 over the cap, or a segment whose assembled extraction prompt exceeds the
 shared UTF-8 byte authority of proposal generation, MUST fail before
@@ -5621,3 +5676,23 @@ parameterized search.
 - **THEN** the failure surfaces through the Studio error surface with the standard error envelope
 - **AND** the discarded upstream body text does not appear in the job error, the envelope, or any author-visible surface
 - **AND** no Lore entry is created from the failed run
+
+#### Scenario: Confirmation updates navigation without a reload
+
+- **GIVEN** the wizard confirms a selected candidate in the current project
+- **WHEN** document creation succeeds, whether or not its following alias write succeeds
+- **THEN** the new draft Lore entry appears in the appropriate navigation group without a page reload
+- **AND** the active editor Draft remains unchanged
+
+#### Scenario: Starting over retries only uncreated candidates
+
+- **GIVEN** one candidate was created and a second candidate's creation failed
+- **WHEN** the author starts over and confirms the remaining candidate
+- **THEN** creation is requested only for the candidate that was not created
+- **AND** any outstanding alias failure on a created entry remains independently retryable
+
+#### Scenario: Late confirmation cannot update a different project
+
+- **GIVEN** confirmation began in one project
+- **WHEN** the author switches to a different project before creation completes
+- **THEN** the created Document is not inserted into the newly active project's navigation
