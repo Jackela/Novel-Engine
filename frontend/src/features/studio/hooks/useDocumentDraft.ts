@@ -126,6 +126,7 @@ export function useDocumentDraft(
     draft,
     titleDraft,
     saveState,
+    isConflictActionPending,
     draftRef,
     persistedDraftsRef,
     loadedRevision,

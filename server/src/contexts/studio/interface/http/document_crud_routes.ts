@@ -95,7 +95,7 @@ export const documentCrudRoutes: FastifyPluginAsync<StudioRoutesOptions> = async
           200: documentResponseSchema,
           // Metadata bytes and outline beats refuse here permanently (#461).
           422: structureCapacity422ResponseSchema,
-          409: revisionConflictSchema,
+          409: { anyOf: [revisionConflictSchema, documentConflictSchema] },
         }),
       },
     },

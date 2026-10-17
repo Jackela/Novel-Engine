@@ -1,48 +1,11 @@
-import {
-  type Dispatch,
-  type MutableRefObject,
-  type SetStateAction,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { HttpError } from "@/app/api";
 import { translateActive } from "@/app/i18n/translate";
-import type { SaveState, StudioDocument } from "@/app/types/studio";
-import type { DraftSnapshot, PersistedDraft } from "./documentDraftState";
+import type { AutosaveOptions } from "./documentDraftState";
 import { flushDraftNow } from "./flushDraftNow";
 import { toErrorMessage } from "./toErrorMessage";
 import { useDocumentDraftRescue } from "./useDocumentDraftRescue";
-
-interface AutosaveOptions {
-  readonly ownerKey: string;
-  readonly ownerToken: symbol;
-  readonly isCurrentOwner: () => boolean;
-  readonly isCurrentProject: () => boolean;
-  readonly activeDocument: StudioDocument | null;
-  readonly draft: string;
-  readonly titleDraft: string;
-  readonly saveState: SaveState;
-  readonly draftRef: MutableRefObject<DraftSnapshot>;
-  readonly persistedDraftsRef: MutableRefObject<Map<string, PersistedDraft>>;
-  readonly loadedRevision: MutableRefObject<string | null>;
-  readonly saveStateRef: MutableRefObject<SaveState>;
-  readonly conflictActionPendingRef: MutableRefObject<symbol | null>;
-  readonly saveTimerRef: MutableRefObject<number | null>;
-  readonly saveInFlightRef: MutableRefObject<Set<string>>;
-  readonly persistDraft: (
-    document: StudioDocument,
-    content: string,
-    title: string,
-    baseRevisionId: string,
-    editVersion: number,
-  ) => Promise<StudioDocument | null>;
-  readonly refreshLatestDocument: (documentId: string) => Promise<StudioDocument | null>;
-  readonly setCurrentSaveState: (nextSaveState: SaveState) => void;
-  readonly setError: Dispatch<SetStateAction<string | null>>;
-}
 
 interface AutosaveHandle {
   readonly retrySave: () => void;
@@ -86,6 +49,7 @@ export function useDocumentDraftAutosave({
   draft,
   titleDraft,
   saveState,
+  isConflictActionPending,
   draftRef,
   persistedDraftsRef,
   loadedRevision,
@@ -138,13 +102,29 @@ export function useDocumentDraftAutosave({
       clearRetryTimer();
     } catch (reason) {
       if (!isCurrentProject()) return;
-      const isConflict = reason instanceof HttpError && reason.status === 409;
+      const isTitleConflict = reason instanceof HttpError && reason.code === "DOCUMENT_CONFLICT";
+      const isPermanent =
+        reason instanceof HttpError &&
+        (reason.status === 413 || reason.status === 422 || isTitleConflict);
+      const isConflict = reason instanceof HttpError && reason.status === 409 && !isTitleConflict;
       if (!isConflict) {
+        if (
+          isPermanent &&
+          isCurrentOwner() &&
+          (draftRef.current.draft !== currentDraft || draftRef.current.titleDraft !== currentTitle)
+        ) {
+          clearRetryTimer();
+          return;
+        }
         setCurrentSaveState("error");
         if (isCurrentOwner()) {
           setError(toErrorMessage(reason, translateActive("errors.saveDocument")));
         }
-        scheduleRetryRef.current();
+        if (isPermanent) {
+          clearRetryTimer();
+        } else {
+          scheduleRetryRef.current();
+        }
         return;
       }
       // Land the winning body before publishing the conflict surface (#472):
@@ -290,6 +270,7 @@ export function useDocumentDraftAutosave({
       saveStateRef.current === "conflict" ||
       saveStateRef.current === "error" ||
       isAutosavePending ||
+      isConflictActionPending ||
       conflictActionPendingRef.current === ownerToken
     ) {
       return;
@@ -311,6 +292,7 @@ export function useDocumentDraftAutosave({
     titleDraft,
     saveState,
     isAutosavePending,
+    isConflictActionPending,
     clearRetryTimer,
     executeSave,
     setCurrentSaveState,

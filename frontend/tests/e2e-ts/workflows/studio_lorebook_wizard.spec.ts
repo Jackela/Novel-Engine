@@ -198,18 +198,27 @@ test.describe
       }
       await expect(results.getByRole("alert")).toHaveCount(0);
 
-      // Confirmation used the existing creation path: after a shell reload
+      // Confirmation updates the current shell immediately; without reloading,
       // the Navigator's Characters and World sections carry the entries as
       // draft lore rows, and the populated lorebook keeps the wizard with its
       // persistent-entry hint.
-      await studio.reload();
+      await results.getByRole("button", { name: "Start over" }).click();
+      await expect(studio.getByRole("region", { name: "Suggested lore entries" })).toHaveCount(0);
+      const shellResponse = await studio.request.get(`/api/projects/${projectId}`);
+      expect(shellResponse.ok()).toBe(true);
+      const shell = (await shellResponse.json()) as { documents: Array<{ kind: string }> };
+      expect(
+        shell.documents.filter(
+          (document) => document.kind === "character" || document.kind === "world",
+        ),
+      ).toHaveLength(2);
       await studio.getByRole("button", { name: "Characters", exact: true }).click();
       await expect(
         studio.getByRole("button", { name: "Placeholder Character — draft" }),
       ).toBeVisible();
       await studio.getByRole("button", { name: "World", exact: true }).click();
       await expect(studio.getByRole("button", { name: "Placeholder World — draft" })).toBeVisible();
-      await studio.goto(`/projects/${projectId}/manuscript?inspector=lore`);
+      await studio.getByRole("tab", { name: "Lore", exact: true }).click();
       await expect(
         studio.getByText(
           "Extract more suggestions from draft material; confirmed entries land as drafts like any new entry.",

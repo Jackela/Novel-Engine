@@ -121,6 +121,7 @@ interface StudioInspectorModelInputs {
   readonly lore: {
     readonly provider: string;
     readonly documents: DocumentSummary[];
+    readonly onDocumentCreated?: (document: StudioDocument) => void;
   };
   readonly copilot: ReturnType<typeof useStudioGeneration>["copilot"];
   /** DR-010: the page-composed one-shot undo for the latest acceptance. */
@@ -255,7 +256,7 @@ export function buildStudioInspectorModel({
     },
     usage: { projectId },
     stats: { projectId },
-    lore: { projectId, provider: lore.provider, documents: lore.documents },
+    lore: { projectId, ...lore },
     settings: {
       settingsForm: settings.settingsForm,
       providers: settings.providers,

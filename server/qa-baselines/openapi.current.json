@@ -2767,46 +2767,78 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": false,
-                  "properties": {
-                    "error": {
+                  "anyOf": [
+                    {
                       "additionalProperties": false,
                       "properties": {
-                        "code": {
-                          "enum": [
-                            "REVISION_CONFLICT"
-                          ],
-                          "type": "string"
-                        },
-                        "details": {
+                        "error": {
                           "additionalProperties": false,
                           "properties": {
-                            "current_revision_id": {
-                              "nullable": true,
+                            "code": {
+                              "enum": [
+                                "REVISION_CONFLICT"
+                              ],
+                              "type": "string"
+                            },
+                            "details": {
+                              "additionalProperties": false,
+                              "properties": {
+                                "current_revision_id": {
+                                  "nullable": true,
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "current_revision_id"
+                              ],
+                              "type": "object"
+                            },
+                            "message": {
                               "type": "string"
                             }
                           },
                           "required": [
-                            "current_revision_id"
+                            "code",
+                            "message",
+                            "details"
                           ],
                           "type": "object"
-                        },
-                        "message": {
-                          "type": "string"
                         }
                       },
                       "required": [
-                        "code",
-                        "message",
-                        "details"
+                        "error"
+                      ],
+                      "type": "object"
+                    },
+                    {
+                      "additionalProperties": false,
+                      "properties": {
+                        "error": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "code": {
+                              "enum": [
+                                "DOCUMENT_CONFLICT"
+                              ],
+                              "type": "string"
+                            },
+                            "message": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "code",
+                            "message"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "error"
                       ],
                       "type": "object"
                     }
-                  },
-                  "required": [
-                    "error"
-                  ],
-                  "type": "object"
+                  ]
                 }
               }
             },

@@ -156,8 +156,21 @@ export function useDocumentDraftActions({
       );
     } catch (reason) {
       if (isCurrentOwner(owner)) {
+        const isPermanent =
+          reason instanceof HttpError &&
+          (reason.status === 413 || reason.status === 422 || reason.code === "DOCUMENT_CONFLICT");
+        if (
+          isPermanent &&
+          (draftRef.current.draft !== draft || draftRef.current.titleDraft !== titleDraft)
+        ) {
+          return;
+        }
         setCurrentSaveState(
-          reason instanceof HttpError && reason.status === 409 ? "conflict" : "error",
+          reason instanceof HttpError &&
+            reason.status === 409 &&
+            reason.code !== "DOCUMENT_CONFLICT"
+            ? "conflict"
+            : "error",
         );
         setError(toErrorMessage(reason, translateActive("errors.overwriteDocument")));
       }

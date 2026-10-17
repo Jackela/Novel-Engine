@@ -1,5 +1,6 @@
 import { api } from "@/app/api";
 import { translateActive } from "@/app/i18n/translate";
+import type { StudioDocument } from "@/app/types/studio";
 import type { MergedLoreCandidate } from "./loreCandidateMerge";
 import { toErrorMessage } from "./toErrorMessage";
 
@@ -49,15 +50,15 @@ export async function confirmLoreCandidate(
   projectId: string,
   candidate: MergedLoreCandidate,
   aliases: string[],
+  onDocumentCreated?: (document: StudioDocument) => void,
 ): Promise<LoreConfirmResult> {
-  let documentId: string;
+  let created: StudioDocument;
   try {
-    const created = await api.createDocument(projectId, {
+    created = await api.createDocument(projectId, {
       kind: candidate.kind,
       title: candidate.title,
       content_markdown: candidate.summary,
     });
-    documentId = created.id;
   } catch (reason) {
     return {
       key: candidate.key,
@@ -69,6 +70,9 @@ export async function confirmLoreCandidate(
       documentId: null,
     };
   }
+  // Publish accepted creation even when the independent alias write fails.
+  onDocumentCreated?.(created);
+  const documentId = created.id;
   const aliasWrite = await writeLoreAliases(projectId, documentId, aliases);
   return {
     key: candidate.key,

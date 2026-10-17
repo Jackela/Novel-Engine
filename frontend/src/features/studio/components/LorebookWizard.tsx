@@ -1,5 +1,7 @@
+import { useState } from "react";
+
 import { translateActive } from "@/app/i18n/translate";
-import type { DocumentSummary } from "@/app/types/studio";
+import type { DocumentSummary, StudioDocument } from "@/app/types/studio";
 
 import { useLorebookWizard } from "../hooks/useLorebookWizard";
 import { LorebookWizardCandidates } from "./LorebookWizardCandidates";
@@ -10,6 +12,7 @@ interface LorebookWizardProps {
   readonly projectId: string;
   readonly provider: string;
   readonly documents: DocumentSummary[];
+  readonly onDocumentCreated?: (document: StudioDocument) => void;
 }
 
 /**
@@ -18,11 +21,17 @@ interface LorebookWizardProps {
  * segments fold into one merged candidate list, and confirmation reports
  * each candidate's two-step outcome. The session lives in this component's
  * hook; unmounting the project abandons it. After a confirmation, Start
- * over clears only the results — the extracted segments stay, so the merged
- * candidates remain reachable for another run.
+ * over revisits the extracted segments without offering already-created
+ * entries again. Failed alias writes remain independently retryable.
  */
-export function LorebookWizard({ projectId, provider, documents }: LorebookWizardProps) {
-  const wizard = useLorebookWizard(projectId, provider);
+export function LorebookWizard({
+  projectId,
+  provider,
+  documents,
+  onDocumentCreated,
+}: LorebookWizardProps) {
+  const wizard = useLorebookWizard(projectId, provider, onDocumentCreated);
+  const [continuing, setContinuing] = useState(false);
   const hasResults = wizard.results.length > 0;
 
   return (
@@ -36,13 +45,17 @@ export function LorebookWizard({ projectId, provider, documents }: LorebookWizar
         onSubmitDocument={(document) => wizard.submitDocumentSegment(document)}
         onRetrySegment={wizard.retrySegment}
       />
-      {hasResults ? (
+      {hasResults && !wizard.isConfirming ? (
         <LorebookWizardResults
           results={wizard.results}
           onRetryAliases={wizard.retryAliases}
-          onStartOver={wizard.clearResults}
+          onStartOver={() => {
+            wizard.clearResults();
+            setContinuing(true);
+          }}
         />
-      ) : (
+      ) : null}
+      {!hasResults || continuing || wizard.isConfirming ? (
         <LorebookWizardCandidates
           candidates={wizard.candidates}
           deselected={wizard.deselected}
@@ -52,10 +65,16 @@ export function LorebookWizard({ projectId, provider, documents }: LorebookWizar
           aliasesFor={wizard.aliasesFor}
           onToggle={wizard.toggleCandidate}
           onAliasDraft={wizard.setAliasDraft}
-          onConfirm={wizard.confirmSelected}
-          onAbandon={wizard.reset}
+          onConfirm={() => {
+            setContinuing(false);
+            return wizard.confirmSelected();
+          }}
+          onAbandon={() => {
+            wizard.reset();
+            setContinuing(false);
+          }}
         />
-      )}
+      ) : null}
     </div>
   );
 }

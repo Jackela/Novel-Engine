@@ -3,7 +3,7 @@ import { useCallback, useMemo, useRef, useState } from "react";
 import { api } from "@/app/api";
 import { translateActive } from "@/app/i18n/translate";
 import type { LoreExtractCandidate } from "@/app/types/lore";
-import type { DocumentSummary } from "@/app/types/studio";
+import type { DocumentSummary, StudioDocument } from "@/app/types/studio";
 import { confirmLoreCandidate, type LoreConfirmResult, writeLoreAliases } from "./lorebookConfirm";
 import { type MergedLoreCandidate, mergeLoreCandidates } from "./loreCandidateMerge";
 import { toErrorMessage } from "./toErrorMessage";
@@ -27,13 +27,19 @@ export interface LoreSegmentState {
  * completed segments fold into one merged candidate list, and confirmation
  * runs the two existing steps per selected candidate (`lorebookConfirm.ts`).
  * Candidates live only in this session; `reset` abandons the wizard and
- * leaves the project untouched, while `clearResults` starts a new run over
- * the same extracted segments.
+ * leaves accepted entries untouched. Created candidate identities stay
+ * excluded while this project is mounted; `clearResults` revisits only
+ * uncreated suggestions and preserves failed alias writes for retry.
  */
-export function useLorebookWizard(projectId: string, provider: string) {
+export function useLorebookWizard(
+  projectId: string,
+  provider: string,
+  onDocumentCreated?: (document: StudioDocument) => void,
+) {
   const [segments, setSegments] = useState<LoreSegmentState[]>([]);
   const [deselected, setDeselected] = useState<ReadonlySet<string>>(new Set());
   const [aliasDrafts, setAliasDrafts] = useState<Record<string, string>>({});
+  const [createdKeys, setCreatedKeys] = useState<ReadonlySet<string>>(new Set());
   const [results, setResults] = useState<LoreConfirmResult[]>([]);
   const [isConfirming, setIsConfirming] = useState(false);
   const runningTextsRef = useRef<ReadonlySet<string>>(new Set());
@@ -169,8 +175,8 @@ export function useLorebookWizard(projectId: string, provider: string) {
         completed.push({ segmentId: segment.id, candidates: segment.candidates });
       }
     }
-    return mergeLoreCandidates(completed);
-  }, [segments]);
+    return mergeLoreCandidates(completed).filter((candidate) => !createdKeys.has(candidate.key));
+  }, [createdKeys, segments]);
 
   const toggleCandidate = useCallback((key: string) => {
     setDeselected((current) => {
@@ -214,14 +220,24 @@ export function useLorebookWizard(projectId: string, provider: string) {
     try {
       const settled = await Promise.all(
         selectedCandidates.map((candidate) =>
-          confirmLoreCandidate(projectId, candidate, aliasesFor(candidate)),
+          confirmLoreCandidate(projectId, candidate, aliasesFor(candidate), onDocumentCreated),
         ),
       );
-      setResults(settled);
+      setCreatedKeys(
+        (current) =>
+          new Set([
+            ...current,
+            ...settled.filter((result) => result.documentId !== null).map((result) => result.key),
+          ]),
+      );
+      setResults((current) => [
+        ...current.filter((result) => result.outcome === "created-with-failed-aliases"),
+        ...settled,
+      ]);
     } finally {
       setIsConfirming(false);
     }
-  }, [aliasesFor, isConfirming, projectId, selectedCandidates]);
+  }, [aliasesFor, isConfirming, onDocumentCreated, projectId, selectedCandidates]);
 
   /** Retry one candidate's alias write after a created-with-failed-aliases outcome. */
   const retryAliases = useCallback(
@@ -244,20 +260,24 @@ export function useLorebookWizard(projectId: string, provider: string) {
     [projectId, results],
   );
 
-  /** Start a new run over the same extracted segments: only the confirmation results clear. */
+  /** Revisit uncreated suggestions while preserving pending alias-write recovery. */
   const clearResults = useCallback(() => {
-    setResults([]);
+    setResults((current) =>
+      current.filter((result) => result.outcome === "created-with-failed-aliases"),
+    );
     setIsConfirming(false);
   }, []);
 
-  /** Abandon the wizard session: candidates and results cease to exist. */
+  /** Discard unconfirmed suggestions without discarding accepted-entry alias recovery. */
   const reset = useCallback(() => {
     runningTextsRef.current = new Set();
     runningDocumentIdsRef.current = new Set();
     setSegments([]);
     setDeselected(new Set());
     setAliasDrafts({});
-    setResults([]);
+    setResults((current) =>
+      current.filter((result) => result.outcome === "created-with-failed-aliases"),
+    );
     setIsConfirming(false);
   }, []);
 

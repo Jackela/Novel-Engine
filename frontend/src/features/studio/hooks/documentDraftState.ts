@@ -1,3 +1,5 @@
+import type { Dispatch, MutableRefObject, SetStateAction } from "react";
+
 import type { SaveState, StudioDocument } from "@/app/types/studio";
 
 import { projectDocumentOwnerKey } from "./projectDocumentOwnerKey";
@@ -34,6 +36,35 @@ export interface DraftSnapshot {
   readonly activeDocument: StudioDocument | null;
   readonly editVersion: number;
   readonly ownerToken: DocumentDraftOwner["token"];
+}
+
+export interface AutosaveOptions {
+  readonly ownerKey: string;
+  readonly ownerToken: symbol;
+  readonly isCurrentOwner: () => boolean;
+  readonly isCurrentProject: () => boolean;
+  readonly activeDocument: StudioDocument | null;
+  readonly draft: string;
+  readonly titleDraft: string;
+  readonly saveState: SaveState;
+  readonly isConflictActionPending: boolean;
+  readonly draftRef: MutableRefObject<DraftSnapshot>;
+  readonly persistedDraftsRef: MutableRefObject<Map<string, PersistedDraft>>;
+  readonly loadedRevision: MutableRefObject<string | null>;
+  readonly saveStateRef: MutableRefObject<SaveState>;
+  readonly conflictActionPendingRef: MutableRefObject<symbol | null>;
+  readonly saveTimerRef: MutableRefObject<number | null>;
+  readonly saveInFlightRef: MutableRefObject<Set<string>>;
+  readonly persistDraft: (
+    document: StudioDocument,
+    content: string,
+    title: string,
+    baseRevisionId: string,
+    editVersion: number,
+  ) => Promise<StudioDocument | null>;
+  readonly refreshLatestDocument: (documentId: string) => Promise<StudioDocument | null>;
+  readonly setCurrentSaveState: (nextSaveState: SaveState) => void;
+  readonly setError: Dispatch<SetStateAction<string | null>>;
 }
 
 export interface CommitExpectation {

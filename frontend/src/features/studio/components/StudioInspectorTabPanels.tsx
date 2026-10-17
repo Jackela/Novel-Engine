@@ -149,6 +149,7 @@ export function StudioInspectorTabPanels({
         role="tabpanel"
       >
         <StudioLorebookWizardPanel
+          onDocumentCreated={model.lore.onDocumentCreated}
           documents={model.lore.documents}
           projectId={model.lore.projectId}
           provider={model.lore.provider}

@@ -239,8 +239,12 @@
 
 .document-row__wrap {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
+}
+
+.document-row__wrap > .document-row {
+  grid-column: 1 / -1;
 }
 
 .document-row__order,
@@ -248,6 +252,14 @@
   display: flex;
   align-items: center;
   opacity: 0;
+}
+
+/* Commands keep their 44px targets below the full-width title. Placement
+   wraps within narrow navigation panes instead of covering the title. */
+.document-row__actions {
+  min-width: 0;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 .document-row__wrap:hover .document-row__order,

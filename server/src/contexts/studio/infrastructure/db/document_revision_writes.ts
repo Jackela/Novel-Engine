@@ -5,12 +5,22 @@ import type {
   DocumentWithCurrent,
 } from "../../application/ports/document_store.js";
 import type { ProjectScope } from "../../application/ports/studio_store.js";
-import { NotFoundError, RevisionConflictError } from "../../domain/exceptions.js";
+import {
+  DuplicateDocumentError,
+  NotFoundError,
+  RevisionConflictError,
+} from "../../domain/exceptions.js";
 import { refreshDocumentIndex } from "./document_search.js";
 import { isCollapsibleAutosavePredecessor, pruneRetainedRevisions } from "./revision_retention.js";
 import { documentRevisions, documents, projects } from "./schema.js";
 import { assertOutlineBeatCapacity } from "./structure_capacity_checks.js";
-import { insertRevision, scopedDocument, scopedProject, type Tx } from "./studio_query_helpers.js";
+import {
+  insertRevision,
+  isUniqueViolation,
+  scopedDocument,
+  scopedProject,
+  type Tx,
+} from "./studio_query_helpers.js";
 
 /**
  * The sole transaction-owned implementation of an immutable revision advance.
@@ -90,10 +100,17 @@ export function advanceDocumentInTransaction(
   if (collapse) {
     tx.delete(documentRevisions).where(eq(documentRevisions.id, current.id)).run();
   }
-  tx.update(documents)
-    .set({ currentRevisionId: revision.id, title, updatedAt: input.now })
-    .where(eq(documents.id, document.id))
-    .run();
+  try {
+    tx.update(documents)
+      .set({ currentRevisionId: revision.id, title, updatedAt: input.now })
+      .where(eq(documents.id, document.id))
+      .run();
+  } catch (error) {
+    if (isUniqueViolation(error)) {
+      throw new DuplicateDocumentError(document.kind, title);
+    }
+    throw error;
+  }
   refreshDocumentIndex(tx, {
     documentId: document.id,
     projectId: project.id,

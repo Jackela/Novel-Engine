@@ -1,4 +1,4 @@
-import { and, eq, inArray, lt, lte, ne, sql } from "drizzle-orm";
+import { and, desc, eq, gt, inArray, lt, ne, sql } from "drizzle-orm";
 
 import { documentRevisions, snapshotDocuments } from "./schema.js";
 import type { Tx } from "./studio_query_helpers.js";
@@ -83,7 +83,7 @@ export interface RevisionPruneInput {
   readonly documentId: string;
   /** The revision written by this save; the newest row of the document. */
   readonly currentRevisionId: string;
-  /** Its revision number: the high-water mark the newest-N floor anchors on. */
+  /** Its revision number: a low high-water mark can skip pruning immediately. */
   readonly currentRevisionNumber: number;
   readonly now: Date;
 }
@@ -91,8 +91,8 @@ export interface RevisionPruneInput {
 /**
  * Prune old unreferenced autosave revisions of one document (DR-047c). A row
  * is prunable when all of these hold: its source is `author` (autosave
- * lineage), it is not the current revision, it sits below the newest-N floor,
- * it is older than the retention window, and no snapshot pins it.
+ * lineage), it is neither the first nor current revision, it sits below the
+ * newest-N floor, it is older than the retention window, and no snapshot pins it.
  *
  * Surviving children of a pruned row are re-linked to the pruned row's own
  * parent before the delete, so the lineage chain never dangles — the stats
@@ -104,8 +104,20 @@ export interface RevisionPruneInput {
  * `PRUNE_BATCH_LIMIT` and later saves continue where it stopped.
  */
 export function pruneRetainedRevisions(tx: Tx, input: RevisionPruneInput): number {
-  const boundary = input.currentRevisionNumber - REVISION_RETENTION_KEEP_NEWEST;
-  if (boundary < 1) {
+  if (input.currentRevisionNumber <= REVISION_RETENTION_KEEP_NEWEST) {
+    return 0;
+  }
+  // Collapse leaves numbering gaps, so protect the newest retained rows rather
+  // than treating the high-water revision number as the number of history rows.
+  const boundary = tx
+    .select({ revisionNumber: documentRevisions.revisionNumber })
+    .from(documentRevisions)
+    .where(eq(documentRevisions.documentId, input.documentId))
+    .orderBy(desc(documentRevisions.revisionNumber))
+    .limit(1)
+    .offset(REVISION_RETENTION_KEEP_NEWEST - 1)
+    .get();
+  if (boundary === undefined) {
     return 0;
   }
   const cutoff = new Date(input.now.getTime() - REVISION_RETENTION_DAYS * DAY_MS);
@@ -116,7 +128,8 @@ export function pruneRetainedRevisions(tx: Tx, input: RevisionPruneInput): numbe
       and(
         eq(documentRevisions.documentId, input.documentId),
         eq(documentRevisions.source, "author"),
-        lte(documentRevisions.revisionNumber, boundary),
+        gt(documentRevisions.revisionNumber, 1),
+        lt(documentRevisions.revisionNumber, boundary.revisionNumber),
         lt(documentRevisions.createdAt, cutoff),
         ne(documentRevisions.id, input.currentRevisionId),
         sql`NOT EXISTS (SELECT 1 FROM snapshot_documents AS referenced WHERE referenced.revision_id = ${documentRevisions.id})`,
