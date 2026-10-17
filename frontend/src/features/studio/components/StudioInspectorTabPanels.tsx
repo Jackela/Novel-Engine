@@ -1,3 +1,5 @@
+import { useTranslation } from "@/app/i18n/useTranslation";
+
 import type { InspectorTab } from "../studioConstants";
 import type { InspectorPendingState, StudioInspectorModel } from "../studioInspectorTypes";
 import { StudioExportPanel } from "./StudioExportPanel";
@@ -30,6 +32,12 @@ export function StudioInspectorTabPanels({
   pending,
   model,
 }: StudioInspectorTabPanelsProps) {
+  const { t } = useTranslation();
+  const sourceNotice = model.hasUnsavedChapter ? (
+    <p className="studio-inspector__source-notice" role="status">
+      {t("inspector.unsavedChapter")}
+    </p>
+  ) : null;
   return (
     <>
       <div
@@ -39,7 +47,7 @@ export function StudioInspectorTabPanels({
         role="tabpanel"
       >
         <StudioExportPanel
-          hasUnsavedChapter={model.hasUnsavedChapter}
+          sourceNotice={sourceNotice}
           exports={model.export.exports}
           historyInitialized={model.export.historyInitialized}
           isLoadingHistory={model.export.isLoadingHistory}
@@ -64,7 +72,7 @@ export function StudioInspectorTabPanels({
         role="tabpanel"
       >
         <StudioReviewPanel
-          hasUnsavedChapter={model.hasUnsavedChapter}
+          sourceNotice={sourceNotice}
           latestReview={model.review.selectedReview}
           summaries={model.review.summaries}
           selectedReviewId={model.review.selectedReviewId}

@@ -1,5 +1,5 @@
 import { RotateCcw } from "lucide-react";
-import { useRef } from "react";
+import { type ReactNode, useRef } from "react";
 
 import { useTranslation } from "@/app/i18n/useTranslation";
 import type { Review, ReviewSummary } from "@/app/types/studio";
@@ -9,7 +9,7 @@ import type { InspectorReviewHistoryPaging } from "../studioInspectorTypes";
 import { StudioReviewHistoryList } from "./StudioReviewHistoryList";
 
 interface StudioReviewPanelProps {
-  hasUnsavedChapter?: boolean;
+  sourceNotice?: ReactNode;
   latestReview: Review | null;
   summaries: ReviewSummary[];
   detailLoading?: boolean;
@@ -36,7 +36,7 @@ const IDLE_HISTORY_PAGING: InspectorReviewHistoryPaging = {
 };
 
 export function StudioReviewPanel({
-  hasUnsavedChapter = false,
+  sourceNotice,
   latestReview,
   summaries,
   detailLoading = false,
@@ -83,11 +83,7 @@ export function StudioReviewPanel({
           <RotateCcw aria-hidden="true" />
         </button>
       </header>
-      {hasUnsavedChapter ? (
-        <p className="studio-inspector__source-notice" role="status">
-          {t("inspector.unsavedChapter")}
-        </p>
-      ) : null}
+      {sourceNotice}
       {isRunning ? <p role="status">{t("review.status.running")}</p> : null}
       {isLoadingHistory ? <p role="status">{t("review.status.loadingHistory")}</p> : null}
       {historyError ? (

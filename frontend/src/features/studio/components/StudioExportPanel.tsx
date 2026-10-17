@@ -1,5 +1,5 @@
 import { Download } from "lucide-react";
-import { useRef } from "react";
+import { type ReactNode, useRef } from "react";
 
 import type { MessageKey } from "@/app/i18n/dictionaries/en";
 import { useTranslation } from "@/app/i18n/useTranslation";
@@ -8,7 +8,7 @@ import { useCommandFocusRestoration } from "../hooks/useCommandFocusRestoration"
 import { StudioExportHistorySection } from "./StudioExportHistorySection";
 
 interface StudioExportPanelProps {
-  hasUnsavedChapter?: boolean;
+  sourceNotice?: ReactNode;
   exports: StudioExport[];
   historyInitialized?: boolean;
   isLoadingHistory?: boolean;
@@ -41,7 +41,7 @@ const FORMATS: Array<{
 ];
 
 export function StudioExportPanel({
-  hasUnsavedChapter = false,
+  sourceNotice,
   exports,
   historyInitialized = true,
   isLoadingHistory = false,
@@ -75,11 +75,7 @@ export function StudioExportPanel({
         </div>
         <Download aria-hidden="true" />
       </header>
-      {hasUnsavedChapter ? (
-        <p className="studio-inspector__source-notice" role="status">
-          {t("inspector.unsavedChapter")}
-        </p>
-      ) : null}
+      {sourceNotice}
 
       {/* biome-ignore lint/a11y/useSemanticElements: this button group is not a form control group; <fieldset> would misrepresent semantics and drag in default fieldset styling. */}
       <div
