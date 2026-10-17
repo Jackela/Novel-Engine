@@ -195,6 +195,14 @@
   display: flex;
   justify-content: space-between;
   align-items: start;
+  gap: 8px;
+}
+.studio-inspector__heading > div {
+  flex: 1;
+  min-width: 0;
+}
+.studio-inspector__heading > .ui-command--icon {
+  flex-shrink: 0;
 }
 .studio-inspector__proposal {
   margin-top: 17px;

@@ -118,5 +118,45 @@ test.describe("saved source feedback", () => {
     const savedExport = await downloadMarkdown(studio);
     expect(savedExport).toContain(SAVED_MARKER);
     expect(savedExport).toContain(UNSAVED_MARKER);
+    // Longer saved-source copy must leave the Review command at its native
+    // 44px target size in both languages and narrow viewports.
+    for (const view of [
+      { language: "en", theme: "light", width: 1440 },
+      { language: "zh", theme: "dark", width: 390 },
+      { language: "en", theme: "dark", width: 320 },
+    ]) {
+      await studio.setViewportSize({ width: view.width, height: 900 });
+      await studio
+        .locator(".ui-language-switch__option")
+        .filter({
+          has: studio.locator(`input[value="${view.language}"]`),
+        })
+        .click();
+      await studio
+        .locator(".ui-theme-switch__option")
+        .filter({
+          has: studio.locator(`input[value="${view.theme}"]`),
+        })
+        .click();
+      await studio
+        .getByRole("tab", {
+          name: view.language === "zh" ? "评审" : "Review",
+          exact: true,
+        })
+        .click();
+      const heading = studio.locator('[role="tabpanel"]:not([hidden]) .studio-inspector__heading');
+      const geometry = await heading.evaluate((node) => {
+        const command = node.querySelector("button");
+        const copy = node.querySelector("div");
+        if (!command || !copy) throw new Error("Review heading has no command or copy.");
+        return {
+          command: command.getBoundingClientRect().toJSON(),
+          copy: copy.getBoundingClientRect().toJSON(),
+        };
+      });
+      expect(geometry.command.width).toBeGreaterThanOrEqual(44);
+      expect(geometry.command.height).toBeGreaterThanOrEqual(44);
+      expect(geometry.copy.right).toBeLessThanOrEqual(geometry.command.left - 8);
+    }
   });
 });
