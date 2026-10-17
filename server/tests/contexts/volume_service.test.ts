@@ -91,9 +91,10 @@ describe("VolumeService reads and title writes", () => {
 
 describe("VolumeService removal and chapter placement", () => {
   it("delegates removal whole and answers nothing", () => {
-    const { service, drops } = volumeHarness();
+    const { service, drops, clockCalls } = volumeHarness();
     expect(service.removeVolume(PRINCIPAL, PROJECT_ID, "volume-2")).toBeUndefined();
-    expect(drops).toEqual([[SCOPE, PROJECT_ID, "volume-2"]]);
+    expect(drops).toEqual([[SCOPE, PROJECT_ID, "volume-2", NOW]]);
+    expect(clockCalls()).toBe(1);
   });
 
   it("surfaces the store's last-volume refusal unchanged", () => {

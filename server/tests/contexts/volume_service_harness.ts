@@ -103,7 +103,7 @@ type Fakes = Pick<
 export type ListCall = [ProjectScope, string];
 export type AddCall = [ProjectScope, string, AddVolumeInput];
 export type AlterCall = [ProjectScope, string, string, AlterVolumeInput];
-export type DropCall = [ProjectScope, string, string];
+export type DropCall = [ProjectScope, string, string, Date];
 export type PlaceCall = [ProjectScope, string, string, PlaceDocumentInput];
 export type RenumberCall = [ProjectScope, string, string[], Date];
 
@@ -141,8 +141,8 @@ export function volumeHarness(config: HarnessConfig = {}) {
       alters.push([scope, projectId, volumeId, input]);
       return outcome(config.altered, volumeRecord(volumeId, input.title, 1));
     },
-    dropVolume: (scope, projectId, volumeId) => {
-      drops.push([scope, projectId, volumeId]);
+    dropVolume: (scope, projectId, volumeId, now) => {
+      drops.push([scope, projectId, volumeId, now]);
       if (config.dropFailure !== undefined) throw config.dropFailure;
     },
     placeDocumentInVolume: (scope, projectId, documentId, input) => {

@@ -99,7 +99,7 @@ export class VolumeStorePart implements StudioVolumeStore {
     }
   }
 
-  dropVolume(scope: ProjectScope, projectId: string, volumeId: string): void {
+  dropVolume(scope: ProjectScope, projectId: string, volumeId: string, now: Date): void {
     this.db.transaction((tx) => {
       const project = scopedProject(tx, scope, projectId);
       const doomed = scopedVolume(tx, scope, projectId, volumeId);
@@ -135,6 +135,7 @@ export class VolumeStorePart implements StudioVolumeStore {
       }
       tx.delete(volumes).where(eq(volumes.id, doomed.id)).run();
       renumberVolumesAfterRemoval(tx, project.id);
+      touchProject(tx, project.id, now);
     });
   }
 

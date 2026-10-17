@@ -53,7 +53,7 @@ export interface StudioVolumeStore {
    * neighbour (preceding by reading order, else following). The LAST
    * remaining volume is refused so the project invariant holds.
    */
-  dropVolume(scope: ProjectScope, projectId: string, volumeId: string): void;
+  dropVolume(scope: ProjectScope, projectId: string, volumeId: string, now: Date): void;
   /** Place an existing chapter document at the tail of the target volume. */
   placeDocumentInVolume(
     scope: ProjectScope,
