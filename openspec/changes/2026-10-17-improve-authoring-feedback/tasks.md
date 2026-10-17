@@ -2,8 +2,7 @@
 
 - [x] 1.1 Draft the approved authoring-feedback and Review-input requirements
   against baseline `45ad1afbf5660f0c1863246cae17cd0d6b372cad`.
-- [x] 1.2 Pass strict OpenSpec validation for the change (`pnpm spec:validate`:
-  3 passed, 0 failed; log: `/tmp/ne-feedback-20261017/spec/spec-validate.log`).
+- [x] 1.2 Pass strict OpenSpec validation for the change (`pnpm spec:validate`).
 
 ## 2. Saved-source and Review result feedback
 
@@ -47,13 +46,17 @@
   real prose guard and preserve the original failed stream evidence.
 - [x] 6.2 Complete the deterministic Chinese narrative without weakening the
   existing prose guard; verify structured and streamed Rewrite and Continue.
-- [ ] 6.3 Verify a real Chinese Proposal preview and explicit author acceptance
+- [x] 6.3 Verify a real Chinese Proposal preview and explicit author acceptance
   in the browser, including unchanged accepted text before Accept.
 
 ## 7. Integrated evidence
 
-- [ ] 7.1 Run the affected frontend and backend checks on the integrated
+- [x] 7.1 Run the affected frontend and backend checks on the integrated
   candidate and inspect the complete diff.
-- [ ] 7.2 Exercise the affected authoring feedback in the browser and record
+- [x] 7.2 Exercise the affected authoring feedback in the browser and record
   actual results, skipped checks, fixed candidate identity, and remaining
   acceptance gates under the repository's change-evidence contract.
+
+Local product validation completed on `186b3ff05167410aa2029ae37f82d1ea238b832b`.
+CI, real-provider checks, and author acceptance remain separate. The change
+remains live until its CI and archival gates close.
