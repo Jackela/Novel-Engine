@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import type { TextGenerationTask } from "../../src/contexts/ai/application/ports/text_generation.js";
 import { DeterministicStoryProvider } from "../../src/contexts/ai/infrastructure/providers/deterministic_story_provider.js";
+import { validatedProposalOrThrow } from "../../src/contexts/studio/application/proposal_landing.js";
 
 /**
  * DR-023: the deterministic (mock) provider is no longer English-only — a zh
@@ -68,8 +69,8 @@ describe("deterministic story provider writing language (DR-023)", () => {
     expect(String(implicit.content.chapter_markdown)).toContain("Chapter 2");
   });
 
-  it("streams joined Chinese deltas byte-identically to the synchronous prose", async () => {
-    const task = { ...chapterTask("chapter_revision"), language: "zh" as const };
+  it("streams Chinese revisions that match synchronous prose and pass proposal validation", async () => {
+    const task = { ...chapterTask("chapter_revision", { title: "章" }), language: "zh" as const };
     const deltas: string[] = [];
     const stream = provider.generateStructuredStreaming?.(task);
     if (stream === undefined) throw new Error("the mock provider must support streaming");
@@ -80,6 +81,10 @@ describe("deterministic story provider writing language (DR-023)", () => {
       (await provider.generateStructured(task)).content.chapter_markdown as string | undefined,
     );
     expect(deltas.join("")).toBe(sync);
+    expect(validatedProposalOrThrow({ content: { chapter_markdown: sync } }).proposal).toBe(sync);
+    expect(
+      validatedProposalOrThrow({ content: { chapter_markdown: deltas.join("") } }).proposal,
+    ).toBe(sync);
   });
 
   it("produces Chinese review findings and lore placeholders for zh tasks", async () => {
