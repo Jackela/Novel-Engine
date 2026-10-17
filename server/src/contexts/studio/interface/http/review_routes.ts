@@ -8,6 +8,7 @@ import {
 } from "../../../../shared/interface/http/error_envelope.js";
 import { reviewPageLimit } from "../../application/ports/review_outcome_store.js";
 import { reviewPayload, reviewSummaryPayload } from "../../application/review_payloads.js";
+import { reviewGeneration422ResponseSchema } from "./generation_capacity_schemas.js";
 import { jobResponseSchema } from "./job_schemas.js";
 import { requireServices, type StudioRoutesOptions } from "./project_routes.js";
 import { decodeReviewCursor, encodeReviewCursor } from "./review_cursor.js";
@@ -64,7 +65,7 @@ export const reviewRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (fast
         response: authedWriteResponses({
           201: jobResponseSchema,
           409: operationInFlightSchema,
-          422: errorEnvelopeResponse,
+          422: reviewGeneration422ResponseSchema,
           503: operationCapacityResponseSchema,
         }),
       },

@@ -219,8 +219,8 @@ export function streamingFailureDisposition(error: unknown): StudioStreamingDisp
 /**
  * The retry chain's verdict for one failed kind execution. Export capacity
  * refusals land their structured outcome and rethrow (the surface renders the
- * pinned envelope); the prompt-byte capacity protocol belongs to proposal
- * retries only — a lore-extract retry re-admits its stored segment, so its
+ * pinned envelope); proposal and review prompt-byte refusals retain that
+ * protocol — a lore-extract retry re-admits its stored segment, so its
  * refusal lands through the plain failed outcome, like every other landing
  * failure. Unknown failures propagate untouched.
  */
@@ -235,7 +235,7 @@ export function retryFailureDisposition(
     return { kind: "capacity-export", failure: error };
   }
   if (error instanceof GenerationCapacityExceededError) {
-    return retryKind === "proposal"
+    return retryKind === "proposal" || retryKind === "review"
       ? { kind: "capacity-generation", failure: error }
       : { kind: "land", failure: error, providerAttributable: false };
   }

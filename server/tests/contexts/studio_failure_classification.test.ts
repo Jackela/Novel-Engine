@@ -176,7 +176,7 @@ describe("studio failure classification registry", () => {
     }
   });
 
-  it("keeps the prompt-byte capacity protocol proposal-only, landing other kinds plainly", () => {
+  it("retains proposal and review prompt-capacity protocols while landing lore plainly", () => {
     const failure = new GenerationCapacityExceededError(
       "prompt_bytes",
       GENERATION_PROMPT_BYTE_LIMIT,
@@ -184,6 +184,10 @@ describe("studio failure classification registry", () => {
     );
 
     expect(retryFailureDisposition(failure, "proposal")).toEqual({
+      kind: "capacity-generation",
+      failure,
+    });
+    expect(retryFailureDisposition(failure, "review")).toEqual({
       kind: "capacity-generation",
       failure,
     });

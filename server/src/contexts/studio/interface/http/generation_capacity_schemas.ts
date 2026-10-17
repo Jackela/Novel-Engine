@@ -95,6 +95,16 @@ export const loreExtraction422ResponseSchema: JsonResponseSchema = {
   },
 } as const;
 
+/** Saved chapter review may refuse the complete prompt before Provider work. */
+export const reviewGeneration422ResponseSchema: JsonResponseSchema = {
+  description: "Invalid review input or permanent generation-capacity refusal.",
+  content: {
+    "application/json": {
+      schema: { oneOf: [generationCapacityEnvelope, validationErrorEnvelope] },
+    },
+  },
+} as const;
+
 export const jobRetry422ResponseSchema: JsonResponseSchema = {
   description: "Invalid retry input or permanent export/generation capacity outcome.",
   content: {

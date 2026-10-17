@@ -178,7 +178,7 @@ export class JobRetryExecutor {
       throw error;
     }
     if (disposition.kind === "capacity-generation") {
-      // Only proposal retries carry the structured prompt-byte capacity
+      // Proposal and review retries carry the structured prompt-byte capacity
       // protocol; a lore-extract retry re-admits its stored segment, so its
       // capacity refusal lands through the plain failed outcome below.
       this.jobs.markJobOutcome(

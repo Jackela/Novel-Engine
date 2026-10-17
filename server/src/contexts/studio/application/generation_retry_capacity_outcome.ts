@@ -90,18 +90,36 @@ const PROTOCOL: RetryCapacityOutcomeProtocol<
   },
 };
 
-/** Build the atomic failed outcome retained by a permanent proposal retry refusal. */
+/** Review refusals retain only capacity evidence; no review result was produced. */
+const REVIEW_PROTOCOL: RetryCapacityOutcomeProtocol<
+  GenerationCapacityEvidence,
+  GenerationCapacityExceededError
+> = {
+  ...PROTOCOL,
+  jobKind: "review",
+  resultKeys: [CAPACITY_ERROR_KEY],
+  readRequestIdentity: () => "",
+  buildFailureResult: (_identity, evidence) => ({ [CAPACITY_ERROR_KEY]: evidence }),
+  isFailedResultShape: () => true,
+};
+
+/** Build the atomic failed outcome retained by a proposal or review prompt refusal. */
 export function generationRetryCapacityOutcome(
   retry: JobRecord,
   error: GenerationCapacityExceededError,
   now: Date,
 ): MarkJobOutcomeInput {
-  return capacityRetryOutcome(PROTOCOL, retry, error, now);
+  return capacityRetryOutcome(
+    retry.kind === "review" ? REVIEW_PROTOCOL : PROTOCOL,
+    retry,
+    error,
+    now,
+  );
 }
 
 /** Rebuild only the exact structured terminal outcome owned by this protocol. */
 export function replayedGenerationCapacityError(
   job: JobRecord,
 ): GenerationCapacityExceededError | null {
-  return replayCapacityOutcome(PROTOCOL, job);
+  return replayCapacityOutcome(job.kind === "review" ? REVIEW_PROTOCOL : PROTOCOL, job);
 }
