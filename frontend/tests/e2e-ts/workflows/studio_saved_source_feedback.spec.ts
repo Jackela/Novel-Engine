@@ -144,6 +144,12 @@ test.describe("saved source feedback", () => {
           exact: true,
         })
         .click();
+      await expect(
+        studio.getByRole("heading", {
+          name: view.language === "zh" ? "评审发现" : "Review findings",
+          exact: true,
+        }),
+      ).toBeVisible();
       const heading = studio.locator('[role="tabpanel"]:not([hidden]) .studio-inspector__heading');
       const geometry = await heading.evaluate((node) => {
         const command = node.querySelector("button");
