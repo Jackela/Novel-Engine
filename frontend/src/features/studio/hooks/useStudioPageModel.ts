@@ -90,6 +90,7 @@ export function useStudioPageModel(projectId: string, route: StudioRouteState, n
     retrySave,
     saveNow,
     serverVersionPreview,
+    hasUnpersistedEdits,
   } = usePageDocumentDraft({
     projectId,
     activeDocument,
@@ -132,11 +133,10 @@ export function useStudioPageModel(projectId: string, route: StudioRouteState, n
     setActiveId,
   );
   const providers = useStudioProviders();
-  const exportHistory = inspectorHistories.exportHistory;
   const exportDownload = useExportDownload(
     project,
     projectId,
-    exportHistory.applyRefreshedFirstPage,
+    inspectorHistories.exportHistory.applyRefreshedFirstPage,
   );
   const diagnosticsDownload = useDiagnosticsDownload(projectId);
   const studioActions = useStudioActions({
@@ -248,6 +248,7 @@ export function useStudioPageModel(projectId: string, route: StudioRouteState, n
         // props corridor through StudioPageView -> Inspector -> Panels.
         model: buildStudioInspectorModel({
           projectId,
+          hasUnsavedChapter: activeDocument?.kind === "chapter" && hasUnpersistedEdits,
           lore: {
             onDocumentCreated: (document) =>
               setProject((current) => mergeCreatedProjectDocument(current, projectId, document)),
@@ -264,7 +265,7 @@ export function useStudioPageModel(projectId: string, route: StudioRouteState, n
             onLoadOlderJobs: loadOlderJobs,
             onRetryJob: retryJob,
           },
-          export: { ...exportDownload, history: exportHistory },
+          export: { ...exportDownload, history: inspectorHistories.exportHistory },
           review: reviewInspectorModel(
             inspectorHistories.review,
             projectErrors.errors.review,

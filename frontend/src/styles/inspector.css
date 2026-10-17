@@ -90,6 +90,13 @@
   font-size: 12px;
   line-height: 1.5;
 }
+.studio-inspector__panel > .studio-inspector__source-notice {
+  padding: 10px;
+  border: 1px solid var(--warn);
+  border-radius: 5px;
+  background: var(--warn-soft);
+  color: var(--warn-ink);
+}
 .studio-inspector__panel textarea {
   width: 100%;
   resize: vertical;

@@ -39,6 +39,7 @@ export function StudioInspectorTabPanels({
         role="tabpanel"
       >
         <StudioExportPanel
+          hasUnsavedChapter={model.hasUnsavedChapter}
           exports={model.export.exports}
           historyInitialized={model.export.historyInitialized}
           isLoadingHistory={model.export.isLoadingHistory}
@@ -63,6 +64,7 @@ export function StudioInspectorTabPanels({
         role="tabpanel"
       >
         <StudioReviewPanel
+          hasUnsavedChapter={model.hasUnsavedChapter}
           latestReview={model.review.selectedReview}
           summaries={model.review.summaries}
           selectedReviewId={model.review.selectedReviewId}

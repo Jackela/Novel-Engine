@@ -186,5 +186,6 @@ export function useDocumentDraft(
     retrySave,
     saveNow,
     serverVersionPreview,
+    hasUnpersistedEdits,
   };
 }

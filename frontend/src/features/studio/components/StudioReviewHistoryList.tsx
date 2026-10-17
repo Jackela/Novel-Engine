@@ -77,7 +77,7 @@ export function StudioReviewHistoryList({
             <li key={summary.id}>
               <button
                 aria-pressed={selectedReviewId === summary.id}
-                className="studio-inspector__history-row"
+                className="ui-command studio-inspector__history-row"
                 onClick={() => onSelectReview?.(summary.id)}
                 type="button"
               >

@@ -44,7 +44,10 @@ export const zhStudio = {
   "review.heading": "评审发现",
   "review.provenance": "由 {provider} · {model} 审阅 · {snapshot}",
   "review.snapshotLabel": "评审快照 {id}",
-  "review.hint": "绑定快照且不修改稿件。",
+  "review.hint": "评审使用已保存的章节，保留本次快照，不修改稿件。",
+  "review.noFindings": "本次评审未报告问题。",
+  "inspector.unsavedChapter":
+    "当前章节有未保存的修改。评审和导出只使用已保存的内容；如需包含这些修改，请先保存。",
   "review.action.run": "运行评审",
   "review.action.running": "正在运行评审",
   "review.status.running": "正在运行评审…",
@@ -83,7 +86,7 @@ export const zhStudio = {
   "history.restore.cancel": "取消恢复",
 
   "export.heading": "导出项目",
-  "export.hint": "从当前不可变快照生成文件。",
+  "export.hint": "导出使用已保存的章节，未保存的修改不会包含在文件中。",
   "export.formats.legend": "导出格式",
   "export.format.markdown": "Markdown",
   "export.format.markdownHint": "可移植的源文本",

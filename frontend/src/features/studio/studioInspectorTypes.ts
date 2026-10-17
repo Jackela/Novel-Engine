@@ -220,6 +220,8 @@ export interface InspectorBeatModel {
 }
 
 export interface StudioInspectorModel {
+  /** Derived from the active chapter Draft; never a second save-state owner. */
+  hasUnsavedChapter?: boolean;
   copilot: InspectorCopilotModel;
   export: InspectorExportModel;
   review: InspectorReviewModel;

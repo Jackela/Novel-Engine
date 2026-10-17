@@ -9,6 +9,7 @@ import type { InspectorReviewHistoryPaging } from "../studioInspectorTypes";
 import { StudioReviewHistoryList } from "./StudioReviewHistoryList";
 
 interface StudioReviewPanelProps {
+  hasUnsavedChapter?: boolean;
   latestReview: Review | null;
   summaries: ReviewSummary[];
   detailLoading?: boolean;
@@ -35,6 +36,7 @@ const IDLE_HISTORY_PAGING: InspectorReviewHistoryPaging = {
 };
 
 export function StudioReviewPanel({
+  hasUnsavedChapter = false,
   latestReview,
   summaries,
   detailLoading = false,
@@ -81,6 +83,11 @@ export function StudioReviewPanel({
           <RotateCcw aria-hidden="true" />
         </button>
       </header>
+      {hasUnsavedChapter ? (
+        <p className="studio-inspector__source-notice" role="status">
+          {t("inspector.unsavedChapter")}
+        </p>
+      ) : null}
       {isRunning ? <p role="status">{t("review.status.running")}</p> : null}
       {isLoadingHistory ? <p role="status">{t("review.status.loadingHistory")}</p> : null}
       {historyError ? (
@@ -138,6 +145,11 @@ export function StudioReviewPanel({
           })}
         </p>
       ) : null}
+      {historyInitialized && latestReview?.issues.length === 0 && !detailLoading && !detailError ? (
+        <p className="studio-inspector__empty" role="status">
+          {t("review.noFindings")}
+        </p>
+      ) : null}
       {historyInitialized && latestReview?.issues.length ? (
         latestReview.issues.map((issue) => (
           <article
@@ -152,7 +164,11 @@ export function StudioReviewPanel({
             <small>{issue.suggestion}</small>
           </article>
         ))
-      ) : historyInitialized && !detailLoading && !detailError && summaries.length === 0 ? (
+      ) : historyInitialized &&
+        !latestReview &&
+        !detailLoading &&
+        !detailError &&
+        summaries.length === 0 ? (
         <p className="studio-inspector__empty">{t("review.empty")}</p>
       ) : null}
       <StudioReviewHistoryList

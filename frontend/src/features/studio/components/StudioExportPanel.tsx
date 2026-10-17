@@ -8,6 +8,7 @@ import { useCommandFocusRestoration } from "../hooks/useCommandFocusRestoration"
 import { StudioExportHistorySection } from "./StudioExportHistorySection";
 
 interface StudioExportPanelProps {
+  hasUnsavedChapter?: boolean;
   exports: StudioExport[];
   historyInitialized?: boolean;
   isLoadingHistory?: boolean;
@@ -40,6 +41,7 @@ const FORMATS: Array<{
 ];
 
 export function StudioExportPanel({
+  hasUnsavedChapter = false,
   exports,
   historyInitialized = true,
   isLoadingHistory = false,
@@ -73,15 +75,24 @@ export function StudioExportPanel({
         </div>
         <Download aria-hidden="true" />
       </header>
+      {hasUnsavedChapter ? (
+        <p className="studio-inspector__source-notice" role="status">
+          {t("inspector.unsavedChapter")}
+        </p>
+      ) : null}
 
       {/* biome-ignore lint/a11y/useSemanticElements: this button group is not a form control group; <fieldset> would misrepresent semantics and drag in default fieldset styling. */}
-      <div aria-label={t("export.formats.legend")} className="export-format-list" role="group">
+      <div
+        aria-label={t("export.formats.legend")}
+        className="studio-inspector__export-formats"
+        role="group"
+      >
         {FORMATS.map(({ format, labelKey, hintKey }) => {
           const isCurrentFormat = exportingFormat === format && retryingFormat !== format;
           return (
             <button
               aria-busy={isCurrentFormat}
-              className="export-format"
+              className="ui-command studio-inspector__export-format"
               disabled={isExporting || !onExport}
               key={format}
               onClick={(event) => {
