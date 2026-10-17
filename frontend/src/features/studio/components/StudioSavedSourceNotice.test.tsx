@@ -35,7 +35,9 @@ it("keeps Review and Export available while explaining that unsaved chapter edit
   const reviewButton = mounted.container.querySelector<HTMLButtonElement>(
     'button[aria-label="Run review"]',
   );
-  const exportButton = mounted.container.querySelector<HTMLButtonElement>(".studio-inspector__export-format");
+  const exportButton = mounted.container.querySelector<HTMLButtonElement>(
+    ".studio-inspector__export-format",
+  );
   expect(reviewButton).not.toBeDisabled();
   expect(exportButton).not.toBeDisabled();
   act(() => {
