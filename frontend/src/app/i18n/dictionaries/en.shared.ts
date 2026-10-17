@@ -8,6 +8,9 @@ export const enShared = {
   "common.action.tryAgain": "Try again",
   "common.action.tryingAgain": "Trying again...",
   "common.action.saving": "Saving…",
+  "common.action.copy": "Copy",
+  "common.copy.copied": "Copied.",
+  "common.copy.failed": "Copy failed. Select the text and copy it manually, or try again.",
   "common.field.title": "Title",
   "common.field.description": "Description",
 

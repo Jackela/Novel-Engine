@@ -94,11 +94,6 @@ export function StudioCopilotPanel({
     );
   };
 
-  const copyStreamedText = () => {
-    if (streamingText === null) return;
-    void navigator.clipboard.writeText(streamingText);
-  };
-
   return (
     <div aria-busy={isBusy} className="studio-inspector__panel">
       <h2>{t("copilot.heading")}</h2>
@@ -150,7 +145,6 @@ export function StudioCopilotPanel({
       {isStreaming ? (
         <StudioCopilotStreamSection
           interrupted={streamingInterrupted}
-          onCopy={copyStreamedText}
           onStop={(target) => {
             if (onStopProposal) {
               void runWithFocusRestoration(

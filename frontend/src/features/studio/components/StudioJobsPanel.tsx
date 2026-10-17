@@ -9,6 +9,7 @@ import { toErrorMessage } from "../hooks/toErrorMessage";
 import { useCommandFocusRestoration } from "../hooks/useCommandFocusRestoration";
 import type { JobsLoadInitiator } from "../hooks/useStudioJobs";
 import { providerLabel } from "../studioConstants";
+import { ClipboardCopyButton } from "./ClipboardCopyButton";
 
 interface StudioJobsPanelProps {
   jobs: StudioJobSummary[];
@@ -164,15 +165,7 @@ export function StudioJobsPanel({
                   ) : viewedProposal.text !== null ? (
                     <>
                       <pre>{viewedProposal.text}</pre>
-                      <button
-                        className="ui-command"
-                        onClick={() => {
-                          void navigator.clipboard.writeText(viewedProposal.text ?? "");
-                        }}
-                        type="button"
-                      >
-                        {t("jobs.proposal.copy")}
-                      </button>
+                      <ClipboardCopyButton text={viewedProposal.text} />
                     </>
                   ) : (
                     <p role="status">{t("jobs.proposal.loading")}</p>
