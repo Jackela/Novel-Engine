@@ -68,6 +68,41 @@ describe("editorial finding coercion (#316)", () => {
     expect(issues.map((issue) => issue.message)).toEqual(["a", "c", "b"]);
   });
 
+  it("keeps only findings for chapters in the captured source", () => {
+    const nonChapters = ["outline", "character", "world", "note", "beat"].map((kind) => ({
+      ...chapter(`${kind}-1`, 3),
+      kind,
+    }));
+    const issues = coerceEditorialFindings(
+      {
+        findings: [
+          ...[
+            "chapter-2",
+            ...nonChapters.map((document) => document.documentId),
+            "unknown",
+            "other-project-chapter",
+          ].map((documentId) => ({
+            document_id: documentId,
+            severity: "warning",
+            dimension: "pacing",
+            message: `Finding for ${documentId}`,
+          })),
+        ],
+      },
+      [...documents, ...nonChapters],
+    );
+    expect(issues).toEqual([
+      {
+        documentId: "chapter-2",
+        severity: "warning",
+        code: "pacing",
+        message: "Finding for chapter-2",
+        suggestion: "",
+        evidence: {},
+      },
+    ]);
+  });
+
   it("drops unknown dimensions, unknown documents, and empty messages", () => {
     const issues = coerceEditorialFindings(
       {
