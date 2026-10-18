@@ -60,3 +60,13 @@
 Local product validation completed on `186b3ff05167410aa2029ae37f82d1ea238b832b`.
 CI, real-provider checks, and author acceptance remain separate. The change
 remains live until its CI and archival gates close.
+
+
+## 8. Captured-chapter finding identity
+
+- [x] 8.1 Reproduce non-chapter findings at the public coercion boundary,
+  retain a legal chapter finding, then apply the smallest identity filter.
+- [x] 8.2 Verify fresh and retried HTTP Reviews reject captured non-chapter,
+  absent, and foreign Document identities in detail, summary, and Job results.
+- [x] 8.3 Verify zero admissible findings still completes and the complete
+  Snapshot capture and ownership paths remain unchanged.

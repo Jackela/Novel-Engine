@@ -6,6 +6,8 @@ Volume must also appear as project activity in the library's recent ordering.
 Review currently supplies chapter statistics without the manuscript prose
 needed for editorial assessment; supplying complete prose needs the existing
 bounded generation-capacity contract to prevent oversized provider requests.
+Provider findings can also attach issues to non-chapter Documents even though
+only chapters were evaluated.
 The trial provider also returns Chinese Proposal prose that its existing
 validator refuses as incomplete, preventing an ordinary Chinese trial flow.
 
@@ -29,12 +31,15 @@ validator refuses as incomplete, preventing an ordinary Chinese trial flow.
 - Complete the Chinese trial Proposal narrative so ordinary Rewrite and
   Continue outputs pass the existing prose guard without relaxing validation.
 
+- Admit Review finding identities only for chapters in the captured source,
+  including fresh and retried Review results; keep the complete Snapshot.
+
 ## Impact
 
 Affected surfaces are the Review and Export panels, Copilot and Jobs copy
 controls, Volume deletion and project listing, and fresh/retried Review
-generation, and Chinese trial Proposal output. Review requests above the complete prompt limit now return the
-existing HTTP 422 `GENERATION_CAPACITY_EXCEEDED` envelope; the public Review
+generation, and Chinese trial Proposal output. Review requests above the
+complete prompt limit now return the existing HTTP 422 `GENERATION_CAPACITY_EXCEEDED` envelope; the public Review
 response contract and generated API types must document that refusal.
 
 No dependency, configuration, migration, deployment, or architectural change

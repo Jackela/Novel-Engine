@@ -258,3 +258,40 @@ change other provider selection, or apply a Proposal without author acceptance.
   in chunks
 - **THEN** both complete outputs pass the existing prose validation
 - **AND** invalid Proposal content continues to be refused
+
+
+### Requirement: Review findings identify captured chapters only
+
+Fresh and retried Review findings MUST be retained only when their document
+identity names a chapter in the same captured source evaluated for that Review.
+Findings naming a captured non-chapter Document, an absent Document, or a
+Document from another Project MUST be ignored. This filtering MUST NOT remove
+non-chapter Documents from the complete Snapshot or change the existing
+severity, dimension, message, ordering, or revision-identity contracts.
+A provider result with no admissible findings MUST remain a completed Review
+with zero findings.
+
+#### Scenario: Mixed provider findings retain only captured chapters
+
+- **GIVEN** the captured source includes chapters, an outline, character and
+  world Documents, and notes
+- **WHEN** the provider returns findings for those Documents, an unknown ID,
+  and a chapter from another Project
+- **THEN** only findings naming chapters in the captured source are retained
+- **AND** its stored detail contains that set, its summary count matches, and
+  the Job result references the same Review and Snapshot
+
+#### Scenario: Non-chapter-only findings do not become manuscript issues
+
+- **GIVEN** every provider finding names a non-chapter, absent, or foreign
+  Document
+- **WHEN** the Review completes
+- **THEN** its stored detail and Job result contain zero findings
+- **AND** its summary reports zero findings without fabricating a failure
+
+#### Scenario: Retry applies the same captured-chapter identity boundary
+
+- **GIVEN** a failed Review Job is retried and captures the current source
+- **WHEN** the retried provider returns mixed chapter and non-chapter findings
+- **THEN** only findings for chapters in that retry's captured source persist
+- **AND** the complete Snapshot and existing retry ownership remain intact
