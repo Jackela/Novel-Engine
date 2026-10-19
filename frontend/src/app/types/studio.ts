@@ -284,9 +284,9 @@ export interface StudioJob {
     base_revision_id?: string;
     accepted_revision_id?: string | null;
     /** Present on terminal export jobs (#272 job-wrapped export responses). */
-    export_id?: string;
+    export_id?: string | null;
     /** Present on terminal review jobs (#272 job-wrapped review responses). */
-    review_id?: string;
+    review_id?: string | null;
     /** Present on terminal lore-extract jobs (#614); suggestions only. */
     candidates?: LoreExtractCandidate[];
   };
