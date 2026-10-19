@@ -119,13 +119,13 @@ async function mountSearch(section: string, targetId: string, inspector = "copil
   );
   await flushEffects();
   const input = getByRole(container, "textbox", { name: "Search project" });
-  act(() => fireEvent.change(input, { target: { value: "willowquill" } }));
+  await act(() => fireEvent.change(input, { target: { value: "willowquill" } }));
   const form = input.closest("form");
   if (!form) throw new Error("Expected search form.");
   await act(async () => {
     fireEvent.submit(form);
   });
-  act(() => fireEvent.click(getByRole(container, "button", { name: `Open ${target.title}` })));
+  await act(() => fireEvent.click(getByRole(container, "button", { name: `Open ${target.title}` })));
   await flushEffects();
   if (!current?.viewProps) throw new Error("Expected loaded Studio.");
   return { view: current.viewProps, target, currentPath };
