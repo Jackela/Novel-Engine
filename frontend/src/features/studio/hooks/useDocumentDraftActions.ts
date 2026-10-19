@@ -99,11 +99,20 @@ export function useDocumentDraftActions({
       return;
     }
     if (saveTimerRef.current) window.clearTimeout(saveTimerRef.current);
+    const discardEditVersion = draftRef.current.editVersion;
     beginConflictAction();
     try {
       const latestDocument = await refreshLatestDocument(activeDocument.id);
       if (!latestDocument || !isCurrentOwner(owner)) return;
-      applyDocument(latestDocument, "idle", true);
+      if (draftRef.current.editVersion > discardEditVersion) {
+        reconcileCommittedDocument(latestDocument, {
+          editVersion: discardEditVersion,
+          successState: "idle",
+          preserveLocalDraft: true,
+        });
+      } else {
+        applyDocument(latestDocument, "idle", true);
+      }
       void refreshDocumentRevisions(latestDocument.id, latestDocument.current_revision_id);
       setError(null);
     } catch (reason) {
@@ -119,9 +128,11 @@ export function useDocumentDraftActions({
     applyDocument,
     beginConflictAction,
     conflictActionPendingRef,
+    draftRef,
     finishConflictAction,
     isCurrentOwner,
     owner,
+    reconcileCommittedDocument,
     refreshDocumentRevisions,
     refreshLatestDocument,
     saveInFlightRef,
