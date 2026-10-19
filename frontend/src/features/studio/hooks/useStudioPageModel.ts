@@ -1,4 +1,4 @@
-import type { NavigateFunction } from "react-router-dom";
+import type { NavigateFunction as Nav } from "react-router-dom";
 
 import type { StudioRouteState } from "../studioRouteState";
 import { mergeCreatedProjectDocument } from "./mergeCreatedProjectDocument";
@@ -24,8 +24,6 @@ import {
 } from "./useStudioPageNavigation";
 import { useStudioProject } from "./useStudioProject";
 import { useStudioProviders } from "./useStudioProviders";
-
-type Nav = NavigateFunction;
 
 /**
  * Compose the whole studio page behind one route-scoped model: the project
