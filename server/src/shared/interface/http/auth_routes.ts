@@ -106,8 +106,10 @@ export const authRoutes: FastifyPluginAsync<AuthRoutesOptions> = async (app, opt
     if (request.method === "OPTIONS") {
       return;
     }
-    const path = request.url.split("?")[0] ?? request.url;
-    if (!FIRST_CONTACT_PATHS.has(path)) {
+    // Fastify matches percent-encoded aliases to the same route; use that
+    // identity so aliases cannot skip the limit or mint separate buckets.
+    const path = request.routeOptions.url;
+    if (path === undefined || !FIRST_CONTACT_PATHS.has(path)) {
       return;
     }
     const key = `${options.resolveClientIdentity(request)}:${request.method}:${path}`;
