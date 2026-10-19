@@ -163,13 +163,15 @@ describe("Studio proposal acceptance refresh ordering", () => {
       }
     },
   );
-  it.each([
-    new HttpError("Obsolete inactive chapter read", 503),
-    new Error("Unexpected inactive chapter read"),
-    new ApiContractError("inactive chapter"),
-  ])(
-    "keeps whole-book progress when an initially inactive chapter advances (%s)",
-    async (failure) => {
+  it.each(
+    [false, true].flatMap((leaveAgain) => [
+      { failure: new HttpError("Obsolete inactive chapter read", 503), leaveAgain },
+      { failure: new Error("Unexpected inactive chapter read"), leaveAgain },
+      { failure: new ApiContractError("inactive chapter"), leaveAgain },
+    ]),
+  )(
+    "keeps whole-book progress when an initially inactive chapter advances (leave=$leaveAgain, $failure)",
+    async ({ failure, leaveAgain }) => {
       const diagnostic = vi
         .spyOn(diagnostics, "reportUnexpectedError")
         .mockImplementation(() => {});
@@ -198,6 +200,10 @@ describe("Studio proposal acceptance refresh ordering", () => {
       act(() => generation.resolve(proposal));
       await until(() => vi.mocked(api.document).mock.calls.length > previousReads);
       await restoreThroughHistory();
+      if (leaveAgain) {
+        act(() => view().navigator.onSelectDocument(other.id));
+        await until(() => view().editor.activeDocument?.id === other.id);
+      }
       await act(async () => {
         rejectBody(failure);
         await pending;
@@ -207,8 +213,15 @@ describe("Studio proposal acceptance refresh ordering", () => {
         generated: 1,
         stoppedEarly: false,
       });
-      expect(view().statusbar.loadedRevisionId).toBe(restored.current_revision_id);
-      expect(view().editor.draft).toBe(restored.content_markdown);
+      expect(
+        view().project.documents.find((document) => document.id === before.id)?.current_revision_id,
+      ).toBe(restored.current_revision_id);
+      expect(view().statusbar.loadedRevisionId).toBe(
+        leaveAgain ? other.current_revision_id : restored.current_revision_id,
+      );
+      expect(view().editor.draft).toBe(
+        leaveAgain ? other.content_markdown : restored.content_markdown,
+      );
       expect(view().inspector.error).toBeNull();
       if (!(failure instanceof HttpError))
         expect(diagnostic).toHaveBeenCalledWith(
@@ -217,6 +230,58 @@ describe("Studio proposal acceptance refresh ordering", () => {
         );
       else expect(diagnostic).not.toHaveBeenCalled();
       diagnostic.mockRestore();
+    },
+  );
+  it.each([false, true])(
+    "retains a normal inactive refresh failure after an unrelated document change (edit=%s)",
+    async (editOther) => {
+      await mount();
+      act(() => view().navigator.onSelectDocument(other.id));
+      await until(() => view().editor.activeDocument?.id === other.id);
+      vi.mocked(streamProposal).mockResolvedValueOnce(proposal);
+      let rejectBody!: (reason: unknown) => void;
+      vi.mocked(api.document).mockImplementationOnce(
+        () =>
+          new Promise<StudioDocument>((_resolve, reject) => {
+            rejectBody = reject;
+          }),
+      );
+      const start = wholeBook().onConfirmReplace;
+      if (!start) throw new Error("Expected replacement confirmation");
+      const previousReads = vi.mocked(api.document).mock.calls.length;
+      let pending = Promise.resolve();
+      act(() => {
+        pending = Promise.resolve(start());
+      });
+      await until(() => vi.mocked(api.document).mock.calls.length > previousReads);
+      if (editOther) {
+        const savedOther = {
+          ...other,
+          title: "Other chapter edited",
+          current_revision_id: "other-new-revision",
+        };
+        vi.mocked(api.saveDocument).mockResolvedValueOnce(savedOther);
+        vi.mocked(api.document).mockImplementation(async (_project, id) =>
+          id === other.id ? savedOther : accepted,
+        );
+        act(() => view().editor.onTitleChange(savedOther.title));
+        await flushEffects();
+        act(() => view().editor.onSaveNow?.());
+        await until(() => view().statusbar.loadedRevisionId === savedOther.current_revision_id);
+      }
+      await act(async () => {
+        rejectBody(new HttpError("Current inactive read failed", 503));
+        await pending;
+      });
+      expect(wholeBook().phase).toEqual({
+        kind: "failed",
+        generated: 1,
+        failedChapterTitle: before.title,
+        message:
+          "Proposal was accepted, but refreshing the project failed. Reload the project to sync.",
+      });
+      expect(view().editor.activeDocument?.id).toBe(other.id);
+      expect(view().editor.draft).toBe(other.content_markdown);
     },
   );
 });

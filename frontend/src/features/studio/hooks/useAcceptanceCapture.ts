@@ -12,8 +12,8 @@ import { captureCommittedDraftReconciler } from "./reconcileCommittedDraft";
 
 export interface AcceptedDocumentCapture {
   readonly reconcile?: (document: StudioDocument) => void;
-  /** Inactive commits still belong to their original shell; an advanced active baseline wins. */
-  readonly isCurrent: (baseRevisionId?: string) => boolean;
+  /** Publication is valid only while the captured accepted baseline still owns the read. */
+  readonly isCurrent: () => boolean;
 }
 
 export type CaptureAcceptedDocument = (documentId: string) => AcceptedDocumentCapture | undefined;
@@ -30,22 +30,13 @@ export function useAcceptanceCapture(
 ): CaptureAcceptedDocument {
   return useCallback(
     (documentId: string) => {
-      const capturedDraft = ownerRef.current === owner && owner.documentId === documentId;
-      const expectedRevisionId = capturedDraft ? loadedRevision.current : undefined;
-      const isCurrent = (baseRevisionId?: string) => {
-        const currentOwner = ownerRef.current;
-        const targetIsActive =
-          currentOwner?.projectId === owner.projectId && currentOwner.documentId === documentId;
-        const baseline = expectedRevisionId ?? baseRevisionId;
-        return (
-          (!capturedDraft || loadedRevision.current === expectedRevisionId) &&
-          (!targetIsActive ||
-            draftRef.current.activeDocument === null ||
-            baseline === undefined ||
-            draftRef.current.activeDocument.current_revision_id === baseline)
-        );
-      };
-      if (!capturedDraft) return { isCurrent };
+      if (ownerRef.current !== owner || owner.documentId !== documentId) return undefined;
+      const expectedRevisionId = loadedRevision.current;
+      const isCurrent = () =>
+        loadedRevision.current === expectedRevisionId &&
+        (ownerRef.current?.key !== owner.key ||
+          draftRef.current.activeDocument === null ||
+          draftRef.current.activeDocument.current_revision_id === expectedRevisionId);
       const reconcileAcceptance = captureCommittedDraftReconciler(
         draftRef.current,
         reconcile,

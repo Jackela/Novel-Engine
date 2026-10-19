@@ -52,8 +52,7 @@ export async function acceptProposalAndRefresh({
 }: AcceptProposalAndRefreshOptions): Promise<StudioDocument | null> {
   const committed = await api.acceptProposal(projectId, proposalId);
   onAcceptanceCommitted?.();
-  const isRefreshCurrent = () =>
-    isProjectCurrent() && (acceptance?.isCurrent(committed.result.base_revision_id) ?? true);
+  const isRefreshCurrent = () => isProjectCurrent() && (acceptance?.isCurrent() ?? true);
   let acceptedDocument: StudioDocument | null;
   try {
     if (!isRefreshCurrent()) return null;

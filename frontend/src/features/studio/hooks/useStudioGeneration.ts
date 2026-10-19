@@ -1,4 +1,5 @@
 import type { Dispatch, SetStateAction } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import type { Project, StudioDocument } from "@/app/types/studio";
 import type { CaptureAcceptedDocument } from "./useAcceptanceCapture";
 import { useStudioJobAudit } from "./useStudioJobAudit";
@@ -25,6 +26,30 @@ export function useStudioGeneration({
   setJobsError,
   captureAcceptance,
 }: StudioGenerationOptions) {
+  const projectRef = useRef(project);
+  useEffect(() => {
+    projectRef.current = project;
+  }, [project]);
+
+  const captureCurrentAcceptance = useCallback<CaptureAcceptedDocument>(
+    (documentId) => {
+      const capture = captureAcceptance(documentId);
+      const expectedRevisionId = projectRef.current?.documents.find(
+        (document) => document.id === documentId,
+      )?.current_revision_id;
+      return {
+        ...capture,
+        // The target shell remains authoritative after its Draft owner leaves.
+        isCurrent: () =>
+          projectRef.current?.id === projectId &&
+          projectRef.current.documents.find((document) => document.id === documentId)
+            ?.current_revision_id === expectedRevisionId &&
+          (capture?.isCurrent() ?? true),
+      };
+    },
+    [captureAcceptance, projectId],
+  );
+
   const jobAudit = useStudioJobAudit(projectId, setJobsError);
   const copilot = useStudioProposal(
     projectId,
@@ -33,7 +58,7 @@ export function useStudioGeneration({
     setProject,
     setProposalError,
     jobAudit.loadJobs,
-    captureAcceptance,
+    captureCurrentAcceptance,
     jobAudit.proposalAudit,
   );
   const wholeBookLoop = useWholeBookLoop({
@@ -42,7 +67,7 @@ export function useStudioGeneration({
     setProject,
     loadJobs: jobAudit.loadJobs,
     proposalAudit: jobAudit.proposalAudit,
-    captureAcceptedDocument: captureAcceptance,
+    captureAcceptedDocument: captureCurrentAcceptance,
   });
   return { ...jobAudit, copilot, wholeBookLoop };
 }

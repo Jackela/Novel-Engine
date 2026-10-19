@@ -36,3 +36,12 @@ Document MUST use its committed Revision or a newer server Revision.
 - **WHEN** the follow-up read fails
 - **THEN** the Studio reports that acceptance succeeded but local refresh failed
 - **AND** the acceptance record and committed chapter count are retained
+
+#### Scenario: A background chapter remains synchronized after entering and leaving it
+
+- **GIVEN** a whole-book acceptance refresh began while its chapter was inactive
+- **AND** the author opened that chapter, successfully restored a historical Revision and then selected another Document
+- **WHEN** the old acceptance read fails after that departure
+- **THEN** the already synchronized chapter is not reported as a failed whole-book refresh
+- **AND** committed chapter accounting is retained
+- **AND** a failure for a chapter whose Revision has not advanced still reports the current synchronization failure
