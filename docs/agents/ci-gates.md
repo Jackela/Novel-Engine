@@ -26,18 +26,47 @@ current commands from the pnpm package scripts and live workflows.
 | `CI` / container | `docker build` + fresh install, persistence across restart, deep link, drizzle-migration table check | The production image fails to boot, persist, or serve the SPA |
 | `CodeQL` | javascript-typescript analysis over `server/` + `frontend/` | A CodeQL alert on the TS workspace |
 
-## CodeQL: the neutral default-setup check
+## Runbook: a neutral CodeQL configuration comparison
 
-On pull requests a second "CodeQL" check with conclusion `neutral` may appear.
-It is created by the `github-advanced-security` app as the code-scanning
-marker for GitHub's *default setup*, which coexists with this repo's advanced
-setup (`.github/workflows/codeql.yml`: push and pull_request triggers on
-`main`/`develop` plus a weekly schedule). The real PR analysis is the
-`Analyze (javascript-typescript)` job in that workflow, which passes on every
-recent PR. The neutral check is therefore a benign byproduct of the two
-setups coexisting, not a coverage gap. To silence it, the Owner can disable
-default setup under Settings → Code security (manual UI action, not a
-workflow change).
+The `github-advanced-security` app can add a `CodeQL` check alongside the
+`Analyze (javascript-typescript)` workflow job. Read its summary on the exact
+PR commit: a neutral result is not evidence that the workflow failed, nor that
+all expected configurations reported results.
+
+On 2026-10-19, the [app check on PR #687](https://github.com/Jackela/Novel-Engine/runs/117882723883)
+(candidate `c9632724c6ce8d58435beb45c826f6baf7e0f7c8`) named
+`.github/workflows/codeql.yml:analyze/language:python` as present on `main` but
+missing from the PR. Python was retired in the accepted
+[TypeScript cutover](../adr/0003-cutover-execution.md); the workflow already
+scans only `javascript-typescript`. The live default-setup API returned
+`state: not-configured`, so disabling default setup would not resolve this
+historical configuration comparison. This setting was checked with
+`gh api repos/Jackela/Novel-Engine/code-scanning/default-setup` against the
+repository at `b3ad2b91a2778a27168f4149ec4e73332233cd6d`. Settings are mutable;
+this dated observation is not a substitute for reading their current value.
+Earlier explanations attributing this
+warning to two active setups must not substitute for a fresh diagnosis.
+
+When this warning appears:
+
+1. Read the app check summary and compare the named configuration with the
+   current workflow, default-setup settings, and analyses for the base branch.
+   Identify the exact ref, tool, and category; a language name alone is not
+   a safe cleanup selector.
+2. If the configuration is retired, preserve available analysis metadata,
+   SARIF, and alert history before an authorized retirement. Record export
+   failures and the effect on GitHub history; a local archive does not promise
+   restoration of the original analysis IDs or alert timeline. Use GitHub's
+   [configuration management](https://docs.github.com/en/code-security/how-tos/find-and-fix-code-vulnerabilities/manage-your-configuration/use-the-tools-status-page-for-code-scanning)
+   or [analysis API](https://docs.github.com/en/rest/code-scanning/code-scanning),
+   confined to the confirmed obsolete configuration.
+3. Keep the current TypeScript workflow, scan paths, permissions, and required
+   checks intact. Do not reintroduce retired source files or suppress scanning
+   to make the comparison green.
+4. Verify a new PR's app check and TypeScript analysis on its exact candidate
+   SHA, then verify the merged `main` scan. Historical PR conclusions are
+   historical evidence and need not be rewritten by a later configuration
+   retirement.
 
 ## Runbook: dependency advisory flaps
 
