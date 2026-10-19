@@ -767,6 +767,14 @@ timeout that remains active while Provider execution runs MUST NOT be shorter
 than that floor; the earlier inbound request-receipt threshold is complete
 before Provider execution and does not enclose it.
 
+For synchronous DashScope Responses generation, a documented response status
+of `failed`, `incomplete`, `cancelled`, `in_progress`, or `queued` MUST NOT be
+recorded as completed generation, even when HTTP is 200 and output contains
+parseable structured prose. These statuses MUST use the existing immediate,
+non-retryable failure path, without creating an acceptable Proposal or exposing
+untrusted Provider diagnostics. Handling of omitted status in existing
+compatible responses MUST remain unchanged.
+
 #### Scenario: Transient error is retried
 - **GIVEN** the provider answers 429 once and then succeeds
 - **WHEN** a proposal is requested
@@ -789,6 +797,20 @@ before Provider execution and does not enclose it.
 - **THEN** the provider call is granted at least 180 seconds
 - **AND** no product-owned client or application-handler timeout that remains
   active during Provider execution ends sooner
+
+#### Scenario: Structured prose cannot override a non-completed response
+
+- **GIVEN** a synchronous DashScope Responses payload has a documented non-completed status and otherwise valid Proposal prose
+- **WHEN** the Provider adapter handles the HTTP 200 response
+- **THEN** the Job fails after one Provider attempt and contains no acceptable Proposal
+- **AND** accepting that Job cannot create a Revision or change the Document
+- **AND** Provider-supplied error text is not copied into author-visible diagnostics
+
+#### Scenario: Completed and legacy compatible responses remain usable
+
+- **GIVEN** a synchronous Responses payload contains valid Proposal prose and status completed or no status field
+- **WHEN** it is handled by the same adapter
+- **THEN** the existing successful generation and explicit acceptance flow remains available
 
 ### Requirement: Untrusted Provider failure diagnostics boundary
 When an HTTP Provider response has a non-success HTTP status, its upstream
@@ -2095,6 +2117,14 @@ acceptance, an explicit conflict choice that replaces it, a departure that
 hands the newest text to its one rescue write, or a reload. A late save,
 rescue, or conflict outcome MUST NOT publish into a newly active Document.
 
+While the same selected Document still owns unaccepted Draft text or title,
+the Studio MUST retain its unsaved-change close/refresh guard when the
+accepted body is temporarily unavailable after an earlier save. A pending or
+failed body reload MUST NOT be treated as proof that the Draft was saved.
+The comparison MUST use the current owner's accepted text and title; returning
+to that accepted content, explicitly discarding the Draft, or switching to a
+clean owner MUST NOT leave a stale warning.
+
 Automatic retries MUST NOT repeat an unchanged Draft after a permanent HTTP
 413 or 422 save refusal. The active Draft and its visible error MUST remain
 available for correction or an explicit retry. Editing that Draft MUST resume
@@ -2172,6 +2202,15 @@ repeating the unchanged title.
 - **AND** the local title, content, and readable save error remain available
 - **WHEN** the author corrects the Draft
 - **THEN** the ordinary debounced save may persist the corrected text
+
+#### Scenario: A later local edit stays guarded during accepted-body reload
+
+- **GIVEN** an autosave is in flight and the author makes a newer local edit
+- **WHEN** the earlier save succeeds and the subsequent accepted-body read is pending or fails
+- **THEN** the same owner's latest Draft remains protected by the unsaved-change close/refresh guard
+- **AND** saved-source Review and Export guidance continues to identify unaccepted chapter edits
+- **WHEN** the author restores the accepted content or explicitly discards the Draft
+- **THEN** the stale warning is removed without retaining an inactive Draft
 
 ### Requirement: Terminal-state job list without polling
 The Studio MUST NOT poll for job updates — no intervals, server-sent
@@ -5129,6 +5168,15 @@ restores the retryable control, terminal success moves focus to the panel
 heading when focus has no connected owner, and a newer author-chosen focus
 target is never overridden.
 
+A completed Review Job retry MUST invalidate that project's cached Review
+history and clear the preceding Review command error even if refreshing the
+Jobs list subsequently fails. When Review is
+inactive, invalidation MUST NOT prefetch; the next activation MUST read only
+one cursorless first page and its newest detail, reset an earlier explicit
+selection, and reject stale page/detail/older outcomes. Failed retries,
+non-Review jobs, and late completions from a departed project MUST NOT clear
+or replace the active project's Review history.
+
 #### Scenario: Lazy activation reads only the selected history
 
 - **GIVEN** the Inspector is on another tab
@@ -5168,6 +5216,28 @@ target is never overridden.
 - **WHEN** the author switches projects
 - **THEN** the request is aborted or its outcome suppressed
 - **AND** the new project's review state starts from its own first page
+
+#### Scenario: Retried Review becomes visible on the next activation
+
+- **GIVEN** Review A is cached and the author retries a failed Review from Jobs
+- **WHEN** the retry completes with new Review B while Review is inactive
+- **THEN** no inactive Review request is made
+- **WHEN** the author returns to Review
+- **THEN** one fresh first page and B's detail are read without walking older pages
+- **AND** a previous selected Review or late old response cannot hide B
+
+#### Scenario: Jobs refresh failure does not conceal a completed Review
+
+- **GIVEN** a Review retry completed but the following Jobs refresh failed
+- **WHEN** the author opens Review
+- **THEN** Review still loads the completed retry's newest assessment through its own recovery surface
+
+#### Scenario: Successful retry clears the preceding Review error
+
+- **GIVEN** a failed Review command left a visible error
+- **WHEN** its Review Job retry completes in the same project
+- **THEN** the preceding Review error is cleared and the newest assessment is loaded on activation
+- **AND** failed, non-Review, or departed-project retry outcomes do not clear that error
 
 ### Requirement: Navigator document deletion
 

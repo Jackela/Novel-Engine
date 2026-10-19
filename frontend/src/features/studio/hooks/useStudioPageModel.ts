@@ -1,4 +1,4 @@
-import type { NavigateFunction } from "react-router-dom";
+import type { NavigateFunction as Nav } from "react-router-dom";
 
 import type { StudioRouteState } from "../studioRouteState";
 import { mergeCreatedProjectDocument } from "./mergeCreatedProjectDocument";
@@ -24,8 +24,6 @@ import {
 } from "./useStudioPageNavigation";
 import { useStudioProject } from "./useStudioProject";
 import { useStudioProviders } from "./useStudioProviders";
-
-type Nav = NavigateFunction;
 
 /**
  * Compose the whole studio page behind one route-scoped model: the project
@@ -144,6 +142,7 @@ export function useStudioPageModel(projectId: string, route: StudioRouteState, n
     projectId,
     setProject,
     setReviewPage: inspectorHistories.review.setFirstPage,
+    invalidateReview: inspectorHistories.review.invalidate,
     setError,
     errorPublishers: projectErrors.publishers,
     setActiveId,
@@ -248,7 +247,7 @@ export function useStudioPageModel(projectId: string, route: StudioRouteState, n
         // props corridor through StudioPageView -> Inspector -> Panels.
         model: buildStudioInspectorModel({
           projectId,
-          hasUnsavedChapter: activeDocument?.kind === "chapter" && hasUnpersistedEdits,
+          hasUnsavedChapter: activeSummary?.kind === "chapter" && hasUnpersistedEdits,
           lore: {
             onDocumentCreated: (document) =>
               setProject((current) => mergeCreatedProjectDocument(current, projectId, document)),

@@ -19,6 +19,7 @@ interface UseStudioActionsOptions {
   projectId: string;
   setProject: Dispatch<SetStateAction<Project | null>>;
   setReviewPage: (page: ReviewsPage) => void;
+  invalidateReview?: () => void;
   setError: Dispatch<SetStateAction<string | null>>;
   errorPublishers?: Partial<StudioActionErrorPublishers>;
   setActiveId: Dispatch<SetStateAction<string | null>>;
@@ -31,6 +32,7 @@ interface UseStudioActionsOptions {
 }
 
 const PROPOSAL_ACTIONS_UNGATED = () => false;
+const NO_REVIEW_INVALIDATION = () => {};
 
 /**
  * Composition facade over the studio action domains: one mounted owner per
@@ -42,6 +44,7 @@ export function useStudioActions({
   projectId,
   setProject,
   setReviewPage,
+  invalidateReview = NO_REVIEW_INVALIDATION,
   setError,
   errorPublishers,
   setActiveId,
@@ -114,6 +117,7 @@ export function useStudioActions({
     isCurrentOwner,
     publishError,
     setReviewPage,
+    invalidateReview,
     loadJobs,
     isProposalActionGated,
   });
