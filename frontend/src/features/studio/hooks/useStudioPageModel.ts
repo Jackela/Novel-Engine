@@ -128,7 +128,7 @@ export function useStudioPageModel(projectId: string, route: StudioRouteState, n
   const { reveal, model: searchModel } = useStudioSearchModel(
     projectId,
     projectErrors.publishers.search,
-    setActiveId,
+    { project, route, navigate, setActiveId },
   );
   const providers = useStudioProviders();
   const exportDownload = useExportDownload(
