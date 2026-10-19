@@ -1352,6 +1352,29 @@ serialization.
 - **THEN** the complete values are returned without truncation
 - **AND** its events appear oldest first
 
+Complete failed Review and Export Jobs MAY carry `null` for their absent
+`result.review_id` or `result.export_id`, respectively. The Studio MUST
+recognize those terminal failures and expose their recorded error rather
+than treating a null result ID as a malformed response. A null artifact ID
+MUST be accepted only when its Job is failed and its kind corresponds to that
+artifact. Completed Jobs and other Job kinds or states
+MUST retain their existing rejection of null artifact IDs. Non-string,
+non-null values for those result IDs MUST remain invalid.
+
+#### Scenario: A known workflow failure has no result artifact
+
+- **GIVEN** Review or Export execution records a failed complete Job with its corresponding result ID set to null
+- **WHEN** the Studio receives its creation, detail, or retry response
+- **THEN** it recognizes the failed Job and exposes the recorded operation error
+- **AND** it does not claim that the response is unrecognizable solely because no result artifact exists
+
+#### Scenario: Null artifact IDs remain invalid outside their failed workflow
+
+- **GIVEN** a complete Job carries a null Review or Export result ID
+- **WHEN** that Job is completed, another non-failed state, or a different kind from the corresponding artifact
+- **THEN** the Studio rejects that field as a malformed response
+- **AND** it does not present an artifact-less completed response as successful work
+
 ### Requirement: Job retry chain
 
 Retry MUST be limited to jobs in `failed` or `interrupted` state; any other
@@ -2211,6 +2234,25 @@ repeating the unchanged title.
 - **AND** saved-source Review and Export guidance continues to identify unaccepted chapter edits
 - **WHEN** the author restores the accepted content or explicitly discards the Draft
 - **THEN** the stale warning is removed without retaining an inactive Draft
+
+An explicit conflict reload MUST discard only the Draft covered by that author
+choice. If the author edits the active Document's text or title while the
+reload is pending, its response MUST preserve those newer edits as a conflict
+against the returned accepted revision. Without a newer edit, the reload MUST
+still replace the earlier Draft and settle as saved.
+
+#### Scenario: Editing while a conflict reload is pending
+
+- **GIVEN** the active Document has a revision conflict and the author chooses to load the latest version, discarding the earlier Draft
+- **WHEN** the author edits its text or title before the latest-version response arrives
+- **THEN** the response preserves the newer local text and title as an editable conflict
+- **AND** a subsequent explicit keep-local save uses the returned accepted revision as its base
+
+#### Scenario: A conflict reload without newer edits still discards
+
+- **GIVEN** the author chooses to load the latest version of the conflicted active Document
+- **WHEN** the latest-version response arrives without any subsequent local edit
+- **THEN** the editor replaces the earlier Draft with the accepted text and title and settles as saved
 
 ### Requirement: Terminal-state job list without polling
 The Studio MUST NOT poll for job updates — no intervals, server-sent
