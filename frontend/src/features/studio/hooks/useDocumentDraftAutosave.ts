@@ -134,7 +134,7 @@ export function useDocumentDraftAutosave({
       // editor in conflict once the recovery tail settles.
       let recoveryError: string | null = null;
       try {
-        await refreshLatestDocument(currentDocument.id);
+        if ((await refreshLatestDocument(currentDocument.id)) === null) return;
       } catch (refreshReason) {
         recoveryError = toErrorMessage(refreshReason, translateActive("errors.refreshDocument"));
       }

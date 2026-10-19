@@ -1,10 +1,12 @@
 import type { Dispatch, MutableRefObject, SetStateAction } from "react";
 import { useCallback, useEffect, useRef } from "react";
 
+import { HttpError } from "@/app/api";
 import type { Project, StudioDocument } from "@/app/types/studio";
 import { loadLatestDocument } from "./documentDraftPersistence";
 import type { DocumentDraftOwner } from "./documentDraftState";
 import { mergeProjectDocument } from "./projectState";
+import { reportUnexpectedError } from "./reportUnexpectedError";
 
 interface DocumentRefreshArgs {
   readonly owner: DocumentDraftOwner;
@@ -33,7 +35,10 @@ function abortAllRequests(requests: Map<DocumentDraftOwner["token"], Set<AbortCo
  * Owns the abortable-request registry for one project/document identity and
  * the guarded "refresh to the latest committed document" command. In-flight
  * requests abort when the owner token rotates or the hook unmounts, and the
- * project merge only publishes documents that still match the owner.
+ * project merge only publishes documents that still match the owner. A read
+ * superseded by another accepted Revision cannot replace that owner's baseline
+ * or error state. Unexpected superseded failures remain visible in diagnostics;
+ * current failures propagate to the caller.
  */
 export function useAbortableDocumentRefresh({
   owner,
@@ -58,6 +63,7 @@ export function useAbortableDocumentRefresh({
   const refreshLatestDocument = useCallback(
     async (documentId: string): Promise<StudioDocument | null> => {
       if (!isCurrentProject(owner) || documentId !== owner.documentId) return null;
+      const expectedRevisionId = loadedRevision.current;
       const controller = new AbortController();
       const ownerControllers =
         requestControllersRef.current.get(owner.token) ?? new Set<AbortController>();
@@ -66,6 +72,7 @@ export function useAbortableDocumentRefresh({
       try {
         const document = await loadLatestDocument(projectId, documentId, controller.signal);
         if (!isCurrentProject(owner) || controller.signal.aborted) return null;
+        if (isCurrentOwner(owner) && loadedRevision.current !== expectedRevisionId) return null;
         if (isCurrentOwner(owner)) loadedRevision.current = document.current_revision_id;
         setProject((current) =>
           isCurrentProject(owner) && current?.id === owner.projectId
@@ -73,6 +80,12 @@ export function useAbortableDocumentRefresh({
             : current,
         );
         return document;
+      } catch (reason) {
+        if (!isCurrentOwner(owner) || loadedRevision.current === expectedRevisionId) throw reason;
+        if (!(reason instanceof HttpError)) {
+          reportUnexpectedError("Superseded document refresh failed.", reason);
+        }
+        return null;
       } finally {
         ownerControllers.delete(controller);
         if (ownerControllers.size === 0) requestControllersRef.current.delete(owner.token);
