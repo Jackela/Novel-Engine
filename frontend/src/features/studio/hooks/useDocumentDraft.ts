@@ -151,10 +151,14 @@ export function useDocumentDraft(
   });
 
   // Browser-close guard for the debounce window and any failed or in-flight
-  // save: only unpersisted text raises it, so a settled Document never nags.
+  // save: an accepted-body reload must not hide the current owner's newer
+  // text. Its committed baseline remains available in the persistence record.
+  const persistedDraft = persistedDraftsRef.current.get(owner.key);
   const hasUnpersistedEdits =
-    activeDocument !== null &&
-    (draft !== activeDocument.content_markdown || titleDraft !== activeDocument.title);
+    activeDocument !== null
+      ? draft !== activeDocument.content_markdown || titleDraft !== activeDocument.title
+      : persistedDraft !== undefined &&
+        (draft !== persistedDraft.draft || titleDraft !== persistedDraft.titleDraft);
   useEffect(() => {
     if (!hasUnpersistedEdits) return;
     const warnBeforeUnload = (event: BeforeUnloadEvent) => {

@@ -249,7 +249,7 @@ export function useStudioPageModel(projectId: string, route: StudioRouteState, n
         // props corridor through StudioPageView -> Inspector -> Panels.
         model: buildStudioInspectorModel({
           projectId,
-          hasUnsavedChapter: activeDocument?.kind === "chapter" && hasUnpersistedEdits,
+          hasUnsavedChapter: activeSummary?.kind === "chapter" && hasUnpersistedEdits,
           lore: {
             onDocumentCreated: (document) =>
               setProject((current) => mergeCreatedProjectDocument(current, projectId, document)),
