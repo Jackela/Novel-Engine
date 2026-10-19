@@ -1,5 +1,5 @@
 import type { Dispatch, SetStateAction } from "react";
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useLayoutEffect, useRef } from "react";
 import type { Project, StudioDocument } from "@/app/types/studio";
 import type { CaptureAcceptedDocument } from "./useAcceptanceCapture";
 import { useStudioJobAudit } from "./useStudioJobAudit";
@@ -27,7 +27,8 @@ export function useStudioGeneration({
   captureAcceptance,
 }: StudioGenerationOptions) {
   const projectRef = useRef(project);
-  useEffect(() => {
+  /** Publishes committed Revision authority before async failures can use an obsolete shell. */
+  useLayoutEffect(() => {
     projectRef.current = project;
   }, [project]);
 
