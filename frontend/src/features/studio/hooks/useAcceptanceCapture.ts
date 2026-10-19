@@ -10,23 +10,58 @@ import type {
 } from "./documentDraftState";
 import { captureCommittedDraftReconciler } from "./reconcileCommittedDraft";
 
-/** Captures the active draft version before an external acceptance starts. */
+export interface AcceptedDocumentCapture {
+  readonly reconcile?: (document: StudioDocument) => void;
+  /** Inactive commits still belong to their original shell; an advanced active baseline wins. */
+  readonly isCurrent: (baseRevisionId?: string) => boolean;
+}
+
+export type CaptureAcceptedDocument = (documentId: string) => AcceptedDocumentCapture | undefined;
+
+/** Captures the active draft and accepted baseline before an external acceptance starts. */
 export function useAcceptanceCapture(
   owner: DocumentDraftOwner,
   ownerRef: MutableRefObject<DocumentDraftOwner | null>,
   draftRef: MutableRefObject<DraftSnapshot>,
+  loadedRevision: MutableRefObject<string | null>,
   reconcile: ReconcileCommittedDocument,
   refreshRevisions: (documentId: string, expectedRevisionId: string) => Promise<void>,
   setError: Dispatch<SetStateAction<string | null>>,
-): (documentId: string) => ((document: StudioDocument) => void) | undefined {
+): CaptureAcceptedDocument {
   return useCallback(
-    (documentId: string) =>
-      ownerRef.current === owner && owner.documentId === documentId
-        ? captureCommittedDraftReconciler(draftRef.current, reconcile, (document, outcome) => {
-            void refreshRevisions(document.id, document.current_revision_id);
-            if (outcome !== "conflict" && ownerRef.current === owner) setError(null);
-          })
-        : undefined,
-    [draftRef, owner, ownerRef, reconcile, refreshRevisions, setError],
+    (documentId: string) => {
+      const capturedDraft = ownerRef.current === owner && owner.documentId === documentId;
+      const expectedRevisionId = capturedDraft ? loadedRevision.current : undefined;
+      const isCurrent = (baseRevisionId?: string) => {
+        const currentOwner = ownerRef.current;
+        const targetIsActive =
+          currentOwner?.projectId === owner.projectId && currentOwner.documentId === documentId;
+        const baseline = expectedRevisionId ?? baseRevisionId;
+        return (
+          (!capturedDraft || loadedRevision.current === expectedRevisionId) &&
+          (!targetIsActive ||
+            draftRef.current.activeDocument === null ||
+            baseline === undefined ||
+            draftRef.current.activeDocument.current_revision_id === baseline)
+        );
+      };
+      if (!capturedDraft) return { isCurrent };
+      const reconcileAcceptance = captureCommittedDraftReconciler(
+        draftRef.current,
+        reconcile,
+        (document, outcome) => {
+          void refreshRevisions(document.id, document.current_revision_id);
+          if (outcome !== "conflict" && ownerRef.current === owner) setError(null);
+        },
+        expectedRevisionId ?? null,
+      );
+      return {
+        isCurrent,
+        reconcile: (document: StudioDocument) => {
+          if (isCurrent()) reconcileAcceptance(document);
+        },
+      };
+    },
+    [draftRef, loadedRevision, owner, ownerRef, reconcile, refreshRevisions, setError],
   );
 }

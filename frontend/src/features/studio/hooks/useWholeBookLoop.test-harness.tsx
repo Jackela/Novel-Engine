@@ -63,6 +63,7 @@ afterEach(() => {
 export function renderLoopHook(
   initialProject: Project,
   onCapture: (documentId: string) => void = () => undefined,
+  isAcceptanceCurrent: () => boolean = () => true,
 ): {
   readonly result: () => HarnessSnapshot;
   readonly rerender: (project: Project) => void;
@@ -85,8 +86,11 @@ export function renderLoopHook(
       loadJobs: vi.fn(),
       captureAcceptedDocument: (documentId) => {
         onCapture(documentId);
-        return (document) => {
-          accepted.current = [...accepted.current, document];
+        return {
+          isCurrent: isAcceptanceCurrent,
+          reconcile: (document) => {
+            accepted.current = [...accepted.current, document];
+          },
         };
       },
     });

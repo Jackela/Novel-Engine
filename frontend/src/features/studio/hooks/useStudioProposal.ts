@@ -1,7 +1,7 @@
 import type { Dispatch, SetStateAction } from "react";
 import { useCallback, useEffect, useRef } from "react";
-
 import type { Project, StudioDocument } from "@/app/types/studio";
+import type { CaptureAcceptedDocument } from "./useAcceptanceCapture";
 
 import { usePendingAction } from "./usePendingAction";
 import { useProposalAcceptance } from "./useProposalAcceptance";
@@ -29,7 +29,7 @@ export function useStudioProposal(
   setProject: Dispatch<SetStateAction<Project | null>>,
   setError: Dispatch<SetStateAction<string | null>>,
   loadJobs: () => void,
-  captureAcceptedDocument: (documentId: string) => ((document: StudioDocument) => void) | undefined,
+  captureAcceptedDocument: CaptureAcceptedDocument,
   proposalAudit: ProposalAuditControl = INACTIVE_PROPOSAL_AUDIT,
 ) {
   const { pending, begin, finish } = usePendingAction(PROPOSAL_KEYS);

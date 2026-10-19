@@ -293,7 +293,7 @@ describe("useDocumentDraft external commit reconciliation", () => {
 
     draft.rerender(documentB);
     act(() =>
-      acceptA?.({
+      acceptA?.reconcile?.({
         ...documentA,
         current_revision_id: "revision-a-accepted",
         content_markdown: "Accepted A",

@@ -93,7 +93,9 @@ function renderProposal(): {
         loadJobs,
         (documentId) => {
           acceptanceCaptures.push(documentId);
-          return documentId === activeDocument.id ? setAccepted : undefined;
+          return documentId === activeDocument.id
+            ? { reconcile: setAccepted, isCurrent: () => true }
+            : undefined;
         },
       ),
       project: visibleProject,

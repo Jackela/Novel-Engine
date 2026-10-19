@@ -77,8 +77,11 @@ export function renderProposalHook(): {
       loadJobs,
       (documentId) =>
         documentId === activeDocument.id
-          ? (document) => {
-              acceptedRef.current = document;
+          ? {
+              isCurrent: () => true,
+              reconcile: (document) => {
+                acceptedRef.current = document;
+              },
             }
           : undefined,
     );

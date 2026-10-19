@@ -4,6 +4,7 @@ import { translateActive } from "@/app/i18n/translate";
 import type { Project, StudioDocument, StudioJob } from "@/app/types/studio";
 import { acceptProposalAndRefresh } from "./acceptProposalAndRefresh";
 import { toErrorMessage } from "./toErrorMessage";
+import type { CaptureAcceptedDocument } from "./useAcceptanceCapture";
 import type { PendingActionController } from "./usePendingAction";
 import type { ProposalKey, ProposalRequest } from "./useProposalStreamSession";
 import type { ProposalAuditControl } from "./useStudioJobs";
@@ -27,9 +28,7 @@ interface ProposalAcceptanceOptions {
   readonly setError: Dispatch<SetStateAction<string | null>>;
   readonly setProject: Dispatch<SetStateAction<Project | null>>;
   readonly loadJobs: () => void;
-  readonly captureAcceptedDocument: (
-    documentId: string,
-  ) => ((document: StudioDocument) => void) | undefined;
+  readonly captureAcceptedDocument: CaptureAcceptedDocument;
   readonly pending: Pick<PendingActionController<ProposalKey>, "begin" | "finish">;
   readonly isCurrentRequest: (requestOwnerKey: string, requestEpoch: number) => boolean;
   /** Claims the next ledger epoch; any in-flight stream is invalidated. */
@@ -113,7 +112,7 @@ export function useProposalAcceptance({
     ) {
       return;
     }
-    const onAccepted = captureAcceptedDocument(activeDocument.id);
+    const acceptance = captureAcceptedDocument(activeDocument.id);
     // DR-010: the accepted revision is written on top of this base revision;
     // it is the one-shot undo target, and absence simply offers no undo.
     const baseRevisionId = proposal.result.base_revision_id;
@@ -128,7 +127,7 @@ export function useProposalAcceptance({
         proposalId: proposal.id,
         documentId: activeDocument.id,
         setProject,
-        onAccepted,
+        acceptance,
         loadJobs,
         signal: controller.signal,
         isProjectCurrent: () => isProjectLive(projectId) && !controller.signal.aborted,

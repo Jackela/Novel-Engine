@@ -1,6 +1,6 @@
 import type { Dispatch, SetStateAction } from "react";
-
 import type { Project, StudioDocument } from "@/app/types/studio";
+import type { CaptureAcceptedDocument } from "./useAcceptanceCapture";
 import { useStudioJobAudit } from "./useStudioJobAudit";
 import { useStudioProposal } from "./useStudioProposal";
 import { useWholeBookLoop } from "./useWholeBookLoop";
@@ -12,9 +12,7 @@ interface StudioGenerationOptions {
   readonly setProject: Dispatch<SetStateAction<Project | null>>;
   readonly setProposalError: Dispatch<SetStateAction<string | null>>;
   readonly setJobsError: Dispatch<SetStateAction<string | null>>;
-  readonly captureAcceptance: (
-    documentId: string,
-  ) => ((document: StudioDocument) => void) | undefined;
+  readonly captureAcceptance: CaptureAcceptedDocument;
 }
 
 /** Coordinate every proposal producer through one project-owned audit gate. */

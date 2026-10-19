@@ -1,7 +1,7 @@
 import type { Dispatch, SetStateAction } from "react";
 import { useCallback } from "react";
-
-import type { Project, StudioDocument } from "@/app/types/studio";
+import type { Project } from "@/app/types/studio";
+import type { CaptureAcceptedDocument } from "./useAcceptanceCapture";
 import type { ProposalAuditControl } from "./useStudioJobs";
 import { useWholeBookChapterRun } from "./useWholeBookChapterRun";
 import { useWholeBookRunLedger } from "./useWholeBookRunLedger";
@@ -24,9 +24,7 @@ interface UseWholeBookLoopArgs {
   readonly loadJobs: () => void;
   readonly proposalAudit?: ProposalAuditControl;
   /** Captures the draft version an acceptance may replace before its request starts. */
-  readonly captureAcceptedDocument?: (
-    documentId: string,
-  ) => ((document: StudioDocument) => void) | undefined;
+  readonly captureAcceptedDocument?: CaptureAcceptedDocument;
 }
 
 /**
