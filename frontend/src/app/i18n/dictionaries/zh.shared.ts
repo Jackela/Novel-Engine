@@ -5,6 +5,9 @@ export const zhShared = {
   "common.action.tryAgain": "重试",
   "common.action.tryingAgain": "正在重试...",
   "common.action.saving": "正在保存…",
+  "common.action.copy": "复制",
+  "common.copy.copied": "已复制。",
+  "common.copy.failed": "复制失败。请手动选择文本复制，或重试。",
   "common.field.title": "标题",
   "common.field.description": "描述",
 

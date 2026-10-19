@@ -3847,13 +3847,42 @@ export interface paths {
                         };
                     };
                 };
-                /** @description Unified error envelope: every API failure renders as {error:{code,message,details?}}. */
+                /** @description Invalid review input or permanent generation-capacity refusal. */
                 422: {
                     headers: {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["ErrorEnvelope"];
+                        "application/json": {
+                            error: {
+                                /** @enum {string} */
+                                code: "GENERATION_CAPACITY_EXCEEDED";
+                                details: {
+                                    /** @enum {integer} */
+                                    limit: 8388608;
+                                    /** @enum {integer} */
+                                    observed: 8388609;
+                                    /** @enum {string} */
+                                    resource: "prompt_bytes";
+                                };
+                                /** @enum {string} */
+                                message: "Generation capacity exceeded.";
+                            };
+                        } | {
+                            error: {
+                                /** @enum {string} */
+                                code: "VALIDATION_ERROR";
+                                details: {
+                                    errors: {
+                                        field: string;
+                                        message: string;
+                                        type: string;
+                                    }[];
+                                };
+                                /** @enum {string} */
+                                message: "Request validation failed.";
+                            };
+                        };
                     };
                 };
                 /** @description Workflow capacity exhaustion or unavailable persistence. */

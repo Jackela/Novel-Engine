@@ -53,7 +53,7 @@ export class VolumeService {
 
   /** Refuses through the store when it is the project's last volume. */
   removeVolume(principal: Principal, projectId: string, volumeId: string): void {
-    this.store.dropVolume(scopeForPrincipal(principal), projectId, volumeId);
+    this.store.dropVolume(scopeForPrincipal(principal), projectId, volumeId, this.now());
   }
 
   /** Chapters land at the tail of their target volume; other kinds refuse. */

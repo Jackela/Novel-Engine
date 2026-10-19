@@ -52,7 +52,10 @@ export const enStudio = {
   "review.heading": "Review findings",
   "review.provenance": "Reviewed by {provider} · {model} · {snapshot}",
   "review.snapshotLabel": "Review snapshot {id}",
-  "review.hint": "Snapshot-bound and non-mutating.",
+  "review.hint": "Reviews use saved chapters and keep a snapshot without changing your manuscript.",
+  "review.noFindings": "This review reported no findings.",
+  "inspector.unsavedChapter":
+    "Your current chapter has unsaved changes. Review and export use saved text. Save first to include these changes.",
   "review.action.run": "Run review",
   "review.action.running": "Running review",
   "review.status.running": "Running review…",
@@ -91,7 +94,7 @@ export const enStudio = {
   "history.restore.cancel": "Cancel restore",
 
   "export.heading": "Export project",
-  "export.hint": "Generate a file from the current immutable snapshot.",
+  "export.hint": "Exports include saved chapters. Unsaved changes are not included.",
   "export.formats.legend": "Export formats",
   "export.format.markdown": "Markdown",
   "export.format.markdownHint": "Portable source text",

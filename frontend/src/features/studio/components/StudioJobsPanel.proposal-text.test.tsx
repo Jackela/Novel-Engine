@@ -1,4 +1,4 @@
-import { getAllByRole, getByRole } from "@testing-library/dom";
+import { getAllByRole, getByRole, queryByRole } from "@testing-library/dom";
 import { act } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -65,6 +65,58 @@ describe("StudioJobsPanel proposal text (DR-010)", () => {
       await Promise.resolve();
     });
     expect(writeText).toHaveBeenCalledWith("A discarded scene, still readable.");
+  });
+
+  it("reports copy failure without losing the job text and clears it after retry", async () => {
+    const writeText = vi
+      .fn<(text: string) => Promise<void>>()
+      .mockRejectedValueOnce(new DOMException("Denied", "NotAllowedError"))
+      .mockResolvedValueOnce(undefined);
+    vi.stubGlobal("navigator", { clipboard: { writeText } });
+    vi.mocked(api.job).mockResolvedValue(job({ result: { proposal_markdown: "Recorded scene." } }));
+    const mounted = harness.mount(
+      <StudioJobsPanel
+        projectId="project-1"
+        jobs={[jobSummary({ kind: "proposal", status: "completed" })]}
+        onLoadJobs={vi.fn()}
+        onRetryJob={vi.fn()}
+      />,
+    );
+    await act(async () =>
+      getByRole(mounted.container, "button", { name: "View proposal text" }).click(),
+    );
+    const copy = getByRole(mounted.container, "button", { name: "Copy" });
+    await act(async () => copy.click());
+    expect(getByRole(mounted.container, "alert").textContent).toContain("copy it manually");
+    expect(mounted.container.querySelector("pre")?.textContent).toBe("Recorded scene.");
+    await act(async () => copy.click());
+    expect(queryByRole(mounted.container, "alert")).toBeNull();
+    expect(getByRole(mounted.container, "status").textContent).toBe("Copied.");
+  });
+
+  it("does not carry copy feedback to another job with identical text", async () => {
+    vi.stubGlobal("navigator", {});
+    vi.mocked(api.job).mockResolvedValue(job({ result: { proposal_markdown: "Same scene." } }));
+    const mounted = harness.mount(
+      <StudioJobsPanel
+        projectId="project-1"
+        jobs={[
+          jobSummary({ id: "job-a", kind: "proposal", status: "completed" }),
+          jobSummary({ id: "job-b", kind: "proposal", status: "completed" }),
+        ]}
+        onLoadJobs={vi.fn()}
+        onRetryJob={vi.fn()}
+      />,
+    );
+    const views = getAllByRole(mounted.container, "button", { name: "View proposal text" });
+    await act(async () => views[0]?.click());
+    await act(async () => getByRole(mounted.container, "button", { name: "Copy" }).click());
+    expect(getByRole(mounted.container, "alert").textContent).toContain("copy it manually");
+    await act(async () => views[1]?.click());
+    expect(queryByRole(mounted.container, "alert")).toBeNull();
+    expect(mounted.container.querySelector("pre")?.textContent).toBe("Same scene.");
+    await act(async () => views[0]?.click());
+    expect(queryByRole(mounted.container, "alert")).toBeNull();
   });
 
   it("keeps the latest clicked proposal when an earlier read lands last", async () => {

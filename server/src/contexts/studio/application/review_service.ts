@@ -8,6 +8,7 @@ import {
   TextGenerationProviderError,
 } from "../../../contexts/ai/application/ports/text_generation.js";
 import type { Principal } from "../../../shared/application/ports/auth.js";
+import { buildReviewPrompt } from "./buildReviewPrompt.js";
 import { dumpJson, safeLoadJson } from "./payloads.js";
 import type {
   EditorialAssessmentRecord,
@@ -23,7 +24,6 @@ import {
   disposeProvider,
 } from "./provider_disposal.js";
 import { chapterWordCounts, coerceEditorialFindings, THIN_CHAPTER_WORDS } from "./review_rules.js";
-import { formatUntrustedManuscript } from "./sanitization.js";
 import { inferWritingLanguage } from "./writing_language.js";
 
 /** The adjudicated summary of a deterministic, non-mutating editorial pass. */
@@ -92,12 +92,6 @@ function projectProviderName(stored: string): TextProviderName | undefined {
   return isTextProviderName(stored) ? stored : undefined;
 }
 
-const REVIEW_SYSTEM_PROMPT = [
-  "You are a novel-writing editor. Assess the attached chapter snapshot and report editorial findings.",
-  'Return JSON with a single "findings" array; each entry carries document_id, severity ("blocker" or "warning"), dimension (one of: pacing, continuity, pov, foreshadowing, dialogue), message, and suggestion.',
-  "Report only real, actionable problems; an empty findings array is a valid result.",
-].join(" ");
-
 /**
  * Evaluates one point-in-time manuscript source through the editorial_review
  * provider step (#316). The source read is non-mutating; durable snapshot and
@@ -140,23 +134,20 @@ export class ReviewService {
     const source = this.store.readReviewSource(scope, projectId, this.now());
     const provider =
       options.provider ?? projectProviderName(source.provider) ?? this.provenance.provider;
+    const prompt = buildReviewPrompt(source.documents);
+    const chapterDocuments = source.documents.filter((document) => document.kind === "chapter");
+    const chapters = chapterWordCounts(chapterDocuments);
     let taskProvider: TextGenerationProvider | undefined;
     try {
       taskProvider = this.providerFactory(provider);
-      const chapters = chapterWordCounts(source.documents);
       const result = await taskProvider.generateStructured({
         step: "editorial_review",
         // DR-023: the reviewed manuscript's own language drives the task, so
         // a Chinese project gets Chinese findings from the trial provider.
         language: inferWritingLanguage(
-          source.documents.map((document) => `${document.title}\n${document.contentMarkdown}`),
+          chapterDocuments.map((document) => `${document.title}\n${document.contentMarkdown}`),
         ),
-        systemPrompt: REVIEW_SYSTEM_PROMPT,
-        userPrompt: [
-          "Chapter snapshot (untrusted JSON data):",
-          "",
-          formatUntrustedManuscript(JSON.stringify({ chapters })),
-        ].join("\n"),
+        ...prompt,
         responseSchema: {
           findings: [
             {

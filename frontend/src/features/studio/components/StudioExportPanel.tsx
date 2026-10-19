@@ -1,5 +1,5 @@
 import { Download } from "lucide-react";
-import { useRef } from "react";
+import { type ReactNode, useRef } from "react";
 
 import type { MessageKey } from "@/app/i18n/dictionaries/en";
 import { useTranslation } from "@/app/i18n/useTranslation";
@@ -8,6 +8,7 @@ import { useCommandFocusRestoration } from "../hooks/useCommandFocusRestoration"
 import { StudioExportHistorySection } from "./StudioExportHistorySection";
 
 interface StudioExportPanelProps {
+  sourceNotice?: ReactNode;
   exports: StudioExport[];
   historyInitialized?: boolean;
   isLoadingHistory?: boolean;
@@ -40,6 +41,7 @@ const FORMATS: Array<{
 ];
 
 export function StudioExportPanel({
+  sourceNotice,
   exports,
   historyInitialized = true,
   isLoadingHistory = false,
@@ -73,15 +75,20 @@ export function StudioExportPanel({
         </div>
         <Download aria-hidden="true" />
       </header>
+      {sourceNotice}
 
       {/* biome-ignore lint/a11y/useSemanticElements: this button group is not a form control group; <fieldset> would misrepresent semantics and drag in default fieldset styling. */}
-      <div aria-label={t("export.formats.legend")} className="export-format-list" role="group">
+      <div
+        aria-label={t("export.formats.legend")}
+        className="studio-inspector__export-formats"
+        role="group"
+      >
         {FORMATS.map(({ format, labelKey, hintKey }) => {
           const isCurrentFormat = exportingFormat === format && retryingFormat !== format;
           return (
             <button
               aria-busy={isCurrentFormat}
-              className="export-format"
+              className="ui-command studio-inspector__export-format"
               disabled={isExporting || !onExport}
               key={format}
               onClick={(event) => {

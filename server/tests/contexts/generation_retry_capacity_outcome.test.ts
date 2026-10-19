@@ -1,7 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { replayedGenerationCapacityError } from "../../src/contexts/studio/application/generation_retry_capacity_outcome.js";
+import {
+  generationRetryCapacityOutcome,
+  replayedGenerationCapacityError,
+} from "../../src/contexts/studio/application/generation_retry_capacity_outcome.js";
 import type { JobRecord } from "../../src/contexts/studio/application/ports/job_records.js";
+import { GenerationCapacityExceededError } from "../../src/contexts/studio/domain/exceptions.js";
 
 const FIXED_PROMPT_LIMIT = 8_388_608;
 
@@ -46,5 +50,46 @@ describe("generation retry capacity replay", () => {
     });
 
     expect(replayedGenerationCapacityError(capacityRetry(1, 2))).toBeNull();
+  });
+
+  it("round-trips only a closed Review capacity result without invented assessment identities", () => {
+    const source = {
+      ...capacityRetry(FIXED_PROMPT_LIMIT, FIXED_PROMPT_LIMIT + 1),
+      kind: "review",
+      operation: "review",
+      documentId: null,
+      requestJson: "{}",
+    };
+    const failure = new GenerationCapacityExceededError(
+      "prompt_bytes",
+      FIXED_PROMPT_LIMIT,
+      FIXED_PROMPT_LIMIT + 1,
+    );
+    const outcome = generationRetryCapacityOutcome(source, failure, source.updatedAt);
+    const resultJson = outcome.resultJson;
+    if (resultJson === undefined) throw new Error("Capacity outcome must carry a result.");
+    expect(JSON.parse(resultJson)).toEqual({
+      capacity_error: {
+        code: "GENERATION_CAPACITY_EXCEEDED",
+        resource: "prompt_bytes",
+        limit: FIXED_PROMPT_LIMIT,
+        observed: FIXED_PROMPT_LIMIT + 1,
+      },
+    });
+    const landed = { ...source, status: outcome.status, resultJson, error: outcome.error };
+    expect(replayedGenerationCapacityError(landed)).toMatchObject({
+      limit: FIXED_PROMPT_LIMIT,
+      observed: FIXED_PROMPT_LIMIT + 1,
+    });
+    for (const corruptResultJson of [
+      source.resultJson,
+      JSON.stringify({ ...JSON.parse(resultJson), review_id: "fabricated" }),
+      JSON.stringify({ capacity_error: { resource: "prompt_bytes", limit: 1, observed: 2 } }),
+    ]) {
+      expect(
+        replayedGenerationCapacityError({ ...landed, resultJson: corruptResultJson }),
+      ).toBeNull();
+    }
+    expect(replayedGenerationCapacityError({ ...landed, kind: "lore-extract" })).toBeNull();
   });
 });

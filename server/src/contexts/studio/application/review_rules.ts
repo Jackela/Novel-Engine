@@ -40,7 +40,11 @@ export function coerceEditorialFindings(
   if (!Array.isArray(findings)) {
     return [];
   }
-  const byDocumentId = new Map(documents.map((document) => [document.documentId, document]));
+  const byDocumentId = new Map(
+    documents
+      .filter((document) => document.kind === "chapter")
+      .map((document) => [document.documentId, document]),
+  );
   const coerced: Array<{ issue: EditorialIssueInput; position: number }> = [];
   for (const entry of findings) {
     if (typeof entry !== "object" || entry === null) {

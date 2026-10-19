@@ -117,6 +117,7 @@ interface InspectorNarrowCommands {
 /** Per-tab inputs the page model already owns (#412). */
 interface StudioInspectorModelInputs {
   readonly projectId: string;
+  readonly hasUnsavedChapter?: boolean;
   /** #614: the lorebook wizard tab's session inputs. */
   readonly lore: {
     readonly provider: string;
@@ -185,6 +186,7 @@ const IDLE_BEAT_LIFECYCLE: BeatLifecycleState = {
  */
 export function buildStudioInspectorModel({
   projectId,
+  hasUnsavedChapter = false,
   lore,
   copilot,
   proposalUndo,
@@ -198,6 +200,7 @@ export function buildStudioInspectorModel({
   const { activeSummary, activeDocument, ...commands } = narrowCommands;
   const narrowDocument = activeDocument?.id === activeSummary?.id ? activeSummary : null;
   return {
+    hasUnsavedChapter,
     copilot: {
       instruction: copilot.instruction,
       proposal: copilot.proposal,

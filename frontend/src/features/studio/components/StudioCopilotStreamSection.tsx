@@ -1,6 +1,7 @@
 import { Copy, X } from "lucide-react";
 
 import { useTranslation } from "@/app/i18n/useTranslation";
+import { ClipboardCopyButton } from "./ClipboardCopyButton";
 
 interface StudioCopilotStreamSectionProps {
   /** DR-006: the stream failed mid-flight; the text is the preserved partial. */
@@ -9,7 +10,6 @@ interface StudioCopilotStreamSectionProps {
   readonly stopped: boolean;
   /** The markdown received so far while the stream runs (#308). */
   readonly streamingText: string;
-  readonly onCopy: () => void;
   readonly onStop: (target: HTMLButtonElement) => void;
 }
 
@@ -21,7 +21,6 @@ interface StudioCopilotStreamSectionProps {
  */
 export function StudioCopilotStreamSection({
   interrupted,
-  onCopy,
   onStop,
   stopped,
   streamingText,
@@ -44,9 +43,9 @@ export function StudioCopilotStreamSection({
       <pre aria-live="polite">{streamingText}</pre>
       <div className="studio-inspector__actions">
         {streamTextKept ? (
-          <button className="ui-command" onClick={onCopy} type="button">
+          <ClipboardCopyButton text={streamingText}>
             <Copy /> {t("copilot.action.copy")}
-          </button>
+          </ClipboardCopyButton>
         ) : (
           <button
             className="ui-command"

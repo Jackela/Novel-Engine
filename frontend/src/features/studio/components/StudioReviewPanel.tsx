@@ -1,5 +1,5 @@
 import { RotateCcw } from "lucide-react";
-import { useRef } from "react";
+import { type ReactNode, useRef } from "react";
 
 import { useTranslation } from "@/app/i18n/useTranslation";
 import type { Review, ReviewSummary } from "@/app/types/studio";
@@ -9,6 +9,7 @@ import type { InspectorReviewHistoryPaging } from "../studioInspectorTypes";
 import { StudioReviewHistoryList } from "./StudioReviewHistoryList";
 
 interface StudioReviewPanelProps {
+  sourceNotice?: ReactNode;
   latestReview: Review | null;
   summaries: ReviewSummary[];
   detailLoading?: boolean;
@@ -35,6 +36,7 @@ const IDLE_HISTORY_PAGING: InspectorReviewHistoryPaging = {
 };
 
 export function StudioReviewPanel({
+  sourceNotice,
   latestReview,
   summaries,
   detailLoading = false,
@@ -81,6 +83,7 @@ export function StudioReviewPanel({
           <RotateCcw aria-hidden="true" />
         </button>
       </header>
+      {sourceNotice}
       {isRunning ? <p role="status">{t("review.status.running")}</p> : null}
       {isLoadingHistory ? <p role="status">{t("review.status.loadingHistory")}</p> : null}
       {historyError ? (
@@ -138,6 +141,11 @@ export function StudioReviewPanel({
           })}
         </p>
       ) : null}
+      {historyInitialized && latestReview?.issues.length === 0 && !detailLoading && !detailError ? (
+        <p className="studio-inspector__empty" role="status">
+          {t("review.noFindings")}
+        </p>
+      ) : null}
       {historyInitialized && latestReview?.issues.length ? (
         latestReview.issues.map((issue) => (
           <article
@@ -152,7 +160,11 @@ export function StudioReviewPanel({
             <small>{issue.suggestion}</small>
           </article>
         ))
-      ) : historyInitialized && !detailLoading && !detailError && summaries.length === 0 ? (
+      ) : historyInitialized &&
+        !latestReview &&
+        !detailLoading &&
+        !detailError &&
+        summaries.length === 0 ? (
         <p className="studio-inspector__empty">{t("review.empty")}</p>
       ) : null}
       <StudioReviewHistoryList

@@ -1,3 +1,4 @@
+import { getAllByRole, getByRole } from "@testing-library/dom";
 import { act } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -13,6 +14,19 @@ afterEach(() => {
 });
 
 describe("StudioExportPanel", () => {
+  it("keeps the labelled format group and each native export command", async () => {
+    const onExport = vi.fn();
+    const mounted = harness.mount(<StudioExportPanel exports={[]} onExport={onExport} />);
+    const group = getByRole(mounted.container, "group", { name: "Export formats" });
+    const commands = getAllByRole(group, "button");
+    expect(commands).toHaveLength(3);
+    for (const command of commands) {
+      expect(command.getAttribute("type")).toBe("button");
+      await act(async () => command.click());
+    }
+    expect(onExport.mock.calls).toEqual([["markdown"], ["docx"], ["epub"]]);
+  });
+
   it("keeps history loading and failure distinct from an empty catalog", () => {
     const mounted = harness.mount(
       <StudioExportPanel exports={[]} historyInitialized={false} isLoadingHistory />,
@@ -51,7 +65,7 @@ describe("StudioExportPanel", () => {
       />,
     );
     const formatButtons = Array.from(
-      mounted.container.querySelectorAll<HTMLButtonElement>(".export-format"),
+      mounted.container.querySelectorAll<HTMLButtonElement>(".studio-inspector__export-format"),
     );
     const retry = mounted.container.querySelector<HTMLButtonElement>(
       'button[aria-label="Retry docx export"]',
@@ -70,7 +84,7 @@ describe("StudioExportPanel", () => {
       <StudioExportPanel exportingFormat="epub" exports={[]} onExport={vi.fn()} />,
     );
     const formatButtons = Array.from(
-      mounted.container.querySelectorAll<HTMLButtonElement>(".export-format"),
+      mounted.container.querySelectorAll<HTMLButtonElement>(".studio-inspector__export-format"),
     );
 
     expect(formatButtons.map((button) => button.getAttribute("aria-busy"))).toEqual([
@@ -85,7 +99,7 @@ describe("StudioExportPanel", () => {
     const onExport = vi.fn(() => completion.promise);
     const mounted = harness.mount(<StudioExportPanel exports={[]} onExport={onExport} />);
     const formatButtons = Array.from(
-      mounted.container.querySelectorAll<HTMLButtonElement>(".export-format"),
+      mounted.container.querySelectorAll<HTMLButtonElement>(".studio-inspector__export-format"),
     );
     const wordButton = formatButtons.find((button) =>
       button.textContent?.includes("Word document"),
@@ -142,7 +156,7 @@ describe("StudioExportPanel", () => {
       'button[aria-label="Retry docx export"]',
     );
     const wordButton = Array.from(
-      mounted.container.querySelectorAll<HTMLButtonElement>(".export-format"),
+      mounted.container.querySelectorAll<HTMLButtonElement>(".studio-inspector__export-format"),
     ).find((button) => button.textContent?.includes("Word document"));
     if (retry === null || wordButton === undefined) {
       throw new Error("Expected the retry and Word export commands.");
@@ -166,7 +180,7 @@ describe("StudioExportPanel", () => {
     const onLoadOlderExports = vi.fn();
     const exports = [studioExport()];
     const olderButton = (container: HTMLElement): HTMLButtonElement | null =>
-      container.querySelector<HTMLButtonElement>("button.ui-command");
+      container.querySelector<HTMLButtonElement>(".export-history > button.ui-command");
 
     const mounted = harness.mount(
       <StudioExportPanel
