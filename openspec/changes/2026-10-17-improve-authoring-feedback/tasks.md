@@ -39,6 +39,8 @@
   same-key versus different-key retry behavior.
 - [x] 5.5 Regenerate and check the OpenAPI baseline and frontend API types for
   the Review capacity-refusal response.
+- [x] 5.6 Restrict the Review capacity response contract to prompt bytes and
+  retain the separate validation-error alternative; verify the published schema.
 
 ## 6. Chinese trial Proposal completeness
 

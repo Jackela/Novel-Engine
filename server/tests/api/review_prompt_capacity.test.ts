@@ -51,6 +51,35 @@ function oversizedContent(): string {
 }
 
 describe("review prompt capacity admission", () => {
+  it("publishes only prompt-byte refusals alongside Review validation errors", async () => {
+    const { app, directory } = await buildStudioApp();
+    try {
+      const document = (await app.inject({ method: "GET", url: "/openapi.json" })).json();
+      const alternatives =
+        document.paths["/api/projects/{projectId}/reviews"].post.responses["422"].content[
+          "application/json"
+        ].schema.oneOf;
+      expect(alternatives).toHaveLength(2);
+      expect(alternatives[0].properties.error.properties.code.enum).toEqual([
+        "GENERATION_CAPACITY_EXCEEDED",
+      ]);
+      expect(alternatives[0].properties.error.properties.details).toEqual({
+        type: "object",
+        additionalProperties: false,
+        properties: {
+          resource: { type: "string", enum: ["prompt_bytes"] },
+          limit: { type: "integer", enum: [GENERATION_PROMPT_BYTE_LIMIT] },
+          observed: { type: "integer", enum: [GENERATION_PROMPT_BYTE_LIMIT + 1] },
+        },
+        required: ["resource", "limit", "observed"],
+      });
+      expect(alternatives[1].properties.error.properties.code.enum).toEqual(["VALIDATION_ERROR"]);
+    } finally {
+      await app.close();
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
+
   it("refuses oversized saved chapters before provider construction without durable evidence", async () => {
     let constructions = 0;
     const { app, directory } = await buildStudioApp(monotonicClock(), {

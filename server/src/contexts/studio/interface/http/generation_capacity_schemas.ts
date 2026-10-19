@@ -95,12 +95,25 @@ export const loreExtraction422ResponseSchema: JsonResponseSchema = {
   },
 } as const;
 
-/** Saved chapter review may refuse the complete prompt before Provider work. */
+/** Saved chapter review only refuses assembled prompt bytes before Provider work. */
+const reviewCapacityEnvelope = {
+  ...generationCapacityEnvelope,
+  properties: {
+    error: {
+      ...generationCapacityEnvelope.properties.error,
+      properties: {
+        ...generationCapacityEnvelope.properties.error.properties,
+        details: capacityRefusal("prompt_bytes", GENERATION_PROMPT_BYTE_LIMIT),
+      },
+    },
+  },
+} as const;
+
 export const reviewGeneration422ResponseSchema: JsonResponseSchema = {
   description: "Invalid review input or permanent generation-capacity refusal.",
   content: {
     "application/json": {
-      schema: { oneOf: [generationCapacityEnvelope, validationErrorEnvelope] },
+      schema: { oneOf: [reviewCapacityEnvelope, validationErrorEnvelope] },
     },
   },
 } as const;

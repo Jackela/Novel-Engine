@@ -8422,66 +8422,33 @@
                               "type": "string"
                             },
                             "details": {
-                              "oneOf": [
-                                {
-                                  "additionalProperties": false,
-                                  "properties": {
-                                    "limit": {
-                                      "enum": [
-                                        8388608
-                                      ],
-                                      "type": "integer"
-                                    },
-                                    "observed": {
-                                      "enum": [
-                                        8388609
-                                      ],
-                                      "type": "integer"
-                                    },
-                                    "resource": {
-                                      "enum": [
-                                        "prompt_bytes"
-                                      ],
-                                      "type": "string"
-                                    }
-                                  },
-                                  "required": [
-                                    "resource",
-                                    "limit",
-                                    "observed"
+                              "additionalProperties": false,
+                              "properties": {
+                                "limit": {
+                                  "enum": [
+                                    8388608
                                   ],
-                                  "type": "object"
+                                  "type": "integer"
                                 },
-                                {
-                                  "additionalProperties": false,
-                                  "properties": {
-                                    "limit": {
-                                      "enum": [
-                                        100000
-                                      ],
-                                      "type": "integer"
-                                    },
-                                    "observed": {
-                                      "enum": [
-                                        100001
-                                      ],
-                                      "type": "integer"
-                                    },
-                                    "resource": {
-                                      "enum": [
-                                        "lore_extract_segment"
-                                      ],
-                                      "type": "string"
-                                    }
-                                  },
-                                  "required": [
-                                    "resource",
-                                    "limit",
-                                    "observed"
+                                "observed": {
+                                  "enum": [
+                                    8388609
                                   ],
-                                  "type": "object"
+                                  "type": "integer"
+                                },
+                                "resource": {
+                                  "enum": [
+                                    "prompt_bytes"
+                                  ],
+                                  "type": "string"
                                 }
-                              ]
+                              },
+                              "required": [
+                                "resource",
+                                "limit",
+                                "observed"
+                              ],
+                              "type": "object"
                             },
                             "message": {
                               "enum": [

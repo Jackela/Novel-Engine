@@ -3864,13 +3864,6 @@ export interface paths {
                                     observed: 8388609;
                                     /** @enum {string} */
                                     resource: "prompt_bytes";
-                                } | {
-                                    /** @enum {integer} */
-                                    limit: 100000;
-                                    /** @enum {integer} */
-                                    observed: 100001;
-                                    /** @enum {string} */
-                                    resource: "lore_extract_segment";
                                 };
                                 /** @enum {string} */
                                 message: "Generation capacity exceeded.";
