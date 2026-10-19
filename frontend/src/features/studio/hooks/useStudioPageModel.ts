@@ -144,6 +144,7 @@ export function useStudioPageModel(projectId: string, route: StudioRouteState, n
     projectId,
     setProject,
     setReviewPage: inspectorHistories.review.setFirstPage,
+    invalidateReview: inspectorHistories.review.invalidate,
     setError,
     errorPublishers: projectErrors.publishers,
     setActiveId,

@@ -29,6 +29,7 @@ export interface ReviewHistoryState {
   readonly error: string | null;
   readonly retry: () => Promise<void>;
   readonly setFirstPage: (page: ReviewsPage) => void;
+  readonly invalidate: () => void;
   readonly isLoadingOlder: boolean;
   readonly olderError: string | null;
   readonly loadOlder: () => Promise<void>;
@@ -129,6 +130,17 @@ export function useReviewHistory({
     loadErrorMessage: translateActive("errors.loadReviewFindings"),
   });
 
+  const invalidatePage = page.invalidate;
+  const invalidateDetail = detail.invalidate;
+  /** A completed retry replaces the Review era without reading an inactive Inspector. */
+  const invalidate = useCallback((): void => {
+    abortInFlightOlder();
+    setSelectedReviewId(null);
+    requestedDetailIdRef.current = null;
+    invalidatePage();
+    invalidateDetail();
+  }, [abortInFlightOlder, invalidatePage, invalidateDetail]);
+
   useEffect(() => {
     if (!active || activeReviewId === null) return;
     if (requestedDetailIdRef.current === activeReviewId) return;
@@ -153,6 +165,7 @@ export function useReviewHistory({
     error: page.error,
     retry: page.retry,
     setFirstPage,
+    invalidate,
     isLoadingOlder: olderPages.isLoadingOlder,
     olderError: olderPages.olderError,
     loadOlder: olderPages.loadOlder,

@@ -27,6 +27,7 @@ interface UseStudioJobActionsOptions {
     value: string | null,
   ) => void;
   readonly setReviewPage: (page: ReviewsPage) => void;
+  readonly invalidateReview: () => void;
   readonly loadJobs: (initiator?: JobsFreshLoadInitiator) => Promise<void>;
   readonly isProposalActionGated: () => boolean;
 }
@@ -42,6 +43,7 @@ export function useStudioJobActions({
   isCurrentOwner,
   publishError,
   setReviewPage,
+  invalidateReview,
   loadJobs,
   isProposalActionGated,
 }: UseStudioJobActionsOptions) {
@@ -91,9 +93,10 @@ export function useStudioJobActions({
       let idempotencyKey: string | null = null;
       try {
         idempotencyKey = getOrCreateRetryAttemptKey(projectId, jobId);
-        await api.retryJob(projectId, jobId, idempotencyKey);
+        const job = await api.retryJob(projectId, jobId, idempotencyKey);
         clearRetryAttempt(projectId, jobId, idempotencyKey);
         if (!isCurrentOwner(owner)) return;
+        if (job.kind === "review" && job.status === "completed") invalidateReview();
         await loadJobs("retry");
       } catch (reason) {
         if (
@@ -115,6 +118,7 @@ export function useStudioJobActions({
       finishForOwner,
       isProposalActionGated,
       isCurrentOwner,
+      invalidateReview,
       loadJobs,
       projectId,
       publishError,

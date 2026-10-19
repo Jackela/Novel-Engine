@@ -145,7 +145,11 @@ export function useLazyInspectorResource<T>({
   ]);
 
   useEffect(() => {
-    if (active && phaseRef.current === "idle") void load();
+    if (active && (state.projectId !== projectId || state.phase === "idle")) void load();
+  }, [active, load, projectId, state.phase, state.projectId]);
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: active and load identify the request owner lifecycle; phase changes must not abort its own pending read.
+  useEffect(() => {
     return () => {
       const inFlight = requestRef.current;
       if (inFlight) {
@@ -181,6 +185,16 @@ export function useLazyInspectorResource<T>({
     [empty, projectId],
   );
 
+  /** Discard this resource era; only an active consumer starts its replacement read. */
+  const invalidate = useCallback((): void => {
+    const inFlight = requestRef.current;
+    requestRef.current = null;
+    epochRef.current += 1;
+    inFlight?.controller.abort();
+    phaseRef.current = "idle";
+    setState({ projectId, phase: "idle", data: empty, error: null });
+  }, [empty, projectId]);
+
   const current =
     state.projectId === projectId
       ? state
@@ -193,5 +207,6 @@ export function useLazyInspectorResource<T>({
     isLoading: active && (current.phase === "idle" || current.phase === "pending"),
     retry: load,
     setData,
+    invalidate,
   };
 }
