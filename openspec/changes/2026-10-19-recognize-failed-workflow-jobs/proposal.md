@@ -1,12 +1,12 @@
 ## Why
 
-Known Review and Export failures carry null result IDs. The Studio currently rejects these valid terminal Jobs, hiding their actual failure and retaining a settled retry key.
+Known first-run Review and Export failures carry null result IDs. The Studio currently rejects these valid terminal Jobs, hiding their recorded failure in creation responses and complete Job details.
 
 ## What Changes
 
 - Recognize null Review and Export result IDs in valid complete failed Jobs while preserving validation of malformed values.
-- Allow a known terminal failed retry to settle and clear its attempt key, so the next explicit author retry starts a new attempt.
+- Preserve existing retry-attempt handling when a complete terminal Job carries a valid nullable result ID. Current backend retry reservations start with an empty result and their ordinary failure path already works.
 
 ## Impact
 
-Studio frontend behavior and focused regressions only. No API, database, dependency, design-language, or deployment change. Existing saved-Revision workflows remain in place.
+Studio frontend contract parsing and focused regressions only. No API, database, dependency, design-language, or deployment change. Existing saved-Revision workflows and retry-key ownership remain in place.
