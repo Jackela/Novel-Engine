@@ -49,7 +49,6 @@ export function useLazyInspectorResource<T>({
   const activeRef = useRef(active);
   const epochRef = useRef(0);
   const requestRef = useRef<LazyResourceRequest | null>(null);
-  const phaseRef = useRef<LazyResourcePhase>("idle");
   const [state, setState] = useState<LazyResourceState<T>>(() => ({
     projectId,
     phase: "idle",
@@ -59,8 +58,7 @@ export function useLazyInspectorResource<T>({
 
   useEffect(() => {
     activeRef.current = active;
-    phaseRef.current = state.projectId === projectId ? state.phase : "idle";
-  }, [active, projectId, state.phase, state.projectId]);
+  }, [active]);
 
   const isCurrent = useCallback(
     (ownedRequest: LazyResourceRequest) =>
@@ -83,14 +81,12 @@ export function useLazyInspectorResource<T>({
       promise: Promise.resolve(),
     };
     requestRef.current = ownedRequest;
-    phaseRef.current = "pending";
     setState((current) => ({ ...current, projectId, phase: "pending", error: null }));
 
     ownedRequest.promise = (async () => {
       try {
         const data = await request(controller.signal);
         if (!isCurrent(ownedRequest)) return;
-        phaseRef.current = "success";
         setState({ projectId, phase: "success", data, error: null });
       } catch (reason) {
         if (!isCurrent(ownedRequest)) return;
@@ -102,7 +98,6 @@ export function useLazyInspectorResource<T>({
           try {
             const projectExists = await recheckProject(controller.signal);
             if (!isCurrent(ownedRequest) || !projectExists) return;
-            phaseRef.current = "failure";
             setState((current) => ({
               ...current,
               projectId,
@@ -111,7 +106,6 @@ export function useLazyInspectorResource<T>({
             }));
           } catch (recheckReason) {
             if (!isCurrent(ownedRequest)) return;
-            phaseRef.current = "failure";
             setState((current) => ({
               ...current,
               projectId,
@@ -121,7 +115,6 @@ export function useLazyInspectorResource<T>({
           }
           return;
         }
-        phaseRef.current = "failure";
         setState((current) => ({
           ...current,
           projectId,
@@ -148,23 +141,22 @@ export function useLazyInspectorResource<T>({
     if (active && (state.projectId !== projectId || state.phase === "idle")) void load();
   }, [active, load, projectId, state.phase, state.projectId]);
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: active and load identify the request owner lifecycle; phase changes must not abort its own pending read.
   useEffect(() => {
+    if (!active) return;
     return () => {
       const inFlight = requestRef.current;
       if (inFlight) {
         requestRef.current = null;
         inFlight.controller.abort();
         epochRef.current += 1;
-        phaseRef.current = "idle";
         setState((current) =>
-          current.phase === "pending"
+          current.projectId === projectId && current.phase === "pending"
             ? { ...current, phase: current.error ? "failure" : "idle" }
             : current,
         );
       }
     };
-  }, [active, load]);
+  }, [active, projectId]);
 
   const setData = useCallback<Dispatch<SetStateAction<T>>>(
     (nextData) => {
@@ -174,7 +166,6 @@ export function useLazyInspectorResource<T>({
         inFlight.controller.abort();
         epochRef.current += 1;
       }
-      phaseRef.current = "success";
       setState((current) => ({
         projectId,
         phase: "success",
@@ -191,7 +182,6 @@ export function useLazyInspectorResource<T>({
     requestRef.current = null;
     epochRef.current += 1;
     inFlight?.controller.abort();
-    phaseRef.current = "idle";
     setState({ projectId, phase: "idle", data: empty, error: null });
   }, [empty, projectId]);
 
