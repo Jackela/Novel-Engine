@@ -47,7 +47,12 @@ export function reconcileCommittedDraft(
       ? {
           ...current,
           documents: current.documents.map((candidate) =>
-            candidate.id === document.id ? summarizeDocument(document) : candidate,
+            candidate.id === document.id &&
+            (expectation.baseRevisionId === undefined ||
+              candidate.current_revision_id === expectation.baseRevisionId ||
+              candidate.current_revision_id === document.current_revision_id)
+              ? summarizeDocument(document)
+              : candidate,
           ),
         }
       : current,
@@ -94,8 +99,10 @@ export function captureCommittedDraftReconciler(
   snapshot: DraftSnapshot,
   reconcile: ReconcileCommittedDocument,
   onReconciled: (document: StudioDocument, outcome: ReconcileCommitOutcome) => void,
+  baseRevisionId: string | null,
 ): (document: StudioDocument) => void {
   const expectation: CommitExpectation = {
+    baseRevisionId,
     editVersion: snapshot.editVersion,
     successState: "saved",
     draft: snapshot.draft,

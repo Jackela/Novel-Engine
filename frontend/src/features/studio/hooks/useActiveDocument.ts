@@ -2,7 +2,8 @@ import { useMemo } from "react";
 
 import type { DocumentKind, DocumentSummary, Project } from "@/app/types/studio";
 
-function documentKindForSection(section: string): DocumentKind | null {
+/** Return the existing authoring-section constraint; null permits every Document kind. */
+export function documentKindForSection(section: string): DocumentKind | null {
   switch (section) {
     case "outline":
       return "outline";

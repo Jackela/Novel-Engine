@@ -120,6 +120,7 @@ export function useDocumentDraftCommit({
     owner,
     ownerRef,
     draftRef,
+    loadedRevision,
     reconcileCommittedDocument,
     refreshDocumentRevisions,
     setError,

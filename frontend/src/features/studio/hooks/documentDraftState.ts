@@ -68,6 +68,8 @@ export interface AutosaveOptions {
 }
 
 export interface CommitExpectation {
+  /** External reads may merge only into the revision from which they started. */
+  readonly baseRevisionId?: string | null;
   readonly editVersion: number;
   readonly successState: SaveState;
   readonly draft?: string;

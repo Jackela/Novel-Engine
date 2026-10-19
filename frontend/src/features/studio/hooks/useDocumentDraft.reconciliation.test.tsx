@@ -201,7 +201,7 @@ describe("useDocumentDraft committed reconciliation", () => {
     if (!reconcileAcceptance) throw new Error("Expected an active-document reconciler.");
 
     act(() => draft.result().hook.setDraft("Newer author edit"));
-    act(() => reconcileAcceptance(acceptedA));
+    act(() => reconcileAcceptance.reconcile?.(acceptedA));
     await flushMicrotasks();
 
     expect(draft.result().hook.draft).toBe("Newer author edit");
@@ -238,7 +238,7 @@ describe("useDocumentDraft committed reconciliation", () => {
     const reconcileAcceptance = draft.result().hook.captureAcceptance(documentA.id);
     if (!reconcileAcceptance) throw new Error("Expected an active-document reconciler.");
 
-    act(() => reconcileAcceptance(acceptedTwice));
+    act(() => reconcileAcceptance.reconcile?.(acceptedTwice));
 
     expect(draft.result().hook.draft).toBe(acceptedTwice.content_markdown);
     expect(draft.result().hook.loadedRevision.current).toBe(acceptedTwice.current_revision_id);
@@ -270,7 +270,7 @@ describe("useDocumentDraft committed reconciliation", () => {
     if (!reconcileAcceptance) throw new Error("Expected an active-document reconciler.");
 
     draft.rerender(documentB, acceptedProject);
-    act(() => reconcileAcceptance(acceptedTwice));
+    act(() => reconcileAcceptance.reconcile?.(acceptedTwice));
 
     expect(draft.result().hook.draft).toBe(documentB.content_markdown);
     expect(draft.result().hook.loadedRevision.current).toBe(documentB.current_revision_id);

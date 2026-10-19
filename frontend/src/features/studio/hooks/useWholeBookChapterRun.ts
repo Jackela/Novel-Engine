@@ -3,9 +3,10 @@ import { useCallback, useLayoutEffect, useRef } from "react";
 import { translateActive } from "@/app/i18n/translate";
 import { ProposalOutcomeUnknownError, streamProposal } from "@/app/proposalStream";
 import { clearGenerateAttempt, getOrCreateGenerateAttemptKey } from "@/app/retryAttemptRegistry";
-import type { Project, StudioDocument } from "@/app/types/studio";
+import type { Project } from "@/app/types/studio";
 import { AcceptedProposalRefreshError, acceptProposalAndRefresh } from "./acceptProposalAndRefresh";
 import { toErrorMessage } from "./toErrorMessage";
+import type { CaptureAcceptedDocument } from "./useAcceptanceCapture";
 import type { ProposalAuditControl } from "./useStudioJobs";
 import type { WholeBookRunLedger } from "./useWholeBookRunLedger";
 import type { WholeBookChapter } from "./wholeBookPlan";
@@ -32,9 +33,7 @@ interface UseWholeBookChapterRunArgs {
   readonly loadJobs: () => void;
   readonly proposalAudit: ProposalAuditControl;
   /** Captures the draft version an acceptance may replace before its request starts. */
-  readonly captureAcceptedDocument?: (
-    documentId: string,
-  ) => ((document: StudioDocument) => void) | undefined;
+  readonly captureAcceptedDocument?: CaptureAcceptedDocument;
   readonly ledger: WholeBookRunLedger;
 }
 
@@ -124,7 +123,7 @@ export function useWholeBookChapterRun({
             });
             // The accepted result may replace only the draft version present
             // before this chapter starts generating. Later author edits win.
-            const onAccepted = captureAcceptedDocument?.(chapter.id);
+            const acceptance = captureAcceptedDocument?.(chapter.id);
             // Each proposal depends on the preceding acceptance, so parallel
             // requests would violate reading order and resident context.
             const proposalController = new AbortController();
@@ -164,7 +163,7 @@ export function useWholeBookChapterRun({
               proposalId: job.id,
               documentId: chapter.id,
               setProject,
-              onAccepted,
+              acceptance,
               loadJobs,
               signal: refreshController.signal,
               isProjectCurrent: () => isCurrentRun(currentRun) && !refreshController.signal.aborted,
