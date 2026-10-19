@@ -59,9 +59,13 @@
   actual results, skipped checks, fixed candidate identity, and remaining
   acceptance gates under the repository's change-evidence contract.
 
-Local product validation completed on `186b3ff05167410aa2029ae37f82d1ea238b832b`.
-CI, real-provider checks, and author acceptance remain separate. The change
-remains live until its CI and archival gates close.
+Local-full validation completed on `8936fcfcb9ded7562f4c83b793b24c6ee2189ef1`.
+The schema follow-up `a87bfdb6a6cc1c0079cb27e5745af0a8edbd4343` passed affected
+local checks, 41 targeted tests, 38 browser tests, and 23 independent container
+assertions. Its CI run `39179819131` and CodeQL run `39179819160` passed before
+archival. The archived-spec candidate must pass fresh CI before merge.
+Real-provider checks and manual author acceptance remain separate and are not
+claimed by this record.
 
 
 ## 8. Captured-chapter finding identity
