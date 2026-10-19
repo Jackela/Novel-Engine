@@ -158,10 +158,11 @@ from following the ordinary save path.
 #### Scenario: A later History restore supersedes a pending reload
 
 - **GIVEN** a conflict reload of the active Document is pending
-- **WHEN** the author confirms a History restore and that restore accepts a new Revision before the earlier read returns
+- **WHEN** the author confirms a History restore and that restore accepts a new Revision before the earlier read succeeds or fails
 - **THEN** the earlier read is ignored and the restored Revision remains the active baseline and project summary
 - **AND** text or title entered after the restore remains editable and its next save uses the restored Revision as its base
-- **AND** without a subsequent edit the restored Document stays saved without a spurious conflict
+- **AND** without a subsequent edit the restored Document stays saved without a spurious conflict or save error
+- **AND** an unexpected failure of the superseded read remains available in diagnostics without preventing the later Draft from saving
 
 #### Scenario: A later restore supersedes autosave conflict recovery
 

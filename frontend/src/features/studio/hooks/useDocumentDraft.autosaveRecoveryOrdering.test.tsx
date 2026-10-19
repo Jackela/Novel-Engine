@@ -208,7 +208,7 @@ it.each([
     }
     if (failure === "unknown" || failure === "contract") {
       expect(diagnosticSpy).toHaveBeenCalledExactlyOnceWith(
-        "Superseded autosave recovery failed.",
+        "Superseded document refresh failed.",
         recoveryError,
       );
       expect(diagnosticSpy.mock.calls[0]?.[1]).toBe(recoveryError);

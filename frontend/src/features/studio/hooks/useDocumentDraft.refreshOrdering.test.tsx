@@ -108,9 +108,13 @@ afterEach(() => {
   current = undefined;
 });
 
-it.each(["body", "title", "both", "none", "no-restore"])(
-  "keeps causal revision ownership when Load latest overlaps History: %s",
-  async (editing) => {
+it.each(
+  ["body", "title", "both", "none", "no-restore"].flatMap((editing) =>
+    [false, true].map((failure) => ({ editing, failure })),
+  ),
+)(
+  "keeps causal revision ownership when Load latest overlaps History: $editing, reload failure=$failure",
+  async ({ editing, failure }) => {
     vi.useFakeTimers();
     seedApi();
     const { container } = harness.mount(
@@ -126,8 +130,12 @@ it.each(["body", "title", "both", "none", "no-restore"])(
     }
     await act(async () => vi.advanceTimersByTimeAsync(1500));
     expect(view().editor.saveState).toBe("conflict");
-    const response = deferred<StudioDocument>();
-    vi.mocked(api.document).mockReturnValueOnce(response.promise);
+    const response = deferred<void>();
+    vi.mocked(api.document).mockImplementationOnce(async () => {
+      await response.promise;
+      if (failure) throw new HttpError("Reload unavailable", 503);
+      return concurrent;
+    });
     let loading: void | Promise<void>;
     act(() => {
       loading = view().editor.onLoadLatest?.();
@@ -155,18 +163,32 @@ it.each(["body", "title", "both", "none", "no-restore"])(
       if (nextTitle) view().editor.onTitleChange("New title after restore");
     });
     await act(async () => {
-      response.resolve(concurrent);
+      response.resolve();
       await loading;
     });
     const expected = editing === "no-restore" ? concurrent : restored;
+    const failedWithoutRestore = failure && editing === "no-restore";
     expect(view().editor.draft).toBe(
-      nextBody ? "New manuscript after restore" : expected.content_markdown,
+      nextBody
+        ? "New manuscript after restore"
+        : failedWithoutRestore
+          ? "Local edit 4"
+          : expected.content_markdown,
     );
-    expect(view().editor.titleDraft).toBe(nextTitle ? "New title after restore" : expected.title);
+    expect(view().editor.titleDraft).toBe(
+      nextTitle
+        ? "New title after restore"
+        : failedWithoutRestore
+          ? original.title
+          : expected.title,
+    );
     expect(view().statusbar.loadedRevisionId).toBe(expected.current_revision_id);
     expect(current?.project?.documents[0]?.current_revision_id).toBe(expected.current_revision_id);
     expect(view().editor.isConflictActionPending).toBe(false);
-    expect(view().editor.saveState).toBe(nextBody || nextTitle ? "saving" : "idle");
+    expect(view().editor.saveState).toBe(
+      failedWithoutRestore ? "error" : nextBody || nextTitle ? "saving" : "idle",
+    );
+    if (failedWithoutRestore) expect(view().editor.error).toBe("Reload unavailable");
     expect(api.saveDocument).toHaveBeenCalledTimes(1);
     vi.mocked(api.saveDocument).mockImplementation(async (_project, _document, draft) => {
       serverBody = { ...expected, ...draft, current_revision_id: "revision-saved" };

@@ -4,7 +4,6 @@ import { HttpError } from "@/app/api";
 import { translateActive } from "@/app/i18n/translate";
 import type { AutosaveOptions } from "./documentDraftState";
 import { flushDraftNow } from "./flushDraftNow";
-import { reportUnexpectedError } from "./reportUnexpectedError";
 import { toErrorMessage } from "./toErrorMessage";
 import { useDocumentDraftRescue } from "./useDocumentDraftRescue";
 
@@ -133,17 +132,10 @@ export function useDocumentDraftAutosave({
       // saveInFlight lock, so an early "Save conflict" renders clickable
       // buttons that silently swallow the discard click and strand the
       // editor in conflict once the recovery tail settles.
-      const recoveryRevisionId = loadedRevision.current;
       let recoveryError: string | null = null;
       try {
         if ((await refreshLatestDocument(currentDocument.id)) === null) return;
       } catch (refreshReason) {
-        if (loadedRevision.current !== recoveryRevisionId) {
-          if (!(refreshReason instanceof HttpError)) {
-            reportUnexpectedError("Superseded autosave recovery failed.", refreshReason);
-          }
-          return;
-        }
         recoveryError = toErrorMessage(refreshReason, translateActive("errors.refreshDocument"));
       }
       setCurrentSaveState("conflict");
