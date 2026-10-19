@@ -69,8 +69,11 @@ serialization.
 Complete failed Review and Export Jobs MAY carry `null` for their absent
 `result.review_id` or `result.export_id`, respectively. The Studio MUST
 recognize those terminal failures and expose their recorded error rather
-than treating a null result ID as a malformed response. Non-string, non-null
-values for those result IDs MUST remain invalid.
+than treating a null result ID as a malformed response. A null artifact ID
+MUST be accepted only when its Job is failed and its kind corresponds to that
+artifact. Completed Jobs and other Job kinds or states
+MUST retain their existing rejection of null artifact IDs. Non-string,
+non-null values for those result IDs MUST remain invalid.
 
 #### Scenario: A known workflow failure has no result artifact
 
@@ -78,3 +81,10 @@ values for those result IDs MUST remain invalid.
 - **WHEN** the Studio receives its creation, detail, or retry response
 - **THEN** it recognizes the failed Job and exposes the recorded operation error
 - **AND** it does not claim that the response is unrecognizable solely because no result artifact exists
+
+#### Scenario: Null artifact IDs remain invalid outside their failed workflow
+
+- **GIVEN** a complete Job carries a null Review or Export result ID
+- **WHEN** that Job is completed, another non-failed state, or a different kind from the corresponding artifact
+- **THEN** the Studio rejects that field as a malformed response
+- **AND** it does not present an artifact-less completed response as successful work

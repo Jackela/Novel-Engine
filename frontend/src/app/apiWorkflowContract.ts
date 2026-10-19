@@ -160,13 +160,15 @@ function parseJobEvent(value: unknown, label: string): StudioJobEvent {
 export function parseJob(value: unknown, label = "job"): StudioJob {
   const item = objectValue(value, label);
   const result = recordField(item, "result", label);
+  const kind = literalField(item, "kind", label, jobKinds) as StudioJobKind;
+  const status = literalField(item, "status", label, jobStatuses) as StudioJobStatus;
   return {
     id: stringField(item, "id", label),
     project_id: stringField(item, "project_id", label),
     document_id: nullableStringField(item, "document_id", label),
-    kind: literalField(item, "kind", label, jobKinds) as StudioJobKind,
+    kind,
     operation: literalField(item, "operation", label, jobOperations) as StudioJobOperation,
-    status: literalField(item, "status", label, jobStatuses) as StudioJobStatus,
+    status,
     provider: stringField(item, "provider", label),
     model: stringField(item, "model", label),
     request: recordField(item, "request", label),
@@ -186,13 +188,13 @@ export function parseJob(value: unknown, label = "job"): StudioJob {
           ? undefined
           : nullableString(result.accepted_revision_id, `${label}.result.accepted_revision_id`),
       export_id:
-        result.export_id === undefined
-          ? undefined
-          : nullableString(result.export_id, `${label}.result.export_id`),
+        kind === "export" && status === "failed" && result.export_id === null
+          ? null
+          : optionalString(result, "export_id", `${label}.result.export_id`),
       review_id:
-        result.review_id === undefined
-          ? undefined
-          : nullableString(result.review_id, `${label}.result.review_id`),
+        kind === "review" && status === "failed" && result.review_id === null
+          ? null
+          : optionalString(result, "review_id", `${label}.result.review_id`),
       candidates: parseLoreCandidates(result, `${label}.result`),
     },
     error: nullableStringField(item, "error", label),

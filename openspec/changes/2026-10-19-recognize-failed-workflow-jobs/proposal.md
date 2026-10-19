@@ -4,7 +4,7 @@ Known first-run Review and Export failures carry null result IDs. The Studio cur
 
 ## What Changes
 
-- Recognize null Review and Export result IDs in valid complete failed Jobs while preserving validation of malformed values.
+- Recognize null Review and Export result IDs in valid complete failed Jobs only for the matching failed Job kind, while preserving rejection of null IDs on completed or unrelated Jobs and other malformed values.
 - Preserve existing retry-attempt handling when a complete terminal Job carries a valid nullable result ID. Current backend retry reservations start with an empty result and their ordinary failure path already works.
 
 ## Impact

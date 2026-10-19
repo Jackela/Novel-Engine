@@ -96,6 +96,29 @@ describe("workflow contract POST responses", () => {
     },
   );
 
+  it.each([
+    { field: "review_id" as const, payload: jobReview, parse: parseReviewJobResponse },
+    { field: "export_id" as const, payload: jobExport, parse: parseExportJobResponse },
+  ])("rejects null $field on every non-failed status", ({ field, payload, parse }) => {
+    for (const status of ["completed", "pending", "running", "interrupted"]) {
+      const invalid = { ...payload, status, result: { [field]: null } };
+      expect(() => parse(invalid)).toThrow(`result.${field}`);
+      expect(() => parseJob(invalid)).toThrow(`result.${field}`);
+    }
+  });
+
+  it.each([
+    { field: "review_id" as const, payload: jobReview, parse: parseReviewJobResponse },
+    { field: "export_id" as const, payload: jobExport, parse: parseExportJobResponse },
+  ])("rejects null $field on failed Jobs of another kind", ({ field, payload, parse }) => {
+    for (const kind of ["proposal", "review", "export", "lore-extract"]) {
+      if (kind === payload.kind) continue;
+      const invalid = { ...payload, kind, status: "failed", result: { [field]: null } };
+      expect(() => parse(invalid)).toThrow(`result.${field}`);
+      expect(() => parseJob(invalid)).toThrow(`result.${field}`);
+    }
+  });
+
   it("rejects the retired Python response shapes instead of normalizing them", () => {
     const retiredReview = {
       id: "review-1",
