@@ -57,6 +57,68 @@ describe("workflow contract POST responses", () => {
     expect(parseExportJobResponse(jobExport).result.export_id).toBe("export-9");
   });
 
+  it.each([
+    { field: "review_id" as const, payload: jobReview, parse: parseReviewJobResponse },
+    { field: "export_id" as const, payload: jobExport, parse: parseExportJobResponse },
+  ])(
+    "preserves null $field on failed Jobs and accepts missing IDs",
+    ({ field, payload, parse }) => {
+      const failed = {
+        ...payload,
+        status: "failed",
+        error: "Known operation failure.",
+        result: { [field]: null },
+      };
+      expect(parse(failed).result[field]).toBeNull();
+      expect(parseJob(failed).result[field]).toBeNull();
+      expect(parse({ ...payload, result: {} }).result[field]).toBeUndefined();
+      expect(parseJob({ ...payload, result: {} }).result[field]).toBeUndefined();
+    },
+  );
+
+  it.each([
+    { field: "review_id" as const, payload: jobReview, parse: parseReviewJobResponse },
+    { field: "export_id" as const, payload: jobExport, parse: parseExportJobResponse },
+  ])(
+    "rejects malformed $field without relaxing other result fields",
+    ({ field, payload, parse }) => {
+      for (const value of [7, {}]) {
+        const malformed = { ...payload, result: { [field]: value } };
+        expect(() => parse(malformed)).toThrow(`result.${field}`);
+        expect(() => parseJob(malformed)).toThrow(`result.${field}`);
+      }
+      expect(() => parseJob({ ...payload, result: { proposal_markdown: null } })).toThrow(
+        "result.proposal_markdown",
+      );
+      expect(() => parseJob({ ...payload, result: { base_revision_id: null } })).toThrow(
+        "result.base_revision_id",
+      );
+    },
+  );
+
+  it.each([
+    { field: "review_id" as const, payload: jobReview, parse: parseReviewJobResponse },
+    { field: "export_id" as const, payload: jobExport, parse: parseExportJobResponse },
+  ])("rejects null $field on every non-failed status", ({ field, payload, parse }) => {
+    for (const status of ["completed", "pending", "running", "interrupted"]) {
+      const invalid = { ...payload, status, result: { [field]: null } };
+      expect(() => parse(invalid)).toThrow(`result.${field}`);
+      expect(() => parseJob(invalid)).toThrow(`result.${field}`);
+    }
+  });
+
+  it.each([
+    { field: "review_id" as const, payload: jobReview, parse: parseReviewJobResponse },
+    { field: "export_id" as const, payload: jobExport, parse: parseExportJobResponse },
+  ])("rejects null $field on failed Jobs of another kind", ({ field, payload, parse }) => {
+    for (const kind of ["proposal", "review", "export", "lore-extract"]) {
+      if (kind === payload.kind) continue;
+      const invalid = { ...payload, kind, status: "failed", result: { [field]: null } };
+      expect(() => parse(invalid)).toThrow(`result.${field}`);
+      expect(() => parseJob(invalid)).toThrow(`result.${field}`);
+    }
+  });
+
   it("rejects the retired Python response shapes instead of normalizing them", () => {
     const retiredReview = {
       id: "review-1",

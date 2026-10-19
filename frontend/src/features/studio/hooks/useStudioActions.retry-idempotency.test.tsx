@@ -2,6 +2,7 @@ import { act, useState } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { api, HttpError } from "@/app/api";
+import { parseJob } from "@/app/apiWorkflowContract";
 import { recordRetryAttemptSession } from "@/app/retryAttemptRegistry";
 import type { Project } from "@/app/types/studio";
 import { job, project } from "@/test/factories";
@@ -136,6 +137,44 @@ describe("useStudioActions retry attempt identity", () => {
       "00000000-0000-4000-8000-000000000002",
     );
   });
+
+  it.each([
+    { kind: "review" as const, operation: "review" as const, field: "review_id" },
+    { kind: "export" as const, operation: "export" as const, field: "export_id" },
+  ])(
+    "starts a new $kind attempt after parsing a terminal failure",
+    async ({ kind, operation, field }) => {
+      vi.mocked(api.retryJob)
+        .mockImplementationOnce(async () =>
+          parseJob({
+            ...job({ id: "retry-failed", kind, operation, status: "failed" }),
+            result: { [field]: null },
+            error: "Known operation failure.",
+          }),
+        )
+        .mockImplementationOnce(async () =>
+          parseJob({
+            ...job({ id: "retry-recovered", kind, operation, status: "completed" }),
+            result: { [field]: "recovered-result" },
+          }),
+        );
+      const mounted = renderActions();
+
+      await act(async () => mounted.actions().retryJob("source-job"));
+      expect(mounted.error()).toBeNull();
+      expect(mounted.loadJobs).toHaveBeenCalledExactlyOnceWith("retry");
+
+      await act(async () => mounted.actions().retryJob("source-job"));
+      expect(api.retryJob).toHaveBeenNthCalledWith(
+        2,
+        "project-a",
+        "source-job",
+        "00000000-0000-4000-8000-000000000002",
+      );
+      expect(mounted.loadJobs).toHaveBeenCalledTimes(2);
+      expect(mounted.error()).toBeNull();
+    },
+  );
 
   it.each([401, 403, 404, 422])("clears a definitively rejected %i attempt", async (status) => {
     vi.mocked(api.retryJob)
