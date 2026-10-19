@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { rm } from "node:fs/promises";
 import { join } from "node:path";
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { buildApp } from "../../src/apps/api/app.js";
 import { owners, sessions } from "../../src/shared/infrastructure/db/schema.js";
@@ -13,8 +13,14 @@ import {
   setupOwner,
 } from "./auth_helpers.js";
 
-/** Freeze replenishment so a slow runner cannot refill an exercised burst. */
-const fixedClock = () => new Date("2026-10-19T00:00:00.000Z");
+/** Freeze the limiter's monotonic clock so a slow runner cannot replenish a burst. */
+beforeEach(() => {
+  vi.spyOn(performance, "now").mockReturnValue(0);
+});
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 
 function expectRateLimited(response: InjectedResponse): void {
   expect(response.statusCode).toBe(429);
@@ -30,7 +36,7 @@ function expectRateLimited(response: InjectedResponse): void {
 
 describe("authentication limits use the matched route", () => {
   it("shares the setup bucket across encoded aliases before verifying the setup token", async () => {
-    const { app, directory } = await buildAuthApp({ clock: fixedClock });
+    const { app, directory } = await buildAuthApp();
     const payload = { username: OWNER_USERNAME, password: OWNER_PASSWORD };
     const remoteAddress = "203.0.113.7";
     try {
@@ -59,7 +65,7 @@ describe("authentication limits use the matched route", () => {
       }
       expect(await app.studioDb?.db.select().from(owners)).toHaveLength(0);
 
-      // GET and another peer keep their own buckets after this POST burst.
+      /** GET and another peer keep their own buckets after this POST burst. */
       const status = await app.inject({ method: "GET", url: "/api/%73etup", remoteAddress });
       expect(status.statusCode).toBe(200);
       expect(status.json().owner_configured).toBe(false);
@@ -77,7 +83,7 @@ describe("authentication limits use the matched route", () => {
   });
 
   it("shares the login bucket across encoded aliases and cannot issue a session when spent", async () => {
-    const { app, directory } = await buildAuthApp({ clock: fixedClock });
+    const { app, directory } = await buildAuthApp();
     try {
       expect((await setupOwner(app)).statusCode).toBe(201);
       for (const url of [
@@ -111,7 +117,7 @@ describe("authentication limits use the matched route", () => {
   });
 
   it("limits encoded setup probes without a database while keeping readiness available", async () => {
-    const app = await buildApp({ logger: false, clock: fixedClock });
+    const app = await buildApp({ logger: false });
     try {
       for (let attempt = 0; attempt < 5; attempt += 1) {
         const response = await app.inject({

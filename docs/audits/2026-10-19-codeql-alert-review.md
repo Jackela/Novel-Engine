@@ -29,7 +29,7 @@ application over synthetic SQLite. Three regressions first failed with
 201/200/503 instead of 429, then passed after the patch. They mix canonical,
 encoded and query-bearing spellings, verify no Owner/session side effects,
 retain peer/method isolation, and cover database-free early admission. The
-clock is frozen so a slow runner cannot replenish the burst; owned temporary
+limiter's monotonic clock is frozen so a slow runner cannot replenish the burst; owned temporary
 databases are removed. Related authentication suites preserve the existing
 validation, setup, CSRF, session, identity and bucket contracts.
 
