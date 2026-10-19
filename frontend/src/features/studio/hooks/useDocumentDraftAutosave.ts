@@ -4,6 +4,7 @@ import { HttpError } from "@/app/api";
 import { translateActive } from "@/app/i18n/translate";
 import type { AutosaveOptions } from "./documentDraftState";
 import { flushDraftNow } from "./flushDraftNow";
+import { reportUnexpectedError } from "./reportUnexpectedError";
 import { toErrorMessage } from "./toErrorMessage";
 import { useDocumentDraftRescue } from "./useDocumentDraftRescue";
 
@@ -137,7 +138,12 @@ export function useDocumentDraftAutosave({
       try {
         if ((await refreshLatestDocument(currentDocument.id)) === null) return;
       } catch (refreshReason) {
-        if (loadedRevision.current !== recoveryRevisionId) return;
+        if (loadedRevision.current !== recoveryRevisionId) {
+          if (!(refreshReason instanceof HttpError)) {
+            reportUnexpectedError("Superseded autosave recovery failed.", refreshReason);
+          }
+          return;
+        }
         recoveryError = toErrorMessage(refreshReason, translateActive("errors.refreshDocument"));
       }
       setCurrentSaveState("conflict");

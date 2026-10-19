@@ -4,12 +4,14 @@ import { MemoryRouter, useNavigate } from "react-router-dom";
 import { afterEach, expect, it, vi } from "vitest";
 
 import { api, HttpError } from "@/app/api";
+import { ApiContractError } from "@/app/apiContract";
 import type { StudioDocument } from "@/app/types/studio";
 import { chapter, projectWith, revision } from "@/test/factories";
 import { createMountHarness, deferred, flushEffects } from "@/test/harness";
 import { StudioHistoryPanel } from "../components/StudioHistoryPanel";
 import { resolveStudioRoute } from "../studioRouteState";
 import { summarizeDocument } from "./projectState";
+import * as diagnostics from "./reportUnexpectedError";
 import { resetRevisionCacheForTests } from "./useRevisionCache";
 import { useStudioPageModel } from "./useStudioPageModel";
 
@@ -94,18 +96,22 @@ afterEach(() => {
   resetRevisionCacheForTests();
   vi.clearAllTimers();
   vi.useRealTimers();
+  vi.restoreAllMocks();
   vi.resetAllMocks();
   serverBody = original;
   current = undefined;
 });
-it.each(
-  ["new-edits", "none", "no-restore"].flatMap((editing) =>
+it.each([
+  ...["new-edits", "none", "no-restore"].flatMap((editing) =>
     [false, true].map((failure) => ({ editing, failure })),
   ),
-)(
+  { editing: "new-edits", failure: "unknown" },
+  { editing: "new-edits", failure: "contract" },
+])(
   "does not publish a superseded autosave conflict after History restore: $editing, recovery failure=$failure",
   async ({ editing, failure }) => {
     vi.useFakeTimers();
+    const diagnosticSpy = vi.spyOn(diagnostics, "reportUnexpectedError");
     seedApi();
     const { container } = harness.mount(
       <MemoryRouter initialEntries={["/projects/project-1/manuscript?inspector=history"]}>
@@ -131,9 +137,15 @@ it.each(
     }
     const recoveryResponse = deferred<void>();
     const recoveryBody = serverBody;
+    const recoveryError =
+      failure === "unknown"
+        ? new Error("Unexpected recovery failure")
+        : failure === "contract"
+          ? new ApiContractError("document.content_markdown")
+          : new HttpError("Recovery unavailable", 503);
     vi.mocked(api.document).mockImplementationOnce(async () => {
       await recoveryResponse.promise;
-      if (failure) throw new HttpError("Recovery unavailable", 503);
+      if (failure) throw recoveryError;
       return recoveryBody;
     });
     // Autosave still submits R1 after the server accepted R3, so its 409 is causal.
@@ -193,6 +205,15 @@ it.each(
         }),
       );
       expect(view().editor.saveState).toBe("saved");
+    }
+    if (failure === "unknown" || failure === "contract") {
+      expect(diagnosticSpy).toHaveBeenCalledExactlyOnceWith(
+        "Superseded autosave recovery failed.",
+        recoveryError,
+      );
+      expect(diagnosticSpy.mock.calls[0]?.[1]).toBe(recoveryError);
+    } else {
+      expect(diagnosticSpy).not.toHaveBeenCalled();
     }
   },
 );
