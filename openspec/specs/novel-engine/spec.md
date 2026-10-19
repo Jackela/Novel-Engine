@@ -2254,6 +2254,28 @@ still replace the earlier Draft and settle as saved.
 - **WHEN** the latest-version response arrives without any subsequent local edit
 - **THEN** the editor replaces the earlier Draft with the accepted text and title and settles as saved
 
+If the same active Document accepts another Revision while a latest-version
+read is pending, that superseded read MUST NOT replace the later accepted
+Revision, its project summary, or any Draft entered afterward. Its recovery
+outcome MUST NOT reinstate an obsolete conflict or prevent the later Draft
+from following the ordinary save path.
+
+#### Scenario: A later History restore supersedes a pending reload
+
+- **GIVEN** a conflict reload of the active Document is pending
+- **WHEN** the author confirms a History restore and that restore accepts a new Revision before the earlier read returns
+- **THEN** the earlier read is ignored and the restored Revision remains the active baseline and project summary
+- **AND** text or title entered after the restore remains editable and its next save uses the restored Revision as its base
+- **AND** without a subsequent edit the restored Document stays saved without a spurious conflict
+
+#### Scenario: A later restore supersedes autosave conflict recovery
+
+- **GIVEN** a History restore has accepted a new Revision on the server while an older autosave is still awaiting its response
+- **WHEN** that autosave conflicts, its recovery read remains pending, and the restore response then accepts the restored Revision in the active editor
+- **THEN** the earlier recovery read, whether successful or failed, does not reinstate the obsolete conflict or error
+- **AND** any subsequent text or title continues to save against the restored Revision
+- **AND** without a subsequent edit the restored Document stays saved
+
 ### Requirement: Terminal-state job list without polling
 The Studio MUST NOT poll for job updates — no intervals, server-sent
 events, or WebSockets. Job list freshness equals its last explicit trigger:

@@ -8,5 +8,5 @@
 
 ## 2. Validate and integrate
 
-- [ ] 2.1 Run frontend checks, relevant repository gates, actual built-page interaction, and isolated container persistence validation.
-- [ ] 2.2 Complete independent Standards and Spec reviews, exact-candidate CI, and archive the change after CI passes.
+- [x] 2.1 Run frontend checks, relevant repository gates, actual built-page interaction, and isolated container persistence validation.
+- [x] 2.2 Complete independent Standards and Spec reviews, exact-candidate CI, and archive the change after CI passes.
