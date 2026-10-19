@@ -1734,6 +1734,12 @@ load, because a range that covers clients would let a client pose as a proxy
 and rotate forged chains into fresh buckets. Preflight `OPTIONS` requests are
 exempt.
 
+All URL spellings that the router resolves to the same authentication endpoint
+MUST share that client IP and HTTP method's rate-limit bucket. Encoded path
+characters and query strings MUST NOT bypass admission or create a fresh
+bucket. Exhausted admission MUST still return the structured 429 before body
+validation or persistence availability can trigger another response.
+
 #### Scenario: Burst exhausted
 - **GIVEN** the default five-per-minute limit
 - **WHEN** a sixth setup or login request arrives from the same client IP within the window
@@ -1755,6 +1761,23 @@ exempt.
 - **GIVEN** `SECURITY_TRUSTED_PROXIES` contains a network range
 - **WHEN** the configuration loads
 - **THEN** it fails with a configuration error instead of trusting the range
+
+#### Scenario: Encoded setup paths cannot bypass an exhausted bucket
+- **GIVEN** one client has exhausted the default setup limit through canonical and encoded spellings of the setup route
+- **WHEN** it submits valid setup credentials and any required setup token through another spelling of that same route
+- **THEN** the response is the structured 429 with a Retry-After header
+- **AND** no Owner is created
+
+#### Scenario: Encoded login paths cannot mint a fresh bucket
+- **GIVEN** one client has exhausted the default login limit through failed requests to equivalent spellings of the login route
+- **WHEN** it submits correct credentials through an encoded spelling or a query-bearing spelling of that route
+- **THEN** the response is the same structured 429 and no session cookies are issued
+
+#### Scenario: Admission remains early on equivalent setup routes
+- **GIVEN** the database-free application has exhausted one client's GET setup bucket
+- **WHEN** that client requests an equivalent encoded setup URL
+- **THEN** it receives 429 rather than persistence-unavailable or validation work
+- **AND** another client or HTTP method retains its independent bucket
 
 ### Requirement: Production configuration guards
 Production and staging MUST refuse to start when the session secret is
