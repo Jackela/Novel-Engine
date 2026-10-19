@@ -13,9 +13,11 @@
 - [x] 3.1 Reproduce non-completed Responses landing as successful Proposals through the API.
 - [x] 3.2 Reject the documented statuses without raw diagnostic leakage, automatic retry, or accepted Revision; preserve completed/legacy responses.
 
-## 4. Verify and integrate
+## 4. Verify before archiving
 
 - [ ] 4.1 Run affected regression, full applicable package/contract checks, emitted-backend browser workflows and isolated Docker persistence checks.
 - [ ] 4.2 Independently review the fixed candidate against standards and this change.
-- [ ] 4.3 Verify exact-candidate required CI, archive the implemented change after green CI, and revalidate the final candidate.
-- [ ] 4.4 Merge after final required checks; verify merged-main CI, preserve recovery material, and clean only this task's branch/worktree.
+- [ ] 4.3 Verify required CI on the exact implemented candidate before archiving this change.
+
+After archiving, revalidate the final candidate and its required checks before merge.
+Merged-main CI, recovery material, and task-only cleanup are recorded in the external closeout evidence.

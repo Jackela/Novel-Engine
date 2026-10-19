@@ -96,7 +96,10 @@ export function useStudioJobActions({
         const job = await api.retryJob(projectId, jobId, idempotencyKey);
         clearRetryAttempt(projectId, jobId, idempotencyKey);
         if (!isCurrentOwner(owner)) return;
-        if (job.kind === "review" && job.status === "completed") invalidateReview();
+        if (job.kind === "review" && job.status === "completed") {
+          publishError(owner, "review", null);
+          invalidateReview();
+        }
         await loadJobs("retry");
       } catch (reason) {
         if (

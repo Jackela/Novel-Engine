@@ -213,7 +213,8 @@ heading when focus has no connected owner, and a newer author-chosen focus
 target is never overridden.
 
 A completed Review Job retry MUST invalidate that project's cached Review
-history even if refreshing the Jobs list subsequently fails. When Review is
+history and clear the preceding Review command error even if refreshing the
+Jobs list subsequently fails. When Review is
 inactive, invalidation MUST NOT prefetch; the next activation MUST read only
 one cursorless first page and its newest detail, reset an earlier explicit
 selection, and reject stale page/detail/older outcomes. Failed retries,
@@ -275,3 +276,9 @@ or replace the active project's Review history.
 - **WHEN** the author opens Review
 - **THEN** Review still loads the completed retry's newest assessment through its own recovery surface
 
+#### Scenario: Successful retry clears the preceding Review error
+
+- **GIVEN** a failed Review command left a visible error
+- **WHEN** its Review Job retry completes in the same project
+- **THEN** the preceding Review error is cleared and the newest assessment is loaded on activation
+- **AND** failed, non-Review, or departed-project retry outcomes do not clear that error

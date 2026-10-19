@@ -19,6 +19,7 @@ export function retryReviewHarness(initialProject: Project) {
   let project = initialProject;
   let history!: ReturnType<typeof useReviewHistory>;
   let actions!: ReturnType<typeof useStudioActions>;
+  let reviewError: string | null = "Previous Review failed";
   const mounts = createMountHarness();
   const loadJobs = vi.fn<() => Promise<void>>().mockResolvedValue(undefined);
   const invalidateReview = vi.fn(() => history.invalidate());
@@ -28,12 +29,15 @@ export function retryReviewHarness(initialProject: Project) {
   function Probe() {
     const [, setProject] = useState<Project | null>(project);
     const [, setError] = useState<string | null>(null);
+    const [currentReviewError, setReviewError] = useState(reviewError);
+    reviewError = currentReviewError;
     history = useReviewHistory({ active, projectId: project.id, recheckProject, onSessionLost });
     actions = useStudioActions({
       project,
       projectId: project.id,
       setProject,
       setError,
+      errorPublishers: { review: setReviewError },
       setActiveId: vi.fn(),
       setReviewPage: history.setFirstPage,
       invalidateReview,
@@ -46,6 +50,7 @@ export function retryReviewHarness(initialProject: Project) {
   return {
     history: () => history,
     actions: () => actions,
+    reviewError: () => reviewError,
     loadJobs,
     invalidateReview,
     activate(next: boolean) {

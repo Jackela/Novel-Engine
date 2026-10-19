@@ -55,6 +55,7 @@ describe("completed Review retry history", () => {
     vi.mocked(api.retryJob).mockResolvedValue(completed);
     vi.mocked(api.reviews).mockResolvedValue(reviewsPage([fresh, old]));
     await retry(target);
+    expect(target.reviewError()).toBeNull();
     expect(api.reviews).toHaveBeenCalledTimes(1);
     expect(api.reviewDetail).toHaveBeenCalledTimes(detailReads);
     expect(target.loadJobs).toHaveBeenCalledWith("retry");
@@ -78,6 +79,7 @@ describe("completed Review retry history", () => {
     target.activate(true);
     await flushEffects();
     expect(target.invalidateReview).not.toHaveBeenCalled();
+    expect(target.reviewError()).toBe("Previous Review failed");
     expect(api.reviews).toHaveBeenCalledTimes(1);
     expect(target.history().detail.review?.id).toBe(old.id);
   });
@@ -90,6 +92,7 @@ describe("completed Review retry history", () => {
     vi.mocked(api.reviews).mockResolvedValue(reviewsPage([fresh]));
     await retry(target);
     expect(target.invalidateReview).toHaveBeenCalledOnce();
+    expect(target.reviewError()).toBeNull();
     target.activate(true);
     await flushEffects();
     expect(target.history().detail.review?.id).toBe(fresh.id);
@@ -110,6 +113,7 @@ describe("completed Review retry history", () => {
     });
     expect(target.invalidateReview).not.toHaveBeenCalled();
     expect(target.loadJobs).not.toHaveBeenCalled();
+    expect(target.reviewError()).toBe("Previous Review failed");
   });
 
   it("aborts old page, detail and older reads and rejects their late outcomes", async () => {
