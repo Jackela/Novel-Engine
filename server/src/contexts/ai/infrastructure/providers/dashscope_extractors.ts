@@ -50,8 +50,23 @@ export function extractDashscopeGenerationText(data: JsonObject): string {
   throw new TextGenerationProviderError("DashScope response missing structured message content");
 }
 
-/** Extract a message item from the compatible Responses API shape. */
+/**
+ * Extract a Responses message; known unfinished generation states fail even
+ * when output text is present. Missing or unrecognized status stays compatible.
+ */
 export function extractDashscopeResponsesText(data: JsonObject): string {
+  const status = data.status;
+  if (
+    status === "failed" ||
+    status === "incomplete" ||
+    status === "cancelled" ||
+    status === "in_progress" ||
+    status === "queued"
+  ) {
+    throw new TextGenerationProviderError(
+      `DashScope response generation did not complete (status: ${status}).`,
+    );
+  }
   const output = data.output;
   if (!Array.isArray(output)) {
     throw new TextGenerationProviderError("DashScope responses output is invalid");
