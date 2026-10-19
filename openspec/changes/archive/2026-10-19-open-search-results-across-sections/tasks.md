@@ -6,6 +6,6 @@
 
 ## 2. Verify and integrate
 
-- [ ] Verify the built frontend with the real backend and synthetic search data.
-- [ ] Run applicable local checks and independent Standards and Spec reviews.
-- [ ] Pass exact source CI, archive unchanged deltas, then pass final-candidate CI.
+- [x] Verify the built frontend with the real backend and synthetic search data.
+- [x] Run applicable local checks and independent Standards and Spec reviews.
+- [x] Pass exact source CI and archive the unchanged spec deltas; final-candidate CI is recorded in the PR evidence.
