@@ -125,7 +125,9 @@ async function mountSearch(section: string, targetId: string, inspector = "copil
   await act(async () => {
     fireEvent.submit(form);
   });
-  await act(() => fireEvent.click(getByRole(container, "button", { name: `Open ${target.title}` })));
+  await act(() =>
+    fireEvent.click(getByRole(container, "button", { name: `Open ${target.title}` })),
+  );
   await flushEffects();
   if (!current?.viewProps) throw new Error("Expected loaded Studio.");
   return { view: current.viewProps, target, currentPath };
