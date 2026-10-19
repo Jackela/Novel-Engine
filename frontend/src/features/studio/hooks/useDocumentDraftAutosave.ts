@@ -132,10 +132,12 @@ export function useDocumentDraftAutosave({
       // saveInFlight lock, so an early "Save conflict" renders clickable
       // buttons that silently swallow the discard click and strand the
       // editor in conflict once the recovery tail settles.
+      const recoveryRevisionId = loadedRevision.current;
       let recoveryError: string | null = null;
       try {
-        await refreshLatestDocument(currentDocument.id);
+        if ((await refreshLatestDocument(currentDocument.id)) === null) return;
       } catch (refreshReason) {
+        if (loadedRevision.current !== recoveryRevisionId) return;
         recoveryError = toErrorMessage(refreshReason, translateActive("errors.refreshDocument"));
       }
       setCurrentSaveState("conflict");

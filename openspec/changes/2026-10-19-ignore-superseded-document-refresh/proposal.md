@@ -6,6 +6,7 @@ A pending conflict reload can return after the author restores a historical Revi
 
 - Ignore a pending latest-version read if the same active Document has accepted another Revision since that read began.
 - Preserve the later accepted Revision and any subsequent Draft; retain ordinary reload and explicit restore behavior.
+- Prevent a superseded autosave recovery read or failure from reinstating an obsolete conflict after a later restore.
 
 ## Impact
 
