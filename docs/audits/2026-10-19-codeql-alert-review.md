@@ -29,8 +29,8 @@ application over synthetic SQLite. Three regressions first failed with
 201/200/503 instead of 429, then passed after the patch. They mix canonical,
 encoded and query-bearing spellings, verify no Owner/session side effects,
 retain peer/method isolation, and cover database-free early admission. The
-limiter's monotonic clock is frozen so a slow runner cannot replenish the burst; owned temporary
-databases are removed. Related authentication suites preserve the existing
+limiter's monotonic clock is frozen so a slow runner cannot replenish the burst;
+owned temporary databases are removed. Related authentication suites preserve the existing
 validation, setup, CSRF, session, identity and bucket contracts.
 
 ## Alert-by-alert assessment
@@ -106,6 +106,33 @@ identity replacement, literal percent/Unicode names and local CLI compatibility)
 Original SARIF, exact commands, logs, environment, probe code and candidate-level
 CI evidence are retained in this task's change-evidence record. Baseline outcomes
 are historical after a later commit and must keep their original SHA.
+
+## Implementation-candidate evidence
+
+Full local checks on `0baed9f05491a0f81d9072c025dd74225399fbd1`
+passed: server gates, architecture, types, both linters, build and coverage
+(288 files / 1731 tests); frontend types, both linters, formatting, coverage
+(163 files / 899 tests), build and generated API drift; strict OpenSpec,
+dependency-chain tests (16), production dependency audit and React Doctor
+(0 diagnostics). Local environment: macOS arm64, Node 24.19.0, pnpm 11.6.0.
+The isolated Linux/arm64 image used Node 24.21.0 and passed 26 bounded
+checks: fresh setup/login/CSRF, exact synthetic prose/export, deep links,
+restart/session/Revision/Snapshot persistence, SQLite integrity, and encoded
+setup admission. Its task-owned container and volume were removed afterward.
+
+Independent Standards and Spec reviews caught comment style and an ineffective
+test clock. On corrected candidate
+`ffd5a4cd74dba53e2ee55c42536ca11f8c5129ed`, all 58 affected authentication
+tests, server gates/types/linters/build and strict OpenSpec passed again;
+both independent follow-ups found no remaining blocker. All 38 Chromium
+workflows passed against the emitted TS server serving the built frontend.
+No product frontend change was required. These are local and automated browser
+results, not human acceptance, native Windows or real-provider evidence.
+
+The PR must retain these historical SHA boundaries, pass exact-head CI before
+OpenSpec archival, then pass fresh final-head checks. Live required checks,
+alert dispositions, post-merge main CI and recovery-backed task-only cleanup
+are integration records, not inferred from the local passes above.
 
 ## Limits
 

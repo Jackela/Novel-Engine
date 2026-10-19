@@ -12,9 +12,9 @@
 
 ## 3. Integration evidence
 
-- [ ] 3.1 Run the affected regressions and applicable full local gates, browser, and isolated container checks.
-- [ ] 3.2 Independently review Standards, Spec, and alert dispositions; record exact candidate evidence and skips.
-- [ ] 3.3 Record exact-SHA evidence, remaining acceptance boundaries, and the CI/archive handoff.
+- [x] 3.1 Run the affected regressions and applicable full local gates, browser, and isolated container checks.
+- [x] 3.2 Independently review Standards, Spec, and alert dispositions; record exact candidate evidence and skips.
+- [x] 3.3 Record exact-SHA evidence, remaining acceptance boundaries, and the CI/archive handoff.
 
 The change remains live until its implementation candidate passes CI. After
 archival, the new final candidate must pass fresh exact-head checks before
