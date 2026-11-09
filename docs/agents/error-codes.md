@@ -1,5 +1,11 @@
 # Error codes
 
+> **正在重建中，本文件描述的是当前运行中的旧契约。** 新契约见
+> [`error-codes-v1.md`](error-codes-v1.md)——那份的 22 条码由 `gate:error-codes-v1`
+> 锁定（四列 + 文案指纹 + 必填码集合 + 帧码隔离）。切换完成后本文件退役，
+> 新文件改名为 `error-codes.md`。不要按文件名判断哪份有效：当前**运行**的是本文件，
+> 当前**被门禁锁定**的是 v1。
+
 Every API failure renders through the unified error envelope:
 
 ```json
