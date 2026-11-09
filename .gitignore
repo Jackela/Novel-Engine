@@ -99,6 +99,11 @@ desktop.ini
 !.claude/skills/**
 !.claude/commands/
 
+# Local agent memory and tooling state (never committed)
+.workbuddy/
+.commandcode/
+.dsh-code-index/
+
 # Root-only generated scratch files
 /session_*.zip
 /undefined:*/
