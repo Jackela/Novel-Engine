@@ -7,7 +7,7 @@
  * snake_case and are mapped only inside the SQLite adapter.
  */
 
-import { Type, type Static } from "typebox";
+import { type Static, Type } from "typebox";
 
 export const ProjectId = Type.String({ minLength: 1, maxLength: 64 });
 export type ProjectId = Static<typeof ProjectId>;

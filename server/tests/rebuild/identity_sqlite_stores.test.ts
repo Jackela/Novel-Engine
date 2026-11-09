@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { openDatabase, type DatabaseHandle } from "../../src/platform/db/connection.js";
+import { type DatabaseHandle, openDatabase } from "../../src/platform/db/connection.js";
 import { createSqliteOwnerStore } from "../../src/slices/identity/adapters/sqlite_owner_store.js";
 import { createSqliteSessionStore } from "../../src/slices/identity/adapters/sqlite_session_store.js";
 import { OwnerAlreadyConfiguredError } from "../../src/slices/identity/domain/errors.js";

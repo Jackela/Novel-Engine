@@ -67,43 +67,49 @@ function asInvalidOperation(error: unknown): never {
 export function registerIdentityRoutes(app: FastifyInstance, deps: IdentityDeps): void {
   const shared = { owners: deps.owners, hasher: deps.hasher, now: deps.now };
 
-  app.post<{ Body: CredentialsRequest }>("/api/setup", async (request, reply): Promise<OwnerView> => {
-    try {
-      const owner = await setupOwner(shared, request.body);
-      void reply.status(201);
-      return owner;
-    } catch (error) {
-      return asInvalidOperation(error);
-    }
-  });
+  app.post<{ Body: CredentialsRequest }>(
+    "/api/setup",
+    async (request, reply): Promise<OwnerView> => {
+      try {
+        const owner = await setupOwner(shared, request.body);
+        void reply.status(201);
+        return owner;
+      } catch (error) {
+        return asInvalidOperation(error);
+      }
+    },
+  );
 
-  app.post<{ Body: CredentialsRequest }>("/api/session", async (request, reply): Promise<SessionView> => {
-    try {
-      const issued = await login(
-        { ...shared, sessions: deps.sessions, tokens: deps.tokens },
-        request.body,
-      );
-      void reply.setCookie(SESSION_COOKIE, issued.token, {
-        path: "/",
-        httpOnly: true,
-        sameSite: "lax",
-        maxAge: SESSION_MAX_AGE_SECONDS,
-        secure: deps.secureCookies,
-      });
-      // The CSRF cookie must stay readable by the page: double-submit compares it
-      // against a header the client script sets.
-      void reply.setCookie(CSRF_COOKIE, issued.csrfToken, {
-        path: "/",
-        httpOnly: false,
-        sameSite: "lax",
-        maxAge: SESSION_MAX_AGE_SECONDS,
-        secure: deps.secureCookies,
-      });
-      return { ownerId: issued.ownerId, expiresAt: issued.expiresAt };
-    } catch (error) {
-      return asInvalidOperation(error);
-    }
-  });
+  app.post<{ Body: CredentialsRequest }>(
+    "/api/session",
+    async (request, reply): Promise<SessionView> => {
+      try {
+        const issued = await login(
+          { ...shared, sessions: deps.sessions, tokens: deps.tokens },
+          request.body,
+        );
+        void reply.setCookie(SESSION_COOKIE, issued.token, {
+          path: "/",
+          httpOnly: true,
+          sameSite: "lax",
+          maxAge: SESSION_MAX_AGE_SECONDS,
+          secure: deps.secureCookies,
+        });
+        // The CSRF cookie must stay readable by the page: double-submit compares it
+        // against a header the client script sets.
+        void reply.setCookie(CSRF_COOKIE, issued.csrfToken, {
+          path: "/",
+          httpOnly: false,
+          sameSite: "lax",
+          maxAge: SESSION_MAX_AGE_SECONDS,
+          secure: deps.secureCookies,
+        });
+        return { ownerId: issued.ownerId, expiresAt: issued.expiresAt };
+      } catch (error) {
+        return asInvalidOperation(error);
+      }
+    },
+  );
 
   app.get("/api/session", (request): SessionProbeView => {
     const principal = resolvePrincipal(
@@ -116,10 +122,7 @@ export function registerIdentityRoutes(app: FastifyInstance, deps: IdentityDeps)
   });
 
   app.delete("/api/session", (request, reply) => {
-    logout(
-      { sessions: deps.sessions, tokens: deps.tokens },
-      request.cookies[SESSION_COOKIE],
-    );
+    logout({ sessions: deps.sessions, tokens: deps.tokens }, request.cookies[SESSION_COOKIE]);
     void reply.clearCookie(SESSION_COOKIE, { path: "/" });
     void reply.clearCookie(CSRF_COOKIE, { path: "/" });
     // A bare `status(204)` never sends, and Fastify then waits for a body that

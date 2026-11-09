@@ -15,10 +15,7 @@
  * each of them see the other's absence rather than an error.
  */
 
-import {
-  type CredentialPolicyError,
-  normalizeOwnerCredentials,
-} from "../domain/credentials.js";
+import { type CredentialPolicyError, normalizeOwnerCredentials } from "../domain/credentials.js";
 import { OwnerAlreadyConfiguredError } from "../domain/errors.js";
 import type { OwnerStore, SecretHasher } from "../ports.js";
 

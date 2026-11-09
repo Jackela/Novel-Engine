@@ -189,7 +189,9 @@ function checkRequiredSet(docLines, sourceLines, failures) {
     return;
   }
 
-  const declared = docLines.map((line) => /^必填 message 码（(\d+)）：(.+)$/.exec(line)).find((m) => m !== null);
+  const declared = docLines
+    .map((line) => /^必填 message 码（(\d+)）：(.+)$/.exec(line))
+    .find((m) => m !== null);
   if (declared === undefined) {
     failures.push(`${CATALOG_DOC} must declare a "必填 message 码（N）：..." line`);
     return;
@@ -203,7 +205,9 @@ function checkRequiredSet(docLines, sourceLines, failures) {
   }
   for (const code of fromType) {
     if (!fromDoc.has(code)) {
-      failures.push(`${CATALOG_DOC} 漏声明必填码 \`${code}\`（类型要求 message 必填）：需要加进文档`);
+      failures.push(
+        `${CATALOG_DOC} 漏声明必填码 \`${code}\`（类型要求 message 必填）：需要加进文档`,
+      );
     }
   }
   for (const code of fromDoc) {
@@ -235,7 +239,9 @@ function checkChannelDisjoint(sourceLines, catalog, failures) {
     if (match !== null) frameKeys.push(match[1]);
   }
   if (frameKeys.length === 0) {
-    failures.push(`${CATALOG_SOURCE} declares no frame error codes; the gate found nothing to check`);
+    failures.push(
+      `${CATALOG_SOURCE} declares no frame error codes; the gate found nothing to check`,
+    );
     return;
   }
   for (const key of frameKeys) {
@@ -263,9 +269,7 @@ function checkChannelDisjoint(sourceLines, catalog, failures) {
  * hex chars.
  */
 function messageFingerprint(entries) {
-  const payload = [...entries]
-    .map(([code, entry]) => `${code}|${entry.defaultMessage}`)
-    .join("\n");
+  const payload = [...entries].map(([code, entry]) => `${code}|${entry.defaultMessage}`).join("\n");
   return createHash("sha256").update(payload, "utf8").digest("hex").slice(0, 12);
 }
 

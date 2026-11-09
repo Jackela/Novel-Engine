@@ -7,7 +7,7 @@
  * cannot leak one.
  */
 
-import { Type, type Static } from "typebox";
+import { type Static, Type } from "typebox";
 
 import { EpochMillis } from "./projects.js";
 

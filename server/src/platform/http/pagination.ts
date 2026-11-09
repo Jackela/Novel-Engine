@@ -114,7 +114,10 @@ export function createCursorCodec(options: CursorCodecOptions): CursorCodec {
       throw invalid("cursor", `The ${label} cursor length is out of range.`);
     }
     if (!CURSOR_PATTERN.test(token)) {
-      throw invalid("cursor", `The ${label} cursor contains characters outside the base64url alphabet.`);
+      throw invalid(
+        "cursor",
+        `The ${label} cursor contains characters outside the base64url alphabet.`,
+      );
     }
     let decoded: string;
     try {
@@ -137,7 +140,10 @@ export function createCursorCodec(options: CursorCodecOptions): CursorCodec {
     }
     const expectedLength = 1 + scope.length + 2;
     if (parsed.length !== expectedLength) {
-      throw invalid("cursor", `The ${label} cursor has ${String(parsed.length)} fields; expected ${String(expectedLength)}.`);
+      throw invalid(
+        "cursor",
+        `The ${label} cursor has ${String(parsed.length)} fields; expected ${String(expectedLength)}.`,
+      );
     }
     if (parsed[0] !== version) {
       throw invalid(

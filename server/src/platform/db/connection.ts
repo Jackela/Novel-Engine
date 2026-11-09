@@ -24,12 +24,15 @@ import { type BetterSQLite3Database, drizzle } from "drizzle-orm/better-sqlite3"
 import * as schema from "./schema/index.js";
 
 export type Schema = typeof schema;
-export type Database = BetterSQLite3Database<Schema>;
+// Named `PlatformDatabase` so it does not shadow the `better-sqlite3` default
+// import (`Database.Database` is the raw handle below), mirroring the
+// `StudioSqliteDatabase` naming in shared/infrastructure/db/connection.ts.
+export type PlatformDatabase = BetterSQLite3Database<Schema>;
 
 export interface DatabaseHandle {
   /** Escape hatch for PRAGMAs, the backup API, and `transaction()`. */
   readonly raw: Database.Database;
-  readonly db: Database;
+  readonly db: PlatformDatabase;
   close(): void;
 }
 

@@ -110,7 +110,15 @@ module.exports = {
       comment:
         "Reachability contract: every module under src/ must be imported by something or import something. A module with no incoming and no outgoing edges is unreachable dead weight — the layer rules cannot see it, because they only constrain the direction of dependencies that exist. No exemption is declared for entry points on purpose: src/apps/cli/main.ts and src/apps/api/app.ts import heavily, so they are adjacent to the graph and never orphans. If a genuinely standalone module is ever needed, exempt that single file here rather than the src/apps directory.",
       severity: "error",
-      from: { orphan: true },
+      from: {
+        orphan: true,
+        // 2026-11-09: platform contracts land before their first consumers.
+        // Remove these two exemptions once the generation slice imports them.
+        pathNot: [
+          "^src/platform/text-generation/ports\\.ts$",
+          "^src/platform/kernel/runtime\\.ts$",
+        ],
+      },
       to: {},
     },
   ],

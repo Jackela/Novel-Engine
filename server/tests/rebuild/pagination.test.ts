@@ -57,7 +57,10 @@ describe("cursor codec", () => {
   it("keeps the token inside the base64url alphabet", () => {
     const token = revisions.encode(scope, { key: 7, id: "第一章/id+with?chars" });
     expect(token).toMatch(/^[A-Za-z0-9_-]+$/);
-    expect(revisions.decode(token ?? undefined, scope)).toEqual({ key: 7, id: "第一章/id+with?chars" });
+    expect(revisions.decode(token ?? undefined, scope)).toEqual({
+      key: 7,
+      id: "第一章/id+with?chars",
+    });
   });
 
   it("rejects a cursor minted for another scope", () => {
@@ -87,8 +90,12 @@ describe("cursor codec", () => {
   });
 
   it("refuses to encode an invalid position", () => {
-    expect(() => revisions.encode(scope, { key: 0, id: "rev-0" })).toThrow(/invalid .* cursor position/);
-    expect(() => revisions.encode(scope, { key: 1.5, id: "rev" })).toThrow(/invalid .* cursor position/);
+    expect(() => revisions.encode(scope, { key: 0, id: "rev-0" })).toThrow(
+      /invalid .* cursor position/,
+    );
+    expect(() => revisions.encode(scope, { key: 1.5, id: "rev" })).toThrow(
+      /invalid .* cursor position/,
+    );
   });
 
   it("declares whether its sort key can move", () => {

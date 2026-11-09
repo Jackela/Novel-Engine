@@ -6,7 +6,7 @@
  * `restoredFrom` names the target, so history is never rewritten.
  */
 
-import { Type, type Static } from "typebox";
+import { type Static, Type } from "typebox";
 
 import { EpochMillis, PageInfo, ProjectId, VolumeId } from "./projects.js";
 

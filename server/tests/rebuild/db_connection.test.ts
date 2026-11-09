@@ -4,7 +4,7 @@ import { join } from "node:path";
 
 import { afterEach, describe, expect, it } from "vitest";
 
-import { openDatabase, type DatabaseHandle } from "../../src/platform/db/connection.js";
+import { type DatabaseHandle, openDatabase } from "../../src/platform/db/connection.js";
 import { createUnitOfWork } from "../../src/platform/db/unit_of_work.js";
 
 const opened: DatabaseHandle[] = [];
@@ -26,7 +26,8 @@ function fileDatabase(): DatabaseHandle {
 
 afterEach(() => {
   for (const handle of opened.splice(0)) handle.close();
-  for (const directory of directories.splice(0)) rmSync(directory, { recursive: true, force: true });
+  for (const directory of directories.splice(0))
+    rmSync(directory, { recursive: true, force: true });
 });
 
 function probeTable(handle: DatabaseHandle): void {

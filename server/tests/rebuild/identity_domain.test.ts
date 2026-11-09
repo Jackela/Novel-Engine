@@ -3,7 +3,6 @@ import { describe, expect, it } from "vitest";
 import {
   CredentialPolicyError,
   MAX_PASSWORD_BYTES,
-  MIN_PASSWORD_CHARACTERS,
   normalizeOwnerCredentials,
 } from "../../src/slices/identity/domain/credentials.js";
 import {

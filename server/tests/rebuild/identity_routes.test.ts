@@ -2,7 +2,7 @@ import cookie from "@fastify/cookie";
 import Fastify, { type FastifyInstance } from "fastify";
 import { afterEach, describe, expect, it } from "vitest";
 
-import { openDatabase, type DatabaseHandle } from "../../src/platform/db/connection.js";
+import { type DatabaseHandle, openDatabase } from "../../src/platform/db/connection.js";
 import { registerErrorEnvelope } from "../../src/platform/http/error_envelope.js";
 import { createBcryptHasher } from "../../src/slices/identity/adapters/bcrypt_hasher.js";
 import { createSessionTokenIssuer } from "../../src/slices/identity/adapters/hmac_tokens.js";
@@ -82,7 +82,11 @@ describe("identity routes", () => {
 
   it("answers 422 for a second owner and for a short password", async () => {
     const app = await buildApp();
-    await app.inject({ method: "POST", url: "/api/setup", payload: { username: "author", password: PASSWORD } });
+    await app.inject({
+      method: "POST",
+      url: "/api/setup",
+      payload: { username: "author", password: PASSWORD },
+    });
 
     const second = await app.inject({
       method: "POST",
@@ -104,7 +108,11 @@ describe("identity routes", () => {
 
   it("logs in, sets both cookies, and probes as authenticated", async () => {
     const app = await buildApp();
-    await app.inject({ method: "POST", url: "/api/setup", payload: { username: "author", password: PASSWORD } });
+    await app.inject({
+      method: "POST",
+      url: "/api/setup",
+      payload: { username: "author", password: PASSWORD },
+    });
 
     const login = await app.inject({
       method: "POST",
@@ -112,7 +120,10 @@ describe("identity routes", () => {
       payload: { username: "author", password: PASSWORD },
     });
     expect(login.statusCode).toBe(200);
-    expect(login.json()).toEqual({ ownerId: expect.any(String), expiresAt: NOW + 30 * 24 * 60 * 60 * 1000 });
+    expect(login.json()).toEqual({
+      ownerId: expect.any(String),
+      expiresAt: NOW + 30 * 24 * 60 * 60 * 1000,
+    });
 
     const setCookie = login.headers["set-cookie"];
     const list = Array.isArray(setCookie) ? setCookie : [String(setCookie)];
@@ -136,7 +147,11 @@ describe("identity routes", () => {
 
   it("answers 422 for a wrong password without revealing why", async () => {
     const app = await buildApp();
-    await app.inject({ method: "POST", url: "/api/setup", payload: { username: "author", password: PASSWORD } });
+    await app.inject({
+      method: "POST",
+      url: "/api/setup",
+      payload: { username: "author", password: PASSWORD },
+    });
 
     const response = await app.inject({
       method: "POST",
@@ -152,7 +167,11 @@ describe("identity routes", () => {
 
   it("probes as unauthenticated without a cookie, and after logout", async () => {
     const app = await buildApp();
-    await app.inject({ method: "POST", url: "/api/setup", payload: { username: "author", password: PASSWORD } });
+    await app.inject({
+      method: "POST",
+      url: "/api/setup",
+      payload: { username: "author", password: PASSWORD },
+    });
     const login = await app.inject({
       method: "POST",
       url: "/api/session",

@@ -31,7 +31,12 @@ function harness(options: { owner?: { username: string; passwordHash: string } }
       findByUsername: (username) => {
         lookups += 1;
         if (owner === undefined || owner.username !== username) return null;
-        return { id: "owner-1", username: owner.username, passwordHash: owner.passwordHash, createdAt: NOW };
+        return {
+          id: "owner-1",
+          username: owner.username,
+          passwordHash: owner.passwordHash,
+          createdAt: NOW,
+        };
       },
       findFirst: () => null,
       create: () => {
@@ -97,9 +102,9 @@ describe("login", () => {
 
   it("rejects a wrong password and writes no session", async () => {
     const h = configured();
-    await expect(login(h.deps, { username: "author", password: "wrong-password" })).rejects.toBeInstanceOf(
-      InvalidCredentialsError,
-    );
+    await expect(
+      login(h.deps, { username: "author", password: "wrong-password" }),
+    ).rejects.toBeInstanceOf(InvalidCredentialsError);
     expect(h.sessions()).toHaveLength(0);
   });
 

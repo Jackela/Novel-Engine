@@ -109,9 +109,8 @@ function send(
   message: string,
   details?: Record<string, unknown>,
 ): void {
-  const payload: ErrorEnvelope = details === undefined
-    ? { error: { code, message } }
-    : { error: { code, message, details } };
+  const payload: ErrorEnvelope =
+    details === undefined ? { error: { code, message } } : { error: { code, message, details } };
   void reply.status(status).send(payload);
 }
 
@@ -121,7 +120,9 @@ interface ValidationItem {
   readonly message?: string;
 }
 
-function isValidationFailure(error: unknown): error is FastifyError & { validation: ValidationItem[] } {
+function isValidationFailure(
+  error: unknown,
+): error is FastifyError & { validation: ValidationItem[] } {
   return error instanceof Error && Array.isArray((error as FastifyError).validation);
 }
 
@@ -158,7 +159,13 @@ export function registerErrorEnvelope(app: FastifyInstance): void {
     }
     if (isValidationFailure(error)) {
       const definition = ERROR_CATALOG.VALIDATION_ERROR;
-      send(reply, definition.status, "VALIDATION_ERROR", definition.defaultMessage, validationDetails(error.validation));
+      send(
+        reply,
+        definition.status,
+        "VALIDATION_ERROR",
+        definition.defaultMessage,
+        validationDetails(error.validation),
+      );
       return;
     }
     const candidate = error as FastifyError;
@@ -169,7 +176,9 @@ export function registerErrorEnvelope(app: FastifyInstance): void {
     const errorId = request.id;
     request.log.error({ err: error, errorId }, "unhandled error while serving request");
     const definition = ERROR_CATALOG.INTERNAL_ERROR;
-    send(reply, definition.status, "INTERNAL_ERROR", definition.defaultMessage, { error_id: errorId });
+    send(reply, definition.status, "INTERNAL_ERROR", definition.defaultMessage, {
+      error_id: errorId,
+    });
   });
 
   app.setNotFoundHandler((request, reply) => {

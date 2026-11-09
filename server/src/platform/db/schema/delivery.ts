@@ -8,9 +8,8 @@
  */
 
 import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
-
-import { projects } from "./library.js";
 import { generationRuns, snapshots } from "./generation.js";
+import { projects } from "./library.js";
 
 export const exports = sqliteTable(
   "exports",

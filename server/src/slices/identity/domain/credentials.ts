@@ -74,10 +74,7 @@ export interface OwnerCredentials {
  * a 24-character Chinese passphrase is 72 bytes and must pass, while a
  * 25-character one exceeds bcrypt's window and must not.
  */
-export function normalizeOwnerCredentials(
-  username: string,
-  password: string,
-): OwnerCredentials {
+export function normalizeOwnerCredentials(username: string, password: string): OwnerCredentials {
   const trimmed = username.trim();
   if (trimmed.length === 0) {
     throw new CredentialPolicyError("username-empty");

@@ -8,9 +8,9 @@
  * references tables declared before it.
  */
 
+export * from "./delivery.js";
+export * from "./generation.js";
 export * from "./identity.js";
 export * from "./library.js";
 export * from "./manuscript.js";
-export * from "./generation.js";
-export * from "./delivery.js";
 export * from "./system.js";
